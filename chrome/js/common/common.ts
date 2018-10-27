@@ -203,8 +203,8 @@ class Env {
   public static is_extension = () => Env.runtime_id() !== null;
 
   public static url_param_require = {
-    string: (values: UrlParams, name: string): string => tool.ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
-    oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => tool.ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
+    string: (values: UrlParams, name: string): string => Ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
+    oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
   };
 
   public static url_params = (expected_keys: string[], string:string|null=null) => {
@@ -998,13 +998,275 @@ class Api {
         values.file = new Attachment({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].attachment.data()});
         promises.push(tool._.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
           progress[i] = single_file_progress;
-          tool.ui.event.prevent(tool.ui.event.spree(), () => {
+          Ui.event.prevent(Ui.event.spree(), () => {
             // this should of course be weighted average. How many years until someone notices?
             progress_callback(tool.arr.average(progress), null, null); // May 2018 - nobody noticed
           })();
         }}));
       }
       return Promise.all(promises);
+    },
+  };
+
+}
+
+class Ui {
+
+  public static retry_link = (caption:string='retry') => `<a href="${tool.str.html_escape(window.location.href)}">${tool.str.html_escape(caption)}</a>`;
+
+  public static delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  public static spinner = (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
+    let path = `/img/svgs/spinner-${color}-small.svg`;
+    let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
+    return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
+  }
+
+  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+
+  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+
+  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+
+  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(tool.str.html_sanitize(dirty_html)); // xss-sanitized
+
+  public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
+    return new Promise(resolve => {
+      let btns = Object.keys(buttons).map(id => `<div class="button ${tool.str.html_escape(buttons[id].color || 'green')} overlay_action_${tool.str.html_escape(id)}">${tool.str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
+      Ui.sanitize_append('body', `
+        <div class="featherlight white prompt_overlay" style="display: block;">
+          <div class="featherlight-content" data-test="dialog">
+            <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
+            <div class="line">${btns}</div>
+            <div class="line">&nbsp;</div>
+            <div class="line">Email human@flowcrypt.com if you need assistance.</div>
+          </div>
+        </div>
+      `);
+      let overlay = $('.prompt_overlay');
+      for(let id of Object.keys(buttons)) {
+        overlay.find(`.overlay_action_${id}`).one('click', () => {
+          overlay.remove();
+          resolve(id);
+        });
+      }
+    });
+  }
+
+  public static abort_and_render_error_on_unprotected_key = async (account_email?: string, tab_id?: string) => {
+    if(account_email) {
+      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+      let {setup_done, setup_simple} = await Store.get_account(account_email, ['setup_simple', 'setup_done']);
+      if(setup_done && setup_simple && primary_ki && openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) {
+        if(window.location.pathname === '/chrome/settings/index.htm') {
+          Settings.render_sub_page(account_email, tab_id!, '/chrome/settings/modules/change_passphrase.htm');
+        } else {
+          let msg = `Protect your key with a pass phrase to finish setup.`;
+          let r = await Ui.render_overlay_prompt_await_user_choice({finish_setup: {}, later: {color: 'gray'}}, msg);
+          if(r === 'finish_setup') {
+            tool.browser.message.send(null, 'settings', {account_email});
+          }
+        }
+      }
+    }
+  }
+
+  public static abort_and_render_error_on_url_param_type_mismatch = (values: UrlParams, name: string, expected_type: string): UrlParam => {
+    let actual_type = typeof values[name];
+    if (actual_type !== expected_type) {
+      let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be of type ${tool.str.html_escape(expected_type)} but got ${tool.str.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      throw new UnreportableError(msg);
+    }
+    return values[name];
+  }
+
+  public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
+    if (expected_values.indexOf(values[name]) === -1) {
+      let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be one of ${tool.str.html_escape(expected_values.map(String).join(','))} but got ${tool.str.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      throw new UnreportableError(msg);
+    }
+    return values[name];
+  }
+
+  public static passphrase_toggle = async (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
+    let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
+    let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
+    let {hide_pass_phrases} = await Store.get_global(['hide_pass_phrases']);
+    let show: boolean;
+    if (force_initial_show_or_hide === 'hide') {
+      show = false;
+    } else if (force_initial_show_or_hide === 'show') {
+      show = true;
+    } else {
+      show = !hide_pass_phrases;
+    }
+    for (let id of pass_phrase_input_ids) {
+      let passphrase_input = $('#' + id);
+      passphrase_input.addClass('toggled_passphrase');
+      if (show) {
+        passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
+        passphrase_input.attr('type', 'text');
+      } else {
+        passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
+        passphrase_input.attr('type', 'password');
+      }
+      $('#toggle_' + id).click(Ui.event.handle(target => {
+        if (passphrase_input.attr('type') === 'password') {
+          $('#' + id).attr('type', 'text');
+          Ui.sanitize_render(target, button_hide);
+          Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.rejection);
+        } else {
+          $('#' + id).attr('type', 'password');
+          Ui.sanitize_render(target, button_show);
+          Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.rejection);
+        }
+      }));
+    }
+  }
+
+  public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    if (e.which === Env.key_codes().enter) {
+      callback();
+    }
+  }
+
+  public static build_jquery_selectors = (selectors: Dict<string>): SelectorCache => {
+    let cache: NamedSelectors = {};
+    return {
+      cached: (name: string) => {
+        if (!cache[name]) {
+          if (typeof selectors[name] === 'undefined') {
+            tool.catch.report('unknown selector name: ' + name);
+          }
+          cache[name] = $(selectors[name]);
+        }
+        return cache[name];
+      },
+      now: (name: string) => {
+        if (typeof selectors[name] === 'undefined') {
+          tool.catch.report('unknown selector name: ' + name);
+        }
+        return $(selectors[name]);
+      },
+      selector: (name: string) => {
+        if (typeof selectors[name] === 'undefined') {
+          tool.catch.report('unknown selector name: ' + name);
+        }
+        return selectors[name];
+      }
+    };
+  }
+
+  public static scroll = (selector: string|JQuery<HTMLElement>, repeat:number[]=[]) => {
+    let el = $(selector as string).first()[0]; // as string due to JQuery TS quirk
+    if (el) {
+      el.scrollIntoView();
+      for (let delay of repeat) { // useful if mobile keyboard is about to show up
+        setTimeout(() => el.scrollIntoView(), delay);
+      }
+    }
+  }
+
+  public static event = {
+    clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function() { resolve(this); })),
+    stop: () => (e: JQuery.Event) => { // returns a function
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    },
+    protect: () => {
+      // prevent events that could potentially leak information about sensitive info from bubbling above the frame
+      $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', e => {
+        // don't ask me how come Chrome allows it to bubble cross-domain
+        // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
+        // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
+        // so this indeed seems like the only defense
+        // happened on only one machine, but could potentially happen to other users as well
+        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
+        e.stopPropagation();
+      });
+    },
+    double: (): PreventableEvent => ({ name: 'double', id: tool.str.random(10) }),
+    parallel: (): PreventableEvent => ({ name: 'parallel', id: tool.str.random(10) }),
+    spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: tool.str.random(10) }),
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+      return function(event: JQuery.Event<HTMLElement, null>) {
+        let r;
+        try {
+          r = cb(this, event);
+          if(typeof r === 'object' && typeof r.catch === 'function') {
+            r.catch(e => Ui.event.__dispatch_err(e, err_handler));
+          }
+        } catch(e) {
+          Ui.event.__dispatch_err(e, err_handler);
+        }
+      };
+    },
+    __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
+      if(Api.error.is_network_error(e) && err_handler && err_handler.network) {
+        err_handler.network();
+      } else if (Api.error.is_auth_error(e) && err_handler && err_handler.auth) {
+        err_handler.auth();
+      } else if (Api.error.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
+        err_handler.auth_popup();
+      } else if (err_handler && err_handler.other) {
+        err_handler.other(e);
+      } else {
+        tool.catch.handle_exception(e);
+      }
+    },
+    prevent: (preventable_event: PreventableEvent, cb: (e: HTMLElement, id: string) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+      let cb_with_errors_handled = (e: HTMLElement, id: string) => {
+        let r;
+        try {
+          r = cb(e, id);
+          if(typeof r === 'object' && typeof r.catch === 'function') {
+            r.catch(e => Ui.event.__dispatch_err(e, err_handler));
+          }
+        } catch(e) {
+          Ui.event.__dispatch_err(e, err_handler);
+        }
+      };
+      return function() {
+        // todo - maybe this could use some refactoring. It works, but I have no clue how.
+        // also, the setTimeouts are weird - don't they get called without the arguments?! that would cause trouble
+        // although spree-s tend to be called on events that do not need the callback (window resize), it's still better to do this consistently
+        if (preventable_event.name === 'spree') {
+          clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
+          tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SPREE_MS);
+        } else if (preventable_event.name === 'slowspree') {
+          clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
+          tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SLOW_SPREE_MS);
+        } else if (preventable_event.name === 'veryslowspree') {
+          clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
+          tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_VERY_SLOW_SPREE_MS);
+        } else {
+          if (preventable_event.id in tool._.var.ui_event_fired) {
+            // if (meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
+            if (preventable_event.name === 'double') {
+              if (Date.now() - tool._.var.ui_event_fired[preventable_event.id] > tool._.var.ui_event_DOUBLE_MS) {
+                tool._.var.ui_event_fired[preventable_event.id] = Date.now();
+                cb_with_errors_handled(this, preventable_event.id);
+              }
+            }
+          } else {
+            tool._.var.ui_event_fired[preventable_event.id] = Date.now();
+            cb_with_errors_handled(this, preventable_event.id);
+          }
+        }
+      };
+    },
+    release: (id: string) => { // todo - I may have forgot to use this somewhere, used only with parallel() - if that's how it works
+      if (id in tool._.var.ui_event_fired) {
+        let ms_to_release = tool._.var.ui_event_DOUBLE_MS + tool._.var.ui_event_fired[id] - Date.now();
+        if (ms_to_release > 0) {
+          setTimeout(() => { delete tool._.var.ui_event_fired[id]; }, ms_to_release);
+        } else {
+          delete tool._.var.ui_event_fired[id];
+        }
+      }
     },
   };
 
@@ -1364,7 +1626,7 @@ let tool = {
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          tool.ui.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
+          Ui.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
           render_in.append(a); // xss-escaped attachment name above
           render_in.css('height', 'auto');
           render_in.find('a').click(e => {
@@ -2059,250 +2321,6 @@ let tool = {
     }
   },
   /* [BARE_ENGINE_OMIT_BEGIN] */
-  ui: {
-    retry_link: (caption:string='retry') => `<a href="${tool.str.html_escape(window.location.href)}">${tool.str.html_escape(caption)}</a>`,
-    delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
-    spinner: (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
-      let path = `/img/svgs/spinner-${color}-small.svg`;
-      let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
-      return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
-    },
-    sanitize_render: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(tool.str.html_sanitize(dirty_html)), // xss-sanitized
-    sanitize_append: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(tool.str.html_sanitize(dirty_html)), // xss-sanitized
-    sanitize_prepend: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(tool.str.html_sanitize(dirty_html)), // xss-sanitized
-    sanitize_replace: (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(tool.str.html_sanitize(dirty_html)), // xss-sanitized
-    render_overlay_prompt_await_user_choice: (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
-      return new Promise(resolve => {
-        let btns = Object.keys(buttons).map(id => `<div class="button ${tool.str.html_escape(buttons[id].color || 'green')} overlay_action_${tool.str.html_escape(id)}">${tool.str.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
-        tool.ui.sanitize_append('body', `
-          <div class="featherlight white prompt_overlay" style="display: block;">
-            <div class="featherlight-content" data-test="dialog">
-              <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
-              <div class="line">${btns}</div>
-              <div class="line">&nbsp;</div>
-              <div class="line">Email human@flowcrypt.com if you need assistance.</div>
-            </div>
-          </div>
-        `);
-        let overlay = $('.prompt_overlay');
-        for(let id of Object.keys(buttons)) {
-          overlay.find(`.overlay_action_${id}`).one('click', () => {
-            overlay.remove();
-            resolve(id);
-          });
-        }
-      });
-    },
-    abort_and_render_error_on_unprotected_key: async (account_email?: string, tab_id?: string) => {
-      if(account_email) {
-        let [primary_ki] = await Store.keys_get(account_email, ['primary']);
-        let {setup_done, setup_simple} = await Store.get_account(account_email, ['setup_simple', 'setup_done']);
-        if(setup_done && setup_simple && primary_ki && openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) {
-          if(window.location.pathname === '/chrome/settings/index.htm') {
-            Settings.render_sub_page(account_email, tab_id!, '/chrome/settings/modules/change_passphrase.htm');
-          } else {
-            let msg = `Protect your key with a pass phrase to finish setup.`;
-            let r = await tool.ui.render_overlay_prompt_await_user_choice({finish_setup: {}, later: {color: 'gray'}}, msg);
-            if(r === 'finish_setup') {
-              tool.browser.message.send(null, 'settings', {account_email});
-            }
-          }
-        }
-      }
-    },
-    abort_and_render_error_on_url_param_type_mismatch: (values: UrlParams, name: string, expected_type: string): UrlParam => {
-      let actual_type = typeof values[name];
-      if (actual_type !== expected_type) {
-        let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be of type ${tool.str.html_escape(expected_type)} but got ${tool.str.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-        tool.ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
-        throw new UnreportableError(msg);
-      }
-      return values[name];
-    },
-    abort_and_render_error_on_url_param_value_mismatch: <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
-      if (expected_values.indexOf(values[name]) === -1) {
-        let msg = `Cannot render page (expected ${tool.str.html_escape(name)} to be one of ${tool.str.html_escape(expected_values.map(String).join(','))} but got ${tool.str.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-        tool.ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
-        throw new UnreportableError(msg);
-      }
-      return values[name];
-    },
-    passphrase_toggle: async (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
-      let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
-      let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-      let {hide_pass_phrases} = await Store.get_global(['hide_pass_phrases']);
-      let show: boolean;
-      if (force_initial_show_or_hide === 'hide') {
-        show = false;
-      } else if (force_initial_show_or_hide === 'show') {
-        show = true;
-      } else {
-        show = !hide_pass_phrases;
-      }
-      for (let id of pass_phrase_input_ids) {
-        let passphrase_input = $('#' + id);
-        passphrase_input.addClass('toggled_passphrase');
-        if (show) {
-          passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
-          passphrase_input.attr('type', 'text');
-        } else {
-          passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
-          passphrase_input.attr('type', 'password');
-        }
-        $('#toggle_' + id).click(tool.ui.event.handle(target => {
-          if (passphrase_input.attr('type') === 'password') {
-            $('#' + id).attr('type', 'text');
-            tool.ui.sanitize_render(target, button_hide);
-            Store.set(null, { hide_pass_phrases: false }).catch(tool.catch.rejection);
-          } else {
-            $('#' + id).attr('type', 'password');
-            tool.ui.sanitize_render(target, button_show);
-            Store.set(null, { hide_pass_phrases: true }).catch(tool.catch.rejection);
-          }
-        }));
-      }
-    },
-    enter: (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-      if (e.which === Env.key_codes().enter) {
-        callback();
-      }
-    },
-    build_jquery_selectors: (selectors: Dict<string>): SelectorCache => {
-      let cache: NamedSelectors = {};
-      return {
-        cached: (name: string) => {
-          if (!cache[name]) {
-            if (typeof selectors[name] === 'undefined') {
-              tool.catch.report('unknown selector name: ' + name);
-            }
-            cache[name] = $(selectors[name]);
-          }
-          return cache[name];
-        },
-        now: (name: string) => {
-          if (typeof selectors[name] === 'undefined') {
-            tool.catch.report('unknown selector name: ' + name);
-          }
-          return $(selectors[name]);
-        },
-        selector: (name: string) => {
-          if (typeof selectors[name] === 'undefined') {
-            tool.catch.report('unknown selector name: ' + name);
-          }
-          return selectors[name];
-        }
-      };
-    },
-    scroll: (selector: string|JQuery<HTMLElement>, repeat:number[]=[]) => {
-      let el = $(selector as string).first()[0]; // as string due to JQuery TS quirk
-      if (el) {
-        el.scrollIntoView();
-        for (let delay of repeat) { // useful if mobile keyboard is about to show up
-          setTimeout(() => el.scrollIntoView(), delay);
-        }
-      }
-    },
-    event: {
-      clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function() { resolve(this); })),
-      stop: () => (e: JQuery.Event) => { // returns a function
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      },
-      protect: () => {
-        // prevent events that could potentially leak information about sensitive info from bubbling above the frame
-        $('body').on('keyup keypress keydown click drag drop dragover dragleave dragend submit', e => {
-          // don't ask me how come Chrome allows it to bubble cross-domain
-          // should be used in embedded frames where the parent cannot be trusted (eg parent is webmail)
-          // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
-          // so this indeed seems like the only defense
-          // happened on only one machine, but could potentially happen to other users as well
-          // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
-          e.stopPropagation();
-        });
-      },
-      double: (): PreventableEvent => ({ name: 'double', id: tool.str.random(10) }),
-      parallel: (): PreventableEvent => ({ name: 'parallel', id: tool.str.random(10) }),
-      spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: tool.str.random(10) }),
-      handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
-        return function(event: JQuery.Event<HTMLElement, null>) {
-          let r;
-          try {
-            r = cb(this, event);
-            if(typeof r === 'object' && typeof r.catch === 'function') {
-              r.catch(e => tool.ui.event.__dispatch_err(e, err_handler));
-            }
-          } catch(e) {
-            tool.ui.event.__dispatch_err(e, err_handler);
-          }
-        };
-      },
-      __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
-        if(Api.error.is_network_error(e) && err_handler && err_handler.network) {
-          err_handler.network();
-        } else if (Api.error.is_auth_error(e) && err_handler && err_handler.auth) {
-          err_handler.auth();
-        } else if (Api.error.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
-          err_handler.auth_popup();
-        } else if (err_handler && err_handler.other) {
-          err_handler.other(e);
-        } else {
-          tool.catch.handle_exception(e);
-        }
-      },
-      prevent: (preventable_event: PreventableEvent, cb: (e: HTMLElement, id: string) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
-        let cb_with_errors_handled = (e: HTMLElement, id: string) => {
-          let r;
-          try {
-            r = cb(e, id);
-            if(typeof r === 'object' && typeof r.catch === 'function') {
-              r.catch(e => tool.ui.event.__dispatch_err(e, err_handler));
-            }
-          } catch(e) {
-            tool.ui.event.__dispatch_err(e, err_handler);
-          }
-        };
-        return function() {
-          // todo - maybe this could use some refactoring. It works, but I have no clue how.
-          // also, the setTimeouts are weird - don't they get called without the arguments?! that would cause trouble
-          // although spree-s tend to be called on events that do not need the callback (window resize), it's still better to do this consistently
-          if (preventable_event.name === 'spree') {
-            clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SPREE_MS);
-          } else if (preventable_event.name === 'slowspree') {
-            clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SLOW_SPREE_MS);
-          } else if (preventable_event.name === 'veryslowspree') {
-            clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-            tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_VERY_SLOW_SPREE_MS);
-          } else {
-            if (preventable_event.id in tool._.var.ui_event_fired) {
-              // if (meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
-              if (preventable_event.name === 'double') {
-                if (Date.now() - tool._.var.ui_event_fired[preventable_event.id] > tool._.var.ui_event_DOUBLE_MS) {
-                  tool._.var.ui_event_fired[preventable_event.id] = Date.now();
-                  cb_with_errors_handled(this, preventable_event.id);
-                }
-              }
-            } else {
-              tool._.var.ui_event_fired[preventable_event.id] = Date.now();
-              cb_with_errors_handled(this, preventable_event.id);
-            }
-          }
-        };
-      },
-      release: (id: string) => { // todo - I may have forgot to use this somewhere, used only with parallel() - if that's how it works
-        if (id in tool._.var.ui_event_fired) {
-          let ms_to_release = tool._.var.ui_event_DOUBLE_MS + tool._.var.ui_event_fired[id] - Date.now();
-          if (ms_to_release > 0) {
-            setTimeout(() => { delete tool._.var.ui_event_fired[id]; }, ms_to_release);
-          } else {
-            delete tool._.var.ui_event_fired[id];
-          }
-        }
-      },
-    },
-  },
   browser: {
     message: {
       send: (destination_string: string|null, name: string, data: Dict<any>|null=null) => {

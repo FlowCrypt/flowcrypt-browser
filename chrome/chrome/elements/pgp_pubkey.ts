@@ -6,7 +6,7 @@ tool.catch.try(async () => {
 
   // todo - this should use KeyImportUI for consistency. Needs general refactoring, hard to follow.
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -59,7 +59,7 @@ tool.catch.try(async () => {
         } else {
           $('.email').text('more than one person');
           $('.input_email').css({display: 'none'});
-          tool.ui.sanitize_append('.add_contact', tool.str.html_escape(' for ' + pubkeys.map(pubkey => tool.str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => tool.str.is_email_valid(e)).join(', ')));
+          Ui.sanitize_append('.add_contact', tool.str.html_escape(' for ' + pubkeys.map(pubkey => tool.str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => tool.str.is_email_valid(e)).join(', ')));
         }
         set_button_text().catch(tool.catch.rejection);
       }
@@ -77,7 +77,7 @@ tool.catch.try(async () => {
     }
   };
 
-  $('.action_add_contact').click(tool.ui.event.handle(async target => {
+  $('.action_add_contact').click(Ui.event.handle(async target => {
     if (pubkeys.length > 1) {
       let contacts: Contact[] = [];
       for (let pubkey of pubkeys) {
@@ -87,13 +87,13 @@ tool.catch.try(async () => {
         }
       }
       await Store.db_contact_save(null, contacts);
-      tool.ui.sanitize_replace(target, '<span class="good">added public keys</span>');
+      Ui.sanitize_replace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
     } else if (pubkeys.length) {
       if (tool.str.is_email_valid($('.input_email').val() as string)) { // text input
         let contact = Store.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
         await Store.db_contact_save(null, contact);
-        tool.ui.sanitize_replace(target, `<span class="good">${tool.str.html_escape(String($('.input_email').val()))} added</span>`);
+        Ui.sanitize_replace(target, `<span class="good">${tool.str.html_escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
       } else {
         alert('This email is invalid, please check for typos. Not added.');
@@ -104,7 +104,7 @@ tool.catch.try(async () => {
 
   $('.input_email').keyup(() => set_button_text());
 
-  $('.action_show_full').click(tool.ui.event.handle(target => {
+  $('.action_show_full').click(Ui.event.handle(target => {
     $(target).css('display', 'none');
     $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
     send_resize_message();

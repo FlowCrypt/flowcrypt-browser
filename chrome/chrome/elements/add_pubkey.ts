@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -13,17 +13,17 @@ tool.catch.try(async () => {
   let close_dialog = () => tool.browser.message.send(parent_tab_id, 'close_dialog');
 
   for (let email of (url_params.emails as string).split(',')) {
-    tool.ui.sanitize_append('select.email', `<option value="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</option>`);
+    Ui.sanitize_append('select.email', `<option value="${tool.str.html_escape(email)}">${tool.str.html_escape(email)}</option>`);
   }
 
   let contacts = await Store.db_contact_search(null, {has_pgp: true});
 
-  tool.ui.sanitize_append('select.copy_from_email', '<option value=""></option>');
+  Ui.sanitize_append('select.copy_from_email', '<option value=""></option>');
   for (let contact of contacts) {
-    tool.ui.sanitize_append('select.copy_from_email', `<option value="${tool.str.html_escape(contact.email)}">${tool.str.html_escape(contact.email)}</option>`);
+    Ui.sanitize_append('select.copy_from_email', `<option value="${tool.str.html_escape(contact.email)}">${tool.str.html_escape(contact.email)}</option>`);
   }
 
-  $('select.copy_from_email').change(tool.ui.event.handle(async target => {
+  $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {
       let [contact] = await Store.db_contact_get(null, [$(target).val() as string]);
       if (contact && contact.pubkey) {
@@ -36,7 +36,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('.action_ok').click(tool.ui.event.handle(async () => {
+  $('.action_ok').click(Ui.event.handle(async () => {
     try {
       let key_import_ui = new KeyImportUI({check_encryption: true});
       let normalized = await key_import_ui.check_pub(tool.crypto.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
@@ -53,7 +53,7 @@ tool.catch.try(async () => {
   }));
 
   if (url_params.placement !== 'settings') {
-    $('.action_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {
+    $('.action_settings').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {
       path: 'index.htm',
       page: '/chrome/settings/modules/contacts.htm',
       account_email,
@@ -62,6 +62,6 @@ tool.catch.try(async () => {
     $('#content').addClass('inside_compose');
   }
 
-  $('.action_close').click(tool.ui.event.handle(close_dialog));
+  $('.action_close').click(Ui.event.handle(close_dialog));
 
 })();

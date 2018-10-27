@@ -22,14 +22,14 @@ tool.catch.try(async () => {
     },
   }, tab_id);
 
-  $('.action_decrypt').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+  $('.action_decrypt').click(Ui.event.prevent(Ui.event.double(), async self => {
     let encrypted = $('.input_message').val() as string;
     if (!encrypted) {
       alert('Please paste an encrypted message');
       return;
     }
     original_content = $(self).html();
-    tool.ui.sanitize_render(self, 'Decrypting.. ' + tool.ui.spinner('white'));
+    Ui.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
     let result = await tool.crypto.message.decrypt(account_email, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
@@ -40,7 +40,7 @@ tool.catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    tool.ui.sanitize_render(self, original_content);
+    Ui.sanitize_render(self, original_content);
   }));
 
 })();

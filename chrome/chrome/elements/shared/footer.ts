@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']); // placement: compose||settings
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -24,7 +24,7 @@ tool.catch.try(async () => {
     $('.user_subscribed').css('display', 'block');
   } else {
     $('.user_free').css('display', 'block');
-    $('.action_upgrade').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
+    $('.action_upgrade').click(Ui.event.prevent(Ui.event.double(), async target => {
       let newly_active = await tool.browser.message.send_await(parent_tab_id, 'subscribe', {});
       if (newly_active) {
         $('.user_subscribed').css('display', 'block');
@@ -33,11 +33,11 @@ tool.catch.try(async () => {
     }));
   }
 
-  $('.action_add_footer').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+  $('.action_add_footer').click(Ui.event.prevent(Ui.event.double(), async self => {
     await save_footer_if_has_subscription_and_requested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string); // is textarea
     tool.browser.message.send(parent_tab_id, 'set_footer', {footer: $('.input_email_footer').val()});
   }));
 
-  $('.action_cancel').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
+  $('.action_cancel').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
 
 })();

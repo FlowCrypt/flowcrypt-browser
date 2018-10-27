@@ -22,11 +22,11 @@ tool.catch.try(async () => {
     },
   }, tab_id);
 
-  $('.action_decrypt_and_download').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+  $('.action_decrypt_and_download').click(Ui.event.prevent(Ui.event.double(), async (self) => {
     let ids = attach_js.get_attachment_ids();
     if (ids.length === 1) {
       original_content = $(self).html();
-      tool.ui.sanitize_render(self, 'Decrypting.. ' + tool.ui.spinner('white'));
+      Ui.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
       let collected = await attach_js.collect_attachment(ids[0]);
       await decrypt_and_download(collected);
     } else {
@@ -46,7 +46,7 @@ tool.catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    tool.ui.sanitize_render('.action_decrypt_and_download', original_content);
+    Ui.sanitize_render('.action_decrypt_and_download', original_content);
   };
 
 })();

@@ -11,7 +11,7 @@ tool.catch.try(async () => {
   let attach_js = new Attach(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let new_photo_file: Attachment;
 
-  const S = tool.ui.build_jquery_selectors({
+  const S = Ui.build_jquery_selectors({
     'status': '.status',
     'subscribe': '.action_subscribe',
     'hide_if_active': '.hide_if_active',
@@ -32,7 +32,7 @@ tool.catch.try(async () => {
       let me = Api.fc.url('me', result.alias);
       let me_escaped = tool.str.html_escape(me);
       let me_escaped_display = tool.str.html_escape(me.replace('https://', ''));
-      tool.ui.sanitize_render(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
+      Ui.sanitize_render(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
       S.cached('hide_if_active').css('display', 'none');
       S.cached('show_if_active').css('display', 'inline-block');
       S.cached('input_email').val(result.email);
@@ -45,17 +45,17 @@ tool.catch.try(async () => {
       attach_js.initialize_attach_dialog('fineuploader', 'select_photo');
       attach_js.set_attachment_added_callback((file: Attachment) => {
         new_photo_file = file;
-        tool.ui.sanitize_replace('#select_photo', tool.e('span', {text: file.name}));
+        Ui.sanitize_replace('#select_photo', tool.e('span', {text: file.name}));
       });
     } else {
       S.cached('management_account').text(result.email).parent().removeClass('display_none');
-      tool.ui.sanitize_render(S.cached('status'), 'Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
-      S.now('action_enable').click(tool.ui.event.prevent(tool.ui.event.double(), enable_contact_page));
+      Ui.sanitize_render(S.cached('status'), 'Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
+      S.now('action_enable').click(Ui.event.prevent(Ui.event.double(), enable_contact_page));
     }
   };
 
   let enable_contact_page = async () => {
-    tool.ui.sanitize_render(S.cached('status'), 'Enabling..' + tool.ui.spinner('green'));
+    Ui.sanitize_render(S.cached('status'), 'Enabling..' + Ui.spinner('green'));
     let auth_info = await Store.auth_info();
     let storage = await Store.get_account(auth_info.account_email!, ['full_name']);
     try {
@@ -73,14 +73,14 @@ tool.catch.try(async () => {
     }
   };
 
-  S.cached('action_update').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
+  S.cached('action_update').click(Ui.event.prevent(Ui.event.double(), async () => {
     if (!S.cached('input_name').val()) {
       alert('Please add your name');
     } else if (!S.cached('input_intro').val()) {
       alert('Please add intro text');
     } else {
       S.cached('show_if_active').css('display', 'none');
-      tool.ui.sanitize_render(S.cached('status'), 'Updating ' + tool.ui.spinner('green'));
+      Ui.sanitize_render(S.cached('status'), 'Updating ' + Ui.spinner('green'));
       let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
         update.photo_content = btoa(new_photo_file.as_text());
@@ -90,7 +90,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  S.cached('action_close').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_page')));
+  S.cached('action_close').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_page')));
 
   let find_available_alias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
@@ -108,14 +108,14 @@ tool.catch.try(async () => {
     }
   };
 
-  tool.ui.sanitize_render(S.cached('status'), 'Loading..' + tool.ui.spinner('green'));
+  Ui.sanitize_render(S.cached('status'), 'Loading..' + Ui.spinner('green'));
   try {
     let response = await Api.fc.account_update();
     render_fields(response.result);
   } catch (e) {
     if (Api.error.is_auth_error(e)) {
-      tool.ui.sanitize_render(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
-      S.now('subscribe').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
+      Ui.sanitize_render(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
+      S.now('subscribe').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
     }

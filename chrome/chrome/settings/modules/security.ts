@@ -8,7 +8,7 @@ tool.catch.try( async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  await tool.ui.passphrase_toggle(['passphrase_entry']);
+  await Ui.passphrase_toggle(['passphrase_entry']);
 
   let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki, false);
@@ -22,7 +22,7 @@ tool.catch.try( async () => {
   }
 
   let on_default_expire_user_change = async () => {
-    tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
+    Ui.sanitize_render('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await Api.fc.account_update({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
@@ -37,11 +37,11 @@ tool.catch.try( async () => {
     $('.passphrase_entry_container').css('display', 'block');
   });
 
-  $('.action_change_passphrase').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/change_passphrase.htm')));
+  $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/change_passphrase.htm')));
 
-  $('.action_test_passphrase').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/test_passphrase.htm')));
+  $('.action_test_passphrase').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/test_passphrase.htm')));
 
-  $('.confirm_passphrase_requirement_change').click(tool.ui.event.handle(async () => {
+  $('.confirm_passphrase_requirement_change').click(Ui.event.handle(async () => {
     if ($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if ($('input#passphrase_entry').val() === stored_passphrase) {
@@ -68,14 +68,14 @@ tool.catch.try( async () => {
 
   let storage = await Store.get_account(account_email, ['hide_message_password']);
   $('#hide_message_password').prop('checked', storage.hide_message_password === true);
-  $('#hide_message_password').change(tool.ui.event.handle(async target => {
+  $('#hide_message_password').change(Ui.event.handle(async target => {
     await Store.set(account_email, {hide_message_password: $(target).is(':checked')});
     window.location.reload();
   }));
 
   let subscription = await Store.subscription();
   if (subscription.active) {
-    tool.ui.sanitize_render('.select_loader_container', tool.ui.spinner('green'));
+    Ui.sanitize_render('.select_loader_container', Ui.spinner('green'));
     try {
       let response = await Api.fc.account_update();
       $('.select_loader_container').text('');
@@ -83,17 +83,17 @@ tool.catch.try( async () => {
       $('.default_message_expire').change(on_default_expire_user_change);
     } catch (e) {
       if (Api.error.is_auth_error(e)) {
-        tool.ui.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
+        Ui.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
       } else if (Api.error.is_network_error(e)) {
-        tool.ui.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Ui.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
         tool.catch.handle_exception(e);
-        tool.ui.sanitize_render('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Ui.sanitize_render('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
-    tool.ui.sanitize_append($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(tool.ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm')));
+    Ui.sanitize_append($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm')));
   }
 
 })();

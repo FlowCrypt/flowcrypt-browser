@@ -125,7 +125,7 @@ class Settings {
       close_on_click = false;
     }
     $.featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant });
-    tool.ui.sanitize_prepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
+    Ui.sanitize_prepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
 
   }
 
@@ -252,7 +252,7 @@ class Settings {
         uids.push(account_email);
       }
       container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
-      tool.ui.sanitize_render(container, [
+      Ui.sanitize_render(container, [
         '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
         '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + tool.str.html_escape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
@@ -271,20 +271,20 @@ class Settings {
         '  <div class="button long gray action_fix_compatibility" data-test="action-fix-and-import-key">UPDATE AND IMPORT KEY</div>',
         '</div>',
       ].join('\n'));
-      container.find('select.input_fix_expire_years').change(tool.ui.event.handle(target => {
+      container.find('select.input_fix_expire_years').change(Ui.event.handle(target => {
         if ($(target).val()) {
           (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('gray').addClass('green');
         } else {
           (container as JQuery<HTMLElement>).find('.action_fix_compatibility').removeClass('green').addClass('gray');
         }
       }));
-      container.find('.action_fix_compatibility').click(tool.ui.event.handle(async target => {
+      container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
         let expire_years = $(target).parents(container as string).find('select.input_fix_expire_years').val() as string; // JQuery quirk
         if (!expire_years) {
           alert('Please select key expiration');
         } else {
           $(target).off();
-          tool.ui.sanitize_render(target, tool.ui.spinner('white'));
+          Ui.sanitize_render(target, Ui.spinner('white'));
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
           await tool.crypto.key.decrypt(original_prv, [passphrase]);
           let reformatted;
@@ -302,7 +302,7 @@ class Settings {
             resolve(reformatted.key);
           } else {
             alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            tool.ui.sanitize_replace(target, tool.e('a', {href: back_url, text: 'Go back and try something else'}));
+            Ui.sanitize_replace(target, tool.e('a', {href: back_url, text: 'Go back and try something else'}));
           }
         }
       }));
@@ -312,7 +312,7 @@ class Settings {
   static abort_and_render_error_if_keyinfo_empty = (ki: KeyInfo|undefined, do_throw:boolean=true) => {
     if (!ki) {
       let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
-      tool.ui.sanitize_render('#content', `${msg} ${tool.ui.retry_link()}`);
+      Ui.sanitize_render('#content', `${msg} ${Ui.retry_link()}`);
       if (do_throw) {
         throw new UnreportableError(msg);
       }
@@ -325,7 +325,7 @@ class Settings {
     if(!Api.error.is_network_error(e)) {
       tool.catch.handle_exception(e);
     }
-    while(await tool.ui.render_overlay_prompt_await_user_choice({retry: {}}, user_message) === 'retry') {
+    while(await Ui.render_overlay_prompt_await_user_choice({retry: {}}, user_message) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {

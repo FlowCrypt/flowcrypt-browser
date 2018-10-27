@@ -10,7 +10,7 @@ tool.catch.try(async () => {
 
   $('.email-address').text(account_email);
 
-  tool.ui.sanitize_render('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + tool.ui.spinner('green'));
+  Ui.sanitize_render('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
   let render_diagnosis = (diagnosis: any, attests_requested: string[], attests_processed: string[]) => {
     let table_contents = '';
@@ -71,29 +71,29 @@ tool.catch.try(async () => {
       }
       table_contents += `<tr><td>${tool.str.html_escape(email)}${remove}</td><td class="${color}">${note}</td><td>${action}</td></tr>`;
     }
-    tool.ui.sanitize_replace('table#emails', `<table id="emails">${table_contents}</table>`);
+    Ui.sanitize_replace('table#emails', `<table id="emails">${table_contents}</table>`);
 
-    $('.action_request_attestation').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
-      tool.ui.sanitize_render(self, tool.ui.spinner('white'));
+    $('.action_request_attestation').click(Ui.event.prevent(Ui.event.double(), async self => {
+      Ui.sanitize_render(self, Ui.spinner('white'));
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
-    $('.action_remove_alias').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+    $('.action_remove_alias').click(Ui.event.prevent(Ui.event.double(), async self => {
       let {addresses} = await Store.get_account(account_email, ['addresses']);
       await Store.set(account_email, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email')!)});
       window.location.reload();
     }));
-    $('.request_replacement').click(tool.ui.event.prevent(tool.ui.event.double(), self => {
-      tool.ui.sanitize_render(self, tool.ui.spinner('white'));
+    $('.request_replacement').click(Ui.event.prevent(Ui.event.double(), self => {
+      Ui.sanitize_render(self, Ui.spinner('white'));
       Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/request_replacement.htm');
     }));
-    $('.refresh_after_attest_request').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
-      tool.ui.sanitize_render(self, 'Updating..' + tool.ui.spinner('white'));
+    $('.refresh_after_attest_request').click(Ui.event.prevent(Ui.event.double(), async self => {
+      Ui.sanitize_render(self, 'Updating..' + Ui.spinner('white'));
       tool.browser.message.send(null, 'attest_requested', {account_email});
       await tool.time.sleep(30000);
       window.location.reload();
     }));
-    tool.ui.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async self => {
-      tool.ui.sanitize_render(self, tool.ui.spinner('green'));
+    Ui.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(Ui.event.prevent(Ui.event.parallel(), async self => {
+      Ui.sanitize_render(self, Ui.spinner('green'));
       try {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
         await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
@@ -136,9 +136,9 @@ tool.catch.try(async () => {
     render_diagnosis(diagnosis, storage.attests_requested || [], storage.attests_processed || []);
   } catch (e) {
     if (Api.error.is_network_error(e)) {
-      tool.ui.sanitize_render('.summary', `Failed to load due to internet connection. ${tool.ui.retry_link()}`);
+      Ui.sanitize_render('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
-      tool.ui.sanitize_render('.summary', `Failed to load. ${tool.ui.retry_link()}`);
+      Ui.sanitize_render('.summary', `Failed to load. ${Ui.retry_link()}`);
       tool.catch.handle_exception(e);
     }
   }

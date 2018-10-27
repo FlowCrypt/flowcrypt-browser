@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -18,7 +18,7 @@ tool.catch.try(async () => {
     if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
       return; // either not a reply box, or reply box & has all needed params
     }
-    tool.ui.sanitize_prepend('#new_message', tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + tool.ui.spinner('green')}));
+    Ui.sanitize_prepend('#new_message', tool.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
     let gmail_message_object;
     try {
       gmail_message_object = await Api.gmail.message_get(account_email, url_params.thread_message_id as string, 'metadata');
@@ -268,7 +268,7 @@ tool.catch.try(async () => {
   }, tab_id || undefined);
 
   if(!url_params.is_reply_box) { // don't want to deal with resizing the frame
-    await tool.ui.abort_and_render_error_on_unprotected_key(account_email);
+    await Ui.abort_and_render_error_on_unprotected_key(account_email);
   }
 
 })();

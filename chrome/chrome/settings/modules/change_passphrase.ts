@@ -8,7 +8,7 @@ tool.catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  await tool.ui.passphrase_toggle(['original_password', 'password', 'password2']);
+  await Ui.passphrase_toggle(['original_password', 'password', 'password2']);
 
   let private_keys = await Store.keys_get(account_email);
   if (private_keys.length > 1) {
@@ -41,7 +41,7 @@ tool.catch.try(async () => {
     display_block('step_1_password');
   }
 
-  $('.action_enter').click(tool.ui.event.handle(async () => {
+  $('.action_enter').click(Ui.event.handle(async () => {
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     if(await tool.crypto.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
       original_passphrase = $('#original_password').val() as string; // text input
@@ -52,9 +52,9 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
+  $('#password').on('keyup', Ui.event.prevent(Ui.event.spree(), () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
 
-  $('.action_password').click(tool.ui.event.handle(target => {
+  $('.action_password').click(Ui.event.handle(target => {
     if ($(target).hasClass('green')) {
       display_block('step_2_confirm');
     } else {
@@ -62,7 +62,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('.action_reset_password').click(tool.ui.event.handle(() => {
+  $('.action_reset_password').click(Ui.event.handle(() => {
     $('#password').val('');
     $('#password2').val('');
     display_block('step_1_password');
@@ -70,7 +70,7 @@ tool.catch.try(async () => {
     $('#password').focus();
   }));
 
-  $('.action_change').click(tool.ui.event.prevent(tool.ui.event.double(), async self => {
+  $('.action_change').click(Ui.event.prevent(Ui.event.double(), async self => {
     let new_passphrase = $('#password').val() as string; // text input
     if (new_passphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');

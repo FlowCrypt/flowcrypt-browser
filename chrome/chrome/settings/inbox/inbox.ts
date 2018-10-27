@@ -14,7 +14,7 @@ tool.catch.try(async () => {
   let injector: Injector;
   let notifications: Notifications;
 
-  let S = tool.ui.build_jquery_selectors({
+  let S = Ui.build_jquery_selectors({
     threads: '.threads',
     thread: '.thread',
     body: 'body',
@@ -65,7 +65,7 @@ tool.catch.try(async () => {
     if (name === 'thread') {
       S.cached('threads').css('display', 'none');
       S.cached('thread').css('display', 'block');
-      tool.ui.sanitize_render('h1', `<a href="#">&lt; back</a> ${title}`).find('a').click(() => window.location.reload());
+      Ui.sanitize_render('h1', `<a href="#">&lt; back</a> ${title}`).find('a').click(() => window.location.reload());
     } else {
       S.cached('thread').css('display', 'none');
       S.cached('threads').css('display', 'block');
@@ -94,7 +94,7 @@ tool.catch.try(async () => {
           }
           thread_item.find('.loading').text('');
           thread_item.find('.date').text(String(new Date(Number(item_result.internalDate))));
-          thread_item.addClass('loaded').click(tool.ui.event.handle(() => render_thread(thread_id).catch(tool.catch.handle_exception)));
+          thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread_id).catch(tool.catch.handle_exception)));
         }, () => $('.threads #' + thread_list_item_id(thread_id)).find('.loading').text('Failed to load'));
       }
     }, () => $('body').text('Connection error trying to get list of messages'));
@@ -116,11 +116,11 @@ tool.catch.try(async () => {
     let bodies = Api.gmail.find_bodies(message);
     let armored_message_from_bodies = tool.crypto.armor.clip(tool.str.base64url_decode(bodies['text/plain']!)) || tool.crypto.armor.clip(tool.crypto.armor.strip(tool.str.base64url_decode(bodies['text/html']!)));
     let renderable_html = !armored_message_from_bodies ? tool.str.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
-    tool.ui.sanitize_append(S.cached('thread'), tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
+    Ui.sanitize_append(S.cached('thread'), tool.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
   };
 
   let render_reply_box = (thread_id: string, last_message_id: string) => {
-    tool.ui.sanitize_append(S.cached('thread'), tool.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)}));
+    Ui.sanitize_append(S.cached('thread'), tool.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)}));
   };
 
   let thread_message_id = (message_id: string) => {
@@ -132,10 +132,10 @@ tool.catch.try(async () => {
   };
 
   let thread_element_add = (thread_id: string) => {
-    tool.ui.sanitize_append(S.cached('threads'), tool.e('div', {
+    Ui.sanitize_append(S.cached('threads'), tool.e('div', {
       class: 'line',
       id: thread_list_item_id(thread_id),
-      html: '<span class="loading">' + tool.ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',
+      html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',
     }));
   };
 

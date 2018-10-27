@@ -33,11 +33,11 @@ tool.catch.try(async () => {
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');
 
-  $('.action_download_pubkey').click(tool.ui.event.prevent(tool.ui.event.double(), () => {
+  $('.action_download_pubkey').click(Ui.event.prevent(Ui.event.double(), () => {
     tool.file.save_to_downloads(tool.file.keyinfo_as_pubkey_attachment(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
-  $('.action_show_other_type').click(tool.ui.event.handle(() => {
+  $('.action_show_other_type').click(Ui.event.handle(() => {
     if ($('.action_show_other_type').text().toLowerCase() === 'show private key') {
       $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
       $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');

@@ -22,8 +22,8 @@ tool.catch.try(async () => {
   $('h1').text('Set Up FlowCrypt');
   $('.email-address').text(account_email);
   $('.back').css('visibility', 'hidden');
-  await tool.ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
-  await tool.ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
+  await Ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
+  await Ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
   let storage = await Store.get_account(account_email, [
     'setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
@@ -40,7 +40,7 @@ tool.catch.try(async () => {
   let rules = new Rules(account_email);
   if (!rules.can_create_keys()) {
     let forbidden = `${Lang.setup.creating_keys_not_allowed_please_import} <a href="${tool.str.html_escape(window.location.href)}">Back</a>`;
-    tool.ui.sanitize_render('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
+    Ui.sanitize_render('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
 
@@ -126,7 +126,7 @@ tool.catch.try(async () => {
         if (keyserver_result.has_cryptup) {
           // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           display_block('step_2b_manual_enter');
-          tool.ui.sanitize_prepend('#step_2b_manual_enter', '<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+          Ui.sanitize_prepend('#step_2b_manual_enter', '<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
         } else if (rules.can_create_keys()) {
           // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           display_block('step_1_easy_or_manual');
@@ -147,7 +147,7 @@ tool.catch.try(async () => {
   let render_add_key_from_backup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     let fetched_keys;
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
-    tool.ui.sanitize_render($('h1').parent(), '<h1>Recover key from backup</h1>');
+    Ui.sanitize_render($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
       fetched_keys = await Api.gmail.fetch_key_backups(account_email);
@@ -252,7 +252,7 @@ tool.catch.try(async () => {
       await save_keys([prv], options);
     } catch (e) {
       tool.catch.handle_exception(e);
-      tool.ui.sanitize_render('#step_2_easy_generating, #step_2a_manual_create', 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
+      Ui.sanitize_render('#step_2_easy_generating, #step_2a_manual_create', 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
     }
   };
 
@@ -273,14 +273,14 @@ tool.catch.try(async () => {
     }
   };
 
-  $('.action_show_help').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm')));
+  $('.action_show_help').click(Ui.event.handle(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm')));
 
-  $('.back').off().click(tool.ui.event.handle(() => {
+  $('.back').off().click(Ui.event.handle(() => {
     $('h1').text('Set Up');
     display_block('step_1_easy_or_manual');
   }));
 
-  $('#step_2_recovery .action_recover_account').click(tool.ui.event.prevent(tool.ui.event.double(), async (self) => {
+  $('#step_2_recovery .action_recover_account').click(Ui.event.prevent(Ui.event.double(), async (self) => {
     let passphrase = $('#recovery_pasword').val() as string; // text input
     let matching_keys: OpenPGP.key.Key[] = [];
     if (passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
@@ -329,7 +329,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_4_more_to_recover .action_recover_remaining').click(tool.ui.event.handle(async () => {
+  $('#step_4_more_to_recover .action_recover_remaining').click(Ui.event.handle(async () => {
     display_block('step_2_recovery');
     $('#recovery_pasword').val('');
     let stored_keys = await Store.keys_get(account_email);
@@ -337,18 +337,18 @@ tool.catch.try(async () => {
     let n_bups = recovered_keys.length;
     let t_left = (n_bups - n_got > 1) ? 'are ' + (n_bups - n_got) + ' backups' : 'is one backup';
     if (action !== 'add_key') {
-      tool.ui.sanitize_render('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
-      tool.ui.sanitize_replace('#step_2_recovery .line_skip_recovery', tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
-      $('#step_2_recovery .skip_recover_remaining').click(tool.ui.event.handle(() => {
+      Ui.sanitize_render('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
+      Ui.sanitize_replace('#step_2_recovery .line_skip_recovery', tool.e('div', {class: 'line', html: tool.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+      $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
         window.location.href = Env.url_create('index.htm', { account_email });
       }));
     } else {
-      tool.ui.sanitize_render('#step_2_recovery .recovery_status', `There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
+      Ui.sanitize_render('#step_2_recovery .recovery_status', `There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
   }));
 
-  $('.action_skip_recovery').click(tool.ui.event.handle(() => {
+  $('.action_skip_recovery').click(Ui.event.handle(() => {
     if (confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
       recovered_keys = [];
       recovered_key_matching_passphrases = [];
@@ -358,19 +358,19 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('.action_send').click(tool.ui.event.handle(() => {
+  $('.action_send').click(Ui.event.handle(() => {
     window.location.href = Env.url_create('index.htm', { account_email, page: '/chrome/elements/compose.htm' });
   }));
 
-  $('.action_account_settings').click(tool.ui.event.handle(() => {
+  $('.action_account_settings').click(Ui.event.handle(() => {
     window.location.href = Env.url_create('index.htm', { account_email });
   }));
 
-  $('.action_go_auth_denied').click(tool.ui.event.handle(() => {
+  $('.action_go_auth_denied').click(Ui.event.handle(() => {
     window.location.href = Env.url_create('index.htm', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
   }));
 
-  $('.input_submit_key').click(tool.ui.event.handle(target => {
+  $('.input_submit_key').click(Ui.event.handle(target => {
     let input_submit_all = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
       if (input_submit_all.closest('div.line').css('visibility') === 'visible') {
@@ -381,11 +381,11 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(tool.ui.event.handle(() => display_block('step_2a_manual_create')));
+  $('#step_0_found_key .action_manual_create_key, #step_1_easy_or_manual .action_manual_create_key').click(Ui.event.handle(() => display_block('step_2a_manual_create')));
 
-  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(tool.ui.event.handle(() => display_block('step_2b_manual_enter')));
+  $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => display_block('step_2b_manual_enter')));
 
-  $('#step_2b_manual_enter .action_save_private').click(tool.ui.event.handle(async () => {
+  $('#step_2b_manual_enter .action_save_private').click(Ui.event.handle(async () => {
     let options = {
       full_name: '',
       passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
@@ -399,7 +399,7 @@ tool.catch.try(async () => {
     };
     try {
       let checked = await key_import_ui.check_prv(account_email, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
-      tool.ui.sanitize_render('#step_2b_manual_enter .action_save_private', tool.ui.spinner('white'));
+      Ui.sanitize_render('#step_2b_manual_enter .action_save_private', Ui.spinner('white'));
       await save_keys([checked.encrypted], options);
       await pre_finalize_setup(options);
       await finalize_setup(options);
@@ -433,7 +433,7 @@ tool.catch.try(async () => {
     await render_setup_done();
   };
 
-  $('#step_2a_manual_create .input_password').on('keyup', tool.ui.event.prevent(tool.ui.event.spree(), () => {
+  $('#step_2a_manual_create .input_password').on('keyup', Ui.event.prevent(Ui.event.spree(), () => {
     Settings.render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
 
@@ -457,14 +457,14 @@ tool.catch.try(async () => {
     return true;
   };
 
-  $('#step_2a_manual_create .action_create_private').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
+  $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent(Ui.event.double(), async () => {
     Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     if(!is_action_create_private_form_input_correct()) {
       return;
     }
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
-      tool.ui.sanitize_render('#step_2a_manual_create .action_create_private', tool.ui.spinner('white') + 'just a minute');
+      Ui.sanitize_render('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
       let userinfo = await get_and_save_google_user_info();
       let options: SetupOptions = {
         full_name: userinfo.full_name,
@@ -488,7 +488,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_2a_manual_create .action_show_advanced_create_settings').click(tool.ui.event.handle(target => {
+  $('#step_2a_manual_create .action_show_advanced_create_settings').click(Ui.event.handle(target => {
     let advanced_create_settings = $('#step_2a_manual_create .advanced_create_settings');
     let container = $('#step_2a_manual_create .advanced_create_settings_container');
     if(advanced_create_settings.is(':visible')) {
@@ -502,7 +502,7 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('#step_4_close .action_close').click(tool.ui.event.handle(() => { // only rendered if action=add_key which means parent_tab_id was used
+  $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parent_tab_id was used
     tool.browser.message.send(parent_tab_id, 'redirect', {location: Env.url_create('index.htm', {account_email, advanced: true})});
   }));
 

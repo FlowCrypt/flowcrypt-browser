@@ -103,7 +103,7 @@ tool.catch.try(async () => {
         check_google_account().catch(tool.catch.handle_exception);
         check_flowcrypt_account_and_subscription_and_contact_page().catch(tool.catch.handle_exception);
         if(storage.picture) {
-          $('img.main-profile-img').attr('src', storage.picture).on('error', tool.ui.event.handle(self => {
+          $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
@@ -155,11 +155,11 @@ tool.catch.try(async () => {
         }
       } catch (e) {
         if (Api.error.is_auth_error(e)) {
-          let action_reauth = tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
-          tool.ui.sanitize_render(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
+          let action_reauth = Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+          Ui.sanitize_render(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
         } else if (Api.error.is_network_error(e)) {
-          tool.ui.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', tool.ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
+          Ui.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
           status_container.text('ecp error');
@@ -202,10 +202,10 @@ tool.catch.try(async () => {
     } catch (e) {
       if (Api.error.is_auth_popup_needed(e)) {
         $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
-          .off().click(tool.ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
+          .off().click(Ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
       } else if (Api.error.is_auth_error(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
-          .off().click(tool.ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
+          .off().click(Ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
       } else if (Api.error.is_network_error(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
@@ -231,7 +231,7 @@ tool.catch.try(async () => {
     let subscription = await Store.subscription();
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(() => Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -267,12 +267,12 @@ tool.catch.try(async () => {
       html += `  <div class="col-sm-12">KeyWords: <span class="good">${tool.str.html_escape(ki.keywords)}</span></div>`;
       html += `</div>`;
     }
-    tool.ui.sanitize_append('.key_list', html);
-    $('.action_show_key').click(tool.ui.event.handle(target => {
+    Ui.sanitize_append('.key_list', html);
+    $('.action_show_key').click(Ui.event.handle(target => {
       // the UI below only gets rendered when account_email is available
       Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
-    $('.action_remove_key').click(tool.ui.event.handle(async target => {
+    $('.action_remove_key').click(Ui.event.handle(async target => {
       // the UI below only gets rendered when account_email is available
       await Store.keys_remove(account_email!, $(target).attr('longid')!);
       await Store.passphrase_save('local', account_email!, $(target).attr('longid')!, undefined);
@@ -293,40 +293,40 @@ tool.catch.try(async () => {
 
   $('.action_send_email').click(() => window.open('https://mail.google.com'));
 
-  $('.show_settings_page').click(tool.ui.event.handle(target => {
+  $('.show_settings_page').click(Ui.event.handle(target => {
     Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
   }));
 
-  $('.action_go_auth_denied').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
+  $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
 
-  $('.action_add_account').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id)));
+  $('.action_add_account').click(Ui.event.prevent(Ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id)));
 
-  $('.action_google_auth').click(tool.ui.event.prevent(tool.ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id, account_email)));
+  $('.action_google_auth').click(Ui.event.prevent(Ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id, account_email)));
 
-  // $('.action_microsoft_auth').click(tool.ui.event.prevent(tool.ui.event.double(), function() {
+  // $('.action_microsoft_auth').click(Ui.event.prevent(Ui.event.double(), function() {
   //   new_microsoft_account_authentication_prompt(account_email);
   // }));
 
-  $('body').click(tool.ui.event.handle(() => {
+  $('body').click(Ui.event.handle(() => {
     $("#alt-accounts").removeClass("active");
     $(".ion-ios-arrow-down").removeClass("up");
     $(".add-account").removeClass("hidden");
   }));
 
-  $(".toggle-settings").click(tool.ui.event.handle(() => {
+  $(".toggle-settings").click(Ui.event.handle(() => {
     $("#settings").toggleClass("advanced");
   }));
 
-  $(".action-toggle-accounts-menu").click(tool.ui.event.handle((target, event) => {
+  $(".action-toggle-accounts-menu").click(Ui.event.handle((target, event) => {
     event.stopPropagation();
     $("#alt-accounts").toggleClass("active");
     $(".ion-ios-arrow-down").toggleClass("up");
     $(".add-account").toggleClass("hidden");
   }));
 
-  $('#status-row #status_google').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
-  // $('#status-row #status_flowcrypt').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
-  // $('#status-row #status_subscription').click(tool.ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
+  $('#status-row #status_google').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
+  // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
+  // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
 
   let reload = (advanced=false) => {
     if (advanced) {
@@ -348,7 +348,7 @@ tool.catch.try(async () => {
   };
 
   await initialize();
-  await tool.ui.abort_and_render_error_on_unprotected_key(account_email, tab_id);
+  await Ui.abort_and_render_error_on_unprotected_key(account_email, tab_id);
   if (url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') {
     if (url_params.page === '/chrome/settings/modules/auth_denied.htm') {
       Settings.render_sub_page(account_email || null, tab_id, url_params.page);
@@ -359,12 +359,12 @@ tool.catch.try(async () => {
 
   let account_storages = await Store.get_accounts(account_emails, ['picture']);
   for (let email of account_emails) {
-    tool.ui.sanitize_prepend('#alt-accounts', menu_account_html(email, account_storages[email].picture));
+    Ui.sanitize_prepend('#alt-accounts', menu_account_html(email, account_storages[email].picture));
   }
-  $('#alt-accounts img.profile-img').on('error', tool.ui.event.handle(self => {
+  $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
     $(self).off().attr('src', '/img/svgs/profile-icon.svg');
   }));
-  $('.action_select_account').click(tool.ui.event.handle(target => {
+  $('.action_select_account').click(Ui.event.handle(target => {
     window.location.href = Env.url_create('index.htm', { account_email: $(target).find('.contains_email').text() });
   }));
 

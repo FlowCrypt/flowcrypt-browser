@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -14,7 +14,7 @@ tool.catch.try(async () => {
   let token = flowcrypt_account.parse_token_email_text(url_params.verification_email_text as string);
 
   let render_status = (content: string, spinner=false) => {
-    tool.ui.sanitize_render('body .status', tool.str.html_sanitize(content + (spinner ? ' ' + tool.ui.spinner('white') : '')));
+    Ui.sanitize_render('body .status', tool.str.html_sanitize(content + (spinner ? ' ' + Ui.spinner('white') : '')));
   };
 
   if (!token) {

@@ -8,11 +8,11 @@ tool.catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  await tool.ui.passphrase_toggle(['input_passphrase']);
+  await Ui.passphrase_toggle(['input_passphrase']);
   let key_import_ui = new KeyImportUI({reject_known: true});
   key_import_ui.init_prv_import_source_form(account_email, parent_tab_id);
 
-  tool.ui.sanitize_render('#spinner_container', tool.ui.spinner('green') + ' loading..');
+  Ui.sanitize_render('#spinner_container', Ui.spinner('green') + ' loading..');
 
   let keyinfos = await Store.keys_get(account_email);
   let private_keys_long_ids = keyinfos.map(ki => ki.longid);
@@ -48,7 +48,7 @@ tool.catch.try(async () => {
   $('.source_selector').css('display', 'block');
   $('#spinner_container').text('');
 
-  $('.action_add_private_key').click(tool.ui.event.prevent(tool.ui.event.double(), async () => {
+  $('.action_add_private_key').click(Ui.event.prevent(Ui.event.double(), async () => {
     try {
       let checked = await key_import_ui.check_prv(account_email, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if(checked) {

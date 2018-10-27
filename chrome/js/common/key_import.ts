@@ -35,12 +35,12 @@ class KeyImportUI {
         window.location.href = Env.url_create('/chrome/settings/setup.htm', {account_email, parent_tab_id, action: 'add_key'});
       }
     });
-    $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(tool.ui.event.handle(target => {
+    $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(Ui.event.handle(target => {
       $('.source_paste_container .input_passphrase').val(tool.crypto.password.random());
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
-    $('.input_private_key').change(tool.ui.event.handle(target => {
+    $('.input_private_key').change(Ui.event.handle(target => {
       let k = openpgp.key.readArmored($(target).val() as string).keys[0];
       $('.input_passphrase').val('');
       if(k && k.isPrivate() && k.isDecrypted()) {

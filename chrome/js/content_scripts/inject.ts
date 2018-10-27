@@ -19,7 +19,7 @@ class Injector {
     this.webmail_name = webmail_name;
     this.webmail_variant = webmail_variant;
     this.factory = factory;
-    this.S = tool.ui.build_jquery_selectors({
+    this.S = Ui.build_jquery_selectors({
       body: 'body',
       compose_button_container: this.compose_button_container_selector[this.webmail_name],
       compose_button: 'div.new_message_button',
@@ -50,7 +50,7 @@ class Injector {
         } else {
           container = this.S.now('compose_button_container').prepend(this.factory.button_compose(this.webmail_name)); // xss-safe-factory
         }
-        container.find(this.S.selector('compose_button')).click(tool.ui.event.handle(() => this.open_compose_window()));
+        container.find(this.S.selector('compose_button')).click(Ui.event.handle(() => this.open_compose_window()));
       }
     }
   }

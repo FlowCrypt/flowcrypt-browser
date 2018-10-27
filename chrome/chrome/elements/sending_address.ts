@@ -18,9 +18,9 @@ tool.catch.try(async () => {
     return `<input type="radio" name="a" value="${a}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
   };
 
-  tool.ui.sanitize_render(container, addresses.map(address_to_html_radio).join(''));
+  Ui.sanitize_render(container, addresses.map(address_to_html_radio).join(''));
   container.find('input').first().prop('checked', true);
-  container.find('input').click(tool.ui.event.handle(async target => {
+  container.find('input').click(Ui.event.handle(async target => {
     let chosen_sending_address = $(target).val() as string;
     if (chosen_sending_address !== addresses[0]) {
       let ordered_addresses = tool.arr.unique([chosen_sending_address].concat(storage.addresses || []));
@@ -29,13 +29,13 @@ tool.catch.try(async () => {
     }
   }));
 
-  $('.action_fetch_aliases').click(tool.ui.event.prevent(tool.ui.event.parallel(), async (target, id) => {
-    tool.ui.sanitize_render(target, tool.ui.spinner('green'));
+  $('.action_fetch_aliases').click(Ui.event.prevent(Ui.event.parallel(), async (target, id) => {
+    Ui.sanitize_render(target, Ui.spinner('green'));
     let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
     await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
     window.location.reload();
   }));
 
-  $('.action_close').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
+  $('.action_close').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_dialog')));
 
 })();

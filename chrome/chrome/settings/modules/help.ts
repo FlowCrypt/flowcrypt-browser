@@ -19,7 +19,7 @@ tool.catch.try(async () => {
     $('#input_text').val(`\n\n\n--------- BUG REPORT ----------\n${bug_report}`);
   }
 
-  $('.action_send_feedback').click(tool.ui.event.handle(async target => {
+  $('.action_send_feedback').click(Ui.event.handle(async target => {
     let my_email = account_email;
     if(!my_email) {
       if(tool.str.is_email_valid($('#input_email').val() as string)) {
@@ -31,8 +31,8 @@ tool.catch.try(async () => {
     }
     let original_button_text = $(target).text();
     let button = this;
-    tool.ui.sanitize_render(target, tool.ui.spinner('white'));
-    await tool.ui.delay(50); // give spinner time to load
+    Ui.sanitize_render(target, Ui.spinner('white'));
+    await Ui.delay(50); // give spinner time to load
     let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  tool.catch.version();
     try {
       let r = await Api.fc.help_feedback(my_email, msg);

@@ -6,7 +6,7 @@ declare var anchorme: (input: string, opts: {emails?: boolean, attributes?: {nam
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -94,16 +94,16 @@ tool.catch.try(async () => {
     }
     if(!is_error) { // rendering message content
       let pgp_block = $('#pgp_block').html(tool.str.html_sanitize_keep_basic_tags(html_content)); // xss-sanitized
-      pgp_block.find('a.image_src_link').one('click', tool.ui.event.handle(display_image_src_link_as_image));
+      pgp_block.find('a.image_src_link').one('click', Ui.event.handle(display_image_src_link_as_image));
     } else { // rendering our own ui
-      tool.ui.sanitize_render('#pgp_block', html_content);
+      Ui.sanitize_render('#pgp_block', html_content);
     }
     // if (unsecure_mdc_ignored && !is_error) {
     //   set_frame_color('red');
-    //   tool.ui.sanitize_prepend('#pgp_block', '<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
+    //   Ui.sanitize_prepend('#pgp_block', '<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
     // }
     if (is_error) {
-      $('.action_show_raw_pgp_block').click(tool.ui.event.handle(target => {
+      $('.action_show_raw_pgp_block').click(Ui.event.handle(target => {
         $('.raw_pgp_block').css('display', 'block');
         $(target).css('display', 'none');
         send_resize_message();
@@ -112,7 +112,7 @@ tool.catch.try(async () => {
     // resize window now
     send_resize_message();
     // start auto-resizing the window after 1s
-    setTimeout(() => $(window).resize(tool.ui.event.prevent(tool.ui.event.spree(), send_resize_message)), 1000);
+    setTimeout(() => $(window).resize(Ui.event.prevent(Ui.event.spree(), send_resize_message)), 1000);
   };
 
   let button_html = (text: string, add_classes: string) => {
@@ -140,10 +140,10 @@ tool.catch.try(async () => {
   let render_error = async (error_box_content: string, raw_message_substitute:string|null=null) => {
     set_frame_color('red');
     await render_content('<div class="error">' + error_box_content.replace(/\n/g, '<br>') + '</div>' + armored_message_as_html(raw_message_substitute), true);
-    $('.button.settings_keyserver').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/keyserver.htm'})));
-    $('.button.settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email})));
-    $('.button.settings_add_key').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/add_key.htm'})));
-    $('.button.reply_pubkey_mismatch').click(tool.ui.event.handle(() => {
+    $('.button.settings_keyserver').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/keyserver.htm'})));
+    $('.button.settings').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email})));
+    $('.button.settings_add_key').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/add_key.htm'})));
+    $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => {
       alert('You should tell the sender to update their settings and send a new message.');
       tool.browser.message.send('broadcast', 'reply_pubkey_mismatch');
     }));
@@ -193,23 +193,23 @@ tool.catch.try(async () => {
   };
 
   let render_inner_attachments = (attachments: Attachment[]) => {
-    tool.ui.sanitize_append('#pgp_block', '<div id="attachments"></div>');
+    Ui.sanitize_append('#pgp_block', '<div id="attachments"></div>');
     included_attachments = attachments;
     for (let i of attachments.keys()) {
       let name = (attachments[i].name ? tool.str.html_escape(attachments[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
       let size = tool.str.number_format(Math.ceil(attachments[i].length / 1024)) + 'KB';
-      tool.ui.sanitize_append('#attachments', `<div class="attachment" index="${Number(i)}"><b>${tool.str.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
+      Ui.sanitize_append('#attachments', `<div class="attachment" index="${Number(i)}"><b>${tool.str.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
     }
     send_resize_message();
-    $('div.attachment').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
+    $('div.attachment').click(Ui.event.prevent(Ui.event.double(), async target => {
       let attachment = included_attachments[Number($(target).attr('index') as string)];
       if (attachment.has_data()) {
         tool.file.save_to_downloads(attachment, $(target));
         send_resize_message();
       } else {
-        tool.ui.sanitize_prepend($(target).find('.progress'), tool.ui.spinner('green'));
+        Ui.sanitize_prepend($(target).find('.progress'), Ui.spinner('green'));
         attachment.set_data(await tool.file.download_as_uint8(attachment.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
-        await tool.ui.delay(100); // give browser time to render
+        await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
         await decrypt_and_save_attachment_to_downloads(attachment, $(target));
       }
@@ -243,9 +243,9 @@ tool.catch.try(async () => {
     if (is_outgoing) {
       btns += ' <a href="#" class="expire_settings">settings</a>';
     }
-    tool.ui.sanitize_append('#pgp_block', tool.e('div', {class: 'future_expiration', html: `This message will expire on ${tool.time.expiration_format(date)}. ${btns}`}));
-    $('.expire_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/security.htm'})));
-    $('.extend_expiration').click(tool.ui.event.handle(target => render_message_expiration_renew_options(target)));
+    Ui.sanitize_append('#pgp_block', tool.e('div', {class: 'future_expiration', html: `This message will expire on ${tool.time.expiration_format(date)}. ${btns}`}));
+    $('.expire_settings').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {account_email, page: '/chrome/settings/modules/security.htm'})));
+    $('.extend_expiration').click(Ui.event.handle(target => render_message_expiration_renew_options(target)));
   };
 
   let recover_stored_admin_codes = async () => {
@@ -259,8 +259,8 @@ tool.catch.try(async () => {
     let parent = $(target).parent();
     let subscription = await Store.subscription();
     if (subscription.level && subscription.active) {
-      tool.ui.sanitize_render(parent, '<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
-      let element = await tool.ui.event.clicked('.do_extend');
+      Ui.sanitize_render(parent, '<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
+      let element = await Ui.event.clicked('.do_extend');
       await handle_extend_message_expiration_clicked(element);
     } else {
       if (subscription.level && !subscription.active && subscription.method === 'trial') {
@@ -274,7 +274,7 @@ tool.catch.try(async () => {
 
   let handle_extend_message_expiration_clicked = async (self: HTMLElement) => {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
-    tool.ui.sanitize_render($(self).parent(), 'Updating..' + tool.ui.spinner('green'));
+    Ui.sanitize_render($(self).parent(), 'Updating..' + Ui.spinner('green'));
     try {
       let r = await Api.fc.message_expiration(admin_codes, n_days);
       if (r.updated) {
@@ -289,8 +289,8 @@ tool.catch.try(async () => {
       } else {
         tool.catch.report('error when extending message expiration', e);
       }
-      tool.ui.sanitize_render($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
-      let el = await tool.ui.event.clicked('.retry_expiration_change');
+      Ui.sanitize_render($(self).parent(), 'Error updating expiration. <a href="#" class="retry_expiration_change">Click here to try again</a>').addClass('bad');
+      let el = await Ui.event.clicked('.retry_expiration_change');
       await handle_extend_message_expiration_clicked(el);
     }
   };
@@ -407,7 +407,7 @@ tool.catch.try(async () => {
       await render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_message, undefined);
       clearInterval(passphrase_interval);
       passphrase_interval = window.setInterval(check_passphrase_changed, 1000);
-      $('.enter_passphrase').click(tool.ui.event.handle(() => {
+      $('.enter_passphrase').click(Ui.event.handle(() => {
         tool.browser.message.send(parent_tab_id, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_pp_k_longids });
         clearInterval(passphrase_interval);
         passphrase_interval = window.setInterval(check_passphrase_changed, 250);
@@ -421,10 +421,10 @@ tool.catch.try(async () => {
     prompt += armored_message_as_html();
     await render_content(prompt, true);
     set_test_state('ready');
-    await tool.ui.event.clicked('.button.decrypt');
+    await Ui.event.clicked('.button.decrypt');
     set_test_state('working'); // so that test suite can wait until ready again
     $(self).text('Opening');
-    await tool.ui.delay(50); // give browser time to render
+    await Ui.delay(50); // give browser time to render
     await decrypt_and_render($('#answer').val() as string); // text input
   };
 
@@ -454,8 +454,8 @@ tool.catch.try(async () => {
       expiration_m += '\n\n<div class="button gray2 action_security">security settings</div>';
       await render_error(expiration_m, null);
       set_frame_color('gray');
-      $('.action_security').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {page: '/chrome/settings/modules/security.htm'})));
-      $('.extend_expiration').click(tool.ui.event.handle(render_message_expiration_renew_options));
+      $('.action_security').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {page: '/chrome/settings/modules/security.htm'})));
+      $('.extend_expiration').click(Ui.event.handle(render_message_expiration_renew_options));
     } else if (!link_result.url) {
       await render_error(Lang.pgp_block.cannot_locate + Lang.pgp_block.broken_link);
     } else {
@@ -511,17 +511,17 @@ tool.catch.try(async () => {
           message_fetched_from_api = format;
           await decrypt_and_render();
         } else { // gmail message read auth not allowed
-          tool.ui.sanitize_render('#pgp_block', 'This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+          Ui.sanitize_render('#pgp_block', 'This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
           send_resize_message();
-          $('.auth_settings').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/auth_denied.htm' })));
+          $('.auth_settings').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', { account_email, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }
     } catch (e) {
       if (Api.error.is_network_error(e)) {
-        await render_error(`Could not load message due to network error. ${tool.ui.retry_link()}`);
+        await render_error(`Could not load message due to network error. ${Ui.retry_link()}`);
       } else if(Api.error.is_auth_popup_needed(e)) {
         tool.browser.message.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        await render_error(`Could not load message due to missing auth. ${tool.ui.retry_link()}`);
+        await render_error(`Could not load message due to missing auth. ${Ui.retry_link()}`);
       } else if (tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
       } else if (Api.error.is_standard_error(e, 'format')) {

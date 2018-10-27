@@ -87,7 +87,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    tool.ui.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(on_click)));
+    Ui.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent(Ui.event.double(), tool.catch.try(on_click)));
   }
 
   private replace_conversation_buttons = (force:boolean=false) => {
@@ -104,7 +104,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             $(reply_button).addClass('replaced').text(''); // hide all except last
           } else {
             $(reply_button).html(this.factory.button_reply()); // replace last,  // xss-safe-factory
-            $(reply_button).click(tool.ui.event.prevent(tool.ui.event.double(), tool.catch.try(this.set_reply_box_editable)));
+            $(reply_button).click(Ui.event.prevent(Ui.event.double(), tool.catch.try(this.set_reply_box_editable)));
           }
         });
       }
@@ -144,8 +144,8 @@ class GmailElementReplacer implements WebmailElementReplacer {
           button = `<a href="#inbox/${tool.str.html_escape(button_href_id)}">Open draft</a>`;
         }
         if (button) {
-          tool.ui.sanitize_replace(contenteditable, button);
-          $(`a.open_draft_${button_href_id}`).click(tool.ui.event.handle(() => {
+          Ui.sanitize_replace(contenteditable, button);
+          $(`a.open_draft_${button_href_id}`).click(Ui.event.handle(() => {
             $('div.new_message').remove();
             $('body').append(this.factory.embedded_compose(button_href_id)); // xss-safe-factory
           }));
@@ -163,7 +163,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
         let message_id = this.determine_message_id(attachments_container);
         if (message_id) {
           if (this.can_read_emails) {
-            tool.ui.sanitize_prepend(new_pgp_attachments, this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
+            Ui.sanitize_prepend(new_pgp_attachments, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
             try {
               let message = await Api.gmail.message_get(this.account_email, message_id, 'full');
               await this.process_attachments(message_id, Api.gmail.find_attachments(message), attachments_container, false, new_pgp_attachments_names);
@@ -175,7 +175,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             }
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => { // xss-safe-factory
+            $(new_pgp_attachments).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
               tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
@@ -402,7 +402,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           let reply_box = $(reply_box_element);
           if (mid_convo_draft || already_has_encrypted_reply_box) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             reply_box.attr('class', 'reply_message_evaluated');
-            tool.ui.sanitize_append(reply_box, '<font>&nbsp;&nbsp;Draft skipped</font>');
+            Ui.sanitize_append(reply_box, '<font>&nbsp;&nbsp;Draft skipped</font>');
             reply_box.children(':not(font)').hide();
           } else {
             let secure_reply_box_xss_safe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embedded_reply(this.get_conversation_params(convo_root_el!), editable)}</div>`;
@@ -469,7 +469,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             if (!standard_compose_window.find('.recipients_use_encryption').length) {
               let prependable = standard_compose_window.find('div.az9 span[email]').first().parents('form').first();
               prependable.prepend(this.factory.button_recipients_use_encryption('gmail')); // xss-safe-factory
-              prependable.find('a').click(tool.ui.event.handle(() => this.injector.open_compose_window()));
+              prependable.find('a').click(Ui.event.handle(() => this.injector.open_compose_window()));
             }
           } else {
             standard_compose_window.find('.recipients_use_encryption').remove();

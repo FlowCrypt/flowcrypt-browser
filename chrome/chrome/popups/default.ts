@@ -11,14 +11,14 @@ tool.catch.try(async () => {
 
   let choose_email_or_settings_popup = (active_account_email:string|null=null) => {
     $('#email_or_settings').css('display', 'block');
-    $('.action_open_settings').click(tool.ui.event.handle(async () => {
+    $('.action_open_settings').click(Ui.event.handle(async () => {
       if (active_account_email) {
         await redirect_to_initial_setup(active_account_email);
       } else {
         window.location.href = 'select_account.htm?action=settings';
       }
     }));
-    $('.action_send_email').click(tool.ui.event.handle(async () => {
+    $('.action_send_email').click(Ui.event.handle(async () => {
       if (active_account_email) {
         await tool.browser.message.send_await(null, 'settings', { account_email: active_account_email, page: '/chrome/elements/compose.htm' });
         window.close();
@@ -31,7 +31,7 @@ tool.catch.try(async () => {
   let set_up_accont_prompt_popup = (active_account_email: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(active_account_email);
-    $('.action_set_up_account').click(tool.ui.event.prevent(tool.ui.event.double(), () => redirect_to_initial_setup(active_account_email).catch(tool.catch.rejection)));
+    $('.action_set_up_account').click(Ui.event.prevent(Ui.event.double(), () => redirect_to_initial_setup(active_account_email).catch(tool.catch.rejection)));
   };
 
   let active_tab = await tool.browser.message.send_await(null, 'get_active_tab_info', {});

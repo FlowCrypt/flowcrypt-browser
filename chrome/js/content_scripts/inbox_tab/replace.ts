@@ -78,13 +78,13 @@ class InboxElementReplacer implements WebmailElementReplacer {
         let message_id = this.dom_extract_message_id(message_element);
         if (message_id) {
           if (this.can_read_emails) {
-            tool.ui.sanitize_prepend(new_pgp_messages, this.factory.embedded_attachment_status('Getting file info..' + tool.ui.spinner('green')));
+            Ui.sanitize_prepend(new_pgp_messages, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
             Api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
               this.process_attachments(message_id!, message_element, Api.gmail.find_attachments(message), attachments_container); // message_id checked right above
             }, () => $(new_pgp_messages).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_message = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_messages).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(tool.ui.event.handle(() => { // xss-safe-factory
+            $(new_pgp_messages).prepend(this.factory.embedded_attachment_status(status_message)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
               tool.browser.message.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }

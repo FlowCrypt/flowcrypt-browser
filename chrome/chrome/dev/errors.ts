@@ -7,10 +7,10 @@ tool.catch.try(async () => {
   let storage = await Store.get_global(['errors']);
   if (storage.errors && storage.errors.length > 0) {
     let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
-    tool.ui.sanitize_render('.pre', errors);
+    Ui.sanitize_render('.pre', errors);
   }
 
-  $('.clear').click(tool.ui.event.handle(async () => {
+  $('.clear').click(Ui.event.handle(async () => {
     await Store.remove(null, ['errors']);
     window.location.reload();
   }));

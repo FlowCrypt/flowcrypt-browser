@@ -40,7 +40,7 @@ class Notifications {
   }
 
   show = (text: string, callbacks:Dict<Callback>={}) => {
-    tool.ui.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
+    Ui.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;
       callbacks.close = tool.catch.try(() => {
@@ -57,7 +57,7 @@ class Notifications {
       callbacks.subscribe = tool.catch.try(() => tool.browser.message.send(this.tab_id, 'subscribe_dialog'));
     }
     for (let name of Object.keys(callbacks)) {
-      $(`.webmail_notifications a.${name}`).click(tool.ui.event.prevent(tool.ui.event.double(), callbacks[name]));
+      $(`.webmail_notifications a.${name}`).click(Ui.event.prevent(Ui.event.double(), callbacks[name]));
     }
   }
 

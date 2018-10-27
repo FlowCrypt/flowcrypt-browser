@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -26,7 +26,7 @@ tool.catch.try(async () => {
   } else if (type === 'attachment') {
     $('h1').text('Enter your pass phrase to decrypt a file');
   }
-  await tool.ui.passphrase_toggle(['passphrase']);
+  await Ui.passphrase_toggle(['passphrase']);
   $('#passphrase').focus();
 
   let all_private_keys = await Store.keys_get(account_email);
@@ -42,7 +42,7 @@ tool.catch.try(async () => {
         html += `KeyWords ${String(i + 1)}: <div class="good">${tool.str.html_escape(mnemonic(selected_private_keys[i].longid))}</div>`;
       }
     }
-    tool.ui.sanitize_render('.which_key', html);
+    Ui.sanitize_render('.which_key', html);
     $('.which_key').css('display', 'block');
   }
 
@@ -59,12 +59,12 @@ tool.catch.try(async () => {
     $('#passphrase').focus();
   };
 
-  $('.action_close').click(tool.ui.event.handle(() => {
+  $('.action_close').click(Ui.event.handle(() => {
     tool.browser.message.send('broadcast', 'passphrase_entry', {entered: false});
     tool.browser.message.send(parent_tab_id, 'close_dialog');
   }));
 
-  $('.action_ok').click(tool.ui.event.handle(async () => {
+  $('.action_ok').click(Ui.event.handle(async () => {
     let pass = $('#passphrase').val() as string; // it's a text input
     let storage_type: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let at_least_one_matched = false;

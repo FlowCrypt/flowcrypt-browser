@@ -36,10 +36,10 @@ tool.catch.try(async () => {
     $('.permission_read').text('Read messages');
   }
 
-  $('.action_auth_proceed').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', {account_email})));
+  $('.action_auth_proceed').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', {account_email})));
 
-  $('.auth_action_limited').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', {omit_read_scope: true, account_email})));
+  $('.auth_action_limited').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'open_google_auth_dialog', {omit_read_scope: true, account_email})));
 
-  $('.close_page').click(tool.ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_page')));
+  $('.close_page').click(Ui.event.handle(() => tool.browser.message.send(parent_tab_id, 'close_page')));
 
 })();

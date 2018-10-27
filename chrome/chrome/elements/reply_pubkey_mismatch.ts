@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   const url_params = Env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -20,7 +20,7 @@ tool.catch.try(async () => {
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id}, new Subscription(null));
 
   for (let to of (url_params.to as string).split(',')) {
-    tool.ui.sanitize_append('.recipients', tool.e('span', {text: to}));
+    Ui.sanitize_append('.recipients', tool.e('span', {text: to}));
   }
 
   // render
@@ -49,7 +49,7 @@ tool.catch.try(async () => {
   }
 
   // send
-  $('#send_btn').click(tool.ui.event.prevent(tool.ui.event.double(), async target => {
+  $('#send_btn').click(Ui.event.prevent(Ui.event.double(), async target => {
     $(target).text('sending..');
     let message = await Api.common.message(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
     for (let k of Object.keys(additional_message_headers)) {
@@ -58,7 +58,7 @@ tool.catch.try(async () => {
     try {
       await Api.gmail.message_send(account_email, message);
       tool.browser.message.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
-      tool.ui.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
+      Ui.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if(Api.error.is_auth_popup_needed(e)) {
         $(target).text('send response');

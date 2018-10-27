@@ -26,16 +26,16 @@ tool.catch.try(async () => {
       Settings.update_profile_picture_if_missing(email).catch(tool.catch.handle_exception); // will show next time page is rendered
     }
   }
-  tool.ui.sanitize_render('ul.emails', ul_emails).find('a').click(tool.ui.event.handle(async target => {
+  Ui.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
     await tool.browser.message.send_await(null, 'settings', { account_email: $(target).attr('email'), page });
     window.close();
   }));
 
-  $(".picture").on('error', tool.ui.event.handle(self => {
+  $(".picture").on('error', Ui.event.handle(self => {
     $(self).off().attr('src', '/img/svgs/profile-icon.svg');
   }));
 
-  $('.action_add_account').click(tool.ui.event.handle(async self => {
+  $('.action_add_account').click(Ui.event.handle(async self => {
     await tool.browser.message.send_await(null, 'settings', { add_new_account: true });
     window.close();
   }));

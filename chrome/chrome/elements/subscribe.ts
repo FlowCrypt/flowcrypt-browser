@@ -4,7 +4,7 @@
 
 tool.catch.try(async () => {
 
-  tool.ui.event.protect();
+  Ui.event.protect();
 
   let url_params = Env.url_params(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
@@ -21,7 +21,7 @@ tool.catch.try(async () => {
     let render_err = (msg: string, e?: any) => {
       msg = tool.str.html_escape(msg);
       let debug = e ? `<pre>${tool.str.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
-      tool.ui.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${tool.ui.retry_link()}</div><br><br>${debug}`);
+      Ui.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retry_link()}</div><br><br>${debug}`);
     };
     if(Api.error.is_network_error(e)) {
       render_err('network error');
@@ -50,11 +50,11 @@ tool.catch.try(async () => {
   let button_spin = (element: HTMLElement) => {
     original_button_content = $(element).html();
     original_button_selector = $(element);
-    tool.ui.sanitize_render(element, tool.ui.spinner('white'));
+    Ui.sanitize_render(element, Ui.spinner('white'));
   };
 
   let button_restore = () => {
-    tool.ui.sanitize_render(original_button_selector, original_button_content);
+    Ui.sanitize_render(original_button_selector, original_button_content);
   };
 
   let handle_successful_upgrade = () => {
@@ -80,12 +80,12 @@ tool.catch.try(async () => {
   } catch (e) {
     if (Api.error.is_auth_error(e)) {
       // todo - handle auth error - add device
-      tool.ui.sanitize_render('#content', `Failed to load - unknown device. ${tool.ui.retry_link()}`);
+      Ui.sanitize_render('#content', `Failed to load - unknown device. ${Ui.retry_link()}`);
     } else if (Api.error.is_network_error(e)) {
-      tool.ui.sanitize_render('#content', `Failed to load due to internet connection. ${tool.ui.retry_link()}`);
+      Ui.sanitize_render('#content', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
       tool.catch.handle_exception(e);
-      tool.ui.sanitize_render('#content', `Unknown error happened when fetching account info. ${tool.ui.retry_link()}`);
+      Ui.sanitize_render('#content', `Unknown error happened when fetching account info. ${Ui.retry_link()}`);
     }
   }
 
@@ -107,22 +107,22 @@ tool.catch.try(async () => {
   }
   $('#content').css('display', 'block');
 
-  $('.action_show_stripe').click(tool.ui.event.handle(() => {
+  $('.action_show_stripe').click(Ui.event.handle(() => {
     $('.status').text('You are subscribing to a $5 monthly payment for FlowCrypt Advanced.');
     $('.hide_on_checkout').css('display', 'none');
     $('.stripe_checkout').css('display', 'block');
   }));
 
-  $('.action_contact_page').click(tool.ui.event.handle(() => tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email})));
+  $('.action_contact_page').click(Ui.event.handle(() => tool.browser.message.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: url_params.account_email})));
 
-  $('.action_close').click(tool.ui.event.handle(close_dialog));
+  $('.action_close').click(Ui.event.handle(close_dialog));
 
-  $('.action_get_trial').click(tool.ui.event.prevent(tool.ui.event.parallel(), target => {
+  $('.action_get_trial').click(Ui.event.prevent(Ui.event.parallel(), target => {
     button_spin(target);
     flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.trial, null).then(handle_successful_upgrade, handle_error_response);
   }));
 
-  $('.action_add_device').click(tool.ui.event.prevent(tool.ui.event.parallel(), target => {
+  $('.action_add_device').click(Ui.event.prevent(Ui.event.parallel(), target => {
     button_spin(target);
     flowcrypt_account.register_new_device(account_email).then(close_dialog, handle_error_response);
   }));
@@ -142,7 +142,7 @@ tool.catch.try(async () => {
       $('.status').text('After the trial, your account will automatically switch to Free Forever.');
     }
   } else if (subscription.active && subscription.method === 'trial') {
-    tool.ui.sanitize_render('.status', 'After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
+    Ui.sanitize_render('.status', 'After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
   } else {
     // todo - upgrade to business
   }
@@ -153,8 +153,8 @@ tool.catch.try(async () => {
         $('.action_get_trial').css('display', 'none');
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
-        tool.ui.sanitize_render('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
-        $('.action_close').click(tool.ui.event.handle(() => {
+        Ui.sanitize_render('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+        $('.action_close').click(Ui.event.handle(() => {
           if (url_params.subscribe_result_tab_id) {
             tool.browser.message.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
           }
@@ -184,6 +184,6 @@ tool.catch.try(async () => {
   tool.browser.message.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id || undefined);
-  $('.stripe_checkout').html(`${Lang.account.credit_or_debit}<br><br>${new XssSafeFactory(account_email, tab_id).embedded_stripe_checkout()}<br>${tool.ui.retry_link('back')}`); // xss-safe-factory
+  $('.stripe_checkout').html(`${Lang.account.credit_or_debit}<br><br>${new XssSafeFactory(account_email, tab_id).embedded_stripe_checkout()}<br>${Ui.retry_link('back')}`); // xss-safe-factory
 
 })();
