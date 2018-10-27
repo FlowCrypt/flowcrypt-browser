@@ -243,6 +243,10 @@ class Env {
 
 class Api {
 
+  private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
+  private static GMAIL_SCOPE_DICT: Dict<string> = {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'};
+  private static GOOGLE_OAUTH2 = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null;
+
   public static auth = {
     window: (auth_url: string, window_closed_by_user: Callback) => {
       let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
@@ -406,8 +410,8 @@ class Api {
         ].join(' ');
       },
     },
-    scope: (scope: string[]): string[] => scope.map(s => tool._.var.api_gmail_SCOPE_DICT[s] as string),
-    has_scope: (scopes: string[], scope: string) => scopes && tool.value(tool._.var.api_gmail_SCOPE_DICT[scope]).in(scopes),
+    scope: (scope: string[]): string[] => scope.map(s => Api.GMAIL_SCOPE_DICT[s] as string),
+    has_scope: (scopes: string[], scope: string) => scopes && tool.value(Api.GMAIL_SCOPE_DICT[scope]).in(scopes),
     users_me_profile: async (account_email: string|null, access_token?: string): Promise<ApirGmailUsersMeProfile> => {
       let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       if(account_email && !access_token) {
@@ -591,7 +595,7 @@ class Api {
       }
     },
     search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
-      let gmail_query = ['is:sent', tool._.var.api_gmail_USELESS_CONTACTS_FILTER];
+      let gmail_query = ['is:sent', Api.GMAIL_USELESS_CONTACTS_FILTER];
       if (user_query) {
         let variations_of_to = user_query.split(/[ .]/g).filter(v => !tool.value(v).in(['com', 'org', 'net']));
         if (!tool.value(user_query).in(variations_of_to)) {
@@ -1070,13 +1074,13 @@ class Api {
         throw e;
       }
     },
-    api_google_auth_state_pack: (status_object: AuthRequest) => tool._.var.google_oauth2!.state_header + JSON.stringify(status_object),
-    api_google_auth_code_url: (auth_request: AuthRequest) => Env.url_create(tool._.var.google_oauth2!.url_code, {
-      client_id: tool._.var.google_oauth2!.client_id,
+    api_google_auth_state_pack: (status_object: AuthRequest) => Api.GOOGLE_OAUTH2!.state_header + JSON.stringify(status_object),
+    api_google_auth_code_url: (auth_request: AuthRequest) => Env.url_create(Api.GOOGLE_OAUTH2!.url_code, {
+      client_id: Api.GOOGLE_OAUTH2!.client_id,
       response_type: 'code',
       access_type: 'offline',
       state: Api.internal.api_google_auth_state_pack(auth_request),
-      redirect_uri: tool._.var.google_oauth2!.url_redirect,
+      redirect_uri: Api.GOOGLE_OAUTH2!.url_redirect,
       scope: (auth_request.scopes || []).join(' '),
       login_hint: auth_request.account_email,
     }),
@@ -1092,13 +1096,13 @@ class Api {
       await Store.set(account_email, to_save);
     },
     google_auth_get_tokens: (code: string) => $.ajax({
-      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'authorization_code', code, client_id: tool._.var.google_oauth2!.client_id, redirect_uri: tool._.var.google_oauth2!.url_redirect }),
+      url: Env.url_create(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'authorization_code', code, client_id: Api.GOOGLE_OAUTH2!.client_id, redirect_uri: Api.GOOGLE_OAUTH2!.url_redirect }),
       method: 'POST',
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokensResponse>,
     google_auth_refresh_token: (refresh_token: string) => $.ajax({
-      url: Env.url_create(tool._.var.google_oauth2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: tool._.var.google_oauth2!.client_id }),
+      url: Env.url_create(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: Api.GOOGLE_OAUTH2!.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
@@ -1196,7 +1200,7 @@ class Api {
         current_tokens_scopes = storage.google_token_scopes || [];
       }
       let auth_request_scopes = requested_scopes || [];
-      for (let scope of tool._.var.google_oauth2!.scopes) {
+      for (let scope of Api.GOOGLE_OAUTH2!.scopes) {
         if (!tool.value(scope).in(requested_scopes)) {
           if (scope !== Api.gmail.scope(['read'])[0] || !omit_read_scope) { // leave out read messages permission if user chose so
             auth_request_scopes.push(scope);
@@ -2873,8 +2877,6 @@ let tool = {
         message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
         password_message: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true},
       } as CryptoArmorHeaderDefinitions,
-      api_gmail_USELESS_CONTACTS_FILTER: '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org',
-      api_gmail_SCOPE_DICT: {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'} as Dict<string>,
       crypto_password_SENTENCE_PRESENT_TEST: /https:\/\/(cryptup\.org|flowcrypt\.com)\/[a-zA-Z0-9]{10}/,
       crypto_password_SENTECES: [
         /This\smessage\sis\sencrypted.+\n\n?/gm, // todo - should be in a common place as the code that generated it
@@ -2889,8 +2891,6 @@ let tool = {
         {match: 'day',      word: 'poor',       bar: 20,  color: 'darkred',     pass: false},
         {match: '',         word: 'weak',       bar: 10,  color: 'red',         pass: false},
       ],
-      google_oauth2: typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null,
-      api_google_AUTH_RESPONDED: 'RESPONDED',
     },
     crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type, content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
