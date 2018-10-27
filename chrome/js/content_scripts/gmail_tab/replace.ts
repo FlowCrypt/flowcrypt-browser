@@ -329,7 +329,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
    *
    * new_html_content must be XSS safe
    */
-  private update_message_body_element_DANGEROUSLY = (element: HTMLElement|JQuery<HTMLElement>, method:'set'|'append', new_html_content: string) => {
+  private update_message_body_element_DANGEROUSLY = (element: HTMLElement|JQuery<HTMLElement>, method:'set'|'append', new_html_content_MUST_BE_XSS_SAFE: string) => {  // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -339,18 +339,18 @@ class GmailElementReplacer implements WebmailElementReplacer {
     if (method === 'set') {
       if (replace) {
         let parent = message_body.parent();
-        message_body.replaceWith(this.wrap_message_body_element(new_html_content)); // xss-unsafe
+        message_body.replaceWith(this.wrap_message_body_element(new_html_content_MUST_BE_XSS_SAFE)); // xss-safe-value
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
-        return message_body.html(new_html_content); // xss-unsafe
+        return message_body.html(new_html_content_MUST_BE_XSS_SAFE); // xss-safe-value
       }
     } else if (method === 'append') {
       if (replace) {
         let parent = message_body.parent();
-        message_body.replaceWith(this.wrap_message_body_element(message_body.html() + new_html_content)); // xss-unsafe
+        message_body.replaceWith(this.wrap_message_body_element(message_body.html() + new_html_content_MUST_BE_XSS_SAFE)); // xss-reinsert // xss-safe-value
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
-        return message_body.append(new_html_content); // xss-unsafe
+        return message_body.append(new_html_content_MUST_BE_XSS_SAFE); // xss-safe-value
       }
     } else {
       throw new Error('Unknown update_message_body_element method:' + method);

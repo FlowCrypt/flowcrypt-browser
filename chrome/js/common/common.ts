@@ -240,8 +240,9 @@ let tool = {
           a.className = 'image_src_link';
           a.target = '_blank';
           a.innerText = title || 'show image';
-          a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; height: ${img.clientHeight ? `${img.clientHeight}px` : 'auto'}; width: ${img.clientWidth ? `${img.clientWidth}px` : 'auto'};`);
-          img.outerHTML = a.outerHTML;
+          let heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
+          a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
+          img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
         }
         if ('target' in node) { // open links in new window
           (node as Element).setAttribute('target', '_blank');

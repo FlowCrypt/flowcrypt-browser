@@ -219,8 +219,8 @@ class XssSafeFactory {
     return tool.e('iframe', attributes);
   }
 
-  private div_dialog_DANGEROUS = (safe_content: string, data_test: string) => {
-    return tool.e('div', { id: 'cryptup_dialog', html: safe_content, 'data-test': data_test });
+  private div_dialog_DANGEROUS = (content_MUST_BE_XSS_SAFE: string, data_test: string) => { // xss-dangerous-function
+    return tool.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': data_test });
   }
 
 }

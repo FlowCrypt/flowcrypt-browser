@@ -73,15 +73,15 @@ tool.catch.try(async () => {
       let content = included_attachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${content_id}>`)[0];
       if(content) {
         img.src = `data:${a.type};base64,${btoa(content.as_text())}`;
-        a.outerHTML = img.outerHTML;
+        a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
       } else {
-        a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`);
+        a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`); // xss-escaped
       }
     } else if(a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
       img.src = a.href;
-      a.outerHTML = img.outerHTML;
+      a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
     } else {
-      a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`);
+      a.outerHTML = tool.str.html_escape(`[broken link: ${a.href}]`); // xss-escaped
     }
     event.preventDefault();
     event.stopPropagation();
