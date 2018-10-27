@@ -49,7 +49,7 @@ let subTask = {
   }),
   copyChromeToFirefox: () => recipe.copy([`${chromeTo}/**`], ffTo),
   copyChromeToFirefoxEditedManifest: () => recipe.copyEditJson(`${chromeTo}/manifest.json`, ffTo, manifest => {
-    manifest.applications = {gecko: {id: 'firefox@cryptup.io', update_url: 'https://flowcrypt.com/api/update/firefox'}};
+    manifest.applications = {gecko: {id: 'firefox@cryptup.io', update_url: 'https://flowcrypt.com/api/update/firefox', strict_min_version: '60'}};
     manifest.permissions = manifest.permissions.filter(p => p !== 'unlimitedStorage');
     delete manifest.minimum_chrome_version;
     return manifest;
