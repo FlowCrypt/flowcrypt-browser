@@ -1273,6 +1273,12 @@ class Api {
 
 class Ui {
 
+  private static EVENT_FIRED: Dict<number> = {};
+  private static EVENT_DOUBLE_MS: 1000;
+  private static EVENT_SPREE_MS: 50;
+  private static EVENT_SLOW_SPREE_MS: 200;
+  private static EVENT_VERY_SLOW_SPREE_MS: 500;
+
   public static retry_link = (caption:string='retry') => `<a href="${Xss.html_escape(window.location.href)}">${Xss.html_escape(caption)}</a>`;
 
   public static delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -1495,37 +1501,37 @@ class Ui {
         // also, the setTimeouts are weird - don't they get called without the arguments?! that would cause trouble
         // although spree-s tend to be called on events that do not need the callback (window resize), it's still better to do this consistently
         if (preventable_event.name === 'spree') {
-          clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-          tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SPREE_MS);
+          clearTimeout(Ui.EVENT_FIRED[preventable_event.id]);
+          Ui.EVENT_FIRED[preventable_event.id] = window.setTimeout(cb_with_errors_handled, Ui.EVENT_SPREE_MS);
         } else if (preventable_event.name === 'slowspree') {
-          clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-          tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_SLOW_SPREE_MS);
+          clearTimeout(Ui.EVENT_FIRED[preventable_event.id]);
+          Ui.EVENT_FIRED[preventable_event.id] = window.setTimeout(cb_with_errors_handled, Ui.EVENT_SLOW_SPREE_MS);
         } else if (preventable_event.name === 'veryslowspree') {
-          clearTimeout(tool._.var.ui_event_fired[preventable_event.id]);
-          tool._.var.ui_event_fired[preventable_event.id] = window.setTimeout(cb_with_errors_handled, tool._.var.ui_event_VERY_SLOW_SPREE_MS);
+          clearTimeout(Ui.EVENT_FIRED[preventable_event.id]);
+          Ui.EVENT_FIRED[preventable_event.id] = window.setTimeout(cb_with_errors_handled, Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
-          if (preventable_event.id in tool._.var.ui_event_fired) {
+          if (preventable_event.id in Ui.EVENT_FIRED) {
             // if (meta.name === 'parallel') - id was found - means the event handling is still being processed. Do not call back
             if (preventable_event.name === 'double') {
-              if (Date.now() - tool._.var.ui_event_fired[preventable_event.id] > tool._.var.ui_event_DOUBLE_MS) {
-                tool._.var.ui_event_fired[preventable_event.id] = Date.now();
+              if (Date.now() - Ui.EVENT_FIRED[preventable_event.id] > Ui.EVENT_DOUBLE_MS) {
+                Ui.EVENT_FIRED[preventable_event.id] = Date.now();
                 cb_with_errors_handled(this, preventable_event.id);
               }
             }
           } else {
-            tool._.var.ui_event_fired[preventable_event.id] = Date.now();
+            Ui.EVENT_FIRED[preventable_event.id] = Date.now();
             cb_with_errors_handled(this, preventable_event.id);
           }
         }
       };
     },
     release: (id: string) => { // todo - I may have forgot to use this somewhere, used only with parallel() - if that's how it works
-      if (id in tool._.var.ui_event_fired) {
-        let ms_to_release = tool._.var.ui_event_DOUBLE_MS + tool._.var.ui_event_fired[id] - Date.now();
+      if (id in Ui.EVENT_FIRED) {
+        let ms_to_release = Ui.EVENT_DOUBLE_MS + Ui.EVENT_FIRED[id] - Date.now();
         if (ms_to_release > 0) {
-          setTimeout(() => { delete tool._.var.ui_event_fired[id]; }, ms_to_release);
+          setTimeout(() => { delete Ui.EVENT_FIRED[id]; }, ms_to_release);
         } else {
-          delete tool._.var.ui_event_fired[id];
+          delete Ui.EVENT_FIRED[id];
         }
       }
     },
@@ -2841,15 +2847,10 @@ let tool = {
   _: {
     var: { // meant to be used privately within this file like so: tool._.vars.???
       // internal variables
-      ui_event_fired: {} as Dict<number>,
       browser_message_background_script_registered_handlers: null as Dict<BrowserMessageHandler>|null,
       browser_message_frame_registered_handlers: {} as Dict<BrowserMessageHandler>,
       // internal constants
       env_url_param_DICT: {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null as null} as Dict<boolean|null>,
-      ui_event_DOUBLE_MS: 1000,
-      ui_event_SPREE_MS: 50,
-      ui_event_SLOW_SPREE_MS: 200,
-      ui_event_VERY_SLOW_SPREE_MS: 500,
       crypto_armor_header_MAX_LENGTH: 50,
       crypto_armor_headers_DICT: {
         null: { begin: '-----BEGIN', end: '-----END', replace: false },
