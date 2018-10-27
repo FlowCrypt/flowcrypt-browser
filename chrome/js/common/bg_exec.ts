@@ -89,10 +89,12 @@ class BgExec {
   private static resolve_path_to_callable_function = (path: string): Function => {  // tslint:disable-line:ban-types
     let f:Function|object|null = null; // tslint:disable-line:ban-types
     for (let step of path.split('.')) {
-      if (f === null && step === 'tool') {
-        f = tool;
-      } else if (f === null && step === 'window') {
-        f = window;
+      if (f === null) {
+        if(step === 'Pgp') {
+          f = Pgp;
+        } else {
+          throw new Error(`BgExec: Not prepared for relaying class ${step}`);
+        }
       } else {
         // @ts-ignore
         f = f[step];
