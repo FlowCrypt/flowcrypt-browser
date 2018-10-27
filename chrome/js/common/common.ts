@@ -171,6 +171,8 @@ class Extension { // todo - move extension-specific common.js code here
 
 class Env {
 
+  private static URL_PARAM_DICT: Dict<boolean|null> = {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null};
+
   public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return {name: 'firefox', v: Number(RegExp.$1)};
@@ -214,7 +216,7 @@ class Env {
     for (let value_pair of value_pairs) {
       let pair = value_pair.split('=');
       if (tool.value(pair[0]).in(expected_keys)) {
-        url_data[pair[0]] = typeof tool._.var.env_url_param_DICT[pair[1]] !== 'undefined' ? tool._.var.env_url_param_DICT[pair[1]] : decodeURIComponent(pair[1]);
+        url_data[pair[0]] = typeof Env.URL_PARAM_DICT[pair[1]] !== 'undefined' ? Env.URL_PARAM_DICT[pair[1]] : decodeURIComponent(pair[1]);
       }
     }
     return url_data;
@@ -224,7 +226,7 @@ class Env {
     for (let key of Object.keys(params)) {
       let value = params[key];
       if (typeof value !== 'undefined') {
-        let transformed = tool.obj.key_by_value(tool._.var.env_url_param_DICT, value);
+        let transformed = tool.obj.key_by_value(Env.URL_PARAM_DICT, value);
         link += (!tool.value('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
       }
     }
@@ -2864,7 +2866,6 @@ let tool = {
   },
   _: {
     var: { // meant to be used privately within this file like so: tool._.vars.???
-      env_url_param_DICT: {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null as null} as Dict<boolean|null>,
       crypto_armor_header_MAX_LENGTH: 50,
       crypto_armor_headers_DICT: {
         null: { begin: '-----BEGIN', end: '-----END', replace: false },
