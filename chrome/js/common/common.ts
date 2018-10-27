@@ -1549,7 +1549,7 @@ class BrowserMsg {
     } else if (is_background_page && tool._.var.browser_message_background_script_registered_handlers && msg.to === null) {
       tool._.var.browser_message_background_script_registered_handlers[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
     } else if (is_background_page) {
-      chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
+      chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
     } else {
       chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
     }
@@ -1600,7 +1600,7 @@ class BrowserMsg {
                 (r as Promise<void>).catch(tool.catch.rejection);
               }
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              if (tool._.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+              if (BrowserMsg.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
                 tool.catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
               } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
                 console.log('BrowserMsg.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
@@ -1639,7 +1639,7 @@ class BrowserMsg {
         };
         if (msg.to && msg.to !== 'broadcast') {
           msg.sender = sender;
-          chrome.tabs.sendMessage(tool._.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
+          chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
         } else if (tool.value(msg.name).in(Object.keys(tool._.var.browser_message_background_script_registered_handlers!))) { // is !null because added above
           let r = tool._.var.browser_message_background_script_registered_handlers![msg.name](msg.data, sender, safe_respond); // is !null because checked above
           if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
@@ -1655,6 +1655,16 @@ class BrowserMsg {
         tool.catch.handle_exception(e);
       }
     });
+  }
+
+  private static browser_message_destination_parse = (destination_string: string|null) => {
+    let parsed = { tab: null as null|number, frame: null as null|number };
+    if (destination_string) {
+      parsed.tab = Number(destination_string.split(':')[0]);
+      // @ts-ignore - adding nonsense into isNaN
+      parsed.frame = !isNaN(destination_string.split(':')[1]) ? Number(destination_string.split(':')[1]) : null;
+    }
+    return parsed;
   }
 
 }
@@ -2997,16 +3007,6 @@ let tool = {
         return seconds + ' second' + number_word_ending(seconds);
       }
       return 'less than a second';
-    },
-    /* [BARE_ENGINE_OMIT_BEGIN] */
-    browser_message_destination_parse: (destination_string: string|null) => {
-      let parsed = { tab: null as null|number, frame: null as null|number };
-      if (destination_string) {
-        parsed.tab = Number(destination_string.split(':')[0]);
-        // @ts-ignore - adding nonsense into isNaN
-        parsed.frame = !isNaN(destination_string.split(':')[1]) ? Number(destination_string.split(':')[1]) : null;
-      }
-      return parsed;
     },
   },
   catch: { // web and extension code
