@@ -22,7 +22,7 @@ Catch.try(async () => {
     },
   }, tab_id);
 
-  $('.action_decrypt').click(Ui.event.prevent(Ui.event.double(), async self => {
+  $('.action_decrypt').click(Ui.event.prevent('double', async self => {
     let encrypted = $('.input_message').val() as string;
     if (!encrypted) {
       alert('Please paste an encrypted message');

@@ -49,7 +49,7 @@ Catch.try(async () => {
   }
 
   // send
-  $('#send_btn').click(Ui.event.prevent(Ui.event.double(), async target => {
+  $('#send_btn').click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
     let message = await Api.common.message(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
     for (let k of Object.keys(additional_message_headers)) {

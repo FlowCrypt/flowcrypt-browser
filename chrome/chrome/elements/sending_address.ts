@@ -29,11 +29,12 @@ Catch.try(async () => {
     }
   }));
 
-  $('.action_fetch_aliases').click(Ui.event.prevent(Ui.event.parallel(), async (target, id) => {
+  $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (target, done) => {
     Ui.sanitize_render(target, Ui.spinner('green'));
     let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
     await Store.set(account_email, { addresses: tool.arr.unique(addresses.concat(account_email)) });
     window.location.reload();
+    done();
   }));
 
   $('.action_close').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_dialog')));

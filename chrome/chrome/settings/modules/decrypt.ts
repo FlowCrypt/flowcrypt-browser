@@ -22,7 +22,7 @@ Catch.try(async () => {
     },
   }, tab_id);
 
-  $('.action_decrypt_and_download').click(Ui.event.prevent(Ui.event.double(), async (self) => {
+  $('.action_decrypt_and_download').click(Ui.event.prevent('double', async (self) => {
     let ids = attach_js.get_attachment_ids();
     if (ids.length === 1) {
       original_content = $(self).html();

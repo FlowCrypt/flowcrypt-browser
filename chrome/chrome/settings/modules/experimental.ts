@@ -31,9 +31,9 @@ Catch.try(async () => {
 
     $('.action_open_decrypt_ignore_mdc').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm')));
 
-    $('.action_backup').click(Ui.event.prevent(Ui.event.double(), () => collect_info_and_download_backup_file(account_email).catch(Catch.rejection)));
+    $('.action_backup').click(Ui.event.prevent('double', () => collect_info_and_download_backup_file(account_email).catch(Catch.rejection)));
 
-    $('.action_fetch_aliases').click(Ui.event.prevent(Ui.event.parallel(), async self => {
+    $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Ui.sanitize_render(self, Ui.spinner('white'));
       try {
         let all = await Settings.refresh_account_aliases(account_email);
@@ -50,11 +50,12 @@ Catch.try(async () => {
         }
       }
       window.location.reload();
+      done();
     }));
 
     $('.action_exception').click(() => Catch.test());
 
-    $('.action_reset_account').click(Ui.event.prevent(Ui.event.double(), async () => {
+    $('.action_reset_account').click(Ui.event.prevent('double', async () => {
       if (confirm('This will remove all your FlowCrypt settings for ' + account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
         await collect_info_and_download_backup_file(account_email);
         if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {

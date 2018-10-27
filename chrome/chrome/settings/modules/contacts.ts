@@ -19,13 +19,13 @@ Catch.try(async () => {
   let render_contact_list = async () => {
     let contacts = await Store.db_contact_search(null, { has_pgp: true });
 
-    Ui.sanitize_render('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(Ui.event.prevent(Ui.event.double(), (self) => {
+    Ui.sanitize_render('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       let all_armored_public_keys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       let export_file = new Attachment({name: 'public-keys-export.asc', type: 'application/pgp-keys', data: all_armored_public_keys});
       tool.file.save_to_downloads(export_file, Env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
-    Ui.sanitize_append('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(Ui.event.prevent(Ui.event.double(), (self) => {
+    Ui.sanitize_append('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(Ui.event.prevent('double', (self) => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       Ui.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
       $('#bulk_import').css('display', 'block');
@@ -51,7 +51,7 @@ Catch.try(async () => {
     }
     Ui.sanitize_replace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${table_contents}</table>`);
 
-    $('a.action_show').off().click(Ui.event.prevent(Ui.event.double(), async (self) => {
+    $('a.action_show').off().click(Ui.event.prevent('double', async (self) => {
       let [contact] = await Store.db_contact_get(null, [$(self).closest('tr').attr('email')!]); // defined above
       $('.hide_when_rendering_subpage').css('display', 'none');
       Ui.sanitize_render('h1', `'${back_button}${space}${contact!.email}`); // should exist - from list of contacts
@@ -67,7 +67,7 @@ Catch.try(async () => {
       $('#page_back_button').click(Ui.event.handle(() => render_contact_list()));
     }));
 
-    $('a.action_change').off().click(Ui.event.prevent(Ui.event.double(), self => {
+    $('a.action_change').off().click(Ui.event.prevent('double', self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       let email = $(self).closest('tr').attr('email')!;
       Ui.sanitize_render('h1', `${back_button}${space}${Xss.html_escape(email)}${space}(edit)`);
@@ -76,7 +76,7 @@ Catch.try(async () => {
       $('#page_back_button').click(Ui.event.handle(() => render_contact_list()));
     }));
 
-    $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent(Ui.event.double(), async (self) => {
+    $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent('double', async (self) => {
       let armored_pubkey = $('#edit_contact .input_pubkey').val() as string; // textarea
       let email = $('#edit_contact .input_pubkey').attr('email');
       if (!armored_pubkey || !email) {
@@ -90,7 +90,7 @@ Catch.try(async () => {
       }
     }));
 
-    $('.action_view_bulk_import').off().click(Ui.event.prevent(Ui.event.double(), self => {
+    $('.action_view_bulk_import').off().click(Ui.event.prevent('double', self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       Ui.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
       $('#bulk_import').css('display', 'block');
@@ -100,7 +100,7 @@ Catch.try(async () => {
       $('#page_back_button').click(Ui.event.handle(() => render_contact_list()));
     }));
 
-    $('#bulk_import .action_process').off().click(Ui.event.prevent(Ui.event.double(), self => {
+    $('#bulk_import .action_process').off().click(Ui.event.prevent('double', self => {
       let replaced_html_safe = Pgp.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
       if (!replaced_html_safe || replaced_html_safe === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
@@ -110,7 +110,7 @@ Catch.try(async () => {
       }
     }));
 
-    $('a.action_remove').off().click(Ui.event.prevent(Ui.event.double(), async (self) => {
+    $('a.action_remove').off().click(Ui.event.prevent('double', async (self) => {
       await Store.db_contact_save(null, Store.db_contact_object($(self).closest('tr').attr('email')!, null, null, null, null, false, null));
       await render_contact_list();
     }));

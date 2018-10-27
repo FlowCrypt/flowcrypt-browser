@@ -31,7 +31,7 @@ Catch.try(async () => {
   let set_up_accont_prompt_popup = (active_account_email: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(active_account_email);
-    $('.action_set_up_account').click(Ui.event.prevent(Ui.event.double(), () => redirect_to_initial_setup(active_account_email).catch(Catch.rejection)));
+    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirect_to_initial_setup(active_account_email).catch(Catch.rejection)));
   };
 
   let active_tab = await BrowserMsg.send_await(null, 'get_active_tab_info', {});

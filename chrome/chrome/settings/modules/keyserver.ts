@@ -73,26 +73,26 @@ Catch.try(async () => {
     }
     Ui.sanitize_replace('table#emails', `<table id="emails">${table_contents}</table>`);
 
-    $('.action_request_attestation').click(Ui.event.prevent(Ui.event.double(), async self => {
+    $('.action_request_attestation').click(Ui.event.prevent('double', async self => {
       Ui.sanitize_render(self, Ui.spinner('white'));
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
-    $('.action_remove_alias').click(Ui.event.prevent(Ui.event.double(), async self => {
+    $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
       let {addresses} = await Store.get_account(account_email, ['addresses']);
       await Store.set(account_email, {'addresses': tool.arr.without_value(addresses || [], $(self).attr('email')!)});
       window.location.reload();
     }));
-    $('.request_replacement').click(Ui.event.prevent(Ui.event.double(), self => {
+    $('.request_replacement').click(Ui.event.prevent('double', self => {
       Ui.sanitize_render(self, Ui.spinner('white'));
       Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/request_replacement.htm');
     }));
-    $('.refresh_after_attest_request').click(Ui.event.prevent(Ui.event.double(), async self => {
+    $('.refresh_after_attest_request').click(Ui.event.prevent('double', async self => {
       Ui.sanitize_render(self, 'Updating..' + Ui.spinner('white'));
       BrowserMsg.send(null, 'attest_requested', {account_email});
       await tool.time.sleep(30000);
       window.location.reload();
     }));
-    Ui.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(Ui.event.prevent(Ui.event.parallel(), async self => {
+    Ui.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Ui.sanitize_render(self, Ui.spinner('green'));
       try {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
@@ -109,6 +109,7 @@ Catch.try(async () => {
         }
       }
       window.location.reload();
+      done();
     }));
   };
 

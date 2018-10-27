@@ -50,7 +50,7 @@ Catch.try(async () => {
     } else {
       S.cached('management_account').text(result.email).parent().removeClass('display_none');
       Ui.sanitize_render(S.cached('status'), 'Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
-      S.now('action_enable').click(Ui.event.prevent(Ui.event.double(), enable_contact_page));
+      S.now('action_enable').click(Ui.event.prevent('double', enable_contact_page));
     }
   };
 
@@ -73,7 +73,7 @@ Catch.try(async () => {
     }
   };
 
-  S.cached('action_update').click(Ui.event.prevent(Ui.event.double(), async () => {
+  S.cached('action_update').click(Ui.event.prevent('double', async () => {
     if (!S.cached('input_name').val()) {
       alert('Please add your name');
     } else if (!S.cached('input_intro').val()) {

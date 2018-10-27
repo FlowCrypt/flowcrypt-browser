@@ -280,7 +280,7 @@ Catch.try(async () => {
     display_block('step_1_easy_or_manual');
   }));
 
-  $('#step_2_recovery .action_recover_account').click(Ui.event.prevent(Ui.event.double(), async (self) => {
+  $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
     let passphrase = $('#recovery_pasword').val() as string; // text input
     let matching_keys: OpenPGP.key.Key[] = [];
     if (passphrase && tool.value(passphrase).in(recovered_key_matching_passphrases)) {
@@ -433,7 +433,7 @@ Catch.try(async () => {
     await render_setup_done();
   };
 
-  $('#step_2a_manual_create .input_password').on('keyup', Ui.event.prevent(Ui.event.spree(), () => {
+  $('#step_2a_manual_create .input_password').on('keyup', Ui.event.prevent('spree', () => {
     Settings.render_password_strength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
 
@@ -457,7 +457,7 @@ Catch.try(async () => {
     return true;
   };
 
-  $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent(Ui.event.double(), async () => {
+  $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent('double', async () => {
     Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     if(!is_action_create_private_form_input_correct()) {
       return;

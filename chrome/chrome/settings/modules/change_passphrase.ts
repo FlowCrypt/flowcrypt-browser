@@ -52,7 +52,7 @@ Catch.try(async () => {
     }
   }));
 
-  $('#password').on('keyup', Ui.event.prevent(Ui.event.spree(), () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
+  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
 
   $('.action_password').click(Ui.event.handle(target => {
     if ($(target).hasClass('green')) {
@@ -70,7 +70,7 @@ Catch.try(async () => {
     $('#password').focus();
   }));
 
-  $('.action_change').click(Ui.event.prevent(Ui.event.double(), async self => {
+  $('.action_change').click(Ui.event.prevent('double', async self => {
     let new_passphrase = $('#password').val() as string; // text input
     if (new_passphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');

@@ -228,7 +228,7 @@ Catch.try(async () => {
   try {
     if(!await process_as_a_public_key_and_hide_attachment_if_appropriate()) {
       // normal attachment, let user download it by clicking
-      $('#download').click(Ui.event.prevent(Ui.event.double(), save_to_downloads));
+      $('#download').click(Ui.event.prevent('double', save_to_downloads));
     }
   } catch (e) {
     if(Api.error.is_auth_popup_needed(e)) {

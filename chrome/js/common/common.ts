@@ -1004,7 +1004,7 @@ class Api {
         values.file = new Attachment({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].attachment.data()});
         promises.push(Api.internal.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
           progress[i] = single_file_progress;
-          Ui.event.prevent(Ui.event.spree(), () => {
+          Ui.event.prevent('spree', () => {
             // this should of course be weighted average. How many years until someone notices?
             progress_callback(tool.arr.average(progress), null, null); // May 2018 - nobody noticed
           })();
@@ -1460,9 +1460,6 @@ class Ui {
         e.stopPropagation();
       });
     },
-    double: (): PreventableEvent => ({ name: 'double', id: Str.random(10) }),
-    parallel: (): PreventableEvent => ({ name: 'parallel', id: Str.random(10) }),
-    spree: (type:"slow"|"veryslow"|""=''): PreventableEvent => ({ name: `${type}spree` as "spree"|"slowspree"|"veryslowspree", id: Str.random(10) }),
     handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
       return function(event: JQuery.Event<HTMLElement, null>) {
         let r;
@@ -1489,7 +1486,7 @@ class Ui {
         Catch.handle_exception(e);
       }
     },
-    prevent: (preventable_event: PreventableEvent, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+    prevent: (preventable_event: PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
       let event_timer: number|undefined;
       let event_fired_on: number|undefined;
       let cb_reset_timer = () => {
@@ -1508,20 +1505,20 @@ class Ui {
         }
       };
       return function() {
-        if (preventable_event.name === 'spree') {
+        if (preventable_event === 'spree') {
           clearTimeout(event_timer);
           event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SPREE_MS);
-        } else if (preventable_event.name === 'slowspree') {
+        } else if (preventable_event === 'slowspree') {
           clearTimeout(event_timer);
           event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SLOW_SPREE_MS);
-        } else if (preventable_event.name === 'veryslowspree') {
+        } else if (preventable_event === 'veryslowspree') {
           clearTimeout(event_timer);
           event_timer = window.setTimeout(() => cb_with_errors_handled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
           if (event_fired_on) {
-            if (preventable_event.name === 'parallel') {
+            if (preventable_event === 'parallel') {
               // event handling is still being processed. Do not call back
-            } else if (preventable_event.name === 'double') {
+            } else if (preventable_event === 'double') {
               if (Date.now() - event_fired_on > Ui.EVENT_DOUBLE_MS) {
                 event_fired_on = Date.now();
                 cb_with_errors_handled(this);

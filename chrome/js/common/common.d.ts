@@ -129,10 +129,7 @@ interface Dict<T> {
 type FlatHeaders = Dict<string>;
 type RichHeaders = Dict<string|string[]>;
 
-interface PreventableEvent {
-    name: 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
-    id: string;
-}
+type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
 
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
 

@@ -112,7 +112,7 @@ Catch.try(async () => {
     // resize window now
     send_resize_message();
     // start auto-resizing the window after 1s
-    setTimeout(() => $(window).resize(Ui.event.prevent(Ui.event.spree(), send_resize_message)), 1000);
+    setTimeout(() => $(window).resize(Ui.event.prevent('spree', send_resize_message)), 1000);
   };
 
   let button_html = (text: string, add_classes: string) => {
@@ -201,7 +201,7 @@ Catch.try(async () => {
       Ui.sanitize_append('#attachments', `<div class="attachment" index="${Number(i)}"><b>${Xss.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
     }
     send_resize_message();
-    $('div.attachment').click(Ui.event.prevent(Ui.event.double(), async target => {
+    $('div.attachment').click(Ui.event.prevent('double', async target => {
       let attachment = included_attachments[Number($(target).attr('index') as string)];
       if (attachment.has_data()) {
         tool.file.save_to_downloads(attachment, $(target));

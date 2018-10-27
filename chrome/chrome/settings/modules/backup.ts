@@ -32,7 +32,7 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  $('#password').on('keyup', Ui.event.prevent(Ui.event.spree(), () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
+  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
 
   let show_status = async () => {
     $('.hide_if_backup_done').css('display', 'none');
@@ -136,7 +136,7 @@ Catch.try(async () => {
     $('#password').focus();
   }));
 
-  $('.action_backup').click(Ui.event.prevent(Ui.event.double(), async (target) => {
+  $('.action_backup').click(Ui.event.prevent('double', async (target) => {
     let new_passphrase = $('#password').val() as string; // text input
     if (new_passphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');
@@ -255,7 +255,7 @@ Catch.try(async () => {
     }
   };
 
-  $('.action_manual_backup').click(Ui.event.prevent(Ui.event.double(), async (target) => {
+  $('.action_manual_backup').click(Ui.event.prevent('double', async (target) => {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
@@ -308,7 +308,7 @@ Catch.try(async () => {
     await write_backup_done_and_render(false, 'inbox');
   };
 
-  $('.action_skip_backup').click(Ui.event.prevent(Ui.event.double(), async () => {
+  $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
     if (url_params.action === 'setup') {
       await Store.set(account_email, { key_backup_prompt: false });
       window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });

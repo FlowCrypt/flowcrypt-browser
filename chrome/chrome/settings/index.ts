@@ -299,11 +299,11 @@ Catch.try(async () => {
 
   $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
 
-  $('.action_add_account').click(Ui.event.prevent(Ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id)));
+  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.new_google_account_authentication_prompt(tab_id)));
 
-  $('.action_google_auth').click(Ui.event.prevent(Ui.event.double(), async () => await Settings.new_google_account_authentication_prompt(tab_id, account_email)));
+  $('.action_google_auth').click(Ui.event.prevent('double', async () => await Settings.new_google_account_authentication_prompt(tab_id, account_email)));
 
-  // $('.action_microsoft_auth').click(Ui.event.prevent(Ui.event.double(), function() {
+  // $('.action_microsoft_auth').click(Ui.event.prevent('double', function() {
   //   new_microsoft_account_authentication_prompt(account_email);
   // }));
 

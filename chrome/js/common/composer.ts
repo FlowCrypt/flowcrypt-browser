@@ -228,7 +228,7 @@ class Composer {
 
   private initialize_actions = () => {
     this.S.cached('icon_pubkey').attr('title', Lang.compose.include_pubkey_icon_title);
-    this.S.cached('input_password').keyup(Ui.event.prevent(Ui.event.spree(), () => this.show_hide_password_or_pubkey_container_and_color_send_button()));
+    this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.show_hide_password_or_pubkey_container_and_color_send_button()));
     this.S.cached('input_password').focus(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
     this.S.cached('input_password').blur(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
     this.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
@@ -1160,7 +1160,7 @@ class Composer {
         ul_html += '<li class="loading">loading...</li>';
       }
       Ui.sanitize_render(this.S.cached('contacts').find('ul'), ul_html);
-      this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent(Ui.event.double(), (target: HTMLElement) => {
+      this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', (target: HTMLElement) => {
         let email = $(target).attr('email');
         if (email) {
           this.select_contact(Str.parse_email(email).email, query);
@@ -1380,11 +1380,11 @@ class Composer {
     if (Env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
-    this.S.cached('send_btn').click(Ui.event.prevent(Ui.event.double(), () => this.extract_process_send_message()));
+    this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extract_process_send_message()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extract_process_send_message()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
-    this.S.cached('input_to').keyup(Ui.event.prevent(Ui.event.spree('veryslow'), () => this.search_contacts()));
-    this.S.cached('input_to').blur(Ui.event.prevent(Ui.event.double(), () => this.parse_and_render_recipients().catch(Catch.rejection)));
+    this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.search_contacts()));
+    this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parse_and_render_recipients().catch(Catch.rejection)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hide_contacts(), this.handle_errors(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
@@ -1404,7 +1404,7 @@ class Composer {
         await this.parse_and_render_recipients(); // this will force firefox to render them on load
       }
       setTimeout(() => { // delay automatic resizing until a second later
-        $(window).resize(Ui.event.prevent(Ui.event.spree('veryslow'), () => this.resize_reply_box()));
+        $(window).resize(Ui.event.prevent('veryslowspree', () => this.resize_reply_box()));
         this.S.cached('input_text').keyup(() => this.resize_reply_box());
       }, 1000);
     } else {

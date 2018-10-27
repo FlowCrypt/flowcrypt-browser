@@ -48,7 +48,7 @@ Catch.try(async () => {
   $('.source_selector').css('display', 'block');
   $('#spinner_container').text('');
 
-  $('.action_add_private_key').click(Ui.event.prevent(Ui.event.double(), async () => {
+  $('.action_add_private_key').click(Ui.event.prevent('double', async () => {
     try {
       let checked = await key_import_ui.check_prv(account_email, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if(checked) {

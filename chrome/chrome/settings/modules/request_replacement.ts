@@ -69,7 +69,7 @@ Catch.try(async () => {
     expect_longid = Pgp.key.fingerprint(keyserver_result.pubkey!)!;
     Ui.sanitize_render('#status', `Original key KeyWords:<br/><span class="good">${mnemonic(Pgp.key.longid(keyserver_result.pubkey)!)}<br/>${Pgp.key.fingerprint(keyserver_result.pubkey, 'spaced')}</span>`); // all pubkeys on keyserver should have computable longid
     $('#step_2b_manual_enter').css('display', 'block');
-    $('.action_request_replacement').click(Ui.event.prevent(Ui.event.double(), request_replacement));
+    $('.action_request_replacement').click(Ui.event.prevent('double', request_replacement));
   }
 
 })();

@@ -87,7 +87,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Ui.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent(Ui.event.double(), Catch.try(on_click)));
+    Ui.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent('double', Catch.try(on_click)));
   }
 
   private replace_conversation_buttons = (force:boolean=false) => {
@@ -104,7 +104,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
             $(reply_button).addClass('replaced').text(''); // hide all except last
           } else {
             $(reply_button).html(this.factory.button_reply()); // replace last,  // xss-safe-factory
-            $(reply_button).click(Ui.event.prevent(Ui.event.double(), Catch.try(this.set_reply_box_editable)));
+            $(reply_button).click(Ui.event.prevent('double', Catch.try(this.set_reply_box_editable)));
           }
         });
       }

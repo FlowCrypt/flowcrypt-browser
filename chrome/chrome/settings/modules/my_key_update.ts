@@ -21,7 +21,7 @@ Catch.try(async () => {
   $('.key_words').text(primary_ki.keywords).attr('title', primary_ki.longid);
   input_private_key.attr('placeholder', input_private_key.attr('placeholder') + ' (' + primary_ki.longid + ')');
 
-  $('.action_update_private_key').click(Ui.event.prevent(Ui.event.double(), async () => {
+  $('.action_update_private_key').click(Ui.event.prevent('double', async () => {
     let updated_key = openpgp.key.readArmored(input_private_key.val() as string).keys[0];
     let updated_key_encrypted = openpgp.key.readArmored(input_private_key.val() as string).keys[0];
     let updated_key_passphrase = $('.input_passphrase').val() as string;

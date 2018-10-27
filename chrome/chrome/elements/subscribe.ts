@@ -117,14 +117,26 @@ Catch.try(async () => {
 
   $('.action_close').click(Ui.event.handle(close_dialog));
 
-  $('.action_get_trial').click(Ui.event.prevent(Ui.event.parallel(), target => {
+  $('.action_get_trial').click(Ui.event.prevent('parallel', async (target, done) => {
     button_spin(target);
-    flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.trial, null).then(handle_successful_upgrade, handle_error_response);
+    try {
+      await flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.trial, null);
+      handle_successful_upgrade();
+    } catch(e) {
+      handle_error_response(e);
+    }
+    done();
   }));
 
-  $('.action_add_device').click(Ui.event.prevent(Ui.event.parallel(), target => {
+  $('.action_add_device').click(Ui.event.prevent('parallel', async (target, done) => {
     button_spin(target);
-    flowcrypt_account.register_new_device(account_email).then(close_dialog, handle_error_response);
+    try {
+      await flowcrypt_account.register_new_device(account_email);
+      close_dialog();
+    } catch(e) {
+      handle_error_response(e);
+    }
+    done();
   }));
 
   if (!subscription.active) {
