@@ -3250,6 +3250,10 @@ class Catch {
     }
   }
 
+  public static set_interval = (cb: () => void, ms: number): number => {
+    return window.setInterval(Catch.try(cb), ms);
+  }
+
   public static initialize = () => {
     let figure_out_flowcrypt_runtime = () => {
       if ((window as FcWindow).is_bare_engine !== true) {

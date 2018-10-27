@@ -23,6 +23,10 @@ const has_xss_comment = (line: string) => {
   return /\/\/ xss-(known-source|direct|escaped|safe-factory|safe-value|sanitized|none|reinsert|dangerous-function)/.test(line);
 };
 
+const has_error_handled_comment = (line: string) => {
+  return /\/\/ error-handled/.test(line);
+};
+
 const validate_line = (line: string, location: string) => {
 
   if(line.match(/\.(innerHTML|outerHTML) ?= ?/) && !has_xss_comment(line)) {
@@ -40,6 +44,11 @@ const validate_line = (line: string, location: string) => {
     errors_found++;
   }
 
+  if(line.match(/setInterval|setTimeout/) && !has_error_handled_comment(line)) {
+    console.error(`errors not handled in ${location}:\n${line}\n`);
+    errors_found++;
+  }
+
 };
 
 const source_file_paths = get_all_files_in_directory('./chrome', /\.ts$/);
@@ -52,6 +61,6 @@ for(const source_file_path of source_file_paths) {
 }
 
 if(errors_found) {
-  console.error(`patterns.ts: Found ${errors_found} unhandled xss patterns, exiting\n`);
+  console.error(`patterns.ts: Found ${errors_found} unhandled patterns, exiting\n`);
   process.exit(1);
 }
