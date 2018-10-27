@@ -1672,7 +1672,6 @@ class BrowserMsg {
 class Str {
 
   private static str_sanitize_ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
-  private static str_sanitize_ALLOWED_HTML_TAGS_WITH_INPUTS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font', 'input', 'select', 'option', 'textarea', 'label', 'optgroup', 'button'];
   private static str_sanitize_ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
   private static str_sanitize_HREF_REGEX_CACHE = null as null|RegExp;
 
