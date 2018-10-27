@@ -30,7 +30,7 @@ tool.catch.try(async () => {
     }
     original_content = $(self).html();
     Ui.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
-    let result = await tool.crypto.message.decrypt(account_email, encrypted);
+    let result = await Pgp.message.decrypt(account_email, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
     } else if (result.error.type === DecryptErrorTypes.need_passphrase) {

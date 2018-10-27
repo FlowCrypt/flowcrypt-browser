@@ -71,7 +71,7 @@ tool.catch.try(async () => {
     for (let keyinfo of selected_private_keys) { // if passphrase matches more keys, it will save them all
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
       try {
-        if (await tool.crypto.key.decrypt(prv, [pass]) === true) {
+        if (await Pgp.key.decrypt(prv, [pass]) === true) {
           await Store.passphrase_save(storage_type, account_email, keyinfo.longid, pass);
           at_least_one_matched = true;
         }

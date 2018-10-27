@@ -15,7 +15,7 @@ tool.catch.try(async () => {
 
   $('.action_verify').click(Ui.event.handle(async () => {
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
-    if (await tool.crypto.key.decrypt(key, [$('#password').val() as string]) === true) { // text input
+    if (await Pgp.key.decrypt(key, [$('#password').val() as string]) === true) { // text input
       Ui.sanitize_render('#content', '<div class="line">Your pass phrase matches. Good job! You\'re all set.</div><div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>');
       $('.close').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_page')));
     } else {

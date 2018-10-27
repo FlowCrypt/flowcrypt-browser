@@ -40,8 +40,8 @@ tool.catch.try(async () => {
     }
     $('.line.fingerprints, .line.add_contact').css('display', url_params.minimized ? 'none' : 'block');
     if (pubkeys.length === 1) {
-      $('.line.fingerprints .fingerprint').text(tool.crypto.key.fingerprint(pubkeys[0], 'spaced') as string);
-      $('.line.fingerprints .keywords').text(mnemonic(tool.crypto.key.longid(pubkeys[0]) as string));
+      $('.line.fingerprints .fingerprint').text(Pgp.key.fingerprint(pubkeys[0], 'spaced') as string);
+      $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) as string));
     } else {
       $('.line.fingerprints').css({display: 'none'});
     }

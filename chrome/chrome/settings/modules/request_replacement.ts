@@ -25,9 +25,9 @@ tool.catch.try(async () => {
         let request_replacement: Dict<string> = {
           'ATT': 'CRYPTUP', // todo - should be the original attester
           'ACT': 'REQUEST_REPLACEMENT',
-          'ADD': tool.crypto.hash.double_sha1_upper(account_email),
+          'ADD': Pgp.hash.double_sha1_upper(account_email),
           'OLD': checked_old_key.fingerprint,
-          'PUB': tool.crypto.key.fingerprint(primary_pubkey_armored) as string,
+          'PUB': Pgp.key.fingerprint(primary_pubkey_armored) as string,
         };
         let signed_packet;
         try {
@@ -63,11 +63,11 @@ tool.catch.try(async () => {
     return;
   }
 
-  if (!keyserver_result.pubkey || !keyserver_result.attested || tool.crypto.key.fingerprint(primary_pubkey_armored) === tool.crypto.key.fingerprint(keyserver_result.pubkey)) {
+  if (!keyserver_result.pubkey || !keyserver_result.attested || Pgp.key.fingerprint(primary_pubkey_armored) === Pgp.key.fingerprint(keyserver_result.pubkey)) {
     Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/keyserver.htm');
   } else { // email previously attested, and there indeed is a pubkey mismatch
-    expect_longid = tool.crypto.key.fingerprint(keyserver_result.pubkey!)!;
-    Ui.sanitize_render('#status', `Original key KeyWords:<br/><span class="good">${mnemonic(tool.crypto.key.longid(keyserver_result.pubkey)!)}<br/>${tool.crypto.key.fingerprint(keyserver_result.pubkey, 'spaced')}</span>`); // all pubkeys on keyserver should have computable longid
+    expect_longid = Pgp.key.fingerprint(keyserver_result.pubkey!)!;
+    Ui.sanitize_render('#status', `Original key KeyWords:<br/><span class="good">${mnemonic(Pgp.key.longid(keyserver_result.pubkey)!)}<br/>${Pgp.key.fingerprint(keyserver_result.pubkey, 'spaced')}</span>`); // all pubkeys on keyserver should have computable longid
     $('#step_2b_manual_enter').css('display', 'block');
     $('.action_request_replacement').click(Ui.event.prevent(Ui.event.double(), request_replacement));
   }

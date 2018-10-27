@@ -22,8 +22,8 @@
     $('#result').attr('data-test-state', 'ready');
   };
 
-  if (f === 'tool.crypto.armor.detect_blocks' && args.length === 1 && typeof args[0] === 'string') {
-    return test(tool.crypto.armor.detect_blocks, args);
+  if (f === 'Pgp.armor.detect_blocks' && args.length === 1 && typeof args[0] === 'string') {
+    return test(Pgp.armor.detect_blocks, args);
   } else {
     return finish('Unknown unit test f');
   }

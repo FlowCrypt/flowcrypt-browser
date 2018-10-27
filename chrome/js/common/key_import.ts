@@ -36,7 +36,7 @@ class KeyImportUI {
       }
     });
     $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(Ui.event.handle(target => {
-      $('.source_paste_container .input_passphrase').val(tool.crypto.password.random());
+      $('.source_paste_container .input_passphrase').val(Pgp.password.random());
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
@@ -53,8 +53,8 @@ class KeyImportUI {
     attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     attach.set_attachment_added_callback(file => {
       let k;
-      if (tool.value(tool.crypto.armor.headers('private_key').begin).in(file.as_text())) {
-        let first_prv = tool.crypto.armor.detect_blocks(file.as_text()).blocks.filter(b => b.type === 'private_key')[0];
+      if (tool.value(Pgp.armor.headers('private_key').begin).in(file.as_text())) {
+        let first_prv = Pgp.armor.detect_blocks(file.as_text()).blocks.filter(b => b.type === 'private_key')[0];
         if (first_prv) {
           k = openpgp.key.readArmored(first_prv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
         }
@@ -83,7 +83,7 @@ class KeyImportUI {
     await this.decrypt_and_encrypt_as_needed(decrypted, encrypted, passphrase);
     await this.check_encryption_prv_if_selected(decrypted, encrypted);
     await this.check_signing_if_selected(decrypted);
-    return {normalized, longid, passphrase, fingerprint: tool.crypto.key.fingerprint(decrypted)!, decrypted, encrypted}; // will have fp if had longid
+    return {normalized, longid, passphrase, fingerprint: Pgp.key.fingerprint(decrypted)!, decrypted, encrypted}; // will have fp if had longid
   }
 
   check_pub = async (armored: string): Promise<string> => {
@@ -95,8 +95,8 @@ class KeyImportUI {
   }
 
   private normalize = (type: KeyBlockType, armored: string) => {
-    let headers = tool.crypto.armor.headers(type);
-    let normalized = tool.crypto.key.normalize(armored);
+    let headers = Pgp.armor.headers(type);
+    let normalized = Pgp.key.normalize(armored);
     if (!normalized) {
       throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
@@ -104,7 +104,7 @@ class KeyImportUI {
   }
 
   private read = (type: KeyBlockType, normalized: string) => {
-    let headers = tool.crypto.armor.headers(type);
+    let headers = Pgp.armor.headers(type);
     let k = openpgp.key.readArmored(normalized).keys[0];
     if (typeof k === 'undefined') {
       throw new UserAlert('Private key is not correctly formated. Please insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
@@ -113,7 +113,7 @@ class KeyImportUI {
   }
 
   private longid = (k: OpenPGP.key.Key) => {
-    let longid = tool.crypto.key.longid(k);
+    let longid = Pgp.key.longid(k);
     if (!longid) {
       throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and let us know which software created this key, so we can get it resolved.\n\n(error: cannot get long_id)');
     }
@@ -121,7 +121,7 @@ class KeyImportUI {
   }
 
   private reject_if_not = (type: KeyBlockType, k: OpenPGP.key.Key) => {
-    let headers = tool.crypto.armor.headers(type);
+    let headers = Pgp.armor.headers(type);
     if (type === 'private_key' && k.isPublic()) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
@@ -134,7 +134,7 @@ class KeyImportUI {
     if(this.reject_known) {
       let keyinfos = await Store.keys_get(account_email);
       let private_keys_long_ids = keyinfos.map(ki => ki.longid);
-      if (tool.value(tool.crypto.key.longid(k)!).in(private_keys_long_ids)) {
+      if (tool.value(Pgp.key.longid(k)!).in(private_keys_long_ids)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
     }
@@ -158,7 +158,7 @@ class KeyImportUI {
       if(to_decrypt.isDecrypted()) {
         return;
       }
-      decrypt_result = await tool.crypto.key.decrypt(to_decrypt, [passphrase]);
+      decrypt_result = await Pgp.key.decrypt(to_decrypt, [passphrase]);
     } catch (e) {
       throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
     }
@@ -174,7 +174,7 @@ class KeyImportUI {
 
   private check_encryption_prv_if_selected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if(this.check_encryption && await k.getEncryptionKey() === null) {
-      if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await tool.crypto.key.usable_but_expired(k)) { // known issues - key can be fixed
+      if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await Pgp.key.usable_but_expired(k)) { // known issues - key can be fixed
         let e = new KeyCanBeFixed('');
         e.encrypted = encrypted;
         throw e;
@@ -185,7 +185,7 @@ class KeyImportUI {
   }
 
   private check_encryption_pub_if_selected = async (normalized: string) => {
-    if(this.check_encryption && !await tool.crypto.key.usable(normalized)) {
+    if(this.check_encryption && !await Pgp.key.usable(normalized)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }

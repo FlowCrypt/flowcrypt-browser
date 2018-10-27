@@ -522,7 +522,7 @@ tool.catch.try(async () => {
       } else if(Api.error.is_auth_popup_needed(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         await render_error(`Could not load message due to missing auth. ${Ui.retry_link()}`);
-      } else if (tool.value(tool.crypto.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
+      } else if (tool.value(Pgp.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
       } else if (Api.error.is_standard_error(e, 'format')) {
         console.log(e.data);

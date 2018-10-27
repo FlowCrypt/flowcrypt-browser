@@ -39,7 +39,7 @@ tool.catch.try(async () => {
   $('.action_ok').click(Ui.event.handle(async () => {
     try {
       let key_import_ui = new KeyImportUI({check_encryption: true});
-      let normalized = await key_import_ui.check_pub(tool.crypto.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
+      let normalized = await key_import_ui.check_pub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
       await Store.db_contact_save(null, Store.db_contact_object($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
       close_dialog();
     } catch (e) {

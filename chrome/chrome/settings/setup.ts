@@ -104,7 +104,7 @@ tool.catch.try(async () => {
 
     if (keyserver_result.pubkey) {
       if (keyserver_result.attested) {
-        account_email_attested_fingerprint = tool.crypto.key.fingerprint(keyserver_result.pubkey);
+        account_email_attested_fingerprint = Pgp.key.fingerprint(keyserver_result.pubkey);
       }
       if (!rules.can_backup_keys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
@@ -117,7 +117,7 @@ tool.catch.try(async () => {
         }
         if (fetched_keys.length) {
           recovered_keys = fetched_keys;
-          recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
+          recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(Pgp.key.longid)).length;
           display_block('step_2_recovery');
         } else {
           display_block('step_0_found_key');
@@ -157,7 +157,7 @@ tool.catch.try(async () => {
     }
     if (fetched_keys.length) {
       recovered_keys = fetched_keys;
-      recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(tool.crypto.key.longid)).length;
+      recovered_keys_longid_count = tool.arr.unique(recovered_keys.map(Pgp.key.longid)).length;
       let stored_keys = await Store.keys_get(account_email);
       recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
       await render_setup_done();
@@ -179,7 +179,7 @@ tool.catch.try(async () => {
     } else {
       addresses = [account_email];
     }
-    if (account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(armored_pubkey)) {
+    if (account_email_attested_fingerprint && account_email_attested_fingerprint !== Pgp.key.fingerprint(armored_pubkey)) {
       return; // already submitted and ATTESTED another pubkey for this email
     }
     await Settings.submit_pubkeys(account_email, addresses, armored_pubkey);
@@ -228,7 +228,7 @@ tool.catch.try(async () => {
 
   let save_keys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (let prv of prvs) {
-      let longid = tool.crypto.key.longid(prv);
+      let longid = Pgp.key.longid(prv);
       if (!longid) {
         alert('Cannot save keys to storage because at least one of them is not valid.');
         return;
@@ -237,7 +237,7 @@ tool.catch.try(async () => {
       await Store.passphrase_save(options.passphrase_save ? 'local' : 'session', account_email, longid, options.passphrase);
     }
     let my_own_email_addresses_as_contacts = all_addresses.map(a => {
-      let attested = Boolean(a === account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== tool.crypto.key.fingerprint(prvs[0].toPublic().armor()));
+      let attested = Boolean(a === account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== Pgp.key.fingerprint(prvs[0].toPublic().armor()));
       return Store.db_contact_object(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
     });
     await Store.db_contact_save(null, my_own_email_addresses_as_contacts);
@@ -246,7 +246,7 @@ tool.catch.try(async () => {
   let create_save_key_pair = async (options: SetupOptions) => {
     Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     try {
-      let key = await tool.crypto.key.create([{ name: options.full_name, email: account_email }], 4096, options.passphrase); // todo - add all addresses?
+      let key = await Pgp.key.create([{ name: options.full_name, email: account_email }], 4096, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
       let prv = openpgp.key.readArmored(key.private).keys[0];
       await save_keys([prv], options);
@@ -287,9 +287,9 @@ tool.catch.try(async () => {
       alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
     } else if (passphrase) {
       for (let recovered_key of recovered_keys) {
-        let longid = tool.crypto.key.longid(recovered_key);
+        let longid = Pgp.key.longid(recovered_key);
         let armored = recovered_key.armor();
-        if (longid && !tool.value(longid).in(recovered_keys_successful_longids) && await tool.crypto.key.decrypt(recovered_key, [passphrase]) === true) {
+        if (longid && !tool.value(longid).in(recovered_keys_successful_longids) && await Pgp.key.decrypt(recovered_key, [passphrase]) === true) {
           recovered_keys_successful_longids.push(longid);
           matching_keys.push(openpgp.key.readArmored(armored).keys[0]);
         }

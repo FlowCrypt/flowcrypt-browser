@@ -33,11 +33,11 @@ class BgExec {
   }
 
   public static crypto_hash_challenge_answer = (password: string) => {
-    return BgExec.request_to_process_in_background('tool.crypto.hash.challenge_answer', [password]) as Promise<string>;
+    return BgExec.request_to_process_in_background('Pgp.hash.challenge_answer', [password]) as Promise<string>;
   }
 
   public static crypto_message_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd:string|null=null, get_uint8=false) => {
-    let result = await BgExec.request_to_process_in_background('tool.crypto.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
+    let result = await BgExec.request_to_process_in_background('Pgp.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
         result.content.text = Str.from_uint8(await tool.file.object_url_consume(result.content.blob.blob_url));
@@ -50,7 +50,7 @@ class BgExec {
   }
 
   public static crypto_message_verify_detached = (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => {
-    return BgExec.request_to_process_in_background('tool.crypto.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
+    return BgExec.request_to_process_in_background('Pgp.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
   }
 
   private static execute_and_format_result = async (path: string, resolved_args: any[]): Promise<PossibleBgExecResults> => {
@@ -58,7 +58,7 @@ class BgExec {
     let returned: Promise<PossibleBgExecResults>|PossibleBgExecResults = f.apply(null, resolved_args);
     if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       let resolved = await returned;
-      if (path === 'tool.crypto.message.decrypt') {
+      if (path === 'Pgp.message.decrypt') {
         BgExec.crypto_message_decrypt_result_create_blobs(resolved as DecryptResult);
       }
       return resolved;

@@ -44,11 +44,11 @@ class InboxElementReplacer implements WebmailElementReplacer {
 
   private replace_armored_blocks = () => {
     let self = this;
-    $(this.message_text_element_selector).not('.evaluated').addClass('evaluated').filter(":contains('" + tool.crypto.armor.headers('null').begin + "')").each((i, message_element) => { // for each email that contains PGP block
+    $(this.message_text_element_selector).not('.evaluated').addClass('evaluated').filter(":contains('" + Pgp.armor.headers('null').begin + "')").each((i, message_element) => { // for each email that contains PGP block
       let message_id = self.dom_extract_message_id(message_element);
       let sender_email = self.dom_extract_sender_email(message_element);
       let is_outgoing = tool.value(sender_email).in(this.addresses);
-      let replacement_xss_safe = tool.crypto.armor.replace_blocks(self.factory, message_element.innerText, message_id || '', sender_email || '', is_outgoing);  // xss-safe-factory
+      let replacement_xss_safe = Pgp.armor.replace_blocks(self.factory, message_element.innerText, message_id || '', sender_email || '', is_outgoing);  // xss-safe-factory
       if (typeof replacement_xss_safe !== 'undefined') {
         $(message_element).parents('.ap').addClass('pgp_message_container');
         $(message_element).html(replacement_xss_safe.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>')); // xss-safe-factory
@@ -111,7 +111,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
           message_element.append(this.factory.embedded_message('', message_id, false, sender_email || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
           Api.gmail.attachment_get(this.account_email, message_id, a.id!).then(downloaded_attachment => {
-            if (tool.value(tool.crypto.armor.headers('null').begin).in(downloaded_attachment.data)) {
+            if (tool.value(Pgp.armor.headers('null').begin).in(downloaded_attachment.data)) {
               message_element.append(this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing)); // xss-safe-factory
             } else {
               attachment_selector.css('display', 'block');
@@ -120,7 +120,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
           }).catch(e => (attachments_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
         } else if (treat_as === 'signature') {
           let embedded_signed_message_xss_safe = this.factory.embedded_message(Str.normalize_spaces(message_element[0].innerText).trim(), message_id, false, sender_email || '', false, true);
-          if (!message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text())) {
+          if (!message_element.is('.evaluated') && !tool.value(Pgp.armor.headers('null').begin).in(message_element.text())) {
             message_element.addClass('evaluated');
             message_element.html(embedded_signed_message_xss_safe).css('display', 'block'); // xss-safe-factory
           } else {

@@ -24,7 +24,7 @@ class BgAttests {
   };
   private static currently_watching: Dict<number> = {};
   private static attest_ts_can_read_emails: Dict<boolean> = {};
-  private static packet_headers = tool.crypto.armor.headers('attest_packet');
+  private static packet_headers = Pgp.armor.headers('attest_packet');
 
   static watch_for_attest_email_if_appropriate = async () => {
     for (let pending of await BgAttests.get_pending_attest_requests()) {
@@ -106,14 +106,14 @@ class BgAttests {
     let {attests_processed} = await Store.get_account(account_email, ['attests_processed']);
     if (!tool.value(attest.content.attester).in(attests_processed || [])) {
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
-      if (await tool.crypto.key.decrypt(key, [passphrase || stored_passphrase || '']) === true) {
+      if (await Pgp.key.decrypt(key, [passphrase || stored_passphrase || '']) === true) {
         let expected_fingerprint = key.primaryKey.getFingerprint().toUpperCase();
-        let expected_email_hash = tool.crypto.hash.double_sha1_upper(Str.parse_email(account_email).email);
+        let expected_email_hash = Pgp.hash.double_sha1_upper(Str.parse_email(account_email).email);
         if (attest && attest.success && attest.text) {
           if(attest.content.attester && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
             let signed;
             try {
-              signed = await tool.crypto.message.sign(key, attest.text);
+              signed = await Pgp.message.sign(key, attest.text);
             } catch (e) {
               throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${e.message}`, attest_packet_text, account_email);
             }

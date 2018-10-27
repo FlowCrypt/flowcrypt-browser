@@ -81,7 +81,7 @@ tool.catch.try(async () => {
       let email = $('#edit_contact .input_pubkey').attr('email');
       if (!armored_pubkey || !email) {
         alert('No public key entered');
-      } else if (tool.crypto.key.fingerprint(armored_pubkey) !== null) {
+      } else if (Pgp.key.fingerprint(armored_pubkey) !== null) {
         await Store.db_contact_save(null, Store.db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()));
         await render_contact_list();
       } else {
@@ -101,7 +101,7 @@ tool.catch.try(async () => {
     }));
 
     $('#bulk_import .action_process').off().click(Ui.event.prevent(Ui.event.double(), self => {
-      let replaced_html_safe = tool.crypto.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
+      let replaced_html_safe = Pgp.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
       if (!replaced_html_safe || replaced_html_safe === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
       } else {

@@ -188,7 +188,7 @@ class Composer {
       };
     } else {
       let allow_huge_attachments = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      let size_mb = (subscription.method !== 'trial' && tool.value(tool.crypto.hash.sha1(this.account_email)).in(allow_huge_attachments)) ? 200 : 25;
+      let size_mb = (subscription.method !== 'trial' && tool.value(Pgp.hash.sha1(this.account_email)).in(allow_huge_attachments)) ? 200 : 25;
       return {
         size_mb,
         size: size_mb * 1024 * 1024,
@@ -336,7 +336,7 @@ class Composer {
     try {
       let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
       let parsed_message = await Mime.decode(Str.base64url_decode(draft_get_response.message.raw!));
-      let armored = tool.crypto.armor.clip(parsed_message.text || tool.crypto.armor.strip(parsed_message.html || '') || '');
+      let armored = Pgp.armor.clip(parsed_message.text || Pgp.armor.strip(parsed_message.html || '') || '');
       if (armored) {
         this.S.cached('input_subject').val(parsed_message.headers.subject || '');
         await this.decrypt_and_render_draft(armored, Mime.headers_to_from(parsed_message));
@@ -399,7 +399,7 @@ class Composer {
       this.draft_save_in_progress = true;
       this.S.cached('send_btn_note').text('Saving');
       let primary_ki = await this.app.storage_get_key(this.account_email);
-      let encrypted = await tool.crypto.message.encrypt([primary_ki.public], null, null, this.extract_as_text('input_text'), null, true) as OpenPGP.EncryptArmorResult;
+      let encrypted = await Pgp.message.encrypt([primary_ki.public], null, null, this.extract_as_text('input_text'), null, true) as OpenPGP.EncryptArmorResult;
       let body;
       if (this.thread_id) { // replied message
         body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
@@ -459,7 +459,7 @@ class Composer {
   private decrypt_and_render_draft = async (encrypted_draft: string, headers: FromToHeaders) => {
     let passphrase = await this.app.storage_passphrase_get();
     if (passphrase !== null) {
-      let result = await tool.crypto.message.decrypt(this.account_email, encrypted_draft);
+      let result = await Pgp.message.decrypt(this.account_email, encrypted_draft);
       if (result.success) {
         this.S.cached('prompt').css({display: 'none'});
         Ui.sanitize_render(this.S.cached('input_text'), await Xss.html_sanitize_keep_basic_tags(result.content.text!));
@@ -663,9 +663,9 @@ class Composer {
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
 
         if(!prv.isDecrypted()) {
-          await tool.crypto.key.decrypt(prv, [passphrase!]); // checked !== null above
+          await Pgp.key.decrypt(prv, [passphrase!]); // checked !== null above
         }
-        let signed_data = await tool.crypto.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
+        let signed_data = await Pgp.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
         let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
         this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(tool.catch.rejection);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -754,7 +754,7 @@ class Composer {
     let usable_from: number[] = [];
     for(let armored_pubkey of armored_pubkeys) {
       let k = openpgp.key.readArmored(armored_pubkey).keys[0];
-      let one_second_before_expiration = await tool.crypto.key.date_before_expiration(k);
+      let one_second_before_expiration = await Pgp.key.date_before_expiration(k);
       usable_from.push(k.getCreationTime().getTime());
       if(one_second_before_expiration !== null) { // key does expire
         usable_until.push(one_second_before_expiration.getTime());
@@ -780,7 +780,7 @@ class Composer {
 
   private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
     let encrypt_as_of_date = await this.encrypt_message_as_of_date_if_some_are_expired(armored_pubkeys);
-    let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
+    let encrypted = await Pgp.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
     let body = {'text/plain': encrypted.data} as SendableMessageBody;
     await this.app.storage_contact_update(recipients, {last_use: Date.now()});
     this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -833,7 +833,7 @@ class Composer {
               tool.catch.log('Dropping found but incompatible public key', {for: lookup_result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null});
               lookup_result.pubkey = null;
             } else if ((await parsed.keys[0].getEncryptionKey()) === null) {
-              tool.catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: lookup_result.email, fingerprint: tool.crypto.key.fingerprint(parsed.keys[0])});
+              tool.catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: lookup_result.email, fingerprint: Pgp.key.fingerprint(parsed.keys[0])});
               lookup_result.pubkey = null;
             }
           }
@@ -1017,7 +1017,7 @@ class Composer {
       }
       return;
     }
-    let result = await tool.crypto.message.decrypt(this.account_email, armored_message);
+    let result = await Pgp.message.decrypt(this.account_email, armored_message);
     if (result.success) {
       if (!Mime.resembles_message(result.content.text!)) {
         this.append_forwarded_message(result.content.text!.replace(/\n/g, '<br>'));
@@ -1295,7 +1295,7 @@ class Composer {
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
-    } else if (contact.pubkey && await tool.crypto.key.usable_but_expired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
+    } else if (contact.pubkey && await Pgp.key.usable_but_expired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
       $(email_element).addClass("expired");
       Ui.sanitize_prepend(email_element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipient_key_id_text(contact));
@@ -1445,7 +1445,7 @@ class Composer {
     }
     text.push(Lang.compose.message_encrypted_text + decrypt_url + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
-    html.push('<div style="opacity: 0;">' + tool.crypto.armor.headers('null').begin + '</div>');
+    html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.message_encrypted_html + a + '<br><br>');
     html.push(Lang.compose.alternatively_copy_paste + Xss.html_escape(decrypt_url) + '<br><br><br>');
     const html_fc_web_url_link = '<a href="' + Xss.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.html_escape(this.FC_WEB_URL) + '</a>';

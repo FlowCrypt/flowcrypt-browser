@@ -43,7 +43,7 @@ tool.catch.try(async () => {
 
   $('.action_enter').click(Ui.event.handle(async () => {
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
-    if(await tool.crypto.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
+    if(await Pgp.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
       original_passphrase = $('#original_password').val() as string; // text input
       display_block('step_1_password');
     } else {
@@ -79,7 +79,7 @@ tool.catch.try(async () => {
     } else {
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
       if(!prv.isDecrypted()) {
-        await tool.crypto.key.decrypt(prv, [original_passphrase!]); // !null because we checked for this above, and user entry cannot be null
+        await Pgp.key.decrypt(prv, [original_passphrase!]); // !null because we checked for this above, and user entry cannot be null
       }
       await Settings.openpgp_key_encrypt(prv, new_passphrase);
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);

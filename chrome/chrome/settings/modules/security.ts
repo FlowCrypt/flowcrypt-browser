@@ -54,7 +54,7 @@ tool.catch.try( async () => {
       }
     } else { // save pass phrase
       let key = openpgp.key.readArmored(primary_ki.private).keys[0];
-      if (await tool.crypto.key.decrypt(key, [$('input#passphrase_entry').val() as string]) === true) { // text input
+      if (await Pgp.key.decrypt(key, [$('input#passphrase_entry').val() as string]) === true) { // text input
         await Store.passphrase_save('local', account_email, primary_ki.longid, $('input#passphrase_entry').val() as string);
         window.location.reload();
       } else {

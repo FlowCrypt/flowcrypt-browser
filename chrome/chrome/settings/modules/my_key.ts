@@ -19,7 +19,7 @@ tool.catch.try(async () => {
   try {
     let {results: [result]} = await Api.attester.lookup_email([account_email]);
     let url = Api.fc.url('pubkey', account_email);
-    if (result.pubkey && tool.crypto.key.longid(result.pubkey) === primary_ki.longid) {
+    if (result.pubkey && Pgp.key.longid(result.pubkey) === primary_ki.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
   } catch (e) {
@@ -28,7 +28,7 @@ tool.catch.try(async () => {
   }
 
   $('.email').text(account_email);
-  $('.key_fingerprint').text(tool.crypto.key.fingerprint(key, 'spaced')!);
+  $('.key_fingerprint').text(Pgp.key.fingerprint(key, 'spaced')!);
   $('.key_words').text(primary_ki.keywords);
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');

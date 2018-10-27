@@ -35,7 +35,7 @@ tool.catch.try(async () => {
   }));
 
   let decrypt_and_download = async (encrypted: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
-    let result = await tool.crypto.message.decrypt(account_email, encrypted.as_bytes(), null, true);
+    let result = await Pgp.message.decrypt(account_email, encrypted.as_bytes(), null, true);
     if (result.success) {
       let attachment = new Attachment({name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8!}); // uint8!: requested uint8 above
       tool.file.save_to_downloads(attachment);

@@ -65,7 +65,7 @@ class Attach {
     for (let id of Object.keys(this.attached_files)) {
       let file = this.attached_files[id];
       let file_data = await this.read_attachment_data_as_uint8(id);
-      let encrypted = await tool.crypto.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false) as OpenPGP.EncryptBinaryResult;
+      let encrypted = await Pgp.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false) as OpenPGP.EncryptBinaryResult;
       attachments.push(new Attachment({name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write()}));
     }
     return attachments;

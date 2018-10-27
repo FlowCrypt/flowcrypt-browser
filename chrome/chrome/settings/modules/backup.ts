@@ -180,7 +180,7 @@ tool.catch.try(async () => {
         return false;
       }
     }
-    if (await tool.crypto.key.decrypt(k, ['']) === true) {
+    if (await Pgp.key.decrypt(k, ['']) === true) {
       return false;
     }
     return true;
@@ -275,7 +275,7 @@ tool.catch.try(async () => {
   }));
 
   let is_pass_phrase_strong_enough = async (ki: KeyInfo, pass_phrase: string) => {
-    let k = tool.crypto.key.read(ki.private);
+    let k = Pgp.key.read(ki.private);
     if(k.isDecrypted()) {
       return false;
     }
@@ -284,7 +284,7 @@ tool.catch.try(async () => {
       if (!pp) {
         return false;
       }
-      if (await tool.crypto.key.decrypt(k, [pp]) !== true) {
+      if (await Pgp.key.decrypt(k, [pp]) !== true) {
         alert('Pass phrase did not match, please try again.');
         return false;
       }
@@ -299,7 +299,7 @@ tool.catch.try(async () => {
 
   let setup_create_simple_automatic_inbox_backup = async () => {
     let [primary_ki] = await Store.keys_get(account_email, ['primary']);
-    if(tool.crypto.key.read(primary_ki.private).isDecrypted()) {
+    if(Pgp.key.read(primary_ki.private).isDecrypted()) {
       alert('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }

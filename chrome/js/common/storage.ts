@@ -131,13 +131,13 @@ class Store {
   }
 
   static keys_object(armored_prv: string, primary=false): KeyInfo {
-    let longid = tool.crypto.key.longid(armored_prv)!;
+    let longid = Pgp.key.longid(armored_prv)!;
     return { // todo - should we not be checking longid!==null? or is it checked before calling this?
       private: armored_prv,
-      public: tool.crypto.key.read(armored_prv).toPublic().armor(),
+      public: Pgp.key.read(armored_prv).toPublic().armor(),
       primary,
       longid,
-      fingerprint: tool.crypto.key.fingerprint(armored_prv)!,
+      fingerprint: Pgp.key.fingerprint(armored_prv)!,
       keywords: mnemonic(longid),
     };
   }
@@ -145,7 +145,7 @@ class Store {
   static async keys_add(account_email: string, new_key_armored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
     let keyinfos = await Store.keys_get(account_email);
     let updated = false;
-    let new_key_longid = tool.crypto.key.longid(new_key_armored);
+    let new_key_longid = Pgp.key.longid(new_key_armored);
     if (new_key_longid) {
       for (let i in keyinfos) {
         if (new_key_longid === keyinfos[i].longid) { // replacing a key
@@ -325,7 +325,7 @@ class Store {
   }
 
   static db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null): Contact {
-    let fingerprint = pubkey ? tool.crypto.key.fingerprint(pubkey) : null;
+    let fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : null;
     email = Str.parse_email(email).email;
     if(!Str.is_email_valid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
@@ -339,8 +339,8 @@ class Store {
       client: pubkey ? client : null,
       attested: pubkey ? Boolean(attested) : null,
       fingerprint,
-      longid: fingerprint ? tool.crypto.key.longid(fingerprint) : null,
-      keywords: fingerprint ? mnemonic(tool.crypto.key.longid(fingerprint)!) : null,
+      longid: fingerprint ? Pgp.key.longid(fingerprint) : null,
+      keywords: fingerprint ? mnemonic(Pgp.key.longid(fingerprint)!) : null,
       pending_lookup: pubkey ? 0 : (pending_lookup ? 1 : 0),
       last_use: last_use || null,
       date: null,

@@ -111,7 +111,7 @@ tool.catch.try(async () => {
   });
 
   let decrypt_and_save_attachment_to_downloads = async (enc_a: Attachment) => {
-    let result = await tool.crypto.message.decrypt(account_email, enc_a.data(), null, true);
+    let result = await Pgp.message.decrypt(account_email, enc_a.data(), null, true);
     Ui.sanitize_render('#download', original_html_content).removeClass('visible');
     if (result.success) {
       let name = result.content.filename;
@@ -207,9 +207,9 @@ tool.catch.try(async () => {
     if (encrypted_a && encrypted_a.message_id && encrypted_a.id && encrypted_a.treat_as() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
       let attachment = await Api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
-      let result = await tool.crypto.message.decrypt(account_email, attachment.data);
+      let result = await Pgp.message.decrypt(account_email, attachment.data);
       if (result.success && result.content.text) {
-        let openpgp_type = tool.crypto.message.type(result.content.text);
+        let openpgp_type = Pgp.message.type(result.content.text);
         if(openpgp_type && openpgp_type.type === 'public_key') {
           if(openpgp_type.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey

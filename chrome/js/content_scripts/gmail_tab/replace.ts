@@ -21,7 +21,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     subject: 'h2.hP',
     message_outer: 'div.adn',
     message_inner: 'div.a3s:not(.undefined), .message_inner_body',
-    message_inner_containing_pgp: "div.a3s:not(.undefined):contains('" + tool.crypto.armor.headers('null').begin + "')",
+    message_inner_containing_pgp: "div.a3s:not(.undefined):contains('" + Pgp.armor.headers('null').begin + "')",
     attachments_container_outer: 'div.hq.gt',
     attachments_container_inner: 'div.aQH',
     translate_prompt: '.adI',
@@ -77,7 +77,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       $(email_container).addClass('evaluated');
       let sender_email = this.get_sender_email(email_container);
       let is_outgoing = tool.value(sender_email).in(this.addresses);
-      let replacement_xss_safe = tool.crypto.armor.replace_blocks(this.factory, email_container.innerText, this.determine_message_id(email_container), sender_email, is_outgoing);
+      let replacement_xss_safe = Pgp.armor.replace_blocks(this.factory, email_container.innerText, this.determine_message_id(email_container), sender_email, is_outgoing);
       if (typeof replacement_xss_safe !== 'undefined') {
         $(this.selector.translate_prompt).hide();
         let new_selector = this.update_message_body_element_DANGEROUSLY(email_container, 'set', replacement_xss_safe.replace(/\n/g, '<br>')); // xss-safe-factory: replace_blocks is XSS safe
@@ -208,7 +208,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
           let is_ambiguous_noname_file = !a.name || a.name === 'noname'; // may not even be OpenPGP related
           if (is_ambiguous_asc_file || is_ambiguous_noname_file) { // Inspect a chunk
             let file_chunk = await Api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
-            let openpgp_type = tool.crypto.message.type(file_chunk);
+            let openpgp_type = Pgp.message.type(file_chunk);
             if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
               rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
             } else if (openpgp_type && tool.value(openpgp_type.type).in(['message', 'signed_message'])) {
@@ -225,12 +225,12 @@ class GmailElementReplacer implements WebmailElementReplacer {
         } else if (treat_as === 'signature') {
           let signed_content = message_element[0] ? Str.normalize_spaces(message_element[0].innerText).trim() : '';
           let embedded_signed_message_xss_safe = this.factory.embedded_message(signed_content, message_id, false, sender_email, false, true);
-          let replace = !message_element.is('.evaluated') && !tool.value(tool.crypto.armor.headers('null').begin).in(message_element.text());
+          let replace = !message_element.is('.evaluated') && !tool.value(Pgp.armor.headers('null').begin).in(message_element.text());
           message_element = this.update_message_body_element_DANGEROUSLY(message_element, replace ? 'set': 'append', embedded_signed_message_xss_safe); // xss-safe-factory
         }
       } else if(treat_as === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
         let file_chunk = await Api.gmail.attachment_get_chunk(this.account_email, message_id, a.id!); // .id is present when fetched from api
-        let openpgp_type = tool.crypto.message.type(file_chunk);
+        let openpgp_type = Pgp.message.type(file_chunk);
         if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
           rendered_attachments_count = await this.render_public_key_from_file(a, attachments_container_inner, message_element, is_outgoing, attachment_selector, rendered_attachments_count);
           this.hide_attachment(attachment_selector, attachments_container_inner);
@@ -271,7 +271,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       rendered_attachments_count++;
       return rendered_attachments_count;
     }
-    let openpgp_type = tool.crypto.message.type(downloaded_attachment.data);
+    let openpgp_type = Pgp.message.type(downloaded_attachment.data);
     if (openpgp_type && openpgp_type.type === 'public_key') {
       message_element = this.update_message_body_element_DANGEROUSLY(message_element, 'append', this.factory.embedded_pubkey(downloaded_attachment.data, is_outgoing)); // xss-safe-factory
     } else {

@@ -80,7 +80,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
       let {results} = await Api.attester.lookup_email(storage.addresses);
       let addresses_keyserver = [];
       for (let result of results) {
-        if (result && result.pubkey && tool.value(tool.crypto.key.longid(result.pubkey)).in(my_longids)) {
+        if (result && result.pubkey && tool.value(Pgp.key.longid(result.pubkey)).in(my_longids)) {
           addresses_keyserver.push(result.email);
         }
       }
@@ -104,7 +104,7 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
       try {
         let pubkey = await hkp.lookup({ query: email });
         if (typeof pubkey !== 'undefined') {
-          if (tool.value(tool.crypto.key.longid(pubkey)).in(my_longids)) {
+          if (tool.value(Pgp.key.longid(pubkey)).in(my_longids)) {
             addresses_pks.push(email);
             console.info(email + ' newly found matching pubkey on PKS');
           }

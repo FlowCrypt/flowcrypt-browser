@@ -22,7 +22,7 @@ tool.catch.try(async () => {
     key_backups = await Api.gmail.fetch_key_backups(account_email);
     if (key_backups.length) {
       let not_imported_backup_longids: string[] = [];
-      for (let longid of tool.arr.unique(key_backups.map(tool.crypto.key.longid))) {
+      for (let longid of tool.arr.unique(key_backups.map(Pgp.key.longid))) {
         if (longid && !tool.value(longid).in(private_keys_long_ids)) {
           not_imported_backup_longids.push(longid);
         }

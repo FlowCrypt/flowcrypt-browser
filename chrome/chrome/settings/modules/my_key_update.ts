@@ -11,7 +11,7 @@ tool.catch.try(async () => {
   let url_my_key_page = Env.url_create('my_key.htm', url_params);
   $('.action_show_public_key').attr('href', url_my_key_page);
   let input_private_key = $('.input_private_key');
-  let prv_headers = tool.crypto.armor.headers('private_key');
+  let prv_headers = Pgp.armor.headers('private_key');
 
   let [primary_ki] = await Store.keys_get(account_email, [url_params.longid as string || 'primary']);
 
@@ -29,15 +29,15 @@ tool.catch.try(async () => {
       alert('Private key is not correctly formated. Please insert complete key, including "' + prv_headers.begin + '" and "' + prv_headers.end + '"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.');
     } else if (updated_key.isPublic()) {
       alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prv_headers.begin + '"');
-    } else if (tool.crypto.key.fingerprint(updated_key) !== tool.crypto.key.fingerprint(primary_ki.public)) {
-      alert('This key ' + tool.crypto.key.longid(updated_key) + ' does not match your current key ' + primary_ki.longid);
-    } else if (await tool.crypto.key.decrypt(updated_key, [updated_key_passphrase]) !== true) {
+    } else if (Pgp.key.fingerprint(updated_key) !== Pgp.key.fingerprint(primary_ki.public)) {
+      alert('This key ' + Pgp.key.longid(updated_key) + ' does not match your current key ' + primary_ki.longid);
+    } else if (await Pgp.key.decrypt(updated_key, [updated_key_passphrase]) !== true) {
       alert('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (await updated_key.getEncryptionKey() !== null) {
         await store_updated_key_and_passphrase(updated_key_encrypted, updated_key_passphrase);
       } else { // cannot get a valid encryption key packet
-        if ((await updated_key.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await tool.crypto.key.usable_but_expired(updated_key)) { // known issues - key can be fixed
+        if ((await updated_key.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usable_but_expired(updated_key)) { // known issues - key can be fixed
           let fixed_encrypted_prv = await Settings.render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user(account_email, '.compatibility_fix_container', updated_key_encrypted, updated_key_passphrase, url_my_key_page);
           await store_updated_key_and_passphrase(fixed_encrypted_prv, updated_key_passphrase);
         } else {

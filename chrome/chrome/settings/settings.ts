@@ -21,7 +21,7 @@ class Settings {
   }
 
   static evaluate_password_strength = (pass_phrase: string) => {
-    return tool.crypto.password.estimate_strength(zxcvbn(pass_phrase, tool.crypto.password.weak_words()).guesses);
+    return Pgp.password.estimate_strength(zxcvbn(pass_phrase, Pgp.password.weak_words()).guesses);
   }
 
   static render_password_strength = (parent_selector: string, input_selector: string, button_selector: string) => {
@@ -286,7 +286,7 @@ class Settings {
           $(target).off();
           Ui.sanitize_render(target, Ui.spinner('white'));
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
-          await tool.crypto.key.decrypt(original_prv, [passphrase]);
+          await Pgp.key.decrypt(original_prv, [passphrase]);
           let reformatted;
           let userIds = uids.map(uid => Str.parse_email(uid)).map(u => ({email: u.email, name: u.name || ''}));
           try {
