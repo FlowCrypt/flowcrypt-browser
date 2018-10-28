@@ -384,6 +384,7 @@ body#settings .settings-border .key_list {
 #settings.client .threads .line .from { display: inline-block; width: 300px; }
 /* #settings.client .threads .line .subject { } */
 #settings.client .threads .line .date { position: absolute; right: 20px; }
+#settings.client .thread .message { border-top: 1px dotted #c0c0c0; }
 #settings.client .thread .message > iframe, #settings.client .thread .reply > iframe { width: 100%; border: none; }
 #settings.client div.new_message { position: fixed; }
 #settings.client span.label { font-weight: normal; text-transform: lowercase; font-size: 10px; padding: 2px 4px; margin-left: 8px; position: relative;
@@ -396,3 +397,5 @@ body#settings .settings-border .key_list {
 #settings.client div.webmail_notifications div.webmail_notification { margin-top: 55px !important; }
 #settings.client img.main-profile-img { height: 32px; width: 32px; float: right; background: white; border-radius: 32px;
   position: relative; top: 10px; top: -6px; }
+#settings.client .attachments { margin-top: 12px; }
+#settings.client .attachments span.pgp_attachment { float: none; margin: 0 16px 16px 0; }

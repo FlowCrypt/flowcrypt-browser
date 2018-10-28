@@ -69,6 +69,9 @@ class XssSafeFactory {
   }
 
   src_pgp_attachment_iframe = (a: Attachment) => {
+    if(!a.id && !a.url && a.has_data()) { // data provided directly, pass as object url
+      a.url = Attachment.methods.object_url_create(a.as_bytes());
+    }
     return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: a.message_id, name: a.name, type: a.type, size: a.length, attachment_id: a.id, url: a.url });
   }
 
