@@ -20,14 +20,23 @@ Catch.try(async () => {
     body: 'body',
   });
 
+  let LABEL = {INBOX: 'INBOX', UNREAD: 'UNREAD'};
+
   let tab_id = await BrowserMsg.required_tab_id();
   notifications = new Notifications(tab_id);
   factory = new XssSafeFactory(account_email, tab_id);
   injector = new Injector('settings', null, factory);
+  let storage = await Store.get_account(account_email, ['email_provider']);
+  email_provider = storage.email_provider || 'gmail';
+  S.cached('body').prepend(factory.meta_notification_container()); // xss-safe-factory
+
+  let notification_show = (data: NotificationWithHandlers) => {
+    notifications.show(data.notification, data.callbacks);
+    $('body').one('click', Catch.try(notifications.clear));
+  };
+
   BrowserMsg.listen({
-    open_new_message: (data) => {
-      injector.open_compose_window();
-    },
+    notification_show,
     close_new_message: (data) => {
       $('div.new_message').remove();
     },
@@ -52,10 +61,6 @@ Catch.try(async () => {
         $('body').append(factory.dialog_add_pubkey(data.emails)); // xss-safe-factory
       }
     },
-    notification_show: (data: NotificationWithHandlers) => {
-      notifications.show(data.notification, data.callbacks);
-      $('body').one('click', Catch.try(notifications.clear));
-    },
     close_dialog: (data) => {
       $('#cryptup_dialog').remove();
     },
@@ -73,32 +78,68 @@ Catch.try(async () => {
     }
   };
 
-  let storage = await Store.get_account(account_email, ['email_provider']);
-  email_provider = storage.email_provider || 'gmail';
-  S.cached('body').prepend(factory.meta_notification_container()); // xss-safe-factory
-  if (email_provider !== 'gmail') {
-    $('body').text('Not supported for ' + email_provider);
-  } else {
-    display_block('inbox', 'FlowCrypt Email Inbox');
-    Api.gmail.message_list(account_email, q_encrypted_messages, false).then(list_result => {
-      let thread_ids = Value.arr.unique((list_result.messages || []).map((m: any) => m.threadId));
-      for (let thread_id of thread_ids) {
-        thread_element_add(thread_id);
-        Api.gmail.message_get(account_email, thread_id, 'metadata').then(item_result => {
-          let thread_item = $('.threads #' + thread_list_item_id(thread_id));
-          thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
-          let from_header_value = Api.gmail.find_header(item_result, 'from');
-          if (from_header_value) {
-            let from = Str.parse_email(from_header_value);
-            thread_item.find('.from').text(from.name || from.email);
-          }
-          thread_item.find('.loading').text('');
-          thread_item.find('.date').text(String(new Date(Number(item_result.internalDate))));
-          thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread_id).catch(Catch.handle_exception)));
-        }, () => $('.threads #' + thread_list_item_id(thread_id)).find('.loading').text('Failed to load'));
+  let render_and_handle_auth_popup_notification = () => {
+    notification_show({notification: `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, callbacks: {
+      action_auth_popup: async () => {
+        await Api.google.auth_popup(account_email, tab_id);
+        window.location.reload();
       }
-    }, () => $('body').text('Connection error trying to get list of messages'));
-  }
+    }});
+  };
+
+  let format_date = (date_from_api: string | number | undefined): string => {
+    let date = new Date(Number(date_from_api));
+    if(date.toLocaleDateString() === new Date().toLocaleDateString()) {
+      return date.toLocaleTimeString();
+    }
+    return date.toLocaleDateString();
+  };
+
+  let render_inbox_item = async (thread_id: string) => {
+    thread_element_add(thread_id);
+    let thread_item = $('.threads #' + thread_list_item_id(thread_id));
+    try {
+      let item_result = await Api.gmail.message_get(account_email, thread_id, 'metadata');
+      thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
+      let from_header_value = Api.gmail.find_header(item_result, 'from');
+      if (from_header_value) {
+        let from = Str.parse_email(from_header_value);
+        thread_item.find('.from').text(from.name || from.email);
+      }
+      thread_item.find('.loading').text('');
+      thread_item.find('.date').text(format_date(item_result.internalDate));
+      thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread_id)));
+      if(Value.is(LABEL.UNREAD).in(item_result.labelIds)) {
+        thread_item.css({'font-weight': 'bold', 'background': 'white'});
+      }
+    } catch (e) {
+      if(Api.error.is_network_error(e)) {
+        Ui.sanitize_render(thread_item.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => render_inbox_item(thread_id)));
+      } else if(Api.error.is_auth_popup_needed(e)) {
+        render_and_handle_auth_popup_notification();
+      } else {
+        Catch.handle_exception(e);
+        thread_item.find('.loading').text('Failed to load');
+      }
+    }
+  };
+
+  let render_inbox = async () => {
+    display_block('inbox', 'FlowCrypt Email Inbox');
+    try {
+      let list_result = await Api.gmail.message_list(account_email, q_encrypted_messages, false);
+      await Promise.all(Value.arr.unique((list_result.messages || []).map(m => m.threadId)).map(render_inbox_item));
+    } catch(e) {
+      if(Api.error.is_network_error(e)) {
+        notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+      } else if(Api.error.is_auth_popup_needed(e)) {
+        render_and_handle_auth_popup_notification();
+      } else {
+        Catch.handle_exception(e);
+        notification_show({notification: `Error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+      }
+    }
+  };
 
   let render_thread = async (thread_id: string) => {
     display_block('thread', 'Loading..');
@@ -112,15 +153,15 @@ Catch.try(async () => {
     }
   };
 
-  let render_message = (message: any) => {
+  let render_message = (message: ApirGmailMessage) => {
     let bodies = Api.gmail.find_bodies(message);
     let armored_message_from_bodies = Pgp.armor.clip(Str.base64url_decode(bodies['text/plain']!)) || Pgp.armor.clip(Pgp.armor.strip(Str.base64url_decode(bodies['text/html']!)));
-    let renderable_html = !armored_message_from_bodies ? Xss.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>\n') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
-    Ui.sanitize_append(S.cached('thread'), Ui.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html}));
+    let renderable_html = !armored_message_from_bodies ? Xss.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
+    S.cached('thread').append(Ui.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html})); // xss-safe-factory //xss-escaped
   };
 
   let render_reply_box = (thread_id: string, last_message_id: string) => {
-    Ui.sanitize_append(S.cached('thread'), Ui.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)}));
+    S.cached('thread').append(Ui.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)})); // xss-safe-factory
   };
 
   let thread_message_id = (message_id: string) => {
@@ -138,5 +179,13 @@ Catch.try(async () => {
       html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',
     }));
   };
+
+  if (email_provider !== 'gmail') {
+    $('body').text('Not supported for ' + email_provider);
+  } else {
+    Ui.sanitize_prepend('.header.line', `<div class="button green action_open_secure_compose_window" style="position: relative;top: -5;">Secure Compose</div>`);
+    $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
+    await render_inbox();
+  }
 
 })();
