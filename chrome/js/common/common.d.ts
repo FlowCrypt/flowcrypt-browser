@@ -340,10 +340,13 @@ type ApirGmailMessage$header = {name: string, value: string};
 type ApirGmailMessage$payload$body = {attachmentId: string, size: number, data?: string};
 type ApirGmailMessage$payload$part = {body?: ApirGmailMessage$payload$body, filename?: string, mimeType?: string, headers?: ApirGmailMessage$header[]};
 type ApirGmailMessage$payload = {parts?: ApirGmailMessage$payload$part[], headers?: ApirGmailMessage$header[], mimeType?: string, body?: ApirGmailMessage$payload$body};
-type ApirGmailMessage$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL';
+type ApirGmailMessage$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
 type ApirGmailMessage = {id: string, threadId?: string|null, payload: ApirGmailMessage$payload, raw?: string, internalDate?: number|string, labelIds: ApirGmailMessage$labelId[]};
 type ApirGmailMessageList$message = {id: string, threadId: string};
 type ApirGmailMessageList = {messages?: ApirGmailMessageList$message[], resultSizeEstimate: number};
+type ApirGmailLabels$label = {id: string, name: string, messageListVisibility: 'show'|'hide', labelListVisibility: 'labelShow'|'labelHide', type: 'user'|'system',
+  messagesTotal: number, messagesUnread: number, threadsTotal: number, threadsUnread: number, color?: {textColor: string, backgroundColor: string}};
+type ApirGmailLabels = {labels: ApirGmailLabels$label[]};
 type ApirGmailAttachment = {attachmentId: string, size: number, data: string};
 type ApirGmailMessageSend = {id: string};
 type ApirGmailThreadGet = {id: string, messages: ApirGmailMessage[]};

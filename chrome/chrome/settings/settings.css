@@ -386,3 +386,5 @@ body#settings .settings-border .key_list {
 #settings.client .threads .line .date { position: absolute; right: 20px; }
 #settings.client .thread .message > iframe, #settings.client .thread .reply > iframe { width: 100%; border: none; }
 #settings.client div.new_message { position: fixed; }
+#settings.client .threads .line .subject span.label { font-weight: normal; text-transform: lowercase; font-size: 10px;
+  padding: 2px 4px; margin-left: 8px; position: relative; top: -1px; border-radius: 2px; }

@@ -13,6 +13,7 @@ Catch.try(async () => {
   let factory: XssSafeFactory;
   let injector: Injector;
   let notifications: Notifications;
+  let all_labels: ApirGmailLabels$label[];
 
   let S = Ui.build_jquery_selectors({
     threads: '.threads',
@@ -20,7 +21,7 @@ Catch.try(async () => {
     body: 'body',
   });
 
-  let LABEL = {INBOX: 'INBOX', UNREAD: 'UNREAD'};
+  let LABEL = {INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'};
 
   let tab_id = await BrowserMsg.required_tab_id();
   notifications = new Notifications(tab_id);
@@ -95,12 +96,33 @@ Catch.try(async () => {
     return date.toLocaleDateString();
   };
 
+  let renderable_label = (label_id: string, placement: 'messages' | 'labels') => {
+    let label = all_labels.find(l => l.id === label_id);
+    if(!label) {
+      return '';
+    }
+    if(placement === 'messages' && label.messageListVisibility !== 'show') {
+      return '';
+    }
+    if(placement === 'labels' && label.labelListVisibility !== 'labelShow') {
+      return '';
+    }
+    let id = Xss.html_escape(label_id);
+    let name = Xss.html_escape(label.name);
+    return `<span class="label label_${id}">${name}</span>`;
+  };
+
+  let renderable_item_labels = (label_ids: ApirGmailMessage$labelId[], placement: 'messages' | 'labels') => {
+    return label_ids.map(id => renderable_label(id, placement)).join('');
+  };
+
   let render_inbox_item = async (thread_id: string) => {
     thread_element_add(thread_id);
     let thread_item = $('.threads #' + thread_list_item_id(thread_id));
     try {
       let item_result = await Api.gmail.message_get(account_email, thread_id, 'metadata');
       thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
+      Ui.sanitize_append(thread_item.find('.subject'), renderable_item_labels(item_result.labelIds, 'messages'));
       let from_header_value = Api.gmail.find_header(item_result, 'from');
       if (from_header_value) {
         let from = Str.parse_email(from_header_value);
@@ -124,11 +146,29 @@ Catch.try(async () => {
     }
   };
 
+  let add_label_styles = (labels: ApirGmailLabels$label[]) => {
+    let style = '';
+    for(let label of labels) {
+      if(label.color) {
+        let id = Xss.html_escape(label.id);
+        let bg = Xss.html_escape(label.color.backgroundColor);
+        let fg = Xss.html_escape(label.color.textColor);
+        style += `.label.label_${id} {color: ${fg}; background-color: ${bg};} `;
+      }
+    }
+    $('body').append(`<style>${style}</style>`); // xss-escaped
+  };
+
   let render_inbox = async () => {
+    Ui.sanitize_prepend('.header.line', `<div class="button green action_open_secure_compose_window" style="position: relative;top: -5;">Secure Compose</div>`);
+    $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
     display_block('inbox', 'FlowCrypt Email Inbox');
     try {
-      let list_result = await Api.gmail.message_list(account_email, q_encrypted_messages, false);
-      await Promise.all(Value.arr.unique((list_result.messages || []).map(m => m.threadId)).map(render_inbox_item));
+      let {labels} = await Api.gmail.labels_get(account_email);
+      add_label_styles(labels);
+      all_labels = labels;
+      let {messages} = await Api.gmail.message_list(account_email, q_encrypted_messages, false);
+      await Promise.all(Value.arr.unique((messages || []).map(m => m.threadId)).map(render_inbox_item));
     } catch(e) {
       if(Api.error.is_network_error(e)) {
         notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
@@ -183,8 +223,6 @@ Catch.try(async () => {
   if (email_provider !== 'gmail') {
     $('body').text('Not supported for ' + email_provider);
   } else {
-    Ui.sanitize_prepend('.header.line', `<div class="button green action_open_secure_compose_window" style="position: relative;top: -5;">Secure Compose</div>`);
-    $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
     await render_inbox();
   }
 

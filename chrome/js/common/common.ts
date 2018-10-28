@@ -528,6 +528,7 @@ class Api {
     messages_get: (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<ApirGmailMessage[]> => {
       return Promise.all(message_ids.map(id => Api.gmail.message_get(account_email, id, format)));
     },
+    labels_get: (account_email: string): Promise<ApirGmailLabels> => Api.internal.api_gmail_call(account_email, 'GET', `labels`, {}),
     attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
       let r: ApirGmailAttachment = await Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
       r.data = Str.base64url_decode(r.data);
