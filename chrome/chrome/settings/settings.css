@@ -375,7 +375,7 @@ body#settings .settings-border .key_list {
 
 #settings.client { background-color: #f8f8f8; font-size: 14px; }
 #settings.client .line { width: auto; max-width: initial; margin-left: 20px; margin-right: 20px; text-align: left; }
-#settings.client .line h1 { margin-top: 20px; text-align: left; font-weight: 300; margin-left: 20px; display: inline-block; }
+#settings.client .line h1 { margin-top: 8px; text-align: left; font-weight: 300; display: inline-block; margin-bottom: 8px; font-size: 22px; }
 #settings.client .block { display: none; }
 #settings.client .threads .line { padding-left: 20px; text-align: left; border-top: 1px solid #31A217; padding-right: 20px; width: auto; }
 #settings.client .threads .line:last-child { border-bottom: 1px solid #31A217; }
@@ -386,5 +386,13 @@ body#settings .settings-border .key_list {
 #settings.client .threads .line .date { position: absolute; right: 20px; }
 #settings.client .thread .message > iframe, #settings.client .thread .reply > iframe { width: 100%; border: none; }
 #settings.client div.new_message { position: fixed; }
-#settings.client .threads .line .subject span.label { font-weight: normal; text-transform: lowercase; font-size: 10px;
-  padding: 2px 4px; margin-left: 8px; position: relative; top: -1px; border-radius: 2px; }
+#settings.client span.label { font-weight: normal; text-transform: lowercase; font-size: 10px; padding: 2px 4px; margin-left: 8px; position: relative;
+  top: -1px; display: inline-block; border-radius: 2px; margin-top: 2px; margin-bottom: 0px; cursor: pointer; }
+#settings.client > table { width: 100%; } 
+#settings.client > table td.menu { width: 200px; padding-left: 20px; }
+#settings.client > table td.menu .button { width: 160px !important; margin-bottom: 8px !important; text-align: left !important; }
+#settings.client > table td.menu span.label { margin-left: 0; margin-bottom: 2px; font-size: 12px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 184px; opacity: 0.7; }
+#settings.client div.webmail_notifications div.webmail_notification { margin-top: 55px !important; }
+#settings.client img.main-profile-img { height: 32px; width: 32px; float: right; background: white; border-radius: 32px;
+  position: relative; top: 10px; right: 20px; }

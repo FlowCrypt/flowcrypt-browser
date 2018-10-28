@@ -4,11 +4,13 @@
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email']);
+  let url_params = Env.url_params(['account_email', 'folder']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let folder = url_params.folder;
 
   let message_headers = ['message', 'signed_message', 'public_key'].map(t => Pgp.armor.headers(t as ReplaceableMessageBlockType).begin);
-  let q_encrypted_messages = 'is:inbox (' + Api.gmail.query.or(message_headers, true) + ')';
+  let q_encrypted_messages_in_chosen_label = `${folder ? `label:${folder} ` : ''}is:inbox (${Api.gmail.query.or(message_headers, true)})`;
+  console.log(q_encrypted_messages_in_chosen_label);
   let email_provider;
   let factory: XssSafeFactory;
   let injector: Injector;
@@ -22,19 +24,27 @@ Catch.try(async () => {
   });
 
   let LABEL = {INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'};
+  let FOLDERS = ['INBOX','STARRED','SENT','DRAFT','TRASH']; // 'UNREAD', 'SPAM'
 
   let tab_id = await BrowserMsg.required_tab_id();
   notifications = new Notifications(tab_id);
   factory = new XssSafeFactory(account_email, tab_id);
   injector = new Injector('settings', null, factory);
-  let storage = await Store.get_account(account_email, ['email_provider']);
+  let storage = await Store.get_account(account_email, ['email_provider', 'picture']);
   email_provider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.meta_notification_container()); // xss-safe-factory
+  if(storage.picture) {
+    $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
+      $(self).off().attr('src', '/img/svgs/profile-icon.svg');
+    }));
+  }
 
   let notification_show = (data: NotificationWithHandlers) => {
     notifications.show(data.notification, data.callbacks);
     $('body').one('click', Catch.try(notifications.clear));
   };
+
+  // notification_show({notification: 'This page has limited functionality. Using FlowCrypt directly in Gmail is more convenient.', callbacks: {}});
 
   BrowserMsg.listen({
     notification_show,
@@ -96,7 +106,7 @@ Catch.try(async () => {
     return date.toLocaleDateString();
   };
 
-  let renderable_label = (label_id: string, placement: 'messages' | 'labels') => {
+  let renderable_label = (label_id: string, placement: 'messages' | 'menu' | 'labels') => {
     let label = all_labels.find(l => l.id === label_id);
     if(!label) {
       return '';
@@ -104,15 +114,22 @@ Catch.try(async () => {
     if(placement === 'messages' && label.messageListVisibility !== 'show') {
       return '';
     }
-    if(placement === 'labels' && label.labelListVisibility !== 'labelShow') {
+    if(placement === 'labels' && (label.labelListVisibility !== 'labelShow' || label.id === LABEL.INBOX)) {
       return '';
     }
     let id = Xss.html_escape(label_id);
     let name = Xss.html_escape(label.name);
-    return `<span class="label label_${id}">${name}</span>`;
+    if(placement === 'menu') {
+      let unread = Number(label.messagesUnread);
+      return `<div class="button gray2 label label_${id}" ${unread ? 'style="font-weight: bold;"' : ''}>${name}${unread ? ` (${unread})` : ''}</div><br>`;
+    } else if (placement === 'labels') {
+      return `<span class="label label_${id}">${name}</span><br>`;
+    } else {
+      return `<span class="label label_${id}">${name}</span>`;
+    }
   };
 
-  let renderable_item_labels = (label_ids: ApirGmailMessage$labelId[], placement: 'messages' | 'labels') => {
+  let renderable_labels = (label_ids: (ApirGmailMessage$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return label_ids.map(id => renderable_label(id, placement)).join('');
   };
 
@@ -122,7 +139,7 @@ Catch.try(async () => {
     try {
       let item_result = await Api.gmail.message_get(account_email, thread_id, 'metadata');
       thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
-      Ui.sanitize_append(thread_item.find('.subject'), renderable_item_labels(item_result.labelIds, 'messages'));
+      Ui.sanitize_append(thread_item.find('.subject'), renderable_labels(item_result.labelIds, 'messages'));
       let from_header_value = Api.gmail.find_header(item_result, 'from');
       if (from_header_value) {
         let from = Str.parse_email(from_header_value);
@@ -159,15 +176,43 @@ Catch.try(async () => {
     $('body').append(`<style>${style}</style>`); // xss-escaped
   };
 
+  let render_folder = (label_element: HTMLSpanElement) => {
+    for(let cls of label_element.classList) {
+      let id = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
+      if(id) {
+        let label = all_labels.find(l => l.id === id);
+        if(label) {
+          window.location.search = Env.url_create('', {account_email, folder: label.name});
+          return;
+        }
+      }
+    }
+    window.location.search = Env.url_create('', {account_email});
+  };
+
+  let render_menu_and_label_styles = (labels: ApirGmailLabels$label[]) => {
+    all_labels = labels;
+    add_label_styles(labels);
+    Ui.sanitize_append('.menu', renderable_labels(FOLDERS, 'menu'));
+    Ui.sanitize_append('.menu', '<br>' + renderable_labels(labels.sort((a, b) => {
+      if(a.name > b.name) {
+        return 1;
+      } else if(a.name < b.name) {
+        return -1;
+      } else {
+        return 0;
+      }
+    }).map(l => l.id), 'labels'));
+    $('.menu > .label').click(Ui.event.handle(render_folder));
+  };
+
   let render_inbox = async () => {
-    Ui.sanitize_prepend('.header.line', `<div class="button green action_open_secure_compose_window" style="position: relative;top: -5;">Secure Compose</div>`);
     $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
     display_block('inbox', 'FlowCrypt Email Inbox');
     try {
       let {labels} = await Api.gmail.labels_get(account_email);
-      add_label_styles(labels);
-      all_labels = labels;
-      let {messages} = await Api.gmail.message_list(account_email, q_encrypted_messages, false);
+      render_menu_and_label_styles(labels);
+      let {messages} = await Api.gmail.message_list(account_email, q_encrypted_messages_in_chosen_label, false);
       await Promise.all(Value.arr.unique((messages || []).map(m => m.threadId)).map(render_inbox_item));
     } catch(e) {
       if(Api.error.is_network_error(e)) {
