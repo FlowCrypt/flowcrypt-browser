@@ -254,17 +254,19 @@ Catch.try(async () => {
 
   let render_message = async (message: ApirGmailMessage) => {
     let html_id = thread_message_id(message.id);
+    let from = Api.gmail.find_header(message, 'from') || 'unknown';
     try {
       let m = await Api.gmail.message_get(account_email, message.id, 'raw');
       let {blocks, headers} = await Mime.process(Str.base64url_decode(m.raw!));
       let r = '';
       for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderable_message_block(factory, block, message.id, headers.from, Value.is(headers.from).in(storage.addresses || []));
+        r += (r ? '\n\n' : '') + Ui.renderable_message_block(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
       }
       let {attachments} = await Mime.decode(Str.base64url_decode(m.raw!));
       if(attachments.length) {
-        r += `<div class="attachments">${attachments.map(factory.embedded_attachment)}</div>`;
+        r += `<div class="attachments">${attachments.filter(a => a.treat_as() === 'encrypted').map(factory.embedded_attachment).join('')}</div>`;
       }
+      r = `<p class="message_header">From: ${Xss.html_escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory
     } catch (e) {
       if(Api.error.is_network_error(e)) {

@@ -398,4 +398,4 @@ body#settings .settings-border .key_list {
 #settings.client img.main-profile-img { height: 32px; width: 32px; float: right; background: white; border-radius: 32px;
   position: relative; top: 10px; top: -6px; }
 #settings.client .attachments { margin-top: 12px; }
-#settings.client .attachments span.pgp_attachment { float: none; margin: 0 16px 16px 0; }
+#settings.client .attachments span.pgp_attachment { float: none; margin: 0 16px 16px 0; display: inline-block; }
