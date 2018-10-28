@@ -6,11 +6,10 @@ Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'folder']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let folder = url_params.folder;
+  let folder = url_params.folder || 'all';
 
   let message_headers = ['message', 'signed_message', 'public_key'].map(t => Pgp.armor.headers(t as ReplaceableMessageBlockType).begin);
-  let q_encrypted_messages_in_chosen_label = `${folder ? `label:${folder} ` : ''}is:inbox (${Api.gmail.query.or(message_headers, true)})`;
-  console.log(q_encrypted_messages_in_chosen_label);
+  let q_encrypted_messages_in_chosen_label = `label:${folder} is:inbox (${Api.gmail.query.or(message_headers, true)})`;
   let email_provider;
   let factory: XssSafeFactory;
   let injector: Injector;
@@ -43,8 +42,6 @@ Catch.try(async () => {
     notifications.show(data.notification, data.callbacks);
     $('body').one('click', Catch.try(notifications.clear));
   };
-
-  // notification_show({notification: 'This page has limited functionality. Using FlowCrypt directly in Gmail is more convenient.', callbacks: {}});
 
   BrowserMsg.listen({
     notification_show,
@@ -81,7 +78,7 @@ Catch.try(async () => {
     if (name === 'thread') {
       S.cached('threads').css('display', 'none');
       S.cached('thread').css('display', 'block');
-      Ui.sanitize_render('h1', `<a href="#">&lt; back</a> ${title}`).find('a').click(() => window.location.reload());
+      Ui.sanitize_render('h1', `${title}`);
     } else {
       S.cached('thread').css('display', 'none');
       S.cached('threads').css('display', 'block');
@@ -187,13 +184,13 @@ Catch.try(async () => {
         }
       }
     }
-    window.location.search = Env.url_create('', {account_email});
+    window.location.search = Env.url_create('', {account_email, folder: 'all'});
   };
 
   let render_menu_and_label_styles = (labels: ApirGmailLabels$label[]) => {
     all_labels = labels;
     add_label_styles(labels);
-    Ui.sanitize_append('.menu', renderable_labels(FOLDERS, 'menu'));
+    Ui.sanitize_append('.menu', `<br><div class="button gray2 label">ALL ENCRYPTED MAIL</div><br>${renderable_labels(FOLDERS, 'menu')}`);
     Ui.sanitize_append('.menu', '<br>' + renderable_labels(labels.sort((a, b) => {
       if(a.name > b.name) {
         return 1;
@@ -208,7 +205,7 @@ Catch.try(async () => {
 
   let render_inbox = async () => {
     $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
-    display_block('inbox', 'FlowCrypt Email Inbox');
+    display_block('inbox', `Encrypted messages in ${folder || 'all folders'}`);
     try {
       let {labels} = await Api.gmail.labels_get(account_email);
       render_menu_and_label_styles(labels);

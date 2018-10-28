@@ -345,7 +345,7 @@ type ApirGmailMessage = {id: string, threadId?: string|null, payload: ApirGmailM
 type ApirGmailMessageList$message = {id: string, threadId: string};
 type ApirGmailMessageList = {messages?: ApirGmailMessageList$message[], resultSizeEstimate: number};
 type ApirGmailLabels$label = {id: string, name: string, messageListVisibility: 'show'|'hide', labelListVisibility: 'labelShow'|'labelHide', type: 'user'|'system',
-  messagesTotal: number, messagesUnread: number, threadsTotal: number, threadsUnread: number, color?: {textColor: string, backgroundColor: string}};
+  messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: {textColor: string, backgroundColor: string}};
 type ApirGmailLabels = {labels: ApirGmailLabels$label[]};
 type ApirGmailAttachment = {attachmentId: string, size: number, data: string};
 type ApirGmailMessageSend = {id: string};
