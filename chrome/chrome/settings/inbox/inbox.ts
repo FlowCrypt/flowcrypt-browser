@@ -29,7 +29,7 @@ Catch.try(async () => {
   notifications = new Notifications(tab_id);
   factory = new XssSafeFactory(account_email, tab_id);
   injector = new Injector('settings', null, factory);
-  let storage = await Store.get_account(account_email, ['email_provider', 'picture']);
+  let storage = await Store.get_account(account_email, ['email_provider', 'picture', 'addresses']);
   email_provider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.meta_notification_container()); // xss-safe-factory
   if(storage.picture) {
@@ -71,6 +71,9 @@ Catch.try(async () => {
     },
     close_dialog: (data) => {
       $('#cryptup_dialog').remove();
+    },
+    scroll_to_bottom_of_conversation: () => {
+      // not implemented
     },
   }, tab_id);
 
@@ -226,20 +229,54 @@ Catch.try(async () => {
   let render_thread = async (thread_id: string) => {
     display_block('thread', 'Loading..');
     try {
-      let thread = await Api.gmail.thread_get(account_email, thread_id, 'full');
+      let thread = await Api.gmail.thread_get(account_email, thread_id, 'metadata');
       display_block('thread', Api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)');
-      thread.messages.map(render_message);
+      for(let m of thread.messages) {
+        await render_message(m);
+      }
       render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id);
     } catch (e) {
-      $('.thread').text('Failed to load thread');
+      if(Api.error.is_network_error(e)) {
+        Ui.sanitize_render('.thread', `<br>Failed to load thread - network error. ${Ui.retry_link()}`);
+      } else if(Api.error.is_auth_popup_needed(e)) {
+        render_and_handle_auth_popup_notification();
+      } else {
+        Catch.handle_exception(e);
+        let printable = Xss.html_escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
+        Ui.sanitize_render('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
+      }
     }
   };
 
-  let render_message = (message: ApirGmailMessage) => {
-    let bodies = Api.gmail.find_bodies(message);
-    let armored_message_from_bodies = Pgp.armor.clip(Str.base64url_decode(bodies['text/plain']!)) || Pgp.armor.clip(Pgp.armor.strip(Str.base64url_decode(bodies['text/html']!)));
-    let renderable_html = !armored_message_from_bodies ? Xss.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
-    S.cached('thread').append(Ui.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html})); // xss-safe-factory //xss-escaped
+  let wrap_message = (id: string, html: string) => {
+    return Ui.e('div', {id, class: 'message line', html});
+  };
+
+  let render_message = async (message: ApirGmailMessage) => {
+    let html_id = thread_message_id(message.id);
+    try {
+      let m = await Api.gmail.message_get(account_email, message.id, 'raw');
+      let {blocks, headers} = await Mime.process(Str.base64url_decode(m.raw!));
+      let r = '';
+      for (let block of blocks) {
+        r += (r ? '\n\n' : '') + Ui.renderable_message_block(factory, block, message.id, headers.from, Value.is(headers.from).in(storage.addresses || []));
+      }
+      $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory
+    } catch (e) {
+      if(Api.error.is_network_error(e)) {
+        Ui.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retry_link()}`));
+      } else if (Api.error.is_auth_popup_needed(e)) {
+        render_and_handle_auth_popup_notification();
+      } else {
+        Catch.handle_exception(e);
+        let printable = Xss.html_escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
+        Ui.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
+      }
+    }
+    // let bodies = Api.gmail.find_bodies(message);
+    // let armored_message_from_bodies = Pgp.armor.clip(Str.base64url_decode(bodies['text/plain']!)) || Pgp.armor.clip(Pgp.armor.strip(Str.base64url_decode(bodies['text/html']!)));
+    // let renderable_html = !armored_message_from_bodies ? Xss.html_escape(bodies['text/plain']!).replace(/\n/g, '<br>') : factory.embedded_message(armored_message_from_bodies, message.id, false, '', false, null);
+    // S.cached('thread').append(Ui.e('div', {id: thread_message_id(message.id), class: 'message line', html: renderable_html})); // xss-safe-factory //xss-escaped
   };
 
   let render_reply_box = (thread_id: string, last_message_id: string) => {

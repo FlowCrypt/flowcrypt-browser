@@ -1599,6 +1599,34 @@ class Ui {
     }
   };
 
+  /**
+   * XSS WARNING
+   *
+   * Return values are inserted directly into DOM. Results must be html escaped.
+   *
+   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
+   */
+  public static renderable_message_block = (factory: XssSafeFactory, block: MessageBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
+    if (block.type === 'text' || block.type === 'private_key') {
+      return Xss.html_escape(block.content) + '\n\n';
+    } else if (block.type === 'message') {
+      return factory.embedded_message(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
+    } else if (block.type === 'signed_message') {
+      return factory.embedded_message(block.content, message_id, is_outgoing, sender_email, false);
+    } else if (block.type === 'public_key') {
+      return factory.embedded_pubkey(Pgp.armor.normalize(block.content, 'public_key'), is_outgoing);
+    } else if (block.type === 'password_message') {
+      return factory.embedded_message('', message_id, is_outgoing, sender_email, true, null, block.content); // here block.content is message short id
+    } else if (block.type === 'attest_packet') {
+      return factory.embedded_attest(block.content);
+    } else if (block.type === 'cryptup_verification') {
+      return factory.embedded_verification(block.content);
+    } else {
+      Catch.report('dunno how to process block type: ' + block.type);
+      return '';
+    }
+  }
+
   public static time = {
     wait: (until_this_function_evaluates_true: () => boolean|undefined) => new Promise((success, error) => {
       let interval = Catch.set_interval(() => {
@@ -2123,7 +2151,6 @@ class Mime {
         if (block.type === 'text') {
           block.type = 'signed_message';
           block.signature = decoded.signature;
-          return false;
         }
       }
     }
@@ -2489,29 +2516,13 @@ class Pgp {
      * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
      */
     replace_blocks: (factory: XssSafeFactory, original_text: string, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
-      let blocks = Pgp.armor.detect_blocks(original_text).blocks;
+      let {blocks} = Pgp.armor.detect_blocks(original_text);
       if (blocks.length === 1 && blocks[0].type === 'text') {
         return;
       }
       let r = '';
-      for (let i in blocks) {
-        if (blocks[i].type === 'text' || blocks[i].type === 'private_key') {
-          r += (Number(i) ? '\n\n' : '') + Xss.html_escape(blocks[i].content) + '\n\n';
-        } else if (blocks[i].type === 'message') {
-          r += factory.embedded_message(blocks[i].complete ? Pgp.armor.normalize(blocks[i].content, 'message') : '', message_id, is_outgoing, sender_email, false);
-        } else if (blocks[i].type === 'signed_message') {
-          r += factory.embedded_message(blocks[i].content, message_id, is_outgoing, sender_email, false);
-        } else if (blocks[i].type === 'public_key') {
-          r += factory.embedded_pubkey(Pgp.armor.normalize(blocks[i].content, 'public_key'), is_outgoing);
-        } else if (blocks[i].type === 'password_message') {
-          r += factory.embedded_message('', message_id, is_outgoing, sender_email, true, null, blocks[i].content); // here blocks[i].content is message short id
-        } else if (blocks[i].type === 'attest_packet') {
-          r += factory.embedded_attest(blocks[i].content);
-        } else if (blocks[i].type === 'cryptup_verification') {
-          r += factory.embedded_verification(blocks[i].content);
-        } else {
-          Catch.report('dunno how to process block type: ' + blocks[i].type);
-        }
+      for (let block of blocks) {
+        r += (r ? '\n\n' : '') + Ui.renderable_message_block(factory, block, message_id, sender_email, is_outgoing);
       }
       return r;
     },

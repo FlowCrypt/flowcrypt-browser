@@ -395,4 +395,4 @@ body#settings .settings-border .key_list {
   text-overflow: ellipsis; max-width: 184px; opacity: 0.7; }
 #settings.client div.webmail_notifications div.webmail_notification { margin-top: 55px !important; }
 #settings.client img.main-profile-img { height: 32px; width: 32px; float: right; background: white; border-radius: 32px;
-  position: relative; top: 10px; right: 20px; }
+  position: relative; top: 10px; top: -6px; }

@@ -268,7 +268,7 @@ html {  padding:0; margin: 0; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0;
   -webkit-border-horizontal-spacing: 0; -webkit-border-vertical-spacing: 0; vertical-align: top; }
 
-.pgp_secure { border: 1px solid #f0f0f0; border-left: 4px solid #31A217; padding-left:10px; min-height: 38px;
+.pgp_secure { background: white; border: 1px solid #f0f0f0; border-left: 4px solid #31A217; padding-left:10px; min-height: 38px;
   background-image: url(/img/lock-seamless-bg-alpha.png); padding-top: 6px; padding-bottom: 6px; }
 .pgp_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; min-height: 25px; }
 .pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; min-height: 25px; }
