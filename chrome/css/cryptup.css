@@ -98,7 +98,6 @@ body#settings > div#content.pubkeys .action_remove_alias { cursor: pointer; }
 body#settings > div#content.contacts #emails td:nth-child(2),
 body#settings > div#content.contacts #emails td:nth-child(3),
 body#settings > div#content.contacts #emails td:nth-child(4) { display: inline-block; height: 25px; width: 25px; }
-body#settings > div#content.contacts table#emails tbody { width: 80%; margin: 0 auto; display: block;}
 body#settings > div#content.contacts #emails tr { margin: 10px; }
 body#settings > div#content.contacts #emails tr[email] { display: block; position: relative; }
 body#settings > div#content.contacts #emails tr[email] a { border-radius: 15px; display: block; font-size: 11px; font-weight: 500; margin: 0 5px; margin-right: 5%; padding: 10px 5px; position: relative; text-align: center; transition: 0.25s; width: 20px; }
