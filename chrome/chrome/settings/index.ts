@@ -297,6 +297,10 @@ Catch.try(async () => {
     Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
   }));
 
+  $('.action_show_encrypted_inbox').click(Ui.event.handle(target => {
+    window.location.href = Env.url_create('/chrome/settings/inbox/inbox.htm', {account_email});
+  }));
+
   $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
 
   $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.new_google_account_authentication_prompt(tab_id)));

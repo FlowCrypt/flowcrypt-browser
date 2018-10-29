@@ -374,6 +374,7 @@ body#settings .settings-border .key_list {
 }
 
 #settings.client { background-color: #f8f8f8; font-size: 14px; }
+#settings.client #banner { background: white; margin-left: 0; margin-right: 0; padding: 20px; }
 #settings.client div.webmail_notifications div.webmail_notification { margin-top: 44px !important; }
 #settings.client .line { width: auto; max-width: initial; margin-left: 20px; margin-right: 20px; text-align: left; }
 #settings.client .line h1 { margin-top: 8px; text-align: left; font-weight: 300; display: inline-block; margin-bottom: 8px; font-size: 22px; }

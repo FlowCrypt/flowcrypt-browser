@@ -67,8 +67,6 @@ Catch.try(async () => {
 
     $('.action_attest_log').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', Env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
 
-    $('.action_email_client').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'redirect', {location: Env.url_create('/chrome/settings/inbox/inbox.htm', {account_email})})));
-
     $('.action_flush_attest_info').click(Ui.event.handle(async () => {
       await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
       alert('Internal attest info flushed');

@@ -44,6 +44,11 @@ Catch.try(async () => {
     $('body').one('click', Catch.try(notifications.clear));
   };
 
+  Catch.set_timeout(() => $('#banner a').css('color', 'red'), 500);
+  Catch.set_timeout(() => $('#banner a').css('color', ''), 1000);
+  Catch.set_timeout(() => $('#banner a').css('color', 'red'), 1500);
+  Catch.set_timeout(() => $('#banner a').css('color', ''), 2000);
+
   BrowserMsg.listen({
     notification_show,
     close_new_message: (data) => {
