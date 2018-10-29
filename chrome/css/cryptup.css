@@ -298,7 +298,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block.pgp_pubkey .line { margin: 0; }
 #pgp_block.pgp_pubkey pre.pubkey { display: none; }
 
-table#compose { height: 100%; border-spacing: 0; border-collapse: collapse; width: 100% }
+table#compose { height: 100%; border-spacing: 0; border-collapse: collapse; width: 100%; background-color: white; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0; border: 1px solid #31A217; background-color: #31A217; }
 table#compose th h1 { display: inline-block; font-size: 13.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
 table#compose.sign th { background-color: #808080; border-color: #808080; }
@@ -425,6 +425,7 @@ table#compose tr#password_or_pubkey_container td .grey { padding: 1px 5px; backg
 table#compose span.start, table#compose span.end { font-weight: 900; position: absolute; font-size: 16px; font-family: 'Open Sans', Arial; }
 table#compose span.end { margin-left: -8px; }
 
+body#new_message { background: transparent; }
 body#new_message.popup { width: 474px; height: 600px; }
 body#new_message.popup table#compose { width: 490px; border: none; }
 body#new_message.popup table#compose tr td { border-left: none; border-right: none; }

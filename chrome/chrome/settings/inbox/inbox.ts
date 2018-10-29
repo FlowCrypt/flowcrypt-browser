@@ -182,12 +182,20 @@ Catch.try(async () => {
       if(id) {
         let label = all_labels.find(l => l.id === id);
         if(label) {
-          window.location.search = Env.url_create('', {account_email, folder: label.name});
+          if(folder === label.name) {
+            window.location.reload();
+          } else {
+            window.location.search = Env.url_create('', {account_email, folder: label.name});
+          }
           return;
         }
       }
     }
-    window.location.search = Env.url_create('', {account_email, folder: 'all'});
+    if(folder === 'all') {
+      window.location.reload();
+    } else {
+      window.location.search = Env.url_create('', {account_email, folder: 'all'});
+    }
   };
 
   let render_menu_and_label_styles = (labels: ApirGmailLabels$label[]) => {

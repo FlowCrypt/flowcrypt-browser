@@ -374,6 +374,7 @@ body#settings .settings-border .key_list {
 }
 
 #settings.client { background-color: #f8f8f8; font-size: 14px; }
+#settings.client div.webmail_notifications div.webmail_notification { margin-top: 44px !important; }
 #settings.client .line { width: auto; max-width: initial; margin-left: 20px; margin-right: 20px; text-align: left; }
 #settings.client .line h1 { margin-top: 8px; text-align: left; font-weight: 300; display: inline-block; margin-bottom: 8px; font-size: 22px; }
 #settings.client .block { display: none; }
@@ -394,7 +395,6 @@ body#settings .settings-border .key_list {
 #settings.client > table td.menu .button { width: 160px !important; margin-bottom: 8px !important; text-align: left !important; }
 #settings.client > table td.menu span.label { margin-left: 0; margin-bottom: 2px; font-size: 12px; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; max-width: 184px; opacity: 0.7; }
-#settings.client div.webmail_notifications div.webmail_notification { margin-top: 55px !important; }
 #settings.client img.main-profile-img { height: 32px; width: 32px; float: right; background: white; border-radius: 32px;
   position: relative; top: 10px; top: -6px; }
 #settings.client .attachments { margin-top: 12px; }
