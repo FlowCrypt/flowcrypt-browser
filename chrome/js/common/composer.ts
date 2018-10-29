@@ -791,7 +791,8 @@ class Composer {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
       let {short, admin_code} = await Api.fc.message_upload(body['text/plain']!, subscription.active ? 'uuid' : null);
-      body = this.format_password_protected_email(short, body, armored_pubkeys);
+      let storage = await Store.get_account(this.account_email, ['outgoing_language']);
+      body = this.format_password_protected_email(short, body, armored_pubkeys, storage.outgoing_language || 'EN');
       body = this.format_email_text_footer(body);
       await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
       await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
@@ -1436,9 +1437,9 @@ class Composer {
     }
   }
 
-  private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[]) => {
-    const decrypt_url = this.FC_WEB_URL + '/' + short_id;
-    const a = '<a href="' + Xss.html_escape(decrypt_url) + '" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">' + Lang.compose.open_message + '</a>';
+  private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
+    const msg_url = `${this.FC_WEB_URL}/${short_id}`;
+    const a = `<a href="${Xss.html_escape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_message[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
     const text = [];
     const html = [];
@@ -1446,11 +1447,11 @@ class Composer {
       text.push(intro + '\n');
       html.push(intro.replace(/\n/, '<br>') + '<br><br>');
     }
-    text.push(Lang.compose.message_encrypted_text + decrypt_url + '\n');
+    text.push(Lang.compose.message_encrypted_text[lang] + msg_url + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
-    html.push(Lang.compose.message_encrypted_html + a + '<br><br>');
-    html.push(Lang.compose.alternatively_copy_paste + Xss.html_escape(decrypt_url) + '<br><br><br>');
+    html.push(Lang.compose.message_encrypted_html[lang] + a + '<br><br>');
+    html.push(Lang.compose.alternatively_copy_paste[lang] + Xss.html_escape(msg_url) + '<br><br><br>');
     const html_fc_web_url_link = '<a href="' + Xss.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.html_escape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       const html_pgp_message = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');

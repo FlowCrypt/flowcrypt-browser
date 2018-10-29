@@ -469,6 +469,7 @@ interface AccountStore extends BaseStore {
     notification_setup_done_seen?: boolean;
     attest_log?: StoredAttestLog[];
     picture?: string; // google image
+    outgoing_language?: 'EN' | 'DE';
 
     // temporary
     tmp_submit_main?: boolean;

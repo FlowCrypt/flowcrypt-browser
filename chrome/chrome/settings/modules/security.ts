@@ -16,6 +16,8 @@ Catch.try( async () => {
     return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   }
 
+  let storage = await Store.get_account(account_email, ['hide_message_password', 'outgoing_language']);
+
   if (url_params.embedded) {
     $('.change_passhrase_container, .title_container').css('display', 'none');
     $('.line').css('padding', '7px 0');
@@ -25,6 +27,11 @@ Catch.try( async () => {
     Xss.sanitize_render('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await Api.fc.account_update({default_message_expire: Number($('.default_message_expire').val())});
+    window.location.reload();
+  };
+
+  let on_message_language_user_change = async () => {
+    await Store.set(account_email, {outgoing_language: $('.password_message_language').val()});
     window.location.reload();
   };
 
@@ -66,12 +73,14 @@ Catch.try( async () => {
 
   $('.cancel_passphrase_requirement_change').click(() =>  window.location.reload());
 
-  let storage = await Store.get_account(account_email, ['hide_message_password']);
   $('#hide_message_password').prop('checked', storage.hide_message_password === true);
+  $('.password_message_language').val(storage.outgoing_language || 'EN');
   $('#hide_message_password').change(Ui.event.handle(async target => {
     await Store.set(account_email, {hide_message_password: $(target).is(':checked')});
     window.location.reload();
   }));
+
+  $('.password_message_language').change(Ui.event.handle(on_message_language_user_change));
 
   let subscription = await Store.subscription();
   if (subscription.active) {
@@ -80,7 +89,7 @@ Catch.try( async () => {
       let response = await Api.fc.account_update();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
-      $('.default_message_expire').change(on_default_expire_user_change);
+      $('.default_message_expire').change(Ui.event.handle(on_default_expire_user_change));
     } catch (e) {
       if (Api.error.is_auth_error(e)) {
         Xss.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));

@@ -41,10 +41,10 @@ const Lang = {
     broken_link: 'It seems it contains a broken link.',
   },
   compose: {
-    message_encrypted_html: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ',
-    message_encrypted_text: 'This message is encrypted. Follow this link to open it: ',
-    alternatively_copy_paste: 'Alternatively copy and paste the following link: ',
-    open_message: 'Open Message',
+    message_encrypted_html: {EN: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ', DE: 'Diese&nbsp;Nachricht&nbsp;ist&nbsp;verschlüsselt: '},
+    message_encrypted_text: {EN: 'This message is encrypted. Follow this link to open it: ', DE: 'Diese Nachricht ist verschlüsselt. Nachricht öffnen: '},
+    alternatively_copy_paste: {EN: 'Alternatively copy and paste the following link: ', DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: '},
+    open_message: {EN: 'Open Message', DE: 'Nachricht öffnen'},
     include_pubkey_icon_title: 'Include your Public Key with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     include_pubkey_icon_title_active: 'Your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     header_title_compose_encrypt: 'New Secure Message',
@@ -54,5 +54,5 @@ const Lang = {
     something_went_wrong_try_again: 'Something went wrong, please try again. If this happens again, please write us at human@flowcrypt.com to fix it. ',
     write_me_to_fix_it: 'Email human@flowcrypt.com to get this resolved if it happens repeatedly. ',
     restart_browser_and_try_again: 'Unexpected error occured. Please restart your browser and try again. If this persists after a restart, please write us at human@flowcrypt.com.',
-  }
+  },
 };

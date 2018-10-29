@@ -2394,7 +2394,7 @@ class Mime {
 class Pgp {
 
   private static ARMOR_HEADER_MAX_LENGTH = 50;
-  private static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = {
+  private static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = { // general password_message begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
