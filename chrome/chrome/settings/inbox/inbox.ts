@@ -7,6 +7,7 @@ Catch.try(async () => {
   let url_params = Env.url_params(['account_email', 'folder']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let folder = url_params.folder || 'all';
+  let thread_id = url_params.thread_id || null;
 
   let message_headers = ['message', 'signed_message', 'public_key'].map(t => Pgp.armor.headers(t as ReplaceableMessageBlockType).begin);
   let q_encrypted_messages_in_chosen_label = `label:${folder} is:inbox (${Api.gmail.query.or(message_headers, true)})`;
@@ -76,6 +77,22 @@ Catch.try(async () => {
       // not implemented
     },
   }, tab_id);
+
+  let update_url = (title: string, params: UrlParams) => {
+    let new_url_search = Env.url_create('', params);
+    if(new_url_search !== window.location.search) {
+      window.history.pushState({}, title, new_url_search);
+    }
+  };
+
+  let load_url = (params: UrlParams) => {
+    let new_url_search = Env.url_create('', params);
+    if(new_url_search !== window.location.search) {
+      window.location.search = new_url_search;
+    } else {
+      window.location.reload();
+    }
+  };
 
   let display_block = (name: string, title: string) => {
     if (name === 'thread') {
@@ -182,20 +199,12 @@ Catch.try(async () => {
       if(id) {
         let label = all_labels.find(l => l.id === id);
         if(label) {
-          if(folder === label.name) {
-            window.location.reload();
-          } else {
-            window.location.search = Env.url_create('', {account_email, folder: label.name});
-          }
+          load_url({account_email, folder: label.name});
           return;
         }
       }
     }
-    if(folder === 'all') {
-      window.location.reload();
-    } else {
-      window.location.search = Env.url_create('', {account_email, folder: 'all'});
-    }
+    load_url({account_email, folder: 'all'});
   };
 
   let render_menu_and_label_styles = (labels: ApirGmailLabels$label[]) => {
@@ -238,7 +247,9 @@ Catch.try(async () => {
     display_block('thread', 'Loading..');
     try {
       let thread = await Api.gmail.thread_get(account_email, thread_id, 'metadata');
-      display_block('thread', Api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)');
+      let subject = Api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)';
+      update_url(`${subject} - FlowCrypt Inbox`, {account_email, thread_id});
+      display_block('thread', subject);
       for(let m of thread.messages) {
         await render_message(m);
       }
@@ -311,6 +322,8 @@ Catch.try(async () => {
 
   if (email_provider !== 'gmail') {
     $('body').text('Not supported for ' + email_provider);
+  } else if (thread_id) {
+    await render_thread(thread_id as string);
   } else {
     await render_inbox();
   }
