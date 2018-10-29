@@ -1,5 +1,7 @@
 <div>
 
+version 6.1.2 on October 29, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/267?closed=1" target="_blank">FlowCrypt Inbox</a>
+
 version 6.1.1 on October 28, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/266?closed=1" target="_blank">Contacts page fix II</a>
 
 version 6.1.0 on October 27, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/265?closed=1" target="_blank">Contacts page fix</a>
