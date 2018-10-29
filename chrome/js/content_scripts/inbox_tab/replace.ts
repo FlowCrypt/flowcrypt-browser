@@ -51,7 +51,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
       let replacement_xss_safe = Pgp.armor.replace_blocks(self.factory, message_element.innerText, message_id || '', sender_email || '', is_outgoing);  // xss-safe-factory
       if (typeof replacement_xss_safe !== 'undefined') {
         $(message_element).parents('.ap').addClass('pgp_message_container');
-        $(message_element).html(replacement_xss_safe.replace(/^…|…$/g, '').trim().replace(/\n/g, '<br>')); // xss-safe-factory
+        $(message_element).html(replacement_xss_safe.replace(/^…|…$/g, '').trim()); // xss-safe-factory
       }
     });
   }

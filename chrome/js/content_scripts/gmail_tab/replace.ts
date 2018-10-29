@@ -80,7 +80,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
       let replacement_xss_safe = Pgp.armor.replace_blocks(this.factory, email_container.innerText, this.determine_message_id(email_container), sender_email, is_outgoing);
       if (typeof replacement_xss_safe !== 'undefined') {
         $(this.selector.translate_prompt).hide();
-        let new_selector = this.update_message_body_element_DANGEROUSLY(email_container, 'set', replacement_xss_safe.replace(/\n/g, '<br>')); // xss-safe-factory: replace_blocks is XSS safe
+        let new_selector = this.update_message_body_element_DANGEROUSLY(email_container, 'set', replacement_xss_safe); // xss-safe-factory: replace_blocks is XSS safe
       }
     }
   }

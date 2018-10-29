@@ -1608,7 +1608,7 @@ class Ui {
    */
   public static renderable_message_block = (factory: XssSafeFactory, block: MessageBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
     if (block.type === 'text' || block.type === 'private_key') {
-      return Xss.html_escape(block.content) + '\n\n';
+      return Xss.html_escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
       return factory.embedded_message(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
     } else if (block.type === 'signed_message') {
