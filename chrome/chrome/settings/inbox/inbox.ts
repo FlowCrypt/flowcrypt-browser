@@ -252,7 +252,11 @@ Catch.try(async () => {
     display_block('inbox', `Encrypted messages in ${folder || 'all folders'}`);
     try {
       let {messages} = await Api.gmail.message_list(account_email, q_encrypted_messages_in_chosen_label, false);
-      await Promise.all(Value.arr.unique((messages || []).map(m => m.threadId)).map(render_inbox_item));
+      if((messages || []).length) {
+        await Promise.all(Value.arr.unique((messages || []).map(m => m.threadId)).map(render_inbox_item));
+      } else {
+        Ui.sanitize_render('.threads', `<p>No encrypted messages in ${folder} yet. ${Ui.retry_link()}</p>`);
+      }
     } catch(e) {
       if(Api.error.is_network_error(e)) {
         notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});

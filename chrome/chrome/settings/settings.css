@@ -379,13 +379,14 @@ body#settings .settings-border .key_list {
 #settings.client .line { width: auto; max-width: initial; margin-left: 20px; margin-right: 20px; text-align: left; }
 #settings.client .line h1 { margin-top: 8px; text-align: left; font-weight: 300; display: inline-block; margin-bottom: 8px; font-size: 22px; }
 #settings.client .block { display: none; }
-#settings.client .threads .line { padding-left: 20px; text-align: left; border-top: 1px solid #31A217; padding-right: 20px; width: auto; }
-#settings.client .threads .line:last-child { border-bottom: 1px solid #31A217; }
-#settings.client .threads .line.loaded:hover { background-color: #fff; cursor: pointer; }
-#settings.client .threads .line .loading {display: inline-block; }
-#settings.client .threads .line .from { display: inline-block; width: 300px; }
+#settings.client .threads > p { padding-left: 20px; opacity: 0.7; }
+#settings.client .threads > .line { padding-left: 20px; text-align: left; border-top: 1px solid #31A217; padding-right: 20px; width: auto; }
+#settings.client .threads > .line:last-child { border-bottom: 1px solid #31A217; }
+#settings.client .threads > .line.loaded:hover { background-color: #fff; cursor: pointer; }
+#settings.client .threads > .line .loading {display: inline-block; }
+#settings.client .threads > .line .from { display: inline-block; width: 300px; }
 /* #settings.client .threads .line .subject { } */
-#settings.client .threads .line .date { position: absolute; right: 20px; }
+#settings.client .threads > .line .date { position: absolute; right: 20px; }
 #settings.client .thread .message { border-top: 1px dotted #c0c0c0; }
 #settings.client .thread .message > iframe, #settings.client .thread .reply > iframe { width: 100%; border: none; }
 #settings.client div.new_message { position: fixed; }
