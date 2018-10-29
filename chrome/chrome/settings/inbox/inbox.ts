@@ -276,6 +276,7 @@ Catch.try(async () => {
         await render_message(m);
       }
       render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id);
+      // await Api.gmail.thread_modify(account_email, thread_id, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
       if(Api.error.is_network_error(e)) {
         Ui.sanitize_render('.thread', `<br>Failed to load thread - network error. ${Ui.retry_link()}`);
