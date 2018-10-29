@@ -4,7 +4,7 @@
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'folder']);
+  let url_params = Env.url_params(['account_email', 'folder', 'thread_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let folder = url_params.folder || 'all';
   let thread_id = url_params.thread_id || null;
@@ -223,12 +223,26 @@ Catch.try(async () => {
     $('.menu > .label').click(Ui.event.handle(render_folder));
   };
 
+  let render_menu = async () => {
+    try {
+      let {labels} = await Api.gmail.labels_get(account_email);
+      render_menu_and_label_styles(labels);
+    } catch(e) {
+      if(Api.error.is_network_error(e)) {
+        notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+      } else if(Api.error.is_auth_popup_needed(e)) {
+        render_and_handle_auth_popup_notification();
+      } else {
+        Catch.handle_exception(e);
+        notification_show({notification: `Error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+      }
+    }
+  };
+
   let render_inbox = async () => {
     $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
     display_block('inbox', `Encrypted messages in ${folder || 'all folders'}`);
     try {
-      let {labels} = await Api.gmail.labels_get(account_email);
-      render_menu_and_label_styles(labels);
       let {messages} = await Api.gmail.message_list(account_email, q_encrypted_messages_in_chosen_label, false);
       await Promise.all(Value.arr.unique((messages || []).map(m => m.threadId)).map(render_inbox_item));
     } catch(e) {
@@ -322,10 +336,12 @@ Catch.try(async () => {
 
   if (email_provider !== 'gmail') {
     $('body').text('Not supported for ' + email_provider);
-  } else if (thread_id) {
-    await render_thread(thread_id as string);
   } else {
-    await render_inbox();
+    await render_menu();
+    if (thread_id) {
+      await render_thread(thread_id as string);
+    } else {
+      await render_inbox();
+    }
   }
-
 })();
