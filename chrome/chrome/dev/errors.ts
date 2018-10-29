@@ -7,7 +7,7 @@ Catch.try(async () => {
   let storage = await Store.get_global(['errors']);
   if (storage.errors && storage.errors.length > 0) {
     let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
-    Ui.sanitize_render('.pre', errors);
+    Xss.sanitize_render('.pre', errors);
   }
 
   $('.clear').click(Ui.event.handle(async () => {

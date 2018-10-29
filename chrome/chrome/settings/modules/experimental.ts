@@ -10,7 +10,7 @@ Catch.try(async () => {
 
   // this is for debugging
   if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
-    Ui.sanitize_append('.storage_link_container', ` - <a href="${Xss.html_escape(Env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
+    Xss.sanitize_append('.storage_link_container', ` - <a href="${Xss.html_escape(Env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
   }
 
   if (account_email) {
@@ -34,7 +34,7 @@ Catch.try(async () => {
     $('.action_backup').click(Ui.event.prevent('double', () => collect_info_and_download_backup_file(account_email).catch(Catch.rejection)));
 
     $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
-      Ui.sanitize_render(self, Ui.spinner('white'));
+      Xss.sanitize_render(self, Ui.spinner('white'));
       try {
         let all = await Settings.refresh_account_aliases(account_email);
         alert('Updated to: ' + all.join(', '));

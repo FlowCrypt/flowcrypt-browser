@@ -106,7 +106,7 @@ Catch.try(async () => {
     if (name === 'thread') {
       S.cached('threads').css('display', 'none');
       S.cached('thread').css('display', 'block');
-      Ui.sanitize_render('h1', `${title}`);
+      Xss.sanitize_render('h1', `${title}`);
     } else {
       S.cached('thread').css('display', 'none');
       S.cached('threads').css('display', 'block');
@@ -164,7 +164,7 @@ Catch.try(async () => {
     try {
       let item_result = await Api.gmail.message_get(account_email, thread_id, 'metadata');
       thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
-      Ui.sanitize_append(thread_item.find('.subject'), renderable_labels(item_result.labelIds, 'messages'));
+      Xss.sanitize_append(thread_item.find('.subject'), renderable_labels(item_result.labelIds, 'messages'));
       let from_header_value = Api.gmail.find_header(item_result, 'from');
       if (from_header_value) {
         let from = Str.parse_email(from_header_value);
@@ -178,7 +178,7 @@ Catch.try(async () => {
       }
     } catch (e) {
       if(Api.error.is_network_error(e)) {
-        Ui.sanitize_render(thread_item.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => render_inbox_item(thread_id)));
+        Xss.sanitize_render(thread_item.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => render_inbox_item(thread_id)));
       } else if(Api.error.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
@@ -218,8 +218,8 @@ Catch.try(async () => {
   let render_menu_and_label_styles = (labels: ApirGmailLabels$label[]) => {
     all_labels = labels;
     add_label_styles(labels);
-    Ui.sanitize_append('.menu', `<br><div class="button gray2 label">ALL ENCRYPTED MAIL</div><br>${renderable_labels(FOLDERS, 'menu')}`);
-    Ui.sanitize_append('.menu', '<br>' + renderable_labels(labels.sort((a, b) => {
+    Xss.sanitize_append('.menu', `<br><div class="button gray2 label">ALL ENCRYPTED MAIL</div><br>${renderable_labels(FOLDERS, 'menu')}`);
+    Xss.sanitize_append('.menu', '<br>' + renderable_labels(labels.sort((a, b) => {
       if(a.name > b.name) {
         return 1;
       } else if(a.name < b.name) {
@@ -255,7 +255,7 @@ Catch.try(async () => {
       if((messages || []).length) {
         await Promise.all(Value.arr.unique((messages || []).map(m => m.threadId)).map(render_inbox_item));
       } else {
-        Ui.sanitize_render('.threads', `<p>No encrypted messages in ${folder} yet. ${Ui.retry_link()}</p>`);
+        Xss.sanitize_render('.threads', `<p>No encrypted messages in ${folder} yet. ${Ui.retry_link()}</p>`);
       }
     } catch(e) {
       if(Api.error.is_network_error(e)) {
@@ -283,13 +283,13 @@ Catch.try(async () => {
       // await Api.gmail.thread_modify(account_email, thread_id, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
       if(Api.error.is_network_error(e)) {
-        Ui.sanitize_render('.thread', `<br>Failed to load thread - network error. ${Ui.retry_link()}`);
+        Xss.sanitize_render('.thread', `<br>Failed to load thread - network error. ${Ui.retry_link()}`);
       } else if(Api.error.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
         let printable = Xss.html_escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
-        Ui.sanitize_render('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
+        Xss.sanitize_render('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
       }
     }
   };
@@ -316,13 +316,13 @@ Catch.try(async () => {
       $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory
     } catch (e) {
       if(Api.error.is_network_error(e)) {
-        Ui.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retry_link()}`));
+        Xss.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retry_link()}`));
       } else if (Api.error.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
         let printable = Xss.html_escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
-        Ui.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
+        Xss.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }
     }
   };
@@ -340,7 +340,7 @@ Catch.try(async () => {
   };
 
   let thread_element_add = (thread_id: string) => {
-    Ui.sanitize_append(S.cached('threads'), Ui.e('div', {
+    Xss.sanitize_append(S.cached('threads'), Ui.e('div', {
       class: 'line',
       id: thread_list_item_id(thread_id),
       html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',

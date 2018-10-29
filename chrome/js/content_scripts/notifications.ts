@@ -40,7 +40,7 @@ class Notifications {
   }
 
   show = (text: string, callbacks:Dict<Callback>={}) => {
-    Ui.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
+    Xss.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;
       callbacks.close = Catch.try(() => {

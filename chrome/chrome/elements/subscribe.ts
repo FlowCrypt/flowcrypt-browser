@@ -21,7 +21,7 @@ Catch.try(async () => {
     let render_err = (msg: string, e?: any) => {
       msg = Xss.html_escape(msg);
       let debug = e ? `<pre>${Xss.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
-      Ui.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retry_link()}</div><br><br>${debug}`);
+      Xss.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retry_link()}</div><br><br>${debug}`);
     };
     if(Api.error.is_network_error(e)) {
       render_err('network error');
@@ -55,11 +55,11 @@ Catch.try(async () => {
   let button_spin = (element: HTMLElement) => {
     original_button_content = $(element).html();
     original_button_selector = $(element);
-    Ui.sanitize_render(element, Ui.spinner('white'));
+    Xss.sanitize_render(element, Ui.spinner('white'));
   };
 
   let button_restore = () => {
-    Ui.sanitize_render(original_button_selector, original_button_content);
+    Xss.sanitize_render(original_button_selector, original_button_content);
   };
 
   let handle_successful_upgrade = () => {
@@ -85,12 +85,12 @@ Catch.try(async () => {
   } catch (e) {
     if (Api.error.is_auth_error(e)) {
       // todo - handle auth error - add device
-      Ui.sanitize_render('#content', `Failed to load - unknown device. ${Ui.retry_link()}`);
+      Xss.sanitize_render('#content', `Failed to load - unknown device. ${Ui.retry_link()}`);
     } else if (Api.error.is_network_error(e)) {
-      Ui.sanitize_render('#content', `Failed to load due to internet connection. ${Ui.retry_link()}`);
+      Xss.sanitize_render('#content', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
       Catch.handle_exception(e);
-      Ui.sanitize_render('#content', `Unknown error happened when fetching account info. ${Ui.retry_link()}`);
+      Xss.sanitize_render('#content', `Unknown error happened when fetching account info. ${Ui.retry_link()}`);
     }
   }
 
@@ -159,7 +159,7 @@ Catch.try(async () => {
       $('.status').text('After the trial, your account will automatically switch to Free Forever.');
     }
   } else if (subscription.active && subscription.method === 'trial') {
-    Ui.sanitize_render('.status', 'After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
+    Xss.sanitize_render('.status', 'After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
   } else {
     // todo - upgrade to business
   }
@@ -170,7 +170,7 @@ Catch.try(async () => {
         $('.action_get_trial').css('display', 'none');
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
-        Ui.sanitize_render('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+        Xss.sanitize_render('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
         $('.action_close').click(Ui.event.handle(() => {
           if (url_params.subscribe_result_tab_id) {
             BrowserMsg.send(url_params.subscribe_result_tab_id as string, 'subscribe_result', {active: true});

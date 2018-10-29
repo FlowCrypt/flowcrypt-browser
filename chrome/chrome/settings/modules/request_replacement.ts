@@ -8,7 +8,7 @@ Catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  Ui.sanitize_render('#status', 'Loading from keyserver<br/><br/><br/>' + Ui.spinner('green'));
+  Xss.sanitize_render('#status', 'Loading from keyserver<br/><br/><br/>' + Ui.spinner('green'));
 
   let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
@@ -59,7 +59,7 @@ Catch.try(async () => {
     let r = await Api.attester.lookup_email([account_email]);
     keyserver_result = r.results[0];
   } catch (e) {
-    Ui.sanitize_render('#status', `Internet connection dropped. ${Ui.retry_link()}`);
+    Xss.sanitize_render('#status', `Internet connection dropped. ${Ui.retry_link()}`);
     return;
   }
 
@@ -67,7 +67,7 @@ Catch.try(async () => {
     Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/keyserver.htm');
   } else { // email previously attested, and there indeed is a pubkey mismatch
     expect_longid = Pgp.key.fingerprint(keyserver_result.pubkey!)!;
-    Ui.sanitize_render('#status', `Original key KeyWords:<br/><span class="good">${mnemonic(Pgp.key.longid(keyserver_result.pubkey)!)}<br/>${Pgp.key.fingerprint(keyserver_result.pubkey, 'spaced')}</span>`); // all pubkeys on keyserver should have computable longid
+    Xss.sanitize_render('#status', `Original key KeyWords:<br/><span class="good">${mnemonic(Pgp.key.longid(keyserver_result.pubkey)!)}<br/>${Pgp.key.fingerprint(keyserver_result.pubkey, 'spaced')}</span>`); // all pubkeys on keyserver should have computable longid
     $('#step_2b_manual_enter').css('display', 'block');
     $('.action_request_replacement').click(Ui.event.prevent('double', request_replacement));
   }

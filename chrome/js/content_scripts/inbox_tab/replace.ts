@@ -78,7 +78,7 @@ class InboxElementReplacer implements WebmailElementReplacer {
         let message_id = this.dom_extract_message_id(message_element);
         if (message_id) {
           if (this.can_read_emails) {
-            Ui.sanitize_prepend(new_pgp_messages, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
+            Xss.sanitize_prepend(new_pgp_messages, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
             Api.gmail.message_get(this.account_email, message_id, 'full').then(message => {
               this.process_attachments(message_id!, message_element, Api.gmail.find_attachments(message), attachments_container); // message_id checked right above
             }, () => $(new_pgp_messages).find('.attachment_loader').text('Failed to load'));

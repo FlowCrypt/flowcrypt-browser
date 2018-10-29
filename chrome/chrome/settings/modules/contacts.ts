@@ -19,15 +19,15 @@ Catch.try(async () => {
   let render_contact_list = async () => {
     let contacts = await Store.db_contact_search(null, { has_pgp: true });
 
-    Ui.sanitize_render('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(Ui.event.prevent('double', (self) => {
+    Xss.sanitize_render('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       let all_armored_public_keys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       let export_file = new Attachment({name: 'public-keys-export.asc', type: 'application/pgp-keys', data: all_armored_public_keys});
       Attachment.methods.save_to_downloads(export_file, Env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
-    Ui.sanitize_append('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(Ui.event.prevent('double', (self) => {
+    Xss.sanitize_append('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(Ui.event.prevent('double', (self) => {
       $('.hide_when_rendering_subpage').css('display', 'none');
-      Ui.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
+      Xss.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
       $('#bulk_import').css('display', 'block');
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
@@ -49,16 +49,16 @@ Catch.try(async () => {
       let remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey"></a>`;
       table_contents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
-    Ui.sanitize_replace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${table_contents}</table>`);
+    Xss.sanitize_replace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${table_contents}</table>`);
 
     $('a.action_show').off().click(Ui.event.prevent('double', async (self) => {
       let [contact] = await Store.db_contact_get(null, [$(self).closest('tr').attr('email')!]); // defined above
       $('.hide_when_rendering_subpage').css('display', 'none');
-      Ui.sanitize_render('h1', `'${back_button}${space}${contact!.email}`); // should exist - from list of contacts
+      Xss.sanitize_render('h1', `'${back_button}${space}${contact!.email}`); // should exist - from list of contacts
       if (contact!.client === 'cryptup') {
-        Ui.sanitize_append('h1', '&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
+        Xss.sanitize_append('h1', '&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
       } else {
-        Ui.sanitize_append('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+        Xss.sanitize_append('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       }
       $('#view_contact .key_dump').text(contact!.pubkey!); // should exist - from list of contacts && should have pgp - filtered
       $('#view_contact .key_fingerprint').text(contact!.fingerprint!); // should exist - from list of contacts && should have pgp - filtered
@@ -70,7 +70,7 @@ Catch.try(async () => {
     $('a.action_change').off().click(Ui.event.prevent('double', self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       let email = $(self).closest('tr').attr('email')!;
-      Ui.sanitize_render('h1', `${back_button}${space}${Xss.html_escape(email)}${space}(edit)`);
+      Xss.sanitize_render('h1', `${back_button}${space}${Xss.html_escape(email)}${space}(edit)`);
       $('#edit_contact').css('display', 'block');
       $('#edit_contact .input_pubkey').val('').attr('email', email);
       $('#page_back_button').click(Ui.event.handle(() => render_contact_list()));
@@ -92,7 +92,7 @@ Catch.try(async () => {
 
     $('.action_view_bulk_import').off().click(Ui.event.prevent('double', self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
-      Ui.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
+      Xss.sanitize_render('h1', `${back_button}${space}Bulk Public Key Import${space}`);
       $('#bulk_import').css('display', 'block');
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');

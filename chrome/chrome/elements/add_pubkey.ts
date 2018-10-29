@@ -13,14 +13,14 @@ Catch.try(async () => {
   let close_dialog = () => BrowserMsg.send(parent_tab_id, 'close_dialog');
 
   for (let email of (url_params.emails as string).split(',')) {
-    Ui.sanitize_append('select.email', `<option value="${Xss.html_escape(email)}">${Xss.html_escape(email)}</option>`);
+    Xss.sanitize_append('select.email', `<option value="${Xss.html_escape(email)}">${Xss.html_escape(email)}</option>`);
   }
 
   let contacts = await Store.db_contact_search(null, {has_pgp: true});
 
-  Ui.sanitize_append('select.copy_from_email', '<option value=""></option>');
+  Xss.sanitize_append('select.copy_from_email', '<option value=""></option>');
   for (let contact of contacts) {
-    Ui.sanitize_append('select.copy_from_email', `<option value="${Xss.html_escape(contact.email)}">${Xss.html_escape(contact.email)}</option>`);
+    Xss.sanitize_append('select.copy_from_email', `<option value="${Xss.html_escape(contact.email)}">${Xss.html_escape(contact.email)}</option>`);
   }
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {

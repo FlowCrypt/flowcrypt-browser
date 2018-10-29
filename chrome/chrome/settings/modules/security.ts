@@ -22,7 +22,7 @@ Catch.try( async () => {
   }
 
   let on_default_expire_user_change = async () => {
-    Ui.sanitize_render('.select_loader_container', Ui.spinner('green'));
+    Xss.sanitize_render('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await Api.fc.account_update({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
@@ -75,7 +75,7 @@ Catch.try( async () => {
 
   let subscription = await Store.subscription();
   if (subscription.active) {
-    Ui.sanitize_render('.select_loader_container', Ui.spinner('green'));
+    Xss.sanitize_render('.select_loader_container', Ui.spinner('green'));
     try {
       let response = await Api.fc.account_update();
       $('.select_loader_container').text('');
@@ -83,17 +83,17 @@ Catch.try( async () => {
       $('.default_message_expire').change(on_default_expire_user_change);
     } catch (e) {
       if (Api.error.is_auth_error(e)) {
-        Ui.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
+        Xss.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
       } else if (Api.error.is_network_error(e)) {
-        Ui.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Xss.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
         Catch.handle_exception(e);
-        Ui.sanitize_render('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
+        Xss.sanitize_render('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
-    Ui.sanitize_append($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm')));
+    Xss.sanitize_append($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm')));
   }
 
 })();

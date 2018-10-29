@@ -23,7 +23,7 @@ Catch.try(async () => {
       Settings.update_profile_picture_if_missing(email).catch(Catch.handle_exception); // will show next time page is rendered
     }
   }
-  Ui.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
+  Xss.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
     if (url_params.action === 'inbox') {
       await BrowserMsg.send_await(null, 'inbox', { account_email: $(target).attr('email') });
       window.close();

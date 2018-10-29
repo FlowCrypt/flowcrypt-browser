@@ -168,7 +168,7 @@ class Attachment {
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          Ui.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
+          Xss.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
           render_in.append(a); // xss-escaped attachment name above
           render_in.css('height', 'auto');
           render_in.find('a').click(e => {
@@ -1364,18 +1364,10 @@ class Ui {
     return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Xss.html_sanitize(dirty_html)); // xss-sanitized
-
-  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Xss.html_sanitize(dirty_html)); // xss-sanitized
-
-  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Xss.html_sanitize(dirty_html)); // xss-sanitized
-
-  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Xss.html_sanitize(dirty_html)); // xss-sanitized
-
   public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
       let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.html_escape(buttons[id].color || 'green')} overlay_action_${Xss.html_escape(id)}">${Xss.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
-      Ui.sanitize_append('body', `
+      Xss.sanitize_append('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
             <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
@@ -1417,7 +1409,7 @@ class Ui {
     let actual_type = typeof values[name];
     if (actual_type !== expected_type) {
       let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be of type ${Xss.html_escape(expected_type)} but got ${Xss.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      Xss.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
     return values[name];
@@ -1426,7 +1418,7 @@ class Ui {
   public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
     if (expected_values.indexOf(values[name]) === -1) {
       let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be one of ${Xss.html_escape(expected_values.map(String).join(','))} but got ${Xss.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Ui.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      Xss.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
     return values[name];
@@ -1457,11 +1449,11 @@ class Ui {
       $('#toggle_' + id).click(Ui.event.handle(target => {
         if (passphrase_input.attr('type') === 'password') {
           $('#' + id).attr('type', 'text');
-          Ui.sanitize_render(target, button_hide);
+          Xss.sanitize_render(target, button_hide);
           Store.set(null, { hide_pass_phrases: false }).catch(Catch.rejection);
         } else {
           $('#' + id).attr('type', 'password');
-          Ui.sanitize_render(target, button_show);
+          Xss.sanitize_render(target, button_show);
           Store.set(null, { hide_pass_phrases: true }).catch(Catch.rejection);
         }
       }));
@@ -1810,6 +1802,14 @@ class Xss {
   private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
   private static HREF_REGEX_CACHE = null as null|RegExp;
+
+  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Xss.html_sanitize(dirty_html)); // xss-sanitized
+
+  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Xss.html_sanitize(dirty_html)); // xss-sanitized
+
+  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Xss.html_sanitize(dirty_html)); // xss-sanitized
+
+  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Xss.html_sanitize(dirty_html)); // xss-sanitized
 
   public static html_sanitize = (dirty_html: string): string => { // originaly text_or_html
     return DOMPurify.sanitize(dirty_html, {

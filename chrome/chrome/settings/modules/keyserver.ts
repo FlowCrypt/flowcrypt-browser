@@ -10,7 +10,7 @@ Catch.try(async () => {
 
   $('.email-address').text(account_email);
 
-  Ui.sanitize_render('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
+  Xss.sanitize_render('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
   let render_diagnosis = (diagnosis: any, attests_requested: string[]) => {
     for (let email of Object.keys(diagnosis.results)) {
@@ -68,11 +68,11 @@ Catch.try(async () => {
           color = 'red';
         }
       }
-      Ui.sanitize_append('#content', `<div class="line left">${Xss.html_escape(email)}: <span class="${color}">${note}</span> ${remove} ${action}</div>`);
+      Xss.sanitize_append('#content', `<div class="line left">${Xss.html_escape(email)}: <span class="${color}">${note}</span> ${remove} ${action}</div>`);
     }
 
     $('.action_request_attestation').click(Ui.event.prevent('double', async self => {
-      Ui.sanitize_render(self, Ui.spinner('white'));
+      Xss.sanitize_render(self, Ui.spinner('white'));
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
@@ -81,17 +81,17 @@ Catch.try(async () => {
       window.location.reload();
     }));
     $('.request_replacement').click(Ui.event.prevent('double', self => {
-      Ui.sanitize_render(self, Ui.spinner('white'));
+      Xss.sanitize_render(self, Ui.spinner('white'));
       Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/request_replacement.htm');
     }));
     $('.refresh_after_attest_request').click(Ui.event.prevent('double', async self => {
-      Ui.sanitize_render(self, 'Updating..' + Ui.spinner('white'));
+      Xss.sanitize_render(self, 'Updating..' + Ui.spinner('white'));
       BrowserMsg.send(null, 'attest_requested', {account_email});
       await Ui.time.sleep(30000);
       window.location.reload();
     }));
-    Ui.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
-      Ui.sanitize_render(self, Ui.spinner('green'));
+    Xss.sanitize_append('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
+      Xss.sanitize_render(self, Ui.spinner('green'));
       try {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
         await Store.set(account_email, { addresses: Value.arr.unique(addresses.concat(account_email)) });
@@ -135,9 +135,9 @@ Catch.try(async () => {
     render_diagnosis(diagnosis, storage.attests_requested || []);
   } catch (e) {
     if (Api.error.is_network_error(e)) {
-      Ui.sanitize_render('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
+      Xss.sanitize_render('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
-      Ui.sanitize_render('.summary', `Failed to load. ${Ui.retry_link()}`);
+      Xss.sanitize_render('.summary', `Failed to load. ${Ui.retry_link()}`);
       Catch.handle_exception(e);
     }
   }

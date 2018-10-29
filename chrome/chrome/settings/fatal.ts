@@ -11,7 +11,7 @@
 
     if (url_params.reason === 'db_corrupted') {
         title.text('FlowCrypt cannot function because your Browser Profile is corrupted.');
-        Ui.sanitize_render(details, `
+        Xss.sanitize_render(details, `
         <p>To fix it:</p>
           <ol>
             <li>Close your browser completely (all tabs and all windows) and open it again. This often helps.</li>
@@ -23,10 +23,10 @@
         `);
     } else if (url_params.reason === 'db_denied') {
         title.text('FlowCrypt cannot function because browser IndexedDB is disabled');
-        Ui.sanitize_render(details, `<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.</p>`);
+        Xss.sanitize_render(details, `<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.</p>`);
     } else if (url_params.reason === 'db_failed') {
         title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
-        Ui.sanitize_render(details, `<p>If you are on Firefox, please report your browser version to human@flowcrypt.com</p>.`);
+        Xss.sanitize_render(details, `<p>If you are on Firefox, please report your browser version to human@flowcrypt.com</p>.`);
     } else {
         details.text('Unknown reason. Write human@flowcrypt.com if you need help.');
     }
