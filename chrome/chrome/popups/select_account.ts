@@ -5,15 +5,12 @@
 Catch.try(async () => {
 
   let url_params = Env.url_params(['action']);
+  let action = Env.url_param_require.oneof(url_params, 'action', ['inbox', 'settings']);
 
-  let page: string|null = null;
-  if (url_params.action === 'new_message') {
-    $('#title').text('Choose account for new message');
-    page = '/chrome/elements/compose.htm';
-  } else if (url_params.action === 'settings') {
-    $('#title').text('Select an account to open settings');
+  if (action === 'inbox') {
+    $('#title').text('Choose inbox account');
   } else {
-    throw new Error('unknown action: ' + url_params.action);
+    $('#title').text('Select an account to open settings');
   }
 
   let account_storages = await Store.get_accounts(await Store.account_emails_get(), ['setup_done', 'picture']);
@@ -27,8 +24,13 @@ Catch.try(async () => {
     }
   }
   Ui.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
-    await BrowserMsg.send_await(null, 'settings', { account_email: $(target).attr('email'), page });
-    window.close();
+    if (url_params.action === 'inbox') {
+      await BrowserMsg.send_await(null, 'inbox', { account_email: $(target).attr('email') });
+      window.close();
+    } else {
+      await BrowserMsg.send_await(null, 'settings', { account_email: $(target).attr('email') });
+      window.close();
+    }
   }));
 
   $(".picture").on('error', Ui.event.handle(self => {

@@ -291,8 +291,6 @@ Catch.try(async () => {
 
   $.get(chrome.extension.getURL('/changelog.txt'), data => $('#status-row #status_v').featherlight(data.replace(/\n/g, '<br>')), 'html');
 
-  $('.action_send_email').click(() => window.open('https://mail.google.com'));
-
   $('.show_settings_page').click(Ui.event.handle(target => {
     Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
   }));

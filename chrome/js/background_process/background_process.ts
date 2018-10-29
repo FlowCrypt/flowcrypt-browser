@@ -21,29 +21,35 @@ chrome.runtime.onInstalled.addListener(event => {
   await Store.set(null, { version: Catch.version('int') as number|null });
   let storage = await Store.get_global(['settings_seen', 'errors']);
 
+  let open_flowcrypt_tab = async (url: string) => {
+    let opened_tab = await get_cryptup_settings_tab_id_if_open();
+    if(opened_tab === null) {
+      chrome.tabs.create({url});
+    } else {
+      chrome.tabs.update(opened_tab, {url, active: true});
+    }
+  };
+
   let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:Dict<FlatTypes>|null=null, add_new_account=false) => {
     let base_path = chrome.extension.getURL(`chrome/settings/${path}`);
-    let opened_tab = await get_cryptup_settings_tab_id_if_open();
-    let open_tab = (url: string) => {
-      if(opened_tab === null) {
-        chrome.tabs.create({url});
-      } else {
-        chrome.tabs.update(opened_tab, {url, active: true});
-      }
-    };
     let page_url_params = _page_url_params ? JSON.stringify(_page_url_params) : null;
     if (account_email) {
-      open_tab(Env.url_create(base_path, { account_email, page, page_url_params}));
+      await open_flowcrypt_tab(Env.url_create(base_path, { account_email, page, page_url_params}));
     } else if(add_new_account) {
-      open_tab(Env.url_create(base_path, { add_new_account }));
+      await open_flowcrypt_tab(Env.url_create(base_path, { add_new_account }));
     } else {
       let account_emails = await Store.account_emails_get();
-      open_tab(Env.url_create(base_path, { account_email: account_emails[0], page, page_url_params}));
+      await open_flowcrypt_tab(Env.url_create(base_path, { account_email: account_emails[0], page, page_url_params}));
     }
   };
 
   let open_settings_page_handler: BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>, add_new_account?: boolean}, sender, respond) => {
     await open_settings_page(message.path, message.account_email, message.page, message.page_url_params, message.add_new_account === true);
+    respond();
+  };
+
+  let open_inbox_page_handler: BrowserMessageHandler = async (message: {account_email: string, thread_id?: string, folder?: string}, sender, respond) => {
+    await open_flowcrypt_tab(Env.url_create(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
     respond();
   };
 
@@ -122,6 +128,7 @@ chrome.runtime.onInstalled.addListener(event => {
     close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
     migrate_account,
     settings: open_settings_page_handler,
+    inbox: open_inbox_page_handler,
     attest_requested: BgAttests.attest_requested_handler,
     attest_packet_received: BgAttests.attest_packet_received_handler,
     update_uninstall_url,

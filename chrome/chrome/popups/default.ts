@@ -18,12 +18,12 @@ Catch.try(async () => {
         window.location.href = 'select_account.htm?action=settings';
       }
     }));
-    $('.action_send_email').click(Ui.event.handle(async () => {
+    $('.action_open_encrypted_inbox').click(Ui.event.handle(async () => {
       if (active_account_email) {
-        await BrowserMsg.send_await(null, 'settings', { account_email: active_account_email, page: '/chrome/elements/compose.htm' });
+        await BrowserMsg.send_await(null, 'inbox', { account_email: active_account_email });
         window.close();
       } else {
-        window.location.href = 'select_account.htm?action=new_message';
+        window.location.href = 'select_account.htm?action=inbox';
       }
     }));
   };

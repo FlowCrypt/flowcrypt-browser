@@ -119,7 +119,7 @@ html, body {
   top: 10px;
   bottom: 0;
 }
-.action_send_email {
+.action_open_encrypted_inbox {
   text-align: center;
   display: block;
   margin: 0 auto!important;
