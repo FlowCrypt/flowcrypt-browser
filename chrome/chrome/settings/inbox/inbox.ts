@@ -39,6 +39,9 @@ Catch.try(async () => {
     }));
   }
 
+  $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send(null, 'settings', {account_email})));
+  $('.action_choose_account').get(0).title = account_email;
+
   let notification_show = (data: NotificationWithHandlers) => {
     notifications.show(data.notification, data.callbacks);
     $('body').one('click', Catch.try(notifications.clear));

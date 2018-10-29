@@ -63,11 +63,13 @@ html, body {
   animation: fadeInUp .4s;
 }
 #email_or_settings {
-  background-image: radial-gradient(52% 137%, #FFFFFF 42%, #E8E5E5 75%, #F3EFEF 100%);
+  background-image: radial-gradient(50% 60%, #FFF 40%, #FFFFFF 77%, #F3EFEF 100%);
 }
 #email_or_settings img {
   opacity: .85;
   transition: .3s;
+  width: 48px;
+  margin: 1px;
 }
 #email_or_settings img:hover {
   opacity: 1;
