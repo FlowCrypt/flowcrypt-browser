@@ -157,7 +157,7 @@ Catch.try(async () => {
   };
 
   let render_inbox_item = async (thread_id: string) => {
-    thread_element_add(thread_id);
+    inbox_thread_item_add(thread_id);
     let thread_item = $('.threads #' + thread_list_item_id(thread_id));
     try {
       let thread = await Api.gmail.thread_get(account_email, thread_id, 'metadata');
@@ -178,7 +178,7 @@ Catch.try(async () => {
         thread_item.css({'font-weight': 'bold', 'background': 'white'});
       }
       if(thread.messages.length > 1) {
-        // todo - render amount of msgs
+        thread_item.find('.msg_count').text(`(${thread.messages.length})`);
       }
     } catch (e) {
       if(Api.error.is_network_error(e)) {
@@ -351,11 +351,11 @@ Catch.try(async () => {
     return 'list_thread_id_' + thread_id;
   };
 
-  let thread_element_add = (thread_id: string) => {
+  let inbox_thread_item_add = (thread_id: string) => {
     Xss.sanitize_append(S.cached('threads'), Ui.e('div', {
       class: 'line',
       id: thread_list_item_id(thread_id),
-      html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from"></span><span class="subject"></span><span class="date"></span>',
+      html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from_container"><span class="from"></span><span class="msg_count"></span></span><span class="subject"></span><span class="date"></span>',
     }));
   };
 

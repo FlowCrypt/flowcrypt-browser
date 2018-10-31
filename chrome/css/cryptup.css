@@ -425,7 +425,6 @@ table#compose tr#password_or_pubkey_container td .grey { padding: 1px 5px; backg
 table#compose span.start, table#compose span.end { font-weight: 900; position: absolute; font-size: 16px; font-family: 'Open Sans', Arial; }
 table#compose span.end { margin-left: -8px; }
 
-body#new_message { background: transparent; }
 body#new_message.popup { width: 474px; height: 600px; }
 body#new_message.popup table#compose { width: 490px; border: none; }
 body#new_message.popup table#compose tr td { border-left: none; border-right: none; }
