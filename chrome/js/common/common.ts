@@ -1,9 +1,9 @@
-
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="common.d.ts" />
-/// <reference path="openpgp.d.ts" />
+/// <reference path="../../types/common.d.ts" />
+/// <reference path="../../types/openpgp.d.ts" />
+/// <reference path="../../types/jquery.d.ts" />
 
 'use strict';
 
@@ -11,8 +11,6 @@ declare let $_HOST_html_to_text: (html: string) => string;
 declare let openpgp: typeof OpenPGP;
 declare let mnemonic: (hex: string) => string;
 declare let zxcvbn: Function; // tslint:disable-line:ban-types
-// declare module 'dompurify'; // useful if on @types repo
-// declare let dompurify: typeof DOMPurify;
 
 class UnreportableError extends Error {}
 class TabIdRequiredError extends Error {}
@@ -1822,7 +1820,7 @@ class Xss {
   public static html_sanitize_keep_basic_tags = (dirty_html: string): string => {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
-    DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+    DOMPurify.addHook('afterSanitizeAttributes', node => {
       if ('src' in node) {
         // replace images with a link that points to that image
         let img: Element = node;

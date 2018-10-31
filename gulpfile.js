@@ -57,6 +57,7 @@ let subTask = {
   runFirefox: () => recipe.exec('web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
   releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),
   releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('./../flowcrypt-script/browser/firefox_release')),
+  chromeResolveModules: () => recipe.exec(`node tooling/resolve-modules`),
 }
 
 let task = {
@@ -68,6 +69,7 @@ let task = {
       subTask.copyVersionedManifest,
     ),
     subTask.chromeBuildSpacesToTabs,
+    subTask.chromeResolveModules,
     subTask.copyChromeToFirefox,
     subTask.copyChromeToFirefoxEditedManifest,
   ),

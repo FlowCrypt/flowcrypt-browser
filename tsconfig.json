@@ -6,7 +6,24 @@
     "strictNullChecks": true,
     "sourceMap": false,
     "checkJs": false,
-    "outDir": "build/chrome"
+    "outDir": "build/chrome",
+    "baseUrl": "chrome",
+    "paths": {
+      "jquery": ["lib/jquery.min.js"],
+      "openpgp": ["lib/openpgp.js"],
+      "dompurify": ["types/purify.d.ts", "lib/purify.min.js", "COMMENT"],
+      "anchorme": ["lib/anchorme.js"],
+      "fine-uploader": ["lib/fine-uploader.js"],
+      "clipboard": ["lib/clipboard.js"],
+      "iso-8859-2": ["lib/iso-8859-2.js"],
+      "zxcvbn": ["lib/zxcvbn.js"],
+      "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js"],
+      "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js"],
+      "featherlight": ["lib/featherlight/featherlight.js"]
+    },
+    "typeRoots": [
+      "chrome/types"
+    ]
   },
   "include": [
     "chrome/**/*.ts"

@@ -2081,7 +2081,9 @@
     (window as any).mnemonic = mnemonic;
   }
 
+  // @ts-ignore
   if (typeof exports === 'object') {
+  // @ts-ignore
     exports.from_hex = mnemonic;
   }
 

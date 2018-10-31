@@ -2,6 +2,8 @@
 import {Page, ElementHandle, Frame, Dialog} from 'puppeteer';
 import {Util} from '../util';
 
+let jQuery: any;
+
 abstract class ControllableBase {
 
   public target: Page|Frame;

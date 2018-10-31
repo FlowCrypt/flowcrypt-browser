@@ -14,7 +14,8 @@
   },
   "files": [
       "source/test.ts",
-      "source/patterns.ts"
+      "source/patterns.ts",
+      "source/resolve-modules.ts"
   ],
   "exclude": [
       "build/*",
