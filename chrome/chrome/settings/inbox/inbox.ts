@@ -4,13 +4,11 @@
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'folder', 'thread_id']);
+  let url_params = Env.url_params(['account_email', 'label_id', 'thread_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let folder = url_params.folder || 'all';
+  let label_id = url_params.label_id ? String(url_params.label_id) : 'INBOX';
   let thread_id = url_params.thread_id || null;
 
-  let message_headers = ['message', 'signed_message', 'public_key'].map(t => Pgp.armor.headers(t as ReplaceableMessageBlockType).begin);
-  let q_encrypted_messages_in_chosen_label = `label:${folder} is:inbox (${Api.gmail.query.or(message_headers, true)})`;
   let email_provider;
   let factory: XssSafeFactory;
   let injector: Injector;
@@ -162,19 +160,25 @@ Catch.try(async () => {
     thread_element_add(thread_id);
     let thread_item = $('.threads #' + thread_list_item_id(thread_id));
     try {
-      let item_result = await Api.gmail.message_get(account_email, thread_id, 'metadata');
-      thread_item.find('.subject').text(Api.gmail.find_header(item_result, 'subject') || '(no subject)');
-      Xss.sanitize_append(thread_item.find('.subject'), renderable_labels(item_result.labelIds, 'messages'));
-      let from_header_value = Api.gmail.find_header(item_result, 'from');
+      let thread = await Api.gmail.thread_get(account_email, thread_id, 'metadata');
+      let first_message = thread.messages[0];
+      let last_message = thread.messages[thread.messages.length - 1];
+
+      thread_item.find('.subject').text(Api.gmail.find_header(first_message, 'subject') || '(no subject)');
+      Xss.sanitize_append(thread_item.find('.subject'), renderable_labels(first_message.labelIds, 'messages'));
+      let from_header_value = Api.gmail.find_header(first_message, 'from');
       if (from_header_value) {
         let from = Str.parse_email(from_header_value);
         thread_item.find('.from').text(from.name || from.email);
       }
       thread_item.find('.loading').text('');
-      thread_item.find('.date').text(format_date(item_result.internalDate));
-      thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread_id)));
-      if(Value.is(LABEL.UNREAD).in(item_result.labelIds)) {
+      thread_item.find('.date').text(format_date(last_message.internalDate));
+      thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread.id, thread)));
+      if(Value.is(LABEL.UNREAD).in(last_message.labelIds)) {
         thread_item.css({'font-weight': 'bold', 'background': 'white'});
+      }
+      if(thread.messages.length > 1) {
+        // todo - render amount of msgs
       }
     } catch (e) {
       if(Api.error.is_network_error(e)) {
@@ -203,22 +207,30 @@ Catch.try(async () => {
 
   let render_folder = (label_element: HTMLSpanElement) => {
     for(let cls of label_element.classList) {
-      let id = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
-      if(id) {
-        let label = all_labels.find(l => l.id === id);
-        if(label) {
-          load_url({account_email, folder: label.name});
-          return;
-        }
+      let label_id = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
+      if(label_id) {
+        load_url({account_email, label_id});
+        return;
       }
     }
-    load_url({account_email, folder: 'all'});
+    load_url({account_email});
+  };
+
+  let get_label_name = (label_id: string) => {
+    if(label_id === 'ALL') {
+      return 'all folders';
+    }
+    let label = all_labels.find(l => l.id === label_id);
+    if(label) {
+      return label.name;
+    }
+    return 'UNKNOWN LABEL';
   };
 
   let render_menu_and_label_styles = (labels: ApirGmailLabels$label[]) => {
     all_labels = labels;
     add_label_styles(labels);
-    Xss.sanitize_append('.menu', `<br><div class="button gray2 label">ALL ENCRYPTED MAIL</div><br>${renderable_labels(FOLDERS, 'menu')}`);
+    Xss.sanitize_append('.menu', `<br>${renderable_labels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
     Xss.sanitize_append('.menu', '<br>' + renderable_labels(labels.sort((a, b) => {
       if(a.name > b.name) {
         return 1;
@@ -247,15 +259,15 @@ Catch.try(async () => {
     }
   };
 
-  let render_inbox = async () => {
+  let render_inbox = async (label_id: string) => {
     $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
-    display_block('inbox', `Encrypted messages in ${folder || 'all folders'}`);
+    display_block('inbox', `Messages in ${get_label_name(label_id)}`);
     try {
-      let {messages} = await Api.gmail.message_list(account_email, q_encrypted_messages_in_chosen_label, false);
-      if((messages || []).length) {
-        await Promise.all(Value.arr.unique((messages || []).map(m => m.threadId)).map(render_inbox_item));
+      let {threads} = await Api.gmail.thread_list(account_email, label_id);
+      if((threads || []).length) {
+        await Promise.all(threads.map(t => render_inbox_item(t.id)));
       } else {
-        Xss.sanitize_render('.threads', `<p>No encrypted messages in ${folder} yet. ${Ui.retry_link()}</p>`);
+        Xss.sanitize_render('.threads', `<p>No encrypted messages in ${label_id} yet. ${Ui.retry_link()}</p>`);
       }
     } catch(e) {
       if(Api.error.is_network_error(e)) {
@@ -269,10 +281,10 @@ Catch.try(async () => {
     }
   };
 
-  let render_thread = async (thread_id: string) => {
+  let render_thread = async (thread_id: string, thread?: ApirGmailThreadGet) => {
     display_block('thread', 'Loading..');
     try {
-      let thread = await Api.gmail.thread_get(account_email, thread_id, 'metadata');
+      thread = thread || await Api.gmail.thread_get(account_email, thread_id, 'metadata');
       let subject = Api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)';
       update_url(`${subject} - FlowCrypt Inbox`, {account_email, thread_id});
       display_block('thread', subject);
@@ -354,7 +366,7 @@ Catch.try(async () => {
     if (thread_id) {
       await render_thread(thread_id as string);
     } else {
-      await render_inbox();
+      await render_inbox(label_id);
     }
   }
 })();

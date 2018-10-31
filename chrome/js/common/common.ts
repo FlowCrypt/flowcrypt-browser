@@ -490,6 +490,13 @@ class Api {
     thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => Api.internal.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
       format,
     }),
+    thread_list: (account_email: string, label_id: string): Promise<ApirGmailThreadList> => Api.internal.api_gmail_call(account_email, 'GET', `threads`, {
+      labelIds: label_id !== 'ALL' ? label_id : undefined,
+      includeSpamTrash: Boolean(label_id === 'SPAM' || label_id === 'TRASH'),
+      // pageToken: page_token,
+      // q,
+      // maxResults
+    }),
     thread_modify: (account_email: string, id: string, remove_label_ids: string[], add_label_ids: string[]): Promise<ApirGmailThreadGet> => Api.internal.api_gmail_call(account_email, 'POST', `threads/${id}/modify`, {
       removeLabelIds: remove_label_ids || [], // todo - insufficient permission - need https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
       addLabelIds: add_label_ids || [],
