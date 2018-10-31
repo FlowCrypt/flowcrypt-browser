@@ -74,6 +74,12 @@ class BgAttests {
             if(Api.error.is_network_error(e)) {
               console.info('cannot fetch attest emails - network error - ' + account_email);
               return;
+            } else if(Api.error.is_auth_popup_needed(e) || Api.error.is_auth_error(e)) {
+              console.info('cannot fetch attest emails - Google auth or token error in bg page - ' + account_email);
+              return;
+            } else if(Api.error.is_server_error(e)) {
+              console.info('cannot fetch attest emails - Google server error ' + account_email);
+              return;
             } else {
               throw e;
             }
