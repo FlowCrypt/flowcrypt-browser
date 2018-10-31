@@ -82,6 +82,16 @@ Catch.try(async () => {
     scroll_to_bottom_of_conversation: () => {
       // not implemented
     },
+    render_public_keys: (data: {public_keys: string[], after_frame_id: string, traverse_up?: number}) => {
+      let traverse_up_levels = data.traverse_up as number || 0;
+      let append_after = $('iframe#' + data.after_frame_id);
+      for (let i = 0; i < traverse_up_levels; i++) {
+        append_after = append_after.parent();
+      }
+      for (let armored_pubkey of data.public_keys) {
+        append_after.after(factory.embedded_pubkey(armored_pubkey, false));
+      }
+    },
   }, tab_id);
 
   let update_url = (title: string, params: UrlParams) => {
