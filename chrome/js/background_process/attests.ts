@@ -160,6 +160,8 @@ class BgAttests {
     try {
       return await BgAttests.add_attest_log(true, await BgAttests.process_attest_packet_text(account_email, attest_packet_text, passphrase));
     } catch (e) {
+      e.account_email = account_email;
+      e.attest_packet_text = attest_packet_text;
       return await BgAttests.add_attest_log(false, e);
     }
   }
