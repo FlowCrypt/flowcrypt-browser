@@ -1,5 +1,7 @@
 <div>
 
+version 6.1.4 on November 1, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/269?closed=1" target="_blank">Attest Bugfix</a>
+
 version 6.1.3 on October 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/268?closed=1" target="_blank">Experimental Module</a>
 
 version 6.1.2 on October 29, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/267?closed=1" target="_blank">FlowCrypt Inbox</a>
