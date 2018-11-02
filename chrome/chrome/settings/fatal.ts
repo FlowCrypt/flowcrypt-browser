@@ -26,7 +26,7 @@
         Xss.sanitize_render(details, `<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.</p>`);
     } else if (url_params.reason === 'db_failed') {
         title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
-        Xss.sanitize_render(details, `<p>If you are on Firefox, please report your browser version to human@flowcrypt.com</p>.`);
+        Xss.sanitize_render(details, `<p>If you are on Firefox, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new Firefox profile (Firefox allows you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please let us know at human@flowcrypt.com and we will include it below to help other users.</p>.`);
     } else {
         details.text('Unknown reason. Write human@flowcrypt.com if you need help.');
     }
