@@ -30,6 +30,7 @@
   ],
   "exclude": [
     "chrome/js/content_scripts/**/*",
-    "build"
+    "**/build/**",
+    "**/node_modules/**"
   ]
 }
