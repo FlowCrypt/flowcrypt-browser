@@ -3,11 +3,15 @@ import {Str, Attachment, BrowserMsg} from './common.js';
 import { Pgp, DiagnoseMessagePubkeysResult, DecryptResult, MessageVerifyResult } from './pgp.js';
 import * as t from '../../types/common';
 
+type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
+type BgExecRequest = {path: string, args: any[]};
+type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
+
 export class BgExec {
 
   private static MAX_MESSAGE_SIZE = 1024 * 1024;
 
-  public static background_request_handler: t.BrowserMessageHandler = async (message: t.BgExecRequest, sender, respond: (r: t.BgExecResponse) => void) => {
+  public static background_request_handler: t.BrowserMessageHandler = async (message: BgExecRequest, sender, respond: (r: BgExecResponse) => void) => {
     try {
       let arg_promises = BgExec.arg_object_urls_consume(message.args);
       let args = await Promise.all(arg_promises);
@@ -59,17 +63,17 @@ export class BgExec {
     return BgExec.request_to_process_in_background('Pgp.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
   }
 
-  private static execute_and_format_result = async (path: string, resolved_args: any[]): Promise<t.PossibleBgExecResults> => {
+  private static execute_and_format_result = async (path: string, resolved_args: any[]): Promise<PossibleBgExecResults> => {
     let f = BgExec.resolve_path_to_callable_function(path);
-    let returned: Promise<t.PossibleBgExecResults>|t.PossibleBgExecResults = f.apply(null, resolved_args);
-    if (returned && typeof returned === 'object' && typeof (returned as Promise<t.PossibleBgExecResults>).then === 'function') { // got a promise
+    let returned: Promise<PossibleBgExecResults>|PossibleBgExecResults = f.apply(null, resolved_args);
+    if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       let resolved = await returned;
       if (path === 'Pgp.message.decrypt') {
         BgExec.crypto_message_decrypt_result_create_blobs(resolved as DecryptResult);
       }
       return resolved;
     }
-    return returned as t.PossibleBgExecResults; // direct result
+    return returned as PossibleBgExecResults; // direct result
   }
 
   private static crypto_message_decrypt_result_create_blobs = (decrypt_result: DecryptResult) => {
@@ -110,7 +114,7 @@ export class BgExec {
   }
 
   private static request_to_process_in_background = async (path: string, args: any[]) => {
-    let response: t.BgExecResponse = await BrowserMsg.send_await(null, 'bg_exec', {path, args: BgExec.arg_object_urls_create(args)});
+    let response: BgExecResponse = await BrowserMsg.send_await(null, 'bg_exec', {path, args: BgExec.arg_object_urls_create(args)});
     if(response.exception) {
       let e = new Error(`[BgExec] ${response.exception.name}: ${response.exception.message}`);
       e.stack += `\n\nBgExec stack:\n${response.exception.stack}`;

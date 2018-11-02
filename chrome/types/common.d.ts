@@ -51,6 +51,7 @@ interface FlowCryptManifest extends chrome.runtime.Manifest {
     oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]};
 }
 
+// todo Store
 interface Contact {
     email: string;
     name: string | null;
@@ -67,6 +68,10 @@ interface Contact {
     date: number | null; // todo - should be removed. email provider search seems to return this?
 }
 
+// todo Store
+type FlatTypes = null|undefined|number|string|boolean;
+type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
+type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 interface ContactUpdate {
     email?: string;
     name?: string | null;
@@ -82,7 +87,9 @@ interface ContactUpdate {
     last_use?: number | null;
     date?: number | null; // todo - should be removed. email provider search seems to return this?
 }
+type StoredAuthInfo = {account_email: string|null, uuid: string|null};
 
+// todo Attachment
 type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
 
 type Attachment$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
@@ -100,6 +107,7 @@ type AttachmentMeta = {
   cid?: string|null;
 };
 
+// todo Setup
 interface SetupOptions {
     full_name: string;
     passphrase: string;
@@ -117,6 +125,7 @@ interface FromToHeaders {
     to: string[];
 }
 
+// todo Api or Store
 interface PubkeySearchResult {
     email: string;
     pubkey: string|null;
@@ -134,20 +143,18 @@ interface Dict<T> {
     [key: string]: T;
 }
 
+// Todo Env
 type FlatHeaders = Dict<string>;
 type RichHeaders = Dict<string|string[]>;
+type UrlParam = string|number|null|undefined|boolean|string[];
+type UrlParams = Dict<UrlParam>;
 
+// Todo Ui
 type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
 
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
 
-type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
-type BgExecRequest = {path: string, args: any[]};
-type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
-
-type UrlParam = string|number|null|undefined|boolean|string[];
-type UrlParams = Dict<UrlParam>;
-
+// Todo Store
 interface KeyInfo {
     public: string;
     private: string;
@@ -158,6 +165,7 @@ interface KeyInfo {
     keywords: string;
 }
 
+// TodoMime
 interface MimeContent {
     headers: FlatHeaders;
     attachments: Attachment[];
@@ -165,20 +173,15 @@ interface MimeContent {
     html: string|undefined;
     text: string|undefined;
 }
-
-type StoredAuthInfo = {account_email: string|null, uuid: string|null};
-
 type KeyBlockType = 'public_key'|'private_key';
 type ReplaceableMessageBlockType = KeyBlockType|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
 type MessageBlockType = 'text'|ReplaceableMessageBlockType;
-
 interface MessageBlock {
     type: MessageBlockType;
     content: string;
     complete: boolean;
     signature?: string;
 }
-
 interface MimeParserNode {
     path: string[];
     headers: {
@@ -191,12 +194,12 @@ interface MimeParserNode {
     charset?: string;
 }
 
+// Todo Api
 interface SendableMessageBody {
     [key: string]: string|undefined;
     'text/plain'?: string;
     'text/html'?: string;
 }
-
 interface SendableMessage {
     headers: FlatHeaders;
     from: string;
@@ -206,7 +209,6 @@ interface SendableMessage {
     attachments: Attachment[];
     thread: string|null;
 }
-
 interface StandardError {
     code: number|null;
     message: string;
@@ -214,19 +216,15 @@ interface StandardError {
     data?: string;
     stack?: string;
 }
-
 interface StandardErrorResponse {error: StandardError;}
 
 type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
-type FlatTypes = null|undefined|number|string|boolean;
-type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
-type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 type Callback = (r?: any) => void;
-type EncryptDecryptOutputFormat = 'utf8'|'binary';
 
+// Todo BrowserMsg
 type BrowserMessageRequestDb = {f: string, args: any[]};
 type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
 type BrowserMessageRequestSessionGet = {account_email: string, key: string};
@@ -234,6 +232,7 @@ type BrowserMessageRequest = null|Dict<any>;
 type BrowserMessageResponse = any|Dict<any>;
 type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void|Promise<void>;
 
+// Todo Api
 type FlowCryptApiAuthToken = {account: string, token: string};
 type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
 
@@ -241,13 +240,19 @@ type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
 type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
 
+// Todo Ui
 type NamedSelectors = Dict<JQuery<HTMLElement>>;
 type SelectorCache = {
     cached: (name: string) => JQuery<HTMLElement>;
     now: (name: string) => JQuery<HTMLElement>;
     selector: (name: string) => string;
 };
+// Todo Storage
 type StorageType = 'session'|'local';
+
+// Todo Pgp
+type EncryptDecryptOutputFormat = 'utf8'|'binary';
+
 type EmailProvider = 'gmail';
 type AccountEventHandlersOptional = {
     render_status_text?: (text: string, show_spinner?: boolean) => void;
@@ -280,6 +285,7 @@ interface JQS extends JQueryStatic {
     featherlight: Function; // tslint:disable-line:ban-types
 }
 
+// todo Attachment
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
 
 type SubscriptionLevel = 'pro'|null;
@@ -295,6 +301,7 @@ interface SubscriptionAttempt extends Product {
     source: string|null;
 }
 
+// Todo Api
 type GoogleAuthTokenInfo = {issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline'};
 type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
 type AuthRequest = {tab_id: string, account_email: string|null, scopes: string[], message_id?: string, auth_responder_id: string, omit_read_scope?: boolean};
@@ -305,78 +312,80 @@ type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, a
 type AuthResult = AuthResultSuccess|AuthResultError;
 // type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
 
+// Todo Store
 type StoredReplyDraftMeta = string; // draft_id
 type StoredComposeDraftMeta = {recipients: string[], subject: string, date: number};
 type StoredAdminCode = {date: number, codes: string[]};
 type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
 type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
 
-type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
-
 interface RawStore {
-    [key: string]: Storable;
+  [key: string]: Storable;
 }
 
 interface BaseStore extends RawStore {
 }
 
 interface GlobalStore extends BaseStore {
-    version?: number|null;
-    account_emails?: string; // stringified array
-    errors?: string[];
-    settings_seen?: boolean;
-    hide_pass_phrases?: boolean;
-    cryptup_account_email?: string|null;
-    cryptup_account_uuid?: string|null;
-    cryptup_account_subscription?: SubscriptionInfo|null;
-    dev_outlook_allow?: boolean;
-    cryptup_subscription_attempt?: SubscriptionAttempt;
-    admin_codes?: Dict<StoredAdminCode>;
-    // following are not used anymore but may still be present in storage:
-    // cryptup_account_verified?: boolean;
+  version?: number|null;
+  account_emails?: string; // stringified array
+  errors?: string[];
+  settings_seen?: boolean;
+  hide_pass_phrases?: boolean;
+  cryptup_account_email?: string|null;
+  cryptup_account_uuid?: string|null;
+  cryptup_account_subscription?: SubscriptionInfo|null;
+  dev_outlook_allow?: boolean;
+  cryptup_subscription_attempt?: SubscriptionAttempt;
+  admin_codes?: Dict<StoredAdminCode>;
+  // following are not used anymore but may still be present in storage:
+  // cryptup_account_verified?: boolean;
 }
 
 interface AccountStore extends BaseStore {
-    keys?: KeyInfo[];
-    notification_setup_needed_dismissed?: boolean;
-    email_provider?: EmailProvider;
-    google_token_access?: string;
-    google_token_expires?: number;
-    google_token_scopes?: string[];
-    google_token_refresh?: string;
-    hide_message_password?: boolean; // is global?
-    addresses?: string[];
-    addresses_pks?: string[];
-    addresses_keyserver?: string[];
-    email_footer?: string|null;
-    drafts_reply?: Dict<StoredReplyDraftMeta>;
-    drafts_compose?: Dict<StoredComposeDraftMeta>;
-    pubkey_sent_to?: string[];
-    full_name?: string;
-    cryptup_enabled?: boolean;
-    setup_done?: boolean;
-    setup_simple?: boolean;
-    is_newly_created_key?: boolean;
-    key_backup_method?: KeyBackupMethod;
-    attests_requested?: string[]; // attester names
-    attests_processed?: string[]; // attester names
-    key_backup_prompt?: number|false;
-    successfully_received_at_leat_one_message?: boolean;
-    notification_setup_done_seen?: boolean;
-    attest_log?: StoredAttestLog[];
-    picture?: string; // google image
-    outgoing_language?: 'EN' | 'DE';
-
-    // temporary
-    tmp_submit_main?: boolean;
-    tmp_submit_all?: boolean;
+  keys?: KeyInfo[];
+  notification_setup_needed_dismissed?: boolean;
+  email_provider?: EmailProvider;
+  google_token_access?: string;
+  google_token_expires?: number;
+  google_token_scopes?: string[];
+  google_token_refresh?: string;
+  hide_message_password?: boolean; // is global?
+  addresses?: string[];
+  addresses_pks?: string[];
+  addresses_keyserver?: string[];
+  email_footer?: string|null;
+  drafts_reply?: Dict<StoredReplyDraftMeta>;
+  drafts_compose?: Dict<StoredComposeDraftMeta>;
+  pubkey_sent_to?: string[];
+  full_name?: string;
+  cryptup_enabled?: boolean;
+  setup_done?: boolean;
+  setup_simple?: boolean;
+  is_newly_created_key?: boolean;
+  key_backup_method?: KeyBackupMethod;
+  attests_requested?: string[]; // attester names
+  attests_processed?: string[]; // attester names
+  key_backup_prompt?: number|false;
+  successfully_received_at_leat_one_message?: boolean;
+  notification_setup_done_seen?: boolean;
+  attest_log?: StoredAttestLog[];
+  picture?: string; // google image
+  outgoing_language?: 'EN' | 'DE';
+  // temporary
+  tmp_submit_main?: boolean;
+  tmp_submit_all?: boolean;
 }
 
+type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
+
+// Todo Pgp or Mime?
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
 type CryptoArmorHeaderDefinitions = {
     readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition;
 };
 
+// Todo KeyImportUi
 type KeyImportUiCheckResult = {
   normalized: string;
   longid: string;
