@@ -2,7 +2,8 @@
 
 'use strict';
 
-import { Catch, Env, Xss, Api, Ui, BrowserMsg, Str } from '../../../js/common/common.js';
+import { Catch, Env, Xss, Ui, BrowserMsg, Str } from '../../../js/common/common.js';
+import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 

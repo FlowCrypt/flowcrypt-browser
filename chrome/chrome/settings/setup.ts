@@ -3,12 +3,13 @@
 'use strict';
 
 import { Store } from '../../js/common/storage.js';
-import { Value, BrowserMsg, Xss, Api, Pgp, Env, Catch, Ui } from '../../js/common/common.js';
+import { Value, BrowserMsg, Xss, Pgp, Env, Catch, Ui } from '../../js/common/common.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { KeyImportUI, UserAlert, KeyCanBeFixed } from '../../js/common/key_import.js';
 import { Settings } from './settings.js';
 import * as t from '../../types/common';
+import { Api, R } from '../../js/common/api.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -268,7 +269,7 @@ Catch.try(async () => {
 
   let get_and_save_google_user_info = async (): Promise<{full_name: string, locale?: string, picture?: string}> => {
     if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and let the user choose
-      let me: t.ApirGooglePlusPeopleMe;
+      let me: R.GooglePlusPeopleMe;
       try {
         me = await Api.google.plus.people_me(account_email);
       } catch (e) {

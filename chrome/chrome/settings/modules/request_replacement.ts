@@ -3,11 +3,12 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Xss, Api, Ui, BrowserMsg, Value, Pgp } from '../../../js/common/common.js';
+import { Catch, Env, Xss, Ui, Pgp } from '../../../js/common/common.js';
 import { KeyImportUI, UserAlert } from '../../../js/common/key_import.js';
 import { mnemonic } from '../../../js/common/mnemonic.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';
+import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 

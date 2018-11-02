@@ -3,8 +3,9 @@
 'use strict';
 
 import {Store} from '../common/storage.js';
-import {Pgp, Catch, Value, Api, Str} from '../common/common.js';
+import {Pgp, Catch, Value, Str} from '../common/common.js';
 import * as t from '../../types/common';
+import { Api, R } from '../common/api.js';
 
 declare let openpgp: typeof OpenPGP;
 
@@ -73,7 +74,7 @@ export class BgAttests {
       let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (passphrase !== null) {
         if (storage.attests_requested && storage.attests_requested.length && BgAttests.attest_ts_can_read_emails[account_email]) {
-          let messages: t.ApirGmailMessage[];
+          let messages: R.GmailMessage[];
           try {
             messages = await BgAttests.fetch_attest_emails(account_email);
           } catch(e) {
@@ -172,7 +173,7 @@ export class BgAttests {
     }
   }
 
-  private static fetch_attest_emails = async (account_email: string): Promise<t.ApirGmailMessage[]> => {
+  private static fetch_attest_emails = async (account_email: string): Promise<R.GmailMessage[]> => {
     let q = [
       '(from:"' + BgAttests.get_attester_emails().join('" OR from: "') + '")',
       'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.

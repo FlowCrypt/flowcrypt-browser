@@ -3,9 +3,10 @@
 'use strict';
 
 import { Store, Subscription } from './../../js/common/storage.js';
-import { Catch, Ui, Env, BrowserMsg, Xss, Pgp, Attachment, Value, DecryptErrorTypes, Api } from './../../js/common/common.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Attachment } from './../../js/common/common.js';
 import * as t from './../../types/common';
 import { Composer } from './../../js/common/composer.js';
+import { Api } from '../../js/common/api.js';
 
 Catch.try(async () => {
 

@@ -3,10 +3,11 @@
 'use strict';
 
 import { Store } from '../../js/common/storage.js';
-import { Value, Api, Str, Pgp, Env, BrowserMsg, Ui, Xss, UnreportableError, Catch } from '../../js/common/common.js';
+import { Value, Str, Pgp, Env, BrowserMsg, Ui, Xss, UnreportableError, Catch } from '../../js/common/common.js';
 import * as t from '../../types/common';
 import { Lang } from '../../js/common/lang.js';
 import { Rules } from '../../js/common/rules.js';
+import { Api } from '../../js/common/api.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types

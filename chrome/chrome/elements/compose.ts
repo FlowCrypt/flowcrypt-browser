@@ -3,10 +3,11 @@
 'use strict';
 
 import { Store, Subscription } from './../../js/common/storage.js';
-import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Api, Str } from './../../js/common/common.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Str } from './../../js/common/common.js';
 import { XssSafeFactory } from './../../js/common/factory.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 import * as t from '../../types/common';
+import { Api, ProgressCallback } from '../../js/common/api.js';
 
 Catch.try(async () => {
 
@@ -173,7 +174,7 @@ Catch.try(async () => {
     email_provider_draft_create: (mime_message: string) => Api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string),
     email_provider_draft_update: (draft_id: string, mime_message: string) => Api.gmail.draft_update(account_email, draft_id, mime_message),
     email_provider_draft_delete: (draft_id: string) => Api.gmail.draft_delete(account_email, draft_id),
-    email_provider_message_send: (message: t.SendableMessage, render_upload_progress: t.ApiCallProgressCallback) => Api.gmail.message_send(account_email, message, render_upload_progress),
+    email_provider_message_send: (message: t.SendableMessage, render_upload_progress: ProgressCallback) => Api.gmail.message_send(account_email, message, render_upload_progress),
     email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: t.Callback) => {
       Api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
         if(Api.error.is_auth_popup_needed(e)) {

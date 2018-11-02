@@ -4,7 +4,7 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-import {Catch, Str, Api, Value, Env} from '../../common/common.js';
+import {Catch, Str, Value, Env} from '../../common/common.js';
 import {Store} from '../../common/storage.js';
 import {Injector} from '../../common/inject.js';
 import {XssSafeFactory} from '../../common/factory.js';
@@ -13,6 +13,7 @@ import {InboxElementReplacer} from './inbox_element_replacer.js';
 import {GmailElementReplacer} from './gmail_element_replacer.js';
 import {content_script_setup_if_vacant} from './setup.js';
 import * as t from '../../../types/common';
+import { Api } from '../../common/api.js';
 
 Catch.try(async () => {
 

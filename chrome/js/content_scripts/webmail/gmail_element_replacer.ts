@@ -2,11 +2,12 @@
 
 'use strict';
 
-import {Catch, BrowserMsg, Value, Ui, Pgp, Attachment, Xss, Api, Str} from '../../common/common.js';
+import {Catch, BrowserMsg, Value, Ui, Pgp, Attachment, Xss, Str} from '../../common/common.js';
 import {Injector} from '../../common/inject.js';
 import {XssSafeFactory} from '../../common/factory.js';
 import {Notifications} from '../../common/notifications.js';
 import * as t from '../../../types/common';
+import { Api } from '../../common/api.js';
 
 export class GmailElementReplacer implements t.WebmailElementReplacer {
 

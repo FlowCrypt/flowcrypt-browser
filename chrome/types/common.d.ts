@@ -292,12 +292,7 @@ type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
 type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
 type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
-type ApiCallFormat = 'JSON'|'FORM';
-type ApiCallProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
-type ApiCallProgressCallbacks = {upload?: ApiCallProgressCallback|null, download?: ApiCallProgressCallback|null};
-type ApiCallMethod = 'POST'|'GET'|'DELETE'|'PUT';
-type ApiResponseFormat = 'json';
-type GmailApiResponseFormat = 'raw'|'full'|'metadata';
+
 type NamedSelectors = Dict<JQuery<HTMLElement>>;
 type SelectorCache = {
     cached: (name: string) => JQuery<HTMLElement>;
@@ -306,9 +301,6 @@ type SelectorCache = {
 };
 type StorageType = 'session'|'local';
 type EmailProvider = 'gmail';
-type ProviderContactsQuery = {substring: string};
-type ProviderContactsResults = {new: Contact[], all: Contact[]};
-
 type AccountEventHandlersOptional = {
     render_status_text?: (text: string, show_spinner?: boolean) => void;
     find_matching_tokens_from_email?: (account_email: string, uuid: string) => Promise<string[]|null>;
@@ -317,55 +309,6 @@ type AccountEventHandlers = {
     render_status_text: (text: string, show_spinner?: boolean) => void;
     find_matching_tokens_from_email: (account_email: string, uuid: string) => Promise<string[]|null>;
 };
-
-// specific api results
-type ApirFcHelpFeedback = {sent: boolean};
-type ApirFcAccountLogin = {registered: boolean, verified: boolean, subscription: SubscriptionInfo};
-type ApirFcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number};
-type ApirFcAccountUpdate = {result: ApirFcAccountUpdate$result, updated: boolean};
-type ApirFcAccountSubscribe = {subscription: SubscriptionInfo};
-type ApirFcAccountCheck = {email: string|null, subscription: {level: SubscriptionLevel, expire: string, expired: boolean, method: PaymentMethod|null}|null};
-
-type ApirFcMessagePresignFiles = {approvals: {base_url: string, fields: {key: string}}[]};
-type ApirFcMessageConfirmFiles = {confirmed: string[], admin_codes: string[]};
-type ApirFcMessageToken = {token: string};
-type ApirFcMessageUpload = {short: string, admin_code: string};
-type ApirFcLinkMessage = {expire: string, deleted: boolean, url: string, expired: boolean};
-type ApirFcLinkMe$profile = {alias: string|null, name: string|null, photo: string|null, photo_circle: boolean, intro: string|null, web: string|null,
-  phone: string|null, token: string|null, subscription_level: string|null, subscription_method: string|null, email: string|null};
-type ApirFcLinkMe = {profile: null|ApirFcLinkMe$profile};
-type ApirFcMessageExpiration = {updated: boolean};
-
-type ApirAttInitialConfirm = {attested: boolean};
-type ApirAttReplaceRequest = {saved: boolean};
-type ApirAttReplaceConfirm = {attested: boolean};
-type ApirAttTestWelcome = {sent: boolean};
-type ApirAttInitialLegacySugmit = {attested: boolean, saved: boolean};
-
-type ApirGmailUsersMeProfile = {emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string};
-type ApirGmailMessage$header = {name: string, value: string};
-type ApirGmailMessage$payload$body = {attachmentId: string, size: number, data?: string};
-type ApirGmailMessage$payload$part = {body?: ApirGmailMessage$payload$body, filename?: string, mimeType?: string, headers?: ApirGmailMessage$header[]};
-type ApirGmailMessage$payload = {parts?: ApirGmailMessage$payload$part[], headers?: ApirGmailMessage$header[], mimeType?: string, body?: ApirGmailMessage$payload$body};
-type ApirGmailMessage$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
-type ApirGmailMessage = {id: string, historyId: string, threadId?: string|null, payload: ApirGmailMessage$payload, raw?: string, internalDate?: number|string, labelIds: ApirGmailMessage$labelId[],
-   snippet?: string};
-type ApirGmailMessageList$message = {id: string, threadId: string};
-type ApirGmailMessageList = {messages?: ApirGmailMessageList$message[], resultSizeEstimate: number};
-type ApirGmailLabels$label = {id: string, name: string, messageListVisibility: 'show'|'hide', labelListVisibility: 'labelShow'|'labelHide', type: 'user'|'system',
-  messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: {textColor: string, backgroundColor: string}};
-type ApirGmailLabels = {labels: ApirGmailLabels$label[]};
-type ApirGmailAttachment = {attachmentId: string, size: number, data: string};
-type ApirGmailMessageSend = {id: string};
-type ApirGmailThreadGet = {id: string, historyId: string, messages: ApirGmailMessage[]};
-type ApirGmailThreadList = {threads: {historyId: string, id: string, snippet: string}[], nextPageToken: string, resultSizeEstimate: number};
-type ApirGmailDraftCreate = {id: string};
-type ApirGmailDraftDelete = {};
-type ApirGmailDraftUpdate = {};
-type ApirGmailDraftGet = {id: string, message: ApirGmailMessage};
-type ApirGmailDraftSend = {};
-
-type ApirGooglePlusPeopleMe = {displayName: string, language: string, image: {url: string}};
 
 type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString};
 type WebmailVariantString = null|'html'|'standard'|'new';

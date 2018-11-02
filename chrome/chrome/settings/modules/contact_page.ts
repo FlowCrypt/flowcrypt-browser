@@ -3,10 +3,11 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Xss, Api, Ui, BrowserMsg, Value, Attachment, Str } from '../../../js/common/common.js';
+import { Catch, Env, Xss, Ui, BrowserMsg, Value, Attachment, Str } from '../../../js/common/common.js';
 import { Attach } from '../../../js/common/attach.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';
+import { Api, R } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
@@ -33,7 +34,7 @@ Catch.try(async () => {
     'photo': '.profile_photo img',
   });
 
-  let render_fields = (result: t.ApirFcAccountUpdate$result) => {
+  let render_fields = (result: R.FcAccountUpdate$result) => {
     if (result.alias) {
       let me = Api.fc.url('me', result.alias);
       let me_escaped = Xss.html_escape(me);

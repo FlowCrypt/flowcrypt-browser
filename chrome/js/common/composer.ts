@@ -4,7 +4,8 @@
 
 import {Store, Subscription} from './storage.js';
 import {Lang} from './lang.js';
-import {Catch, Value, Xss, Str, Mime, Ui, Pgp, Api, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
+import {Catch, Value, Xss, Str, Mime, Ui, Pgp, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
+import {Api, R, ProgressCallback, ProviderContactsQuery} from './api.js';
 import {Attach} from './attach.js';
 import * as t from '../../types/common';
 
@@ -27,13 +28,13 @@ interface ComposerAppFunctionsInterface {
     storage_contact_get: (email: string[]) => Promise<(t.Contact|null)[]>;
     storage_contact_update: (email: string|string[], update: t.ContactUpdate) => Promise<void>;
     storage_contact_save:  (contact: t.Contact) =>  Promise<void>;
-    storage_contact_search: (query: t.ProviderContactsQuery) => Promise<t.Contact[]>;
+    storage_contact_search: (query: ProviderContactsQuery) => Promise<t.Contact[]>;
     storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => t.Contact;
-    email_provider_draft_get: (draft_id: string) => Promise<t.ApirGmailDraftGet>;
-    email_provider_draft_create: (mime_message: string) => Promise<t.ApirGmailDraftCreate>;
-    email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<t.ApirGmailDraftUpdate>;
-    email_provider_draft_delete: (draft_id: string) => Promise<t.ApirGmailDraftDelete>;
-    email_provider_message_send: (message: t.SendableMessage, render_upload_progress: t.ApiCallProgressCallback) => Promise<t.ApirGmailMessageSend>;
+    email_provider_draft_get: (draft_id: string) => Promise<R.GmailDraftGet>;
+    email_provider_draft_create: (mime_message: string) => Promise<R.GmailDraftCreate>;
+    email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<R.GmailDraftUpdate>;
+    email_provider_draft_delete: (draft_id: string) => Promise<R.GmailDraftDelete>;
+    email_provider_message_send: (message: t.SendableMessage, render_upload_progress: ProgressCallback) => Promise<R.GmailMessageSend>;
     email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: (r: {new: t.Contact[], all: t.Contact[]}) => void) => void;
     email_provider_determine_reply_message_header_variables: () => Promise<undefined|{last_message_id: string, headers: {'In-Reply-To': string, 'References': string}}>;
     email_provider_extract_armored_block: (message_id: string) => Promise<string>;
@@ -691,7 +692,7 @@ export class Composer {
 
   private upload_attachments_to_fc = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: t.ApirFcMessagePresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
+      let pf_response: R.FcMessagePresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
       const items: any[] = [];
       for (let i of pf_response.approvals.keys()) {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
@@ -1090,7 +1091,7 @@ export class Composer {
     this.set_input_text_height_manually_if_needed();
   }
 
-  private select_contact = (email: string, from_query: t.ProviderContactsQuery) => {
+  private select_contact = (email: string, from_query: ProviderContactsQuery) => {
     const possibly_bogus_recipient = $('.recipients span.wrong').last();
     const possibly_bogus_address = Str.parse_email(possibly_bogus_recipient.text()).email;
     const q = Str.parse_email(from_query.substring).email;
@@ -1141,7 +1142,7 @@ export class Composer {
     }
   }
 
-  private render_search_results = (contacts: t.Contact[], query: t.ProviderContactsQuery) => {
+  private render_search_results = (contacts: t.Contact[], query: ProviderContactsQuery) => {
     const renderable_contacts = contacts.slice();
     renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
     renderable_contacts.splice(8);
@@ -1500,11 +1501,11 @@ export class Composer {
       storage_contact_save: (contact: t.Contact) => Promise.resolve(),
       storage_contact_search: (query: t.DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
-      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as t.ApirGmailMessage}),
+      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMessage}),
       email_provider_draft_create: (mime_message: string) => Promise.reject(null),
       email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve({}),
       email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
-      email_provider_message_send: (message: t.SendableMessage, render_upload_progress: t.ApiCallProgressCallback) => Promise.reject({message: 'not implemented'}),
+      email_provider_message_send: (message: t.SendableMessage, render_upload_progress: ProgressCallback) => Promise.reject({message: 'not implemented'}),
       email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: t.Callback) => multi_cb({new: [], all: []}),
       email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
       email_provider_extract_armored_block: (message_id) => Promise.resolve(''),

@@ -3,8 +3,9 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Api, Ui, Pgp, Attachment } from '../../../js/common/common.js';
+import { Catch, Env, Ui, Pgp, Attachment } from '../../../js/common/common.js';
 import { Settings } from '../settings.js';
+import { Api } from '../../../js/common/api.js';
 
 declare const openpgp: typeof OpenPGP;
 

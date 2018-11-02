@@ -2,8 +2,9 @@
 
 'use strict';
 
-import { Catch, Env, Xss, Api } from '../../../js/common/common.js';
+import { Catch, Env, Xss } from '../../../js/common/common.js';
 import * as t from '../../../types/common';
+import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 

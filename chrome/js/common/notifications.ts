@@ -3,8 +3,9 @@
 'use strict';
 
 import {Store} from './storage.js';
-import {Catch, Xss, Ui, Api, BrowserMsg} from './common.js';
+import {Catch, Xss, Ui, BrowserMsg} from './common.js';
 import * as t from '../../types/common';
+import { Api } from './api.js';
 
 export class Notifications {
 

@@ -3,12 +3,12 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Ui, BrowserMsg, Xss, Value, Str, Api, Mime } from '../../../js/common/common.js';
+import { Catch, Env, Ui, BrowserMsg, Xss, Value, Str, Mime } from '../../../js/common/common.js';
 import { XssSafeFactory } from '../../../js/common/factory.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
-import { ApirGmailLabels$label } from '../../../types/common.js';
 import * as t from '../../../types/common';
+import { Api, R } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
@@ -21,7 +21,7 @@ Catch.try(async () => {
   let factory: XssSafeFactory;
   let injector: Injector;
   let notifications: Notifications;
-  let all_labels: ApirGmailLabels$label[];
+  let all_labels: R.GmailLabels$label[];
 
   let S = Ui.build_jquery_selectors({
     threads: '.threads',
@@ -177,7 +177,7 @@ Catch.try(async () => {
     }
   };
 
-  let renderable_labels = (label_ids: (t.ApirGmailMessage$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+  let renderable_labels = (label_ids: (R.GmailMessage$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return label_ids.map(id => renderable_label(id, placement)).join('');
   };
 
@@ -217,7 +217,7 @@ Catch.try(async () => {
     }
   };
 
-  let add_label_styles = (labels: ApirGmailLabels$label[]) => {
+  let add_label_styles = (labels: R.GmailLabels$label[]) => {
     let style = '';
     for(let label of labels) {
       if(label.color) {
@@ -252,7 +252,7 @@ Catch.try(async () => {
     return 'UNKNOWN LABEL';
   };
 
-  let render_menu_and_label_styles = (labels: ApirGmailLabels$label[]) => {
+  let render_menu_and_label_styles = (labels: R.GmailLabels$label[]) => {
     all_labels = labels;
     add_label_styles(labels);
     Xss.sanitize_append('.menu', `<br>${renderable_labels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
@@ -306,7 +306,7 @@ Catch.try(async () => {
     }
   };
 
-  let render_thread = async (thread_id: string, thread?: t.ApirGmailThreadGet) => {
+  let render_thread = async (thread_id: string, thread?: R.GmailThreadGet) => {
     display_block('thread', 'Loading..');
     try {
       thread = thread || await Api.gmail.thread_get(account_email, thread_id, 'metadata');
@@ -335,7 +335,7 @@ Catch.try(async () => {
     return Ui.e('div', {id, class: 'message line', html});
   };
 
-  let render_message = async (message: t.ApirGmailMessage) => {
+  let render_message = async (message: R.GmailMessage) => {
     let html_id = thread_message_id(message.id);
     let from = Api.gmail.find_header(message, 'from') || 'unknown';
     try {
@@ -364,7 +364,7 @@ Catch.try(async () => {
     }
   };
 
-  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: t.ApirGmailMessage) => {
+  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: R.GmailMessage) => {
     let params: t.UrlParams;
     if(last_message) {
       let to = Api.gmail.find_header(last_message, 'to');
