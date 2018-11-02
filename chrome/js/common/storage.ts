@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Catch, Value, Str, BrowserMsg} from './common.js';
+import {Catch, Value, Str, BrowserMsg, Env} from './common.js';
 import {mnemonic} from './mnemonic.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
@@ -39,10 +39,6 @@ export class Store {
 
   private static global_storage_scope = 'global';
   private static db_query_keys = ['limit', 'substring', 'has_pgp'];
-
-  private static env_is_background_script() {
-    return window.location && Value.is('_generated_background_page.html').in(window.location.href);
-  }
 
   static index(account_key_or_list: string|string[], key: string|string[]) {
     if (Array.isArray(account_key_or_list)) {
@@ -81,7 +77,7 @@ export class Store {
   }
 
   static async session_get(account_email: string, key: string): Promise<string|null> {
-    if (Store.env_is_background_script()) {
+    if (Env.is_background_page()) {
       return window.sessionStorage.getItem(Store.index(account_email, key) as string);
     } else {
       return await BrowserMsg.send_await(null, 'session_get', {account_email, key});
@@ -89,7 +85,7 @@ export class Store {
   }
 
   static async session_set(account_email: string, key: string, value: string|undefined): Promise<void> {
-    if (Store.env_is_background_script()) {
+    if (Env.is_background_page()) {
       if (typeof value !== 'undefined') {
         sessionStorage.setItem(Store.index(account_email, key) as string, String(value));
       } else {

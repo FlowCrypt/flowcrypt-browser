@@ -47,10 +47,10 @@ Catch.try( async () => {
   if (stored_passphrase === null) {
     $('#passphrase_to_open_email').prop('checked', true);
   }
-  $('#passphrase_to_open_email').change(() => {
+  $('#passphrase_to_open_email').change(Ui.event.handle(() => {
     $('.passhprase_checkbox_container').css('display', 'none');
     $('.passphrase_entry_container').css('display', 'block');
-  });
+  }));
 
   $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/change_passphrase.htm')));
 
