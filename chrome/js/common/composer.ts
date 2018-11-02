@@ -4,7 +4,8 @@
 
 import {Store, Subscription} from './storage.js';
 import {Lang} from './lang.js';
-import {Catch, Value, Xss, Str, Mime, Ui, Pgp, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
+import {Catch, Value, Xss, Str, Mime, Ui, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
+import { Pgp } from './pgp.js';
 import {Api, R, ProgressCallback, ProviderContactsQuery} from './api.js';
 import {Attach} from './attach.js';
 import * as t from '../../types/common';

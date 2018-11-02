@@ -3,12 +3,13 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Xss, Ui, BrowserMsg, Value, Pgp, Attachment, UnreportableError } from '../../../js/common/common.js';
+import { Catch, Env, Xss, Ui, BrowserMsg, Value, Attachment, UnreportableError } from '../../../js/common/common.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';
 import { Api } from '../../../js/common/api.js';
+import { Pgp } from '../../../js/common/pgp.js';
 
 declare const openpgp: typeof OpenPGP;
 

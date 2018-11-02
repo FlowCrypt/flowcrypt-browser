@@ -3,11 +3,12 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Ui, Env, BrowserMsg, Xss, Pgp, Attachment, Value, DecryptErrorTypes, Str, Mime } from './../../js/common/common.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Str, Mime } from './../../js/common/common.js';
 import { BgExec } from './../../js/common/bg_exec.js';
 import { Lang } from './../../js/common/lang.js';
 import * as t from '../../types/common';
 import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
+import { MessageVerifyResult, DecryptErrorTypes, Pgp } from '../../js/common/pgp.js';
 
 declare const anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
 
@@ -222,7 +223,7 @@ Catch.try(async () => {
     }));
   };
 
-  let render_pgp_signature_check_result = (signature: t.MessageVerifyResult|null) => {
+  let render_pgp_signature_check_result = (signature: MessageVerifyResult|null) => {
     if (signature) {
       let signer_email = signature.contact ? signature.contact.name || sender_email : sender_email;
       $('#pgp_signature > .cursive > span').text(String(signer_email) || 'Unknown Signer');
@@ -301,7 +302,7 @@ Catch.try(async () => {
     }
   };
 
-  let decide_decrypted_content_formatting_and_render = async (decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: t.MessageVerifyResult|null) => {
+  let decide_decrypted_content_formatting_and_render = async (decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MessageVerifyResult|null) => {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
     let public_keys: string[] = [];

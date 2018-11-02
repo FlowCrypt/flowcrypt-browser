@@ -3,8 +3,9 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Ui, Env, BrowserMsg, Xss, Pgp, Attachment, Value, DecryptErrorTypes } from './../../js/common/common.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value } from './../../js/common/common.js';
 import { Api } from '../../js/common/api.js';
+import { Pgp, DecryptErrorTypes } from '../../js/common/pgp.js';
 
 Catch.try(async () => {
 

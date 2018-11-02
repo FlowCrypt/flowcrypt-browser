@@ -2,8 +2,9 @@
 
 'use strict';
 
-import {Value, Str, Pgp} from './common.js';
+import {Value, Str} from './common.js';
 import * as t from '../../types/common';
+import { Pgp } from './pgp.js';
 
 export type DomainRule = {flags: ('NO_PRV_CREATE'|'NO_PRV_BACKUP')[]};
 

@@ -1,10 +1,11 @@
 
 export type bogus = never; // that way TS understands this is to be treated as a module
 
-import {Attachment, DecryptErrorTypes} from '../js/common/common.js';
+import {Attachment} from '../js/common/common.js';
 import {Injector} from '../js/common/inject.js';
 import {Notifications} from '../js/common/notifications.js';
 import {XssSafeFactory} from '../js/common/factory.js';
+import { DecryptResult, DiagnoseMessagePubkeysResult, MessageVerifyResult } from '../js/common/pgp.js';
 
 interface BrowserWidnow extends Window {
     XMLHttpRequest: any;
@@ -140,41 +141,6 @@ type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspr
 
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
 
-interface DecryptSuccess {
-    success: true;
-    content: {
-      blob?: ConsummableBrowserBlob;
-      text?: string;
-      uint8?: Uint8Array;
-      filename: string|null;
-    };
-    signature: MessageVerifyResult|null;
-    is_encrypted: boolean|null;
-}
-
-type DecryptError$error = {
-  type: DecryptErrorTypes;
-  error?: string;
-};
-
-type DecryptError$longids = {
-  message: string[];
-  matching: string[];
-  chosen: string[];
-  need_passphrase: string[];
-};
-
-interface DecryptError {
-    success: false;
-    error: DecryptError$error;
-    longids: DecryptError$longids;
-    is_encrypted: null|boolean;
-    signature: null;
-    message?: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage;
-}
-
-type DecryptResult = DecryptSuccess|DecryptError;
-type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
 type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
 type BgExecRequest = {path: string, args: any[]};
 type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
@@ -223,24 +189,6 @@ interface MimeParserNode {
     appendChild: (child: MimeParserNode) => void;
     contentTransferEncoding: {value: string};
     charset?: string;
-}
-
-interface MessageVerifyResult {
-    signer: string|null;
-    contact: Contact|null;
-    match: boolean|null;
-    error: null|string;
-}
-
-interface InternalSortedKeysForDecrypt {
-    verification_contacts: Contact[];
-    for_verification: OpenPGP.key.Key[];
-    encrypted_for: string[];
-    signed_by: string[];
-    prv_matching: KeyInfo[];
-    prv_for_decrypt: KeyInfo[];
-    prv_for_decrypt_decrypted: KeyInfo[];
-    prv_for_decrypt_without_passphrases: KeyInfo[];
 }
 
 interface SendableMessageBody {

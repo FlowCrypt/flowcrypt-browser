@@ -4,9 +4,10 @@
 
 import {Store} from './storage.js';
 import {mnemonic} from './mnemonic.js';
-import {Value, Ui, Pgp, Env} from './common.js';
+import {Value, Ui, Env} from './common.js';
 import {Attach} from './attach.js';
 import * as t from '../../types/common';
+import { Pgp } from './pgp.js';
 
 declare let openpgp: typeof OpenPGP;
 

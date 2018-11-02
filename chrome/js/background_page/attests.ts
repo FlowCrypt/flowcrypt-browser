@@ -3,9 +3,10 @@
 'use strict';
 
 import {Store} from '../common/storage.js';
-import {Pgp, Catch, Value, Str} from '../common/common.js';
+import {Catch, Value, Str} from '../common/common.js';
 import * as t from '../../types/common';
 import { Api, R } from '../common/api.js';
+import { Pgp } from '../common/pgp.js';
 
 declare let openpgp: typeof OpenPGP;
 

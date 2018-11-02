@@ -1,5 +1,6 @@
 
-import {Str, Pgp, Attachment, BrowserMsg} from './common.js';
+import {Str, Attachment, BrowserMsg} from './common.js';
+import { Pgp, DiagnoseMessagePubkeysResult, DecryptResult, MessageVerifyResult } from './pgp.js';
 import * as t from '../../types/common';
 
 export class BgExec {
@@ -34,7 +35,7 @@ export class BgExec {
   }
 
   public static diagnose_message_pubkeys = (account_email: string, message: string) => {
-    return BgExec.request_to_process_in_background('Pgp.message.diagnose_pubkeys', [account_email, message]) as Promise<t.DiagnoseMessagePubkeysResult>;
+    return BgExec.request_to_process_in_background('Pgp.message.diagnose_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>;
   }
 
   public static crypto_hash_challenge_answer = (password: string) => {
@@ -42,7 +43,7 @@ export class BgExec {
   }
 
   public static crypto_message_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd:string|null=null, get_uint8=false) => {
-    let result = await BgExec.request_to_process_in_background('Pgp.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as t.DecryptResult;
+    let result = await BgExec.request_to_process_in_background('Pgp.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
         result.content.text = Str.from_uint8(await Attachment.methods.object_url_consume(result.content.blob.blob_url));
@@ -55,7 +56,7 @@ export class BgExec {
   }
 
   public static crypto_message_verify_detached = (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => {
-    return BgExec.request_to_process_in_background('Pgp.message.verify_detached', [account_email, message, signature]) as Promise<t.MessageVerifyResult>;
+    return BgExec.request_to_process_in_background('Pgp.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
   }
 
   private static execute_and_format_result = async (path: string, resolved_args: any[]): Promise<t.PossibleBgExecResults> => {
@@ -64,14 +65,14 @@ export class BgExec {
     if (returned && typeof returned === 'object' && typeof (returned as Promise<t.PossibleBgExecResults>).then === 'function') { // got a promise
       let resolved = await returned;
       if (path === 'Pgp.message.decrypt') {
-        BgExec.crypto_message_decrypt_result_create_blobs(resolved as t.DecryptResult);
+        BgExec.crypto_message_decrypt_result_create_blobs(resolved as DecryptResult);
       }
       return resolved;
     }
     return returned as t.PossibleBgExecResults; // direct result
   }
 
-  private static crypto_message_decrypt_result_create_blobs = (decrypt_result: t.DecryptResult) => {
+  private static crypto_message_decrypt_result_create_blobs = (decrypt_result: DecryptResult) => {
     if (decrypt_result && decrypt_result.success && decrypt_result.content) {
       if(decrypt_result.content.text && decrypt_result.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
         decrypt_result.content.blob = {blob_type: 'text', blob_url: Attachment.methods.object_url_create(decrypt_result.content.text)};

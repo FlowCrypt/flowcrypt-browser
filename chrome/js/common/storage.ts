@@ -2,9 +2,10 @@
 
 'use strict';
 
-import {Catch, Value, Str, Pgp, BrowserMsg} from './common.js';
+import {Catch, Value, Str, BrowserMsg} from './common.js';
 import {mnemonic} from './mnemonic.js';
 import * as t from '../../types/common';
+import { Pgp } from './pgp.js';
 
 export class Subscription implements t.SubscriptionInfo {
   active: boolean|null = null;
