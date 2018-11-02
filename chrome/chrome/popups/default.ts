@@ -2,6 +2,9 @@
 
 'use strict';
 
+import { Store } from '../../js/common/storage.js';
+import { Catch, BrowserMsg, Ui } from '../../js/common/common.js';
+
 Catch.try(async () => {
 
   let redirect_to_initial_setup = async (account_email:string|null=null) => {

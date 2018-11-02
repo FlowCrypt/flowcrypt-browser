@@ -2,6 +2,10 @@
 
 'use strict';
 
+import { Catch, Env, Xss, Api, Ui, BrowserMsg, Value, Pgp, Attachment, DecryptErrorTypes } from '../../../js/common/common.js';
+import { Attach } from '../../../js/common/attach.js';
+import { XssSafeFactory } from '../../../js/common/factory.js';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']);

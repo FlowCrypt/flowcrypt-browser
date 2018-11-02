@@ -2,6 +2,13 @@
 
 'use strict';
 
+import { Store } from './../../js/common/storage.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Pgp, Str } from './../../js/common/common.js';
+import { mnemonic } from './../../js/common/mnemonic.js';
+import * as t from '../../types/common';
+
+declare let openpgp: typeof OpenPGP;
+
 Catch.try(async () => {
 
   // todo - this should use KeyImportUI for consistency. Needs general refactoring, hard to follow.
@@ -41,7 +48,7 @@ Catch.try(async () => {
     $('.line.fingerprints, .line.add_contact').css('display', url_params.minimized ? 'none' : 'block');
     if (pubkeys.length === 1) {
       $('.line.fingerprints .fingerprint').text(Pgp.key.fingerprint(pubkeys[0], 'spaced') as string);
-      $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) as string));
+      $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) || '') || '');
     } else {
       $('.line.fingerprints').css({display: 'none'});
     }
@@ -79,7 +86,7 @@ Catch.try(async () => {
 
   $('.action_add_contact').click(Ui.event.handle(async target => {
     if (pubkeys.length > 1) {
-      let contacts: Contact[] = [];
+      let contacts: t.Contact[] = [];
       for (let pubkey of pubkeys) {
         let email_address = Str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
         if (Str.is_email_valid(email_address)) {

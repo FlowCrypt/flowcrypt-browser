@@ -2,16 +2,22 @@
 
 'use strict';
 
-class GmailElementReplacer implements WebmailElementReplacer {
+import {Catch, BrowserMsg, Value, Ui, Pgp, Attachment, Xss, Api, Str} from '../../common/common.js';
+import {Injector} from '../../common/inject.js';
+import {XssSafeFactory} from '../../common/factory.js';
+import {Notifications} from '../../common/notifications.js';
+import * as t from '../../../types/common';
 
-  private recipient_has_pgp_cache: Dict<boolean> = {};
+export class GmailElementReplacer implements t.WebmailElementReplacer {
+
+  private recipient_has_pgp_cache: t.Dict<boolean> = {};
   private addresses: string[];
   private factory: XssSafeFactory;
   private account_email: string;
   private can_read_emails: boolean;
   private injector: Injector;
   private notifications: Notifications;
-  private gmail_variant: WebmailVariantString;
+  private gmail_variant: t.WebmailVariantString;
   private css_hidden = 'opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important; max-width: 1px !important; position: absolute !important; z-index: -1000 !important';
   private currently_evaluating_standard_compose_box_recipients = false;
 
@@ -28,7 +34,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     standard_compose_window: '.aaZ:visible',
   };
 
-  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, notifications: Notifications, gmail_variant: WebmailVariantString) {
+  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, notifications: Notifications, gmail_variant: t.WebmailVariantString) {
     this.factory = factory;
     this.account_email = account_email;
     this.addresses = addresses;
@@ -85,7 +91,7 @@ class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: Callback) => {
+  private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: t.Callback) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
     Xss.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent('double', Catch.try(on_click)));
   }

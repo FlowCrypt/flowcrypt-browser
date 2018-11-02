@@ -2,12 +2,16 @@
 
 'use strict';
 
-class Injector {
+import {XssSafeFactory} from './factory.js';
+import {Catch, Ui} from './common.js';
+import * as t from '../../types/common';
+
+export class Injector {
 
   private factory: XssSafeFactory;
-  private webmail_name: WebMailName;
-  private webmail_variant: WebmailVariantString;
-  private S: SelectorCache;
+  private webmail_name: t.WebMailName;
+  private webmail_variant: t.WebmailVariantString;
+  private S: t.SelectorCache;
   private compose_button_container_selector = {
     'gmail': 'div.aic',
     'inbox': 'div.jp',
@@ -15,7 +19,7 @@ class Injector {
     'settings': '#does_not_have',
   };
 
-  constructor(webmail_name: WebMailName, webmail_variant: WebmailVariantString, factory: XssSafeFactory) {
+  constructor(webmail_name: t.WebMailName, webmail_variant: t.WebmailVariantString, factory: XssSafeFactory) {
     this.webmail_name = webmail_name;
     this.webmail_variant = webmail_variant;
     this.factory = factory;
@@ -40,7 +44,7 @@ class Injector {
 
   buttons = () => {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
-      (window as ContentScriptWindow).TrySetDestroyableTimeout(this.buttons, 300);
+      (window as t.ContentScriptWindow).TrySetDestroyableTimeout(this.buttons, 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
         let container;

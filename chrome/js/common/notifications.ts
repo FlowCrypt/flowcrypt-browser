@@ -2,7 +2,11 @@
 
 'use strict';
 
-class Notifications {
+import {Store} from './storage.js';
+import {Catch, Xss, Ui, Api, BrowserMsg} from './common.js';
+import * as t from '../../types/common';
+
+export class Notifications {
 
   private tab_id: string;
 
@@ -39,7 +43,7 @@ class Notifications {
     $('.webmail_notifications').text('');
   }
 
-  show = (text: string, callbacks:Dict<Callback>={}) => {
+  show = (text: string, callbacks:t.Dict<t.Callback>={}) => {
     Xss.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;

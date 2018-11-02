@@ -2,19 +2,24 @@
 
 'use strict';
 
-class InboxElementReplacer implements WebmailElementReplacer {
+import {Injector} from '../../common/inject.js';
+import {XssSafeFactory} from '../../common/factory.js';
+import {Catch, BrowserMsg, Value, Ui, Pgp, Attachment, Xss, Api, Str} from '../../common/common.js';
+import * as t from '../../../types/common';
 
-  private recipient_has_pgp: Dict<boolean|null|undefined> = {}; // undefined: never checked or check failed, null: checking now, true: uses, false: doesn't use
+export class InboxElementReplacer implements t.WebmailElementReplacer {
+
+  private recipient_has_pgp: t.Dict<boolean|null|undefined> = {}; // undefined: never checked or check failed, null: checking now, true: uses, false: doesn't use
   private addresses: string[];
   private factory: XssSafeFactory;
   private account_email: string;
   private can_read_emails: boolean;
   private injector: Injector;
-  private gmail_variant: WebmailVariantString;
+  private gmail_variant: t.WebmailVariantString;
 
   private message_text_element_selector = 'div.b5.xJNT8d';
 
-  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: WebmailVariantString) {
+  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: t.WebmailVariantString) {
     this.factory = factory;
     this.account_email = account_email;
     this.addresses = addresses;

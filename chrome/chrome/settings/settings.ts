@@ -2,7 +2,16 @@
 
 'use strict';
 
-class Settings {
+import { Store } from '../../js/common/storage.js';
+import { Value, Api, Str, Pgp, Env, BrowserMsg, Ui, Xss, UnreportableError, Catch } from '../../js/common/common.js';
+import * as t from '../../types/common';
+import { Lang } from '../../js/common/lang.js';
+import { Rules } from '../../js/common/rules.js';
+
+declare const openpgp: typeof OpenPGP;
+declare const zxcvbn: Function; // tslint:disable-line:ban-types
+
+export class Settings {
 
   private static is_embedded = Boolean(Env.url_params(['embedded']).embedded);
   private static ignore_email_aliases = ['nobody@google.com'];
@@ -96,8 +105,8 @@ class Settings {
     await key.encrypt(passphrase);
   }
 
-  private static prepare_new_settings_location_url = (account_email: string|null, parent_tab_id: string, page: string, add_url_text_or_params: string|UrlParams|null=null): string => {
-    let page_params: UrlParams = {placement: 'settings', parent_tab_id};
+  private static prepare_new_settings_location_url = (account_email: string|null, parent_tab_id: string, page: string, add_url_text_or_params: string|t.UrlParams|null=null): string => {
+    let page_params: t.UrlParams = {placement: 'settings', parent_tab_id};
     if (account_email) {
       page_params.account_email = account_email;
     }
@@ -110,7 +119,7 @@ class Settings {
     return Env.url_create(page, page_params) + (add_url_text_or_params || '');
   }
 
-  static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
+  static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|t.UrlParams|null=null) => {
     let new_location = Settings.prepare_new_settings_location_url(account_email, tab_id, page, add_url_text_or_params);
     let width, height, variant, close_on_click;
     if (page !== '/chrome/elements/compose.htm') {
@@ -124,12 +133,12 @@ class Settings {
       variant = 'new_message_featherlight';
       close_on_click = false;
     }
-    $.featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant });
+    ($ as t.JQS).featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant });
     Xss.sanitize_prepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
 
   }
 
-  static redirect_sub_page = (account_email: string, parent_tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
+  static redirect_sub_page = (account_email: string, parent_tab_id: string, page: string, add_url_text_or_params:string|t.UrlParams|null=null) => {
     let new_location = Settings.prepare_new_settings_location_url(account_email, parent_tab_id, page, add_url_text_or_params);
     if (Settings.is_embedded) { // embedded on the main page
       BrowserMsg.send(parent_tab_id, 'open_page', { page, add_url_text: add_url_text_or_params });
@@ -196,7 +205,7 @@ class Settings {
     let new_account_email_index_prefix = Store.index(new_account_email, '') as string;
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
     let destination_account_private_keys = await Store.keys_get(new_account_email);
-    let destination_account_pass_phrases: Dict<string> = {};
+    let destination_account_pass_phrases: t.Dict<string> = {};
     for(let ki of destination_account_private_keys) {
       let pp = await Store.passphrase_get(new_account_email, ki.longid, true);
       if(pp) {
@@ -309,7 +318,7 @@ class Settings {
     });
   }
 
-  static abort_and_render_error_if_keyinfo_empty = (ki: KeyInfo|undefined, do_throw:boolean=true) => {
+  static abort_and_render_error_if_keyinfo_empty = (ki: t.KeyInfo|undefined, do_throw:boolean=true) => {
     if (!ki) {
       let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
       Xss.sanitize_render('#content', `${msg} ${Ui.retry_link()}`);

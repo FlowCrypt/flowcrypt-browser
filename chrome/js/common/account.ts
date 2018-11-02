@@ -2,9 +2,13 @@
 
 'use strict';
 
-class FlowCryptAccount {
+import {Store} from './storage.js';
+import {Api, Env, Str, Catch} from './common.js';
+import * as t from '../../types/common';
 
-  PRODUCTS: Dict<Product> = {
+export class FlowCryptAccount {
+
+  PRODUCTS: t.Dict<t.Product> = {
     null: {id: null, method: null, name: null, level: null},
     trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
     advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
@@ -12,9 +16,9 @@ class FlowCryptAccount {
 
   private can_read_email: boolean;
   private cryptup_verification_email_sender = 'verify@cryptup.org';
-  private event_handlers: AccountEventHandlers;
+  private event_handlers: t.AccountEventHandlers;
 
-  constructor(handlers: AccountEventHandlersOptional, can_read_email: boolean) {
+  constructor(handlers: t.AccountEventHandlersOptional, can_read_email: boolean) {
     this.event_handlers = {
       render_status_text: handlers.render_status_text || ((text: string, show_spinner?:boolean) => undefined),
       find_matching_tokens_from_email: handlers.find_matching_tokens_from_email || this.fetch_token_emails_on_gmail_and_find_matching_token,
@@ -22,7 +26,7 @@ class FlowCryptAccount {
     this.can_read_email = can_read_email;
   }
 
-  subscribe = async (account_email: string, chosen_product: Product, source: string|null) => {
+  subscribe = async (account_email: string, chosen_product: t.Product, source: string|null) => {
     this.event_handlers.render_status_text(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
     await Api.fc.account_check_sync();
     try {
@@ -79,9 +83,9 @@ class FlowCryptAccount {
     return await this.register(account_email);
   }
 
-  save_subscription_attempt = async (product: Product, source: string|null) => {
-    (product as SubscriptionAttempt).source = source;
-    await Store.set(null, { 'cryptup_subscription_attempt': product as SubscriptionAttempt });
+  save_subscription_attempt = async (product: t.Product, source: string|null) => {
+    (product as t.SubscriptionAttempt).source = source;
+    await Store.set(null, { 'cryptup_subscription_attempt': product as t.SubscriptionAttempt });
   }
 
   parse_token_email_text = (verification_email_text: string, stored_uuid_to_cross_check?: string): string|undefined => {
@@ -94,7 +98,7 @@ class FlowCryptAccount {
     }
   }
 
-  private do_subscribe = async (chosen_product: Product, source:string|null=null) => {
+  private do_subscribe = async (chosen_product: t.Product, source:string|null=null) => {
     await Store.remove(null, ['cryptup_subscription_attempt']);
     // todo - deal with auth error? would need to know account_email for new registration
     let response = await Api.fc.account_subscribe(chosen_product.id!, chosen_product.method!, source);

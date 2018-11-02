@@ -2,17 +2,20 @@
 
 'use strict';
 
+import {Catch, Attachment, Pgp} from './common.js';
+import * as t from '../../types/common';
+
 declare let qq: any;
 
-class Attach {
+export class Attach {
 
   private template_path = '/chrome/elements/shared/attach.template.htm';
-  private get_limits: () => AttachLimits;
-  private attached_files: Dict<File> = {};
+  private get_limits: () => t.AttachLimits;
+  private attached_files: t.Dict<File> = {};
   private uploader: any = undefined;
-  private attachment_added_callback: Callback;
+  private attachment_added_callback: t.Callback;
 
-  constructor(get_limits: () => AttachLimits) {
+  constructor(get_limits: () => t.AttachLimits) {
     this.get_limits = get_limits;
   }
 
@@ -35,7 +38,7 @@ class Attach {
     });
   }
 
-  set_attachment_added_callback = (cb: Callback) => {
+  set_attachment_added_callback = (cb: t.Callback) => {
     this.attachment_added_callback = cb;
   }
 
@@ -60,7 +63,7 @@ class Attach {
     return attachments;
   }
 
-  collect_and_encrypt_attachments = async (armored_pubkeys: string[], challenge: Challenge|null): Promise<Attachment[]> => {
+  collect_and_encrypt_attachments = async (armored_pubkeys: string[], challenge: t.Challenge|null): Promise<Attachment[]> => {
     let attachments: Attachment[] = [];
     for (let id of Object.keys(this.attached_files)) {
       let file = this.attached_files[id];

@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { Env, Xss } from '../../js/common/common.js';
+
 (() => {
 
     let url_params = Env.url_params(['reason']);

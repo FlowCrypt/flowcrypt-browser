@@ -2,6 +2,12 @@
 
 'use strict';
 
+import { Store, Subscription } from './../../js/common/storage.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Api, Str } from './../../js/common/common.js';
+import { XssSafeFactory } from './../../js/common/factory.js';
+import { Composer, ComposerUserError } from '../../js/common/composer.js';
+import * as t from '../../types/common';
+
 Catch.try(async () => {
 
   Ui.event.protect();
@@ -113,7 +119,7 @@ Catch.try(async () => {
     },
     storage_get_hide_message_password: () => !!storage.hide_message_password,
     storage_get_subscription: () => Store.subscription(),
-    storage_get_key: async (sender_email: string): Promise<KeyInfo> => {
+    storage_get_key: async (sender_email: string): Promise<t.KeyInfo> => {
       let [primary_k] = await Store.keys_get(account_email, ['primary']);
       if (primary_k) {
         return primary_k;
@@ -159,16 +165,16 @@ Catch.try(async () => {
       await Store.set(null, admin_code_storage);
     },
     storage_contact_get: (email: string[]) => Store.db_contact_get(null, email),
-    storage_contact_update: (email: string[]|string, update: ContactUpdate) => Store.db_contact_update(null, email, update),
-    storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
-    storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
+    storage_contact_update: (email: string[]|string, update: t.ContactUpdate) => Store.db_contact_update(null, email, update),
+    storage_contact_save: (contact: t.Contact) => Store.db_contact_save(null, contact),
+    storage_contact_search: (query: t.DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
     email_provider_draft_get: (draft_id: string) => Api.gmail.draft_get(account_email, draft_id, 'raw'),
     email_provider_draft_create: (mime_message: string) => Api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string),
     email_provider_draft_update: (draft_id: string, mime_message: string) => Api.gmail.draft_update(account_email, draft_id, mime_message),
     email_provider_draft_delete: (draft_id: string) => Api.gmail.draft_delete(account_email, draft_id),
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Api.gmail.message_send(account_email, message, render_upload_progress),
-    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => {
+    email_provider_message_send: (message: t.SendableMessage, render_upload_progress: t.ApiCallProgressCallback) => Api.gmail.message_send(account_email, message, render_upload_progress),
+    email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: t.Callback) => {
       Api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
         if(Api.error.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
@@ -202,8 +208,8 @@ Catch.try(async () => {
       }
     },
     email_provider_extract_armored_block: (message_id: string) => Api.gmail.extract_armored_block(account_email, message_id, 'full'),
-    send_message_to_main_window: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data),
-    send_message_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
+    send_message_to_main_window: (channel: string, data: t.Dict<t.Serializable>) => BrowserMsg.send(parent_tab_id, channel, data),
+    send_message_to_background_script: (channel: string, data: t.Dict<t.Serializable>) => BrowserMsg.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {
       BrowserMsg.send(parent_tab_id, 'reinsert_reply_box', {
         account_email,
@@ -214,18 +220,18 @@ Catch.try(async () => {
         thread_message_id: last_message_id,
       });
     },
-    render_footer_dialog: () => $.featherlight({iframe: factory.src_add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
+    render_footer_dialog: () => ($ as t.JQS).featherlight({iframe: factory.src_add_footer_dialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
       $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
     }}),
     render_add_pubkey_dialog: (emails: string[]) => {
       if (url_params.placement !== 'settings') {
         BrowserMsg.send(parent_tab_id, 'add_pubkey_dialog', {emails});
       } else {
-        $.featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50}); // body element is present
+        ($ as t.JQS).featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50}); // body element is present
       }
     },
     render_help_dialog: () => BrowserMsg.send(null, 'settings', { account_email, page: '/chrome/settings/modules/help.htm' }),
-    render_sending_address_dialog: () => $.featherlight({iframe: factory.src_sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
+    render_sending_address_dialog: () => ($ as t.JQS).featherlight({iframe: factory.src_sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
     close_message,
     factory_attachment: (attachment: Attachment) => factory.embedded_attachment(attachment),
   }, {

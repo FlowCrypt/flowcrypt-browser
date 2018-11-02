@@ -2,6 +2,9 @@
 
 'use strict';
 
+import {Env, Pgp} from '../../js/common/common.js';
+import * as t from '../../types/common';
+
 (() => {
 
   let url_params = Env.url_params(['f', 'args']);
@@ -16,7 +19,7 @@
     }
   };
 
-  let finish = (error: string|StandardError|Error|null, result?: any) => {
+  let finish = (error: string|t.StandardError|Error|null, result?: any) => {
     error = (error === null) ? null : String(error);
     $('#result').text(JSON.stringify({error, result}));
     $('#result').attr('data-test-state', 'ready');

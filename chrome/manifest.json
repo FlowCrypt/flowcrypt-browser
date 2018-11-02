@@ -30,39 +30,20 @@
     {
       "matches": ["*://mail.google.com/*", "*://inbox.google.com/*"],
       "css": ["/css/webmail.css"],
-      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/lib/openpgp.js",  "/js/content_scripts/webmail/webmail_bundle.js"]
+      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/lib/openpgp.js", "/js/content_scripts/webmail_bundle.js"]
     },
     {
       "matches": ["*://accounts.google.com/o/oauth2/approval*"],
-      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/oauth_window/google.js"]
+      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/js/content_scripts/google_bundle.js"]
     },
     {
       "matches": ["https://flowcrypt.com/stripe*", "https://cryptup.org/stripe*"],
-      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/js/common/common.js", "/js/content_scripts/checkout/stripe.js"],
+      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/js/content_scripts/stripe_bundle.js"],
       "all_frames": true
     }
   ],
   "background": {
-    "scripts": [
-      "/lib/purify.min.js",
-      "/lib/jquery.min.js",
-      "/lib/openpgp.js",
-      "/lib/emailjs/punycode.js",
-      "/lib/emailjs/emailjs-stringencoding.js",
-      "/lib/emailjs/emailjs-mime-codec.js",
-      "/lib/emailjs/emailjs-mime-types.js",
-      "/lib/emailjs/emailjs-addressparser.js",
-      "/lib/emailjs/emailjs-mime-builder.js",
-      "/lib/emailjs/emailjs-mime-parser.js",
-      "/js/common/mnemonic.js",
-      "/js/common/storage.js",
-      "/js/common/common.js",
-      "/js/common/bg_exec.js",
-      "/js/background_process/inject.js",
-      "/js/background_process/attests.js",
-      "/js/background_process/migrations.js",
-      "/js/background_process/background_process.js"
-    ]
+    "page": "/js/background_page/background_page.htm"
   },
   "web_accessible_resources": [
     "/css/webmail.css",

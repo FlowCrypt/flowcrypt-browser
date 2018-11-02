@@ -2,6 +2,13 @@
 
 'use strict';
 
+import { Store } from './../../js/common/storage.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Api, Str } from './../../js/common/common.js';
+import { FlowCryptAccount } from './../../js/common/account.js';
+import { XssSafeFactory } from './../../js/common/factory.js';
+import { Lang } from './../../js/common/lang.js';
+import * as t from './../../types/common';
+
 Catch.try(async () => {
 
   Ui.event.protect();
@@ -17,7 +24,7 @@ Catch.try(async () => {
   let original_button_content: string;
   let original_button_selector: JQuery<HTMLElement>;
 
-  let handle_error_response = (e: Thrown) => {
+  let handle_error_response = (e: t.Thrown) => {
     let render_err = (msg: string, e?: any) => {
       msg = Xss.html_escape(msg);
       let debug = e ? `<pre>${Xss.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
@@ -38,7 +45,7 @@ Catch.try(async () => {
     }
   };
 
-  let stripe_credit_card_entered_handler: BrowserMessageHandler = async (data: {token: string}, sender, respond) => {
+  let stripe_credit_card_entered_handler: t.BrowserMessageHandler = async (data: {token: string}, sender, respond) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
       await flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token);

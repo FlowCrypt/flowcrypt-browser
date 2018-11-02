@@ -2,6 +2,14 @@
 
 'use strict';
 
+import {Store, Subscription} from './storage.js';
+import {Lang} from './lang.js';
+import {Catch, Value, Xss, Str, Mime, Ui, Pgp, Api, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
+import {Attach} from './attach.js';
+import * as t from '../../types/common';
+
+declare let openpgp: typeof OpenPGP;
+
 interface ComposerAppFunctionsInterface {
     can_read_email: () => boolean;
     does_recipient_have_my_pubkey: (email: string) => Promise<boolean|undefined>;
@@ -12,21 +20,21 @@ interface ComposerAppFunctionsInterface {
     storage_set_email_footer: (footer: string|null) => Promise<void>;
     storage_get_hide_message_password: () => boolean;
     storage_get_subscription: () => Promise<Subscription>;
-    storage_get_key: (sender_email: string) => Promise<KeyInfo>;
+    storage_get_key: (sender_email: string) => Promise<t.KeyInfo>;
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>;
     storage_passphrase_get: () => Promise<string|null>;
     storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise<void>;
-    storage_contact_get: (email: string[]) => Promise<(Contact|null)[]>;
-    storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>;
-    storage_contact_save:  (contact: Contact) =>  Promise<void>;
-    storage_contact_search: (query: ProviderContactsQuery) => Promise<Contact[]>;
-    storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => Contact;
-    email_provider_draft_get: (draft_id: string) => Promise<ApirGmailDraftGet>;
-    email_provider_draft_create: (mime_message: string) => Promise<ApirGmailDraftCreate>;
-    email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<ApirGmailDraftUpdate>;
-    email_provider_draft_delete: (draft_id: string) => Promise<ApirGmailDraftDelete>;
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Promise<ApirGmailMessageSend>;
-    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void) => void;
+    storage_contact_get: (email: string[]) => Promise<(t.Contact|null)[]>;
+    storage_contact_update: (email: string|string[], update: t.ContactUpdate) => Promise<void>;
+    storage_contact_save:  (contact: t.Contact) =>  Promise<void>;
+    storage_contact_search: (query: t.ProviderContactsQuery) => Promise<t.Contact[]>;
+    storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => t.Contact;
+    email_provider_draft_get: (draft_id: string) => Promise<t.ApirGmailDraftGet>;
+    email_provider_draft_create: (mime_message: string) => Promise<t.ApirGmailDraftCreate>;
+    email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<t.ApirGmailDraftUpdate>;
+    email_provider_draft_delete: (draft_id: string) => Promise<t.ApirGmailDraftDelete>;
+    email_provider_message_send: (message: t.SendableMessage, render_upload_progress: t.ApiCallProgressCallback) => Promise<t.ApirGmailMessageSend>;
+    email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: (r: {new: t.Contact[], all: t.Contact[]}) => void) => void;
     email_provider_determine_reply_message_header_variables: () => Promise<undefined|{last_message_id: string, headers: {'In-Reply-To': string, 'References': string}}>;
     email_provider_extract_armored_block: (message_id: string) => Promise<string>;
     send_message_to_main_window: (channel: string, data?: object) => void;
@@ -40,12 +48,12 @@ interface ComposerAppFunctionsInterface {
     close_message: () => void;
 }
 
-class ComposerUserError extends Error {}
-class ComposerNotReadyError extends ComposerUserError {}
-class ComposerNetworkError extends Error {}
-class ComposerResetBtnTrigger extends Error {}
+export class ComposerUserError extends Error {}
+export class ComposerNotReadyError extends ComposerUserError {}
+export class ComposerNetworkError extends Error {}
+export class ComposerResetBtnTrigger extends Error {}
 
-class Composer {
+export class Composer {
 
   private S = Ui.build_jquery_selectors({
     body: 'body',
@@ -107,7 +115,7 @@ class Composer {
   private my_addresses_on_pks: string[] = [];
   private my_addresses_on_keyserver: string[] = [];
   private recipients_missing_my_key: string[] = [];
-  private ks_lookups_by_email: {[key: string]: PubkeySearchResult|Contact} = {};
+  private ks_lookups_by_email: {[key: string]: t.PubkeySearchResult|t.Contact} = {};
   private subscribe_result_listener: ((subscription_active: boolean) => void)|undefined;
   private additional_message_headers: {[key: string]: string} = {};
   private button_update_timeout: number|null = null;
@@ -122,7 +130,7 @@ class Composer {
   private frame_id: string;
   private reference_body_height: number;
 
-  constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
+  constructor(app_functions: ComposerAppFunctionsInterface, variables: t.UrlParams, subscription: Subscription) {
     this.attach = new Attach(() => this.get_max_attachment_size_and_oversize_notice(subscription));
     this.app = app_functions;
 
@@ -203,7 +211,7 @@ class Composer {
     }
   }
 
-  private handle_errors = (could_not_do_what: string): BrowserEventErrorHandler => {
+  private handle_errors = (could_not_do_what: string): t.BrowserEventErrorHandler => {
     return {
       network: () => alert(`Could not ${could_not_do_what} (network error). Please try again.`),
       auth_popup: () => this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email}),
@@ -289,12 +297,12 @@ class Composer {
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
   }
 
-  show_subscribe_dialog_and_wait_for_response: BrowserMessageHandler = (data, sender, respond: (subscribed: boolean) => void) => {
+  show_subscribe_dialog_and_wait_for_response: t.BrowserMessageHandler = (data, sender, respond: (subscribed: boolean) => void) => {
     this.subscribe_result_listener = respond;
     this.app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
   }
 
-  private initialize_compose_box = async (variables: UrlParams) => {
+  private initialize_compose_box = async (variables: t.UrlParams) => {
     if(this.is_reply_box) {
       this.S.cached('header').remove();
       this.S.cached('subject').remove();
@@ -412,7 +420,7 @@ class Composer {
         body = encrypted.data;
       }
       let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
-      let mime_message = await Mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, []);
+      let mime_message = await Mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as t.RichHeaders, []);
       try {
         if (!this.draft_id) {
           let new_draft = await this.app.email_provider_draft_create(mime_message);
@@ -459,7 +467,7 @@ class Composer {
     }
   }
 
-  private decrypt_and_render_draft = async (encrypted_draft: string, headers: FromToHeaders) => {
+  private decrypt_and_render_draft = async (encrypted_draft: string, headers: t.FromToHeaders) => {
     let passphrase = await this.app.storage_passphrase_get();
     if (passphrase !== null) {
       let result = await Pgp.message.decrypt(this.account_email, encrypted_draft);
@@ -544,7 +552,7 @@ class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throw_if_form_values_invalid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null) => {
+  private throw_if_form_values_invalid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: t.Challenge|null) => {
     const is_encrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -558,7 +566,7 @@ class Composer {
     }
   }
 
-  private handle_send_error(e: Error|StandardError) {
+  private handle_send_error(e: Error|t.StandardError) {
     if(Api.error.is_network_error(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
     } else if(Api.error.is_auth_popup_needed(e)) {
@@ -576,7 +584,7 @@ class Composer {
       }
     } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
       Catch.report('StandardError | failed to send message', e);
-      alert(`Failed to send message: [${(e as StandardError).internal}] ${e.message}`);
+      alert(`Failed to send message: [${(e as t.StandardError).internal}] ${e.message}`);
     } else if(e instanceof ComposerUserError) {
       alert(`Could not send message: ${e.message}`);
     } else {
@@ -621,7 +629,7 @@ class Composer {
     }
   }
 
-  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
+  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: t.Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription);
     let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
@@ -635,7 +643,7 @@ class Composer {
     }
   }
 
-  private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
+  private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: t.Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
     let [primary_k] = await Store.keys_get(this.account_email, ['primary']);
     if (primary_k) {
@@ -650,7 +658,7 @@ class Composer {
           this.reset_send_btn();
         }
       } else {
-        let MimeCodec = (window as BrowserWidnow)['emailjs-mime-codec'];
+        let MimeCodec = (window as t.BrowserWidnow)['emailjs-mime-codec'];
         // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
         // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
         // resulting in.. wait for it.. signatures that don't match
@@ -683,7 +691,7 @@ class Composer {
 
   private upload_attachments_to_fc = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: ApirFcMessagePresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
+      let pf_response: t.ApirFcMessagePresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
       const items: any[] = [];
       for (let i of pf_response.approvals.keys()) {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
@@ -725,7 +733,7 @@ class Composer {
     return plaintext;
   }
 
-  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string> => {
+  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: t.Challenge|null, subscription: Subscription): Promise<string> => {
     if (!challenge || !subscription.active) {
       return plaintext;
     }
@@ -781,10 +789,10 @@ class Composer {
     return new Date(usable_time_until); // latest date none of the keys were expired
   }
 
-  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
+  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: t.Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
     let encrypt_as_of_date = await this.encrypt_message_as_of_date_if_some_are_expired(armored_pubkeys);
     let encrypted = await Pgp.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
-    let body = {'text/plain': encrypted.data} as SendableMessageBody;
+    let body = {'text/plain': encrypted.data} as t.SendableMessageBody;
     await this.app.storage_contact_update(recipients, {last_use: Date.now()});
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (challenge) {
@@ -802,7 +810,7 @@ class Composer {
     }
   }
 
-  private do_send_message = async (message: SendableMessage, plaintext: string) => {
+  private do_send_message = async (message: t.SendableMessage, plaintext: string) => {
     for (let k of Object.keys(this.additional_message_headers)) {
       message.headers[k] = this.additional_message_headers[k];
     }
@@ -823,7 +831,7 @@ class Composer {
     }
   }
 
-  private lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed = async (email: string): Promise<Contact|"fail"> => {
+  private lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed = async (email: string): Promise<t.Contact|"fail"> => {
     let [db_contact] = await this.app.storage_contact_get([email]);
     if (db_contact && db_contact.has_pgp && db_contact.pubkey) {
       return db_contact;
@@ -1082,7 +1090,7 @@ class Composer {
     this.set_input_text_height_manually_if_needed();
   }
 
-  private select_contact = (email: string, from_query: ProviderContactsQuery) => {
+  private select_contact = (email: string, from_query: t.ProviderContactsQuery) => {
     const possibly_bogus_recipient = $('.recipients span.wrong').last();
     const possibly_bogus_address = Str.parse_email(possibly_bogus_recipient.text()).email;
     const q = Str.parse_email(from_query.substring).email;
@@ -1133,7 +1141,7 @@ class Composer {
     }
   }
 
-  private render_search_results = (contacts: Contact[], query: ProviderContactsQuery) => {
+  private render_search_results = (contacts: t.Contact[], query: t.ProviderContactsQuery) => {
     const renderable_contacts = contacts.slice();
     renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
     renderable_contacts.splice(8);
@@ -1260,7 +1268,7 @@ class Composer {
     this.show_hide_password_or_pubkey_container_and_color_send_button();
   }
 
-  private recipient_key_id_text = (contact: Contact) => {
+  private recipient_key_id_text = (contact: t.Contact) => {
     if (contact.client === 'cryptup' && contact.keywords) {
       return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
     } else if (contact.fingerprint) {
@@ -1270,7 +1278,7 @@ class Composer {
     }
   }
 
-  private render_pubkey_result = async (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
+  private render_pubkey_result = async (email_element: HTMLElement, email: string, contact: t.Contact|"fail"|"wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         let sending_address_on_pks = Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks);
@@ -1341,7 +1349,7 @@ class Composer {
     }
   }
 
-  private render_reply_success = (message: SendableMessage, plaintext: string, message_id: string) => {
+  private render_reply_success = (message: t.SendableMessage, plaintext: string, message_id: string) => {
     let is_signed = this.S.cached('icon_sign').is('.active');
     this.app.render_reinsert_reply_box(message_id, message.headers.To.split(',').map(a => Str.parse_email(a).email));
     if (is_signed) {
@@ -1437,7 +1445,7 @@ class Composer {
     }
   }
 
-  private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
+  private format_password_protected_email = (short_id: string, original_body: t.SendableMessageBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
     const msg_url = `${this.FC_WEB_URL}/${short_id}`;
     const a = `<a href="${Xss.html_escape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_message[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
@@ -1462,9 +1470,9 @@ class Composer {
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
 
-  private format_email_text_footer = (original_body: SendableMessageBody): SendableMessageBody => {
+  private format_email_text_footer = (original_body: t.SendableMessageBody): t.SendableMessageBody => {
     const email_footer = this.app.storage_get_email_footer();
-    const body = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')} as SendableMessageBody;
+    const body = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')} as t.SendableMessageBody;
     if (typeof original_body['text/html'] !== 'undefined') {
       body['text/html'] = original_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
     }
@@ -1473,7 +1481,7 @@ class Composer {
 
   static default_app_functions = (): ComposerAppFunctionsInterface => {
     return {
-      send_message_to_main_window: (channel: string, data: Dict<Serializable>) => null,
+      send_message_to_main_window: (channel: string, data: t.Dict<t.Serializable>) => null,
       can_read_email: () => false,
       does_recipient_have_my_pubkey: (their_email: string): Promise<boolean|undefined> => Promise.resolve(false),
       storage_get_addresses: () => [],
@@ -1488,19 +1496,19 @@ class Composer {
       storage_passphrase_get: () => Promise.resolve(null),
       storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
       storage_contact_get: (email: string[]) => Promise.resolve([]),
-      storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
-      storage_contact_save: (contact: Contact) => Promise.resolve(),
-      storage_contact_search: (query: DbContactFilter) => Promise.resolve([]),
+      storage_contact_update: (email: string[]|string, update: t.ContactUpdate) => Promise.resolve(),
+      storage_contact_save: (contact: t.Contact) => Promise.resolve(),
+      storage_contact_search: (query: t.DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
-      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as ApirGmailMessage}),
+      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as t.ApirGmailMessage}),
       email_provider_draft_create: (mime_message: string) => Promise.reject(null),
       email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve({}),
       email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
-      email_provider_message_send: (message: SendableMessage, render_upload_progress: ApiCallProgressCallback) => Promise.reject({message: 'not implemented'}),
-      email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: Callback) => multi_cb({new: [], all: []}),
+      email_provider_message_send: (message: t.SendableMessage, render_upload_progress: t.ApiCallProgressCallback) => Promise.reject({message: 'not implemented'}),
+      email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: t.Callback) => multi_cb({new: [], all: []}),
       email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
       email_provider_extract_armored_block: (message_id) => Promise.resolve(''),
-      send_message_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
+      send_message_to_background_script: (channel: string, data: t.Dict<t.Serializable>) => BrowserMsg.send(null, channel, data),
       render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => Promise.resolve(),
       render_footer_dialog: () => null,
       render_add_pubkey_dialog: (emails: string[]) => null,

@@ -2,9 +2,13 @@
 
 'use strict';
 
+import {Store} from '../../js/common/storage.js';
+import {Catch, Env, Xss, Value, Ui, Str} from '../../js/common/common.js';
+import * as t from '../../types/common';
+
 Catch.try(async () => {
 
-  type RenderableStorage = Dict<{key: string, value: Storable}>;
+  type RenderableStorage = t.Dict<{key: string, value: t.Storable}>;
 
   let url_params = Env.url_params(['filter', 'keys', 'controls', 'title']);
 
@@ -65,7 +69,7 @@ Catch.try(async () => {
         if (namespace_selector.val() === '-- namespace --' || $('.type').val() === '-- type --' || !key_selector.val()) {
           alert('Namespace, key and type need to be filled');
         } else {
-          let storage_update: BaseStore = {};
+          let storage_update: t.BaseStore = {};
           storage_update[key_selector.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
           let account_email = namespace_selector.val() === 'global' ? null : decodeURIComponent(namespace_selector.val() as string); // it's a text input
           await Store.set(account_email, storage_update);

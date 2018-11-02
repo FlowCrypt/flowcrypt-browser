@@ -4,13 +4,23 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
+import {Catch, Str, Api, Value, Env} from '../../common/common.js';
+import {Store} from '../../common/storage.js';
+import {Injector} from '../../common/inject.js';
+import {XssSafeFactory} from '../../common/factory.js';
+import {Notifications} from '../../common/notifications.js';
+import {InboxElementReplacer} from './inbox_element_replacer.js';
+import {GmailElementReplacer} from './gmail_element_replacer.js';
+import {content_script_setup_if_vacant} from './setup.js';
+import * as t from '../../../types/common';
+
 Catch.try(async () => {
 
   let gmail_webmail_startup = async () => {
     const replace_pgp_elements_interval_ms = 1000;
     let replace_pgp_elements_interval: number;
     let replacer: GmailElementReplacer;
-    let host_page_info: WebmailVariantObject;
+    let host_page_info: t.WebmailVariantObject;
 
     let get_user_account_email = (): undefined|string => {
       if (window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
@@ -29,7 +39,7 @@ Catch.try(async () => {
     };
 
     let get_insights_from_host_variables = () => {
-      let insights: WebmailVariantObject = {new_data_layer: null, new_ui: null, email: null, gmail_variant: null};
+      let insights: t.WebmailVariantObject = {new_data_layer: null, new_ui: null, email: null, gmail_variant: null};
       $('body').append(['<script>', '(function() {', // xss-direct - not sanitized because adding a <script> in intentional here
         'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
         'let e = document.getElementById("FC_VAR_PASS");',
@@ -70,8 +80,8 @@ Catch.try(async () => {
       replacer = new GmailElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, notifications, host_page_info.gmail_variant);
       await notifications.show_initial(account_email);
       replacer.everything();
-      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as FcWindow).$ === 'function') {
+      replace_pgp_elements_interval = (window as t.ContentScriptWindow).TrySetDestroyableInterval(() => {
+        if (typeof (window as t.FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replace_pgp_elements_interval);
@@ -118,8 +128,8 @@ Catch.try(async () => {
       replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);
       await notifications.show_initial(account_email);
       replacer.everything();
-      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as FcWindow).$ === 'function') {
+      replace_pgp_elements_interval = (window as t.ContentScriptWindow).TrySetDestroyableInterval(() => {
+        if (typeof (window as t.FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replace_pgp_elements_interval);

@@ -1,6 +1,10 @@
+
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 'use strict';
+
+import { Catch, Ui, Env, BrowserMsg } from './../../../js/common/common.js';
+import { Store } from './../../../js/common/storage.js';
 
 Catch.try(async () => {
 

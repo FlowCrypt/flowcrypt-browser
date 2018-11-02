@@ -1,21 +1,21 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../types/common.d.ts" />
-/// <reference path="../../types/openpgp.d.ts" />
-/// <reference path="../../types/jquery.d.ts" />
 
 'use strict';
 
+import * as DOMPurify from 'dompurify';
+import {Store} from './storage.js';
+import {XssSafeFactory} from './factory.js';
+import * as t from '../../types/common';
+
 declare let $_HOST_html_to_text: (html: string) => string;
-declare let openpgp: typeof OpenPGP;
-declare let mnemonic: (hex: string) => string;
-declare let zxcvbn: Function; // tslint:disable-line:ban-types
+declare const openpgp: typeof OpenPGP;
 
-class UnreportableError extends Error {}
-class TabIdRequiredError extends Error {}
+export class UnreportableError extends Error {}
+export class TabIdRequiredError extends Error {}
 
-enum DecryptErrorTypes {
+export enum DecryptErrorTypes {
   key_mismatch = 'key_mismatch',
   use_password = 'use_password',
   wrong_password = 'wrong_password',
@@ -25,11 +25,11 @@ enum DecryptErrorTypes {
   other = 'other',
 }
 
-class Attachment {
+export class Attachment {
 
   private text: string|null = null;
   private bytes: Uint8Array|null = null;
-  private treat_as_value: Attachment$treat_as|null = null;
+  private treat_as_value: t.Attachment$treat_as|null = null;
 
   public length: number;
   public type: string;
@@ -40,7 +40,7 @@ class Attachment {
   public inline: boolean;
   public cid: string|null;
 
-  constructor({data, type, name, length, url, inline, id, message_id, treat_as, cid}: AttachmentMeta) {
+  constructor({data, type, name, length, url, inline, id, message_id, treat_as, cid}: t.AttachmentMeta) {
     if(typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Attachment: one of data|url|id has to be set');
     }
@@ -110,7 +110,7 @@ class Attachment {
     throw new Error('Attachment has no data set');
   }
 
-  public treat_as = (): Attachment$treat_as => {
+  public treat_as = (): t.Attachment$treat_as => {
     // todo - should return a probability in the range of certain-likely-maybe
     // could also return possible types as an array - which makes basic usage more difficult - to think through
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
@@ -144,7 +144,7 @@ class Attachment {
       window.URL.revokeObjectURL(url);
       return uint8;
     },
-    download_as_uint8: (url: string, progress:ApiCallProgressCallback|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
+    download_as_uint8: (url: string, progress:t.ApiCallProgressCallback|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
@@ -198,15 +198,15 @@ class Attachment {
       }
     },
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
+    keyinfo_as_pubkey_attachment: (ki: t.KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
   };
 
 }
 
-class Extension { // todo - move extension-specific common.js code here
+export class Extension { // todo - move extension-specific common.js code here
 
-  public static prepare_bug_report = (name: string, details?: Dict<FlatTypes>, error?: Error|any): string => {
-    let bug_report: Dict<string> = {
+  public static prepare_bug_report = (name: string, details?: t.Dict<t.FlatTypes>, error?: Error|any): string => {
+    let bug_report: t.Dict<string> = {
       name,
       stack: Catch.stack_trace(),
     };
@@ -231,9 +231,9 @@ class Extension { // todo - move extension-specific common.js code here
 
 }
 
-class Env {
+export class Env {
 
-  private static URL_PARAM_DICT: Dict<boolean|null> = {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null};
+  private static URL_PARAM_DICT: t.Dict<boolean|null> = {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null};
 
   public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
@@ -267,14 +267,14 @@ class Env {
   public static is_extension = () => Env.runtime_id() !== null;
 
   public static url_param_require = {
-    string: (values: UrlParams, name: string): string => Ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
-    oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
+    string: (values: t.UrlParams, name: string): string => Ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
+    oneof: (values: t.UrlParams, name: string, allowed: t.UrlParam[]): string => Ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
   };
 
   public static url_params = (expected_keys: string[], string:string|null=null) => {
     let url = (string || window.location.search.replace('?', ''));
     let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    let url_data: UrlParams = {};
+    let url_data: t.UrlParams = {};
     for (let value_pair of value_pairs) {
       let pair = value_pair.split('=');
       if (Value.is(pair[0]).in(expected_keys)) {
@@ -284,7 +284,7 @@ class Env {
     return url_data;
   }
 
-  public static url_create = (link: string, params: UrlParams) => {
+  public static url_create = (link: string, params: t.UrlParams) => {
     for (let key of Object.keys(params)) {
       let value = params[key];
       if (typeof value !== 'undefined') {
@@ -299,21 +299,21 @@ class Env {
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 
-  public static webmails = async (): Promise<WebMailName[]> => {
+  public static webmails = async (): Promise<t.WebMailName[]> => {
     return ['gmail', 'inbox']; // async because storage may be involved in the future
   }
 
 }
 
-class Api {
+export class Api {
 
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
-  private static GMAIL_SCOPE_DICT: Dict<string> = {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'};
-  private static GOOGLE_OAUTH2 = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null;
+  private static GMAIL_SCOPE_DICT: t.Dict<string> = {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'};
+  private static GOOGLE_OAUTH2 = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as t.FlowCryptManifest).oauth2 : null;
   public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
   public static auth = {
-    window: (auth_url: string, window_closed_by_user: Callback) => {
+    window: (auth_url: string, window_closed_by_user: t.Callback) => {
       let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
       let window_closed_timer = Catch.set_interval(() => {
         if (auth_code_window !== null && auth_code_window.closed) {
@@ -332,7 +332,7 @@ class Api {
   };
 
   public static error = {
-    is_network_error: (e: Thrown) => {
+    is_network_error: (e: t.Thrown) => {
       if(e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
@@ -346,7 +346,7 @@ class Api {
       }
       return false;
     },
-    is_auth_error: (e: Thrown) => {
+    is_auth_error: (e: t.Thrown) => {
       if (e && typeof e === 'object') {
         if(Api.error.is_standard_error(e, 'auth')) {
           return true; // API auth error response
@@ -357,7 +357,7 @@ class Api {
       }
       return false;
     },
-    is_standard_error: (e: Thrown, internal_type: string) => {
+    is_standard_error: (e: t.Thrown, internal_type: string) => {
       if(e && typeof e === 'object') {
         if(e.internal === internal_type) {
           return true;
@@ -368,7 +368,7 @@ class Api {
       }
       return false;
     },
-    is_auth_popup_needed: (e: Thrown) => {
+    is_auth_popup_needed: (e: t.Thrown) => {
       if (e && typeof e === 'object' && e.status === 400 && typeof e.responseJSON === 'object') {
         if (e.responseJSON.error === 'invalid_grant' && Value.is(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
           return true;
@@ -376,24 +376,24 @@ class Api {
       }
       return false;
     },
-    is_not_found: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
-    is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
-    is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
+    is_not_found: (e: t.Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
+    is_bad_request: (e: t.Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
+    is_server_error: (e: t.Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
   };
 
   public static google = {
     plus: {
-      people_me: (account_email: string): Promise<ApirGooglePlusPeopleMe> => Api.internal.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
+      people_me: (account_email: string): Promise<t.ApirGooglePlusPeopleMe> => Api.internal.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
     },
-    auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
+    auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<t.AuthResult> => new Promise((resolve, reject) => {
       if (Env.is_background_script()) {
         throw {code: null, message: 'Cannot produce auth window from background script'};
       }
       let response_handled = false;
       Api.internal.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
-        let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: Str.random(20), scopes};
+        let auth_request: t.AuthRequest = {tab_id, account_email, auth_responder_id: Str.random(20), scopes};
         BrowserMsg.listen({
-          google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
+          google_auth_window_result: (result: t.GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
             if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
               response_handled = true;
               Api.internal.google_auth_window_result_handler(result).then(resolve, reject);
@@ -422,7 +422,7 @@ class Api {
   };
 
   public static common = {
-    message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<SendableMessage> => {
+    message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: t.SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<t.SendableMessage> => {
       let [primary_ki] = await Store.keys_get(account_email, ['primary']);
       return {
         headers: primary_ki ? {OpenPGP: `id=${primary_ki.fingerprint}`} : {},
@@ -477,7 +477,7 @@ class Api {
     },
     scope: (scope: string[]): string[] => scope.map(s => Api.GMAIL_SCOPE_DICT[s] as string),
     has_scope: (scopes: string[], scope: string) => scopes && Value.is(Api.GMAIL_SCOPE_DICT[scope]).in(scopes),
-    users_me_profile: async (account_email: string|null, access_token?: string): Promise<ApirGmailUsersMeProfile> => {
+    users_me_profile: async (account_email: string|null, access_token?: string): Promise<t.ApirGmailUsersMeProfile> => {
       let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       if(account_email && !access_token) {
         return await Api.internal.api_google_call(account_email, 'GET', url, {});
@@ -487,39 +487,39 @@ class Api {
         throw new Error('Api.gmail.users_me_profile: need either account_email or access_token');
       }
     },
-    thread_get: (account_email: string, thread_id: string, format: GmailApiResponseFormat|null): Promise<ApirGmailThreadGet> => Api.internal.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
+    thread_get: (account_email: string, thread_id: string, format: t.GmailApiResponseFormat|null): Promise<t.ApirGmailThreadGet> => Api.internal.api_gmail_call(account_email, 'GET', `threads/${thread_id}`, {
       format,
     }),
-    thread_list: (account_email: string, label_id: string): Promise<ApirGmailThreadList> => Api.internal.api_gmail_call(account_email, 'GET', `threads`, {
+    thread_list: (account_email: string, label_id: string): Promise<t.ApirGmailThreadList> => Api.internal.api_gmail_call(account_email, 'GET', `threads`, {
       labelIds: label_id !== 'ALL' ? label_id : undefined,
       includeSpamTrash: Boolean(label_id === 'SPAM' || label_id === 'TRASH'),
       // pageToken: page_token,
       // q,
       // maxResults
     }),
-    thread_modify: (account_email: string, id: string, remove_label_ids: string[], add_label_ids: string[]): Promise<ApirGmailThreadGet> => Api.internal.api_gmail_call(account_email, 'POST', `threads/${id}/modify`, {
+    thread_modify: (account_email: string, id: string, remove_label_ids: string[], add_label_ids: string[]): Promise<t.ApirGmailThreadGet> => Api.internal.api_gmail_call(account_email, 'POST', `threads/${id}/modify`, {
       removeLabelIds: remove_label_ids || [], // todo - insufficient permission - need https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
       addLabelIds: add_label_ids || [],
     }),
-    draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<ApirGmailDraftCreate> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts', {
+    draft_create: (account_email: string, mime_message: string, thread_id: string): Promise<t.ApirGmailDraftCreate> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts', {
       message: {
         raw: Str.base64url_encode(mime_message),
         threadId: thread_id || null,
       },
     }),
-    draft_delete: (account_email: string, id: string): Promise<ApirGmailDraftDelete> => Api.internal.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
-    draft_update: (account_email: string, id: string, mime_message: string): Promise<ApirGmailDraftUpdate> => Api.internal.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
+    draft_delete: (account_email: string, id: string): Promise<t.ApirGmailDraftDelete> => Api.internal.api_gmail_call(account_email, 'DELETE', 'drafts/' + id, null),
+    draft_update: (account_email: string, id: string, mime_message: string): Promise<t.ApirGmailDraftUpdate> => Api.internal.api_gmail_call(account_email, 'PUT', `drafts/${id}`, {
       message: {
         raw: Str.base64url_encode(mime_message),
       },
     }),
-    draft_get: (account_email: string, id: string, format:GmailApiResponseFormat='full'): Promise<ApirGmailDraftGet> => Api.internal.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
+    draft_get: (account_email: string, id: string, format:t.GmailApiResponseFormat='full'): Promise<t.ApirGmailDraftGet> => Api.internal.api_gmail_call(account_email, 'GET', `drafts/${id}`, {
       format,
     }),
-    draft_send: (account_email: string, id: string): Promise<ApirGmailDraftSend> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts/send', {
+    draft_send: (account_email: string, id: string): Promise<t.ApirGmailDraftSend> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts/send', {
       id,
     }),
-    message_send: async (account_email: string, message: SendableMessage, progress_callback?: ApiCallProgressCallback): Promise<ApirGmailMessageSend> => {
+    message_send: async (account_email: string, message: t.SendableMessage, progress_callback?: t.ApiCallProgressCallback): Promise<t.ApirGmailMessageSend> => {
       message.headers.From = message.from;
       message.headers.To = message.to.join(',');
       message.headers.Subject = message.subject;
@@ -527,19 +527,19 @@ class Api {
       let request = Api.internal.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
       return Api.internal.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || Value.noop}, request.content_type);
     },
-    message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<ApirGmailMessageList> => Api.internal.api_gmail_call(account_email, 'GET', 'messages', {
+    message_list: (account_email: string, q: string, include_deleted:boolean=false): Promise<t.ApirGmailMessageList> => Api.internal.api_gmail_call(account_email, 'GET', 'messages', {
       q,
       includeSpamTrash: include_deleted,
     }),
-    message_get: (account_email: string, message_id: string, format: GmailApiResponseFormat): Promise<ApirGmailMessage> => Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
+    message_get: (account_email: string, message_id: string, format: t.GmailApiResponseFormat): Promise<t.ApirGmailMessage> => Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}`, {
       format: format || 'full',
     }),
-    messages_get: (account_email: string, message_ids: string[], format: GmailApiResponseFormat): Promise<ApirGmailMessage[]> => {
+    messages_get: (account_email: string, message_ids: string[], format: t.GmailApiResponseFormat): Promise<t.ApirGmailMessage[]> => {
       return Promise.all(message_ids.map(id => Api.gmail.message_get(account_email, id, format)));
     },
-    labels_get: (account_email: string): Promise<ApirGmailLabels> => Api.internal.api_gmail_call(account_email, 'GET', `labels`, {}),
-    attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ApiCallProgressCallback|null=null): Promise<ApirGmailAttachment> => {
-      let r: ApirGmailAttachment = await Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
+    labels_get: (account_email: string): Promise<t.ApirGmailLabels> => Api.internal.api_gmail_call(account_email, 'GET', `labels`, {}),
+    attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:t.ApiCallProgressCallback|null=null): Promise<t.ApirGmailAttachment> => {
+      let r: t.ApirGmailAttachment = await Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
       r.data = Str.base64url_decode(r.data);
       return r;
     },
@@ -618,8 +618,8 @@ class Api {
         };
       }).catch(reject);
     }),
-    find_header: (api_gmail_message_object: ApirGmailMessage|ApirGmailMessage$payload, header_name: string) => {
-      let node: ApirGmailMessage$payload = api_gmail_message_object.hasOwnProperty('payload') ? (api_gmail_message_object as ApirGmailMessage).payload : api_gmail_message_object as ApirGmailMessage$payload;
+    find_header: (api_gmail_message_object: t.ApirGmailMessage|t.ApirGmailMessage$payload, header_name: string) => {
+      let node: t.ApirGmailMessage$payload = api_gmail_message_object.hasOwnProperty('payload') ? (api_gmail_message_object as t.ApirGmailMessage).payload : api_gmail_message_object as t.ApirGmailMessage$payload;
       if (typeof node.headers !== 'undefined') {
         for (let header of node.headers) {
           if (header.name.toLowerCase() === header_name.toLowerCase()) {
@@ -629,29 +629,29 @@ class Api {
       }
       return null;
     },
-    find_attachments: (message_or_payload_or_part: ApirGmailMessage|ApirGmailMessage$payload|ApirGmailMessage$payload$part, internal_results:Attachment[]=[], internal_message_id:string|null=null) => {
+    find_attachments: (message_or_payload_or_part: t.ApirGmailMessage|t.ApirGmailMessage$payload|t.ApirGmailMessage$payload$part, internal_results:Attachment[]=[], internal_message_id:string|null=null) => {
       if (message_or_payload_or_part.hasOwnProperty('payload')) {
-        internal_message_id = (message_or_payload_or_part as ApirGmailMessage).id;
-        Api.gmail.find_attachments((message_or_payload_or_part as ApirGmailMessage).payload, internal_results, internal_message_id);
+        internal_message_id = (message_or_payload_or_part as t.ApirGmailMessage).id;
+        Api.gmail.find_attachments((message_or_payload_or_part as t.ApirGmailMessage).payload, internal_results, internal_message_id);
       }
       if (message_or_payload_or_part.hasOwnProperty('parts')) {
-        for (let part of (message_or_payload_or_part as ApirGmailMessage$payload).parts!) {
+        for (let part of (message_or_payload_or_part as t.ApirGmailMessage$payload).parts!) {
           Api.gmail.find_attachments(part, internal_results, internal_message_id);
         }
       }
-      if (message_or_payload_or_part.hasOwnProperty('body') && (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.hasOwnProperty('attachmentId')) {
+      if (message_or_payload_or_part.hasOwnProperty('body') && (message_or_payload_or_part as t.ApirGmailMessage$payload$part).body!.hasOwnProperty('attachmentId')) {
         internal_results.push(new Attachment({
           message_id: internal_message_id,
-          id: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.attachmentId,
-          length: (message_or_payload_or_part as ApirGmailMessage$payload$part).body!.size,
-          name: (message_or_payload_or_part as ApirGmailMessage$payload$part).filename,
-          type: (message_or_payload_or_part as ApirGmailMessage$payload$part).mimeType,
+          id: (message_or_payload_or_part as t.ApirGmailMessage$payload$part).body!.attachmentId,
+          length: (message_or_payload_or_part as t.ApirGmailMessage$payload$part).body!.size,
+          name: (message_or_payload_or_part as t.ApirGmailMessage$payload$part).filename,
+          type: (message_or_payload_or_part as t.ApirGmailMessage$payload$part).mimeType,
           inline: (Api.gmail.find_header(message_or_payload_or_part, 'content-disposition') || '').toLowerCase().indexOf('inline') === 0,
         }));
       }
       return internal_results;
     },
-    find_bodies: (gmail_email_object: Dict<any>, internal_results:Dict<any>={}): SendableMessageBody => {
+    find_bodies: (gmail_email_object: t.Dict<any>, internal_results:t.Dict<any>={}): t.SendableMessageBody => {
       if (typeof gmail_email_object.payload !== 'undefined') {
         Api.gmail.find_bodies(gmail_email_object.payload, internal_results);
       }
@@ -663,7 +663,7 @@ class Api {
       if (typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.data !== 'undefined' && gmail_email_object.body.size !== 0) {
         internal_results[gmail_email_object.mimeType] = gmail_email_object.body.data;
       }
-      return internal_results as SendableMessageBody;
+      return internal_results as t.SendableMessageBody;
     },
     fetch_attachments: async (account_email: string, attachments: Attachment[]) => {
       let responses = await Promise.all(attachments.map(a => Api.gmail.attachment_get(account_email, a.message_id!, a.id!)));
@@ -671,7 +671,7 @@ class Api {
         attachments[i].set_data(responses[i].data);
       }
     },
-    search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
+    search_contacts: async (account_email: string, user_query: string, known_contacts: t.Contact[], chunked_callback: (r: t.ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
       let gmail_query = ['is:sent', Api.GMAIL_USELESS_CONTACTS_FILTER];
       if (user_query) {
         let variations_of_to = user_query.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
@@ -693,7 +693,7 @@ class Api {
     *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
     *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
     */
-    extract_armored_block: async (account_email: string, message_id: string, format:GmailApiResponseFormat): Promise<string> => {
+    extract_armored_block: async (account_email: string, message_id: string, format: t.GmailApiResponseFormat): Promise<string> => {
       let gmail_message_object = await Api.gmail.message_get(account_email, message_id, format);
       if (format === 'full') {
         let bodies = Api.gmail.find_bodies(gmail_message_object);
@@ -761,31 +761,31 @@ class Api {
   };
 
   public static attester = {
-    lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => Api.internal.api_attester_call('lookup/email', {
+    lookup_email: (emails: string[]): Promise<{results: t.PubkeySearchResult[]}> => Api.internal.api_attester_call('lookup/email', {
       email: emails.map(e => Str.parse_email(e).email),
     }),
-    initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<ApirAttInitialLegacySugmit> => Api.internal.api_attester_call('initial/legacy_submit', {
+    initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<t.ApirAttInitialLegacySugmit> => Api.internal.api_attester_call('initial/legacy_submit', {
       email: Str.parse_email(email).email,
       pubkey: pubkey.trim(),
       attest,
     }),
-    initial_confirm: (signed_attest_packet: string): Promise<ApirAttInitialConfirm> => Api.internal.api_attester_call('initial/confirm', {
+    initial_confirm: (signed_attest_packet: string): Promise<t.ApirAttInitialConfirm> => Api.internal.api_attester_call('initial/confirm', {
       signed_message: signed_attest_packet,
     }),
-    replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): Promise<ApirAttReplaceRequest> => Api.internal.api_attester_call('replace/request', {
+    replace_request: (email: string, signed_attest_packet: string, new_pubkey: string): Promise<t.ApirAttReplaceRequest> => Api.internal.api_attester_call('replace/request', {
       signed_message: signed_attest_packet,
       new_pubkey,
       email,
     }),
-    replace_confirm: (signed_attest_packet: string): Promise<ApirAttReplaceConfirm> => Api.internal.api_attester_call('replace/confirm', {
+    replace_confirm: (signed_attest_packet: string): Promise<t.ApirAttReplaceConfirm> => Api.internal.api_attester_call('replace/confirm', {
       signed_message: signed_attest_packet,
     }),
-    test_welcome: (email: string, pubkey: string): Promise<ApirAttTestWelcome> => Api.internal.api_attester_call('test/welcome', {
+    test_welcome: (email: string, pubkey: string): Promise<t.ApirAttTestWelcome> => Api.internal.api_attester_call('test/welcome', {
       email,
       pubkey,
     }),
     diagnose_keyserver_pubkeys: async (account_email: string) => {
-      let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
+      let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as t.Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
       let {addresses} = await Store.get_account(account_email, ['addresses']);
       let stored_keys = await Store.keys_get(account_email);
       let stored_keys_longids = stored_keys.map(ki => ki.longid);
@@ -806,7 +806,7 @@ class Api {
       return diagnosis;
     },
     packet: {
-      create_sign: async (values: Dict<string>, decrypted_prv: OpenPGP.key.Key) => {
+      create_sign: async (values: t.Dict<string>, decrypted_prv: OpenPGP.key.Key) => {
         let lines:string[] = [];
         for (let key of Object.keys(values)) {
           lines.push(key + ':' + values[key]);
@@ -819,7 +819,7 @@ class Api {
         return await Pgp.message.sign(decrypted_prv, content_text);
       },
       is_valid_hash: (v: string) => /^[A-F0-9]{40}$/.test(v),
-      parse: (text: string): ParsedAttest => {
+      parse: (text: string): t.ParsedAttest => {
         let accepted_values = {
           'ACT': 'action',
           'ATT': 'attester',
@@ -827,8 +827,8 @@ class Api {
           'PUB': 'fingerprint',
           'OLD': 'fingerprint_old',
           'RAN': 'random',
-        } as Dict<string>;
-        let result: ParsedAttest = {
+        } as t.Dict<string>;
+        let result: t.ParsedAttest = {
           success: false,
           content: {},
           error: null as string|null,
@@ -907,9 +907,9 @@ class Api {
         'pubkey': 'https://flowcrypt.com/pub/' + variable,
         'decrypt': 'https://flowcrypt.com/' + variable,
         'web': 'https://flowcrypt.com/',
-      } as Dict<string>)[type];
+      } as t.Dict<string>)[type];
     },
-    help_feedback: (account_email: string, message: string): Promise<ApirFcHelpFeedback> => Api.internal.api_fc_call('help/feedback', {
+    help_feedback: (account_email: string, message: string): Promise<t.ApirFcHelpFeedback> => Api.internal.api_fc_call('help/feedback', {
       email: account_email,
       message,
     }),
@@ -918,11 +918,11 @@ class Api {
       client,
       metrics: null,
     }),
-    account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: SubscriptionInfo}> => {
+    account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: t.SubscriptionInfo}> => {
       let auth_info = await Store.auth_info();
       let uuid = auth_info.uuid || Pgp.hash.sha1(Str.random(40));
       let account = auth_info.account_email || account_email;
-      let response: ApirFcAccountLogin = await Api.internal.api_fc_call('account/login', {
+      let response: t.ApirFcAccountLogin = await Api.internal.api_fc_call('account/login', {
         account,
         uuid,
         token,
@@ -935,14 +935,14 @@ class Api {
     },
     account_check: (emails: string[]) => Api.internal.api_fc_call('account/check', {
       emails,
-    }) as Promise<ApirFcAccountCheck>,
+    }) as Promise<t.ApirFcAccountCheck>,
     account_check_sync: async () => { // callbacks true on updated, false not updated, null for could not fetch
       let emails = await Store.account_emails_get();
       if (emails.length) {
         let response = await Api.fc.account_check(emails);
         let auth_info = await Store.auth_info();
         let subscription = await Store.subscription();
-        let local_storage_update: GlobalStore = {};
+        let local_storage_update: t.GlobalStore = {};
         if (response.email) {
           if (response.email !== auth_info.account_email) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
@@ -974,9 +974,9 @@ class Api {
         }
       }
     },
-    account_update: async (update_values?: Dict<Serializable>): Promise<ApirFcAccountUpdate> => {
+    account_update: async (update_values?: t.Dict<t.Serializable>): Promise<t.ApirFcAccountUpdate> => {
       let auth_info = await Store.auth_info();
-      let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
+      let request = {account: auth_info.account_email, uuid: auth_info.uuid} as t.Dict<t.Serializable>;
       if (update_values) {
         for (let k of Object.keys(update_values)) {
           request[k] = update_values[k];
@@ -984,9 +984,9 @@ class Api {
       }
       return await Api.internal.api_fc_call('account/update', request);
     },
-    account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<ApirFcAccountSubscribe> => {
+    account_subscribe: async (product: string, method: string, payment_source_token:string|null=null): Promise<t.ApirFcAccountSubscribe> => {
       let auth_info = await Store.auth_info();
-      let response: ApirFcAccountSubscribe = await Api.internal.api_fc_call('account/subscribe', {
+      let response: t.ApirFcAccountSubscribe = await Api.internal.api_fc_call('account/subscribe', {
         account: auth_info.account_email,
         uuid: auth_info.uuid,
         method,
@@ -996,8 +996,8 @@ class Api {
       await Store.set(null, { cryptup_account_subscription: response.subscription });
       return response;
     },
-    message_presign_files: async (attachments: Attachment[], auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessagePresignFiles> => {
-      let response: ApirFcMessagePresignFiles;
+    message_presign_files: async (attachments: Attachment[], auth_method: t.FlowCryptApiAuthMethods): Promise<t.ApirFcMessagePresignFiles> => {
+      let response: t.ApirFcMessagePresignFiles;
       let lengths = attachments.map(a => a.length);
       if (!auth_method) {
         response = await Api.internal.api_fc_call('message/presign_files', {
@@ -1022,10 +1022,10 @@ class Api {
       }
       throw new Error('Could not verify that all files were uploaded properly, please try again.');
     },
-    message_confirm_files: (identifiers: string[]): Promise<ApirFcMessageConfirmFiles> => Api.internal.api_fc_call('message/confirm_files', {
+    message_confirm_files: (identifiers: string[]): Promise<t.ApirFcMessageConfirmFiles> => Api.internal.api_fc_call('message/confirm_files', {
       identifiers,
     }),
-    message_upload: async (encrypted_data_armored: string, auth_method: FlowCryptApiAuthMethods): Promise<ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
+    message_upload: async (encrypted_data_armored: string, auth_method: t.FlowCryptApiAuthMethods): Promise<t.ApirFcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
       if (encrypted_data_armored.length > 100000) {
         throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
       }
@@ -1037,11 +1037,11 @@ class Api {
         return await Api.internal.api_fc_call('message/upload', {account: auth_info.account_email, uuid: auth_info.uuid, content}, 'FORM');
       }
     },
-    message_token: async (): Promise<ApirFcMessageToken> => {
+    message_token: async (): Promise<t.ApirFcMessageToken> => {
       let auth_info = await Store.auth_info();
       return await Api.internal.api_fc_call('message/token', {account: auth_info.account_email, uuid: auth_info.uuid});
     },
-    message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<ApirFcMessageExpiration> => {
+    message_expiration: async (admin_codes: string[], add_days:null|number=null): Promise<t.ApirFcMessageExpiration> => {
       let auth_info = await Store.auth_info();
       return await Api.internal.api_fc_call('message/expiration', {account: auth_info.account_email, uuid: auth_info.uuid, admin_codes, add_days});
     },
@@ -1053,22 +1053,22 @@ class Api {
       subject,
       message,
     }),
-    message_contact: (sender: string, message: string, message_token: FlowCryptApiAuthToken) => Api.internal.api_fc_call('message/contact', {
+    message_contact: (sender: string, message: string, message_token: t.FlowCryptApiAuthToken) => Api.internal.api_fc_call('message/contact', {
       message_token_account: message_token.account,
       message_token: message_token.token,
       sender,
       message,
     }),
-    link_message: (short: string): Promise<ApirFcLinkMessage> => Api.internal.api_fc_call('link/message', {
+    link_message: (short: string): Promise<t.ApirFcLinkMessage> => Api.internal.api_fc_call('link/message', {
       short,
     }),
-    link_me: (alias: string): Promise<ApirFcLinkMe> => Api.internal.api_fc_call('link/me', {
+    link_me: (alias: string): Promise<t.ApirFcLinkMe> => Api.internal.api_fc_call('link/me', {
       alias,
     }),
   };
 
   public static aws = {
-    s3_upload: (items: {base_url:string, fields: Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ApiCallProgressCallback) => {
+    s3_upload: (items: {base_url:string, fields: t.Dict<t.Serializable|Attachment>, attachment: Attachment}[], progress_callback: t.ApiCallProgressCallback) => {
       let progress = Value.arr.zeroes(items.length);
       let promises:Promise<void>[] = [];
       if (!items.length) {
@@ -1090,8 +1090,8 @@ class Api {
   };
 
   private static internal = {
-    get_ajax_progress_xhr: (progress_callbacks: ApiCallProgressCallbacks|null) => {
-      let progress_reporting_xhr = new (window as FcWindow).XMLHttpRequest();
+    get_ajax_progress_xhr: (progress_callbacks: t.ApiCallProgressCallbacks|null) => {
+      let progress_reporting_xhr = new (window as t.FcWindow).XMLHttpRequest();
       if (progress_callbacks && typeof progress_callbacks.upload === 'function') {
         progress_reporting_xhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
           progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
@@ -1104,8 +1104,8 @@ class Api {
       }
       return progress_reporting_xhr;
     },
-    api_call: async (base_url: string, path: string, fields: Dict<any>, format: ApiCallFormat, progress:ApiCallProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ApiResponseFormat='json', method:ApiCallMethod='POST') => {
-      progress = progress || {} as ApiCallProgressCallbacks;
+    api_call: async (base_url: string, path: string, fields: t.Dict<any>, format: t.ApiCallFormat, progress: t.ApiCallProgressCallbacks|null, headers:t.FlatHeaders|undefined=undefined, response_format:t.ApiResponseFormat='json', method:t.ApiCallMethod='POST') => {
+      progress = progress || {} as t.ApiCallProgressCallbacks;
       let formatted_data: FormData|string;
       let content_type: string|false;
       if (format === 'JSON' && fields !== null) {
@@ -1141,7 +1141,7 @@ class Api {
       try {
         let response = await $.ajax(request);
         if (response && typeof response === 'object' && typeof response.error === 'object') {
-          throw response as StandardError;
+          throw response as t.StandardError;
         }
         return response;
       } catch(e) {
@@ -1151,8 +1151,8 @@ class Api {
         throw e;
       }
     },
-    api_google_auth_state_pack: (status_object: AuthRequest) => Api.GOOGLE_OAUTH2!.state_header + JSON.stringify(status_object),
-    api_google_auth_code_url: (auth_request: AuthRequest) => Env.url_create(Api.GOOGLE_OAUTH2!.url_code, {
+    api_google_auth_state_pack: (status_object: t.AuthRequest) => Api.GOOGLE_OAUTH2!.state_header + JSON.stringify(status_object),
+    api_google_auth_code_url: (auth_request: t.AuthRequest) => Env.url_create(Api.GOOGLE_OAUTH2!.url_code, {
       client_id: Api.GOOGLE_OAUTH2!.client_id,
       response_type: 'code',
       access_type: 'offline',
@@ -1161,8 +1161,8 @@ class Api {
       scope: (auth_request.scopes || []).join(' '),
       login_hint: auth_request.account_email,
     }),
-    google_auth_save_tokens: async (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
-      let to_save: AccountStore = {
+    google_auth_save_tokens: async (account_email: string, tokens_object: t.GoogleAuthTokensResponse, scopes: string[]) => {
+      let to_save: t.AccountStore = {
         google_token_access: tokens_object.access_token,
         google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
         google_token_scopes: scopes,
@@ -1177,19 +1177,19 @@ class Api {
       method: 'POST',
       crossDomain: true,
       async: true,
-    }) as any as Promise<GoogleAuthTokensResponse>,
+    }) as any as Promise<t.GoogleAuthTokensResponse>,
     google_auth_refresh_token: (refresh_token: string) => $.ajax({
       url: Env.url_create(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: Api.GOOGLE_OAUTH2!.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
-    }) as any as Promise<GoogleAuthTokensResponse>,
+    }) as any as Promise<t.GoogleAuthTokensResponse>,
     google_auth_check_access_token: (access_token: string) => $.ajax({
       url: Env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
       crossDomain: true,
       async: true,
-    }) as any as Promise<GoogleAuthTokenInfo>,
-    google_auth_window_result_handler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
+    }) as any as Promise<t.GoogleAuthTokenInfo>,
+    google_auth_window_result_handler: async (result: t.GoogleAuthWindowResult): Promise<t.AuthResult> => {
       if (result.result === 'Success') {
         let tokens_object = await Api.internal.google_auth_get_tokens(result.params.code);
         let _ = await Api.internal.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
@@ -1221,13 +1221,13 @@ class Api {
         throw e;
       }
     },
-    api_google_call: async (account_email: string, method: ApiCallMethod, url: string, parameters: Dict<Serializable>|string) => {
+    api_google_call: async (account_email: string, method: t.ApiCallMethod, url: string, parameters: t.Dict<t.Serializable>|string) => {
       let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
       let headers = { Authorization: await Api.internal.google_api_authorization_header(account_email) };
       let request = {url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true};
       return await Api.internal.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    api_gmail_call: async (account_email: string, method: ApiCallMethod, resource: string, parameters: Dict<Serializable>|string|null, progress:ApiCallProgressCallbacks|null=null, contentType:string|null=null) => {
+    api_gmail_call: async (account_email: string, method: t.ApiCallMethod, resource: string, parameters: t.Dict<t.Serializable>|string|null, progress: t.ApiCallProgressCallbacks|null=null, contentType:string|null=null) => {
       progress = progress || {};
       let data;
       let url;
@@ -1248,7 +1248,7 @@ class Api {
       let request = {xhr, url, method, data, headers, crossDomain: true, contentType, async: true};
       return await Api.internal.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    google_api_is_auth_token_valid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
+    google_api_is_auth_token_valid: (s: t.AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
     google_api_authorization_header: async (account_email: string, force_refresh=false): Promise<string> => {
       if (!account_email) {
         throw new Error('missing account_email in api_gmail_call');
@@ -1291,7 +1291,7 @@ class Api {
       }
       return auth_request_scopes;
     },
-    encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
+    encode_as_multipart_related: (parts: t.Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
       let boundary = 'this_sucks_' + Str.random(10);
       let body = '';
       for (let type of Object.keys(parts)) {
@@ -1307,12 +1307,12 @@ class Api {
       body += '--' + boundary + '--';
       return { content_type: 'multipart/related; boundary=' + boundary, body };
     },
-    api_gmail_loop_through_emails_to_compile_contacts: async (account_email: string, query: string, chunked_callback: (r: ProviderContactsResults) => void) => {
-      let all_results: Contact[] = [];
+    api_gmail_loop_through_emails_to_compile_contacts: async (account_email: string, query: string, chunked_callback: (r: t.ProviderContactsResults) => void) => {
+      let all_results: t.Contact[] = [];
       while(true) {
         let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
         if (headers.to) {
-          let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
+          let raw_parsed_results = (window as t.BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
           let new_valid_results = raw_parsed_results.filter(r => Str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
           query += raw_parsed_results.map(raw => ` -to:"${raw.address}"`).join('');
           all_results = all_results.concat(new_valid_results);
@@ -1327,9 +1327,9 @@ class Api {
         }
       }
     },
-    api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header: async (account_email: string, messages: ApirGmailMessageList$message[], header_names: string[]): Promise<FlatHeaders> => {
+    api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header: async (account_email: string, messages: t.ApirGmailMessageList$message[], header_names: string[]): Promise<t.FlatHeaders> => {
       for (let message of messages) {
-        let header_values: FlatHeaders = {};
+        let header_values: t.FlatHeaders = {};
         let message_get_response = await Api.gmail.message_get(account_email, message.id, 'metadata');
         for (let header_name of header_names) {
           let value = Api.gmail.find_header(message_get_response, header_name);
@@ -1346,13 +1346,13 @@ class Api {
       return {};
     },
     api_attester_packet_armor: (content_text: string) => `${Pgp.armor.headers('attest_packet').begin}\n${content_text}\n${Pgp.armor.headers('attest_packet').end}`,
-    api_attester_call: (path: string, values: Dict<any>) => Api.internal.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
-    api_fc_call: (path: string, values: Dict<any>, format='JSON' as ApiCallFormat) => Api.internal.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
+    api_attester_call: (path: string, values: t.Dict<any>) => Api.internal.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as t.FlatHeaders),
+    api_fc_call: (path: string, values: t.Dict<any>, format='JSON' as t.ApiCallFormat) => Api.internal.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as t.FlatHeaders),
   };
 
 }
 
-class Ui {
+export class Ui {
 
   public static EVENT_DOUBLE_MS = 1000;
   public static EVENT_SPREE_MS = 50;
@@ -1369,7 +1369,7 @@ class Ui {
     return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
+  public static render_overlay_prompt_await_user_choice = (buttons: t.Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
       let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.html_escape(buttons[id].color || 'green')} overlay_action_${Xss.html_escape(id)}">${Xss.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
       Xss.sanitize_append('body', `
@@ -1411,7 +1411,7 @@ class Ui {
     }
   }
 
-  public static abort_and_render_error_on_url_param_type_mismatch = (values: UrlParams, name: string, expected_type: string): UrlParam => {
+  public static abort_and_render_error_on_url_param_type_mismatch = (values: t.UrlParams, name: string, expected_type: string): t.UrlParam => {
     let actual_type = typeof values[name];
     if (actual_type !== expected_type) {
       let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be of type ${Xss.html_escape(expected_type)} but got ${Xss.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
@@ -1421,7 +1421,7 @@ class Ui {
     return values[name];
   }
 
-  public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
+  public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: t.Dict<T>, name: string, expected_values: T[]): T => {
     if (expected_values.indexOf(values[name]) === -1) {
       let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be one of ${Xss.html_escape(expected_values.map(String).join(','))} but got ${Xss.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
@@ -1472,8 +1472,8 @@ class Ui {
     }
   }
 
-  public static build_jquery_selectors = (selectors: Dict<string>): SelectorCache => {
-    let cache: NamedSelectors = {};
+  public static build_jquery_selectors = (selectors: t.Dict<string>): t.SelectorCache => {
+    let cache: t.NamedSelectors = {};
     return {
       cached: (name: string) => {
         if (!cache[name]) {
@@ -1528,7 +1528,7 @@ class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: t.BrowserEventErrorHandler) => {
       return function(event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
@@ -1541,7 +1541,7 @@ class Ui {
         }
       };
     },
-    __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
+    __dispatch_err: (e: any, err_handler?: t.BrowserEventErrorHandler) => {
       if(Api.error.is_network_error(e) && err_handler && err_handler.network) {
         err_handler.network();
       } else if (Api.error.is_auth_error(e) && err_handler && err_handler.auth) {
@@ -1554,7 +1554,7 @@ class Ui {
         Catch.handle_exception(e);
       }
     },
-    prevent: (preventable_event: PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+    prevent: (preventable_event: t.PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: t.BrowserEventErrorHandler) => {
       let event_timer: number|undefined;
       let event_fired_on: number|undefined;
       let cb_reset_timer = () => {
@@ -1608,7 +1608,7 @@ class Ui {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderable_message_block = (factory: XssSafeFactory, block: MessageBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
+  public static renderable_message_block = (factory: XssSafeFactory, block: t.MessageBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
     if (block.type === 'text' || block.type === 'private_key') {
       return Xss.html_escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
@@ -1649,17 +1649,17 @@ class Ui {
     sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = Catch.set_timeout) => new Promise(resolve => set_timeout(resolve, ms)),
   };
 
-  public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+  public static e = (name: string, attrs: t.Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
 
 }
 
-class BrowserMsg {
+export class BrowserMsg {
 
   public static MAX_SIZE = 1024 * 1024; // 1MB
-  private static HANDLERS_REGISTERED_BACKGROUND: Dict<BrowserMessageHandler>|null = null;
-  private static HANDLERS_REGISTERED_FRAME: Dict<BrowserMessageHandler> = {};
+  private static HANDLERS_REGISTERED_BACKGROUND: t.Dict<t.BrowserMessageHandler>|null = null;
+  private static HANDLERS_REGISTERED_FRAME: t.Dict<t.BrowserMessageHandler> = {};
   private static HANDLERS_STANDARD = {
-    set_css: (data: {css: Dict<string|number>, selector: string, traverse_up?: number}) => {
+    set_css: (data: {css: t.Dict<string|number>, selector: string, traverse_up?: number}) => {
       let element = $(data.selector);
       let traverse_up_levels = data.traverse_up as number || 0;
       for (let i = 0; i < traverse_up_levels; i++) {
@@ -1667,15 +1667,15 @@ class BrowserMsg {
       }
       element.css(data.css);
     },
-  } as Dict<BrowserMessageHandler>;
+  } as t.Dict<t.BrowserMessageHandler>;
 
-  public static send = (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
+  public static send = (destination_string: string|null, name: string, data: t.Dict<any>|null=null) => {
     BrowserMsg.send_await(destination_string, name, data).catch(Catch.rejection);
   }
 
-  public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
+  public static send_await = (destination_string: string|null, name: string, data: t.Dict<any>|null=null): Promise<t.BrowserMessageResponse> => new Promise(resolve => {
     let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: Catch.stack_trace() };
-    let try_resolve_no_undefined = (r?: BrowserMessageResponse) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
+    let try_resolve_no_undefined = (r?: t.BrowserMessageResponse) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     let is_background_page = Env.is_background_script();
     if (typeof  destination_string === 'undefined') { // don't know where to send the message
       Catch.log('BrowserMsg.send to:undefined');
@@ -1710,7 +1710,7 @@ class BrowserMsg {
     throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
   }
 
-  public static listen = (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
+  public static listen = (handlers: t.Dict<t.BrowserMessageHandler>, listen_for_tab_id='all') => {
     for (let name of Object.keys(handlers)) {
       // newly registered handlers with the same name will overwrite the old ones if BrowserMsg.listen is declared twice for the same frame
       // original handlers not mentioned in newly set handlers will continue to work
@@ -1750,7 +1750,7 @@ class BrowserMsg {
     });
   }
 
-  public static listen_background = (handlers: Dict<BrowserMessageHandler>) => {
+  public static listen_background = (handlers: t.Dict<t.BrowserMessageHandler>) => {
     if (!BrowserMsg.HANDLERS_REGISTERED_BACKGROUND) {
       BrowserMsg.HANDLERS_REGISTERED_BACKGROUND = handlers;
     } else {
@@ -1803,7 +1803,7 @@ class BrowserMsg {
 
 }
 
-class Xss {
+export class Xss {
 
   private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
@@ -1901,7 +1901,7 @@ class Xss {
 
 }
 
-class Str {
+export class Str {
 
   public static parse_email = (email_string: string) => {
     if (Value.is('<').in(email_string) && Value.is('>').in(email_string)) {
@@ -1953,9 +1953,9 @@ class Str {
 
   public static regex_escape = (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  public static html_attribute_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
+  public static html_attribute_encode = (values: t.Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
 
-  public static html_attribute_decode = (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
+  public static html_attribute_decode = (encoded: string): t.FlowCryptAttachmentLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
 
   public static base64url_encode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
@@ -2066,7 +2066,7 @@ class Str {
         let element = $(found_link);
         let fc_data = element.attr('cryptup-data');
         if (fc_data) {
-          let a: FlowCryptAttachmentLinkData = Str.html_attribute_decode(fc_data);
+          let a: t.FlowCryptAttachmentLinkData = Str.html_attribute_decode(fc_data);
           if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
             fc_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
           }
@@ -2132,14 +2132,14 @@ class Str {
 
 }
 
-class Mime {
+export class Mime {
 
   public static process = async (mime_message: string) => {
     let decoded = await Mime.decode(mime_message);
     if (typeof decoded.text === 'undefined' && typeof decoded.html !== 'undefined' && typeof $_HOST_html_to_text === 'function') { // android
       decoded.text = $_HOST_html_to_text(decoded.html); // temporary solution
     }
-    let blocks: MessageBlock[] = [];
+    let blocks: t.MessageBlock[] = [];
     if (decoded.text) {  // may be undefined or empty
       blocks = blocks.concat(Pgp.armor.detect_blocks(decoded.text).blocks);
     }
@@ -2167,7 +2167,7 @@ class Mime {
     return {headers: decoded.headers, blocks};
   }
 
-  public static headers_to_from = (parsed_mime_message: MimeContent): FromToHeaders => {
+  public static headers_to_from = (parsed_mime_message: t.MimeContent): t.FromToHeaders => {
     let header_to: string[] = [];
     let header_from;
     // @ts-ignore - I should check this - does it really have .address?
@@ -2187,7 +2187,7 @@ class Mime {
     return { from: header_from, to: header_to };
   }
 
-  public static reply_headers = (parsed_mime_message: MimeContent) => {
+  public static reply_headers = (parsed_mime_message: t.MimeContent) => {
     let message_id = parsed_mime_message.headers['message-id'] || '';
     let references = parsed_mime_message.headers['in-reply-to'] || '';
     return { 'in-reply-to': message_id, 'references': references + ' ' + message_id };
@@ -2210,21 +2210,21 @@ class Mime {
     return Boolean(contentType.index === 0 && m.match(/boundary=/));
   }
 
-  public static decode = (mime_message: string): Promise<MimeContent> => {
+  public static decode = (mime_message: string): Promise<t.MimeContent> => {
     return new Promise(async resolve => {
-      let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
+      let mime_content = {attachments: [], headers: {} as t.FlatHeaders, text: undefined, html: undefined, signature: undefined} as t.MimeContent;
       try {
-        let MimeParser = (window as BrowserWidnow)['emailjs-mime-parser'];
+        let MimeParser = (window as t.BrowserWidnow)['emailjs-mime-parser'];
         let parser = new MimeParser();
-        let parsed: {[key: string]: MimeParserNode} = {};
-        parser.onheader = (node: MimeParserNode) => {
+        let parsed: {[key: string]: t.MimeParserNode} = {};
+        parser.onheader = (node: t.MimeParserNode) => {
           if (!String(node.path.join('.'))) { // root node headers
             for (let name of Object.keys(node.headers)) {
               mime_content.headers[name] = node.headers[name][0].value;
             }
           }
         };
-        parser.onbody = (node: MimeParserNode) => {
+        parser.onbody = (node: t.MimeParserNode) => {
           let path = String(node.path.join('.'));
           if (typeof parsed[path] === 'undefined') {
             parsed[path] = node;
@@ -2260,8 +2260,8 @@ class Mime {
     });
   }
 
-  public static encode = async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
-    let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
+  public static encode = async (body:string|t.SendableMessageBody, headers: t.RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
+    let MimeBuilder = (window as t.BrowserWidnow)['emailjs-mime-builder'];
     let root_node = new MimeBuilder('multipart/mixed');
     for (let key of Object.keys(headers)) {
       root_node.addHeader(key, headers[key]);
@@ -2269,7 +2269,7 @@ class Mime {
     if (typeof body === 'string') {
       body = {'text/plain': body};
     }
-    let content_node: MimeParserNode;
+    let content_node: t.MimeParserNode;
     if (Object.keys(body).length === 1) {
       content_node = Mime.new_content_node(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
     } else {
@@ -2349,19 +2349,19 @@ class Mime {
     }
   }
 
-  private static get_node_type = (node: MimeParserNode) => {
+  private static get_node_type = (node: t.MimeParserNode) => {
     if (node.headers['content-type'] && node.headers['content-type'][0]) {
       return node.headers['content-type'][0].value;
     }
   }
 
-  private static get_node_content_id = (node: MimeParserNode) => {
+  private static get_node_content_id = (node: t.MimeParserNode) => {
     if (node.headers['content-id'] && node.headers['content-id'][0]) {
       return node.headers['content-id'][0].value;
     }
   }
 
-  private static get_node_filename = (node: MimeParserNode) => {
+  private static get_node_filename = (node: t.MimeParserNode) => {
     // @ts-ignore - lazy
     if (node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
       // @ts-ignore - lazy
@@ -2374,7 +2374,7 @@ class Mime {
     }
   }
 
-  private static get_node_content_as_text = (node: MimeParserNode): string => {
+  private static get_node_content_as_text = (node: t.MimeParserNode): string => {
     if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
       return Str.uint8_as_utf(node.content);
     }
@@ -2382,12 +2382,12 @@ class Mime {
       return Str.from_equal_sign_notation_as_utf(node.rawContent);
     }
     if(node.charset === 'iso-8859-2') {
-      return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
+      return (window as t.FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
     }
     return node.rawContent;
   }
 
-  private static new_content_node = (MimeBuilder: AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
+  private static new_content_node = (MimeBuilder: t.AnyThirdPartyLibrary, type: string, content: string): t.MimeParserNode => {
     let node = new MimeBuilder(type).setContent(content);
     if (type === 'text/plain') {
       node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
@@ -2397,10 +2397,10 @@ class Mime {
 
 }
 
-class Pgp {
+export class Pgp {
 
   private static ARMOR_HEADER_MAX_LENGTH = 50;
-  private static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = { // general password_message begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
+  private static ARMOR_HEADER_DICT: t.CryptoArmorHeaderDefinitions = { // general password_message begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
@@ -2490,7 +2490,7 @@ class Pgp {
       }
       return null;
     },
-    headers: (block_type: ReplaceableMessageBlockType|'null', format='string'): CryptoArmorHeaderDefinition => {
+    headers: (block_type: t.ReplaceableMessageBlockType|'null', format='string'): t.CryptoArmorHeaderDefinition => {
       let h = Pgp.ARMOR_HEADER_DICT[block_type];
       return {
         begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\\s') : h.begin,
@@ -2499,7 +2499,7 @@ class Pgp {
       };
     },
     detect_blocks: (original_text: string) => {
-      let blocks: MessageBlock[] = [];
+      let blocks: t.MessageBlock[] = [];
       let normalized = Str.normalize(original_text);
       let start_at = 0;
       while(true) {
@@ -2673,7 +2673,7 @@ class Pgp {
   };
 
   public static message = {
-    type: (data: string|Uint8Array): {armored: boolean, type: MessageBlockType}|null => {
+    type: (data: string|Uint8Array): {armored: boolean, type: t.MessageBlockType}|null => {
       if (!data || !data.length) {
         return null;
       }
@@ -2709,8 +2709,8 @@ class Pgp {
       let sign_result = await openpgp.sign({data, armor: true, privateKeys: [signing_prv]});
       return (sign_result as OpenPGP.SignArmorResult).data;
     },
-    verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: Contact|null=null) => {
-      let signature: MessageVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
+    verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: t.Contact|null=null) => {
+      let signature: t.MessageVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
       try {
         for (let verify_result of await message.verify(keys_for_verification)) {
           signature.match = Value.is(signature.match).in([true, null]) && verify_result.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
@@ -2729,7 +2729,7 @@ class Pgp {
       }
       return signature;
     },
-    verify_detached: async (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array): Promise<MessageVerifyResult> => {
+    verify_detached: async (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array): Promise<t.MessageVerifyResult> => {
       if (plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
         plaintext = Str.from_uint8(plaintext);
       }
@@ -2741,7 +2741,7 @@ class Pgp {
       let keys = await Pgp.internal.crypto_message_get_sorted_keys_for_message(account_email, message);
       return await Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]);
     },
-    decrypt: async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd: string|null=null, get_uint8=false): Promise<DecryptSuccess|DecryptError> => {
+    decrypt: async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd: string|null=null, get_uint8=false): Promise<t.DecryptSuccess|t.DecryptError> => {
       let prepared;
       let longids = {message: [] as string[], matching: [] as string[], chosen: [] as string[], need_passphrase: [] as string[]};
       try {
@@ -2781,7 +2781,7 @@ class Pgp {
         return {success: false, error: Pgp.internal.crypto_message_decrypt_categorize_error(e, msg_pwd), signature: null, message: prepared.message, longids, is_encrypted};
       }
     },
-    encrypt: async (armored_pubkeys: string[], signing_prv: OpenPGP.key.Key|null, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
+    encrypt: async (armored_pubkeys: string[], signing_prv: OpenPGP.key.Key|null, challenge: t.Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
       let options: OpenPGP.EncryptOptions = { data, armor, date: date || undefined, filename: filename || undefined };
       let used_challange = false;
       if (armored_pubkeys) {
@@ -2803,7 +2803,7 @@ class Pgp {
       }
       return await openpgp.encrypt(options);
     },
-    diagnose_pubkeys: async (account_email: string, m: string|Uint8Array|OpenPGP.message.Message): Promise<DiagnoseMessagePubkeysResult> => {
+    diagnose_pubkeys: async (account_email: string, m: string|Uint8Array|OpenPGP.message.Message): Promise<t.DiagnoseMessagePubkeysResult> => {
       let message: OpenPGP.message.Message;
       if (typeof m === 'string') {
         message = openpgp.message.readArmored(m);
@@ -2855,14 +2855,14 @@ class Pgp {
   };
 
   public static internal = {
-    crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false):MessageBlock => ({type, content, complete: !missing_end}),
+    crypto_armor_block_object: (type: t.MessageBlockType, content: string, missing_end=false): t.MessageBlock => ({type, content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
-      let result = {found: [] as MessageBlock[], continue_at: null as number|null};
+      let result = {found: [] as t.MessageBlock[], continue_at: null as number|null};
       let begin = original_text.indexOf(Pgp.armor.headers('null').begin, start_at);
       if (begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
         for (let _type of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
-          let type = _type as ReplaceableMessageBlockType;
+          let type = _type as t.ReplaceableMessageBlockType;
           let block_header_def = Pgp.ARMOR_HEADER_DICT[type];
           if (block_header_def.replace) {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
@@ -2935,8 +2935,8 @@ class Pgp {
         return {is_armored, is_cleartext: false, message: openpgp.message.read(Str.to_uint8(data))};
       }
     },
-    crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage): Promise<InternalSortedKeysForDecrypt> => {
-      let keys: InternalSortedKeysForDecrypt = {
+    crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage): Promise<t.InternalSortedKeysForDecrypt> => {
+      let keys: t.InternalSortedKeysForDecrypt = {
         verification_contacts: [],
         for_verification: [],
         encrypted_for: [],
@@ -2968,12 +2968,12 @@ class Pgp {
       }
       if (keys.signed_by.length && typeof Store.db_contact_get === 'function') {
         let verification_contacts = await Store.db_contact_get(null, keys.signed_by);
-        keys.verification_contacts = verification_contacts.filter(contact => contact !== null && contact.pubkey) as Contact[];
+        keys.verification_contacts = verification_contacts.filter(contact => contact !== null && contact.pubkey) as t.Contact[];
         keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey!).keys)); // pubkey! checked above
       }
       return keys;
     },
-    crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): DecryptError$error => {
+    crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): t.DecryptError$error => {
       let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
       if (Value.is(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
         return {type: DecryptErrorTypes.key_mismatch, error: e};
@@ -3028,12 +3028,12 @@ class Pgp {
 
 }
 
-class Catch {
+export class Catch {
 
-  private static RUNTIME: Dict<string> = {};
+  private static RUNTIME: t.Dict<string> = {};
   private static ORIGINAL_ON_ERROR = window.onerror;
 
-  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
+  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|t.Dict<t.Serializable>, is_manually_called: boolean, version: string, env: string) => {
     if (typeof error === 'string') {
       error_message = error;
       error = { name: 'thrown_string', message: error_message, stack: error_message };
@@ -3146,7 +3146,7 @@ class Catch {
     Catch.handle_error(exception.message, window.location.href, line, col, exception, true, Catch.RUNTIME.version, Catch.RUNTIME.environment);
   }
 
-  public static report = (name: string, details:Error|Serializable|StandardError|PromiseRejectionEvent=undefined) => {
+  public static report = (name: string, details:Error|t.Serializable|t.StandardError|PromiseRejectionEvent=undefined) => {
     try {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
@@ -3163,7 +3163,7 @@ class Catch {
     }
   }
 
-  public static log = (name: string, details:Serializable|Error|Dict<Serializable>=undefined) => {
+  public static log = (name: string, details:t.Serializable|Error|t.Dict<t.Serializable>=undefined) => {
     name = 'Catch.log: ' + name;
     console.log(name);
     try {
@@ -3256,14 +3256,14 @@ class Catch {
     return ''; // make ts happy - this will never happen
   }
 
-  public static rejection = (e: PromiseRejectionEvent|StandardError|Error) => {
+  public static rejection = (e: PromiseRejectionEvent|t.StandardError|Error) => {
     if(!(e instanceof UnreportableError)) {
       if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
         Catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
-        if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
-          let stack = (e as StandardError).stack;
-          delete (e as StandardError).stack;
+        if (typeof e === 'object' && typeof (e as t.StandardError).stack === 'string' && (e as t.StandardError).stack) { // thrown object that has a stack attached
+          let stack = (e as t.StandardError).stack;
+          delete (e as t.StandardError).stack;
           Catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
         } else {
           Catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
@@ -3282,7 +3282,7 @@ class Catch {
 
   public static initialize = () => {
     let figure_out_flowcrypt_runtime = () => {
-      if ((window as FcWindow).is_bare_engine !== true) {
+      if ((window as t.FcWindow).is_bare_engine !== true) {
         try {
           Catch.RUNTIME.version = chrome.runtime.getManifest().version;
         } catch (err) {} // tslint:disable-line:no-empty
@@ -3299,16 +3299,16 @@ class Catch {
       }
     };
     figure_out_flowcrypt_runtime();
-    (window as FcWindow).onerror = (Catch.handle_error as ErrorEventHandler);
-    (window as FcWindow).onunhandledrejection = Catch.rejection;
+    (window as t.FcWindow).onerror = (Catch.handle_error as ErrorEventHandler);
+    (window as t.FcWindow).onunhandledrejection = Catch.rejection;
   }
 
 }
 
-class Value {
+export class Value {
 
   public static arr = {
-    unique: <T extends FlatTypes>(array: T[]): T[] => {
+    unique: <T extends t.FlatTypes>(array: T[]): T[] => {
       let unique: T[] = [];
       for (let v of array) {
         if (!Value.is(v).in(unique)) {
@@ -3341,7 +3341,7 @@ class Value {
   };
 
   public static obj = {
-    key_by_value: <T>(obj: Dict<T>, v: T) => {
+    key_by_value: <T>(obj: t.Dict<T>, v: T) => {
       for (let k of Object.keys(obj)) {
         if (obj[k] === v) {
           return k;
@@ -3358,7 +3358,7 @@ class Value {
 
   public static noop = (): void => undefined;
 
-  public static is = (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => Value.arr.contains(array_or_str, v)});  // Value.this(v).in(array_or_string)
+  public static is = (v: t.FlatTypes) => ({in: (array_or_str: t.FlatTypes[]|string): boolean => Value.arr.contains(array_or_str, v)});  // Value.this(v).in(array_or_string)
 
 }
 

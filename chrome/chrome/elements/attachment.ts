@@ -2,6 +2,9 @@
 
 'use strict';
 
+import { Store } from './../../js/common/storage.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Pgp, Attachment, Value, DecryptErrorTypes, Api } from './../../js/common/common.js';
+
 Catch.try(async () => {
 
   Ui.event.protect();

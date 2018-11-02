@@ -2,6 +2,13 @@
 
 'use strict';
 
+import { Store } from '../../../js/common/storage.js';
+import { Catch, Env, Xss, Api, Ui, BrowserMsg, Value, Pgp } from '../../../js/common/common.js';
+import { KeyImportUI, UserAlert } from '../../../js/common/key_import.js';
+import { mnemonic } from '../../../js/common/mnemonic.js';
+import * as t from '../../../types/common';
+import { Settings } from '../settings.js';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']);
@@ -14,7 +21,7 @@ Catch.try(async () => {
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let primary_pubkey_armored = primary_ki.public;
-  let keyserver_result: PubkeySearchResult;
+  let keyserver_result: t.PubkeySearchResult;
   let expect_longid: string;
 
   let request_replacement = async () => {
@@ -22,7 +29,7 @@ Catch.try(async () => {
       let key_import_ui = new KeyImportUI({expect_longid, reject_known: true, check_signing: true});
       let checked_old_key = await key_import_ui.check_prv(account_email, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if(checked_old_key) {
-        let request_replacement: Dict<string> = {
+        let request_replacement: t.Dict<string> = {
           'ATT': 'CRYPTUP', // todo - should be the original attester
           'ACT': 'REQUEST_REPLACEMENT',
           'ADD': Pgp.hash.double_sha1_upper(account_email),

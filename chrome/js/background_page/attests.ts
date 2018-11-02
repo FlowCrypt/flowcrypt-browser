@@ -2,6 +2,12 @@
 
 'use strict';
 
+import {Store} from '../common/storage.js';
+import {Pgp, Catch, Value, Api, Str} from '../common/common.js';
+import * as t from '../../types/common';
+
+declare let openpgp: typeof OpenPGP;
+
 type AttestResult = {message: string, account_email: string, attest_packet_text: string|null};
 
 class AttestError extends Error implements AttestResult {
@@ -15,15 +21,15 @@ class AttestError extends Error implements AttestResult {
   }
 }
 
-class BgAttests {
+export class BgAttests {
 
   private static CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
   private static CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
   private static ATTESTERS = {
     CRYPTUP: { email: 'attest@cryptup.org', api: undefined as string|undefined, pubkey: undefined as string|undefined }
   };
-  private static currently_watching: Dict<number> = {};
-  private static attest_ts_can_read_emails: Dict<boolean> = {};
+  private static currently_watching: t.Dict<number> = {};
+  private static attest_ts_can_read_emails: t.Dict<boolean> = {};
   private static packet_headers = Pgp.armor.headers('attest_packet');
 
   static watch_for_attest_email_if_appropriate = async () => {
@@ -34,13 +40,13 @@ class BgAttests {
     }
   }
 
-  static attest_requested_handler: BrowserMessageHandler = async (request: {account_email: string}, sender, respond) => {
+  static attest_requested_handler: t.BrowserMessageHandler = async (request: {account_email: string}, sender, respond) => {
     respond();
     await BgAttests.get_pending_attest_requests();
     BgAttests.watch_for_attest_email(request.account_email);
   }
 
-  static attest_packet_received_handler = async (request: {account_email: string, packet: string, passphrase: string}, sender: chrome.runtime.MessageSender|'background', respond: Callback) => {
+  static attest_packet_received_handler = async (request: {account_email: string, packet: string, passphrase: string}, sender: chrome.runtime.MessageSender|'background', respond: t.Callback) => {
     try { // todo - could be refactored to pass AttestResult directly
       let r = await BgAttests.process_attest_and_log_result(request.account_email, request.packet, request.passphrase);
       respond({success: true, result: r.message});
@@ -67,7 +73,7 @@ class BgAttests {
       let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (passphrase !== null) {
         if (storage.attests_requested && storage.attests_requested.length && BgAttests.attest_ts_can_read_emails[account_email]) {
-          let messages: ApirGmailMessage[];
+          let messages: t.ApirGmailMessage[];
           try {
             messages = await BgAttests.fetch_attest_emails(account_email);
           } catch(e) {
@@ -166,7 +172,7 @@ class BgAttests {
     }
   }
 
-  private static fetch_attest_emails = async (account_email: string): Promise<ApirGmailMessage[]> => {
+  private static fetch_attest_emails = async (account_email: string): Promise<t.ApirGmailMessage[]> => {
     let q = [
       '(from:"' + BgAttests.get_attester_emails().join('" OR from: "') + '")',
       'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.

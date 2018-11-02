@@ -1,11 +1,22 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-class KeyCanBeFixed extends Error {
+'user strict';
+
+import {Store} from './storage.js';
+import {mnemonic} from './mnemonic.js';
+import {Value, Ui, Pgp, Env} from './common.js';
+import {Attach} from './attach.js';
+import * as t from '../../types/common';
+
+declare let openpgp: typeof OpenPGP;
+
+export class KeyCanBeFixed extends Error {
   encrypted: OpenPGP.key.Key;
 }
 
-class UserAlert extends Error {}
+export class UserAlert extends Error {}
 
-class KeyImportUI {
+export class KeyImportUI {
 
   private expected_longid: string|null;
   private reject_known: boolean;
@@ -72,7 +83,7 @@ class KeyImportUI {
     });
   }
 
-  check_prv = async (account_email: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
+  check_prv = async (account_email: string, armored: string, passphrase: string): Promise<t.KeyImportUiCheckResult> => {
     let normalized = this.normalize('private_key', armored);
     let decrypted = this.read('private_key', normalized);
     let encrypted = this.read('private_key', normalized);
@@ -94,7 +105,7 @@ class KeyImportUI {
     return normalized;
   }
 
-  private normalize = (type: KeyBlockType, armored: string) => {
+  private normalize = (type: t.KeyBlockType, armored: string) => {
     let headers = Pgp.armor.headers(type);
     let normalized = Pgp.key.normalize(armored);
     if (!normalized) {
@@ -103,7 +114,7 @@ class KeyImportUI {
     return normalized;
   }
 
-  private read = (type: KeyBlockType, normalized: string) => {
+  private read = (type: t.KeyBlockType, normalized: string) => {
     let headers = Pgp.armor.headers(type);
     let k = openpgp.key.readArmored(normalized).keys[0];
     if (typeof k === 'undefined') {
@@ -120,7 +131,7 @@ class KeyImportUI {
     return longid;
   }
 
-  private reject_if_not = (type: KeyBlockType, k: OpenPGP.key.Key) => {
+  private reject_if_not = (type: t.KeyBlockType, k: OpenPGP.key.Key) => {
     let headers = Pgp.armor.headers(type);
     if (type === 'private_key' && k.isPublic()) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');

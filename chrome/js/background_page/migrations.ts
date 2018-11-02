@@ -2,11 +2,13 @@
 
 'use strict';
 
-/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-/// <reference path="../../../node_modules/@types/openpgp/index.d.ts" />
-/// <reference path="../common/common.d.ts" />
+import {Store} from '../common/storage.js';
+import {Pgp, Catch, Value, Api, Str} from '../common/common.js';
+import * as t from '../../types/common';
 
-let migrate_account: BrowserMessageHandler = async (data: {account_email: string}, sender, respond_done) => {
+declare let openpgp: typeof OpenPGP;
+
+export let migrate_account: t.BrowserMessageHandler = async (data: {account_email: string}, sender, respond_done) => {
   if(data.account_email) {
     await Store.set(data.account_email, { version: Catch.version('int') as number|null });
     respond_done();
@@ -17,7 +19,7 @@ let migrate_account: BrowserMessageHandler = async (data: {account_email: string
   }
 };
 
-let migrate_global = async () => {
+export let migrate_global = async () => {
   await migrate_local_storage_to_extension_storage();
 };
 
@@ -25,7 +27,7 @@ let migrate_local_storage_to_extension_storage = () => new Promise(resolve => {
   if (window.localStorage.length === 0) {
     resolve(); // nothing in localStorage
   } else {
-    let values: Dict<FlatTypes> = {};
+    let values: t.Dict<t.FlatTypes> = {};
     for (let legacy_storage_key of Object.keys(localStorage)) {
       let value = legacy_local_storage_read(localStorage.getItem(legacy_storage_key)!);
       if (legacy_storage_key === 'settings_seen') {
@@ -34,7 +36,7 @@ let migrate_local_storage_to_extension_storage = () => new Promise(resolve => {
         values[legacy_storage_key] = value;
       } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
         try {
-          let primary_longid = legacy_local_storage_read(localStorage.getItem(legacy_storage_key.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
+          let primary_longid = legacy_local_storage_read(localStorage.getItem(legacy_storage_key.replace('master_passphrase', 'keys'))!).filter((ki: t.KeyInfo) => ki.primary)[0].longid;
           values[legacy_storage_key.replace('master_passphrase', 'passphrase_' + primary_longid)] = value;
         } catch (e) {} // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
       } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
@@ -123,7 +125,7 @@ let report_useful_errors = (e: any) => {
   }
 };
 
-let schedule_cryptup_subscription_level_check = () => {
+export let schedule_cryptup_subscription_level_check = (background_process_start_reason: 'update' | 'chrome_update' | 'browser_start' | string) => {
   Catch.set_timeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload

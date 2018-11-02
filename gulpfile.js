@@ -13,6 +13,7 @@ let version = config('package.json').version;
 
 let chromeTo = 'build/chrome';
 let ffTo = 'build/firefox';
+let contentScriptsTo = 'build/_/content_scripts';
 let chromeReleaseZipTo = `release/flowcrypt-chrome-${version.replace(/\./g, '-')}.zip`;
 
 let recipe = {
@@ -36,9 +37,9 @@ let recipe = {
 }
 
 let subTask = {
-  flush: () => Promise.all([del(chromeTo), del(ffTo)]),
+  flush: () => Promise.all([del(chromeTo), del(ffTo), del(contentScriptsTo)]),
   runTsc: () => recipe.exec('./node_modules/typescript/bin/tsc'),
-  runTscWebmail: () => recipe.exec('./node_modules/typescript/bin/tsc --project tsconfig.webmail.json'),
+  runTscContentScripts: () => recipe.exec('./node_modules/typescript/bin/tsc --project tsconfig.content_scripts.json'),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
   chromeBuildSpacesToTabs: () => Promise.all([
     recipe.spacesToTabs(`${chromeTo}/js`),
@@ -59,7 +60,7 @@ let subTask = {
   releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),
   releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('./../flowcrypt-script/browser/firefox_release')),
   chromeResolveModules: () => recipe.exec(`node tooling/resolve-modules`),
-  chromeWrapWebmailBundle: () => recipe.exec(`node tooling/wrap-webmail-bundle`),
+  chromeBundleContentScripts: () => recipe.exec(`node tooling/bundle-content-scripts`),
 }
 
 let task = {
@@ -67,13 +68,13 @@ let task = {
     subTask.flush,
     gulp.parallel(
       subTask.runTsc, 
-      subTask.runTscWebmail,
+      subTask.runTscContentScripts,
       subTask.copySourceFiles,
       subTask.copyVersionedManifest,
     ),
     subTask.chromeBuildSpacesToTabs,
     subTask.chromeResolveModules,
-    subTask.chromeWrapWebmailBundle,
+    subTask.chromeBundleContentScripts,
     subTask.copyChromeToFirefox,
     subTask.copyChromeToFirefoxEditedManifest,
   ),

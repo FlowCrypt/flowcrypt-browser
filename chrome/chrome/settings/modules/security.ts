@@ -2,6 +2,12 @@
 
 'use strict';
 
+import { Store } from '../../../js/common/storage.js';
+import { Catch, Env, Xss, Api, Ui, BrowserMsg, Value, Pgp } from '../../../js/common/common.js';
+import { Settings } from '../settings.js';
+
+declare const openpgp: typeof OpenPGP;
+
 Catch.try( async () => {
 
   let url_params = Env.url_params(['account_email', 'embedded', 'parent_tab_id']);

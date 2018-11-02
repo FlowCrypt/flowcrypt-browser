@@ -2,6 +2,9 @@
 
 'use strict';
 
+import { Store } from '../../../js/common/storage.js';
+import { Catch, Env, Ui, BrowserMsg } from '../../../js/common/common.js';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id', 'email_provider']);

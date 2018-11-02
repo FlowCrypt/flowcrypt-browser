@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { Catch, Env, Xss, Api, Ui, BrowserMsg, Str } from '../../../js/common/common.js';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id', 'bug_report']);

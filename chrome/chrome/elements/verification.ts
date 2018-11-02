@@ -2,6 +2,10 @@
 
 'use strict';
 
+import { Store } from './../../js/common/storage.js';
+import { Catch, Ui, Env, Xss } from './../../js/common/common.js';
+import { FlowCryptAccount } from './../../js/common/account.js';
+
 Catch.try(async () => {
 
   Ui.event.protect();

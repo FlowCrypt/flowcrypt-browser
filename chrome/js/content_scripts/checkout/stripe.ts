@@ -2,6 +2,8 @@
 
 'use strict';
 
+import {Catch, Env, BrowserMsg} from '../../common/common.js';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['parent_tab_id']);

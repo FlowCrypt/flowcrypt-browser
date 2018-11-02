@@ -2,7 +2,13 @@
 
 'use strict';
 
-declare var anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
+import { Store } from './../../js/common/storage.js';
+import { Catch, Ui, Env, BrowserMsg, Xss, Pgp, Attachment, Value, DecryptErrorTypes, Api, Str, Mime } from './../../js/common/common.js';
+import { BgExec } from './../../js/common/bg_exec.js';
+import { Lang } from './../../js/common/lang.js';
+import * as t from '../../types/common';
+
+declare const anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
 
 Catch.try(async () => {
 
@@ -22,11 +28,11 @@ Catch.try(async () => {
 
   let included_attachments: Attachment[] = [];
   let height_history: number[] = [];
-  let message_fetched_from_api: false|GmailApiResponseFormat = false;
+  let message_fetched_from_api: false|t.GmailApiResponseFormat = false;
   let passphrase_interval: number|undefined;
-  let missing_or_wrong_passprases: Dict<string|null> = {};
+  let missing_or_wrong_passprases: t.Dict<string|null> = {};
   let can_read_emails: undefined|boolean;
-  let password_message_link_result: ApirFcLinkMessage;
+  let password_message_link_result: t.ApirFcLinkMessage;
   let admin_codes: string[];
   let user_entered_message_password: string|undefined;
 
@@ -215,7 +221,7 @@ Catch.try(async () => {
     }));
   };
 
-  let render_pgp_signature_check_result = (signature: MessageVerifyResult|null) => {
+  let render_pgp_signature_check_result = (signature: t.MessageVerifyResult|null) => {
     if (signature) {
       let signer_email = signature.contact ? signature.contact.name || sender_email : sender_email;
       $('#pgp_signature > .cursive > span').text(String(signer_email) || 'Unknown Signer');
@@ -294,7 +300,7 @@ Catch.try(async () => {
     }
   };
 
-  let decide_decrypted_content_formatting_and_render = async (decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MessageVerifyResult|null) => {
+  let decide_decrypted_content_formatting_and_render = async (decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: t.MessageVerifyResult|null) => {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
     let public_keys: string[] = [];
@@ -440,7 +446,7 @@ Catch.try(async () => {
     }
   };
 
-  let render_password_encrypted_message_load_fail = async (link_result: ApirFcLinkMessage) => {
+  let render_password_encrypted_message_load_fail = async (link_result: t.ApirFcLinkMessage) => {
     if (link_result.expired) {
       let expiration_m = Lang.pgp_block.message_expired_on + Str.datetime_to_date(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
       if (link_result.deleted) {
@@ -504,7 +510,7 @@ Catch.try(async () => {
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (can_read_emails) {
           render_text('Retrieving message...');
-          let format: GmailApiResponseFormat = (!message_fetched_from_api) ? 'full' : 'raw';
+          let format: t.GmailApiResponseFormat = (!message_fetched_from_api) ? 'full' : 'raw';
           message = await Api.gmail.extract_armored_block(account_email, message_id as string, format);
           render_text('Decrypting...');
           message_fetched_from_api = format;

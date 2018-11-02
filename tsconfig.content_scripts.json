@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "es6",
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "sourceMap": false,
+    "checkJs": false,
+    "outDir": "build/_/content_scripts",
+    "baseUrl": "chrome",
+    "paths": {
+      "dompurify": ["types/purify.d.ts"]
+    },
+    "typeRoots": [
+      "chrome/types"
+    ]
+  },
+  "include": [
+    "chrome/types/*.ts",
+    "chrome/js/common/storage.ts",
+    "chrome/js/common/common.ts",
+    "chrome/js/common/factory.ts",
+    "chrome/js/common/inject.ts",
+    "chrome/js/common/notifications.ts",
+    "chrome/js/content_scripts/**/*.ts"
+  ],
+  "exclude": [
+    "build"
+  ]
+}

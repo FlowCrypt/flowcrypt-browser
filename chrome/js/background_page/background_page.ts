@@ -2,11 +2,19 @@
 
 'use strict';
 
-const MAX_MESSAGE_SIZE = 1024 * 1024;
+import {Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError} from '../common/storage.js';
+import {Env, Catch, Value, BrowserMsg} from '../common/common.js';
+import {BgExec} from '../common/bg_exec.js';
+import {BgAttests} from './attests.js';
+import {inject_cryptup_into_webmail_if_needed} from './inject.js';
+import {migrate_account, migrate_global, schedule_cryptup_subscription_level_check} from './migrations.js';
+import * as t from '../../types/common';
+
+declare let openpgp: typeof OpenPGP;
 
 console.info('background_process.js starting');
 
-openpgp.initWorker({path: 'lib/openpgp.worker.js'});
+openpgp.initWorker({path: '/lib/openpgp.worker.js'});
 
 let background_process_start_reason = 'browser_start';
 chrome.runtime.onInstalled.addListener(event => {
@@ -30,7 +38,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:Dict<FlatTypes>|null=null, add_new_account=false) => {
+  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:t.Dict<t.FlatTypes>|null=null, add_new_account=false) => {
     let base_path = chrome.extension.getURL(`chrome/settings/${path}`);
     let page_url_params = _page_url_params ? JSON.stringify(_page_url_params) : null;
     if (account_email) {
@@ -43,17 +51,17 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let open_settings_page_handler: BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: Dict<FlatTypes>, add_new_account?: boolean}, sender, respond) => {
+  let open_settings_page_handler: t.BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: t.Dict<t.FlatTypes>, add_new_account?: boolean}, sender, respond) => {
     await open_settings_page(message.path, message.account_email, message.page, message.page_url_params, message.add_new_account === true);
     respond();
   };
 
-  let open_inbox_page_handler: BrowserMessageHandler = async (message: {account_email: string, thread_id?: string, folder?: string}, sender, respond) => {
+  let open_inbox_page_handler: t.BrowserMessageHandler = async (message: {account_email: string, thread_id?: string, folder?: string}, sender, respond) => {
     await open_flowcrypt_tab(Env.url_create(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
     respond();
   };
 
-  let get_active_tab_info: BrowserMessageHandler = (message: Dict<any>|null, sender, respond) => {
+  let get_active_tab_info: t.BrowserMessageHandler = (message: t.Dict<any>|null, sender, respond) => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (tabs) => {
       if (tabs.length) {
         if (tabs[0].id !== undefined) {
@@ -82,7 +90,7 @@ chrome.runtime.onInstalled.addListener(event => {
     });
   });
 
-  let update_uninstall_url: BrowserMessageHandler = async (request: Dict<any>|null, sender, respond) => {
+  let update_uninstall_url: t.BrowserMessageHandler = async (request: t.Dict<any>|null, sender, respond) => {
     respond();
     let account_emails = await Store.account_emails_get();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
@@ -91,7 +99,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let db_operation = (request: BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: Callback, db: IDBDatabase) => {
+  let db_operation = (request: t.BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: t.Callback, db: IDBDatabase) => {
     Catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
@@ -122,9 +130,9 @@ chrome.runtime.onInstalled.addListener(event => {
 
   BrowserMsg.listen_background({
     bg_exec: BgExec.background_request_handler,
-    db: (request, sender, respond) => db_operation(request as BrowserMessageRequestDb, sender, respond, db),
-    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(Catch.rejection),
-    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(Catch.rejection),
+    db: (request, sender, respond) => db_operation(request as t.BrowserMessageRequestDb, sender, respond, db),
+    session_set: (r: t.BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(Catch.rejection),
+    session_get: (r: t.BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(Catch.rejection),
     close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
     migrate_account,
     settings: open_settings_page_handler,
@@ -155,7 +163,7 @@ chrome.runtime.onInstalled.addListener(event => {
 
   update_uninstall_url(null, 'background', Value.noop);
   inject_cryptup_into_webmail_if_needed();
-  schedule_cryptup_subscription_level_check();
+  schedule_cryptup_subscription_level_check(background_process_start_reason);
   BgAttests.watch_for_attest_email_if_appropriate().catch(Catch.rejection);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be concating it to show the last 100

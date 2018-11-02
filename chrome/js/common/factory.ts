@@ -2,7 +2,10 @@
 
 'use strict';
 
-class XssSafeFactory {
+import {Catch, Value, Xss, Str, Ui, Attachment, Env} from './common.js';
+import * as t from '../../types/common';
+
+export class XssSafeFactory {
 
   /**
    * XSS WARNING
@@ -14,12 +17,12 @@ class XssSafeFactory {
    * If you add or edit a method, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
 
-  private set_params: UrlParams;
+  private set_params: t.UrlParams;
   private reloadable_class: string;
   private destroyable_class: string;
   private hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
-  constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:UrlParams={}) {
+  constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:t.UrlParams={}) {
     this.reloadable_class = Xss.html_escape(reloadable_class);
     this.destroyable_class = Xss.html_escape(destroyable_class);
     this.set_params = set_params;
@@ -29,7 +32,7 @@ class XssSafeFactory {
 
   src_img = (relative_path: string) => this.ext_url(`img/${relative_path}`);
 
-  private frame_src = (path: string, params:UrlParams={}) => {
+  private frame_src = (path: string, params:t.UrlParams={}) => {
     for (let k of Object.keys(this.set_params)) {
       params[k] = this.set_params[k];
     }
@@ -40,11 +43,11 @@ class XssSafeFactory {
     return this.frame_src(this.ext_url('chrome/elements/compose.htm'), { is_reply_box: false, draft_id, placement: 'gmail' });
   }
 
-  src_passphrase_dialog = (longids:string[]=[], type: PassphraseDialogType) => {
+  src_passphrase_dialog = (longids:string[]=[], type: t.PassphraseDialogType) => {
     return this.frame_src(this.ext_url('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  src_subscribe_dialog = (verification_email_text: string|null, placement: Placement, source: string|null, subscribe_result_tab_id:string|null=null) => {
+  src_subscribe_dialog = (verification_email_text: string|null, placement: t.Placement, source: string|null, subscribe_result_tab_id:string|null=null) => {
     return this.frame_src(this.ext_url('chrome/elements/subscribe.htm'), { verification_email_text, placement, source, subscribe_result_tab_id });
   }
 
@@ -56,15 +59,15 @@ class XssSafeFactory {
     return this.frame_src(this.ext_url('chrome/elements/attest.htm'), { attest_packet, });
   }
 
-  src_add_pubkey_dialog = (emails: string[], placement: Placement) => {
+  src_add_pubkey_dialog = (emails: string[], placement: t.Placement) => {
     return this.frame_src(this.ext_url('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  src_add_footer_dialog = (placement: Placement) => {
+  src_add_footer_dialog = (placement: t.Placement) => {
     return this.frame_src(this.ext_url('chrome/elements/shared/footer.htm'), { placement });
   }
 
-  src_sending_address_dialog = (placement: Placement) => {
+  src_sending_address_dialog = (placement: t.Placement) => {
     return this.frame_src(this.ext_url('chrome/elements/sending_address.htm'), { placement });
   }
 
@@ -83,8 +86,8 @@ class XssSafeFactory {
     return this.frame_src(this.ext_url('chrome/elements/pgp_pubkey.htm'), { frame_id: this.new_id(), armored_pubkey, minimized: Boolean(is_outgoing), });
   }
 
-  src_reply_message_iframe = (conversation_params: UrlParams, skip_click_prompt: boolean, ignore_draft: boolean) => {
-    let params: UrlParams = {
+  src_reply_message_iframe = (conversation_params: t.UrlParams, skip_click_prompt: boolean, ignore_draft: boolean) => {
+    let params: t.UrlParams = {
       is_reply_box: true,
       frame_id: 'frame_' + Str.random(10),
       placement: 'gmail',
@@ -114,7 +117,7 @@ class XssSafeFactory {
     return `<link class="${this.destroyable_class}" rel="stylesheet" href="${this.ext_url(`css/${file}.css`)}" />`;
   }
 
-  dialog_passphrase = (longids: string[], type: PassphraseDialogType) => {
+  dialog_passphrase = (longids: string[], type: t.PassphraseDialogType) => {
     return this.div_dialog_DANGEROUS(this.iframe(this.src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}), 'dialog-passphrase'); // xss-safe-factory
   }
 
@@ -150,7 +153,7 @@ class XssSafeFactory {
     return this.iframe(this.src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']);
   }
 
-  embedded_reply = (conversation_params: UrlParams, skip_click_prompt: boolean, ignore_draft:boolean=false) => {
+  embedded_reply = (conversation_params: t.UrlParams, skip_click_prompt: boolean, ignore_draft:boolean=false) => {
     return this.iframe(this.src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']);
   }
 
@@ -170,7 +173,7 @@ class XssSafeFactory {
     return this.iframe(this.src_stripe_checkout(), [], {sandbox: 'allow-forms allow-scripts allow-same-origin'});
   }
 
-  button_compose = (webmail_name: WebMailName) => {
+  button_compose = (webmail_name: t.WebMailName) => {
     if (webmail_name === 'inbox') {
       return `<div class="S ${this.destroyable_class}"><div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.src_img('logo/logo.svg')}"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>`;
     } else if (webmail_name === 'outlook') {
@@ -192,7 +195,7 @@ class XssSafeFactory {
     return `<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ${this.destroyable_class}" data-tooltip="Use Secure Reply"><span>secure reply</span></span>`;
   }
 
-  button_recipients_use_encryption = (webmail_name: WebMailName) => {
+  button_recipients_use_encryption = (webmail_name: t.WebMailName) => {
     if (webmail_name !== 'gmail') {
       Catch.report('switch_to_secure not implemented for ' + webmail_name);
       return '';
@@ -212,10 +215,10 @@ class XssSafeFactory {
     return { to: their_emails, from: my_email };
   }
 
-  private iframe = (src: string, classes:string[]=[], element_attrs:UrlParams={}) => {
+  private iframe = (src: string, classes:string[]=[], element_attrs:t.UrlParams={}) => {
     let id = Env.url_params(['frame_id'], src).frame_id as string;
     let class_attr = (classes || []).concat(this.reloadable_class).join(' ');
-    let attributes: Dict<string> = {id, class: class_attr, src};
+    let attributes: t.Dict<string> = {id, class: class_attr, src};
     for (let name of Object.keys(element_attrs)) {
       attributes[name] = String(element_attrs[name]);
     }

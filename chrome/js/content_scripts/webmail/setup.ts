@@ -2,7 +2,14 @@
 
 'use strict';
 
-let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInfo) => {
+import {Store} from '../../common/storage.js';
+import {Catch, Env, BrowserMsg, Value, Ui, TabIdRequiredError} from '../../common/common.js';
+import {Injector} from '../../common/inject.js';
+import {XssSafeFactory} from '../../common/factory.js';
+import {Notifications} from '../../common/notifications.js';
+import {ContentScriptWindow, WebmailSpecificInfo, NotificationWithHandlers, PassphraseDialogType} from '../../../types/common.js';
+
+export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInfo) => {
 
   let set_up_notification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
   let was_destroyed = false;

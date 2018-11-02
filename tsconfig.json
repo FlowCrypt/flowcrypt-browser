@@ -9,17 +9,17 @@
     "outDir": "build/chrome",
     "baseUrl": "chrome",
     "paths": {
-      "jquery": ["lib/jquery.min.js"],
-      "openpgp": ["lib/openpgp.js"],
+      "jquery": ["lib/jquery.min.js", "COMMENT"],
+      "openpgp": ["lib/openpgp.js", "COMMENT"],
       "dompurify": ["types/purify.d.ts", "lib/purify.min.js", "COMMENT"],
-      "anchorme": ["lib/anchorme.js"],
-      "fine-uploader": ["lib/fine-uploader.js"],
-      "clipboard": ["lib/clipboard.js"],
-      "iso-8859-2": ["lib/iso-8859-2.js"],
-      "zxcvbn": ["lib/zxcvbn.js"],
-      "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js"],
-      "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js"],
-      "featherlight": ["lib/featherlight/featherlight.js"]
+      "anchorme": ["lib/anchorme.js", "COMMENT"],
+      "fine-uploader": ["lib/fine-uploader.js", "COMMENT"],
+      "clipboard": ["lib/clipboard.js", "COMMENT"],
+      "iso-8859-2": ["lib/iso-8859-2.js", "COMMENT"],
+      "zxcvbn": ["lib/zxcvbn.js", "COMMENT"],
+      "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js", "COMMENT"],
+      "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js", "COMMENT"],
+      "featherlight": ["lib/featherlight/featherlight.js", "COMMENT"]
     },
     "typeRoots": [
       "chrome/types"
@@ -29,6 +29,7 @@
     "chrome/**/*.ts"
   ],
   "exclude": [
-    "chrome/js/content_scripts/webmail/*.ts"
+    "chrome/js/content_scripts/**/*",
+    "build"
   ]
 }

@@ -2,6 +2,14 @@
 
 'use strict';
 
+import { Store } from '../../../js/common/storage.js';
+import { Catch, Env, Ui, BrowserMsg, Xss, Value, Str, Api, Mime } from '../../../js/common/common.js';
+import { XssSafeFactory } from '../../../js/common/factory.js';
+import { Injector } from '../../../js/common/inject.js';
+import { Notifications } from '../../../js/common/notifications.js';
+import { ApirGmailLabels$label } from '../../../types/common.js';
+import * as t from '../../../types/common';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'label_id', 'thread_id']);
@@ -40,7 +48,7 @@ Catch.try(async () => {
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send(null, 'settings', {account_email})));
   $('.action_choose_account').get(0).title = account_email;
 
-  let notification_show = (data: NotificationWithHandlers) => {
+  let notification_show = (data: t.NotificationWithHandlers) => {
     notifications.show(data.notification, data.callbacks);
     $('body').one('click', Catch.try(notifications.clear));
   };
@@ -61,7 +69,7 @@ Catch.try(async () => {
     reinsert_reply_box: (data: {thread_id: string, thread_message_id: string}) => {
       render_reply_box(data.thread_id, data.thread_message_id);
     },
-    passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
+    passphrase_dialog: (data: {longids: string[], type: t.PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
         $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
       }
@@ -101,14 +109,14 @@ Catch.try(async () => {
     },
   }, tab_id);
 
-  let update_url = (title: string, params: UrlParams) => {
+  let update_url = (title: string, params: t.UrlParams) => {
     let new_url_search = Env.url_create('', params);
     if(new_url_search !== window.location.search) {
       window.history.pushState({}, title, new_url_search);
     }
   };
 
-  let load_url = (params: UrlParams) => {
+  let load_url = (params: t.UrlParams) => {
     let new_url_search = Env.url_create('', params);
     if(new_url_search !== window.location.search) {
       window.location.search = new_url_search;
@@ -169,7 +177,7 @@ Catch.try(async () => {
     }
   };
 
-  let renderable_labels = (label_ids: (ApirGmailMessage$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+  let renderable_labels = (label_ids: (t.ApirGmailMessage$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return label_ids.map(id => renderable_label(id, placement)).join('');
   };
 
@@ -298,7 +306,7 @@ Catch.try(async () => {
     }
   };
 
-  let render_thread = async (thread_id: string, thread?: ApirGmailThreadGet) => {
+  let render_thread = async (thread_id: string, thread?: t.ApirGmailThreadGet) => {
     display_block('thread', 'Loading..');
     try {
       thread = thread || await Api.gmail.thread_get(account_email, thread_id, 'metadata');
@@ -327,7 +335,7 @@ Catch.try(async () => {
     return Ui.e('div', {id, class: 'message line', html});
   };
 
-  let render_message = async (message: ApirGmailMessage) => {
+  let render_message = async (message: t.ApirGmailMessage) => {
     let html_id = thread_message_id(message.id);
     let from = Api.gmail.find_header(message, 'from') || 'unknown';
     try {
@@ -356,8 +364,8 @@ Catch.try(async () => {
     }
   };
 
-  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: ApirGmailMessage) => {
-    let params: UrlParams;
+  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: t.ApirGmailMessage) => {
+    let params: t.UrlParams;
     if(last_message) {
       let to = Api.gmail.find_header(last_message, 'to');
       let to_arr = to ? to.split(',').map(Str.parse_email).map(e => e.email).filter(e => e) : [];

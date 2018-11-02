@@ -2,6 +2,12 @@
 
 'use strict';
 
+import { Store } from '../../../js/common/storage.js';
+import { Catch, Env, Xss, Api, Ui, BrowserMsg, Value, Attachment, Str } from '../../../js/common/common.js';
+import { Attach } from '../../../js/common/attach.js';
+import * as t from '../../../types/common';
+import { Settings } from '../settings.js';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['account_email', 'parent_tab_id']);
@@ -27,7 +33,7 @@ Catch.try(async () => {
     'photo': '.profile_photo img',
   });
 
-  let render_fields = (result: ApirFcAccountUpdate$result) => {
+  let render_fields = (result: t.ApirFcAccountUpdate$result) => {
     if (result.alias) {
       let me = Api.fc.url('me', result.alias);
       let me_escaped = Xss.html_escape(me);
@@ -81,7 +87,7 @@ Catch.try(async () => {
     } else {
       S.cached('show_if_active').css('display', 'none');
       Xss.sanitize_render(S.cached('status'), 'Updating ' + Ui.spinner('green'));
-      let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
+      let update: t.Dict<t.Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
         update.photo_content = btoa(new_photo_file.as_text());
       }

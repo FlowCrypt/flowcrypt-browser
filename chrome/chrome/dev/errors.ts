@@ -2,6 +2,9 @@
 
 'use strict';
 
+import { Catch, Xss, Ui } from "./../../js/common/common.js";
+import { Store } from "./../../js/common/storage.js";
+
 Catch.try(async () => {
 
   let storage = await Store.get_global(['errors']);

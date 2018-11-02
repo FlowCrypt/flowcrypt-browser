@@ -2,11 +2,14 @@
 
 'use strict';
 
+import {Env, Value, BrowserMsg, Ui} from '../../common/common.js';
+import * as t from '../../../types/common';
+
 (async () => {
 
-  const google_oauth2 = (chrome.runtime.getManifest() as any as FlowCryptManifest).oauth2;
+  const google_oauth2 = (chrome.runtime.getManifest() as any as t.FlowCryptManifest).oauth2;
 
-  let api_google_auth_state_unpack = (status_string: string): AuthRequest => {
+  let api_google_auth_state_unpack = (status_string: string): t.AuthRequest => {
     return JSON.parse(status_string.replace(google_oauth2.state_header, ''));
   };
 

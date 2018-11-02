@@ -1,7 +1,11 @@
 
 'use strict';
 import {return_this_worked} from './test_module_for_import.js';
+import * as t from '../../types/common';
 import * as DOMPurify from 'dompurify';
+
+declare const anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
+declare const openpgp: typeof OpenPGP;
 
 // results:
 //
@@ -28,7 +32,7 @@ ${anchorme('hello text https://flowcrypt.com yay', {})}
 
 Mime encode:
 ${(() => {
-  let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
+  let MimeBuilder = (window as t.BrowserWidnow)['emailjs-mime-builder'];
   let root_node = new MimeBuilder();
   root_node.addHeader('random-header-1', 'RANDOM HEADER A');
   root_node.addHeader('random-header-2', 'RANDOM HEADER B');

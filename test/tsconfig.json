@@ -16,10 +16,10 @@
       "source/test.ts",
       "source/patterns.ts",
       "source/resolve-modules.ts",
-      "source/wrap-webmail-bundle.ts"
+      "source/bundle-content-scripts.ts"
   ],
   "exclude": [
-      "build/*",
+      "**/build/**",
       "node_modules/*"
   ]
 }

@@ -1,4 +1,11 @@
 
+export type bogus = never; // that way TS understands this is to be treated as a module
+
+import {Attachment, DecryptErrorTypes} from '../js/common/common.js';
+import {Injector} from '../js/common/inject.js';
+import {Notifications} from '../js/common/notifications.js';
+import {XssSafeFactory} from '../js/common/factory.js';
+
 interface BrowserWidnow extends Window {
     XMLHttpRequest: any;
     onunhandledrejection: (e: any) => void;
@@ -378,11 +385,7 @@ interface WebmailElementReplacer {
 }
 type NotificationWithHandlers = {notification: string, callbacks: Dict<Callback>};
 
-interface JQueryStatic {
-    featherlight: Function; // tslint:disable-line:ban-types
-}
-
-interface JQuery {
+interface JQS extends JQueryStatic {
     featherlight: Function; // tslint:disable-line:ban-types
 }
 

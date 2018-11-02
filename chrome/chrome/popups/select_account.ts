@@ -2,6 +2,10 @@
 
 'use strict';
 
+import { Store } from '../../js/common/storage.js';
+import { Xss, BrowserMsg, Ui, Catch, Env } from '../../js/common/common.js';
+import { Settings } from '../settings/settings.js';
+
 Catch.try(async () => {
 
   let url_params = Env.url_params(['action']);
