@@ -30,12 +30,7 @@
     {
       "matches": ["*://mail.google.com/*", "*://inbox.google.com/*"],
       "css": ["/css/webmail.css"],
-      "js": [
-        "/lib/purify.min.js", "/lib/jquery.min.js", "/lib/openpgp.js", "/js/common/storage.js", "/js/common/common.js",
-        "/js/common/factory.js", "/js/common/inject.js", "/js/common/notifications.js",
-        "/js/content_scripts/webmail/setup.js", "/js/content_scripts/webmail/gmail_element_replacer.js", "/js/content_scripts/webmail/inbox_element_replacer.js", 
-        "/js/content_scripts/webmail/webmail.js"
-      ]
+      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/lib/openpgp.js",  "/js/content_scripts/webmail/webmail_bundle.js"]
     },
     {
       "matches": ["*://accounts.google.com/o/oauth2/approval*"],

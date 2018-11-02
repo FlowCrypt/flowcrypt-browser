@@ -6,7 +6,7 @@
     "strictNullChecks": true,
     "sourceMap": false,
     "checkJs": false,
-    "outDir": "build/chrome",
+    "outFile": "build/chrome/js/content_scripts/webmail/webmail_bundle.js",
     "baseUrl": "chrome",
     "paths": {
       "jquery": ["lib/jquery.min.js"],
@@ -26,9 +26,17 @@
     ]
   },
   "include": [
-    "chrome/**/*.ts"
+    "chrome/types/purify.d.ts",
+    "chrome/js/common/storage.ts",
+    "chrome/js/common/common.ts",
+    "chrome/js/common/factory.ts",
+    "chrome/js/common/inject.ts",
+    "chrome/js/common/notifications.ts",
+    "chrome/js/content_scripts/webmail/*.ts"
   ],
   "exclude": [
-    "chrome/js/content_scripts/webmail/*.ts"
+    "test/node_modules",
+    "node_modules",
+    "build"
   ]
 }

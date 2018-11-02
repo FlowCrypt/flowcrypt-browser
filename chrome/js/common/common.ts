@@ -1398,6 +1398,7 @@ class Ui {
       let {setup_done, setup_simple} = await Store.get_account(account_email, ['setup_simple', 'setup_done']);
       if(setup_done && setup_simple && primary_ki && openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) {
         if(window.location.pathname === '/chrome/settings/index.htm') {
+          // @ts-ignore - this lets it compile in content script that is missing Settings
           Settings.render_sub_page(account_email, tab_id!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
           let msg = `Protect your key with a pass phrase to finish setup.`;

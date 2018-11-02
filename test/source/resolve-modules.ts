@@ -2,8 +2,6 @@
 import {readdirSync, statSync, readFileSync, symlinkSync, writeFileSync} from 'fs';
 import * as path from 'path';
 
-let errors_found = 0;
-
 const get_all_files_in_directory = (dir: string, file_pattern: RegExp): string[] => {
   let all: string[] = [];
   const files_in_dir = readdirSync(dir);
@@ -43,7 +41,7 @@ const resolve_imports = (line: string, path: string) => line.replace(/^(import (
   }
 });
 
-const source_file_paths = get_all_files_in_directory('./build/chrome', /\.js$/);
+const source_file_paths = get_all_files_in_directory(`./${compilerOptions.outDir}`, /\.js$/);
 
 for (const source_file_path of source_file_paths) {
   const original = readFileSync(source_file_path).toString();
@@ -52,8 +50,3 @@ for (const source_file_path of source_file_paths) {
     writeFileSync(source_file_path, resolved);
   }
 }
-
-// if(errors_found) {
-//   console.error(`patterns.ts: Found ${errors_found} unhandled patterns, exiting\n`);
-//   process.exit(1);
-// }

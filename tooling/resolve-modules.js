@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 const path = require("path");
-let errors_found = 0;
 const get_all_files_in_directory = (dir, file_pattern) => {
     let all = [];
     const files_in_dir = fs_1.readdirSync(dir);
@@ -43,7 +42,7 @@ const resolve_imports = (line, path) => line.replace(/^(import (?:.+ from )?['"]
         return resolved;
     }
 });
-const source_file_paths = get_all_files_in_directory('./build/chrome', /\.js$/);
+const source_file_paths = get_all_files_in_directory(`./${compilerOptions.outDir}`, /\.js$/);
 for (const source_file_path of source_file_paths) {
     const original = fs_1.readFileSync(source_file_path).toString();
     const resolved = original.split('\n').map(l => resolve_imports(l, source_file_path)).join('\n');
@@ -51,8 +50,4 @@ for (const source_file_path of source_file_paths) {
         fs_1.writeFileSync(source_file_path, resolved);
     }
 }
-// if(errors_found) {
-//   console.error(`patterns.ts: Found ${errors_found} unhandled patterns, exiting\n`);
-//   process.exit(1);
-// }
 //# sourceMappingURL=resolve-modules.js.map

@@ -25,7 +25,7 @@
     "test_0_tslint": "./node_modules/tslint/bin/tslint --project tsconfig.json",
     "test_1_patterns": "node test/build/patterns.js",
     "test_2_puppeteer": "node ./node_modules/ava/cli --verbose --concurrency=1 test/build/test.js",
-    "prebuild": "cd test && rm -rf ./build && ../node_modules/typescript/bin/tsc && cd .. && cp test/build/resolve-modules.js tooling/",
+    "prebuild": "cd test && rm -rf ./build && ../node_modules/typescript/bin/tsc && cd .. && cp test/build/resolve-modules.js tooling/ && cp test/build/wrap-webmail-bundle.js tooling/",
     "build": "gulp",
     "pretest": "npm run-script build --silent && cd test && rm -rf ./build && ../node_modules/typescript/bin/tsc && cd ..",
     "test": "npm run-script test_0_tslint && npm run-script test_1_patterns && npm run-script test_2_puppeteer"

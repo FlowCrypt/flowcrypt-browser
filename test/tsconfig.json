@@ -15,7 +15,8 @@
   "files": [
       "source/test.ts",
       "source/patterns.ts",
-      "source/resolve-modules.ts"
+      "source/resolve-modules.ts",
+      "source/wrap-webmail-bundle.ts"
   ],
   "exclude": [
       "build/*",

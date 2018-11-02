@@ -37,7 +37,8 @@ let recipe = {
 
 let subTask = {
   flush: () => Promise.all([del(chromeTo), del(ffTo)]),
-  transpileProjectTs: () => recipe.exec('./node_modules/typescript/bin/tsc'),
+  runTsc: () => recipe.exec('./node_modules/typescript/bin/tsc'),
+  runTscWebmail: () => recipe.exec('./node_modules/typescript/bin/tsc --project tsconfig.webmail.json'),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
   chromeBuildSpacesToTabs: () => Promise.all([
     recipe.spacesToTabs(`${chromeTo}/js`),
@@ -58,18 +59,21 @@ let subTask = {
   releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),
   releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('./../flowcrypt-script/browser/firefox_release')),
   chromeResolveModules: () => recipe.exec(`node tooling/resolve-modules`),
+  chromeWrapWebmailBundle: () => recipe.exec(`node tooling/wrap-webmail-bundle`),
 }
 
 let task = {
   build: gulp.series(
     subTask.flush,
     gulp.parallel(
-      subTask.transpileProjectTs, 
+      subTask.runTsc, 
+      subTask.runTscWebmail,
       subTask.copySourceFiles,
       subTask.copyVersionedManifest,
     ),
     subTask.chromeBuildSpacesToTabs,
     subTask.chromeResolveModules,
+    subTask.chromeWrapWebmailBundle,
     subTask.copyChromeToFirefox,
     subTask.copyChromeToFirefoxEditedManifest,
   ),
@@ -81,5 +85,13 @@ let task = {
 }
 
 gulp.task('default', task.build);
-gulp.task('runFirefox', gulp.series(task.build, task.runFirefox));
-gulp.task('release', gulp.series(task.build, task.release));
+
+gulp.task('runFirefox', gulp.series(
+  task.build, 
+  task.runFirefox,
+));
+
+gulp.task('release', gulp.series(
+  task.build,
+  task.release,
+));
