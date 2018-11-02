@@ -262,7 +262,7 @@ export class Env {
     return null;
   }
 
-  public static is_background_script = () => Boolean(window.location && Value.is('_generated_background_page.html').in(window.location.href));
+  public static is_background_page = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
 
   public static is_extension = () => Env.runtime_id() !== null;
 
@@ -386,7 +386,7 @@ export class Api {
       people_me: (account_email: string): Promise<t.ApirGooglePlusPeopleMe> => Api.internal.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
     },
     auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<t.AuthResult> => new Promise((resolve, reject) => {
-      if (Env.is_background_script()) {
+      if (Env.is_background_page()) {
         throw {code: null, message: 'Cannot produce auth window from background script'};
       }
       let response_handled = false;
@@ -1676,7 +1676,7 @@ export class BrowserMsg {
   public static send_await = (destination_string: string|null, name: string, data: t.Dict<any>|null=null): Promise<t.BrowserMessageResponse> => new Promise(resolve => {
     let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: Catch.stack_trace() };
     let try_resolve_no_undefined = (r?: t.BrowserMessageResponse) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
-    let is_background_page = Env.is_background_script();
+    let is_background_page = Env.is_background_page();
     if (typeof  destination_string === 'undefined') { // don't know where to send the message
       Catch.log('BrowserMsg.send to:undefined');
       try_resolve_no_undefined();
@@ -3287,7 +3287,7 @@ export class Catch {
           Catch.RUNTIME.version = chrome.runtime.getManifest().version;
         } catch (err) {} // tslint:disable-line:no-empty
         Catch.RUNTIME.environment = Catch.environment();
-        if (!Env.is_background_script() && Env.is_extension()) {
+        if (!Env.is_background_page() && Env.is_extension()) {
           BrowserMsg.send_await(null, 'runtime', null).then(extension_runtime => {
             if (typeof extension_runtime !== 'undefined') {
               Catch.RUNTIME = extension_runtime;
