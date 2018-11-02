@@ -80,7 +80,8 @@ Catch.try(async () => {
       $('#cryptup_dialog').remove();
     },
     scroll_to_bottom_of_conversation: () => {
-      // not implemented
+      let scrollable_element = $('.thread').get(0);
+      scrollable_element.scrollTop = scrollable_element.scrollHeight; // scroll to the bottom of conversation where the reply box is
     },
     render_public_keys: (data: {public_keys: string[], after_frame_id: string, traverse_up?: number}) => {
       let traverse_up_levels = data.traverse_up as number || 0;
@@ -90,6 +91,12 @@ Catch.try(async () => {
       }
       for (let armored_pubkey of data.public_keys) {
         append_after.after(factory.embedded_pubkey(armored_pubkey, false));
+      }
+    },
+    reply_pubkey_mismatch: () => {
+      let reply_iframe = $('iframe.reply_message').get(0) as HTMLIFrameElement|undefined;
+      if(reply_iframe) {
+        reply_iframe.src = reply_iframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
       }
     },
   }, tab_id);
@@ -301,7 +308,7 @@ Catch.try(async () => {
       for(let m of thread.messages) {
         await render_message(m);
       }
-      render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id);
+      render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
       // await Api.gmail.thread_modify(account_email, thread_id, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
       if(Api.error.is_network_error(e)) {
@@ -349,8 +356,18 @@ Catch.try(async () => {
     }
   };
 
-  let render_reply_box = (thread_id: string, last_message_id: string) => {
-    S.cached('thread').append(Ui.e('div', {class: 'reply line', html: factory.embedded_reply({thread_id, thread_message_id: last_message_id}, false, false)})); // xss-safe-factory
+  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: ApirGmailMessage) => {
+    let params: UrlParams;
+    if(last_message) {
+      let to = Api.gmail.find_header(last_message, 'to');
+      let to_arr = to ? to.split(',').map(Str.parse_email).map(e => e.email).filter(e => e) : [];
+      let headers = Api.common.reply_correspondents(account_email, storage.addresses || [], Api.gmail.find_header(last_message, 'from'), to_arr);
+      let subject = Api.gmail.find_header(last_message, 'subject');
+      params = {subject, reply_to: headers.to, addresses: storage.addresses || [], my_email: headers.from, thread_id, thread_message_id};
+    } else {
+      params = {thread_id, thread_message_id};
+    }
+    S.cached('thread').append(Ui.e('div', {class: 'reply line', html: factory.embedded_reply(params, false, false)})); // xss-safe-factory
   };
 
   let thread_message_id = (message_id: string) => {
