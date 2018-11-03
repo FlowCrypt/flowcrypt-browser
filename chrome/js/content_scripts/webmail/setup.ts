@@ -2,11 +2,11 @@
 
 'use strict';
 
-import {Store} from '../../common/storage.js';
-import {Catch, Env, Value} from '../../common/common.js';
-import {Injector} from '../../common/inject.js';
-import {Notifications} from '../../common/notifications.js';
-import {WebmailSpecificInfo, NotificationWithHandlers, PassphraseDialogType} from '../../../types/common.js';
+import { Store } from '../../common/storage.js';
+import { Catch, Env, Value } from '../../common/common.js';
+import { Injector } from '../../common/inject.js';
+import { Notifications } from '../../common/notifications.js';
+import { WebmailSpecificInfo, NotificationWithHandlers, PassphraseDialogType } from '../../../types/common.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError } from '../../common/extension.js';
 import { Ui, XssSafeFactory } from '../../common/browser.js';
 

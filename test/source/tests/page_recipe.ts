@@ -1,7 +1,7 @@
 
-import {BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, gmail_seq} from '../browser';
-import {Util, Config} from '../util';
-import {expect} from 'chai';
+import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, gmail_seq } from '../browser';
+import { Util, Config } from '../util';
+import { expect } from 'chai';
 
 export class PageRecipe {
 

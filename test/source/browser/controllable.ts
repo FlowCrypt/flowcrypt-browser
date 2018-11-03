@@ -1,6 +1,6 @@
 
-import {Page, ElementHandle, Frame, Dialog} from 'puppeteer';
-import {Util} from '../util';
+import { Page, ElementHandle, Frame, Dialog } from 'puppeteer';
+import { Util } from '../util';
 
 let jQuery: any;
 

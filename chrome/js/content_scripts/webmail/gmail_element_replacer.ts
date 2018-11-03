@@ -2,9 +2,9 @@
 
 'use strict';
 
-import {Catch, Value, Attachment, Str} from '../../common/common.js';
-import {Injector} from '../../common/inject.js';
-import {Notifications} from '../../common/notifications.js';
+import { Catch, Value, Attachment, Str } from '../../common/common.js';
+import { Injector } from '../../common/inject.js';
+import { Notifications } from '../../common/notifications.js';
 import * as t from '../../../types/common';
 import { Api } from '../../common/api.js';
 import { Pgp } from '../../common/pgp.js';

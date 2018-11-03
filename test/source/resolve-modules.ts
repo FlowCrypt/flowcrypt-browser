@@ -1,5 +1,5 @@
 
-import {readdirSync, statSync, readFileSync, symlinkSync, writeFileSync} from 'fs';
+import { readdirSync, statSync, readFileSync, symlinkSync, writeFileSync } from 'fs';
 import * as path from 'path';
 
 const get_all_files_in_directory = (dir: string, file_pattern: RegExp): string[] => {

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Env} from '../../js/common/common.js';
+import { Env } from '../../js/common/common.js';
 import * as t from '../../types/common';
 import { Pgp } from '../../js/common/pgp.js';
 import { StandardError } from '../../js/common/api.js';

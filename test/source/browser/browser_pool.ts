@@ -1,10 +1,10 @@
 
-import {launch} from "puppeteer";
-import {BrowserHandle} from './browser_handle';
-import {Util} from "../util";
+import { launch } from "puppeteer";
+import { BrowserHandle } from './browser_handle';
+import { Util } from "../util";
 import * as ava from 'ava';
 import { resolve } from "url";
-import {GlobalBrowser} from "../test";
+import { GlobalBrowser } from "../test";
 
 class TimeoutError extends Error {}
 

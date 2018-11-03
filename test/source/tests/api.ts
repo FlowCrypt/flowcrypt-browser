@@ -1,6 +1,6 @@
 import * as request from 'fc-node-requests';
-import {Response} from 'request';
-import {Config} from '../util';
+import { Response } from 'request';
+import { Config } from '../util';
 
 const ci_admin_token = Config.secrets.ci_admin_token;
 

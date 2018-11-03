@@ -1,7 +1,7 @@
-import {Page, Browser} from 'puppeteer';
-import {Url} from './url';
-import {Semaphore} from './browser_pool';
-import {ControllablePage} from './controllable';
+import { Page, Browser } from 'puppeteer';
+import { Url } from './url';
+import { Semaphore } from './browser_pool';
+import { ControllablePage } from './controllable';
 
 export class BrowserHandle {
 

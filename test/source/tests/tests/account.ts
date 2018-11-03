@@ -1,12 +1,12 @@
 
-import {TestWithBrowser, TestWithGlobalBrowser} from '..';
-import {PageRecipe, ComposePageRecipe, SetupPageRecipe, GmailPageRecipe} from '../page_recipe';
-import {BrowserRecipe} from '../browser_recipe';
-import {Url, Semaphore} from '../../browser';
-import {FlowCryptApi} from '../api';
+import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { PageRecipe, ComposePageRecipe, SetupPageRecipe, GmailPageRecipe } from '../page_recipe';
+import { BrowserRecipe } from '../browser_recipe';
+import { Url, Semaphore } from '../../browser';
+import { FlowCryptApi } from '../api';
 import * as ava from 'ava';
-import {Util, Config} from '../../util';
-import {expect} from 'chai';
+import { Util, Config } from '../../util';
+import { expect } from 'chai';
 
 export let define_account_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
 

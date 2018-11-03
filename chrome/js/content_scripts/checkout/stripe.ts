@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Catch, Env} from '../../common/common.js';
+import { Catch, Env } from '../../common/common.js';
 import { BrowserMsg } from '../../common/extension.js';
 
 Catch.try(async () => {

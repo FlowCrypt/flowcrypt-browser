@@ -1,6 +1,6 @@
-import {TestWithBrowser, TestWithGlobalBrowser} from '..';
-import {Config} from '../../util';
-import {expect} from 'chai';
+import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { Config } from '../../util';
+import { expect } from 'chai';
 const ordered_stringify = require('json-stable-stringify'); // tslint:disable-line
 import * as ava from 'ava';
 

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Catch, Attachment} from './common.js';
+import { Catch, Attachment } from './common.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 

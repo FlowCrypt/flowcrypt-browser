@@ -2,8 +2,8 @@
 
 'use strict';
 
-import {Injector} from '../../common/inject.js';
-import {Catch, Value, Attachment, Str} from '../../common/common.js';
+import { Injector } from '../../common/inject.js';
+import { Catch, Value, Attachment, Str } from '../../common/common.js';
 import * as t from '../../../types/common';
 import { Api } from '../../common/api.js';
 import { Pgp } from '../../common/pgp.js';

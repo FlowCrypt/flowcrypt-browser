@@ -1,5 +1,5 @@
 
-import {readdirSync, statSync, readFileSync, writeFileSync, mkdirSync} from 'fs';
+import { readdirSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import * as path from 'path';
 
 const OUT_DIR = `build/chrome/js/content_scripts`;

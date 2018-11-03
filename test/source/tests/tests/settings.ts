@@ -1,9 +1,9 @@
-import {TestWithBrowser, TestWithGlobalBrowser} from '..';
-import {PageRecipe, SettingsPageRecipe} from '../page_recipe';
-import {Url} from '../../browser';
+import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { PageRecipe, SettingsPageRecipe } from '../page_recipe';
+import { Url } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
-import {expect} from 'chai';
+import { expect } from 'chai';
 
 export let define_settings_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
 

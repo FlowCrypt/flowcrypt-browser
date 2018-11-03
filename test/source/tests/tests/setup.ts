@@ -1,6 +1,6 @@
-import {TestWithBrowser, TestWithGlobalBrowser} from '..';
-import {PageRecipe, SetupPageRecipe} from '../page_recipe';
-import {BrowserRecipe} from '../browser_recipe';
+import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { PageRecipe, SetupPageRecipe } from '../page_recipe';
+import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 
 export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {

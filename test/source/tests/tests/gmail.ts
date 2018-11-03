@@ -1,8 +1,8 @@
-import {TestWithBrowser, TestWithGlobalBrowser} from '..';
-import {Url, BrowserHandle, ControllablePage} from '../../browser';
+import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { Url, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
-import {expect} from 'chai';
-import {BrowserRecipe} from '../browser_recipe';
+import { expect } from 'chai';
+import { BrowserRecipe } from '../browser_recipe';
 import { ComposePageRecipe, GmailPageRecipe } from '../page_recipe';
 
 export let define_gmail_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {

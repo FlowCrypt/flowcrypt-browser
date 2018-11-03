@@ -2,8 +2,8 @@
 
 'use strict';
 
-import {Store, SubscriptionAttempt} from './storage.js';
-import {Env, Str, Catch} from './common.js';
+import { Store, SubscriptionAttempt } from './storage.js';
+import { Env, Str, Catch } from './common.js';
 import * as t from '../../types/common';
 import { Api } from './api.js';
 

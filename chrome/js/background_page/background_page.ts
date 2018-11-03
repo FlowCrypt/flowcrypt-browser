@@ -2,12 +2,12 @@
 
 'use strict';
 
-import {Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes} from '../common/storage.js';
-import {Env, Catch, Value} from '../common/common.js';
-import {BgExec, BrowserMessageHandler, BrowserMessageRequestDb, BrowserMessageRequestSessionSet, BrowserMessageRequestSessionGet, BrowserMsg} from '../common/extension.js';
-import {BgAttests} from './attests.js';
-import {inject_cryptup_into_webmail_if_needed} from './inject.js';
-import {migrate_account, migrate_global, schedule_cryptup_subscription_level_check} from './migrations.js';
+import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes } from '../common/storage.js';
+import { Env, Catch, Value } from '../common/common.js';
+import { BgExec, BrowserMessageHandler, BrowserMessageRequestDb, BrowserMessageRequestSessionSet, BrowserMessageRequestSessionGet, BrowserMsg } from '../common/extension.js';
+import { BgAttests } from './attests.js';
+import { inject_cryptup_into_webmail_if_needed } from './inject.js';
+import { migrate_account, migrate_global, schedule_cryptup_subscription_level_check } from './migrations.js';
 import * as t from '../../types/common';
 
 declare let openpgp: typeof OpenPGP;

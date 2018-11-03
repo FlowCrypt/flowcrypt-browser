@@ -2,8 +2,8 @@
 
 'use strict';
 
-import {Store, FlatTypes, KeyInfo} from '../common/storage.js';
-import {Catch, Value, Str} from '../common/common.js';
+import { Store, FlatTypes, KeyInfo } from '../common/storage.js';
+import { Catch, Value, Str } from '../common/common.js';
 import * as t from '../../types/common';
 import { Api } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';

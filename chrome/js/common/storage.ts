@@ -2,8 +2,8 @@
 
 'use strict';
 
-import {Catch, Value, Str, Env} from './common.js';
-import {mnemonic} from './mnemonic.js';
+import { Catch, Value, Str, Env } from './common.js';
+import { mnemonic } from './mnemonic.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 import { SubscriptionInfo } from './api.js';

@@ -1,6 +1,6 @@
-import {Url, BrowserHandle} from '../browser';
-import {PageRecipe, OauthPageRecipe, SettingsPageRecipe, SetupPageRecipe} from './page_recipe';
-import {Util} from '../util';
+import { Url, BrowserHandle } from '../browser';
+import { PageRecipe, OauthPageRecipe, SettingsPageRecipe, SetupPageRecipe } from './page_recipe';
+import { Util } from '../util';
 
 export class BrowserRecipe {
 

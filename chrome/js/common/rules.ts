@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Value, Str} from './common.js';
+import { Value, Str } from './common.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 

@@ -2,8 +2,8 @@
 
 'use strict';
 
-import {Store} from './storage.js';
-import {Catch} from './common.js';
+import { Store } from './storage.js';
+import { Catch } from './common.js';
 import * as t from '../../types/common';
 import { Api } from './api.js';
 import { BrowserMsg } from './extension.js';

@@ -1,5 +1,5 @@
 
-import {readdirSync, statSync, readFileSync, symlinkSync} from 'fs';
+import { readdirSync, statSync, readFileSync, symlinkSync } from 'fs';
 import * as path from 'path';
 
 let errors_found = 0;

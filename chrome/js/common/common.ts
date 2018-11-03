@@ -4,7 +4,7 @@
 
 'use strict';
 
-import {Store, FlatTypes, Serializable, KeyInfo} from './storage.js';
+import { Store, FlatTypes, Serializable, KeyInfo } from './storage.js';
 import * as t from '../../types/common';
 import { ProgressCallback, SendableMessageBody, RichHeaders, FlatHeaders, StandardError } from './api.js';
 import { Pgp } from './pgp.js';

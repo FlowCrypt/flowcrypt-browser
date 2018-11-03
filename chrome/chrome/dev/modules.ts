@@ -1,6 +1,6 @@
 
 'use strict';
-import {return_this_worked} from './test_module_for_import.js';
+import { return_this_worked } from './test_module_for_import.js';
 import * as t from '../../types/common';
 import * as DOMPurify from 'dompurify';
 

@@ -1,5 +1,5 @@
 
-import {Config} from '../util';
+import { Config } from '../util';
 
 export let gmail_seq : string[] = [];
 

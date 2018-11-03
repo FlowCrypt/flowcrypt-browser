@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Catch} from './common.js';
+import { Catch } from './common.js';
 import * as t from '../../types/common';
 import { ContentScriptWindow } from './extension.js';
 import { Ui, XssSafeFactory } from './browser.js';

@@ -1,5 +1,5 @@
 
-import {Str, Attachment, Catch, Env, Value} from './common.js';
+import { Str, Attachment, Catch, Env, Value } from './common.js';
 import { Pgp, DiagnoseMessagePubkeysResult, DecryptResult, MessageVerifyResult } from './pgp.js';
 import * as t from '../../types/common';
 import { FlatTypes } from './storage.js';

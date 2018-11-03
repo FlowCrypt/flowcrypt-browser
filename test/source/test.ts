@@ -1,18 +1,18 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
-import {BrowserHandle, BrowserPool, Semaphore} from './browser';
-import {BrowserRecipe} from './tests/browser_recipe';
-import {define_unit_tests} from './tests/tests/unit';
-import {define_setup_tests} from './tests/tests/setup';
-import {define_compose_tests} from './tests/tests/compose';
-import {define_decrypt_tests} from './tests/tests/decrypt';
-import {define_gmail_tests} from './tests/tests/gmail';
-import {define_settings_tests} from './tests/tests/settings';
-import {define_elements_tests} from './tests/tests/elements';
-import {define_account_tests} from './tests/tests/account';
-import {Config} from './util';
-import {FlowCryptApi} from './tests/api';
+import { BrowserHandle, BrowserPool, Semaphore } from './browser';
+import { BrowserRecipe } from './tests/browser_recipe';
+import { define_unit_tests } from './tests/tests/unit';
+import { define_setup_tests } from './tests/tests/setup';
+import { define_compose_tests } from './tests/tests/compose';
+import { define_decrypt_tests } from './tests/tests/decrypt';
+import { define_gmail_tests } from './tests/tests/gmail';
+import { define_settings_tests } from './tests/tests/settings';
+import { define_elements_tests } from './tests/tests/elements';
+import { define_account_tests } from './tests/tests/account';
+import { Config } from './util';
+import { FlowCryptApi } from './tests/api';
 
 type GlobalBrowserGroup = 'compatibility'|'trial';
 export type GlobalBrowser = {browser?: BrowserHandle, semaphore: Semaphore, before_each_test: () => Promise<void>};
