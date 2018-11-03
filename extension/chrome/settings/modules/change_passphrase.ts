@@ -12,20 +12,20 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   await Ui.passphrase_toggle(['original_password', 'password', 'password2']);
 
-  let private_keys = await Store.keys_get(account_email);
+  let private_keys = await Store.keysGet(account_email);
   if (private_keys.length > 1) {
     $('#step_0_enter .sentence').text('Enter the current passphrase for your primary key');
     $('#step_0_enter #original_password').attr('placeholder', 'Current primary key pass phrase');
     $('#step_1_password #password').attr('placeholder', 'Enter a new primary key pass phrase');
   }
 
-  let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+  let [primary_ki] = await Store.keysGet(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let orig_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
@@ -94,7 +94,7 @@ Catch.try(async () => {
       await Store.keys_add(account_email, prv.armor());
       await Store.passphrase_save('local', account_email, primary_ki.longid, stored_passphrase !== null ? new_passphrase : undefined);
       await Store.passphrase_save('session', account_email, primary_ki.longid, stored_passphrase !== null ? undefined : new_passphrase);
-      let {setup_simple} = await Store.get_account(account_email, ['setup_simple']);
+      let {setup_simple} = await Store.getAccount(account_email, ['setup_simple']);
       if (setup_simple) {
         Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
       } else {

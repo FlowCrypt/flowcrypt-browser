@@ -13,7 +13,7 @@ import { Mime } from '../../../js/common/mime.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'label_id', 'thread_id']);
+  let url_params = Env.urlParams(['account_email', 'label_id', 'thread_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let label_id = url_params.label_id ? String(url_params.label_id) : 'INBOX';
   let thread_id = url_params.thread_id || null;
@@ -37,7 +37,7 @@ Catch.try(async () => {
   notifications = new Notifications(tab_id);
   factory = new XssSafeFactory(account_email, tab_id);
   injector = new Injector('settings', null, factory);
-  let storage = await Store.get_account(account_email, ['email_provider', 'picture', 'addresses']);
+  let storage = await Store.getAccount(account_email, ['email_provider', 'picture', 'addresses']);
   email_provider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.meta_notification_container()); // xss-safe-factory
   if(storage.picture) {
@@ -111,14 +111,14 @@ Catch.try(async () => {
   }, tab_id);
 
   let update_url = (title: string, params: UrlParams) => {
-    let new_url_search = Env.url_create('', params);
+    let new_url_search = Env.urlCreate('', params);
     if(new_url_search !== window.location.search) {
       window.history.pushState({}, title, new_url_search);
     }
   };
 
   let load_url = (params: UrlParams) => {
-    let new_url_search = Env.url_create('', params);
+    let new_url_search = Env.urlCreate('', params);
     if(new_url_search !== window.location.search) {
       window.location.search = new_url_search;
     } else {
@@ -141,7 +141,7 @@ Catch.try(async () => {
   let render_and_handle_auth_popup_notification = () => {
     notification_show({notification: `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, callbacks: {
       action_auth_popup: async () => {
-        await Api.google.auth_popup(account_email, tab_id);
+        await Api.google.authPopup(account_email, tab_id);
         window.location.reload();
       }
     }});
@@ -186,15 +186,15 @@ Catch.try(async () => {
     inbox_thread_item_add(thread_id);
     let thread_item = $('.threads #' + thread_list_item_id(thread_id));
     try {
-      let thread = await Api.gmail.thread_get(account_email, thread_id, 'metadata');
+      let thread = await Api.gmail.threadGet(account_email, thread_id, 'metadata');
       let first_message = thread.messages[0];
       let last_message = thread.messages[thread.messages.length - 1];
 
-      thread_item.find('.subject').text(Api.gmail.find_header(first_message, 'subject') || '(no subject)');
+      thread_item.find('.subject').text(Api.gmail.findHeader(first_message, 'subject') || '(no subject)');
       Xss.sanitize_append(thread_item.find('.subject'), renderable_labels(first_message.labelIds, 'messages'));
-      let from_header_value = Api.gmail.find_header(first_message, 'from');
+      let from_header_value = Api.gmail.findHeader(first_message, 'from');
       if (from_header_value) {
-        let from = Str.parse_email(from_header_value);
+        let from = Str.parseEmail(from_header_value);
         thread_item.find('.from').text(from.name || from.email);
       }
       thread_item.find('.loading').text('');
@@ -207,9 +207,9 @@ Catch.try(async () => {
         thread_item.find('.msg_count').text(`(${thread.messages.length})`);
       }
     } catch (e) {
-      if(Api.err.is_net_err(e)) {
+      if(Api.err.isNetErr(e)) {
         Xss.sanitize_render(thread_item.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => render_inbox_item(thread_id)));
-      } else if(Api.err.is_auth_popup_needed(e)) {
+      } else if(Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -271,12 +271,12 @@ Catch.try(async () => {
 
   let render_menu = async () => {
     try {
-      let {labels} = await Api.gmail.labels_get(account_email);
+      let {labels} = await Api.gmail.labelsGet(account_email);
       render_menu_and_label_styles(labels);
     } catch(e) {
-      if(Api.err.is_net_err(e)) {
+      if(Api.err.isNetErr(e)) {
         notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
-      } else if(Api.err.is_auth_popup_needed(e)) {
+      } else if(Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -289,16 +289,16 @@ Catch.try(async () => {
     $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
     display_block('inbox', `Messages in ${get_label_name(label_id)}`);
     try {
-      let {threads} = await Api.gmail.thread_list(account_email, label_id);
+      let {threads} = await Api.gmail.threadList(account_email, label_id);
       if((threads || []).length) {
         await Promise.all(threads.map(t => render_inbox_item(t.id)));
       } else {
         Xss.sanitize_render('.threads', `<p>No encrypted messages in ${label_id} yet. ${Ui.retry_link()}</p>`);
       }
     } catch(e) {
-      if(Api.err.is_net_err(e)) {
+      if(Api.err.isNetErr(e)) {
         notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
-      } else if(Api.err.is_auth_popup_needed(e)) {
+      } else if(Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -310,8 +310,8 @@ Catch.try(async () => {
   let render_thread = async (thread_id: string, thread?: R.GmailThreadGet) => {
     display_block('thread', 'Loading..');
     try {
-      thread = thread || await Api.gmail.thread_get(account_email, thread_id, 'metadata');
-      let subject = Api.gmail.find_header(thread.messages[0], 'subject') || '(no subject)';
+      thread = thread || await Api.gmail.threadGet(account_email, thread_id, 'metadata');
+      let subject = Api.gmail.findHeader(thread.messages[0], 'subject') || '(no subject)';
       update_url(`${subject} - FlowCrypt Inbox`, {account_email, thread_id});
       display_block('thread', subject);
       for(let m of thread.messages) {
@@ -320,9 +320,9 @@ Catch.try(async () => {
       render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
       // await Api.gmail.thread_modify(account_email, thread_id, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
-      if(Api.err.is_net_err(e)) {
+      if(Api.err.isNetErr(e)) {
         Xss.sanitize_render('.thread', `<br>Failed to load thread - network error. ${Ui.retry_link()}`);
-      } else if(Api.err.is_auth_popup_needed(e)) {
+      } else if(Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -338,24 +338,24 @@ Catch.try(async () => {
 
   let render_message = async (message: R.GmailMsg) => {
     let html_id = thread_message_id(message.id);
-    let from = Api.gmail.find_header(message, 'from') || 'unknown';
+    let from = Api.gmail.findHeader(message, 'from') || 'unknown';
     try {
-      let m = await Api.gmail.msg_get(account_email, message.id, 'raw');
-      let {blocks, headers} = await Mime.process(Str.base64url_decode(m.raw!));
+      let m = await Api.gmail.msgGet(account_email, message.id, 'raw');
+      let {blocks, headers} = await Mime.process(Str.base64urlDecode(m.raw!));
       let r = '';
       for (let block of blocks) {
         r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
       }
-      let {atts} = await Mime.decode(Str.base64url_decode(m.raw!));
+      let {atts} = await Mime.decode(Str.base64urlDecode(m.raw!));
       if(atts.length) {
         r += `<div class="attachments">${atts.filter(a => a.treat_as() === 'encrypted').map(factory.embedded_attachment).join('')}</div>`;
       }
       r = `<p class="message_header">From: ${Xss.html_escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory
     } catch (e) {
-      if(Api.err.is_net_err(e)) {
+      if(Api.err.isNetErr(e)) {
         Xss.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retry_link()}`));
-      } else if (Api.err.is_auth_popup_needed(e)) {
+      } else if (Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -368,10 +368,10 @@ Catch.try(async () => {
   let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: R.GmailMsg) => {
     let params: UrlParams;
     if(last_message) {
-      let to = Api.gmail.find_header(last_message, 'to');
-      let to_arr = to ? to.split(',').map(Str.parse_email).map(e => e.email).filter(e => e) : [];
-      let headers = Api.common.reply_correspondents(account_email, storage.addresses || [], Api.gmail.find_header(last_message, 'from'), to_arr);
-      let subject = Api.gmail.find_header(last_message, 'subject');
+      let to = Api.gmail.findHeader(last_message, 'to');
+      let to_arr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
+      let headers = Api.common.replyCorrespondents(account_email, storage.addresses || [], Api.gmail.findHeader(last_message, 'from'), to_arr);
+      let subject = Api.gmail.findHeader(last_message, 'subject');
       params = {subject, reply_to: headers.to, addresses: storage.addresses || [], my_email: headers.from, thread_id, thread_message_id};
     } else {
       params = {thread_id, thread_message_id};

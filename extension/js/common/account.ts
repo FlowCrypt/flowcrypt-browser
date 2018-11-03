@@ -43,7 +43,7 @@ export class FlowCryptAccount {
     try {
       return await this.do_subscribe(chosen_product, source);
     } catch (e) {
-      if (Api.err.is_auth_err(e)) {
+      if (Api.err.isAuthErr(e)) {
         await this.save_subscription_attempt(chosen_product, source);
         let response = await this.register(account_email);
         return await this.do_subscribe(chosen_product, source);
@@ -54,7 +54,7 @@ export class FlowCryptAccount {
 
   register = async (account_email: string) => { // register_and_attempt_to_verify
     this.event_handlers.render_status_text('registering..', true);
-    let response = await Api.fc.account_login(account_email);
+    let response = await Api.fc.accountLogin(account_email);
     if (response.verified) {
       return response;
     }
@@ -76,9 +76,9 @@ export class FlowCryptAccount {
     let last_token_error;
     for (let token of tokens) {
       try {
-        return await Api.fc.account_login(account_email, token);
+        return await Api.fc.accountLogin(account_email, token);
       } catch (e) {
-        if (Api.err.is_standard_err(e, 'token')) {
+        if (Api.err.isStandardErr(e, 'token')) {
           last_token_error = e;
         } else {
           throw e;
@@ -102,7 +102,7 @@ export class FlowCryptAccount {
   parse_token_email_text = (verification_email_text: string, stored_uuid_to_cross_check?: string): string|undefined => {
     let token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
     if (token_link_match !== null) {
-      let token_link_params = Env.url_params(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
+      let token_link_params = Env.urlParams(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
       if ((!stored_uuid_to_cross_check || token_link_params.uuid === stored_uuid_to_cross_check) && token_link_params.token) {
         return token_link_params.token as string;
       }
@@ -112,7 +112,7 @@ export class FlowCryptAccount {
   private do_subscribe = async (chosen_product: Product, source:string|null=null) => {
     await Store.remove(null, ['cryptup_subscription_attempt']);
     // todo - deal with auth error? would need to know account_email for new registration
-    let response = await Api.fc.account_subscribe(chosen_product.id!, chosen_product.method!, source);
+    let response = await Api.fc.accountSubscribe(chosen_product.id!, chosen_product.method!, source);
     if (response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
       return response.subscription;
     }
@@ -121,14 +121,14 @@ export class FlowCryptAccount {
 
   private fetch_token_emails_on_gmail_and_find_matching_token = async (account_email: string, uuid: string): Promise<string[]|null> => {
     let tokens: string[] = [];
-    let response = await Api.gmail.msg_list(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
+    let response = await Api.gmail.msgList(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
     if (!response.messages) {
       return null;
     }
-    let msgs = await Api.gmail.msgs_get(account_email, response.messages.map(m => m.id), 'full');
+    let msgs = await Api.gmail.msgsGet(account_email, response.messages.map(m => m.id), 'full');
     for (let gmail_msg_obj of msgs) {
       if (gmail_msg_obj.payload.mimeType === 'text/plain' && gmail_msg_obj.payload.body && gmail_msg_obj.payload.body.size > 0 && gmail_msg_obj.payload.body.data) {
-        let token = this.parse_token_email_text(Str.base64url_decode(gmail_msg_obj.payload.body.data), uuid);
+        let token = this.parse_token_email_text(Str.base64urlDecode(gmail_msg_obj.payload.body.data), uuid);
         if (token && typeof token === 'string') {
           tokens.push(token);
         }
@@ -150,7 +150,7 @@ export class FlowCryptAccount {
       } else if ((end - Date.now()) < 10000) { // 10s left
         this.event_handlers.render_status_text('A little while more..');
       }
-      let auth_info = await Store.auth_info();
+      let auth_info = await Store.authInfo();
       let tokens = await this.event_handlers.find_matching_tokens_from_email(auth_info.account_email!, auth_info.uuid!);
       if (tokens) {
         return tokens;

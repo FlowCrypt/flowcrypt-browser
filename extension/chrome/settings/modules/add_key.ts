@@ -11,7 +11,7 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
@@ -21,12 +21,12 @@ Catch.try(async () => {
 
   Xss.sanitize_render('#spinner_container', Ui.spinner('green') + ' loading..');
 
-  let keyinfos = await Store.keys_get(account_email);
+  let keyinfos = await Store.keysGet(account_email);
   let private_keys_long_ids = keyinfos.map(ki => ki.longid);
   let key_backups;
 
   try {
-    key_backups = await Api.gmail.fetch_key_backups(account_email);
+    key_backups = await Api.gmail.fetchKeyBackups(account_email);
     if (key_backups.length) {
       let not_imported_backup_longids: string[] = [];
       for (let longid of Value.arr.unique(key_backups.map(Pgp.key.longid))) {
@@ -45,7 +45,7 @@ Catch.try(async () => {
       $('#source_backup').prop('disabled', true);
     }
   } catch (e) {
-    if(Api.err.is_auth_popup_needed(e)) {
+    if(Api.err.isAuthPopupNeeded(e)) {
       BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
     }
     $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');

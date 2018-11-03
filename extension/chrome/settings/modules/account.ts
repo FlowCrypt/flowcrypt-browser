@@ -10,14 +10,14 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   Xss.sanitize_render('.loading', Ui.spinner('green', 'large_spinner'));
 
   await Api.fc.account_check_sync();
-  let auth_info = await Store.auth_info();
+  let auth_info = await Store.authInfo();
   let subscription = await Store.subscription();
 
   $('.email').text(auth_info.account_email || 'UNKNOWN!');

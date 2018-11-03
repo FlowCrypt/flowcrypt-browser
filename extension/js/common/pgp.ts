@@ -450,7 +450,7 @@ export class Pgp {
         message = m;
       }
       let message_key_ids = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
-      let private_keys = await Store.keys_get(account_email);
+      let private_keys = await Store.keysGet(account_email);
       let local_key_ids = [].concat.apply([], private_keys.map(ki => ki.public).map(Pgp.internal.crypto_key_ids));
       let diagnosis = { found_match: false, receivers: message_key_ids.length };
       for (let msg_k_id of message_key_ids) {
@@ -585,7 +585,7 @@ export class Pgp {
       };
       keys.encrypted_for = (message instanceof openpgp.message.Message ? (message as OpenPGP.message.Message).getEncryptionKeyIds() : []).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
       keys.signed_by = (message.getSigningKeyIds ? message.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid((id as any).bytes)).filter(Boolean) as string[];
-      let private_keys_all = await Store.keys_get(account_email);
+      let private_keys_all = await Store.keysGet(account_email);
       keys.prv_matching = private_keys_all.filter(ki => Value.is(ki.longid).in(keys.encrypted_for));
       if (keys.prv_matching.length) {
         keys.prv_for_decrypt = keys.prv_matching;

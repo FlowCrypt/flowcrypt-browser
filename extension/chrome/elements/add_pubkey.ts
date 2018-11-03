@@ -12,7 +12,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'emails', 'placement']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'emails', 'placement']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
@@ -46,7 +46,7 @@ Catch.try(async () => {
     try {
       let key_import_ui = new KeyImportUI({check_encryption: true});
       let normalized = await key_import_ui.check_pub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
-      await Store.db_contact_save(null, Store.db_contact_object($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
+      await Store.db_contact_save(null, Store.dbContactObj($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
       close_dialog();
     } catch (e) {
       if(e instanceof UserAlert) {

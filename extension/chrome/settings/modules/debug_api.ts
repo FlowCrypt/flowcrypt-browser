@@ -9,7 +9,7 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  const url_params = Env.url_params(['account_email', 'parent_tab_id', 'which']);
+  const url_params = Env.urlParams(['account_email', 'parent_tab_id', 'which']);
   const account_email = Env.url_param_require.string(url_params, 'account_email');
   const parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   const which = Env.url_param_require.oneof(url_params, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
@@ -22,13 +22,13 @@ Catch.try(async () => {
   if(which === 'google_account') {
     const variables = {account_email};
     try {
-      const r = await Api.gmail.users_me_profile(account_email);
+      const r = await Api.gmail.usersMeProfile(account_email);
       render_call_result('gmail.users_me_profile', variables, r);
     } catch (e) {
       render_call_result('gmail.users_me_profile', variables, null, e);
     }
     try {
-      const r = await Api.google.plus.people_me(account_email);
+      const r = await Api.google.plus.peopleMe(account_email);
       render_call_result('google.plus.people_me', variables, r);
     } catch (e) {
       render_call_result('google.plus.people_me', variables, null, e);

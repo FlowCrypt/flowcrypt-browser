@@ -60,7 +60,7 @@ export class BgAttests {
   private static watch_for_attest_email = (account_email: string) => {
     clearInterval(BgAttests.currently_watching[account_email]);
     Catch.set_timeout(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_TIMEOUT);
-    BgAttests.currently_watching[account_email] = Catch.set_interval(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_INTERVAL);
+    BgAttests.currently_watching[account_email] = Catch.setHandledInterval(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_INTERVAL);
   }
 
   private static stop_watching = (account_email: string) => {
@@ -69,8 +69,8 @@ export class BgAttests {
   }
 
   private static check_email_for_attests_and_respond = async (account_email: string) => {
-    let storage = await Store.get_account(account_email, ['attests_requested']);
-    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    let storage = await Store.getAccount(account_email, ['attests_requested']);
+    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
     if (primary_ki) {
       let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (passphrase !== null) {
@@ -79,13 +79,13 @@ export class BgAttests {
           try {
             msgs = await BgAttests.fetch_attest_emails(account_email);
           } catch(e) {
-            if(Api.err.is_net_err(e)) {
+            if(Api.err.isNetErr(e)) {
               console.info('cannot fetch attest emails - network error - ' + account_email);
               return;
-            } else if(Api.err.is_auth_popup_needed(e) || Api.err.is_auth_err(e)) {
+            } else if(Api.err.isAuthPopupNeeded(e) || Api.err.isAuthErr(e)) {
               console.info('cannot fetch attest emails - Google auth or token error in bg page - ' + account_email);
               return;
-            } else if(Api.err.is_server_err(e)) {
+            } else if(Api.err.isServerErr(e)) {
               console.info('cannot fetch attest emails - Google server error ' + account_email);
               return;
             } else {
@@ -94,7 +94,7 @@ export class BgAttests {
           }
           for (let msg of msgs) {
             if (msg.payload.mimeType === 'text/plain' && msg.payload.body && msg.payload.body.size > 0 && msg.payload.body.data) {
-              await BgAttests.process_attest_and_log_result(account_email, Str.base64url_decode(msg.payload.body.data), passphrase);
+              await BgAttests.process_attest_and_log_result(account_email, Str.base64urlDecode(msg.payload.body.data), passphrase);
             }
           }
         } else {
@@ -111,18 +111,18 @@ export class BgAttests {
 
   private static process_attest_packet_text = async (account_email: string, attest_packet_text: string, passphrase: string|null): Promise<AttestResult> => {
     let attest = Api.attester.packet.parse(attest_packet_text);
-    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
     if (!primary_ki) {
       BgAttests.stop_watching(account_email);
       return {attest_packet_text, message: `No primary_ki for ${account_email}`, account_email};
     }
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
-    let {attests_processed} = await Store.get_account(account_email, ['attests_processed']);
+    let {attests_processed} = await Store.getAccount(account_email, ['attests_processed']);
     if (!Value.is(attest.content.attester).in(attests_processed || [])) {
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (await Pgp.key.decrypt(key, [passphrase || stored_passphrase || '']) === true) {
         let expected_fingerprint = key.primaryKey.getFingerprint().toUpperCase();
-        let expected_email_hash = Pgp.hash.double_sha1_upper(Str.parse_email(account_email).email);
+        let expected_email_hash = Pgp.hash.double_sha1_upper(Str.parseEmail(account_email).email);
         if (attest && attest.success && attest.text) {
           if(attest.content.attester && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
             let signed;
@@ -134,15 +134,15 @@ export class BgAttests {
             try {
               let api_r;
               if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
-                api_r = await Api.attester.initial_confirm(signed);
+                api_r = await Api.attester.initialConfirm(signed);
               } else {
-                api_r = await Api.attester.replace_confirm(signed);
+                api_r = await Api.attester.replaceConfirm(signed);
               }
               if (!api_r.attested) {
                 throw new AttestError(`Refused by Attester. Email human@flowcrypt.com to find out why.\n\n${JSON.stringify(api_r)}`, attest_packet_text, account_email);
               }
             } catch (e) {
-              if(Api.err.is_net_err(e)) {
+              if(Api.err.isNetErr(e)) {
                 throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
               }
               throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${e.message}`, attest_packet_text, account_email);
@@ -182,16 +182,16 @@ export class BgAttests {
       '"' + BgAttests.packet_headers.begin + '"',
       '"' + BgAttests.packet_headers.end + '"',
     ];
-    let list_response = await Api.gmail.msg_list(account_email, q.join(' '), true);
-    return Api.gmail.msgs_get(account_email, (list_response.messages || []).map(m => m.id), 'full');
+    let list_response = await Api.gmail.msgList(account_email, q.join(' '), true);
+    return Api.gmail.msgsGet(account_email, (list_response.messages || []).map(m => m.id), 'full');
   }
 
   private static get_pending_attest_requests = async () => {
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     let storages = await Store.get_accounts(account_emails, ['attests_requested', 'google_token_scopes']);
     let pending = [];
     for (let email of Object.keys(storages)) {
-      BgAttests.attest_ts_can_read_emails[email] = Api.gmail.has_scope(storages[email].google_token_scopes || [], 'read');
+      BgAttests.attest_ts_can_read_emails[email] = Api.gmail.hasScope(storages[email].google_token_scopes || [], 'read');
       pending.push({email, attests_requested: storages[email].attests_requested || []});
     }
     return pending;
@@ -207,7 +207,7 @@ export class BgAttests {
 
   private static account_storage_mark_as_attested = async (account_email: string, attester: string) => {
     BgAttests.stop_watching(account_email);
-    let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
+    let storage = await Store.getAccount(account_email, ['attests_requested', 'attests_processed']);
     if (storage.attests_requested && Value.is(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); // remove attester from requested
       if (typeof storage.attests_processed === 'undefined') {
@@ -222,7 +222,7 @@ export class BgAttests {
 
   private static add_attest_log = async (success: boolean, ar: AttestResult) => {
     console.log('attest result ' + success + ': ' + ar.message);
-    let storage = await Store.get_account(ar.account_email, ['attest_log']);
+    let storage = await Store.getAccount(ar.account_email, ['attest_log']);
     if (!storage.attest_log) {
       storage.attest_log = [];
     } else if (storage.attest_log.length > 100) { // todo - should do a rolling delete to always keep last X

@@ -41,12 +41,12 @@ chrome.runtime.onInstalled.addListener(event => {
     let base_path = chrome.extension.getURL(`chrome/settings/${path}`);
     let page_url_params = _page_url_params ? JSON.stringify(_page_url_params) : null;
     if (account_email) {
-      await open_flowcrypt_tab(Env.url_create(base_path, { account_email, page, page_url_params}));
+      await open_flowcrypt_tab(Env.urlCreate(base_path, { account_email, page, page_url_params}));
     } else if(add_new_account) {
-      await open_flowcrypt_tab(Env.url_create(base_path, { add_new_account }));
+      await open_flowcrypt_tab(Env.urlCreate(base_path, { add_new_account }));
     } else {
-      let account_emails = await Store.account_emails_get();
-      await open_flowcrypt_tab(Env.url_create(base_path, { account_email: account_emails[0], page, page_url_params}));
+      let account_emails = await Store.accountEmailsGet();
+      await open_flowcrypt_tab(Env.urlCreate(base_path, { account_email: account_emails[0], page, page_url_params}));
     }
   };
 
@@ -56,7 +56,7 @@ chrome.runtime.onInstalled.addListener(event => {
   };
 
   let open_inbox_page_handler: BrowserMsgHandler = async (message: {account_email: string, thread_id?: string, folder?: string}, sender, respond) => {
-    await open_flowcrypt_tab(Env.url_create(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
+    await open_flowcrypt_tab(Env.urlCreate(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
     respond();
   };
 
@@ -91,7 +91,7 @@ chrome.runtime.onInstalled.addListener(event => {
 
   let update_uninstall_url: BrowserMsgHandler = async (request: Dict<any>|null, sender, respond) => {
     respond();
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       let email = (account_emails && account_emails.length) ? account_emails[0] : null;
       chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({email, metrics: null})}`);

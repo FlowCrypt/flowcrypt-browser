@@ -8,20 +8,20 @@ import { Att } from '../../js/common/att.js';
 import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 
-import { Api, ProgressCallback, SendableMsg } from '../../js/common/api.js';
+import { Api, ProgressCb, SendableMsg } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   let subscription_when_page_was_opened = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-  let storage = await Store.get_account(account_email, storage_keys);
+  let storage = await Store.getAccount(account_email, storage_keys);
 
   await (async () => { // attempt to recover missing params
     if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
@@ -30,9 +30,9 @@ Catch.try(async () => {
     Xss.sanitize_prepend('#new_message', Ui.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
     let gmail_message_object;
     try {
-      gmail_message_object = await Api.gmail.msg_get(account_email, url_params.thread_message_id as string, 'metadata');
+      gmail_message_object = await Api.gmail.msgGet(account_email, url_params.thread_message_id as string, 'metadata');
     } catch(e) {
-      if(Api.err.is_auth_popup_needed(e)) {
+      if(Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       }
       if (!url_params.from) {
@@ -47,7 +47,7 @@ Catch.try(async () => {
       return;
     }
     url_params.thread_id = gmail_message_object.threadId;
-    let reply = Api.common.reply_correspondents(account_email, storage.addresses || [], Api.gmail.find_header(gmail_message_object, 'from'), (Api.gmail.find_header(gmail_message_object, 'to') || '').split(','));
+    let reply = Api.common.replyCorrespondents(account_email, storage.addresses || [], Api.gmail.findHeader(gmail_message_object, 'from'), (Api.gmail.findHeader(gmail_message_object, 'to') || '').split(','));
     if (!url_params.to) {
       url_params.to = reply.to.join(',');
     }
@@ -55,14 +55,14 @@ Catch.try(async () => {
       url_params.from = reply.from;
     }
     if (!url_params.subject) {
-      url_params.subject = Api.gmail.find_header(gmail_message_object, 'subject');
+      url_params.subject = Api.gmail.findHeader(gmail_message_object, 'subject');
     }
     $('#loader').remove();
   })();
 
   let tab_id = await BrowserMsg.required_tab_id();
 
-  const can_read_email = Api.gmail.has_scope(storage.google_token_scopes as string[], 'read');
+  const can_read_email = Api.gmail.hasScope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(account_email, tab_id);
   if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id as string]) { // there may be a draft we want to load
     url_params.draft_id = storage.drafts_reply[url_params.thread_id as string];
@@ -82,11 +82,11 @@ Catch.try(async () => {
   let composer = new Composer({
     can_read_email: () => can_read_email,
     does_recipient_have_my_pubkey: async (their_email: string): Promise<boolean|undefined> => {
-      their_email = Str.parse_email(their_email).email;
+      their_email = Str.parseEmail(their_email).email;
       if(!their_email) {
         return false;
       }
-      let storage = await Store.get_account(account_email, ['pubkey_sent_to']);
+      let storage = await Store.getAccount(account_email, ['pubkey_sent_to']);
       if (Value.is(their_email).in(storage.pubkey_sent_to || [])) {
         return true;
       }
@@ -96,7 +96,7 @@ Catch.try(async () => {
       const q_sent_pubkey = `is:sent to:${their_email} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
       const q_received_message = `from:${their_email} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
       try {
-        let response = await Api.gmail.msg_list(account_email, `(${q_sent_pubkey}) OR (${q_received_message})`, true);
+        let response = await Api.gmail.msgList(account_email, `(${q_sent_pubkey}) OR (${q_received_message})`, true);
         if (response.messages) {
           await Store.set(account_email, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)});
           return true;
@@ -104,9 +104,9 @@ Catch.try(async () => {
           return false;
         }
       } catch(e) {
-        if(Api.err.is_auth_popup_needed(e)) {
+        if(Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if(!Api.err.is_net_err(e)) {
+        } else if(!Api.err.isNetErr(e)) {
           Catch.handle_exception(e);
         }
         return undefined;
@@ -123,7 +123,7 @@ Catch.try(async () => {
     storage_get_hide_msg_password: () => !!storage.hide_message_password,
     storage_get_subscription: () => Store.subscription(),
     storage_get_key: async (sender_email: string): Promise<KeyInfo> => {
-      let [primary_k] = await Store.keys_get(account_email, ['primary']);
+      let [primary_k] = await Store.keysGet(account_email, ['primary']);
       if (primary_k) {
         return primary_k;
       } else {
@@ -131,7 +131,7 @@ Catch.try(async () => {
       }
     },
     storage_set_draft_meta: async (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[], subject: string) => {
-      let draft_storage = await Store.get_account(account_email, ['drafts_reply', 'drafts_compose']);
+      let draft_storage = await Store.getAccount(account_email, ['drafts_reply', 'drafts_compose']);
       if (thread_id) { // it's a reply
         let drafts = draft_storage.drafts_reply || {};
         if (store_if_true) {
@@ -152,7 +152,7 @@ Catch.try(async () => {
       }
     },
     storage_passphrase_get: async () => {
-      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+      let [primary_ki] = await Store.keysGet(account_email, ['primary']);
       if (primary_ki === null) {
         return null; // flowcrypt just uninstalled or reset?
       }
@@ -171,17 +171,17 @@ Catch.try(async () => {
     storage_contact_update: (email: string[]|string, update: ContactUpdate) => Store.db_contact_update(null, email, update),
     storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
-    storage_contact_object: Store.db_contact_object,
-    email_provider_draft_get: (draft_id: string) => Api.gmail.draft_get(account_email, draft_id, 'raw'),
-    email_provider_draft_create: (mime_message: string) => Api.gmail.draft_create(account_email, mime_message, url_params.thread_id as string),
-    email_provider_draft_update: (draft_id: string, mime_message: string) => Api.gmail.draft_update(account_email, draft_id, mime_message),
-    email_provider_draft_delete: (draft_id: string) => Api.gmail.draft_delete(account_email, draft_id),
-    email_provider_msg_send: (message: SendableMsg, render_upload_progress: ProgressCallback) => Api.gmail.msg_send(account_email, message, render_upload_progress),
+    storage_contact_object: Store.dbContactObj,
+    email_provider_draft_get: (draft_id: string) => Api.gmail.draftGet(account_email, draft_id, 'raw'),
+    email_provider_draft_create: (mime_message: string) => Api.gmail.draftCreate(account_email, mime_message, url_params.thread_id as string),
+    email_provider_draft_update: (draft_id: string, mime_message: string) => Api.gmail.draftUpdate(account_email, draft_id, mime_message),
+    email_provider_draft_delete: (draft_id: string) => Api.gmail.draftDelete(account_email, draft_id),
+    email_provider_msg_send: (message: SendableMsg, render_upload_progress: ProgressCb) => Api.gmail.msgSend(account_email, message, render_upload_progress),
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: any) => { // todo remove the any
-      Api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
-        if(Api.err.is_auth_popup_needed(e)) {
+      Api.gmail.searchContacts(account_email, query, known_contacts, multi_cb).catch(e => {
+        if(Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if (Api.err.is_net_err(e)) {
+        } else if (Api.err.isNetErr(e)) {
           // todo: render network error
         } else {
           Catch.handle_exception(e);
@@ -191,18 +191,18 @@ Catch.try(async () => {
     },
     email_provider_determine_reply_msg_header_variables: async () => {
       try {
-        let thread = await Api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
+        let thread = await Api.gmail.threadGet(account_email, url_params.thread_id as string, 'full');
         if (thread.messages && thread.messages.length > 0) {
-          let thread_message_id_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-          let thread_message_referrences_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+          let thread_message_id_last = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+          let thread_message_referrences_last = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
           return {last_msg_id: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last }};
         } else {
           return;
         }
       } catch (e) {
-        if(Api.err.is_auth_popup_needed(e)) {
+        if(Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if (Api.err.is_net_err(e)) {
+        } else if (Api.err.isNetErr(e)) {
           // todo: render retry
         } else {
           Catch.handle_exception(e);
@@ -210,7 +210,7 @@ Catch.try(async () => {
         }
       }
     },
-    email_provider_extract_armored_block: (message_id: string) => Api.gmail.extract_armored_block(account_email, message_id, 'full'),
+    email_provider_extract_armored_block: (message_id: string) => Api.gmail.extractArmoredBlock(account_email, message_id, 'full'),
     send_msg_to_main_window: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data),
     send_msg_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {

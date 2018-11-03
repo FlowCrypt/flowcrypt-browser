@@ -14,7 +14,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted', 'frame_id']);
+  let url_params = Env.urlParams(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted', 'frame_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   url_params.size = url_params.size ? parseInt(url_params.size as string) : undefined;
@@ -130,7 +130,7 @@ Catch.try(async () => {
     } else if (result.error.type === DecryptErrTypes.need_passphrase) {
       BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
-      passphrase_interval = Catch.set_interval(check_passphrase_entered, 1000);
+      passphrase_interval = Catch.setHandledInterval(check_passphrase_entered, 1000);
     } else {
       delete result.message;
       console.info(result);
@@ -167,21 +167,21 @@ Catch.try(async () => {
         Att.methods.save_to_downloads(decrypted_a, Env.browser().name === 'firefox' ? $('body') : null);
       } else if (encrypted_a && encrypted_a.has_data()) { // when encrypted content was already downloaded
         await decrypt_and_save_att_to_downloads(encrypted_a);
-      } else if (encrypted_a && encrypted_a.id && encrypted_a.msg_id) { // gmail attachment_id
-        let att = await Api.gmail.att_get(account_email, encrypted_a.msg_id, encrypted_a.id, render_progress);
-        encrypted_a.set_data(att.data);
+      } else if (encrypted_a && encrypted_a.id && encrypted_a.msgId) { // gmail attachment_id
+        let att = await Api.gmail.att_get(account_email, encrypted_a.msgId, encrypted_a.id, render_progress);
+        encrypted_a.setData(att.data);
         await decrypt_and_save_att_to_downloads(encrypted_a!);
       } else if (encrypted_a && encrypted_a.url) { // gneneral url to download attachment
-        encrypted_a.set_data(await Att.methods.download_as_uint8(encrypted_a.url, render_progress));
+        encrypted_a.setData(await Att.methods.download_as_uint8(encrypted_a.url, render_progress));
         await decrypt_and_save_att_to_downloads(encrypted_a);
       } else {
         throw Error('Missing both id and url');
       }
     } catch(e) {
-      if(Api.err.is_auth_popup_needed(e)) {
+      if(Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         Xss.sanitize_render('body.attachment', `Error downloading file: google auth needed. ${Ui.retry_link()}`);
-      } else if(Api.err.is_net_err(e)) {
+      } else if(Api.err.isNetErr(e)) {
         Xss.sanitize_render('body.attachment', `Error downloading file: no internet. ${Ui.retry_link()}`);
       } else {
         Catch.handle_exception(e);
@@ -193,7 +193,7 @@ Catch.try(async () => {
   let recover_missing_att_id_if_needed = async () => {
     if (!url_params.url && !url_params.attachment_id && url_params.message_id) {
       try {
-        let result = await Api.gmail.msg_get(account_email, url_params.message_id as string, 'full');
+        let result = await Api.gmail.msgGet(account_email, url_params.message_id as string, 'full');
         if (result && result.payload && result.payload.parts) {
           for (let att_meta of result.payload.parts) {
             if (att_meta.filename === url_params.name && att_meta.body && att_meta.body.size === url_params.size && att_meta.body.attachmentId) {
@@ -212,7 +212,7 @@ Catch.try(async () => {
   };
 
   let process_as_a_public_key_and_hide_att_if_appropriate = async () => {
-    if (encrypted_a && encrypted_a.msg_id && encrypted_a.id && encrypted_a.treat_as() === 'public_key') {
+    if (encrypted_a && encrypted_a.msgId && encrypted_a.id && encrypted_a.treat_as() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
       let att = await Api.gmail.att_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
       let result = await Pgp.msg.decrypt(account_email, att.data);
@@ -239,10 +239,10 @@ Catch.try(async () => {
       $('#download').click(Ui.event.prevent('double', save_to_downloads));
     }
   } catch (e) {
-    if(Api.err.is_auth_popup_needed(e)) {
+    if(Api.err.isAuthPopupNeeded(e)) {
       BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       Xss.sanitize_render('body.attachment', `Error downloading file - google auth needed. ${Ui.retry_link()}`);
-    } else if(Api.err.is_net_err(e)) {
+    } else if(Api.err.isNetErr(e)) {
       Xss.sanitize_render('body.attachment', `Error downloading file - no internet. ${Ui.retry_link()}`);
     } else {
       Catch.handle_exception(e);

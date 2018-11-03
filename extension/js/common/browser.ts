@@ -71,8 +71,8 @@ export class Ui {
 
   public static abort_and_render_error_on_unprotected_key = async (account_email?: string, tab_id?: string) => {
     if(account_email) {
-      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
-      let {setup_done, setup_simple} = await Store.get_account(account_email, ['setup_simple', 'setup_done']);
+      let [primary_ki] = await Store.keysGet(account_email, ['primary']);
+      let {setup_done, setup_simple} = await Store.getAccount(account_email, ['setup_simple', 'setup_done']);
       if(setup_done && setup_simple && primary_ki && openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) {
         if(window.location.pathname === '/chrome/settings/index.htm') {
           // @ts-ignore - this lets it compile in content script that is missing Settings
@@ -219,11 +219,11 @@ export class Ui {
       };
     },
     __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
-      if(Api.err.is_net_err(e) && err_handler && err_handler.network) {
+      if(Api.err.isNetErr(e) && err_handler && err_handler.network) {
         err_handler.network();
-      } else if (Api.err.is_auth_err(e) && err_handler && err_handler.auth) {
+      } else if (Api.err.isAuthErr(e) && err_handler && err_handler.auth) {
         err_handler.auth();
-      } else if (Api.err.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
+      } else if (Api.err.isAuthPopupNeeded(e) && err_handler && err_handler.auth_popup) {
         err_handler.auth_popup();
       } else if (err_handler && err_handler.other) {
         err_handler.other(e);
@@ -308,7 +308,7 @@ export class Ui {
 
   public static time = {
     wait: (until_this_function_evaluates_true: () => boolean|undefined) => new Promise((success, error) => {
-      let interval = Catch.set_interval(() => {
+      let interval = Catch.setHandledInterval(() => {
         let result = until_this_function_evaluates_true();
         if (result === true) {
           clearInterval(interval);
@@ -459,7 +459,7 @@ export class XssSafeFactory {
     for (let k of Object.keys(this.set_params)) {
       params[k] = this.set_params[k];
     }
-    return Env.url_create(path, params);
+    return Env.urlCreate(path, params);
   }
 
   src_compose_message = (draft_id?: string) => {
@@ -498,7 +498,7 @@ export class XssSafeFactory {
     if(!a.id && !a.url && a.has_data()) { // data provided directly, pass as object url
       a.url = Att.methods.object_url_create(a.as_bytes());
     }
-    return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: a.msg_id, name: a.name, type: a.type, size: a.length, attachment_id: a.id, url: a.url });
+    return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: a.msgId, name: a.name, type: a.type, size: a.length, attachment_id: a.id, url: a.url });
   }
 
   src_pgp_block_iframe = (message: string, message_id: string|null, is_outgoing: boolean|null, sender_email: string|null, has_password: boolean, signature: string|null|boolean, short: string|null) => {
@@ -639,7 +639,7 @@ export class XssSafeFactory {
   }
 
   private iframe = (src: string, classes:string[]=[], element_attrs:UrlParams={}) => {
-    let id = Env.url_params(['frame_id'], src).frame_id as string;
+    let id = Env.urlParams(['frame_id'], src).frame_id as string;
     let class_attr = (classes || []).concat(this.reloadable_class).join(' ');
     let attrs: Dict<string> = {id, class: class_attr, src};
     for (let name of Object.keys(element_attrs)) {
@@ -687,7 +687,7 @@ export class KeyImportUI {
         $('.source_paste_container').css('display', 'block');
         $('.source_paste_container .pass_phrase_needed').hide();
       } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = Env.url_create('/chrome/settings/setup.htm', {account_email, parent_tab_id, action: 'add_key'});
+        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', {account_email, parent_tab_id, action: 'add_key'});
       }
     });
     $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(Ui.event.handle(target => {
@@ -787,7 +787,7 @@ export class KeyImportUI {
 
   private reject_known_if_selected = async (account_email: string, k: OpenPGP.key.Key) => {
     if(this.reject_known) {
-      let keyinfos = await Store.keys_get(account_email);
+      let keyinfos = await Store.keysGet(account_email);
       let private_keys_long_ids = keyinfos.map(ki => ki.longid);
       if (Value.is(Pgp.key.longid(k)!).in(private_keys_long_ids)) {
         throw new UserAlert('This is one of your current keys, try another one.');

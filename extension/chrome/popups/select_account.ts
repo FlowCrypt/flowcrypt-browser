@@ -10,7 +10,7 @@ import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['action']);
+  let url_params = Env.urlParams(['action']);
   let action = Env.url_param_require.oneof(url_params, 'action', ['inbox', 'settings']);
 
   if (action === 'inbox') {
@@ -19,7 +19,7 @@ Catch.try(async () => {
     $('#title').text('Select an account to open settings');
   }
 
-  let account_storages = await Store.get_accounts(await Store.account_emails_get(), ['setup_done', 'picture']);
+  let account_storages = await Store.get_accounts(await Store.accountEmailsGet(), ['setup_done', 'picture']);
   let ul_emails = '';
   for (let email of Object.keys(account_storages)) {
     if (account_storages[email].setup_done === true) {
@@ -31,10 +31,10 @@ Catch.try(async () => {
   }
   Xss.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
     if (url_params.action === 'inbox') {
-      await BrowserMsg.send_await(null, 'inbox', { account_email: $(target).attr('email') });
+      await BrowserMsg.sendAwait(null, 'inbox', { account_email: $(target).attr('email') });
       window.close();
     } else {
-      await BrowserMsg.send_await(null, 'settings', { account_email: $(target).attr('email') });
+      await BrowserMsg.sendAwait(null, 'settings', { account_email: $(target).attr('email') });
       window.close();
     }
   }));
@@ -44,7 +44,7 @@ Catch.try(async () => {
   }));
 
   $('.action_add_account').click(Ui.event.handle(async self => {
-    await BrowserMsg.send_await(null, 'settings', { add_new_account: true });
+    await BrowserMsg.sendAwait(null, 'settings', { add_new_account: true });
     window.close();
   }));
 

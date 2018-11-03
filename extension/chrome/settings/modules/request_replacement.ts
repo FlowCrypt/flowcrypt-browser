@@ -13,13 +13,13 @@ import { Api, PubkeySearchResult } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   Xss.sanitize_render('#status', 'Loading from keyserver<br/><br/><br/>' + Ui.spinner('green'));
 
-  let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+  let [primary_ki] = await Store.keysGet(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let primary_pubkey_armored = primary_ki.public;
@@ -40,13 +40,13 @@ Catch.try(async () => {
         };
         let signed_packet;
         try {
-          signed_packet = await Api.attester.packet.create_sign(request_replacement, checked_old_key.decrypted);
+          signed_packet = await Api.attester.packet.createSign(request_replacement, checked_old_key.decrypted);
         } catch (e) {
           Catch.report('Error signing REQUEST_REPLACEMENT: ' + e.message);
           return alert('Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
         }
         try {
-          await Api.attester.replace_request(account_email, signed_packet, primary_pubkey_armored);
+          await Api.attester.replaceRequest(account_email, signed_packet, primary_pubkey_armored);
         } catch (e) {
           return alert('Error requesting Re-Attestation. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
         }
@@ -65,7 +65,7 @@ Catch.try(async () => {
   };
 
   try {
-    let r = await Api.attester.lookup_email([account_email]);
+    let r = await Api.attester.lookupEmail([account_email]);
     keyserver_result = r.results[0];
   } catch (e) {
     Xss.sanitize_render('#status', `Internet connection dropped. ${Ui.retry_link()}`);

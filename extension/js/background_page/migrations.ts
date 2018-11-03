@@ -72,17 +72,17 @@ let legacy_local_storage_read = (value: string) => {
 };
 
 let account_update_status_keyserver = async (account_email: string) => { // checks which emails were registered on Attester
-  let keyinfos = await Store.keys_get(account_email);
+  let keyinfos = await Store.keysGet(account_email);
   let my_longids = keyinfos.map(ki => ki.longid);
-  let storage = await Store.get_account(account_email, ['addresses', 'addresses_keyserver']);
+  let storage = await Store.getAccount(account_email, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
-    let unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.is_email_valid(a));
+    let unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
     if(unique.length < storage.addresses.length) {
       storage.addresses = unique;
       await Store.set(account_email, storage); // fix duplicate email addresses
     }
     try {
-      let {results} = await Api.attester.lookup_email(storage.addresses);
+      let {results} = await Api.attester.lookupEmail(storage.addresses);
       let addresses_keyserver = [];
       for (let result of results) {
         if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(my_longids)) {
@@ -91,7 +91,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
       }
       await Store.set(account_email, { addresses_keyserver });
     } catch(e) {
-      if(!Api.err.is_net_err(e)) {
+      if(!Api.err.isNetErr(e)) {
         Catch.handle_exception(e);
       }
     }
@@ -99,10 +99,10 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
 };
 
 let account_update_status_pks = async (account_email: string) => { // checks if any new emails were registered on pks lately
-  let keyinfos = await Store.keys_get(account_email);
+  let keyinfos = await Store.keysGet(account_email);
   let my_longids = keyinfos.map(ki => ki.longid);
   let hkp = new openpgp.HKP('https://pgp.key-server.io');
-  let storage = await Store.get_account(account_email, ['addresses', 'addresses_pks']);
+  let storage = await Store.getAccount(account_email, ['addresses', 'addresses_pks']);
   let addresses_pks = storage.addresses_pks || [];
   for (let email of storage.addresses || [account_email]) {
     if (!Value.is(email).in(addresses_pks)) {
@@ -123,7 +123,7 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
 };
 
 let report_useful_errors = (e: any) => {
-  if(!Api.err.is_net_err(e) && !Api.err.is_server_err(e)) {
+  if(!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
     Catch.handle_exception(e);
   }
 };
@@ -138,5 +138,5 @@ export let schedule_cryptup_subscription_level_check = (background_process_start
       Api.fc.account_check_sync().catch(report_useful_errors); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  Catch.set_interval(() => Api.fc.account_check_sync().catch(report_useful_errors), Value.int.hours_as_miliseconds(23 + Math.random())); // random 23-24 hours
+  Catch.setHandledInterval(() => Api.fc.account_check_sync().catch(report_useful_errors), Value.int.hours_as_miliseconds(23 + Math.random())); // random 23-24 hours
 };

@@ -102,13 +102,13 @@ export class BrowserMsg {
   } as Dict<BrowserMsgHandler>;
 
   public static send = (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
-    BrowserMsg.send_await(destination_string, name, data).catch(Catch.rejection);
+    BrowserMsg.sendAwait(destination_string, name, data).catch(Catch.rejection);
   }
 
-  public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMsgRes> => new Promise(resolve => {
+  public static sendAwait = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMsgRes> => new Promise(resolve => {
     let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: Catch.stack_trace() };
     let try_resolve_no_undefined = (r?: BrowserMsgRes) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
-    let is_background_page = Env.is_background_page();
+    let is_background_page = Env.isBackgroundPage();
     if (typeof  destination_string === 'undefined') { // don't know where to send the message
       Catch.log('BrowserMsg.send to:undefined');
       try_resolve_no_undefined();
@@ -122,7 +122,7 @@ export class BrowserMsg {
   })
 
   public static tab_id = async (): Promise<string|null|undefined> => {
-    let r = await BrowserMsg.send_await(null, '_tab_', null);
+    let r = await BrowserMsg.sendAwait(null, '_tab_', null);
     if(typeof r === 'string' || typeof r === 'undefined' || r === null) {
       return r; // for compatibility reasons when upgrading from 5.7.2 - can be removed later
     } else {
@@ -342,7 +342,7 @@ export class BgExec {
   }
 
   private static request_to_process_in_background = async (path: string, args: any[]) => {
-    let response: BgExecResponse = await BrowserMsg.send_await(null, 'bg_exec', {path, args: BgExec.arg_object_urls_create(args)});
+    let response: BgExecResponse = await BrowserMsg.sendAwait(null, 'bg_exec', {path, args: BgExec.arg_object_urls_create(args)});
     if(response.exception) {
       let e = new Error(`[BgExec] ${response.exception.name}: ${response.exception.message}`);
       e.stack += `\n\nBgExec stack:\n${response.exception.stack}`;

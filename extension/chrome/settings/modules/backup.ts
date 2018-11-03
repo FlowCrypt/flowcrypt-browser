@@ -17,7 +17,7 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'action', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'action', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id: string|null = null;
   if (url_params.action !== 'setup') {
@@ -28,7 +28,7 @@ Catch.try(async () => {
 
   await Ui.passphrase_toggle(['password', 'password2']);
 
-  let storage = await Store.get_account(account_email, ['setup_simple', 'email_provider']);
+  let storage = await Store.getAccount(account_email, ['setup_simple', 'email_provider']);
   email_provider = storage.email_provider || 'gmail';
 
   let rules = new Rules(account_email);
@@ -51,15 +51,15 @@ Catch.try(async () => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     display_block('loading');
-    let storage = await Store.get_account(account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
-    if (email_provider === 'gmail' && Api.gmail.has_scope(storage.google_token_scopes || [], 'read')) {
+    let storage = await Store.getAccount(account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
+    if (email_provider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
-        keys = await Api.gmail.fetch_key_backups(account_email);
+        keys = await Api.gmail.fetchKeyBackups(account_email);
       } catch (e) {
-        if (Api.err.is_net_err(e)) {
+        if (Api.err.isNetErr(e)) {
           Xss.sanitize_render('#content', `Could not check for backups: no internet. ${Ui.retry_link()}`);
-        } else if(Api.err.is_auth_popup_needed(e)) {
+        } else if(Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           Xss.sanitize_render('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retry_link()}`);
         } else {
@@ -158,7 +158,7 @@ Catch.try(async () => {
     } else {
       let btn_text = $(target).text();
       Xss.sanitize_render(target, Ui.spinner('white'));
-      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+      let [primary_ki] = await Store.keysGet(account_email, ['primary']);
       Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
       await Settings.openpgp_key_encrypt(prv, new_passphrase);
@@ -167,9 +167,9 @@ Catch.try(async () => {
       try {
         await do_backup_on_email_provider(account_email, prv.armor());
       } catch (e) {
-        if(Api.err.is_net_err(e)) {
+        if(Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parent_tab_id && Api.err.is_auth_popup_needed(e)) {
+        } else if(parent_tab_id && Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
@@ -208,7 +208,7 @@ Catch.try(async () => {
     let email_atts = [as_backup_file(account_email, armored_key)];
     let msg = await Api.common.msg(account_email, account_email, account_email, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': email_msg}, email_atts);
     if (email_provider === 'gmail') {
-      return await Api.gmail.msg_send(account_email, msg);
+      return await Api.gmail.msgSend(account_email, msg);
     } else {
       throw Error(`Backup method not implemented for ${email_provider}`);
     }
@@ -226,9 +226,9 @@ Catch.try(async () => {
     try {
       await do_backup_on_email_provider(account_email, primary_ki.private);
     } catch (e) {
-      if(Api.err.is_net_err(e)) {
+      if(Api.err.isNetErr(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
-      } else if(parent_tab_id && Api.err.is_auth_popup_needed(e)) {
+      } else if(parent_tab_id && Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
@@ -262,7 +262,7 @@ Catch.try(async () => {
   let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {
     await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
     if (url_params.action === 'setup') {
-      window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email, action: 'finalize' });
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: url_params.account_email, action: 'finalize' });
     } else {
       await show_status();
     }
@@ -270,7 +270,7 @@ Catch.try(async () => {
 
   $('.action_manual_backup').click(Ui.event.prevent('double', async (target) => {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     if (!await is_master_private_key_encrypted(primary_ki)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
@@ -311,7 +311,7 @@ Catch.try(async () => {
   };
 
   let setup_create_simple_automatic_inbox_backup = async () => {
-    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
     if(Pgp.key.read(primary_ki.private).isDecrypted()) {
       alert('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
@@ -324,7 +324,7 @@ Catch.try(async () => {
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
     if (url_params.action === 'setup') {
       await Store.set(account_email, { key_backup_prompt: false });
-      window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email });
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: url_params.account_email });
     } else {
       BrowserMsg.send(parent_tab_id, 'close_page');
     }
@@ -362,7 +362,7 @@ Catch.try(async () => {
   } else if (url_params.action === 'passphrase_change_gmail_backup') {
     if (storage.setup_simple) {
       display_block('loading');
-      let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+      let [primary_ki] = await Store.keysGet(account_email, ['primary']);
       Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       try {
         await do_backup_on_email_provider(account_email, primary_ki.private);

@@ -9,7 +9,7 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'bug_report']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'bug_report']);
   let account_email = url_params.account_email as string|undefined;
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   let bug_report = url_params.bug_report as string|undefined;
@@ -27,7 +27,7 @@ Catch.try(async () => {
   $('.action_send_feedback').click(Ui.event.handle(async target => {
     let my_email = account_email;
     if(!my_email) {
-      if(Str.is_email_valid($('#input_email').val() as string)) {
+      if(Str.isEmailValid($('#input_email').val() as string)) {
         my_email = $('#input_email').val() as string;
       } else {
         alert('Please enter valid email - so that we can get back to you.');
@@ -40,7 +40,7 @@ Catch.try(async () => {
     await Ui.delay(50); // give spinner time to load
     let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  Catch.version();
     try {
-      let r = await Api.fc.help_feedback(my_email, msg);
+      let r = await Api.fc.helpFeedback(my_email, msg);
       if (r.sent) {
         $(button).text('sent!');
         alert(`Message sent! You will find your response in ${my_email}, check your email later. Thanks!`);
@@ -50,7 +50,7 @@ Catch.try(async () => {
         alert('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
-      if(!Api.err.is_net_err(e)) {
+      if(!Api.err.isNetErr(e)) {
         Catch.handle_exception(e);
       }
       $(button).text(orig_btn_text);

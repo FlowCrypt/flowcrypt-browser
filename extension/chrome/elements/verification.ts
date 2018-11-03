@@ -11,7 +11,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 

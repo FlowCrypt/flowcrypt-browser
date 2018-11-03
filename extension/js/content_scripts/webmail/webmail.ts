@@ -33,7 +33,7 @@ Catch.try(async () => {
           return account_email_loading_match[0].trim().toLowerCase();
         }
         let email_from_account_dropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
-        if (Str.is_email_valid(email_from_account_dropdown)) {
+        if (Str.isEmailValid(email_from_account_dropdown)) {
           return email_from_account_dropdown;
         }
       }
@@ -59,7 +59,7 @@ Catch.try(async () => {
         } else if (extracted[1] === 'false') {
           insights.new_ui = false;
         }
-        if (Str.is_email_valid(extracted[2])) {
+        if (Str.isEmailValid(extracted[2])) {
           insights.email = extracted[2].trim().toLowerCase();
         }
         if (insights.new_data_layer === null && insights.new_ui === null && insights.email === null) {
@@ -75,8 +75,8 @@ Catch.try(async () => {
 
     let start = async (account_email: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: () => void) => {
       hijack_gmail_hotkeys();
-      let storage = await Store.get_account(account_email, ['addresses', 'google_token_scopes']);
-      let can_read_emails = Api.gmail.has_scope(storage.google_token_scopes || [], 'read');
+      let storage = await Store.getAccount(account_email, ['addresses', 'google_token_scopes']);
+      let can_read_emails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
       injector.buttons();
       replacer = new GmailElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, notifications, host_page_info.gmail_variant);
       await notifications.show_initial(account_email);
@@ -123,8 +123,8 @@ Catch.try(async () => {
     let full_name = '';
 
     let start = async (account_email: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: () => void) => {
-      let storage = await Store.get_account(account_email, ['addresses', 'google_token_scopes']);
-      let can_read_emails = Api.gmail.has_scope(storage.google_token_scopes || [], 'read');
+      let storage = await Store.getAccount(account_email, ['addresses', 'google_token_scopes']);
+      let can_read_emails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
       injector.buttons();
       replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);
       await notifications.show_initial(account_email);
@@ -144,7 +144,7 @@ Catch.try(async () => {
       variant: 'standard',
       get_user_account_email: () => {
         let creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
-        if (creds.length === 2 &&  creds[0].innerText && creds[1].innerText && Str.is_email_valid(creds[1].innerText)) {
+        if (creds.length === 2 &&  creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
           let account_email = creds[1].innerText.toLowerCase();
           full_name =  creds[0].innerText;
           console.info('Loading for ' + account_email + ' (' + full_name + ')');

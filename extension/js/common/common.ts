@@ -54,7 +54,7 @@ export class Env {
     return null;
   }
 
-  public static is_background_page = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
+  public static isBackgroundPage = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
 
   public static is_extension = () => Env.runtime_id() !== null;
 
@@ -63,7 +63,7 @@ export class Env {
     oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
   };
 
-  public static url_params = (expected_keys: string[], string:string|null=null) => {
+  public static urlParams = (expected_keys: string[], string:string|null=null) => {
     let url = (string || window.location.search.replace('?', ''));
     let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
     let url_data: UrlParams = {};
@@ -76,7 +76,7 @@ export class Env {
     return url_data;
   }
 
-  public static url_create = (link: string, params: UrlParams) => {
+  public static urlCreate = (link: string, params: UrlParams) => {
     for (let key of Object.keys(params)) {
       let value = params[key];
       if (typeof value !== 'undefined') {
@@ -182,7 +182,7 @@ export class Catch {
       console.log('%cFlowCrypt ISSUE:' + user_log_msg, 'font-weight: bold;');
     }
     try {
-      if (typeof Store.get_account === 'function' && typeof Store.set === 'function') {
+      if (typeof Store.getAccount === 'function' && typeof Store.set === 'function') {
         Store.get_global(['errors']).then(s => {
           if (typeof s.errors === 'undefined') {
             s.errors = [];
@@ -341,7 +341,7 @@ export class Catch {
     }
   }
 
-  public static set_interval = (cb: () => void, ms: number): number => {
+  public static setHandledInterval = (cb: () => void, ms: number): number => {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   }
 
@@ -357,7 +357,7 @@ Catch.RUNTIME_ENVIRONMENT = Catch.environment();
 
 export class Str {
 
-  public static parse_email = (email_string: string) => {
+  public static parseEmail = (email_string: string) => {
     if (Value.is('<').in(email_string) && Value.is('>').in(email_string)) {
       return {
         email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
@@ -392,7 +392,7 @@ export class Str {
     return x1 + x2;
   }
 
-  public static is_email_valid = (email: string) => /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
+  public static isEmailValid = (email: string) => /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
 
   public static month_name = (month_index: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][month_index];
 
@@ -411,9 +411,9 @@ export class Str {
 
   public static html_attr_decode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
 
-  public static base64url_encode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+  public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
-  public static base64url_decode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+  public static base64urlDecode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
   public static from_uint8 = (u8a: Uint8Array|string): string => {
     if(typeof u8a === 'string') {

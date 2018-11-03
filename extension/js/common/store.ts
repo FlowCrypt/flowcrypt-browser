@@ -165,22 +165,22 @@ export class Store {
   }
 
   static async session_get(account_email: string, key: string): Promise<string|null> {
-    if (Env.is_background_page()) {
+    if (Env.isBackgroundPage()) {
       return window.sessionStorage.getItem(Store.index(account_email, key) as string);
     } else {
-      return await BrowserMsg.send_await(null, 'session_get', {account_email, key});
+      return await BrowserMsg.sendAwait(null, 'session_get', {account_email, key});
     }
   }
 
   static async session_set(account_email: string, key: string, value: string|undefined): Promise<void> {
-    if (Env.is_background_page()) {
+    if (Env.isBackgroundPage()) {
       if (typeof value !== 'undefined') {
         sessionStorage.setItem(Store.index(account_email, key) as string, String(value));
       } else {
         sessionStorage.removeItem(Store.index(account_email, key) as string);
       }
     } else {
-      await BrowserMsg.send_await(null, 'session_set', {account_email, key, value});
+      await BrowserMsg.sendAwait(null, 'session_set', {account_email, key, value});
     }
   }
 
@@ -201,7 +201,7 @@ export class Store {
 
   static async passphrase_get(account_email: string, longid: string, ignore_session:boolean=false): Promise<string|null> {
     let storage_k = 'passphrase_' + longid;
-    let storage = await Store.get_account(account_email, [storage_k]);
+    let storage = await Store.getAccount(account_email, [storage_k]);
     if (typeof storage[storage_k] === 'string') {
       return storage[storage_k] as string; // checked above
     } else {
@@ -210,8 +210,8 @@ export class Store {
     }
   }
 
-  static async keys_get(account_email: string, longids:string[]|null=null) {
-    let stored = await Store.get_account(account_email, ['keys']);
+  static async keysGet(account_email: string, longids:string[]|null=null) {
+    let stored = await Store.getAccount(account_email, ['keys']);
     let keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
       return keys;
@@ -235,7 +235,7 @@ export class Store {
   }
 
   static async keys_add(account_email: string, new_key_armored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
-    let keyinfos = await Store.keys_get(account_email);
+    let keyinfos = await Store.keysGet(account_email);
     let updated = false;
     let new_key_longid = Pgp.key.longid(new_key_armored);
     if (new_key_longid) {
@@ -253,7 +253,7 @@ export class Store {
   }
 
   static async keys_remove(account_email: string, remove_longid: string): Promise<void> {
-    let private_keys = await Store.keys_get(account_email);
+    let private_keys = await Store.keysGet(account_email);
     let filtered_private_keys = private_keys.filter(ki => ki.longid !== remove_longid);
     await Store.set(account_email, {keys: filtered_private_keys});
   }
@@ -278,7 +278,7 @@ export class Store {
     });
   }
 
-  static get_account(account: string, keys: string[]): Promise<AccountStore> {
+  static getAccount(account: string, keys: string[]): Promise<AccountStore> {
     return new Promise(resolve => {
       chrome.storage.local.get(Store.index(account, keys) as string[], (storage_object: RawStore) => {
         resolve(Store.account_storage_object_keys_to_orig(account, storage_object) as AccountStore);
@@ -298,7 +298,7 @@ export class Store {
     return new Promise(resolve => chrome.storage.local.remove(Store.index(Store._global_storage_index_if_null(account_email), keys), () => resolve()));
   }
 
-  static async account_emails_get(): Promise<string[]> {
+  static async accountEmailsGet(): Promise<string[]> {
     let storage = await Store.get_global(['account_emails']);
     let account_emails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
@@ -315,21 +315,21 @@ export class Store {
     if (!account_email) {
       Catch.report('attempting to save empty account_email: ' + account_email);
     }
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     if (!Value.is(account_email).in(account_emails) && account_email) {
       account_emails.push(account_email);
       await Store.set(null, { account_emails: JSON.stringify(account_emails) });
-      await BrowserMsg.send_await(null, 'update_uninstall_url');
+      await BrowserMsg.sendAwait(null, 'update_uninstall_url');
     }
   }
 
   static async account_emails_remove(account_email: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     await Store.set(null, { account_emails: JSON.stringify(Value.arr.without_value(account_emails, account_email)) });
-    await BrowserMsg.send_await(null, 'update_uninstall_url');
+    await BrowserMsg.sendAwait(null, 'update_uninstall_url');
   }
 
-  static async auth_info(): Promise<StoredAuthInfo> {
+  static async authInfo(): Promise<StoredAuthInfo> {
     let storage = await Store.get_global(['cryptup_account_email', 'cryptup_account_uuid']);
     return {account_email: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null };
   }
@@ -416,10 +416,10 @@ export class Store {
     return index;
   }
 
-  static db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null): Contact {
+  static dbContactObj(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null): Contact {
     let fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : null;
-    email = Str.parse_email(email).email;
-    if(!Str.is_email_valid(email)) {
+    email = Str.parseEmail(email).email;
+    if(!Str.isEmailValid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
     }
     return {
@@ -442,7 +442,7 @@ export class Store {
   static db_contact_save = (db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
     if (db === null) { // relay op through background process
       // todo - currently will silently swallow errors
-      BrowserMsg.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(Catch.rejection);
+      BrowserMsg.sendAwait(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(Catch.rejection);
     } else {
       if (Array.isArray(contact)) {
         for (let single_contact of contact) {
@@ -464,7 +464,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send_await(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(Catch.rejection);
+        BrowserMsg.sendAwait(null, 'db', {f: 'db_contact_update', args: [email, update]}).then(resolve).catch(Catch.rejection);
       } else {
         if (Array.isArray(email)) {
           for (let single_email of email) {
@@ -474,7 +474,7 @@ export class Store {
         } else {
           let [contact] = await Store.db_contact_get(db, [email]);
           if (contact === null) { // updating a non-existing contact, insert it first
-            await Store.db_contact_save(db, Store.db_contact_object(email, null, null, null, null, false, null));
+            await Store.db_contact_save(db, Store.dbContactObj(email, null, null, null, null, false, null));
             [contact] = await Store.db_contact_get(db, [email]);
             if (contact === null) { // todo - temporary. If no such errors show by end of June 2018, remove this.
               reject({message: 'contact not found right after inserting it', internal: 'missing_contact', code: null});
@@ -487,7 +487,7 @@ export class Store {
           }
           let tx = db.transaction('contacts', 'readwrite');
           let contactsTable = tx.objectStore('contacts');
-          contactsTable.put(Store.db_contact_object(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
+          contactsTable.put(Store.dbContactObj(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
           tx.oncomplete = Catch.try(resolve);
           let stack_fill = String((new Error()).stack);
           tx.onabort = () => reject(Store.db_error_categorize(tx.error, stack_fill));
@@ -500,7 +500,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send_await(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(Catch.rejection);
+        BrowserMsg.sendAwait(null, 'db', {f: 'db_contact_get', args: [email_or_longid]}).then(resolve).catch(Catch.rejection);
       } else {
         if (email_or_longid.length === 1) {
           let tx: IDBRequest;
@@ -528,7 +528,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send_await(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(Catch.rejection);
+        BrowserMsg.sendAwait(null, 'db', {f: 'db_contact_search', args: [query]}).then(resolve).catch(Catch.rejection);
       } else {
         for (let key of Object.keys(query)) {
           if (!Value.is(key).in(Store.db_query_keys)) {

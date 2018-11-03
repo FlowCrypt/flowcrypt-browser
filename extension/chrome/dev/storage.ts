@@ -10,7 +10,7 @@ Catch.try(async () => {
 
   type RenderableStorage = Dict<{key: string, value: Storable}>;
 
-  let url_params = Env.url_params(['filter', 'keys', 'controls', 'title']);
+  let url_params = Env.urlParams(['filter', 'keys', 'controls', 'title']);
 
   // this is for debugging
   let controls = url_params.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
@@ -20,13 +20,13 @@ Catch.try(async () => {
   }
 
   if (controls) {
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     let emails_selector = $('.emails');
-    Xss.sanitize_append(emails_selector, `<a href="${Xss.html_escape(Env.url_create('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
-    Xss.sanitize_append(emails_selector, `<a href="${Xss.html_escape(Env.url_create('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
+    Xss.sanitize_append(emails_selector, `<a href="${Xss.html_escape(Env.urlCreate('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
+    Xss.sanitize_append(emails_selector, `<a href="${Xss.html_escape(Env.urlCreate('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
     Xss.sanitize_append('.namespace', '<option value="global">global</option>');
     for (let account_email of account_emails) {
-      Xss.sanitize_append('.emails', `<a href="${Xss.html_escape(Env.url_create('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${Xss.html_escape(account_email)}</a>`);
+      Xss.sanitize_append('.emails', `<a href="${Xss.html_escape(Env.urlCreate('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${Xss.html_escape(account_email)}</a>`);
       Xss.sanitize_append('.namespace', `<option value="${Xss.html_escape(account_email)}">${Xss.html_escape(account_email)}</option>`);
     }
   }

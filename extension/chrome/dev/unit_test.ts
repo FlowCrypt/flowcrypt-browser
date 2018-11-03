@@ -9,7 +9,7 @@ import { StandardError } from '../../js/common/api.js';
 
 (() => {
 
-  let url_params = Env.url_params(['f', 'args']);
+  let url_params = Env.urlParams(['f', 'args']);
   let f = String(url_params.f);
   let args = JSON.parse(String(url_params.args));
 

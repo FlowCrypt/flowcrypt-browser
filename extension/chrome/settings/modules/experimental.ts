@@ -12,13 +12,13 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   // this is for debugging
   if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
-    Xss.sanitize_append('.storage_link_container', ` - <a href="${Xss.html_escape(Env.url_create('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
+    Xss.sanitize_append('.storage_link_container', ` - <a href="${Xss.html_escape(Env.urlCreate('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
   }
 
   if (account_email) {
@@ -47,9 +47,9 @@ Catch.try(async () => {
         let all = await Settings.refresh_account_aliases(account_email);
         alert('Updated to: ' + all.join(', '));
       } catch(e) {
-        if(Api.err.is_net_err(e)) {
+        if(Api.err.isNetErr(e)) {
           alert('Network error, please try again');
-        } else if(Api.err.is_auth_popup_needed(e)) {
+        } else if(Api.err.isAuthPopupNeeded(e)) {
           alert('Error: account needs to be re-connected first.');
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else {
@@ -73,7 +73,7 @@ Catch.try(async () => {
       }
     }));
 
-    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', Env.url_create('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
+    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', Env.urlCreate('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
 
     $('.action_flush_attest_info').click(Ui.event.handle(async () => {
       await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
@@ -99,16 +99,16 @@ Catch.try(async () => {
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
       if(confirm(`Your current account email is ${account_email}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`)) {
         let tab_id = await BrowserMsg.required_tab_id();
-        let response = await Api.google.auth_popup(account_email, tab_id);
-        if (response && response.success === true && response.account_email) {
-          if(response.account_email === account_email) {
+        let response = await Api.google.authPopup(account_email, tab_id);
+        if (response && response.success === true && response.acctEmail) {
+          if(response.acctEmail === account_email) {
             alert(`Account email address seems to be the same, nothing to update: ${account_email}`);
-          } else if(response.account_email) {
-            if(confirm(`Change your Google Account email from ${account_email} to ${response.account_email}?`)) {
+          } else if(response.acctEmail) {
+            if(confirm(`Change your Google Account email from ${account_email} to ${response.acctEmail}?`)) {
               try {
-                await Settings.account_storage_change_email(account_email, response.account_email);
-                alert(`Email address changed to ${response.account_email}. You should now check that your public key is properly submitted.`);
-                BrowserMsg.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', account_email: response.account_email});
+                await Settings.account_storage_change_email(account_email, response.acctEmail);
+                alert(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
+                BrowserMsg.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', account_email: response.acctEmail});
               } catch(e) {
                 Catch.handle_exception(e);
                 alert('There was an error changing google account, please write human@flowcrypt.com');
@@ -148,11 +148,11 @@ Catch.try(async () => {
         'account_email: ' + account_email,
       ];
       let global_storage = await Store.get_global(['version']);
-      let account_storage = await Store.get_account(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
+      let account_storage = await Store.getAccount(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
       text.push('global_storage: ' + JSON.stringify(global_storage));
       text.push('account_storage: ' + JSON.stringify(account_storage));
       text.push('');
-      let keyinfos = await Store.keys_get(account_email);
+      let keyinfos = await Store.keysGet(account_email);
       for (let keyinfo of keyinfos) {
         text.push('');
         text.push('key_longid: ' + keyinfo.longid);

@@ -15,11 +15,11 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const url_params = Env.url_params(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
+  const url_params = Env.urlParams(['account_email', 'from', 'to', 'subject', 'frame_id', 'thread_id', 'thread_message_id', 'parent_tab_id', 'skip_click_prompt', 'ignore_draft']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let [primary_k] = await Store.keys_get(account_email, ['primary']);
+  let [primary_k] = await Store.keysGet(account_email, ['primary']);
 
   const att = Att.methods.keyinfo_as_pubkey_att(primary_k);
   let additional_msg_headers: FlatHeaders;
@@ -42,16 +42,16 @@ Catch.try(async () => {
 
   // determine reply headers
   try {
-    let thread = await Api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
+    let thread = await Api.gmail.threadGet(account_email, url_params.thread_id as string, 'full');
     if (thread.messages && thread.messages.length > 0) {
-      let thread_msg_id_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-      let thread_msg_refs_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+      let thread_msg_id_last = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      let thread_msg_refs_last = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
       additional_msg_headers = { 'In-Reply-To': thread_msg_id_last, 'References': thread_msg_refs_last + ' ' + thread_msg_id_last };
     }
   } catch (e) {
-    if(Api.err.is_auth_popup_needed(e)) {
+    if(Api.err.isAuthPopupNeeded(e)) {
       BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-    } else if (Api.err.is_net_err(e)) {
+    } else if (Api.err.isNetErr(e)) {
       // todo - render retry button
     } else {
       Catch.handle_exception(e);
@@ -67,15 +67,15 @@ Catch.try(async () => {
       message.headers[k] = additional_msg_headers[k];
     }
     try {
-      await Api.gmail.msg_send(account_email, message);
+      await Api.gmail.msgSend(account_email, message);
       BrowserMsg.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
       Xss.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
-      if(Api.err.is_auth_popup_needed(e)) {
+      if(Api.err.isAuthPopupNeeded(e)) {
         $(target).text(send_button_text);
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         alert('Google account permission needed, please re-connect account and try again.');
-      } else if(Api.err.is_net_err(e)) {
+      } else if(Api.err.isNetErr(e)) {
         $(target).text(send_button_text);
         alert('No internet connection, please try again.');
       } else {

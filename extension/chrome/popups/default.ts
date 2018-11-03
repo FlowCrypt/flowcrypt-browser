@@ -10,7 +10,7 @@ import { BrowserMsg } from '../../js/common/extension.js';
 Catch.try(async () => {
 
   let redirect_to_initial_setup = async (account_email:string|null=null) => {
-    await BrowserMsg.send_await(null, 'settings', { account_email });
+    await BrowserMsg.sendAwait(null, 'settings', { account_email });
     window.close();
   };
 
@@ -25,7 +25,7 @@ Catch.try(async () => {
     }));
     $('.action_open_encrypted_inbox').click(Ui.event.handle(async () => {
       if (active_account_email) {
-        await BrowserMsg.send_await(null, 'inbox', { account_email: active_account_email });
+        await BrowserMsg.sendAwait(null, 'inbox', { account_email: active_account_email });
         window.close();
       } else {
         window.location.href = 'select_account.htm?action=inbox';
@@ -39,9 +39,9 @@ Catch.try(async () => {
     $('.action_set_up_account').click(Ui.event.prevent('double', () => redirect_to_initial_setup(active_account_email).catch(Catch.rejection)));
   };
 
-  let active_tab = await BrowserMsg.send_await(null, 'get_active_tab_info', {});
+  let active_tab = await BrowserMsg.sendAwait(null, 'get_active_tab_info', {});
   if (active_tab && active_tab.account_email !== null) {
-    let {setup_done} = await Store.get_account(active_tab.account_email, ['setup_done']);
+    let {setup_done} = await Store.getAccount(active_tab.account_email, ['setup_done']);
     if (setup_done) {
       choose_email_or_settings_popup(active_tab.account_email);
     } else {
@@ -50,7 +50,7 @@ Catch.try(async () => {
   } else if (active_tab && active_tab.provider !== null && active_tab.same_world === true) {
     set_up_accont_prompt_popup(active_tab.account_email);
   } else {
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     if (account_emails && account_emails.length) {
       let account_storages = await Store.get_accounts(account_emails, ['setup_done']);
       let functioning_accounts = 0;

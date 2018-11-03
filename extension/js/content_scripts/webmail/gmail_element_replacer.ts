@@ -175,10 +175,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.can_read_emails) {
             Xss.sanitize_prepend(new_pgp_atts, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
             try {
-              let msg = await Api.gmail.msg_get(this.account_email, msg_id, 'full');
-              await this.process_atts(msg_id, Api.gmail.find_atts(msg), atts_container, false, new_pgp_atts_names);
+              let msg = await Api.gmail.msgGet(this.account_email, msg_id, 'full');
+              await this.process_atts(msg_id, Api.gmail.findAtts(msg), atts_container, false, new_pgp_atts_names);
             } catch (e) {
-              if (Api.err.is_auth_popup_needed(e)) {
+              if (Api.err.isAuthPopupNeeded(e)) {
                 this.notifications.show_auth_popup_needed(this.account_email);
               }
               $(new_pgp_atts).find('.attachment_loader').text('Failed to load');
@@ -275,7 +275,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private render_public_key_from_file = async (att_meta: Att, atts_container_inner: JQuery<HTMLElement>, msg_el: JQuery<HTMLElement>, is_outgoing: boolean, att_sel: JQuery<HTMLElement>, n_rendered_atts: number) => {
     let downloaded_att;
     try {
-      downloaded_att = await Api.gmail.att_get(this.account_email, att_meta.msg_id!, att_meta.id!); // .id is present when fetched from api
+      downloaded_att = await Api.gmail.att_get(this.account_email, att_meta.msgId!, att_meta.id!); // .id is present when fetched from api
     } catch (e) {
       atts_container_inner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       n_rendered_atts++;
@@ -384,7 +384,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private get_conversation_params = (convo_root_el: JQuery<HTMLElement>) => {
-    let headers = Api.common.reply_correspondents(this.account_email, this.addresses, this.dom_get_msg_sender(convo_root_el), this.dom_get_msg_recipients(convo_root_el));
+    let headers = Api.common.replyCorrespondents(this.account_email, this.addresses, this.dom_get_msg_sender(convo_root_el), this.dom_get_msg_recipients(convo_root_el));
     return {
       subject: this.dom_get_msg_subject(convo_root_el),
       reply_to: headers.to,
@@ -447,13 +447,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           for (let email of recipients) {
             if (email) {
               let cache = this.recipient_has_pgp_cache[email];
-              if (!Str.is_email_valid(email)) {
+              if (!Str.isEmailValid(email)) {
                 everyone_uses_encryption = false;
                 break;
               }
               if (typeof cache === 'undefined') {
                 try {
-                  let {results: [result]} = await Api.attester.lookup_email([email]);
+                  let {results: [result]} = await Api.attester.lookupEmail([email]);
                   this.recipient_has_pgp_cache[email] = Boolean(result.pubkey); // true or false
                   if (!this.recipient_has_pgp_cache[email]) {
                     everyone_uses_encryption = false;

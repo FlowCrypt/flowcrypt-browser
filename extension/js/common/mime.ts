@@ -29,14 +29,14 @@ export class Mime {
     for (let file of decoded.atts) {
       let treat_as = file.treat_as();
       if (treat_as === 'message') {
-        let armored = Pgp.armor.clip(file.as_text());
+        let armored = Pgp.armor.clip(file.asText());
         if (armored) {
           blocks.push(Pgp.internal.crypto_armor_block_object('message', armored));
         }
       } else if (treat_as === 'signature') {
-        decoded.signature = decoded.signature || file.as_text();
+        decoded.signature = decoded.signature || file.asText();
       } else if (treat_as === 'public_key') {
-        blocks = blocks.concat(Pgp.armor.detect_blocks(file.as_text()).blocks);
+        blocks = blocks.concat(Pgp.armor.detect_blocks(file.asText()).blocks);
       }
     }
     if (decoded.signature) {

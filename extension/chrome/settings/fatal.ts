@@ -7,7 +7,7 @@ import { Xss } from '../../js/common/browser.js';
 
 (() => {
 
-    let url_params = Env.url_params(['reason']);
+    let url_params = Env.urlParams(['reason']);
 
     let title = $('.title');
     let details = $('.details');

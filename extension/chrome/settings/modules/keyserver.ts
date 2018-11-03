@@ -11,7 +11,7 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
@@ -83,7 +83,7 @@ Catch.try(async () => {
       await action_submit_or_request_attestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
-      let {addresses} = await Store.get_account(account_email, ['addresses']);
+      let {addresses} = await Store.getAccount(account_email, ['addresses']);
       await Store.set(account_email, {'addresses': Value.arr.without_value(addresses || [], $(self).attr('email')!)});
       window.location.reload();
     }));
@@ -103,9 +103,9 @@ Catch.try(async () => {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
         await Store.set(account_email, { addresses: Value.arr.unique(addresses.concat(account_email)) });
       } catch(e) {
-        if(Api.err.is_net_err(e)) {
+        if(Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parent_tab_id && Api.err.is_auth_popup_needed(e)) {
+        } else if(parent_tab_id && Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
@@ -119,14 +119,14 @@ Catch.try(async () => {
   };
 
   let action_submit_or_request_attestation = async (email: string) => {
-    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     try {
       if (email === account_email) { // request attestation
         await Settings.save_attest_request(account_email, 'CRYPTUP');
-        await Api.attester.initial_legacy_submit(email, primary_ki.public, true);
+        await Api.attester.initialLegacySubmit(email, primary_ki.public, true);
       } else { // submit only
-        await Api.attester.initial_legacy_submit(email, primary_ki.public, false);
+        await Api.attester.initialLegacySubmit(email, primary_ki.public, false);
       }
     } catch (e) {
       Catch.handle_exception(e);
@@ -135,13 +135,13 @@ Catch.try(async () => {
     }
   };
 
-  let storage = await Store.get_account(account_email, ['attests_requested', 'addresses']);
+  let storage = await Store.getAccount(account_email, ['attests_requested', 'addresses']);
   try {
-    let diagnosis = await Api.attester.diagnose_keyserver_pubkeys(account_email);
+    let diagnosis = await Api.attester.diagnoseKeyserverPubkeys(account_email);
     $('.summary').text('');
     render_diagnosis(diagnosis, storage.attests_requested || []);
   } catch (e) {
-    if (Api.err.is_net_err(e)) {
+    if (Api.err.isNetErr(e)) {
       Xss.sanitize_render('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
       Xss.sanitize_render('.summary', `Failed to load. ${Ui.retry_link()}`);

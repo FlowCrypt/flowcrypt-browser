@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Value, Env, Catch } from './common.js';
-import { ProgressCallback } from './api.js';
+import { ProgressCb } from './api.js';
 import { Xss } from './browser.js';
 import { KeyInfo } from './store.js';
 
@@ -24,7 +24,7 @@ export class Att {
   public name: string;
   public url: string|null;
   public id: string|null;
-  public msg_id: string|null;
+  public msgId: string|null;
   public inline: boolean;
   public cid: string|null;
 
@@ -36,7 +36,7 @@ export class Att {
       throw new Error('Att: if id is set, message_id must be set too');
     }
     if(data !== null && typeof data !== 'undefined') {
-      this.set_data(data);
+      this.setData(data);
     }
     this.name = name || '';
     this.type = type || 'application/octet-stream';
@@ -44,12 +44,12 @@ export class Att {
     this.url = url || null;
     this.inline = inline !== true;
     this.id = id || null;
-    this.msg_id = msg_id || null;
+    this.msgId = msg_id || null;
     this.treat_as_value = treat_as || null;
     this.cid = cid || null;
   }
 
-  public set_data = (data: string|Uint8Array) => {
+  public setData = (data: string|Uint8Array) => {
     if(this.has_data()) {
       throw new Error('Att: data already set');
     }
@@ -78,7 +78,7 @@ export class Att {
     throw new Error('Att has no data set');
   }
 
-  public as_text = (): string => {
+  public asText = (): string => {
     if(this.text === null && this.bytes !== null) {
       this.text = Str.from_uint8(this.bytes);
     }
@@ -132,7 +132,7 @@ export class Att {
       window.URL.revokeObjectURL(url);
       return uint8;
     },
-    download_as_uint8: (url: string, progress:ProgressCallback|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
+    download_as_uint8: (url: string, progress:ProgressCb|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';

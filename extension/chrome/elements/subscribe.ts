@@ -15,11 +15,11 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let auth_info = await Store.auth_info();
+  let auth_info = await Store.authInfo();
   if (auth_info.account_email) {
     account_email = auth_info.account_email; // todo - allow user to select and confirm email address
   }
@@ -32,11 +32,11 @@ Catch.try(async () => {
       let debug = e ? `<pre>${Xss.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
       Xss.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retry_link()}</div><br><br>${debug}`);
     };
-    if(Api.err.is_net_err(e)) {
+    if(Api.err.isNetErr(e)) {
       render_err('network error');
-    } else if (Api.err.is_auth_err(e)) {
+    } else if (Api.err.isAuthErr(e)) {
       render_err('auth error', e);
-    } else if(Api.err.is_standard_err(e, 'email')) {
+    } else if(Api.err.isStandardErr(e, 'email')) {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
       render_status_text(e.message || e.error.message);
@@ -92,10 +92,10 @@ Catch.try(async () => {
   try {
     await Api.fc.account_check_sync();
   } catch (e) {
-    if (Api.err.is_auth_err(e)) {
+    if (Api.err.isAuthErr(e)) {
       // todo - handle auth error - add device
       Xss.sanitize_render('#content', `Failed to load - unknown device. ${Ui.retry_link()}`);
-    } else if (Api.err.is_net_err(e)) {
+    } else if (Api.err.isNetErr(e)) {
       Xss.sanitize_render('#content', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
       Catch.handle_exception(e);
@@ -104,8 +104,8 @@ Catch.try(async () => {
   }
 
   let subscription = await Store.subscription();
-  let {google_token_scopes} = await Store.get_account(account_email, ['google_token_scopes']);
-  let can_read_email = Api.gmail.has_scope(google_token_scopes || [] , 'read');
+  let {google_token_scopes} = await Store.getAccount(account_email, ['google_token_scopes']);
+  let can_read_email = Api.gmail.hasScope(google_token_scopes || [] , 'read');
   let flowcrypt_account = new FlowCryptAccount({render_status_text}, can_read_email);
 
   if (url_params.placement === 'settings') {
@@ -194,12 +194,12 @@ Catch.try(async () => {
       $('.action_add_device, .action_close').addClass('long');
       // try API call auth in case it got fixed meanwhile
       try {
-        await Api.fc.account_update();
+        await Api.fc.accountUpdate();
         $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${account_email}).`);
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');
       } catch(e) {
-        if(!Api.err.is_auth_err(e) && !Api.err.is_net_err(e)) {
+        if(!Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
           Catch.handle_exception(e);
         }
       }

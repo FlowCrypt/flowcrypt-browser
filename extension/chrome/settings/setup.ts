@@ -28,7 +28,7 @@ interface SetupOptions {
 
 Catch.try(async () => {
 
-  let unchecked_url_params = Env.url_params(['account_email', 'action', 'parent_tab_id']);
+  let unchecked_url_params = Env.urlParams(['account_email', 'action', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(unchecked_url_params, 'account_email');
   let parent_tab_id: string|null = null;
   let action = Env.url_param_require.oneof(unchecked_url_params, 'action', ['add_key', 'finalize', undefined]) as 'add_key'|'finalize'|undefined;
@@ -49,7 +49,7 @@ Catch.try(async () => {
   await Ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
   await Ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
-  let storage = await Store.get_account(account_email, [
+  let storage = await Store.getAccount(account_email, [
     'setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
   ]);
 
@@ -120,7 +120,7 @@ Catch.try(async () => {
     let keyserver_result, fetched_keys;
 
     try {
-      let r = await Api.attester.lookup_email([account_email]);
+      let r = await Api.attester.lookupEmail([account_email]);
       keyserver_result = r.results[0];
     } catch (e) {
       return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => render_setup_dialog());
@@ -133,9 +133,9 @@ Catch.try(async () => {
       if (!rules.can_backup_keys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         display_block('step_2b_manual_enter');
-      } else if (storage.email_provider === 'gmail' && Api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+      } else if (storage.email_provider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
         try {
-          fetched_keys = await Api.gmail.fetch_key_backups(account_email);
+          fetched_keys = await Api.gmail.fetchKeyBackups(account_email);
         } catch (e) {
           return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => render_setup_dialog());
         }
@@ -174,29 +174,29 @@ Catch.try(async () => {
     Xss.sanitize_render($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
-      fetched_keys = await Api.gmail.fetch_key_backups(account_email);
+      fetched_keys = await Api.gmail.fetchKeyBackups(account_email);
     } catch (e) {
-      window.location.href = Env.url_create('modules/add_key.htm', {account_email, parent_tab_id});
+      window.location.href = Env.urlCreate('modules/add_key.htm', {account_email, parent_tab_id});
       return;
     }
     if (fetched_keys.length) {
       recovered_keys = fetched_keys;
       recovered_keys_longid_count = Value.arr.unique(recovered_keys.map(Pgp.key.longid)).length;
-      let stored_keys = await Store.keys_get(account_email);
+      let stored_keys = await Store.keysGet(account_email);
       recovered_keys_successful_longids = stored_keys.map(ki => ki.longid);
       await render_setup_done();
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
-      window.location.href = Env.url_create('modules/add_key.htm', {account_email, parent_tab_id});
+      window.location.href = Env.urlCreate('modules/add_key.htm', {account_email, parent_tab_id});
     }
   };
 
   let submit_public_key_if_needed = async (armored_pubkey: string, options: {submit_main: boolean, submit_all: boolean}) => {
-    let storage = await Store.get_account(account_email, ['addresses']);
+    let storage = await Store.getAccount(account_email, ['addresses']);
     if (!options.submit_main) {
       return;
     }
-    Api.attester.test_welcome(account_email, armored_pubkey).catch(error => Catch.report('Api.attester.test_welcome: failed', error));
+    Api.attester.testWelcome(account_email, armored_pubkey).catch(error => Catch.report('Api.attester.test_welcome: failed', error));
     let addresses;
     if (typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
       addresses = storage.addresses.concat(account_email);
@@ -210,7 +210,7 @@ Catch.try(async () => {
   };
 
   let render_setup_done = async () => {
-    let stored_keys = await Store.keys_get(account_email);
+    let stored_keys = await Store.keysGet(account_email);
     if (recovered_keys_longid_count > stored_keys.length) { // recovery where not all keys were processed: some may have other pass phrase
       display_block('step_4_more_to_recover');
       $('h1').text('More keys to recover');
@@ -235,7 +235,7 @@ Catch.try(async () => {
   };
 
   let finalize_setup = async ({submit_main, submit_all}: {submit_main: boolean, submit_all: boolean}): Promise<void> => {
-    let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
     Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
     try {
       await submit_public_key_if_needed(primary_ki.public, {submit_main, submit_all});
@@ -262,7 +262,7 @@ Catch.try(async () => {
     }
     let my_own_email_addresses_as_contacts = all_addresses.map(a => {
       let attested = Boolean(a === account_email && account_email_attested_fingerprint && account_email_attested_fingerprint !== Pgp.key.fingerprint(prvs[0].toPublic().armor()));
-      return Store.db_contact_object(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
+      return Store.dbContactObj(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
     });
     await Store.db_contact_save(null, my_own_email_addresses_as_contacts);
   };
@@ -284,7 +284,7 @@ Catch.try(async () => {
     if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and let the user choose
       let me: R.GooglePlusPeopleMe;
       try {
-        me = await Api.google.plus.people_me(account_email);
+        me = await Api.google.plus.peopleMe(account_email);
       } catch (e) {
         Catch.handle_exception(e);
         return {full_name: ''};
@@ -332,7 +332,7 @@ Catch.try(async () => {
         };
         recovered_key_matching_passphrases.push(passphrase);
         await save_keys(matching_keys, options);
-        let storage = await Store.get_account(account_email, ['setup_done']);
+        let storage = await Store.getAccount(account_email, ['setup_done']);
         if (!storage.setup_done) { // normal situation - fresh setup
           await pre_finalize_setup(options);
           await finalize_setup(options);
@@ -356,7 +356,7 @@ Catch.try(async () => {
   $('#step_4_more_to_recover .action_recover_remaining').click(Ui.event.handle(async () => {
     display_block('step_2_recovery');
     $('#recovery_pasword').val('');
-    let stored_keys = await Store.keys_get(account_email);
+    let stored_keys = await Store.keysGet(account_email);
     let n_got = stored_keys.length;
     let n_bups = recovered_keys.length;
     let t_left = (n_bups - n_got > 1) ? 'are ' + (n_bups - n_got) + ' backups' : 'is one backup';
@@ -364,7 +364,7 @@ Catch.try(async () => {
       Xss.sanitize_render('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
       Xss.sanitize_replace('#step_2_recovery .line_skip_recovery', Ui.e('div', {class: 'line', html: Ui.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
       $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
-        window.location.href = Env.url_create('index.htm', { account_email });
+        window.location.href = Env.urlCreate('index.htm', { account_email });
       }));
     } else {
       Xss.sanitize_render('#step_2_recovery .recovery_status', `There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
@@ -383,15 +383,15 @@ Catch.try(async () => {
   }));
 
   $('.action_send').click(Ui.event.handle(() => {
-    window.location.href = Env.url_create('index.htm', { account_email, page: '/chrome/elements/compose.htm' });
+    window.location.href = Env.urlCreate('index.htm', { account_email, page: '/chrome/elements/compose.htm' });
   }));
 
   $('.action_account_settings').click(Ui.event.handle(() => {
-    window.location.href = Env.url_create('index.htm', { account_email });
+    window.location.href = Env.urlCreate('index.htm', { account_email });
   }));
 
   $('.action_go_auth_denied').click(Ui.event.handle(() => {
-    window.location.href = Env.url_create('index.htm', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
+    window.location.href = Env.urlCreate('index.htm', { account_email, page: '/chrome/settings/modules/auth_denied.htm' });
   }));
 
   $('.input_submit_key').click(Ui.event.handle(target => {
@@ -504,7 +504,7 @@ Catch.try(async () => {
       await create_save_key_pair(options);
       await pre_finalize_setup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-      window.location.href = Env.url_create('modules/backup.htm', { action: 'setup', account_email });
+      window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', account_email });
     } catch (e) {
       Catch.handle_exception(e);
       alert(`There was an error, please try again.\n\n(${String(e)})`);
@@ -527,16 +527,16 @@ Catch.try(async () => {
   }));
 
   $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parent_tab_id was used
-    BrowserMsg.send(parent_tab_id, 'redirect', {location: Env.url_create('index.htm', {account_email, advanced: true})});
+    BrowserMsg.send(parent_tab_id, 'redirect', {location: Env.urlCreate('index.htm', {account_email, advanced: true})});
   }));
 
   // show alternative account addresses in setup form + save them for later
   if (storage.email_provider === 'gmail') {
-    if (!Api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+    if (!Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
       $('.auth_denied_warning').css('display', 'block');
     }
     if (typeof storage.addresses === 'undefined') {
-      if (Api.gmail.has_scope(storage.google_token_scopes as string[], 'read')) {
+      if (Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
         Settings.fetch_account_aliases_from_gmail(account_email).then(save_and_fill_submit_option).catch(Catch.rejection);
       } else { // cannot read emails, don't fetch alternative addresses
         save_and_fill_submit_option([account_email]).catch(Catch.rejection);
@@ -553,13 +553,13 @@ Catch.try(async () => {
       await render_add_key_from_backup();
     }
   } else if(action === 'finalize') {
-    let {tmp_submit_all, tmp_submit_main, key_backup_method} = await Store.get_account(account_email, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
+    let {tmp_submit_all, tmp_submit_main, key_backup_method} = await Store.getAccount(account_email, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
     if(typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
       return $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
     }
     if(typeof key_backup_method !== 'string') {
       alert('Backup has not successfully finished, will retry');
-      window.location.href = Env.url_create('modules/backup.htm', { action: 'setup', account_email });
+      window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', account_email });
       return;
     }
     await finalize_setup({submit_all: tmp_submit_all, submit_main: tmp_submit_main});

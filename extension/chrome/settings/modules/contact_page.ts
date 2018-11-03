@@ -13,7 +13,7 @@ import { Api, R } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
@@ -65,12 +65,12 @@ Catch.try(async () => {
 
   let enable_contact_page = async () => {
     Xss.sanitize_render(S.cached('status'), 'Enabling..' + Ui.spinner('green'));
-    let auth_info = await Store.auth_info();
-    let storage = await Store.get_account(auth_info.account_email!, ['full_name']);
+    let auth_info = await Store.authInfo();
+    let storage = await Store.getAccount(auth_info.account_email!, ['full_name']);
     try {
       let alias = await find_available_alias(auth_info.account_email!);
       let initial = {alias, name: storage.full_name || Str.capitalize(auth_info.account_email!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
-      let response = await Api.fc.account_update(initial);
+      let response = await Api.fc.accountUpdate(initial);
       if (!response.updated) {
         alert('Failed to enable your Contact Page. Please try again');
       }
@@ -92,9 +92,9 @@ Catch.try(async () => {
       Xss.sanitize_render(S.cached('status'), 'Updating ' + Ui.spinner('green'));
       let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
-        update.photo_content = btoa(new_photo_file.as_text());
+        update.photo_content = btoa(new_photo_file.asText());
       }
-      await Api.fc.account_update(update);
+      await Api.fc.accountUpdate(update);
       window.location.reload();
     }
   }));
@@ -109,7 +109,7 @@ Catch.try(async () => {
     let i = 0;
     while(true) {
       alias += (i || '');
-      let response = await Api.fc.link_me(alias);
+      let response = await Api.fc.linkMe(alias);
       if (!response.profile) {
         return alias;
       }
@@ -119,10 +119,10 @@ Catch.try(async () => {
 
   Xss.sanitize_render(S.cached('status'), 'Loading..' + Ui.spinner('green'));
   try {
-    let response = await Api.fc.account_update();
+    let response = await Api.fc.accountUpdate();
     render_fields(response.result);
   } catch (e) {
-    if (Api.err.is_auth_err(e)) {
+    if (Api.err.isAuthErr(e)) {
       Xss.sanitize_render(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
       S.now('subscribe').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
     } else {

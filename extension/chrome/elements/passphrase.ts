@@ -15,7 +15,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'longids', 'type']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'longids', 'type']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   let longids = Env.url_param_require.string(url_params, 'longids').split(',');
@@ -38,7 +38,7 @@ Catch.try(async () => {
   await Ui.passphrase_toggle(['passphrase']);
   $('#passphrase').focus();
 
-  let all_private_keys = await Store.keys_get(account_email);
+  let all_private_keys = await Store.keysGet(account_email);
   let selected_private_keys = all_private_keys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
 
   if (all_private_keys.length > 1) {

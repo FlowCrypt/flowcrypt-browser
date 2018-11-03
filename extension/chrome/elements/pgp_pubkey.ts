@@ -18,7 +18,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
+  let url_params = Env.urlParams(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   let armored_pubkey = Env.url_param_require.string(url_params, 'armored_pubkey');
@@ -61,7 +61,7 @@ Catch.try(async () => {
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       } else {
         if (pubkeys.length === 1) {
-          let email = pubkeys[0].users[0].userId ? Str.parse_email(pubkeys[0].users[0].userId ? pubkeys[0].users[0].userId!.userid : '').email : null;
+          let email = pubkeys[0].users[0].userId ? Str.parseEmail(pubkeys[0].users[0].userId ? pubkeys[0].users[0].userId!.userid : '').email : null;
           if (email) {
             $('.input_email').val(email); // checked above
             $('.email').text(email);
@@ -69,7 +69,7 @@ Catch.try(async () => {
         } else {
           $('.email').text('more than one person');
           $('.input_email').css({display: 'none'});
-          Xss.sanitize_append('.add_contact', Xss.html_escape(' for ' + pubkeys.map(pubkey => Str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.is_email_valid(e)).join(', ')));
+          Xss.sanitize_append('.add_contact', Xss.html_escape(' for ' + pubkeys.map(pubkey => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.isEmailValid(e)).join(', ')));
         }
         set_button_text().catch(Catch.rejection);
       }
@@ -79,7 +79,7 @@ Catch.try(async () => {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
       if (fixed !== url_params.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-        window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
+        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
       } else {
         $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
@@ -91,17 +91,17 @@ Catch.try(async () => {
     if (pubkeys.length > 1) {
       let contacts: Contact[] = [];
       for (let pubkey of pubkeys) {
-        let email_address = Str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
-        if (Str.is_email_valid(email_address)) {
-          contacts.push(Store.db_contact_object(email_address, null, 'pgp', pubkey.armor(), null, false, Date.now()));
+        let email_address = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
+        if (Str.isEmailValid(email_address)) {
+          contacts.push(Store.dbContactObj(email_address, null, 'pgp', pubkey.armor(), null, false, Date.now()));
         }
       }
       await Store.db_contact_save(null, contacts);
       Xss.sanitize_replace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
     } else if (pubkeys.length) {
-      if (Str.is_email_valid($('.input_email').val() as string)) { // text input
-        let contact = Store.db_contact_object($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
+      if (Str.isEmailValid($('.input_email').val() as string)) { // text input
+        let contact = Store.dbContactObj($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
         await Store.db_contact_save(null, contact);
         Xss.sanitize_replace(target, `<span class="good">${Xss.html_escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();

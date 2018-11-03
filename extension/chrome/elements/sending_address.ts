@@ -11,13 +11,13 @@ import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id', 'placement']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'placement']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   let hash = Pgp.hash.sha1;
   let container = $('.emails');
 
-  let storage = await Store.get_account(account_email, ['addresses']);
+  let storage = await Store.getAccount(account_email, ['addresses']);
   let addresses = storage.addresses || [url_params.account_email];
 
   let address_to_html_radio = (a: string) => {

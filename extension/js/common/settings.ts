@@ -17,19 +17,19 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
-  private static is_embedded = Boolean(Env.url_params(['embedded']).embedded);
+  private static is_embedded = Boolean(Env.urlParams(['embedded']).embedded);
   private static ignore_email_aliases = ['nobody@google.com'];
 
   static fetch_account_aliases_from_gmail = async (account_email: string) => {
     let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
     let results = [];
     while (true) {
-      let headers = await Api.gmail.fetch_msgs_based_on_query_and_extract_first_available_header(account_email, query, ['from']);
+      let headers = await Api.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(account_email, query, ['from']);
       if (!headers.from) {
         return results.filter(email => !Value.is(email).in(Settings.ignore_email_aliases));
       }
-      results.push(Str.parse_email(headers.from).email);
-      query += ' -from:"' + Str.parse_email(headers.from).email + '"';
+      results.push(Str.parseEmail(headers.from).email);
+      query += ' -from:"' + Str.parseEmail(headers.from).email + '"';
     }
   }
 
@@ -61,7 +61,7 @@ export class Settings {
   }
 
   static save_attest_request = async (account_email: string, attester: string) => {
-    let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
+    let storage = await Store.getAccount(account_email, ['attests_requested', 'attests_processed']);
     if (typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
     } else if (!Value.is(attester).in(storage.attests_requested)) {
@@ -71,11 +71,11 @@ export class Settings {
       storage.attests_processed = [];
     }
     await Store.set(account_email, storage);
-    return await BrowserMsg.send_await(null, 'attest_requested', {account_email});
+    return await BrowserMsg.sendAwait(null, 'attest_requested', {account_email});
   }
 
   static mark_as_attested = async (account_email: string, attester: string) => {
-    let storage = await Store.get_account(account_email, ['attests_requested', 'attests_processed']);
+    let storage = await Store.getAccount(account_email, ['attests_requested', 'attests_processed']);
     if (typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
     } else if (Value.is(attester).in(storage.attests_requested)) {
@@ -90,7 +90,7 @@ export class Settings {
   }
 
   static submit_pubkeys = async (account_email: string, addresses: string[], pubkey: string) => {
-    let attest_response = await Api.attester.initial_legacy_submit(account_email, pubkey, true);
+    let attest_response = await Api.attester.initialLegacySubmit(account_email, pubkey, true);
     if (!attest_response.attested) {
       await Settings.save_attest_request(account_email, 'CRYPTUP');
     } else { // Attester claims it was previously successfully attested
@@ -98,7 +98,7 @@ export class Settings {
     }
     let aliases = addresses.filter(a => a !== account_email);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => Api.attester.initial_legacy_submit(a, pubkey, false)));
+      await Promise.all(aliases.map(a => Api.attester.initialLegacySubmit(a, pubkey, false)));
     }
   }
 
@@ -120,7 +120,7 @@ export class Settings {
       }
       add_url_text_or_params = null;
     }
-    return Env.url_create(page, page_params) + (add_url_text_or_params || '');
+    return Env.urlCreate(page, page_params) + (add_url_text_or_params || '');
   }
 
   static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
@@ -162,7 +162,7 @@ export class Settings {
     if (!account_email) {
       throw new Error('Missing account_email to reset');
     }
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     if (!Value.is(account_email).in(account_emails)) {
       throw new Error(`"${account_email}" is not a known account_email in "${JSON.stringify(account_emails)}"`);
     }
@@ -197,10 +197,10 @@ export class Settings {
   })
 
   static account_storage_change_email = (old_account_email: string, new_account_email: string) => new Promise(async (resolve, reject) => {
-    if (!old_account_email || !new_account_email || !Str.is_email_valid(new_account_email)) {
+    if (!old_account_email || !new_account_email || !Str.isEmailValid(new_account_email)) {
       throw new Error('Missing or wrong account_email to reset');
     }
-    let account_emails = await Store.account_emails_get();
+    let account_emails = await Store.accountEmailsGet();
     if (!Value.is(old_account_email).in(account_emails)) {
       throw new Error(`"${old_account_email}" is not a known account_email in "${JSON.stringify(account_emails)}"`);
     }
@@ -208,7 +208,7 @@ export class Settings {
     let old_account_email_index_prefix = Store.index(old_account_email, '') as string;
     let new_account_email_index_prefix = Store.index(new_account_email, '') as string;
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    let dest_account_private_keys = await Store.keys_get(new_account_email);
+    let dest_account_private_keys = await Store.keysGet(new_account_email);
     let dest_account_pass_phrases: Dict<string> = {};
     for(let ki of dest_account_private_keys) {
       let pp = await Store.passphrase_get(new_account_email, ki.longid, true);
@@ -227,7 +227,7 @@ export class Settings {
             storage_indexes_to_change.push(key.replace(old_account_email_index_prefix, ''));
           }
         }
-        let old_account_storage = await Store.get_account(old_account_email, storage_indexes_to_change);
+        let old_account_storage = await Store.getAccount(old_account_email, storage_indexes_to_change);
         await Store.set(new_account_email, old_account_storage);
         for (let local_storage_index of Object.keys(localStorage)) {
           if (local_storage_index.indexOf(old_account_email_index_prefix) === 0) {
@@ -260,7 +260,7 @@ export class Settings {
 
   static render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user = (account_email: string, container: string|JQuery<HTMLElement>, orig_prv: OpenPGP.key.Key, passphrase: string, back_url: string): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      let uids = orig_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.is_email_valid(Str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
+      let uids = orig_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid) as string[];
       if (!uids.length) {
         uids.push(account_email);
       }
@@ -301,7 +301,7 @@ export class Settings {
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - orig_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
           await Pgp.key.decrypt(orig_prv, [passphrase]);
           let reformatted;
-          let userIds = uids.map(uid => Str.parse_email(uid)).map(u => ({email: u.email, name: u.name || ''}));
+          let userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({email: u.email, name: u.name || ''}));
           try {
             reformatted = await openpgp.reformatKey({privateKey: orig_prv, passphrase, userIds, keyExpirationTime: expire_seconds}) as {key: OpenPGP.key.Key};
           } catch (e) {
@@ -335,14 +335,14 @@ export class Settings {
   static prompt_to_retry = async (type: 'REQUIRED', e: Error, user_msg: string, retry_callback: () => Promise<void>): Promise<void> => {
     // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
-    if(!Api.err.is_net_err(e)) {
+    if(!Api.err.isNetErr(e)) {
       Catch.handle_exception(e);
     }
     while(await Ui.render_overlay_prompt_await_user_choice({retry: {}}, user_msg) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {
-        if(!Api.err.is_net_err(e2)) {
+        if(!Api.err.isNetErr(e2)) {
           Catch.handle_exception(e2);
         }
       }
@@ -366,16 +366,16 @@ export class Settings {
   }
 
   static new_google_account_authentication_prompt = async (tab_id: string, account_email?: string, omit_read_scope=false) => {
-    let response = await Api.google.auth_popup(account_email || null, tab_id, omit_read_scope);
-    if (response && response.success === true && response.account_email) {
-      await Store.account_emails_add(response.account_email);
-      let storage = await Store.get_account(response.account_email, ['setup_done']);
+    let response = await Api.google.authPopup(account_email || null, tab_id, omit_read_scope);
+    if (response && response.success === true && response.acctEmail) {
+      await Store.account_emails_add(response.acctEmail);
+      let storage = await Store.getAccount(response.acctEmail, ['setup_done']);
       if (storage.setup_done) { // this was just an additional permission
         alert('You\'re all set.');
-        window.location.href = Env.url_create('/chrome/settings/index.htm', { account_email: response.account_email });
+        window.location.href = Env.urlCreate('/chrome/settings/index.htm', { account_email: response.acctEmail });
       } else {
-        await Store.set(response.account_email, {email_provider: 'gmail'});
-        window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: response.account_email });
+        await Store.set(response.acctEmail, {email_provider: 'gmail'});
+        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: response.acctEmail });
       }
     } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
       Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
@@ -387,13 +387,13 @@ export class Settings {
   }
 
   static update_profile_picture_if_missing = async (account_email: string) => {
-    let storage = await Store.get_account(account_email, ['setup_done', 'picture']);
+    let storage = await Store.getAccount(account_email, ['setup_done', 'picture']);
     if(storage.setup_done && !storage.picture) {
       try {
-        let {image} = await Api.google.plus.people_me(account_email);
+        let {image} = await Api.google.plus.peopleMe(account_email);
         await Store.set(account_email, {picture: image.url});
       } catch(e) {
-        if(!Api.err.is_auth_popup_needed(e) && !Api.err.is_auth_err(e) && !Api.err.is_net_err(e)) {
+        if(!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
           Catch.handle_exception(e);
         }
       }

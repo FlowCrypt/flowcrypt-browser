@@ -11,7 +11,7 @@ import { Pgp } from '../../../js/common/pgp.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.url_params(['account_email', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
@@ -89,7 +89,7 @@ Catch.try(async () => {
       if (!armored_pubkey || !email) {
         alert('No public key entered');
       } else if (Pgp.key.fingerprint(armored_pubkey) !== null) {
-        await Store.db_contact_save(null, Store.db_contact_object(email, null, 'pgp', armored_pubkey, null, false, Date.now()));
+        await Store.db_contact_save(null, Store.dbContactObj(email, null, 'pgp', armored_pubkey, null, false, Date.now()));
         await render_contact_list();
       } else {
         alert('Cannot recognize a valid public key, please try again. Let me know at human@flowcrypt.com if you need help.');
@@ -118,7 +118,7 @@ Catch.try(async () => {
     }));
 
     $('a.action_remove').off().click(Ui.event.prevent('double', async (self) => {
-      await Store.db_contact_save(null, Store.db_contact_object($(self).closest('tr').attr('email')!, null, null, null, null, false, null));
+      await Store.db_contact_save(null, Store.dbContactObj($(self).closest('tr').attr('email')!, null, null, null, null, false, null));
       await render_contact_list();
     }));
 

@@ -19,7 +19,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.url_params(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
+  let url_params = Env.urlParams(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   let has_challenge_password = url_params.has_password === true;
@@ -83,7 +83,7 @@ Catch.try(async () => {
       let content_id = a.href.replace(/^cid:/g, '');
       let content = included_atts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${content_id}>`)[0];
       if(content) {
-        img.src = `data:${a.type};base64,${btoa(content.as_text())}`;
+        img.src = `data:${a.type};base64,${btoa(content.asText())}`;
         a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
       } else {
         a.outerHTML = Xss.html_escape(`[broken link: ${a.href}]`); // xss-escaped
@@ -218,7 +218,7 @@ Catch.try(async () => {
         send_resize_message();
       } else {
         Xss.sanitize_prepend($(target).find('.progress'), Ui.spinner('green'));
-        att.set_data(await Att.methods.download_as_uint8(att.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || att.length)));
+        att.setData(await Att.methods.download_as_uint8(att.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || att.length)));
         await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
         await decrypt_and_save_att_to_downloads(att, $(target));
@@ -286,14 +286,14 @@ Catch.try(async () => {
     let n_days = Number($(self).attr('href')!.replace('#', ''));
     Xss.sanitize_render($(self).parent(), 'Updating..' + Ui.spinner('green'));
     try {
-      let r = await Api.fc.message_expiration(admin_codes, n_days);
+      let r = await Api.fc.messageExpiration(admin_codes, n_days);
       if (r.updated) {
         window.location.reload();
       } else {
         throw r;
       }
     } catch (e) {
-      if (Api.err.is_auth_err(e)) {
+      if (Api.err.isAuthErr(e)) {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
         BrowserMsg.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       } else {
@@ -343,7 +343,7 @@ Catch.try(async () => {
         if (att.treat_as() !== 'public_key') {
           renderable_atts.push(att);
         } else {
-          public_keys.push(att.as_text());
+          public_keys.push(att.asText());
         }
       }
       if (renderable_atts.length) {
@@ -381,7 +381,7 @@ Catch.try(async () => {
       } else if (result.longids.need_passphrase.length) {
         await render_passphrase_prompt(result.longids.need_passphrase);
       } else {
-        let [primary_k] = await Store.keys_get(account_email, ['primary']);
+        let [primary_k] = await Store.keysGet(account_email, ['primary']);
         if (!result.longids.chosen && !primary_k) {
           await render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
         } else if (result.error.type === DecryptErrTypes.key_mismatch) {
@@ -416,11 +416,11 @@ Catch.try(async () => {
       missing_or_wrong_passprases[missing_or_wrong_pp_k_longids[i]] = passphrases[i];
       await render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_msg, undefined);
       clearInterval(passphrase_interval);
-      passphrase_interval = Catch.set_interval(check_passphrase_changed, 1000);
+      passphrase_interval = Catch.setHandledInterval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(Ui.event.handle(() => {
         BrowserMsg.send(parent_tab_id, 'passphrase_dialog', { type: 'message', longids: missing_or_wrong_pp_k_longids });
         clearInterval(passphrase_interval);
-        passphrase_interval = Catch.set_interval(check_passphrase_changed, 250);
+        passphrase_interval = Catch.setHandledInterval(check_passphrase_changed, 250);
       }));
     }
   };
@@ -477,12 +477,12 @@ Catch.try(async () => {
     try {
       if (can_read_emails && message && signature === true) {
         render_text('Loading signature...');
-        let result = await Api.gmail.msg_get(account_email, message_id as string, 'raw');
+        let result = await Api.gmail.msgGet(account_email, message_id as string, 'raw');
         if (!result.raw) {
           await decrypt_and_render();
         } else {
           msg_fetched_from_api = 'raw';
-          let mime_message = Str.base64url_decode(result.raw);
+          let mime_message = Str.base64urlDecode(result.raw);
           let parsed = Mime.signed(mime_message);
           if (parsed) {
             signature = parsed.signature;
@@ -503,7 +503,7 @@ Catch.try(async () => {
       } else if (!message && has_challenge_password && short) { // need to fetch the message from FlowCrypt API
         render_text('Loading message...');
         await recover_stored_admin_codes();
-        let m_link_result = await Api.fc.link_message(short as string);
+        let m_link_result = await Api.fc.linkMessage(short as string);
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
           let download_uint_result = await Att.methods.download_as_uint8(m_link_result.url, null);
@@ -516,7 +516,7 @@ Catch.try(async () => {
         if (can_read_emails) {
           render_text('Retrieving message...');
           let format: GmailResponseFormat = (!msg_fetched_from_api) ? 'full' : 'raw';
-          message = await Api.gmail.extract_armored_block(account_email, message_id as string, format);
+          message = await Api.gmail.extractArmoredBlock(account_email, message_id as string, format);
           render_text('Decrypting...');
           msg_fetched_from_api = format;
           await decrypt_and_render();
@@ -527,14 +527,14 @@ Catch.try(async () => {
         }
       }
     } catch (e) {
-      if (Api.err.is_net_err(e)) {
+      if (Api.err.isNetErr(e)) {
         await render_error(`Could not load message due to network error. ${Ui.retry_link()}`);
-      } else if(Api.err.is_auth_popup_needed(e)) {
+      } else if(Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         await render_error(`Could not load message due to missing auth. ${Ui.retry_link()}`);
       } else if (Value.is(Pgp.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
-        window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
-      } else if (Api.err.is_standard_err(e, 'format')) {
+        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
+      } else if (Api.err.isStandardErr(e, 'format')) {
         console.log(e.data);
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + Lang.pgp_block.dont_know_how_open, e.data);
       } else {
@@ -544,8 +544,8 @@ Catch.try(async () => {
     }
   };
 
-  let storage = await Store.get_account(account_email, ['setup_done', 'google_token_scopes']);
-  can_read_emails = Api.gmail.has_scope(storage.google_token_scopes || [], 'read');
+  let storage = await Store.getAccount(account_email, ['setup_done', 'google_token_scopes']);
+  can_read_emails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
   if (storage.setup_done) {
     await initialize();
   } else {

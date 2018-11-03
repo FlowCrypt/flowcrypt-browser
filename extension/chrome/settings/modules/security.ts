@@ -13,19 +13,19 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try( async () => {
 
-  let url_params = Env.url_params(['account_email', 'embedded', 'parent_tab_id']);
+  let url_params = Env.urlParams(['account_email', 'embedded', 'parent_tab_id']);
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   await Ui.passphrase_toggle(['passphrase_entry']);
 
-  let [primary_ki] = await Store.keys_get(account_email, ['primary']);
+  let [primary_ki] = await Store.keysGet(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki, false);
   if (!primary_ki) {
     return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   }
 
-  let storage = await Store.get_account(account_email, ['hide_message_password', 'outgoing_language']);
+  let storage = await Store.getAccount(account_email, ['hide_message_password', 'outgoing_language']);
 
   if (url_params.embedded) {
     $('.change_passhrase_container, .title_container').css('display', 'none');
@@ -35,7 +35,7 @@ Catch.try( async () => {
   let on_default_expire_user_change = async () => {
     Xss.sanitize_render('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Api.fc.account_update({default_message_expire: Number($('.default_message_expire').val())});
+    await Api.fc.accountUpdate({default_message_expire: Number($('.default_message_expire').val())});
     window.location.reload();
   };
 
@@ -95,14 +95,14 @@ Catch.try( async () => {
   if (subscription.active) {
     Xss.sanitize_render('.select_loader_container', Ui.spinner('green'));
     try {
-      let response = await Api.fc.account_update();
+      let response = await Api.fc.accountUpdate();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(on_default_expire_user_change));
     } catch (e) {
-      if (Api.err.is_auth_err(e)) {
+      if (Api.err.isAuthErr(e)) {
         Xss.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
-      } else if (Api.err.is_net_err(e)) {
+      } else if (Api.err.isNetErr(e)) {
         Xss.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
         Catch.handle_exception(e);

@@ -71,14 +71,14 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
   let show_notifications_and_wait_until_account_set_up = async (account_email: string, notifications: Notifications) => {
     let show_setup_needed_notification_if_setup_not_done = true;
     while(true) {
-      let storage = await Store.get_account(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
+      let storage = await Store.getAccount(account_email, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
       if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
         notifications.clear();
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && show_setup_needed_notification_if_setup_not_done && storage.cryptup_enabled !== false) {
         notifications.show(set_up_notification, {
           notification_setup_needed_dismiss: () => Store.set(account_email, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
-          action_open_settings: () => BrowserMsg.send_await(null, 'settings', {account_email}),
+          action_open_settings: () => BrowserMsg.sendAwait(null, 'settings', {account_email}),
           close: () => { show_setup_needed_notification_if_setup_not_done = false; },
         });
       }
@@ -147,7 +147,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
   };
 
   let save_account_email_full_name_if_needed = async (account_email: string) => {
-    let storage = await Store.get_account(account_email, ['full_name']);
+    let storage = await Store.getAccount(account_email, ['full_name']);
     let timeout = 1000;
     if (typeof storage.full_name === 'undefined') {
       while(true) {
@@ -175,7 +175,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
       let {tab_id, notifications, factory, inject} = await initialize_internal_variables(account_email);
       await show_notifications_and_wait_until_account_set_up(account_email, notifications);
       browser_msg_listen(account_email, tab_id, inject, factory, notifications);
-      await BrowserMsg.send_await(null, 'migrate_account', {account_email});
+      await BrowserMsg.sendAwait(null, 'migrate_account', {account_email});
       await webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
     } catch(e) {
       if(e instanceof TabIdRequiredError) {
@@ -232,7 +232,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
     };
 
     (window as ContentScriptWindow).TrySetDestroyableInterval = (code, ms) => {
-      let id = Catch.set_interval(code, ms);
+      let id = Catch.setHandledInterval(code, ms);
       (window as ContentScriptWindow).destroyable_intervals.push(id);
       return id;
     };

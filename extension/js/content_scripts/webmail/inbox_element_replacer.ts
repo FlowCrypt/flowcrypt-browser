@@ -88,8 +88,8 @@ export class InboxElementReplacer implements WebmailElementReplacer {
         if (msg_id) {
           if (this.can_read_emails) {
             Xss.sanitize_prepend(new_pgp_msgs, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
-            Api.gmail.msg_get(this.account_email, msg_id, 'full').then(msg => {
-              this.process_atts(msg_id!, msg_el, Api.gmail.find_atts(msg), atts_container); // message_id checked right above
+            Api.gmail.msgGet(this.account_email, msg_id, 'full').then(msg => {
+              this.process_atts(msg_id!, msg_el, Api.gmail.findAtts(msg), atts_container); // message_id checked right above
             }, () => $(new_pgp_msgs).find('.attachment_loader').text('Failed to load'));
           } else {
             let status_msg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
@@ -218,7 +218,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
 
   private get_conversation_params = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
     let thread_id = this.dom_extract_thread_id(conversation_root_element);
-    let headers = Api.common.reply_correspondents(this.account_email, this.addresses, this.dom_extract_sender_email(conversation_root_element) || '', this.dom_extract_recipients(conversation_root_element));
+    let headers = Api.common.replyCorrespondents(this.account_email, this.addresses, this.dom_extract_sender_email(conversation_root_element) || '', this.dom_extract_recipients(conversation_root_element));
     return {
       subject: this.dom_extract_subject(conversation_root_element),
       reply_to: headers.to,
