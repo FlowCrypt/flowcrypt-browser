@@ -168,7 +168,7 @@ Catch.try(async () => {
       } else if (encrypted_a && encrypted_a.hasData()) { // when encrypted content was already downloaded
         await decrypt_and_save_att_to_downloads(encrypted_a);
       } else if (encrypted_a && encrypted_a.id && encrypted_a.msgId) { // gmail attachment_id
-        let att = await Api.gmail.att_get(account_email, encrypted_a.msgId, encrypted_a.id, render_progress);
+        let att = await Api.gmail.attGet(account_email, encrypted_a.msgId, encrypted_a.id, render_progress);
         encrypted_a.setData(att.data);
         await decrypt_and_save_att_to_downloads(encrypted_a!);
       } else if (encrypted_a && encrypted_a.url) { // gneneral url to download attachment
@@ -214,7 +214,7 @@ Catch.try(async () => {
   let process_as_a_public_key_and_hide_att_if_appropriate = async () => {
     if (encrypted_a && encrypted_a.msgId && encrypted_a.id && encrypted_a.treatAs() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
-      let att = await Api.gmail.att_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
+      let att = await Api.gmail.attGet(account_email, url_params.message_id as string, url_params.attachment_id as string);
       let result = await Pgp.msg.decrypt(account_email, att.data);
       if (result.success && result.content.text) {
         let openpgp_type = Pgp.msg.type(result.content.text);

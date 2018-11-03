@@ -9,23 +9,23 @@ import { Notifications, NotificationWithHandlers } from '../../common/notificati
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError } from '../../common/extension.js';
 import { Ui, XssSafeFactory, PassphraseDialogType, WebMailName, WebmailVariantString } from '../../common/browser.js';
 
-export type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString};
+export type WebmailVariantObject = {new_data_layer: null|boolean, newUi: null|boolean, email: null|string, gmailVariant: WebmailVariantString};
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
-  get_user_account_email: () => string|undefined;
-  get_user_full_name: () => string|undefined;
-  get_replacer: () => WebmailElementReplacer;
+  getUserAccountEmail: () => string|undefined;
+  getUserFullName: () => string|undefined;
+  getReplacer: () => WebmailElementReplacer;
   start: (account_email: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: () => void) => Promise<void>;
 };
 export interface WebmailElementReplacer {
   everything: () => void;
-  set_reply_box_editable: () => void;
-  reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void;
-  scroll_to_bottom_of_conversation: () => void;
+  setReplyBoxEditable: () => void;
+  reinsertReplyBox: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void;
+  scrollToBottomOfConvo: () => void;
 }
 
-export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInfo) => {
+export let contentScriptSetupIfVacant = async (webmail_specific: WebmailSpecificInfo) => {
 
   let set_up_notification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
   let was_destroyed = false;
@@ -35,7 +35,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
     let account_email_interval = 1000;
     let webmails = await Env.webmails();
     while(true) {
-      let account_email = webmail_specific.get_user_account_email();
+      let account_email = webmail_specific.getUserAccountEmail();
       if (typeof account_email !== 'undefined' && Catch.version()) {
         (window as ContentScriptWindow).account_email_global = account_email;
         if (Value.is(webmail_specific.name).in(webmails)) {
@@ -100,7 +100,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
       close_reply_message: (data: {frame_id: string}) => {
         $('iframe#' + data.frame_id).remove();
       },
-      reinsert_reply_box: (data: {subject: string, my_email: string, their_email: string[], thread_id:string}) => webmail_specific.get_replacer().reinsert_reply_box(data.subject, data.my_email, data.their_email, data.thread_id),
+      reinsert_reply_box: (data: {subject: string, my_email: string, their_email: string[], thread_id:string}) => webmail_specific.getReplacer().reinsertReplyBox(data.subject, data.my_email, data.their_email, data.thread_id),
       render_public_keys: (data: {public_keys: string[], after_frame_id: string, traverse_up?: number}) => {
         let traverse_up_levels = data.traverse_up as number || 0;
         let append_after = $('iframe#' + data.after_frame_id);
@@ -114,7 +114,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
       close_dialog: () => {
         $('#cryptup_dialog').remove();
       },
-      scroll_to_bottom_of_conversation: () => webmail_specific.get_replacer().scroll_to_bottom_of_conversation(),
+      scroll_to_bottom_of_conversation: () => webmail_specific.getReplacer().scrollToBottomOfConvo(),
       passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
         if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
@@ -151,7 +151,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
     let timeout = 1000;
     if (typeof storage.full_name === 'undefined') {
       while(true) {
-        let full_name = webmail_specific.get_user_full_name();
+        let full_name = webmail_specific.getUserFullName();
         if(full_name) {
           await Store.set(account_email, {full_name});
           return;

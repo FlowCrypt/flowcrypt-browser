@@ -2,6 +2,8 @@
 
 'use strict';
 
+// todo - a few things are duplicated here, refactor
+
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
 import { Catch, Str, Value, Env } from '../../common/common.js';
@@ -10,37 +12,37 @@ import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { InboxElementReplacer } from './inbox_element_replacer.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
-import { content_script_setup_if_vacant, WebmailVariantObject } from './setup_webmail_content_script.js';
+import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { Api } from '../../common/api.js';
 import { ContentScriptWindow, FcWindow } from '../../common/extension.js';
 import { XssSafeFactory } from '../../common/browser.js';
 
 Catch.try(async () => {
 
-  let gmail_webmail_startup = async () => {
-    const replace_pgp_elements_interval_ms = 1000;
-    let replace_pgp_elements_interval: number;
+  let gmailWebmailStartup = async () => {
+    const replacePgElsIntervalMs = 1000;
+    let replacePgpElsInterval: number;
     let replacer: GmailElementReplacer;
-    let host_page_info: WebmailVariantObject;
+    let hostPageInfo: WebmailVariantObject;
 
-    let get_user_account_email = (): undefined|string => {
+    let getUserAccountEmail = (): undefined|string => {
       if (window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
-        if (host_page_info.email) {
-          return host_page_info.email;
+        if (hostPageInfo.email) {
+          return hostPageInfo.email;
         }
-        let account_email_loading_match = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
-        if (account_email_loading_match !== null) { // try parse from loading div
-          return account_email_loading_match[0].trim().toLowerCase();
+        let accountEmailLoadingMatch = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
+        if (accountEmailLoadingMatch !== null) { // try parse from loading div
+          return accountEmailLoadingMatch[0].trim().toLowerCase();
         }
-        let email_from_account_dropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
-        if (Str.isEmailValid(email_from_account_dropdown)) {
-          return email_from_account_dropdown;
+        let emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
+        if (Str.isEmailValid(emailFromAccountDropdown)) {
+          return emailFromAccountDropdown;
         }
       }
     };
 
-    let get_insights_from_host_variables = () => {
-      let insights: WebmailVariantObject = {new_data_layer: null, new_ui: null, email: null, gmail_variant: null};
+    let getInsightsFromHostVariables = () => {
+      let insights: WebmailVariantObject = {new_data_layer: null, newUi: null, email: null, gmailVariant: null};
       $('body').append(['<script>', '(function() {', // xss-direct - not sanitized because adding a <script> in intentional here
         'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
         'let e = document.getElementById("FC_VAR_PASS");',
@@ -55,112 +57,112 @@ Catch.try(async () => {
           insights.new_data_layer = false;
         }
         if (extracted[1] === 'true') {
-          insights.new_ui = true;
+          insights.newUi = true;
         } else if (extracted[1] === 'false') {
-          insights.new_ui = false;
+          insights.newUi = false;
         }
         if (Str.isEmailValid(extracted[2])) {
           insights.email = extracted[2].trim().toLowerCase();
         }
-        if (insights.new_data_layer === null && insights.new_ui === null && insights.email === null) {
-          insights.gmail_variant = 'html';
-        } else if (insights.new_ui === false) {
-          insights.gmail_variant = 'standard';
-        } else if (insights.new_ui === true) {
-          insights.gmail_variant = 'new';
+        if (insights.new_data_layer === null && insights.newUi === null && insights.email === null) {
+          insights.gmailVariant = 'html';
+        } else if (insights.newUi === false) {
+          insights.gmailVariant = 'standard';
+        } else if (insights.newUi === true) {
+          insights.gmailVariant = 'new';
         }
       } catch (e) {} // tslint:disable-line:no-empty
       return insights;
     };
 
-    let start = async (account_email: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: () => void) => {
-      hijack_gmail_hotkeys();
-      let storage = await Store.getAccount(account_email, ['addresses', 'google_token_scopes']);
-      let can_read_emails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
+    let start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
+      hijackGmailHotkeys();
+      let storage = await Store.getAccount(acctEmail, ['addresses', 'google_token_scopes']);
+      let canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
       injector.buttons();
-      replacer = new GmailElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, notifications, host_page_info.gmail_variant);
-      await notifications.show_initial(account_email);
+      replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
+      await notifications.showInitial(acctEmail);
       replacer.everything();
-      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
+      replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
         if (typeof (window as FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
-          clearInterval(replace_pgp_elements_interval);
-          notify_murdered();
+          clearInterval(replacePgpElsInterval);
+          notifyMurdered();
         }
-      }, replace_pgp_elements_interval_ms);
+      }, replacePgElsIntervalMs);
     };
 
-    let hijack_gmail_hotkeys = () => {
+    let hijackGmailHotkeys = () => {
       let keys = Env.key_codes();
-      let unsecure_reply_key_shortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
+      let unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
       $(document).keypress(e => {
         Catch.try(() => {
-          let causes_unsecure_reply = Value.is(e.which).in(unsecure_reply_key_shortcuts);
-          if (causes_unsecure_reply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
+          let causesUnsecureReply = Value.is(e.which).in(unsecureReplyKeyShortcuts);
+          if (causesUnsecureReply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
             e.stopImmediatePropagation();
-            replacer.set_reply_box_editable();
+            replacer.setReplyBoxEditable();
           }
         })();
       });
     };
 
-    host_page_info = get_insights_from_host_variables();
-    await content_script_setup_if_vacant({
+    hostPageInfo = getInsightsFromHostVariables();
+    await contentScriptSetupIfVacant({
       name: 'gmail',
-      variant: host_page_info.gmail_variant,
-      get_user_account_email,
-      get_user_full_name: () => $("div.gb_hb div.gb_lb").text() || $("div.gb_Fb.gb_Hb").text(),
-      get_replacer: () => replacer,
+      variant: hostPageInfo.gmailVariant,
+      getUserAccountEmail,
+      getUserFullName: () => $("div.gb_hb div.gb_lb").text() || $("div.gb_Fb.gb_Hb").text(),
+      getReplacer: () => replacer,
       start,
     });
   };
 
-  let inbox_webmail_startup = async () => {
-    const replace_pgp_elements_interval_ms = 1000;
-    let replace_pgp_elements_interval: number;
+  let inboxWebmailStartup = async () => {
+    const replacePgpElementsIntervalMs = 1000;
+    let replacePgpElsInterval: number;
     let replacer: InboxElementReplacer;
-    let full_name = '';
+    let fullName = '';
 
-    let start = async (account_email: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: () => void) => {
-      let storage = await Store.getAccount(account_email, ['addresses', 'google_token_scopes']);
-      let can_read_emails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
+    let start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
+      let storage = await Store.getAccount(acctEmail, ['addresses', 'google_token_scopes']);
+      let canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
       injector.buttons();
-      replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);
-      await notifications.show_initial(account_email);
+      replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, null);
+      await notifications.showInitial(acctEmail);
       replacer.everything();
-      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
+      replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
         if (typeof (window as FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
-          clearInterval(replace_pgp_elements_interval);
-          notify_murdered();
+          clearInterval(replacePgpElsInterval);
+          notifyMurdered();
         }
-      }, replace_pgp_elements_interval_ms);
+      }, replacePgpElementsIntervalMs);
     };
 
-    await content_script_setup_if_vacant({
+    await contentScriptSetupIfVacant({
       name: 'inbox',
       variant: 'standard',
-      get_user_account_email: () => {
+      getUserAccountEmail: () => {
         let creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
         if (creds.length === 2 &&  creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
           let account_email = creds[1].innerText.toLowerCase();
-          full_name =  creds[0].innerText;
-          console.info('Loading for ' + account_email + ' (' + full_name + ')');
+          fullName =  creds[0].innerText;
+          console.info('Loading for ' + account_email + ' (' + fullName + ')');
           return account_email;
         }
       },
-      get_user_full_name: () => full_name,
-      get_replacer: () => replacer,
+      getUserFullName: () => fullName,
+      getReplacer: () => replacer,
       start,
     });
   };
 
   if (window.location.host !== 'inbox.google.com') {
-    await gmail_webmail_startup();
+    await gmailWebmailStartup();
   } else {
-    await inbox_webmail_startup(); // to be deprecated by Google in 2019
+    await inboxWebmailStartup(); // to be deprecated by Google in 2019
   }
 
 })();

@@ -13,180 +13,173 @@ import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 
 export class InboxElementReplacer implements WebmailElementReplacer {
 
-  private recipient_has_pgp: Dict<boolean|null|undefined> = {}; // undefined: never checked or check failed, null: checking now, true: uses, false: doesn't use
   private addresses: string[];
   private factory: XssSafeFactory;
-  private account_email: string;
-  private can_read_emails: boolean;
-  private injector: Injector;
-  private gmail_variant: WebmailVariantString;
+  private acctEmail: string;
+  private canReadEmails: boolean;
+  private msgTextElSel = 'div.b5.xJNT8d';
 
-  private msg_text_el_selector = 'div.b5.xJNT8d';
-
-  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: WebmailVariantString) {
+  constructor(factory: XssSafeFactory, acctEmail: string, addresses: string[], canReadEmails: boolean, injector: Injector, gmailVariant: WebmailVariantString) {
     this.factory = factory;
-    this.account_email = account_email;
+    this.acctEmail = acctEmail;
     this.addresses = addresses;
-    this.can_read_emails = can_read_emails;
-    this.injector = injector;
-    this.gmail_variant = gmail_variant;
+    this.canReadEmails = canReadEmails;
   }
 
   everything = () => {
-    this.replace_armored_blocks();
-    this.replace_standard_reply_box();
-    this.replace_atts();
+    this.replaceArmoredBlocks();
+    this.replaceStandardReplyBox();
+    this.replaceAtts();
   }
 
-  set_reply_box_editable = () => {
+  setReplyBoxEditable = () => {
     throw Error('not implemented');
   }
 
-  reinsert_reply_box = (subject: string, my_email: string, reply_to: string[], thread_id: string) => {
-    let params = { subject, reply_to, addresses: this.addresses, my_email, thread_id, thread_message_id: thread_id };
+  reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
+    let params = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMessageId: threadId };
     $('.reply_message_iframe_container').append(this.factory.embedded_reply(params, false, true)); // xss-safe-factory
   }
 
-  scroll_to_bottom_of_conversation = () => {
+  scrollToBottomOfConvo = () => {
     // not implemented for Google Inbox - which will be deprecated soon
   }
 
-  private replace_armored_blocks = () => {
+  private replaceArmoredBlocks = () => {
     let self = this;
-    $(this.msg_text_el_selector).not('.evaluated').addClass('evaluated').filter(":contains('" + Pgp.armor.headers('null').begin + "')").each((i, msg_el) => { // for each email that contains PGP block
-      let msg_id = self.dom_extract_msg_id(msg_el);
-      let sender_email = self.dom_extract_sender_email(msg_el);
-      let is_outgoing = Value.is(sender_email).in(this.addresses);
-      let replacement_xss_safe = Pgp.armor.replace_blocks(self.factory, msg_el.innerText, msg_id || '', sender_email || '', is_outgoing);  // xss-safe-factory
-      if (typeof replacement_xss_safe !== 'undefined') {
+    $(this.msgTextElSel).not('.evaluated').addClass('evaluated').filter(":contains('" + Pgp.armor.headers('null').begin + "')").each((i, msg_el) => { // for each email that contains PGP block
+      let msgId = self.domExtractMsgId(msg_el);
+      let senderEmail = self.domExtractSenderEmail(msg_el);
+      let isOutgoing = Value.is(senderEmail).in(this.addresses);
+      let replacementXssSafe = Pgp.armor.replace_blocks(self.factory, msg_el.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
+      if (typeof replacementXssSafe !== 'undefined') {
         $(msg_el).parents('.ap').addClass('pgp_message_container');
-        $(msg_el).html(replacement_xss_safe.replace(/^…|…$/g, '').trim()); // xss-safe-factory
+        $(msg_el).html(replacementXssSafe.replace(/^…|…$/g, '').trim()); // xss-safe-factory
       }
     });
   }
 
-  private replace_standard_reply_box = (editable=false, force_replace_even_if_pgp_block_is_not_present=false) => {
+  private replaceStandardReplyBox = (editable=false, forceReplaceEvenIfPgpBlockIsNotPresent=false) => {
     let self = this;
     $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, reply_box) => {
-      let root_element = self.dom_get_conversation_root_el(reply_box);
-      if (root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && force_replace_even_if_pgp_block_is_not_present)) {
-        let iframe_xss_safe = self.factory.embedded_reply(self.get_conversation_params(root_element), editable);
+      let root_element = self.domGetConversationRootEl(reply_box);
+      if (root_element.find('iframe.pgp_block').filter(':visible').length || (root_element.is(':visible') && forceReplaceEvenIfPgpBlockIsNotPresent)) {
+        let iframe_xss_safe = self.factory.embedded_reply(self.getConvoParams(root_element), editable);
         $(reply_box).addClass('reply_message_iframe_container').html(iframe_xss_safe).children(':not(iframe)').css('display', 'none'); // xss-safe-factory
       }
     });
   }
 
-  private replace_atts = () => {
-
-    for(let atts_container_el of $('div.OW').get()) {
-      let atts_container = $(atts_container_el);
-      let new_pgp_msgs = atts_container.children(Att.methods.pgpNamePatterns().map(this.get_att_sel).join(',')).not('.evaluated').addClass('evaluated');
-      if (new_pgp_msgs.length) {
-        let msg_root_container = atts_container.parents('.ap');
-        let msg_el = msg_root_container.find(this.msg_text_el_selector);
-        let msg_id = this.dom_extract_msg_id(msg_el);
-        if (msg_id) {
-          if (this.can_read_emails) {
-            Xss.sanitizePrepend(new_pgp_msgs, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
-            Api.gmail.msgGet(this.account_email, msg_id, 'full').then(msg => {
-              this.process_atts(msg_id!, msg_el, Api.gmail.findAtts(msg), atts_container); // message_id checked right above
-            }, () => $(new_pgp_msgs).find('.attachment_loader').text('Failed to load'));
+  private replaceAtts = () => {
+    for(let attsContainerEl of $('div.OW').get()) {
+      let attsContainer = $(attsContainerEl);
+      let newPgpMsgs = attsContainer.children(Att.methods.pgpNamePatterns().map(this.getAttSel).join(',')).not('.evaluated').addClass('evaluated');
+      if (newPgpMsgs.length) {
+        let msgRootContainer = attsContainer.parents('.ap');
+        let msgEl = msgRootContainer.find(this.msgTextElSel);
+        let msgId = this.domExtractMsgId(msgEl);
+        if (msgId) {
+          if (this.canReadEmails) {
+            Xss.sanitizePrepend(newPgpMsgs, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
+            Api.gmail.msgGet(this.acctEmail, msgId, 'full').then(msg => {
+              this.processAtts(msgId!, msgEl, Api.gmail.findAtts(msg), attsContainer); // message_id checked right above
+            }, () => $(newPgpMsgs).find('.attachment_loader').text('Failed to load'));
           } else {
-            let status_msg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
-            $(new_pgp_msgs).prepend(this.factory.embedded_attachment_status(status_msg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
-              BrowserMsg.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
+            let statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
+            $(newPgpMsgs).prepend(this.factory.embedded_attachment_status(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
+              BrowserMsg.send(null, 'settings', { account_email: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {
-          $(new_pgp_msgs).prepend(this.factory.embedded_attachment_status('Unknown message id')); // xss-safe-factory
+          $(newPgpMsgs).prepend(this.factory.embedded_attachment_status('Unknown message id')); // xss-safe-factory
         }
       }
     }
   }
 
   // todo - mostly the same as gmail/replace.ts
-  private process_atts = (msgId: string, msg_el: JQuery<HTMLElement>, att_metas: Att[], atts_container: JQuery<HTMLElement>|HTMLElement, skip_google_drive=false) => {
-    let sender_email = this.dom_extract_sender_email(msg_el);
-    let is_outgoing = Value.is(sender_email).in(this.addresses);
-    atts_container = $(atts_container);
-    for (let a of att_metas) {
-      let treat_as = a.treatAs();
-      if (treat_as !== 'standard') {
-        let att_sel = (atts_container as JQuery<HTMLElement>).find(this.get_att_sel(a.name)).first();
-        this.hide_att(att_sel, atts_container);
-        if (treat_as === 'encrypted') { // actual encrypted attachment - show it
-          (atts_container as JQuery<HTMLElement>).prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
-        } else if (treat_as === 'message') {
-          msg_el.append(this.factory.embedded_message('', msgId, false, sender_email || '', false)).css('display', 'block'); // xss-safe-factory
-        } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          Api.gmail.att_get(this.account_email, msgId, a.id!).then(downloaded_att => {
-            if (Value.is(Pgp.armor.headers('null').begin).in(downloaded_att.data)) {
-              msg_el.append(this.factory.embedded_pubkey(downloaded_att.data, is_outgoing)); // xss-safe-factory
+  private processAtts = (msgId: string, msgEl: JQuery<HTMLElement>, attMetas: Att[], attsContainer: JQuery<HTMLElement>|HTMLElement, skipGoogleDrive=false) => {
+    let senderEmail = this.domExtractSenderEmail(msgEl);
+    let isOutgoing = Value.is(senderEmail).in(this.addresses);
+    attsContainer = $(attsContainer);
+    for (let a of attMetas) {
+      let treatAs = a.treatAs();
+      if (treatAs !== 'standard') {
+        let attSel = (attsContainer as JQuery<HTMLElement>).find(this.getAttSel(a.name)).first();
+        this.hide_att(attSel, attsContainer);
+        if (treatAs === 'encrypted') { // actual encrypted attachment - show it
+          (attsContainer as JQuery<HTMLElement>).prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
+        } else if (treatAs === 'message') {
+          msgEl.append(this.factory.embedded_message('', msgId, false, senderEmail || '', false)).css('display', 'block'); // xss-safe-factory
+        } else if (treatAs === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
+          Api.gmail.attGet(this.acctEmail, msgId, a.id!).then(downloadedAtt => {
+            if (Value.is(Pgp.armor.headers('null').begin).in(downloadedAtt.data)) {
+              msgEl.append(this.factory.embedded_pubkey(downloadedAtt.data, isOutgoing)); // xss-safe-factory
             } else {
-              att_sel.css('display', 'block');
-              att_sel.children('.attachment_loader').text('Unknown Public Key Format');
+              attSel.css('display', 'block');
+              attSel.children('.attachment_loader').text('Unknown Public Key Format');
             }
-          }).catch(e => (atts_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
-        } else if (treat_as === 'signature') {
-          let embedded_signed_msg_xss_safe = this.factory.embedded_message(Str.normalize_spaces(msg_el[0].innerText).trim(), msgId, false, sender_email || '', false, true);
-          if (!msg_el.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msg_el.text())) {
-            msg_el.addClass('evaluated');
-            msg_el.html(embedded_signed_msg_xss_safe).css('display', 'block'); // xss-safe-factory
+          }).catch(e => (attsContainer as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
+        } else if (treatAs === 'signature') {
+          let embeddedSignedMsgXssSafe = this.factory.embedded_message(Str.normalizeSpaces(msgEl[0].innerText).trim(), msgId, false, senderEmail || '', false, true);
+          if (!msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text())) {
+            msgEl.addClass('evaluated');
+            msgEl.html(embeddedSignedMsgXssSafe).css('display', 'block'); // xss-safe-factory
           } else {
-            msg_el.append(embedded_signed_msg_xss_safe).css('display', 'block'); // xss-safe-factory
+            msgEl.append(embeddedSignedMsgXssSafe).css('display', 'block'); // xss-safe-factory
           }
         }
       }
     }
-    let not_processed_atts_loaders = atts_container.find('.attachment_loader');
-    if (!skip_google_drive && not_processed_atts_loaders.length && msg_el.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
+    let notProcessedAttsLoaders = attsContainer.find('.attachment_loader');
+    if (!skipGoogleDrive && notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
-      let google_drive_atts: Att[] = [];
-      not_processed_atts_loaders.each((i, loader_element) => {
+      let googleDriveAtts: Att[] = [];
+      notProcessedAttsLoaders.each((i, loaderEl) => {
         try {
-          let meta = $(loader_element).parent().attr('download_url')!.split(':');
-          google_drive_atts.push(new Att({msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted'}));
+          let meta = $(loaderEl).parent().attr('download_url')!.split(':');
+          googleDriveAtts.push(new Att({msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted'}));
         } catch (e) {
           Catch.report(e);
         }
       });
-      this.process_atts(msgId, msg_el, google_drive_atts, atts_container, true);
+      this.processAtts(msgId, msgEl, googleDriveAtts, attsContainer, true);
     }
   }
 
-  private get_att_sel = (file_name_filter: string) => {
-    if (file_name_filter.indexOf('*.') === 0) { // ends with
-      return 'div[title*="' + file_name_filter.substr(1).replace(/@/g, '%40') + '"]';
+  private getAttSel = (fileNameFilter: string) => {
+    if (fileNameFilter.indexOf('*.') === 0) { // ends with
+      return 'div[title*="' + fileNameFilter.substr(1).replace(/@/g, '%40') + '"]';
     } else { // exact name
-      return 'div[title="' + file_name_filter.replace(/@/g, '%40') + '"]';
+      return 'div[title="' + fileNameFilter.replace(/@/g, '%40') + '"]';
     }
   }
 
-  private hide_att = (atachment_element: JQuery<HTMLElement>|HTMLElement, atts_container_sel: JQuery<HTMLElement>|HTMLElement) => {
-    $(atachment_element).css('display', 'none');
-    if (!$(atachment_element).length) {
-      $(atts_container_sel).children('.attachment_loader').text('Missing file info');
+  private hide_att = (attEl: JQuery<HTMLElement>|HTMLElement, attsContainerSel: JQuery<HTMLElement>|HTMLElement) => {
+    $(attEl).css('display', 'none');
+    if (!$(attEl).length) {
+      $(attsContainerSel).children('.attachment_loader').text('Missing file info');
     }
   }
 
-  private dom_get_conversation_root_el = (base_el: HTMLElement) => {
-    return $(base_el).parents('.top-level-item').first();
+  private domGetConversationRootEl = (baseEl: HTMLElement) => {
+    return $(baseEl).parents('.top-level-item').first();
   }
 
-  private dom_extract_sender_email = (base_element: HTMLElement|JQuery<HTMLElement>) => {
-    if ($(base_element).is('.top-level-item')) {
-      return $(base_element).find('.ap').last().find('.fX').attr('email');
+  private domExtractSenderEmail = (baseEl: HTMLElement|JQuery<HTMLElement>) => {
+    if ($(baseEl).is('.top-level-item')) {
+      return $(baseEl).find('.ap').last().find('.fX').attr('email');
     } else {
-      return $(base_element).parents('.ap').find('.fX').attr('email');
+      return $(baseEl).parents('.ap').find('.fX').attr('email');
     }
   }
 
-  private dom_extract_recipients = (base_element: HTMLElement|JQuery<HTMLElement>) => {
+  private domExtractRecipients = (baseEl: HTMLElement|JQuery<HTMLElement>) => {
     let m;
-    if ($(base_element).is('.top-level-item')) {
-      m = $(base_element).find('.ap').last();
+    if ($(baseEl).is('.top-level-item')) {
+      m = $(baseEl).find('.ap').last();
     } else {
-      m = $(base_element).parents('.ap');
+      m = $(baseEl).parents('.ap');
     }
     let recipients: string[] = [];
     m.find('.fX').siblings('span[email]').each((i, recipient_element) => {
@@ -198,34 +191,34 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     return recipients;
   }
 
-  private dom_extract_msg_id = (base_element: HTMLElement|JQuery<HTMLElement>) => {
-    let inbox_msg_id_match = ($(base_element).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
-    if (inbox_msg_id_match) {
-      return Str.int_to_hex(inbox_msg_id_match[0]);
+  private domExtractMsgId = (baseEl: HTMLElement|JQuery<HTMLElement>) => {
+    let inboxMsgIdMatch = ($(baseEl).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
+    if (inboxMsgIdMatch) {
+      return Str.int_to_hex(inboxMsgIdMatch[0]);
     }
   }
 
-  private dom_extract_subject = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
-    return $(conversation_root_element).find('.eo').first().text();
+  private domExtractSubject = (convoRootEl: HTMLElement|JQuery<HTMLElement>) => {
+    return $(convoRootEl).find('.eo').first().text();
   }
 
-  private dom_extract_thread_id = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
-    let inbox_thread_id_match = ($(conversation_root_element).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
-    if (inbox_thread_id_match) {
-      return Str.int_to_hex(inbox_thread_id_match[0]);
+  private domExtractThreadId = (convoRootEl: HTMLElement|JQuery<HTMLElement>) => {
+    let inboxThreadIdMatch = ($(convoRootEl).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
+    if (inboxThreadIdMatch) {
+      return Str.int_to_hex(inboxThreadIdMatch[0]);
     }
   }
 
-  private get_conversation_params = (conversation_root_element: HTMLElement|JQuery<HTMLElement>) => {
-    let thread_id = this.dom_extract_thread_id(conversation_root_element);
-    let headers = Api.common.replyCorrespondents(this.account_email, this.addresses, this.dom_extract_sender_email(conversation_root_element) || '', this.dom_extract_recipients(conversation_root_element));
+  private getConvoParams = (convoRootEl: HTMLElement|JQuery<HTMLElement>) => {
+    let threadId = this.domExtractThreadId(convoRootEl);
+    let headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domExtractSenderEmail(convoRootEl) || '', this.domExtractRecipients(convoRootEl));
     return {
-      subject: this.dom_extract_subject(conversation_root_element),
+      subject: this.domExtractSubject(convoRootEl),
       reply_to: headers.to,
       addresses: this.addresses,
       my_email: headers.from,
-      thread_id,
-      thread_message_id: thread_id ? thread_id : this.dom_extract_msg_id($(conversation_root_element).find('.ap').last().children().first()), // backup
+      threadId,
+      thread_message_id: threadId ? threadId : this.domExtractMsgId($(convoRootEl).find('.ap').last().children().first()), // backup
     };
   }
 

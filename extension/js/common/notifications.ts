@@ -19,7 +19,7 @@ export class Notifications {
     this.tab_id = tab_id;
   }
 
-  show_initial = async (account_email: string) => {
+  showInitial = async (account_email: string) => {
     let account_storage = await Store.getAccount(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
     if (!account_storage.notification_setup_done_seen) {
       await Store.set(account_email, { notification_setup_done_seen: true });

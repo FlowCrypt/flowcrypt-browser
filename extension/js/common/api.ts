@@ -331,12 +331,12 @@ export class Api {
       return Promise.all(message_ids.map(id => Api.gmail.msgGet(acctEmail, id, format)));
     },
     labelsGet: (acctEmail: string): Promise<R.GmailLabels> => Api.internal.apiGmailCall(acctEmail, 'GET', `labels`, {}),
-    att_get: async (account_email: string, message_id: string, att_id: string, progress_callback:ProgressCb|null=null): Promise<R.GmailAtt> => {
+    attGet: async (account_email: string, message_id: string, att_id: string, progress_callback:ProgressCb|null=null): Promise<R.GmailAtt> => {
       let r: R.GmailAtt = await Api.internal.apiGmailCall(account_email, 'GET', `messages/${message_id}/attachments/${att_id}`, {}, {download: progress_callback});
       r.data = Str.base64urlDecode(r.data);
       return r;
     },
-    att_get_chunk: (acctEmail: string, messageId: string, attId: string): Promise<string> => new Promise(async (resolve, reject) => {
+    attGetChunk: (acctEmail: string, messageId: string, attId: string): Promise<string> => new Promise(async (resolve, reject) => {
       let minBytes = 1000;
       let processed = 0;
       let processChunkAndResolve = (chunk: string) => {
@@ -461,7 +461,7 @@ export class Api {
       return internalResults as SendableMsgBody;
     },
     fetchAtts: async (acctEmail: string, atts: Att[]) => {
-      let responses = await Promise.all(atts.map(a => Api.gmail.att_get(acctEmail, a.msgId!, a.id!)));
+      let responses = await Promise.all(atts.map(a => Api.gmail.attGet(acctEmail, a.msgId!, a.id!)));
       for (let i of responses.keys()) {
         atts[i].setData(responses[i].data);
       }

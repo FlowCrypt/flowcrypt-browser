@@ -374,11 +374,11 @@ export class Str {
 
   public static pretty_print = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
 
-  public static normalize_spaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
+  public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
 
   public static normalize_dashes = (str: string) => str.replace(/^—–|—–$/gm, '-----');
 
-  public static normalize = (str: string) => Str.normalize_spaces(Str.normalize_dashes(str));
+  public static normalize = (str: string) => Str.normalizeSpaces(Str.normalize_dashes(str));
 
   public static number_format = (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
     let nStr: string = number + '';
