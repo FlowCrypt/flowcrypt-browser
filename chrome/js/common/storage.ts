@@ -10,9 +10,16 @@ import { SubscriptionInfo } from './api.js';
 import { BrowserMsg } from './extension.js';
 import { Product, PaymentMethod, ProductLevel } from './account.js';
 
+type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
+type StoredAuthInfo = {account_email: string|null, uuid: string|null};
+type StoredReplyDraftMeta = string; // draft_id
+type StoredComposeDraftMeta = {recipients: string[], subject: string, date: number};
+type StoredAdminCode = {date: number, codes: string[]};
+type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
+
 export type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
-export interface Contact {
+export type Contact = {
   email: string;
   name: string | null;
   pubkey: string | null;
@@ -26,9 +33,8 @@ export interface Contact {
   pending_lookup: number;
   last_use: number | null;
   date: number | null; // todo - should be removed. email provider search seems to return this?
-}
-
-export interface KeyInfo {
+};
+export type KeyInfo = {
   public: string;
   private: string;
   fingerprint: string;
@@ -36,18 +42,10 @@ export interface KeyInfo {
   primary: boolean;
   decrypted?: OpenPGP.key.Key;
   keywords: string;
-}
-
+};
 export type StorageType = 'session'|'local';
-
-export interface SubscriptionAttempt extends Product {
-    source: string|null;
-}
-
 export type FlatTypes = null|undefined|number|string|boolean;
-type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
-
-export interface ContactUpdate {
+export type ContactUpdate = {
   email?: string;
   name?: string | null;
   pubkey?: string;
@@ -61,13 +59,13 @@ export interface ContactUpdate {
   pending_lookup?: number;
   last_use?: number | null;
   date?: number | null; // todo - should be removed. email provider search seems to return this?
-}
-type StoredAuthInfo = {account_email: string|null, uuid: string|null};
-type StoredReplyDraftMeta = string; // draft_id
-type StoredComposeDraftMeta = {recipients: string[], subject: string, date: number};
-type StoredAdminCode = {date: number, codes: string[]};
-type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
+};
 export type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
+export type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
+
+export interface SubscriptionAttempt extends Product {
+  source: string|null;
+}
 
 interface RawStore {
   [key: string]: Storable;
@@ -75,8 +73,6 @@ interface RawStore {
 
 export interface BaseStore extends RawStore {
 }
-
-export type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 
 export interface GlobalStore extends BaseStore {
   version?: number|null;

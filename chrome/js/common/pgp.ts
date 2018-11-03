@@ -9,63 +9,21 @@ import { ReplaceableMessageBlockType, MessageBlock, MessageBlockType } from './m
 
 declare const openpgp: typeof OpenPGP;
 
-// type EncryptDecryptOutputFormat = 'utf8'|'binary';
-
-export interface MessageVerifyResult {
-  signer: string|null;
-  contact: Contact|null;
-  match: boolean|null;
-  error: null|string;
-}
-
-interface InternalSortedKeysForDecrypt {
-  verification_contacts: Contact[];
-  for_verification: OpenPGP.key.Key[];
-  encrypted_for: string[];
-  signed_by: string[];
-  prv_matching: KeyInfo[];
-  prv_for_decrypt: KeyInfo[];
-  prv_for_decrypt_decrypted: KeyInfo[];
-  prv_for_decrypt_without_passphrases: KeyInfo[];
-}
-
+type InternalSortedKeysForDecrypt = { verification_contacts: Contact[]; for_verification: OpenPGP.key.Key[]; encrypted_for: string[]; signed_by: string[];
+  prv_matching: KeyInfo[]; prv_for_decrypt: KeyInfo[]; prv_for_decrypt_decrypted: KeyInfo[]; prv_for_decrypt_without_passphrases: KeyInfo[]; };
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
+type DecrytSuccess$content = { blob?: ConsummableBrowserBlob; text?: string; uint8?: Uint8Array; filename: string|null; };
+type DecryptSuccess = { success: true; content: DecrytSuccess$content, signature: MessageVerifyResult|null; is_encrypted: boolean|null; };
+type DecryptError$error = { type: DecryptErrorTypes; error?: string; };
+type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; need_passphrase: string[]; };
+type DecryptError = { success: false; error: DecryptError$error; longids: DecryptError$longids;
+  is_encrypted: null|boolean; signature: null; message?: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage; };
+type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
+type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition; };
 
-interface DecryptSuccess {
-  success: true;
-  content: {
-    blob?: ConsummableBrowserBlob;
-    text?: string;
-    uint8?: Uint8Array;
-    filename: string|null;
-  };
-  signature: MessageVerifyResult|null;
-  is_encrypted: boolean|null;
-}
-
-type DecryptError$error = {
-type: DecryptErrorTypes;
-error?: string;
-};
-
-type DecryptError$longids = {
-message: string[];
-matching: string[];
-chosen: string[];
-need_passphrase: string[];
-};
-
-interface DecryptError {
-  success: false;
-  error: DecryptError$error;
-  longids: DecryptError$longids;
-  is_encrypted: null|boolean;
-  signature: null;
-  message?: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage;
-}
+export type MessageVerifyResult = { signer: string|null; contact: Contact|null; match: boolean|null; error: null|string; };
 export type DecryptResult = DecryptSuccess|DecryptError;
 export type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
-
 export enum DecryptErrorTypes {
   key_mismatch = 'key_mismatch',
   use_password = 'use_password',
@@ -75,10 +33,6 @@ export enum DecryptErrorTypes {
   format = 'format',
   other = 'other',
 }
-type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
-type CryptoArmorHeaderDefinitions = {
-  readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition;
-};
 
 export class Pgp {
 

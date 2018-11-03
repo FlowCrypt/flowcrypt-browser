@@ -3,7 +3,6 @@
 'use strict';
 
 import { Catch } from './common.js';
-
 import { ContentScriptWindow } from './extension.js';
 import { Ui, XssSafeFactory, SelectorCache, WebMailName, WebmailVariantString } from './browser.js';
 

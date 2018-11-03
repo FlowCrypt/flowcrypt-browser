@@ -7,10 +7,19 @@ import { Ui } from './browser.js';
 import { Attachment } from './attachment.js';
 
 type Codec = {encode: (text: string, mode: 'fatal'|'html') => string, decode: (text: string) => string, labels: string[], version: string};
-export type AnyThirdPartyLibrary = any;
+
 type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
 type BgExecRequest = {path: string, args: any[]};
 type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
+type BrowserMessageRequest = null|Dict<any>;
+type BrowserMessageResponse = any|Dict<any>;
+
+export type AnyThirdPartyLibrary = any;
+export type BrowserMessageRequestDb = {f: string, args: any[]};
+export type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
+export type BrowserMessageRequestSessionGet = {account_email: string, key: string};
+export type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: (r?: any) => void) => void|Promise<void>;
+
 export interface BrowserWidnow extends Window {
   XMLHttpRequest: any;
   onunhandledrejection: (e: any) => void;
@@ -42,14 +51,9 @@ export interface ContentScriptWindow extends FcWindow {
   destroy: () => void;
   vacant: () => boolean;
 }
-export interface FlowCryptManifest extends chrome.runtime.Manifest { oauth2: {
-  client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]}; }
-export type BrowserMessageRequestDb = {f: string, args: any[]};
-export type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
-export type BrowserMessageRequestSessionGet = {account_email: string, key: string};
-type BrowserMessageRequest = null|Dict<any>;
-type BrowserMessageResponse = any|Dict<any>;
-export type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: (r?: any) => void) => void|Promise<void>;
+export interface FlowCryptManifest extends chrome.runtime.Manifest {
+  oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[] };
+}
 
 export class TabIdRequiredError extends Error {}
 

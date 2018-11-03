@@ -15,54 +15,37 @@ import { PaymentMethod } from './account.js';
 declare const openpgp: typeof OpenPGP;
 
 type Thrown = Error|StandardError|any;
-type ParsedAttest = {
-  success: boolean;
-  content: {
-    [key: string]: string|undefined;
-    action?: string;
-    attester?: string;
-    email_hash?: string;
-    fingerprint?: string;
-    fingerprint_old?: string;
-    random?: string;
-  };
-  text: string|null;
-  error: string|null;
-};
-
-export type FlatHeaders = Dict<string>;
-export type RichHeaders = Dict<string|string[]>;
-export interface SendableMessageBody { [key: string]: string|undefined; 'text/plain'?: string; 'text/html'?: string; }
-export interface SendableMessage { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMessageBody; attachments: Attachment[];
-  thread: string|null; }
-export interface StandardError { code: number|null; message: string; internal: string|null; data?: string; stack?: string; }
-interface StandardErrorResponse { error: StandardError; }
-
+type ParsedAttest$content = { [key: string]: string|undefined; action?: string; attester?: string; email_hash?: string;
+  fingerprint?: string; fingerprint_old?: string; random?: string; };
+type ParsedAttest = { success: boolean; content: ParsedAttest$content; text: string|null; error: string|null; };
 type FcAuthToken = {account: string, token: string};
 type FcAuthMethods = 'uuid'|FcAuthToken|null;
-
 type GoogleAuthTokenInfo = {issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline'};
 type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
-export type AuthRequest = {tab_id: string, account_email: string|null, scopes: string[], message_id?: string, auth_responder_id: string, omit_read_scope?: boolean};
 type GoogleAuthWindowResult$result = 'Success'|'Denied'|'Error'|'Closed';
 type GoogleAuthWindowResult = {result: GoogleAuthWindowResult$result, state: AuthRequest, params: {code: string, error: string}};
 type AuthResultSuccess = {success: true, result: 'Success', account_email: string, message_id?: string};
 type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, account_email: string|null, message_id?: string, error?: string};
 type AuthResult = AuthResultSuccess|AuthResultError;
-// type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
-
 type SubscriptionLevel = 'pro'|null;
 type RequestFormat = 'JSON'|'FORM';
 type ResponseFormat = 'json';
 type RequestMethod = 'POST'|'GET'|'DELETE'|'PUT';
 type ProviderContactsResults = {new: Contact[], all: Contact[]};
 
+export type FlatHeaders = Dict<string>;
+export type RichHeaders = Dict<string|string[]>;
+export type AuthRequest = {tab_id: string, account_email: string|null, scopes: string[], message_id?: string, auth_responder_id: string, omit_read_scope?: boolean};
 export type ProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
 export type ProgressCallbacks = {upload?: ProgressCallback|null, download?: ProgressCallback|null};
 export type GmailResponseFormat = 'raw'|'full'|'metadata';
 export type ProviderContactsQuery = {substring: string};
-export interface SubscriptionInfo { active: boolean|null; method: PaymentMethod|null; level: SubscriptionLevel; expire: string|null; }
-export interface PubkeySearchResult { email: string; pubkey: string|null; attested: boolean|null; has_cryptup: boolean|null; longid: string|null; }
+export type SendableMessageBody = { [key: string]: string|undefined; 'text/plain'?: string; 'text/html'?: string; };
+export type SendableMessage = { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMessageBody; attachments: Attachment[];
+  thread: string|null; };
+export type StandardError = { code: number|null; message: string; internal: string|null; data?: string; stack?: string; };
+export type SubscriptionInfo = { active: boolean|null; method: PaymentMethod|null; level: SubscriptionLevel; expire: string|null; };
+export type PubkeySearchResult = { email: string; pubkey: string|null; attested: boolean|null; has_cryptup: boolean|null; longid: string|null; };
 
 export namespace R { // responses
 

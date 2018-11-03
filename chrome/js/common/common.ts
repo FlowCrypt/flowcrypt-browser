@@ -13,11 +13,11 @@ import { StandardError } from './api.js';
 
 declare const openpgp: typeof OpenPGP;
 
-export interface Dict<T> { [key: string]: T; }
+export type Dict<T> = { [key: string]: T; };
 export type UrlParam = string|number|null|undefined|boolean|string[];
 export type UrlParams = Dict<UrlParam>;
-export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
 export type EmailProvider = 'gmail';
+export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
 
 export class UnreportableError extends Error {}
 

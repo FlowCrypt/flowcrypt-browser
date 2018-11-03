@@ -9,12 +9,11 @@ import { Api } from './api.js';
 
 type AccountEventHandlersOptional = {
   render_status_text?: (text: string, show_spinner?: boolean) => void;
-  find_matching_tokens_from_email?: (account_email: string, uuid: string) => Promise<string[]|null>;
-};
+  find_matching_tokens_from_email?: (account_email: string, uuid: string) => Promise<string[]|null>; };
 type AccountEventHandlers = {
   render_status_text: (text: string, show_spinner?: boolean) => void;
-  find_matching_tokens_from_email: (account_email: string, uuid: string) => Promise<string[]|null>;
-};
+  find_matching_tokens_from_email: (account_email: string, uuid: string) => Promise<string[]|null>; };
+
 export type PaymentMethod = 'stripe'|'group'|'trial';
 export type ProductLevel = 'pro'|null;
 export type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};

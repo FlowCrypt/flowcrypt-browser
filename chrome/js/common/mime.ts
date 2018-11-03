@@ -8,37 +8,15 @@ import { Pgp } from './pgp.js';
 import { Attachment } from './attachment.js';
 import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension.js';
 
-interface MimeContent {
-  headers: FlatHeaders;
-  attachments: Attachment[];
-  signature: string|undefined;
-  html: string|undefined;
-  text: string|undefined;
-}
-interface MimeParserNode {
-path: string[];
-headers: {
-    [key: string]: {value: string}[];
-};
-rawContent: string;
-content: Uint8Array;
-appendChild: (child: MimeParserNode) => void;
-contentTransferEncoding: {value: string};
-charset?: string;
-}
+type MimeContent = { headers: FlatHeaders; attachments: Attachment[]; signature: string|undefined; html: string|undefined; text: string|undefined; };
+type MimeParserNode = { path: string[]; headers: { [key: string]: {value: string}[]; }; rawContent: string; content: Uint8Array;
+  appendChild: (child: MimeParserNode) => void; contentTransferEncoding: {value: string}; charset?: string; };
+
 export type KeyBlockType = 'public_key'|'private_key';
 export type ReplaceableMessageBlockType = KeyBlockType|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
 export type MessageBlockType = 'text'|ReplaceableMessageBlockType;
-export interface MessageBlock {
-  type: MessageBlockType;
-  content: string;
-  complete: boolean;
-  signature?: string;
-}
-export interface FromToHeaders {
-  from: string;
-  to: string[];
-}
+export type MessageBlock = { type: MessageBlockType; content: string; complete: boolean; signature?: string; };
+export type FromToHeaders = { from: string; to: string[]; };
 
 export class Mime {
 

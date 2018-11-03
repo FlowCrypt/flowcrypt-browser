@@ -7,22 +7,11 @@ import { ProgressCallback } from './api.js';
 import { Xss } from './browser.js';
 import { KeyInfo } from './storage.js';
 
-export type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
-
 type Attachment$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
+type AttachmentMeta = { data?: string|Uint8Array|null; type?:string|null; name?: string|null; length?: number|null; url?: string|null;
+  inline?: boolean|null; id?: string|null; message_id?: string|null; treat_as?: Attachment$treat_as; cid?: string|null; };
 
-type AttachmentMeta = {
-  data?: string|Uint8Array|null;
-  type?:string|null;
-  name?: string|null;
-  length?: number|null;
-  url?: string|null;
-  inline?: boolean|null;
-  id?: string|null;
-  message_id?: string|null;
-  treat_as?: Attachment$treat_as;
-  cid?: string|null;
-};
+export type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
 
 export class Attachment {
 

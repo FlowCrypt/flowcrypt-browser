@@ -15,32 +15,19 @@ import { MessageBlock, KeyBlockType } from './mime.js';
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
 
-export type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
-export interface Challenge {
-  question?: string;
-  answer: string;
-}
-export type WebmailVariantString = null|'html'|'standard'|'new';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
-export type PassphraseDialogType = 'embedded'|'sign'|'attest';
-export type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
 type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
 type NamedSelectors = Dict<JQuery<HTMLElement>>;
-export type SelectorCache = {
-    cached: (name: string) => JQuery<HTMLElement>;
-    now: (name: string) => JQuery<HTMLElement>;
-    selector: (name: string) => string;
-};
+type KeyImportUiCheckResult = { normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
+  encrypted: OpenPGP.key.Key; };
 
-type KeyImportUiCheckResult = {
-  normalized: string;
-  longid: string;
-  passphrase: string;
-  fingerprint: string;
-  decrypted: OpenPGP.key.Key;
-  encrypted: OpenPGP.key.Key;
-};
+export type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
+export type Challenge = { question?: string; answer: string; };
+export type WebmailVariantString = null|'html'|'standard'|'new';
+export type PassphraseDialogType = 'embedded'|'sign'|'attest';
+export type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
+export type SelectorCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; selector: (name: string) => string; };
 
 export class Ui {
 
