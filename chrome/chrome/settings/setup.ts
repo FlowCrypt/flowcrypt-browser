@@ -8,11 +8,22 @@ import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { KeyImportUI, UserAlert, KeyCanBeFixed } from '../../js/common/key_import.js';
 import { Settings } from './settings.js';
-import * as t from '../../types/common';
 import { Api, R } from '../../js/common/api.js';
 import { Pgp } from '../../js/common/pgp.js';
 
 declare const openpgp: typeof OpenPGP;
+
+interface SetupOptions {
+  full_name: string;
+  passphrase: string;
+  passphrase_save: boolean;
+  submit_main: boolean;
+  submit_all: boolean;
+  setup_simple: boolean;
+  key_backup_prompt: number|boolean;
+  recovered?: boolean;
+  is_newly_created_key: boolean;
+}
 
 Catch.try(async () => {
 
@@ -212,7 +223,7 @@ Catch.try(async () => {
     }
   };
 
-  let pre_finalize_setup = async (options: t.SetupOptions): Promise<void> => {
+  let pre_finalize_setup = async (options: SetupOptions): Promise<void> => {
     await Store.set(account_email, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
@@ -238,7 +249,7 @@ Catch.try(async () => {
     await Store.remove(account_email, ['tmp_submit_main', 'tmp_submit_all']);
   };
 
-  let save_keys = async (prvs: OpenPGP.key.Key[], options: t.SetupOptions) => {
+  let save_keys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (let prv of prvs) {
       let longid = Pgp.key.longid(prv);
       if (!longid) {
@@ -255,7 +266,7 @@ Catch.try(async () => {
     await Store.db_contact_save(null, my_own_email_addresses_as_contacts);
   };
 
-  let create_save_key_pair = async (options: t.SetupOptions) => {
+  let create_save_key_pair = async (options: SetupOptions) => {
     Settings.forbid_and_refresh_page_if_cannot('CREATE_KEYS', rules);
     try {
       let key = await Pgp.key.create([{ name: options.full_name, email: account_email }], 4096, options.passphrase); // todo - add all addresses?
@@ -307,7 +318,7 @@ Catch.try(async () => {
         }
       }
       if (matching_keys.length) {
-        let options: t.SetupOptions = {
+        let options: SetupOptions = {
           full_name: '',
           submit_main: false, // todo - reevaluate submitting when recovering
           submit_all: false,
@@ -428,7 +439,7 @@ Catch.try(async () => {
     }
   }));
 
-  let render_compatibility_fix_block_and_finalize_setup = async (original_prv: OpenPGP.key.Key, options: t.SetupOptions) => {
+  let render_compatibility_fix_block_and_finalize_setup = async (original_prv: OpenPGP.key.Key, options: SetupOptions) => {
     display_block('step_3_compatibility_fix');
     let fixed_prv;
     try {
@@ -478,7 +489,7 @@ Catch.try(async () => {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitize_render('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
       let userinfo = await get_and_save_google_user_info();
-      let options: t.SetupOptions = {
+      let options: SetupOptions = {
         full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val() as string,
         passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),

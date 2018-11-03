@@ -86,19 +86,6 @@ type AttachmentMeta = {
   cid?: string|null;
 };
 
-// todo Setup
-interface SetupOptions {
-    full_name: string;
-    passphrase: string;
-    passphrase_save: boolean;
-    submit_main: boolean;
-    submit_all: boolean;
-    setup_simple: boolean;
-    key_backup_prompt: number|boolean;
-    recovered?: boolean;
-    is_newly_created_key: boolean;
-}
-
 interface FromToHeaders {
     from: string;
     to: string[];
