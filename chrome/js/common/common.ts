@@ -8,7 +8,7 @@ import * as DOMPurify from 'dompurify';
 import {Store, FlatTypes, Serializable, KeyInfo} from './storage.js';
 import {XssSafeFactory} from './factory.js';
 import * as t from '../../types/common';
-import { Api, ProgressCallback } from './api.js';
+import { Api, ProgressCallback, SendableMessageBody, RichHeaders, FlatHeaders, StandardError } from './api.js';
 import { Pgp } from './pgp.js';
 
 declare let $_HOST_html_to_text: (html: string) => string;
@@ -1157,7 +1157,7 @@ export class Mime {
 
   public static decode = (mime_message: string): Promise<t.MimeContent> => {
     return new Promise(async resolve => {
-      let mime_content = {attachments: [], headers: {} as t.FlatHeaders, text: undefined, html: undefined, signature: undefined} as t.MimeContent;
+      let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as t.MimeContent;
       try {
         let MimeParser = (window as t.BrowserWidnow)['emailjs-mime-parser'];
         let parser = new MimeParser();
@@ -1205,7 +1205,7 @@ export class Mime {
     });
   }
 
-  public static encode = async (body:string|t.SendableMessageBody, headers: t.RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
+  public static encode = async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
     let MimeBuilder = (window as t.BrowserWidnow)['emailjs-mime-builder'];
     let root_node = new MimeBuilder('multipart/mixed');
     for (let key of Object.keys(headers)) {
@@ -1460,7 +1460,7 @@ export class Catch {
     Catch.handle_error(exception.message, window.location.href, line, col, exception, true, Catch.RUNTIME.version, Catch.RUNTIME.environment);
   }
 
-  public static report = (name: string, details:Error|Serializable|t.StandardError|PromiseRejectionEvent=undefined) => {
+  public static report = (name: string, details:Error|Serializable|StandardError|PromiseRejectionEvent=undefined) => {
     try {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
@@ -1570,14 +1570,14 @@ export class Catch {
     return ''; // make ts happy - this will never happen
   }
 
-  public static rejection = (e: PromiseRejectionEvent|t.StandardError|Error) => {
+  public static rejection = (e: PromiseRejectionEvent|StandardError|Error) => {
     if(!(e instanceof UnreportableError)) {
       if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
         Catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
-        if (typeof e === 'object' && typeof (e as t.StandardError).stack === 'string' && (e as t.StandardError).stack) { // thrown object that has a stack attached
-          let stack = (e as t.StandardError).stack;
-          delete (e as t.StandardError).stack;
+        if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
+          let stack = (e as StandardError).stack;
+          delete (e as StandardError).stack;
           Catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
         } else {
           Catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled

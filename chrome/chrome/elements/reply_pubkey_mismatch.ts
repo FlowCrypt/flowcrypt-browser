@@ -6,7 +6,7 @@ import { Store, Subscription, Serializable } from './../../js/common/storage.js'
 import { Catch, Ui, Env, BrowserMsg, Xss, Attachment } from './../../js/common/common.js';
 import * as t from './../../types/common';
 import { Composer } from './../../js/common/composer.js';
-import { Api } from '../../js/common/api.js';
+import { Api, FlatHeaders } from '../../js/common/api.js';
 
 Catch.try(async () => {
 
@@ -19,7 +19,7 @@ Catch.try(async () => {
   let [primary_k] = await Store.keys_get(account_email, ['primary']);
 
   const attachment = Attachment.methods.keyinfo_as_pubkey_attachment(primary_k);
-  let additional_message_headers: t.FlatHeaders;
+  let additional_message_headers: FlatHeaders;
 
   let app_functions = Composer.default_app_functions();
   app_functions.send_message_to_main_window = (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);

@@ -9,6 +9,27 @@ import { Pgp } from './pgp.js';
 
 declare const openpgp: typeof OpenPGP;
 
+export type FlatHeaders = t.Dict<string>;
+export type RichHeaders = t.Dict<string|string[]>;
+export interface SendableMessageBody { [key: string]: string|undefined; 'text/plain'?: string; 'text/html'?: string; }
+export interface SendableMessage { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMessageBody; attachments: Attachment[];
+  thread: string|null; }
+export interface StandardError { code: number|null; message: string; internal: string|null; data?: string; stack?: string; }
+interface StandardErrorResponse { error: StandardError; }
+
+type FcAuthToken = {account: string, token: string};
+type FcAuthMethods = 'uuid'|FcAuthToken|null;
+
+type GoogleAuthTokenInfo = {issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline'};
+type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
+export type AuthRequest = {tab_id: string, account_email: string|null, scopes: string[], message_id?: string, auth_responder_id: string, omit_read_scope?: boolean};
+type GoogleAuthWindowResult$result = 'Success'|'Denied'|'Error'|'Closed';
+type GoogleAuthWindowResult = {result: GoogleAuthWindowResult$result, state: AuthRequest, params: {code: string, error: string}};
+type AuthResultSuccess = {success: true, result: 'Success', account_email: string, message_id?: string};
+type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, account_email: string|null, message_id?: string, error?: string};
+type AuthResult = AuthResultSuccess|AuthResultError;
+// type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
+
 type SubscriptionLevel = 'pro'|null;
 type RequestFormat = 'JSON'|'FORM';
 type ResponseFormat = 'json';
@@ -20,6 +41,7 @@ export type ProgressCallbacks = {upload?: ProgressCallback|null, download?: Prog
 export type GmailResponseFormat = 'raw'|'full'|'metadata';
 export type ProviderContactsQuery = {substring: string};
 export interface SubscriptionInfo { active: boolean|null; method: t.PaymentMethod|null; level: SubscriptionLevel; expire: string|null; }
+export interface PubkeySearchResult { email: string; pubkey: string|null; attested: boolean|null; has_cryptup: boolean|null; longid: string|null; }
 
 export namespace R { // responses
 
@@ -153,15 +175,15 @@ export class Api {
     plus: {
       people_me: (account_email: string): Promise<R.GooglePlusPeopleMe> => Api.internal.api_google_call(account_email, 'GET', 'https://www.googleapis.com/plus/v1/people/me', {alt: 'json'}),
     },
-    auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<t.AuthResult> => new Promise((resolve, reject) => {
+    auth_popup: (account_email: string|null, tab_id: string, omit_read_scope=false, scopes:string[]=[]): Promise<AuthResult> => new Promise((resolve, reject) => {
       if (Env.is_background_page()) {
         throw {code: null, message: 'Cannot produce auth window from background script'};
       }
       let response_handled = false;
       Api.internal.api_google_auth_popup_prepare_auth_request_scopes(account_email, scopes, omit_read_scope).then(scopes => {
-        let auth_request: t.AuthRequest = {tab_id, account_email, auth_responder_id: Str.random(20), scopes};
+        let auth_request: AuthRequest = {tab_id, account_email, auth_responder_id: Str.random(20), scopes};
         BrowserMsg.listen({
-          google_auth_window_result: (result: t.GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
+          google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, close_auth_window: VoidCallback) => {
             if (result.state.auth_responder_id === auth_request.auth_responder_id && !response_handled) {
               response_handled = true;
               Api.internal.google_auth_window_result_handler(result).then(resolve, reject);
@@ -190,7 +212,7 @@ export class Api {
   };
 
   public static common = {
-    message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: t.SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<t.SendableMessage> => {
+    message: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMessageBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<SendableMessage> => {
       let [primary_ki] = await Store.keys_get(account_email, ['primary']);
       return {
         headers: primary_ki ? {OpenPGP: `id=${primary_ki.fingerprint}`} : {},
@@ -287,7 +309,7 @@ export class Api {
     draft_send: (account_email: string, id: string): Promise<R.GmailDraftSend> => Api.internal.api_gmail_call(account_email, 'POST', 'drafts/send', {
       id,
     }),
-    message_send: async (account_email: string, message: t.SendableMessage, progress_callback?: ProgressCallback): Promise<R.GmailMessageSend> => {
+    message_send: async (account_email: string, message: SendableMessage, progress_callback?: ProgressCallback): Promise<R.GmailMessageSend> => {
       message.headers.From = message.from;
       message.headers.To = message.to.join(',');
       message.headers.Subject = message.subject;
@@ -419,7 +441,7 @@ export class Api {
       }
       return internal_results;
     },
-    find_bodies: (gmail_email_object: t.Dict<any>, internal_results:t.Dict<any>={}): t.SendableMessageBody => {
+    find_bodies: (gmail_email_object: t.Dict<any>, internal_results:t.Dict<any>={}): SendableMessageBody => {
       if (typeof gmail_email_object.payload !== 'undefined') {
         Api.gmail.find_bodies(gmail_email_object.payload, internal_results);
       }
@@ -431,7 +453,7 @@ export class Api {
       if (typeof gmail_email_object.body !== 'undefined' && typeof gmail_email_object.body.data !== 'undefined' && gmail_email_object.body.size !== 0) {
         internal_results[gmail_email_object.mimeType] = gmail_email_object.body.data;
       }
-      return internal_results as t.SendableMessageBody;
+      return internal_results as SendableMessageBody;
     },
     fetch_attachments: async (account_email: string, attachments: Attachment[]) => {
       let responses = await Promise.all(attachments.map(a => Api.gmail.attachment_get(account_email, a.message_id!, a.id!)));
@@ -529,7 +551,7 @@ export class Api {
   };
 
   public static attester = {
-    lookup_email: (emails: string[]): Promise<{results: t.PubkeySearchResult[]}> => Api.internal.api_attester_call('lookup/email', {
+    lookup_email: (emails: string[]): Promise<{results: PubkeySearchResult[]}> => Api.internal.api_attester_call('lookup/email', {
       email: emails.map(e => Str.parse_email(e).email),
     }),
     initial_legacy_submit: (email: string, pubkey: string, attest:boolean=false): Promise<R.AttInitialLegacySugmit> => Api.internal.api_attester_call('initial/legacy_submit', {
@@ -764,7 +786,7 @@ export class Api {
       await Store.set(null, { cryptup_account_subscription: response.subscription });
       return response;
     },
-    message_presign_files: async (attachments: Attachment[], auth_method: t.FlowCryptApiAuthMethods): Promise<R.FcMessagePresignFiles> => {
+    message_presign_files: async (attachments: Attachment[], auth_method: FcAuthMethods): Promise<R.FcMessagePresignFiles> => {
       let response: R.FcMessagePresignFiles;
       let lengths = attachments.map(a => a.length);
       if (!auth_method) {
@@ -793,7 +815,7 @@ export class Api {
     message_confirm_files: (identifiers: string[]): Promise<R.FcMessageConfirmFiles> => Api.internal.api_fc_call('message/confirm_files', {
       identifiers,
     }),
-    message_upload: async (encrypted_data_armored: string, auth_method: t.FlowCryptApiAuthMethods): Promise<R.FcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
+    message_upload: async (encrypted_data_armored: string, auth_method: FcAuthMethods): Promise<R.FcMessageUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
       if (encrypted_data_armored.length > 100000) {
         throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
       }
@@ -821,7 +843,7 @@ export class Api {
       subject,
       message,
     }),
-    message_contact: (sender: string, message: string, message_token: t.FlowCryptApiAuthToken) => Api.internal.api_fc_call('message/contact', {
+    message_contact: (sender: string, message: string, message_token: FcAuthToken) => Api.internal.api_fc_call('message/contact', {
       message_token_account: message_token.account,
       message_token: message_token.token,
       sender,
@@ -872,7 +894,7 @@ export class Api {
       }
       return progress_reporting_xhr;
     },
-    api_call: async (base_url: string, path: string, fields: t.Dict<any>, format: RequestFormat, progress: ProgressCallbacks|null, headers:t.FlatHeaders|undefined=undefined, response_format:ResponseFormat='json', method:RequestMethod='POST') => {
+    api_call: async (base_url: string, path: string, fields: t.Dict<any>, format: RequestFormat, progress: ProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ResponseFormat='json', method:RequestMethod='POST') => {
       progress = progress || {} as ProgressCallbacks;
       let formatted_data: FormData|string;
       let content_type: string|false;
@@ -909,7 +931,7 @@ export class Api {
       try {
         let response = await $.ajax(request);
         if (response && typeof response === 'object' && typeof response.error === 'object') {
-          throw response as t.StandardError;
+          throw response as StandardError;
         }
         return response;
       } catch(e) {
@@ -919,8 +941,8 @@ export class Api {
         throw e;
       }
     },
-    api_google_auth_state_pack: (status_object: t.AuthRequest) => Api.GOOGLE_OAUTH2!.state_header + JSON.stringify(status_object),
-    api_google_auth_code_url: (auth_request: t.AuthRequest) => Env.url_create(Api.GOOGLE_OAUTH2!.url_code, {
+    api_google_auth_state_pack: (status_object: AuthRequest) => Api.GOOGLE_OAUTH2!.state_header + JSON.stringify(status_object),
+    api_google_auth_code_url: (auth_request: AuthRequest) => Env.url_create(Api.GOOGLE_OAUTH2!.url_code, {
       client_id: Api.GOOGLE_OAUTH2!.client_id,
       response_type: 'code',
       access_type: 'offline',
@@ -929,7 +951,7 @@ export class Api {
       scope: (auth_request.scopes || []).join(' '),
       login_hint: auth_request.account_email,
     }),
-    google_auth_save_tokens: async (account_email: string, tokens_object: t.GoogleAuthTokensResponse, scopes: string[]) => {
+    google_auth_save_tokens: async (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
       let to_save: AccountStore = {
         google_token_access: tokens_object.access_token,
         google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
@@ -945,19 +967,19 @@ export class Api {
       method: 'POST',
       crossDomain: true,
       async: true,
-    }) as any as Promise<t.GoogleAuthTokensResponse>,
+    }) as any as Promise<GoogleAuthTokensResponse>,
     google_auth_refresh_token: (refresh_token: string) => $.ajax({
       url: Env.url_create(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'refresh_token', refresh_token, client_id: Api.GOOGLE_OAUTH2!.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
-    }) as any as Promise<t.GoogleAuthTokensResponse>,
+    }) as any as Promise<GoogleAuthTokensResponse>,
     google_auth_check_access_token: (access_token: string) => $.ajax({
       url: Env.url_create('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
       crossDomain: true,
       async: true,
-    }) as any as Promise<t.GoogleAuthTokenInfo>,
-    google_auth_window_result_handler: async (result: t.GoogleAuthWindowResult): Promise<t.AuthResult> => {
+    }) as any as Promise<GoogleAuthTokenInfo>,
+    google_auth_window_result_handler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
       if (result.result === 'Success') {
         let tokens_object = await Api.internal.google_auth_get_tokens(result.params.code);
         let _ = await Api.internal.google_auth_check_access_token(tokens_object.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
@@ -1095,9 +1117,9 @@ export class Api {
         }
       }
     },
-    api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header: async (account_email: string, messages: R.GmailMessageList$message[], header_names: string[]): Promise<t.FlatHeaders> => {
+    api_gmail_fetch_messages_sequentially_from_list_and_extract_first_available_header: async (account_email: string, messages: R.GmailMessageList$message[], header_names: string[]): Promise<FlatHeaders> => {
       for (let message of messages) {
-        let header_values: t.FlatHeaders = {};
+        let header_values: FlatHeaders = {};
         let message_get_response = await Api.gmail.message_get(account_email, message.id, 'metadata');
         for (let header_name of header_names) {
           let value = Api.gmail.find_header(message_get_response, header_name);
@@ -1114,8 +1136,8 @@ export class Api {
       return {};
     },
     api_attester_packet_armor: (content_text: string) => `${Pgp.armor.headers('attest_packet').begin}\n${content_text}\n${Pgp.armor.headers('attest_packet').end}`,
-    api_attester_call: (path: string, values: t.Dict<any>) => Api.internal.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as t.FlatHeaders),
-    api_fc_call: (path: string, values: t.Dict<any>, format='JSON' as RequestFormat) => Api.internal.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as t.FlatHeaders),
+    api_attester_call: (path: string, values: t.Dict<any>) => Api.internal.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
+    api_fc_call: (path: string, values: t.Dict<any>, format='JSON' as RequestFormat) => Api.internal.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
   };
 
 }

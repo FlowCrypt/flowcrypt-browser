@@ -6,6 +6,7 @@ import {Injector} from '../js/common/inject.js';
 import {Notifications} from '../js/common/notifications.js';
 import {XssSafeFactory} from '../js/common/factory.js';
 import { DecryptResult, DiagnoseMessagePubkeysResult, MessageVerifyResult } from '../js/common/pgp.js';
+import { FlatHeaders, StandardError } from '../js/common/api.js';
 
 interface BrowserWidnow extends Window {
     XMLHttpRequest: any;
@@ -91,15 +92,6 @@ interface FromToHeaders {
     to: string[];
 }
 
-// todo Api or Store
-interface PubkeySearchResult {
-    email: string;
-    pubkey: string|null;
-    attested: boolean|null;
-    has_cryptup: boolean|null;
-    longid: string|null;
-}
-
 interface Challenge {
     question?: string;
     answer: string;
@@ -110,8 +102,6 @@ interface Dict<T> {
 }
 
 // Todo Env
-type FlatHeaders = Dict<string>;
-type RichHeaders = Dict<string|string[]>;
 type UrlParam = string|number|null|undefined|boolean|string[];
 type UrlParams = Dict<UrlParam>;
 
@@ -149,30 +139,6 @@ interface MessageBlock {
     signature?: string;
 }
 
-// Todo Api
-interface SendableMessageBody {
-    [key: string]: string|undefined;
-    'text/plain'?: string;
-    'text/html'?: string;
-}
-interface SendableMessage {
-    headers: FlatHeaders;
-    from: string;
-    to: string[];
-    subject: string;
-    body: SendableMessageBody;
-    attachments: Attachment[];
-    thread: string|null;
-}
-interface StandardError {
-    code: number|null;
-    message: string;
-    internal: string|null;
-    data?: string;
-    stack?: string;
-}
-interface StandardErrorResponse {error: StandardError;}
-
 type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
 type PassphraseDialogType = 'embedded'|'sign'|'attest';
@@ -186,10 +152,6 @@ type BrowserMessageRequestSessionGet = {account_email: string, key: string};
 type BrowserMessageRequest = null|Dict<any>;
 type BrowserMessageResponse = any|Dict<any>;
 type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void|Promise<void>;
-
-// Todo Api
-type FlowCryptApiAuthToken = {account: string, token: string};
-type FlowCryptApiAuthMethods = 'uuid'|FlowCryptApiAuthToken|null;
 
 type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
@@ -241,17 +203,6 @@ interface JQS extends JQueryStatic {
 // todo Attachment
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
 
-// Todo Api
-type GoogleAuthTokenInfo = {issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline'};
-type GoogleAuthTokensResponse = {access_token: string, expires_in: number, refresh_token?: string};
-type AuthRequest = {tab_id: string, account_email: string|null, scopes: string[], message_id?: string, auth_responder_id: string, omit_read_scope?: boolean};
-type GoogleAuthWindowResult$result = 'Success'|'Denied'|'Error'|'Closed';
-type GoogleAuthWindowResult = {result: GoogleAuthWindowResult$result, state: AuthRequest, params: {code: string, error: string}};
-type AuthResultSuccess = {success: true, result: 'Success', account_email: string, message_id?: string};
-type AuthResultError = {success: false, result: GoogleAuthWindowResult$result, account_email: string|null, message_id?: string, error?: string};
-type AuthResult = AuthResultSuccess|AuthResultError;
-// type AjaxError = {request: JQuery.jqXHR<any>, status: JQuery.Ajax.ErrorTextStatus, error: string};
-
 type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
 
 // Todo Pgp or Mime?
@@ -270,6 +221,7 @@ type KeyImportUiCheckResult = {
   encrypted: OpenPGP.key.Key;
 };
 
+// todo pgp
 type ParsedAttest = {
   success: boolean;
   content: {

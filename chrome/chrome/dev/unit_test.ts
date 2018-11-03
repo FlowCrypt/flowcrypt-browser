@@ -5,6 +5,7 @@
 import {Env} from '../../js/common/common.js';
 import * as t from '../../types/common';
 import { Pgp } from '../../js/common/pgp.js';
+import { StandardError } from '../../js/common/api.js';
 
 (() => {
 
@@ -20,7 +21,7 @@ import { Pgp } from '../../js/common/pgp.js';
     }
   };
 
-  let finish = (error: string|t.StandardError|Error|null, result?: any) => {
+  let finish = (error: string|StandardError|Error|null, result?: any) => {
     error = (error === null) ? null : String(error);
     $('#result').text(JSON.stringify({error, result}));
     $('#result').attr('data-test-state', 'ready');

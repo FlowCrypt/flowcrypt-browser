@@ -9,7 +9,7 @@ import { KeyImportUI, UserAlert } from '../../../js/common/key_import.js';
 import { mnemonic } from '../../../js/common/mnemonic.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';
-import { Api } from '../../../js/common/api.js';
+import { Api, PubkeySearchResult } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
@@ -23,7 +23,7 @@ Catch.try(async () => {
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let primary_pubkey_armored = primary_ki.public;
-  let keyserver_result: t.PubkeySearchResult;
+  let keyserver_result: PubkeySearchResult;
   let expect_longid: string;
 
   let request_replacement = async () => {
