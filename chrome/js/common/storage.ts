@@ -2,13 +2,16 @@
 
 'use strict';
 
-import { Catch, Value, Str, Env } from './common.js';
+import { Catch, Value, Str, Env, Dict, EmailProvider } from './common.js';
 import { mnemonic } from './mnemonic.js';
-import * as t from '../../types/common';
+
 import { Pgp } from './pgp.js';
 import { SubscriptionInfo } from './api.js';
 import { BrowserMsg } from './extension.js';
+import { Product, PaymentMethod, ProductLevel } from './account.js';
 
+export type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
+export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
 export interface Contact {
   email: string;
   name: string | null;
@@ -37,7 +40,7 @@ export interface KeyInfo {
 
 export type StorageType = 'session'|'local';
 
-export interface SubscriptionAttempt extends t.Product {
+export interface SubscriptionAttempt extends Product {
     source: string|null;
 }
 
@@ -64,7 +67,7 @@ type StoredReplyDraftMeta = string; // draft_id
 type StoredComposeDraftMeta = {recipients: string[], subject: string, date: number};
 type StoredAdminCode = {date: number, codes: string[]};
 type StoredAttestLog = {attempt: number, packet?: string, success: boolean, result: string};
-export type Storable = FlatTypes|string[]|KeyInfo[]|t.Dict<StoredReplyDraftMeta>|t.Dict<StoredComposeDraftMeta>|t.Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
+export type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
 
 interface RawStore {
   [key: string]: Storable;
@@ -73,7 +76,7 @@ interface RawStore {
 export interface BaseStore extends RawStore {
 }
 
-export type Serializable = SerializableTypes|SerializableTypes[]|t.Dict<SerializableTypes>|t.Dict<SerializableTypes>[];
+export type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 
 export interface GlobalStore extends BaseStore {
   version?: number|null;
@@ -86,7 +89,7 @@ export interface GlobalStore extends BaseStore {
   cryptup_account_subscription?: SubscriptionInfo|null;
   dev_outlook_allow?: boolean;
   cryptup_subscription_attempt?: SubscriptionAttempt;
-  admin_codes?: t.Dict<StoredAdminCode>;
+  admin_codes?: Dict<StoredAdminCode>;
   // following are not used anymore but may still be present in storage:
   // cryptup_account_verified?: boolean;
 }
@@ -94,7 +97,7 @@ export interface GlobalStore extends BaseStore {
 export interface AccountStore extends BaseStore {
   keys?: KeyInfo[];
   notification_setup_needed_dismissed?: boolean;
-  email_provider?: t.EmailProvider;
+  email_provider?: EmailProvider;
   google_token_access?: string;
   google_token_expires?: number;
   google_token_scopes?: string[];
@@ -104,15 +107,15 @@ export interface AccountStore extends BaseStore {
   addresses_pks?: string[];
   addresses_keyserver?: string[];
   email_footer?: string|null;
-  drafts_reply?: t.Dict<StoredReplyDraftMeta>;
-  drafts_compose?: t.Dict<StoredComposeDraftMeta>;
+  drafts_reply?: Dict<StoredReplyDraftMeta>;
+  drafts_compose?: Dict<StoredComposeDraftMeta>;
   pubkey_sent_to?: string[];
   full_name?: string;
   cryptup_enabled?: boolean;
   setup_done?: boolean;
   setup_simple?: boolean;
   is_newly_created_key?: boolean;
-  key_backup_method?: t.KeyBackupMethod;
+  key_backup_method?: KeyBackupMethod;
   attests_requested?: string[]; // attester names
   attests_processed?: string[]; // attester names
   key_backup_prompt?: number|false;
@@ -128,11 +131,11 @@ export interface AccountStore extends BaseStore {
 
 export class Subscription implements SubscriptionInfo {
   active: boolean|null = null;
-  method: t.PaymentMethod|null = null;
-  level: t.ProductLevel|null = null;
+  method: PaymentMethod|null = null;
+  level: ProductLevel|null = null;
   expire: string|null = null;
 
-  constructor(stored_subscription: {active: boolean|null, method: t.PaymentMethod|null, level: t.ProductLevel, expire?: string|null}|null) {
+  constructor(stored_subscription: {active: boolean|null, method: PaymentMethod|null, level: ProductLevel, expire?: string|null}|null) {
     if (stored_subscription) {
       this.active = stored_subscription.active;
       this.method = stored_subscription.method;
@@ -176,7 +179,7 @@ export class Store {
     }
   }
 
-  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: RawStore): BaseStore | t.Dict<BaseStore> {
+  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: RawStore): BaseStore | Dict<BaseStore> {
     if (typeof account_or_accounts === 'string') {
       let fixed_keys_object: BaseStore = {};
       for (let k of Object.keys(storage_object)) {
@@ -187,7 +190,7 @@ export class Store {
       }
       return fixed_keys_object;
     } else {
-      let results_by_account: t.Dict<BaseStore> = {};
+      let results_by_account: Dict<BaseStore> = {};
       for (let account of account_or_accounts) {
         results_by_account[account] = Store.account_storage_object_keys_to_original(account, storage_object) as BaseStore;
       }
@@ -223,7 +226,7 @@ export class Store {
       if (typeof passphrase === 'undefined') {
         await Store.remove(account_email, [storage_k]);
       } else {
-        let to_save: t.Dict<string> = {};
+        let to_save: Dict<string> = {};
         to_save[storage_k] = passphrase;
         await Store.set(account_email, to_save);
       }
@@ -294,7 +297,7 @@ export class Store {
   }
 
   static set(account_email: string|null, values: BaseStore): Promise<void> {
-    let storage_update: t.Dict<any> = {};
+    let storage_update: Dict<any> = {};
     for (let key of Object.keys(values)) {
       storage_update[Store.index(Store._global_storage_index_if_null(account_email), key) as string] = values[key];
     }
@@ -317,10 +320,10 @@ export class Store {
     });
   }
 
-  static get_accounts(accounts: string[], keys: string[]): Promise<t.Dict<AccountStore>> {
+  static get_accounts(accounts: string[], keys: string[]): Promise<Dict<AccountStore>> {
     return new Promise(resolve => {
       chrome.storage.local.get(Store.index(accounts, keys) as string[], (storage_object: RawStore) => {
-        resolve(Store.account_storage_object_keys_to_original(accounts, storage_object) as t.Dict<AccountStore>);
+        resolve(Store.account_storage_object_keys_to_original(accounts, storage_object) as Dict<AccountStore>);
       });
     });
   }
@@ -555,7 +558,7 @@ export class Store {
     });
   }
 
-  static db_contact_search(db: IDBDatabase|null, query: t.DbContactFilter): Promise<Contact[]> {
+  static db_contact_search(db: IDBDatabase|null, query: DbContactFilter): Promise<Contact[]> {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors

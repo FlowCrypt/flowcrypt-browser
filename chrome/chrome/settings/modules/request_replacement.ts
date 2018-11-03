@@ -3,11 +3,11 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env } from '../../../js/common/common.js';
+import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Xss, Ui, KeyImportUI, UserAlert } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { mnemonic } from '../../../js/common/mnemonic.js';
-import * as t from '../../../types/common';
+
 import { Settings } from '../settings.js';
 import { Api, PubkeySearchResult } from '../../../js/common/api.js';
 
@@ -31,7 +31,7 @@ Catch.try(async () => {
       let key_import_ui = new KeyImportUI({expect_longid, reject_known: true, check_signing: true});
       let checked_old_key = await key_import_ui.check_prv(account_email, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if(checked_old_key) {
-        let request_replacement: t.Dict<string> = {
+        let request_replacement: Dict<string> = {
           'ATT': 'CRYPTUP', // todo - should be the original attester
           'ACT': 'REQUEST_REPLACEMENT',
           'ADD': Pgp.hash.double_sha1_upper(account_email),

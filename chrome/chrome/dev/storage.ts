@@ -3,13 +3,12 @@
 'use strict';
 
 import { Store, Storable, BaseStore } from '../../js/common/storage.js';
-import { Catch, Env, Value, Str } from '../../js/common/common.js';
+import { Catch, Env, Value, Str, Dict } from '../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
-import * as t from '../../types/common';
 
 Catch.try(async () => {
 
-  type RenderableStorage = t.Dict<{key: string, value: Storable}>;
+  type RenderableStorage = Dict<{key: string, value: Storable}>;
 
   let url_params = Env.url_params(['filter', 'keys', 'controls', 'title']);
 

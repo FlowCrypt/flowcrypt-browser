@@ -2,14 +2,13 @@
 
 'use strict';
 
-import { Store, KeyInfo } from '../../../js/common/storage.js';
-import { Catch, Env, Value, UnreportableError } from '../../../js/common/common.js';
+import { Store, KeyInfo, KeyBackupMethod } from '../../../js/common/storage.js';
+import { Catch, Env, Value, UnreportableError, EmailProvider } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
 import { Xss, Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
-import * as t from '../../../types/common';
 import { Settings } from '../settings.js';
 import { Api } from '../../../js/common/api.js';
 import { Pgp } from '../../../js/common/pgp.js';
@@ -25,7 +24,7 @@ Catch.try(async () => {
     parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   }
 
-  let email_provider: t.EmailProvider;
+  let email_provider: EmailProvider;
 
   await Ui.passphrase_toggle(['password', 'password2']);
 
@@ -260,7 +259,7 @@ Catch.try(async () => {
     await write_backup_done_and_render(Value.int.get_future_timestamp_in_months(3), 'none');
   };
 
-  let write_backup_done_and_render = async (prompt: number|false, method: t.KeyBackupMethod) => {
+  let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {
     await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
     if (url_params.action === 'setup') {
       window.location.href = Env.url_create('/chrome/settings/setup.htm', { account_email: url_params.account_email, action: 'finalize' });

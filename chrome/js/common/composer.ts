@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact } from './storage.js';
+import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from './storage.js';
 import { Lang } from './lang.js';
-import { Catch, Value, Str, Env, UnreportableError } from './common.js';
+import { Catch, Value, Str, Env, UnreportableError, Dict, UrlParams } from './common.js';
 import { Attachment } from './attachment.js';
-import { BrowserMsg, Extension, BrowserMessageHandler } from './extension.js';
+import { BrowserMsg, Extension, BrowserMessageHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMessage, RichHeaders, StandardError, SendableMessageBody } from './api.js';
-import * as t from '../../types/common';
-import { Ui, Xss, AttachmentUI, BrowserEventErrorHandler } from './browser.js';
+
+import { Ui, Xss, AttachmentUI, BrowserEventErrorHandler, Challenge } from './browser.js';
 import { FromToHeaders, Mime } from './mime.js';
 
 declare let openpgp: typeof OpenPGP;
@@ -135,7 +135,7 @@ export class Composer {
   private frame_id: string;
   private reference_body_height: number;
 
-  constructor(app_functions: ComposerAppFunctionsInterface, variables: t.UrlParams, subscription: Subscription) {
+  constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
     this.attach = new AttachmentUI(() => this.get_max_attachment_size_and_oversize_notice(subscription));
     this.app = app_functions;
 
@@ -193,7 +193,7 @@ export class Composer {
             alert(get_advanced);
           } else {
             if (confirm(get_advanced)) {
-              this.show_subscribe_dialog_and_wait_for_response(null, {}, (new_subscription_active) => {
+              this.show_subscribe_dialog_and_wait_for_response(null, {}, (new_subscription_active: boolean) => {
                 if (new_subscription_active) {
                   alert('You\'re all set, now you can add your file again.');
                 }
@@ -307,7 +307,7 @@ export class Composer {
     this.app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
   }
 
-  private initialize_compose_box = async (variables: t.UrlParams) => {
+  private initialize_compose_box = async (variables: UrlParams) => {
     if(this.is_reply_box) {
       this.S.cached('header').remove();
       this.S.cached('subject').remove();
@@ -557,7 +557,7 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throw_if_form_values_invalid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: t.Challenge|null) => {
+  private throw_if_form_values_invalid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null) => {
     const is_encrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -634,7 +634,7 @@ export class Composer {
     }
   }
 
-  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: t.Challenge|null, subscription: Subscription) => {
+  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription);
     let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
@@ -648,7 +648,7 @@ export class Composer {
     }
   }
 
-  private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: t.Challenge|null, subscription: Subscription) => {
+  private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
     let [primary_k] = await Store.keys_get(this.account_email, ['primary']);
     if (primary_k) {
@@ -663,7 +663,7 @@ export class Composer {
           this.reset_send_btn();
         }
       } else {
-        let MimeCodec = (window as t.BrowserWidnow)['emailjs-mime-codec'];
+        let MimeCodec = (window as BrowserWidnow)['emailjs-mime-codec'];
         // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
         // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
         // resulting in.. wait for it.. signatures that don't match
@@ -738,7 +738,7 @@ export class Composer {
     return plaintext;
   }
 
-  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: t.Challenge|null, subscription: Subscription): Promise<string> => {
+  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string> => {
     if (!challenge || !subscription.active) {
       return plaintext;
     }
@@ -794,7 +794,7 @@ export class Composer {
     return new Date(usable_time_until); // latest date none of the keys were expired
   }
 
-  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: t.Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
+  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
     let encrypt_as_of_date = await this.encrypt_message_as_of_date_if_some_are_expired(armored_pubkeys);
     let encrypted = await Pgp.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
     let body: SendableMessageBody = {'text/plain': encrypted.data};
@@ -1486,7 +1486,7 @@ export class Composer {
 
   static default_app_functions = (): ComposerAppFunctionsInterface => {
     return {
-      send_message_to_main_window: (channel: string, data: t.Dict<Serializable>) => null,
+      send_message_to_main_window: (channel: string, data: Dict<Serializable>) => null,
       can_read_email: () => false,
       does_recipient_have_my_pubkey: (their_email: string): Promise<boolean|undefined> => Promise.resolve(false),
       storage_get_addresses: () => [],
@@ -1503,17 +1503,17 @@ export class Composer {
       storage_contact_get: (email: string[]) => Promise.resolve([]),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
       storage_contact_save: (contact: Contact) => Promise.resolve(),
-      storage_contact_search: (query: t.DbContactFilter) => Promise.resolve([]),
+      storage_contact_search: (query: DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
       email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMessage}),
       email_provider_draft_create: (mime_message: string) => Promise.reject(null),
       email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve({}),
       email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
       email_provider_message_send: (message: SendableMessage, render_upload_progress: ProgressCallback) => Promise.reject({message: 'not implemented'}),
-      email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: t.Callback) => multi_cb({new: [], all: []}),
+      email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: any) => void) => multi_cb({new: [], all: []}),
       email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
       email_provider_extract_armored_block: (message_id) => Promise.resolve(''),
-      send_message_to_background_script: (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(null, channel, data),
+      send_message_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
       render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => Promise.resolve(),
       render_footer_dialog: () => null,
       render_add_pubkey_dialog: (emails: string[]) => null,

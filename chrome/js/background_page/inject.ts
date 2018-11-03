@@ -2,8 +2,6 @@
 
 'use strict';
 
-import * as t from '../../types/common';
-
 export let inject_cryptup_into_webmail_if_needed = () => {
   for (let group of chrome.runtime.getManifest().content_scripts!) {  // we know it's in the manifest
     get_content_script_tab_ids(group.matches || [], (tab_ids) => {
@@ -31,7 +29,7 @@ let is_content_script_injection_needed = (tab_id: number, callback: (injected: b
   });
 };
 
-let inject_content_scripts = (tab_id: number, files: string[], callback: t.Callback|null = null) => {
+let inject_content_scripts = (tab_id: number, files: string[], callback: (() => void)|null = null) => {
   let files_copy = files.slice();
   chrome.tabs.executeScript(tab_id, { file: files_copy.shift() }, results => {
     if (files_copy.length) {

@@ -2,8 +2,7 @@
 
 'use strict';
 
-import { Value, Str } from './common.js';
-import * as t from '../../types/common';
+import { Value, Str, Dict } from './common.js';
 import { Pgp } from './pgp.js';
 
 export type DomainRule = {flags: ('NO_PRV_CREATE'|'NO_PRV_BACKUP')[]};
@@ -12,7 +11,7 @@ export class Rules {
 
   private other = 'other';
   private domain_hash: string = this.other;
-  private rules: t.Dict<DomainRule> = {
+  private rules: Dict<DomainRule> = {
     '745126dcac9a94a1931a3a5e03f02be3820f51d1': {flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP']}, // n
     '77754b18ecb3f2f7c59bf20cfe06afac2a6458ec': {flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP']}, // v
     [this.other]: {flags: []},

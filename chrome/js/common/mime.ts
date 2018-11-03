@@ -6,7 +6,7 @@ import { Str, Value, Catch } from './common';
 import { SendableMessageBody, RichHeaders, FlatHeaders } from './api.js';
 import { Pgp } from './pgp';
 import { Attachment } from './attachment';
-import * as t from '../../types/common';
+import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension';
 
 interface MimeContent {
   headers: FlatHeaders;
@@ -119,7 +119,7 @@ export class Mime {
     return new Promise(async resolve => {
       let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
       try {
-        let MimeParser = (window as t.BrowserWidnow)['emailjs-mime-parser'];
+        let MimeParser = (window as BrowserWidnow)['emailjs-mime-parser'];
         let parser = new MimeParser();
         let parsed: {[key: string]: MimeParserNode} = {};
         parser.onheader = (node: MimeParserNode) => {
@@ -166,7 +166,7 @@ export class Mime {
   }
 
   public static encode = async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
-    let MimeBuilder = (window as t.BrowserWidnow)['emailjs-mime-builder'];
+    let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
     let root_node = new MimeBuilder('multipart/mixed');
     for (let key of Object.keys(headers)) {
       root_node.addHeader(key, headers[key]);
@@ -287,12 +287,12 @@ export class Mime {
       return Str.from_equal_sign_notation_as_utf(node.rawContent);
     }
     if(node.charset === 'iso-8859-2') {
-      return (window as t.FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
+      return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
     }
     return node.rawContent;
   }
 
-  private static new_content_node = (MimeBuilder: t.AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
+  private static new_content_node = (MimeBuilder: AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
     let node = new MimeBuilder(type).setContent(content);
     if (type === 'text/plain') {
       node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Catch, Env } from '../../../js/common/common.js';
+import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
 import { Xss, Ui, XssSafeFactory, AttachmentUI } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';

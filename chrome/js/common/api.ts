@@ -3,16 +3,18 @@
 'use strict';
 
 import { Store, GlobalStore, Serializable, AccountStore, Contact } from './storage.js';
-import { Catch, Value, Str, Env } from './common.js';
-import * as t from '../../types/common';
+import { Catch, Value, Str, Env, Dict } from './common.js';
+
 import { Pgp } from './pgp.js';
-import { FlowCryptManifest, BrowserMsg } from './extension.js';
+import { FlowCryptManifest, BrowserMsg, BrowserWidnow, FcWindow } from './extension.js';
 import { Ui } from './browser.js';
 import { Attachment } from './attachment.js';
 import { Mime } from './mime.js';
+import { PaymentMethod } from './account.js';
 
 declare const openpgp: typeof OpenPGP;
 
+type Thrown = Error|StandardError|any;
 type ParsedAttest = {
   success: boolean;
   content: {
@@ -28,8 +30,8 @@ type ParsedAttest = {
   error: string|null;
 };
 
-export type FlatHeaders = t.Dict<string>;
-export type RichHeaders = t.Dict<string|string[]>;
+export type FlatHeaders = Dict<string>;
+export type RichHeaders = Dict<string|string[]>;
 export interface SendableMessageBody { [key: string]: string|undefined; 'text/plain'?: string; 'text/html'?: string; }
 export interface SendableMessage { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMessageBody; attachments: Attachment[];
   thread: string|null; }
@@ -59,7 +61,7 @@ export type ProgressCallback = (percent: number|null, loaded: number|null, total
 export type ProgressCallbacks = {upload?: ProgressCallback|null, download?: ProgressCallback|null};
 export type GmailResponseFormat = 'raw'|'full'|'metadata';
 export type ProviderContactsQuery = {substring: string};
-export interface SubscriptionInfo { active: boolean|null; method: t.PaymentMethod|null; level: SubscriptionLevel; expire: string|null; }
+export interface SubscriptionInfo { active: boolean|null; method: PaymentMethod|null; level: SubscriptionLevel; expire: string|null; }
 export interface PubkeySearchResult { email: string; pubkey: string|null; attested: boolean|null; has_cryptup: boolean|null; longid: string|null; }
 
 export namespace R { // responses
@@ -69,7 +71,7 @@ export namespace R { // responses
   export type FcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number};
   export type FcAccountUpdate = {result: FcAccountUpdate$result, updated: boolean};
   export type FcAccountSubscribe = {subscription: SubscriptionInfo};
-  export type FcAccountCheck = {email: string|null, subscription: {level: SubscriptionLevel, expire: string, expired: boolean, method: t.PaymentMethod|null}|null};
+  export type FcAccountCheck = {email: string|null, subscription: {level: SubscriptionLevel, expire: string, expired: boolean, method: PaymentMethod|null}|null};
 
   export type FcMessagePresignFiles = {approvals: {base_url: string, fields: {key: string}}[]};
   export type FcMessageConfirmFiles = {confirmed: string[], admin_codes: string[]};
@@ -117,12 +119,12 @@ export namespace R { // responses
 export class Api {
 
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
-  private static GMAIL_SCOPE_DICT: t.Dict<string> = {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'};
+  private static GMAIL_SCOPE_DICT: Dict<string> = {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'};
   private static GOOGLE_OAUTH2 = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null;
   public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
   public static auth = {
-    window: (auth_url: string, window_closed_by_user: t.Callback) => {
+    window: (auth_url: string, window_closed_by_user: () => void) => {
       let auth_code_window = window.open(auth_url, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
       let window_closed_timer = Catch.set_interval(() => {
         if (auth_code_window !== null && auth_code_window.closed) {
@@ -141,7 +143,7 @@ export class Api {
   };
 
   public static error = {
-    is_network_error: (e: t.Thrown) => {
+    is_network_error: (e: Thrown) => {
       if(e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
@@ -155,7 +157,7 @@ export class Api {
       }
       return false;
     },
-    is_auth_error: (e: t.Thrown) => {
+    is_auth_error: (e: Thrown) => {
       if (e && typeof e === 'object') {
         if(Api.error.is_standard_error(e, 'auth')) {
           return true; // API auth error response
@@ -166,7 +168,7 @@ export class Api {
       }
       return false;
     },
-    is_standard_error: (e: t.Thrown, internal_type: string) => {
+    is_standard_error: (e: Thrown, internal_type: string) => {
       if(e && typeof e === 'object') {
         if(e.internal === internal_type) {
           return true;
@@ -177,7 +179,7 @@ export class Api {
       }
       return false;
     },
-    is_auth_popup_needed: (e: t.Thrown) => {
+    is_auth_popup_needed: (e: Thrown) => {
       if (e && typeof e === 'object' && e.status === 400 && typeof e.responseJSON === 'object') {
         if (e.responseJSON.error === 'invalid_grant' && Value.is(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
           return true;
@@ -185,9 +187,9 @@ export class Api {
       }
       return false;
     },
-    is_not_found: (e: t.Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
-    is_bad_request: (e: t.Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
-    is_server_error: (e: t.Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
+    is_not_found: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
+    is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
+    is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
   };
 
   public static google = {
@@ -460,7 +462,7 @@ export class Api {
       }
       return internal_results;
     },
-    find_bodies: (gmail_email_object: t.Dict<any>, internal_results:t.Dict<any>={}): SendableMessageBody => {
+    find_bodies: (gmail_email_object: Dict<any>, internal_results:Dict<any>={}): SendableMessageBody => {
       if (typeof gmail_email_object.payload !== 'undefined') {
         Api.gmail.find_bodies(gmail_email_object.payload, internal_results);
       }
@@ -594,7 +596,7 @@ export class Api {
       pubkey,
     }),
     diagnose_keyserver_pubkeys: async (account_email: string) => {
-      let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as t.Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
+      let diagnosis = { has_pubkey_missing: false, has_pubkey_mismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
       let {addresses} = await Store.get_account(account_email, ['addresses']);
       let stored_keys = await Store.keys_get(account_email);
       let stored_keys_longids = stored_keys.map(ki => ki.longid);
@@ -615,7 +617,7 @@ export class Api {
       return diagnosis;
     },
     packet: {
-      create_sign: async (values: t.Dict<string>, decrypted_prv: OpenPGP.key.Key) => {
+      create_sign: async (values: Dict<string>, decrypted_prv: OpenPGP.key.Key) => {
         let lines:string[] = [];
         for (let key of Object.keys(values)) {
           lines.push(key + ':' + values[key]);
@@ -636,7 +638,7 @@ export class Api {
           'PUB': 'fingerprint',
           'OLD': 'fingerprint_old',
           'RAN': 'random',
-        } as t.Dict<string>;
+        } as Dict<string>;
         let result: ParsedAttest = {
           success: false,
           content: {},
@@ -716,7 +718,7 @@ export class Api {
         'pubkey': 'https://flowcrypt.com/pub/' + variable,
         'decrypt': 'https://flowcrypt.com/' + variable,
         'web': 'https://flowcrypt.com/',
-      } as t.Dict<string>)[type];
+      } as Dict<string>)[type];
     },
     help_feedback: (account_email: string, message: string): Promise<R.FcHelpFeedback> => Api.internal.api_fc_call('help/feedback', {
       email: account_email,
@@ -783,9 +785,9 @@ export class Api {
         }
       }
     },
-    account_update: async (update_values?: t.Dict<Serializable>): Promise<R.FcAccountUpdate> => {
+    account_update: async (update_values?: Dict<Serializable>): Promise<R.FcAccountUpdate> => {
       let auth_info = await Store.auth_info();
-      let request = {account: auth_info.account_email, uuid: auth_info.uuid} as t.Dict<Serializable>;
+      let request = {account: auth_info.account_email, uuid: auth_info.uuid} as Dict<Serializable>;
       if (update_values) {
         for (let k of Object.keys(update_values)) {
           request[k] = update_values[k];
@@ -877,7 +879,7 @@ export class Api {
   };
 
   public static aws = {
-    s3_upload: (items: {base_url:string, fields: t.Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ProgressCallback) => {
+    s3_upload: (items: {base_url:string, fields: Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ProgressCallback) => {
       let progress = Value.arr.zeroes(items.length);
       let promises:Promise<void>[] = [];
       if (!items.length) {
@@ -900,7 +902,7 @@ export class Api {
 
   private static internal = {
     get_ajax_progress_xhr: (progress_callbacks: ProgressCallbacks|null) => {
-      let progress_reporting_xhr = new (window as t.FcWindow).XMLHttpRequest();
+      let progress_reporting_xhr = new (window as FcWindow).XMLHttpRequest();
       if (progress_callbacks && typeof progress_callbacks.upload === 'function') {
         progress_reporting_xhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
           progress_callbacks.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
@@ -913,7 +915,7 @@ export class Api {
       }
       return progress_reporting_xhr;
     },
-    api_call: async (base_url: string, path: string, fields: t.Dict<any>, format: RequestFormat, progress: ProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ResponseFormat='json', method:RequestMethod='POST') => {
+    api_call: async (base_url: string, path: string, fields: Dict<any>, format: RequestFormat, progress: ProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ResponseFormat='json', method:RequestMethod='POST') => {
       progress = progress || {} as ProgressCallbacks;
       let formatted_data: FormData|string;
       let content_type: string|false;
@@ -1030,13 +1032,13 @@ export class Api {
         throw e;
       }
     },
-    api_google_call: async (account_email: string, method: RequestMethod, url: string, parameters: t.Dict<Serializable>|string) => {
+    api_google_call: async (account_email: string, method: RequestMethod, url: string, parameters: Dict<Serializable>|string) => {
       let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
       let headers = { Authorization: await Api.internal.google_api_authorization_header(account_email) };
       let request = {url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true};
       return await Api.internal.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    api_gmail_call: async (account_email: string, method: RequestMethod, resource: string, parameters: t.Dict<Serializable>|string|null, progress: ProgressCallbacks|null=null, contentType:string|null=null) => {
+    api_gmail_call: async (account_email: string, method: RequestMethod, resource: string, parameters: Dict<Serializable>|string|null, progress: ProgressCallbacks|null=null, contentType:string|null=null) => {
       progress = progress || {};
       let data;
       let url;
@@ -1100,7 +1102,7 @@ export class Api {
       }
       return auth_request_scopes;
     },
-    encode_as_multipart_related: (parts: t.Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
+    encode_as_multipart_related: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
       let boundary = 'this_sucks_' + Str.random(10);
       let body = '';
       for (let type of Object.keys(parts)) {
@@ -1121,7 +1123,7 @@ export class Api {
       while(true) {
         let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
         if (headers.to) {
-          let raw_parsed_results = (window as t.BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
+          let raw_parsed_results = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
           let new_valid_results = raw_parsed_results.filter(r => Str.is_email_valid(r.address)).map(r => Store.db_contact_object(r.address, r.name, null, null, null, false, null));
           query += raw_parsed_results.map(raw => ` -to:"${raw.address}"`).join('');
           all_results = all_results.concat(new_valid_results);
@@ -1155,8 +1157,8 @@ export class Api {
       return {};
     },
     api_attester_packet_armor: (content_text: string) => `${Pgp.armor.headers('attest_packet').begin}\n${content_text}\n${Pgp.armor.headers('attest_packet').end}`,
-    api_attester_call: (path: string, values: t.Dict<any>) => Api.internal.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
-    api_fc_call: (path: string, values: t.Dict<any>, format='JSON' as RequestFormat) => Api.internal.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
+    api_attester_call: (path: string, values: Dict<any>) => Api.internal.api_call('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
+    api_fc_call: (path: string, values: Dict<any>, format='JSON' as RequestFormat) => Api.internal.api_call(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
   };
 
 }

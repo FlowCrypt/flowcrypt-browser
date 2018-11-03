@@ -3,11 +3,11 @@
 'use strict';
 
 import { Store, Serializable } from '../../../js/common/storage.js';
-import { Catch, Env, Value, Str } from '../../../js/common/common.js';
+import { Catch, Env, Value, Str, Dict } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
 import { Xss, Ui, AttachmentUI } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
-import * as t from '../../../types/common';
+
 import { Settings } from '../settings.js';
 import { Api, R } from '../../../js/common/api.js';
 
@@ -90,7 +90,7 @@ Catch.try(async () => {
     } else {
       S.cached('show_if_active').css('display', 'none');
       Xss.sanitize_render(S.cached('status'), 'Updating ' + Ui.spinner('green'));
-      let update: t.Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
+      let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
         update.photo_content = btoa(new_photo_file.as_text());
       }

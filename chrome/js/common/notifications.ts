@@ -3,11 +3,13 @@
 'use strict';
 
 import { Store } from './storage.js';
-import { Catch } from './common.js';
-import * as t from '../../types/common';
+import { Catch, Dict } from './common.js';
+
 import { Api } from './api.js';
 import { BrowserMsg } from './extension.js';
 import { Xss, Ui } from './browser.js';
+
+export type NotificationWithHandlers = {notification: string, callbacks: Dict<() => void>};
 
 export class Notifications {
 
@@ -46,7 +48,7 @@ export class Notifications {
     $('.webmail_notifications').text('');
   }
 
-  show = (text: string, callbacks:t.Dict<t.Callback>={}) => {
+  show = (text: string, callbacks:Dict<() => void>={}) => {
     Xss.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let original_close_callback = callbacks.close;

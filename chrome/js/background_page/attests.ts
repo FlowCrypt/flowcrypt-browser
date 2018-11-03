@@ -3,8 +3,7 @@
 'use strict';
 
 import { Store } from '../common/storage.js';
-import { Catch, Value, Str } from '../common/common.js';
-import * as t from '../../types/common';
+import { Catch, Value, Str, Dict } from '../common/common.js';
 import { Api, R } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
 import { BrowserMessageHandler } from '../common/extension.js';
@@ -31,8 +30,8 @@ export class BgAttests {
   private static ATTESTERS = {
     CRYPTUP: { email: 'attest@cryptup.org', api: undefined as string|undefined, pubkey: undefined as string|undefined }
   };
-  private static currently_watching: t.Dict<number> = {};
-  private static attest_ts_can_read_emails: t.Dict<boolean> = {};
+  private static currently_watching: Dict<number> = {};
+  private static attest_ts_can_read_emails: Dict<boolean> = {};
   private static packet_headers = Pgp.armor.headers('attest_packet');
 
   static watch_for_attest_email_if_appropriate = async () => {
@@ -49,7 +48,7 @@ export class BgAttests {
     BgAttests.watch_for_attest_email(request.account_email);
   }
 
-  static attest_packet_received_handler = async (request: {account_email: string, packet: string, passphrase: string}, sender: chrome.runtime.MessageSender|'background', respond: t.Callback) => {
+  static attest_packet_received_handler = async (request: {account_email: string, packet: string, passphrase: string}, sender: chrome.runtime.MessageSender|'background', respond: (r: {success: boolean, result: string}) => void) => {
     try { // todo - could be refactored to pass AttestResult directly
       let r = await BgAttests.process_attest_and_log_result(request.account_email, request.packet, request.passphrase);
       respond({success: true, result: r.message});

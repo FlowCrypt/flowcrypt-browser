@@ -3,11 +3,10 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Value, Str } from '../../../js/common/common.js';
-import { Xss, Ui, XssSafeFactory } from '../../../js/common/browser.js';
+import { Catch, Env, Value, Str, UrlParams } from '../../../js/common/common.js';
+import { Xss, Ui, XssSafeFactory, PassphraseDialogType } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
-import { Notifications } from '../../../js/common/notifications.js';
-import * as t from '../../../types/common';
+import { Notifications, NotificationWithHandlers } from '../../../js/common/notifications.js';
 import { Api, R } from '../../../js/common/api.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/mime.js';
@@ -50,7 +49,7 @@ Catch.try(async () => {
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send(null, 'settings', {account_email})));
   $('.action_choose_account').get(0).title = account_email;
 
-  let notification_show = (data: t.NotificationWithHandlers) => {
+  let notification_show = (data: NotificationWithHandlers) => {
     notifications.show(data.notification, data.callbacks);
     $('body').one('click', Catch.try(notifications.clear));
   };
@@ -71,7 +70,7 @@ Catch.try(async () => {
     reinsert_reply_box: (data: {thread_id: string, thread_message_id: string}) => {
       render_reply_box(data.thread_id, data.thread_message_id);
     },
-    passphrase_dialog: (data: {longids: string[], type: t.PassphraseDialogType}) => {
+    passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
         $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
       }
@@ -111,14 +110,14 @@ Catch.try(async () => {
     },
   }, tab_id);
 
-  let update_url = (title: string, params: t.UrlParams) => {
+  let update_url = (title: string, params: UrlParams) => {
     let new_url_search = Env.url_create('', params);
     if(new_url_search !== window.location.search) {
       window.history.pushState({}, title, new_url_search);
     }
   };
 
-  let load_url = (params: t.UrlParams) => {
+  let load_url = (params: UrlParams) => {
     let new_url_search = Env.url_create('', params);
     if(new_url_search !== window.location.search) {
       window.location.search = new_url_search;
@@ -367,7 +366,7 @@ Catch.try(async () => {
   };
 
   let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: R.GmailMessage) => {
-    let params: t.UrlParams;
+    let params: UrlParams;
     if(last_message) {
       let to = Api.gmail.find_header(last_message, 'to');
       let to_arr = to ? to.split(',').map(Str.parse_email).map(e => e.email).filter(e => e) : [];

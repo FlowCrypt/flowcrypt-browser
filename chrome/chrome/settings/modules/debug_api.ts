@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Catch, Env } from '../../../js/common/common.js';
+import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Xss } from '../../../js/common/browser.js';
-import * as t from '../../../types/common';
+
 import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
@@ -14,7 +14,7 @@ Catch.try(async () => {
   const parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
   const which = Env.url_param_require.oneof(url_params, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
 
-  const render_call_result = (api: string, variables: t.Dict<any>, result: any, error: any=null) => {
+  const render_call_result = (api: string, variables: Dict<any>, result: any, error: any=null) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${JSON.stringify(error)})</pre>`;
     Xss.sanitize_append('#content', r);
   };

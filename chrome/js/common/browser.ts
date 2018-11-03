@@ -3,11 +3,10 @@
 'use strict';
 
 import * as DOMPurify from 'dompurify';
-import { Catch, UnreportableError, Env, Str, Value } from './common';
+import { Catch, UnreportableError, Env, Str, Value, Dict, UrlParams, UrlParam } from './common';
 import { BrowserMsg } from './extension';
 import { Store } from './storage';
 import { Api } from './api';
-import * as t from '../../types/common';
 import { Pgp } from './pgp';
 import { mnemonic } from './mnemonic';
 import { Attachment } from './attachment';
@@ -16,10 +15,18 @@ import { MessageBlock, KeyBlockType } from './mime';
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
 
+export type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
+export interface Challenge {
+  question?: string;
+  answer: string;
+}
+export type WebmailVariantString = null|'html'|'standard'|'new';
+type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
+export type PassphraseDialogType = 'embedded'|'sign'|'attest';
 export type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
 type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
-type NamedSelectors = t.Dict<JQuery<HTMLElement>>;
+type NamedSelectors = Dict<JQuery<HTMLElement>>;
 export type SelectorCache = {
     cached: (name: string) => JQuery<HTMLElement>;
     now: (name: string) => JQuery<HTMLElement>;
@@ -52,7 +59,7 @@ export class Ui {
     return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static render_overlay_prompt_await_user_choice = (buttons: t.Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
+  public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
       let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.html_escape(buttons[id].color || 'green')} overlay_action_${Xss.html_escape(id)}">${Xss.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
       Xss.sanitize_append('body', `
@@ -94,7 +101,7 @@ export class Ui {
     }
   }
 
-  public static abort_and_render_error_on_url_param_type_mismatch = (values: t.UrlParams, name: string, expected_type: string): t.UrlParam => {
+  public static abort_and_render_error_on_url_param_type_mismatch = (values: UrlParams, name: string, expected_type: string): UrlParam => {
     let actual_type = typeof values[name];
     if (actual_type !== expected_type) {
       let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be of type ${Xss.html_escape(expected_type)} but got ${Xss.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
@@ -104,7 +111,7 @@ export class Ui {
     return values[name];
   }
 
-  public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: t.Dict<T>, name: string, expected_values: T[]): T => {
+  public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
     if (expected_values.indexOf(values[name]) === -1) {
       let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be one of ${Xss.html_escape(expected_values.map(String).join(','))} but got ${Xss.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
@@ -155,7 +162,7 @@ export class Ui {
     }
   }
 
-  public static build_jquery_selectors = (selectors: t.Dict<string>): SelectorCache => {
+  public static build_jquery_selectors = (selectors: Dict<string>): SelectorCache => {
     let cache: NamedSelectors = {};
     return {
       cached: (name: string) => {
@@ -332,7 +339,7 @@ export class Ui {
     sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = Catch.set_timeout) => new Promise(resolve => set_timeout(resolve, ms)),
   };
 
-  public static e = (name: string, attrs: t.Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+  public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
 
 }
 
@@ -446,12 +453,12 @@ export class XssSafeFactory {
    * If you add or edit a method, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
 
-  private set_params: t.UrlParams;
+  private set_params: UrlParams;
   private reloadable_class: string;
   private destroyable_class: string;
   private hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
-  constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:t.UrlParams={}) {
+  constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:UrlParams={}) {
     this.reloadable_class = Xss.html_escape(reloadable_class);
     this.destroyable_class = Xss.html_escape(destroyable_class);
     this.set_params = set_params;
@@ -461,7 +468,7 @@ export class XssSafeFactory {
 
   src_img = (relative_path: string) => this.ext_url(`img/${relative_path}`);
 
-  private frame_src = (path: string, params:t.UrlParams={}) => {
+  private frame_src = (path: string, params:UrlParams={}) => {
     for (let k of Object.keys(this.set_params)) {
       params[k] = this.set_params[k];
     }
@@ -472,11 +479,11 @@ export class XssSafeFactory {
     return this.frame_src(this.ext_url('chrome/elements/compose.htm'), { is_reply_box: false, draft_id, placement: 'gmail' });
   }
 
-  src_passphrase_dialog = (longids:string[]=[], type: t.PassphraseDialogType) => {
+  src_passphrase_dialog = (longids:string[]=[], type: PassphraseDialogType) => {
     return this.frame_src(this.ext_url('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  src_subscribe_dialog = (verification_email_text: string|null, placement: t.Placement, source: string|null, subscribe_result_tab_id:string|null=null) => {
+  src_subscribe_dialog = (verification_email_text: string|null, placement: Placement, source: string|null, subscribe_result_tab_id:string|null=null) => {
     return this.frame_src(this.ext_url('chrome/elements/subscribe.htm'), { verification_email_text, placement, source, subscribe_result_tab_id });
   }
 
@@ -488,15 +495,15 @@ export class XssSafeFactory {
     return this.frame_src(this.ext_url('chrome/elements/attest.htm'), { attest_packet, });
   }
 
-  src_add_pubkey_dialog = (emails: string[], placement: t.Placement) => {
+  src_add_pubkey_dialog = (emails: string[], placement: Placement) => {
     return this.frame_src(this.ext_url('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  src_add_footer_dialog = (placement: t.Placement) => {
+  src_add_footer_dialog = (placement: Placement) => {
     return this.frame_src(this.ext_url('chrome/elements/shared/footer.htm'), { placement });
   }
 
-  src_sending_address_dialog = (placement: t.Placement) => {
+  src_sending_address_dialog = (placement: Placement) => {
     return this.frame_src(this.ext_url('chrome/elements/sending_address.htm'), { placement });
   }
 
@@ -515,8 +522,8 @@ export class XssSafeFactory {
     return this.frame_src(this.ext_url('chrome/elements/pgp_pubkey.htm'), { frame_id: this.new_id(), armored_pubkey, minimized: Boolean(is_outgoing), });
   }
 
-  src_reply_message_iframe = (conversation_params: t.UrlParams, skip_click_prompt: boolean, ignore_draft: boolean) => {
-    let params: t.UrlParams = {
+  src_reply_message_iframe = (conversation_params: UrlParams, skip_click_prompt: boolean, ignore_draft: boolean) => {
+    let params: UrlParams = {
       is_reply_box: true,
       frame_id: 'frame_' + Str.random(10),
       placement: 'gmail',
@@ -546,7 +553,7 @@ export class XssSafeFactory {
     return `<link class="${this.destroyable_class}" rel="stylesheet" href="${this.ext_url(`css/${file}.css`)}" />`;
   }
 
-  dialog_passphrase = (longids: string[], type: t.PassphraseDialogType) => {
+  dialog_passphrase = (longids: string[], type: PassphraseDialogType) => {
     return this.div_dialog_DANGEROUS(this.iframe(this.src_passphrase_dialog(longids, type), ['medium'], {scrolling: 'no'}), 'dialog-passphrase'); // xss-safe-factory
   }
 
@@ -582,7 +589,7 @@ export class XssSafeFactory {
     return this.iframe(this.src_pgp_pubkey_iframe(armored_pubkey, is_outgoing), ['pgp_block']);
   }
 
-  embedded_reply = (conversation_params: t.UrlParams, skip_click_prompt: boolean, ignore_draft:boolean=false) => {
+  embedded_reply = (conversation_params: UrlParams, skip_click_prompt: boolean, ignore_draft:boolean=false) => {
     return this.iframe(this.src_reply_message_iframe(conversation_params, skip_click_prompt, ignore_draft), ['reply_message']);
   }
 
@@ -602,7 +609,7 @@ export class XssSafeFactory {
     return this.iframe(this.src_stripe_checkout(), [], {sandbox: 'allow-forms allow-scripts allow-same-origin'});
   }
 
-  button_compose = (webmail_name: t.WebMailName) => {
+  button_compose = (webmail_name: WebMailName) => {
     if (webmail_name === 'inbox') {
       return `<div class="S ${this.destroyable_class}"><div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.src_img('logo/logo.svg')}"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>`;
     } else if (webmail_name === 'outlook') {
@@ -624,7 +631,7 @@ export class XssSafeFactory {
     return `<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ${this.destroyable_class}" data-tooltip="Use Secure Reply"><span>secure reply</span></span>`;
   }
 
-  button_recipients_use_encryption = (webmail_name: t.WebMailName) => {
+  button_recipients_use_encryption = (webmail_name: WebMailName) => {
     if (webmail_name !== 'gmail') {
       Catch.report('switch_to_secure not implemented for ' + webmail_name);
       return '';
@@ -644,10 +651,10 @@ export class XssSafeFactory {
     return { to: their_emails, from: my_email };
   }
 
-  private iframe = (src: string, classes:string[]=[], element_attrs:t.UrlParams={}) => {
+  private iframe = (src: string, classes:string[]=[], element_attrs:UrlParams={}) => {
     let id = Env.url_params(['frame_id'], src).frame_id as string;
     let class_attr = (classes || []).concat(this.reloadable_class).join(' ');
-    let attributes: t.Dict<string> = {id, class: class_attr, src};
+    let attributes: Dict<string> = {id, class: class_attr, src};
     for (let name of Object.keys(element_attrs)) {
       attributes[name] = String(element_attrs[name]);
     }
@@ -862,9 +869,9 @@ export class AttachmentUI {
 
   private template_path = '/chrome/elements/shared/attach.template.htm';
   private get_limits: () => AttachLimits;
-  private attached_files: t.Dict<File> = {};
+  private attached_files: Dict<File> = {};
   private uploader: any = undefined;
-  private attachment_added_callback: t.Callback;
+  private attachment_added_callback: (r: any) => void;
 
   constructor(get_limits: () => AttachLimits) {
     this.get_limits = get_limits;
@@ -889,7 +896,7 @@ export class AttachmentUI {
     });
   }
 
-  set_attachment_added_callback = (cb: t.Callback) => {
+  set_attachment_added_callback = (cb: (r: any) => void) => {
     this.attachment_added_callback = cb;
   }
 
@@ -914,7 +921,7 @@ export class AttachmentUI {
     return attachments;
   }
 
-  collect_and_encrypt_attachments = async (armored_pubkeys: string[], challenge: t.Challenge|null): Promise<Attachment[]> => {
+  collect_and_encrypt_attachments = async (armored_pubkeys: string[], challenge: Challenge|null): Promise<Attachment[]> => {
     let attachments: Attachment[] = [];
     for (let id of Object.keys(this.attached_files)) {
       let file = this.attached_files[id];

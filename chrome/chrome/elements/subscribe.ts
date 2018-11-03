@@ -8,7 +8,7 @@ import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
 import { FlowCryptAccount } from './../../js/common/account.js';
 import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api.js';
-import * as t from './../../types/common';
+
 import { BrowserMessageHandler, BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
@@ -26,7 +26,7 @@ Catch.try(async () => {
   let original_button_content: string;
   let original_button_selector: JQuery<HTMLElement>;
 
-  let handle_error_response = (e: t.Thrown) => {
+  let handle_error_response = (e: any) => {
     let render_err = (msg: string, e?: any) => {
       msg = Xss.html_escape(msg);
       let debug = e ? `<pre>${Xss.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';

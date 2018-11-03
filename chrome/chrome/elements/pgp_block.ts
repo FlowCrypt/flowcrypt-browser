@@ -3,12 +3,12 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Env, Value, Str } from './../../js/common/common.js';
+import { Catch, Env, Value, Str, Dict } from './../../js/common/common.js';
 import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';
-import * as t from '../../types/common';
+
 import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
 import { MessageVerifyResult, DecryptErrorTypes, Pgp } from '../../js/common/pgp.js';
 import { Mime } from '../../js/common/mime.js';
@@ -35,7 +35,7 @@ Catch.try(async () => {
   let height_history: number[] = [];
   let message_fetched_from_api: false|GmailResponseFormat = false;
   let passphrase_interval: number|undefined;
-  let missing_or_wrong_passprases: t.Dict<string|null> = {};
+  let missing_or_wrong_passprases: Dict<string|null> = {};
   let can_read_emails: undefined|boolean;
   let password_message_link_result: R.FcLinkMessage;
   let admin_codes: string[];

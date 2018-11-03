@@ -3,11 +3,10 @@
 'use strict';
 
 import { Store, KeyInfo } from '../../js/common/storage.js';
-import { Catch, Env, Str } from '../../js/common/common.js';
-import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
+import { Catch, Env, Str, JQS } from '../../js/common/common.js';
+import { Xss, Ui, XssSafeFactory, PassphraseDialogType } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
-import * as t from '../../types/common';
 import { Settings } from './settings.js';
 import { Api } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -79,7 +78,7 @@ Catch.try(async () => {
       $('.featherlight-close').click();
       Settings.new_google_account_authentication_prompt(tab_id, (data || {}).account_email, (data || {}).omit_read_scope).catch(Catch.handle_exception);
     },
-    passphrase_dialog: (data: {longids: string[], type: t.PassphraseDialogType}) => {
+    passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
         let factory = new XssSafeFactory(account_email!, tab_id);
         $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
@@ -301,7 +300,7 @@ Catch.try(async () => {
   //   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};
   // }
 
-  $.get(chrome.extension.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as t.JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
+  $.get(chrome.extension.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
 
   $('.show_settings_page').click(Ui.event.handle(target => {
     Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr

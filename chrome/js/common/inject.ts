@@ -3,15 +3,15 @@
 'use strict';
 
 import { Catch } from './common.js';
-import * as t from '../../types/common';
+
 import { ContentScriptWindow } from './extension.js';
-import { Ui, XssSafeFactory, SelectorCache } from './browser.js';
+import { Ui, XssSafeFactory, SelectorCache, WebMailName, WebmailVariantString } from './browser.js';
 
 export class Injector {
 
   private factory: XssSafeFactory;
-  private webmail_name: t.WebMailName;
-  private webmail_variant: t.WebmailVariantString;
+  private webmail_name: WebMailName;
+  private webmail_variant: WebmailVariantString;
   private S: SelectorCache;
   private compose_button_container_selector = {
     'gmail': 'div.aic',
@@ -20,7 +20,7 @@ export class Injector {
     'settings': '#does_not_have',
   };
 
-  constructor(webmail_name: t.WebMailName, webmail_variant: t.WebmailVariantString, factory: XssSafeFactory) {
+  constructor(webmail_name: WebMailName, webmail_variant: WebmailVariantString, factory: XssSafeFactory) {
     this.webmail_name = webmail_name;
     this.webmail_variant = webmail_variant;
     this.factory = factory;

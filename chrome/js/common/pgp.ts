@@ -4,13 +4,12 @@
 
 import { Store, KeyInfo, Contact } from './storage.js';
 import { Catch, Value, Str } from './common.js';
-import * as t from '../../types/common';
-import { Ui, XssSafeFactory } from './browser.js';
+import { Ui, XssSafeFactory, Challenge } from './browser.js';
 import { ReplaceableMessageBlockType, MessageBlock, MessageBlockType } from './mime.js';
 
 declare const openpgp: typeof OpenPGP;
 
-type EncryptDecryptOutputFormat = 'utf8'|'binary';
+// type EncryptDecryptOutputFormat = 'utf8'|'binary';
 
 export interface MessageVerifyResult {
   signer: string|null;
@@ -30,10 +29,12 @@ interface InternalSortedKeysForDecrypt {
   prv_for_decrypt_without_passphrases: KeyInfo[];
 }
 
+type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
+
 interface DecryptSuccess {
   success: true;
   content: {
-    blob?: t.ConsummableBrowserBlob;
+    blob?: ConsummableBrowserBlob;
     text?: string;
     uint8?: Uint8Array;
     filename: string|null;
@@ -463,7 +464,7 @@ export class Pgp {
         return {success: false, error: Pgp.internal.crypto_message_decrypt_categorize_error(e, msg_pwd), signature: null, message: prepared.message, longids, is_encrypted};
       }
     },
-    encrypt: async (armored_pubkeys: string[], signing_prv: OpenPGP.key.Key|null, challenge: t.Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
+    encrypt: async (armored_pubkeys: string[], signing_prv: OpenPGP.key.Key|null, challenge: Challenge|null, data: string|Uint8Array, filename: string|null, armor: boolean, date: Date|null=null): Promise<OpenPGP.EncryptResult> => {
       let options: OpenPGP.EncryptOptions = { data, armor, date: date || undefined, filename: filename || undefined };
       let used_challange = false;
       if (armored_pubkeys) {

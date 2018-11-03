@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Env } from './../../js/common/common.js';
+import { Catch, Env, Dict } from './../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { Settings } from '../settings/settings.js';
 import { BrowserMsg } from '../../js/common/extension.js';

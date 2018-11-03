@@ -3,10 +3,10 @@
 'use strict';
 
 import { Store, Subscription, Serializable } from './../../js/common/storage.js';
-import { Catch, Env } from './../../js/common/common.js';
+import { Catch, Env, Dict } from './../../js/common/common.js';
 import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui } from '../../js/common/browser.js';
-import * as t from './../../types/common';
+
 import { Composer } from './../../js/common/composer.js';
 import { Api, FlatHeaders } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -25,7 +25,7 @@ Catch.try(async () => {
   let additional_message_headers: FlatHeaders;
 
   let app_functions = Composer.default_app_functions();
-  app_functions.send_message_to_main_window = (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
+  app_functions.send_message_to_main_window = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id, disable_draft_saving: true}, new Subscription(null));
 
   const send_button_text = 'Send Response';

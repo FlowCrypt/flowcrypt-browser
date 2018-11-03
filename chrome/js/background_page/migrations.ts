@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store, FlatTypes, KeyInfo } from '../common/storage.js';
-import { Catch, Value, Str } from '../common/common.js';
-import * as t from '../../types/common';
+import { Catch, Value, Str, Dict } from '../common/common.js';
+
 import { Api } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
 import { BrowserMessageHandler } from '../common/extension.js';
@@ -30,7 +30,7 @@ let migrate_local_storage_to_extension_storage = () => new Promise(resolve => {
   if (window.localStorage.length === 0) {
     resolve(); // nothing in localStorage
   } else {
-    let values: t.Dict<FlatTypes> = {};
+    let values: Dict<FlatTypes> = {};
     for (let legacy_storage_key of Object.keys(localStorage)) {
       let value = legacy_local_storage_read(localStorage.getItem(legacy_storage_key)!);
       if (legacy_storage_key === 'settings_seen') {

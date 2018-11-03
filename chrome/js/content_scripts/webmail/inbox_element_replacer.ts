@@ -3,27 +3,27 @@
 'use strict';
 
 import { Injector } from '../../common/inject.js';
-import { Catch, Value, Str } from '../../common/common.js';
-import * as t from '../../../types/common';
+import { Catch, Value, Str, Dict } from '../../common/common.js';
 import { Api } from '../../common/api.js';
 import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui, XssSafeFactory } from '../../common/browser.js';
+import { Xss, Ui, XssSafeFactory, WebmailVariantString } from '../../common/browser.js';
 import { Attachment } from '../../common/attachment.js';
+import { WebmailElementReplacer } from './setup.js';
 
-export class InboxElementReplacer implements t.WebmailElementReplacer {
+export class InboxElementReplacer implements WebmailElementReplacer {
 
-  private recipient_has_pgp: t.Dict<boolean|null|undefined> = {}; // undefined: never checked or check failed, null: checking now, true: uses, false: doesn't use
+  private recipient_has_pgp: Dict<boolean|null|undefined> = {}; // undefined: never checked or check failed, null: checking now, true: uses, false: doesn't use
   private addresses: string[];
   private factory: XssSafeFactory;
   private account_email: string;
   private can_read_emails: boolean;
   private injector: Injector;
-  private gmail_variant: t.WebmailVariantString;
+  private gmail_variant: WebmailVariantString;
 
   private message_text_element_selector = 'div.b5.xJNT8d';
 
-  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: t.WebmailVariantString) {
+  constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, gmail_variant: WebmailVariantString) {
     this.factory = factory;
     this.account_email = account_email;
     this.addresses = addresses;

@@ -6,7 +6,7 @@ import { Store, Contact } from './../../js/common/storage.js';
 import { Catch, Env, Str } from './../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { mnemonic } from './../../js/common/mnemonic.js';
-import * as t from '../../types/common';
+
 import { Pgp } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 

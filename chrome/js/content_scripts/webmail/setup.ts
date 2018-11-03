@@ -5,10 +5,25 @@
 import { Store } from '../../common/storage.js';
 import { Catch, Env, Value } from '../../common/common.js';
 import { Injector } from '../../common/inject.js';
-import { Notifications } from '../../common/notifications.js';
-import { WebmailSpecificInfo, NotificationWithHandlers, PassphraseDialogType } from '../../../types/common.js';
+import { Notifications, NotificationWithHandlers } from '../../common/notifications.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError } from '../../common/extension.js';
-import { Ui, XssSafeFactory } from '../../common/browser.js';
+import { Ui, XssSafeFactory, PassphraseDialogType, WebMailName, WebmailVariantString } from '../../common/browser.js';
+
+export type WebmailVariantObject = {new_data_layer: null|boolean, new_ui: null|boolean, email: null|string, gmail_variant: WebmailVariantString};
+type WebmailSpecificInfo = {
+  name: WebMailName;
+  variant: WebmailVariantString;
+  get_user_account_email: () => string|undefined;
+  get_user_full_name: () => string|undefined;
+  get_replacer: () => WebmailElementReplacer;
+  start: (account_email: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notify_murdered: () => void) => Promise<void>;
+};
+export interface WebmailElementReplacer {
+  everything: () => void;
+  set_reply_box_editable: () => void;
+  reinsert_reply_box: (subject: string, my_email: string, reply_to: string[], thread_id: string) => void;
+  scroll_to_bottom_of_conversation: () => void;
+}
 
 export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInfo) => {
 

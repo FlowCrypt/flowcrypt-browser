@@ -3,10 +3,10 @@
 'use strict';
 
 import { Store, KeyInfo } from '../../js/common/storage.js';
-import { Value, Str, Env, UnreportableError, Catch } from '../../js/common/common.js';
+import { Value, Str, Env, UnreportableError, Catch, UrlParams, JQS, Dict } from '../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
-import * as t from '../../types/common';
+
 import { Lang } from '../../js/common/lang.js';
 import { Rules } from '../../js/common/rules.js';
 import { Api } from '../../js/common/api.js';
@@ -109,8 +109,8 @@ export class Settings {
     await key.encrypt(passphrase);
   }
 
-  private static prepare_new_settings_location_url = (account_email: string|null, parent_tab_id: string, page: string, add_url_text_or_params: string|t.UrlParams|null=null): string => {
-    let page_params: t.UrlParams = {placement: 'settings', parent_tab_id};
+  private static prepare_new_settings_location_url = (account_email: string|null, parent_tab_id: string, page: string, add_url_text_or_params: string|UrlParams|null=null): string => {
+    let page_params: UrlParams = {placement: 'settings', parent_tab_id};
     if (account_email) {
       page_params.account_email = account_email;
     }
@@ -123,7 +123,7 @@ export class Settings {
     return Env.url_create(page, page_params) + (add_url_text_or_params || '');
   }
 
-  static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|t.UrlParams|null=null) => {
+  static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
     let new_location = Settings.prepare_new_settings_location_url(account_email, tab_id, page, add_url_text_or_params);
     let width, height, variant, close_on_click;
     if (page !== '/chrome/elements/compose.htm') {
@@ -137,12 +137,12 @@ export class Settings {
       variant = 'new_message_featherlight';
       close_on_click = false;
     }
-    ($ as t.JQS).featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant });
+    ($ as JQS).featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant });
     Xss.sanitize_prepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
 
   }
 
-  static redirect_sub_page = (account_email: string, parent_tab_id: string, page: string, add_url_text_or_params:string|t.UrlParams|null=null) => {
+  static redirect_sub_page = (account_email: string, parent_tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
     let new_location = Settings.prepare_new_settings_location_url(account_email, parent_tab_id, page, add_url_text_or_params);
     if (Settings.is_embedded) { // embedded on the main page
       BrowserMsg.send(parent_tab_id, 'open_page', { page, add_url_text: add_url_text_or_params });
@@ -209,7 +209,7 @@ export class Settings {
     let new_account_email_index_prefix = Store.index(new_account_email, '') as string;
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
     let destination_account_private_keys = await Store.keys_get(new_account_email);
-    let destination_account_pass_phrases: t.Dict<string> = {};
+    let destination_account_pass_phrases: Dict<string> = {};
     for(let ki of destination_account_private_keys) {
       let pp = await Store.passphrase_get(new_account_email, ki.longid, true);
       if(pp) {

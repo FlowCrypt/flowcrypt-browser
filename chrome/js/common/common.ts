@@ -5,20 +5,25 @@
 'use strict';
 
 import { Store, FlatTypes, Serializable } from './storage.js';
-import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
-import { BrowserMsg } from './extension.js';
-import { Xss, Ui } from './browser.js';
+import { BrowserMsg, FcWindow } from './extension.js';
+import { Xss, Ui, WebMailName } from './browser.js';
 import { Attachment, FlowCryptAttachmentLinkData } from './attachment.js';
 import { StandardError } from './api.js';
 
 declare const openpgp: typeof OpenPGP;
 
+export interface Dict<T> { [key: string]: T; }
+export type UrlParam = string|number|null|undefined|boolean|string[];
+export type UrlParams = Dict<UrlParam>;
+export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
+export type EmailProvider = 'gmail';
+
 export class UnreportableError extends Error {}
 
 export class Env {
 
-  private static URL_PARAM_DICT: t.Dict<boolean|null> = {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null};
+  private static URL_PARAM_DICT: Dict<boolean|null> = {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null};
 
   public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
@@ -52,14 +57,14 @@ export class Env {
   public static is_extension = () => Env.runtime_id() !== null;
 
   public static url_param_require = {
-    string: (values: t.UrlParams, name: string): string => Ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
-    oneof: (values: t.UrlParams, name: string, allowed: t.UrlParam[]): string => Ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
+    string: (values: UrlParams, name: string): string => Ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
+    oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
   };
 
   public static url_params = (expected_keys: string[], string:string|null=null) => {
     let url = (string || window.location.search.replace('?', ''));
     let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    let url_data: t.UrlParams = {};
+    let url_data: UrlParams = {};
     for (let value_pair of value_pairs) {
       let pair = value_pair.split('=');
       if (Value.is(pair[0]).in(expected_keys)) {
@@ -69,7 +74,7 @@ export class Env {
     return url_data;
   }
 
-  public static url_create = (link: string, params: t.UrlParams) => {
+  public static url_create = (link: string, params: UrlParams) => {
     for (let key of Object.keys(params)) {
       let value = params[key];
       if (typeof value !== 'undefined') {
@@ -84,7 +89,7 @@ export class Env {
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 
-  public static webmails = async (): Promise<t.WebMailName[]> => {
+  public static webmails = async (): Promise<WebMailName[]> => {
     return ['gmail', 'inbox']; // async because storage may be involved in the future
   }
 
@@ -142,7 +147,7 @@ export class Str {
 
   public static regex_escape = (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  public static html_attribute_encode = (values: t.Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
+  public static html_attribute_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
 
   public static html_attribute_decode = (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
 
@@ -323,10 +328,10 @@ export class Str {
 
 export class Catch {
 
-  private static RUNTIME: t.Dict<string> = {};
+  private static RUNTIME: Dict<string> = {};
   private static ORIGINAL_ON_ERROR = window.onerror;
 
-  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|t.Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
+  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
     if (typeof error === 'string') {
       error_message = error;
       error = { name: 'thrown_string', message: error_message, stack: error_message };
@@ -456,7 +461,7 @@ export class Catch {
     }
   }
 
-  public static log = (name: string, details:Serializable|Error|t.Dict<Serializable>=undefined) => {
+  public static log = (name: string, details:Serializable|Error|Dict<Serializable>=undefined) => {
     name = 'Catch.log: ' + name;
     console.log(name);
     try {
@@ -575,7 +580,7 @@ export class Catch {
 
   public static initialize = () => {
     let figure_out_flowcrypt_runtime = () => {
-      if ((window as t.FcWindow).is_bare_engine !== true) {
+      if ((window as FcWindow).is_bare_engine !== true) {
         try {
           Catch.RUNTIME.version = chrome.runtime.getManifest().version;
         } catch (err) {} // tslint:disable-line:no-empty
@@ -592,8 +597,8 @@ export class Catch {
       }
     };
     figure_out_flowcrypt_runtime();
-    (window as t.FcWindow).onerror = (Catch.handle_error as ErrorEventHandler);
-    (window as t.FcWindow).onunhandledrejection = Catch.rejection;
+    (window as FcWindow).onerror = (Catch.handle_error as ErrorEventHandler);
+    (window as FcWindow).onunhandledrejection = Catch.rejection;
   }
 
 }
@@ -634,7 +639,7 @@ export class Value {
   };
 
   public static obj = {
-    key_by_value: <T>(obj: t.Dict<T>, v: T) => {
+    key_by_value: <T>(obj: Dict<T>, v: T) => {
       for (let k of Object.keys(obj)) {
         if (obj[k] === v) {
           return k;

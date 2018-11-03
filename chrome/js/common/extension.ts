@@ -1,16 +1,34 @@
 
-import { Str, Catch, Env, Value } from './common.js';
+import { Str, Catch, Env, Value, Dict } from './common.js';
 import { Pgp, DiagnoseMessagePubkeysResult, DecryptResult, MessageVerifyResult } from './pgp.js';
-import * as t from '../../types/common';
+
 import { FlatTypes } from './storage.js';
 import { Ui } from './browser.js';
 import { Attachment } from './attachment.js';
 
+type Codec = {encode: (text: string, mode: 'fatal'|'html') => string, decode: (text: string) => string, labels: string[], version: string};
+export type AnyThirdPartyLibrary = any;
 type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
 type BgExecRequest = {path: string, args: any[]};
 type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
-
-export interface ContentScriptWindow extends t.FcWindow {
+export interface BrowserWidnow extends Window {
+  XMLHttpRequest: any;
+  onunhandledrejection: (e: any) => void;
+  'emailjs-mime-codec': AnyThirdPartyLibrary;
+  'emailjs-mime-parser': AnyThirdPartyLibrary;
+  'emailjs-mime-builder': AnyThirdPartyLibrary;
+  'emailjs-addressparser': {
+    parse: (raw: string) => {name: string, address: string}[];
+  };
+}
+export interface FcWindow extends BrowserWidnow {
+  $: JQuery;
+  iso88592: Codec;
+  // windows1252: Codec;
+  // koi8r: Codec;
+  is_bare_engine: boolean;
+}
+export interface ContentScriptWindow extends FcWindow {
   TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
   TrySetDestroyableInterval: (code: () => void, ms: number) => number;
   injected: true; // background script will use this to test if scripts were already injected, and inject if not
@@ -29,16 +47,16 @@ export interface FlowCryptManifest extends chrome.runtime.Manifest { oauth2: {
 export type BrowserMessageRequestDb = {f: string, args: any[]};
 export type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
 export type BrowserMessageRequestSessionGet = {account_email: string, key: string};
-type BrowserMessageRequest = null|t.Dict<any>;
-type BrowserMessageResponse = any|t.Dict<any>;
-export type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: t.Callback) => void|Promise<void>;
+type BrowserMessageRequest = null|Dict<any>;
+type BrowserMessageResponse = any|Dict<any>;
+export type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: (r?: any) => void) => void|Promise<void>;
 
 export class TabIdRequiredError extends Error {}
 
 export class Extension { // todo - move extension-specific common.js code here
 
-  public static prepare_bug_report = (name: string, details?: t.Dict<FlatTypes>, error?: Error|any): string => {
-    let bug_report: t.Dict<string> = {
+  public static prepare_bug_report = (name: string, details?: Dict<FlatTypes>, error?: Error|any): string => {
+    let bug_report: Dict<string> = {
       name,
       stack: Catch.stack_trace(),
     };
@@ -66,10 +84,10 @@ export class Extension { // todo - move extension-specific common.js code here
 export class BrowserMsg {
 
   public static MAX_SIZE = 1024 * 1024; // 1MB
-  private static HANDLERS_REGISTERED_BACKGROUND: t.Dict<BrowserMessageHandler>|null = null;
-  private static HANDLERS_REGISTERED_FRAME: t.Dict<BrowserMessageHandler> = {};
+  private static HANDLERS_REGISTERED_BACKGROUND: Dict<BrowserMessageHandler>|null = null;
+  private static HANDLERS_REGISTERED_FRAME: Dict<BrowserMessageHandler> = {};
   private static HANDLERS_STANDARD = {
-    set_css: (data: {css: t.Dict<string|number>, selector: string, traverse_up?: number}) => {
+    set_css: (data: {css: Dict<string|number>, selector: string, traverse_up?: number}) => {
       let element = $(data.selector);
       let traverse_up_levels = data.traverse_up as number || 0;
       for (let i = 0; i < traverse_up_levels; i++) {
@@ -77,13 +95,13 @@ export class BrowserMsg {
       }
       element.css(data.css);
     },
-  } as t.Dict<BrowserMessageHandler>;
+  } as Dict<BrowserMessageHandler>;
 
-  public static send = (destination_string: string|null, name: string, data: t.Dict<any>|null=null) => {
+  public static send = (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
     BrowserMsg.send_await(destination_string, name, data).catch(Catch.rejection);
   }
 
-  public static send_await = (destination_string: string|null, name: string, data: t.Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
+  public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
     let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: Catch.stack_trace() };
     let try_resolve_no_undefined = (r?: BrowserMessageResponse) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     let is_background_page = Env.is_background_page();
@@ -120,7 +138,7 @@ export class BrowserMsg {
     throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
   }
 
-  public static listen = (handlers: t.Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
+  public static listen = (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
     for (let name of Object.keys(handlers)) {
       // newly registered handlers with the same name will overwrite the old ones if BrowserMsg.listen is declared twice for the same frame
       // original handlers not mentioned in newly set handlers will continue to work
@@ -160,7 +178,7 @@ export class BrowserMsg {
     });
   }
 
-  public static listen_background = (handlers: t.Dict<BrowserMessageHandler>) => {
+  public static listen_background = (handlers: Dict<BrowserMessageHandler>) => {
     if (!BrowserMsg.HANDLERS_REGISTERED_BACKGROUND) {
       BrowserMsg.HANDLERS_REGISTERED_BACKGROUND = handlers;
     } else {
