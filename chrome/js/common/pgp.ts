@@ -2,22 +2,24 @@
 
 'use strict';
 
-import { Store, KeyInfo } from './storage.js';
+import { Store, KeyInfo, Contact } from './storage.js';
 import { Catch, Value, Str, Ui } from './common.js';
 import * as t from '../../types/common';
 import { XssSafeFactory } from './factory.js';
 
 declare const openpgp: typeof OpenPGP;
 
+type EncryptDecryptOutputFormat = 'utf8'|'binary';
+
 export interface MessageVerifyResult {
   signer: string|null;
-  contact: t.Contact|null;
+  contact: Contact|null;
   match: boolean|null;
   error: null|string;
 }
 
 interface InternalSortedKeysForDecrypt {
-  verification_contacts: t.Contact[];
+  verification_contacts: Contact[];
   for_verification: OpenPGP.key.Key[];
   encrypted_for: string[];
   signed_by: string[];
@@ -384,7 +386,7 @@ export class Pgp {
       let sign_result = await openpgp.sign({data, armor: true, privateKeys: [signing_prv]});
       return (sign_result as OpenPGP.SignArmorResult).data;
     },
-    verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: t.Contact|null=null) => {
+    verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: Contact|null=null) => {
       let signature: MessageVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
       try {
         for (let verify_result of await message.verify(keys_for_verification)) {
@@ -643,7 +645,7 @@ export class Pgp {
       }
       if (keys.signed_by.length && typeof Store.db_contact_get === 'function') {
         let verification_contacts = await Store.db_contact_get(null, keys.signed_by);
-        keys.verification_contacts = verification_contacts.filter(contact => contact !== null && contact.pubkey) as t.Contact[];
+        keys.verification_contacts = verification_contacts.filter(contact => contact !== null && contact.pubkey) as Contact[];
         keys.for_verification = [].concat.apply([], keys.verification_contacts.map(contact => openpgp.key.readArmored(contact.pubkey!).keys)); // pubkey! checked above
       }
       return keys;

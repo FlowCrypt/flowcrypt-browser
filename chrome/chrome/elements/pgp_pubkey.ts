@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from './../../js/common/storage.js';
+import { Store, Contact } from './../../js/common/storage.js';
 import { Catch, Ui, Env, BrowserMsg, Xss, Str } from './../../js/common/common.js';
 import { mnemonic } from './../../js/common/mnemonic.js';
 import * as t from '../../types/common';
@@ -87,7 +87,7 @@ Catch.try(async () => {
 
   $('.action_add_contact').click(Ui.event.handle(async target => {
     if (pubkeys.length > 1) {
-      let contacts: t.Contact[] = [];
+      let contacts: Contact[] = [];
       for (let pubkey of pubkeys) {
         let email_address = Str.parse_email(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
         if (Str.is_email_valid(email_address)) {

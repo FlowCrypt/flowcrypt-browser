@@ -2,12 +2,27 @@
 
 'use strict';
 
-import { Store, GlobalStore, Serializable, AccountStore } from './storage.js';
+import { Store, GlobalStore, Serializable, AccountStore, Contact } from './storage.js';
 import { Catch, Value, Str, Attachment, Env, BrowserMsg, Mime, Ui } from './common.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 
 declare const openpgp: typeof OpenPGP;
+
+type ParsedAttest = {
+  success: boolean;
+  content: {
+    [key: string]: string|undefined;
+    action?: string;
+    attester?: string;
+    email_hash?: string;
+    fingerprint?: string;
+    fingerprint_old?: string;
+    random?: string;
+  };
+  text: string|null;
+  error: string|null;
+};
 
 export type FlatHeaders = t.Dict<string>;
 export type RichHeaders = t.Dict<string|string[]>;
@@ -34,7 +49,7 @@ type SubscriptionLevel = 'pro'|null;
 type RequestFormat = 'JSON'|'FORM';
 type ResponseFormat = 'json';
 type RequestMethod = 'POST'|'GET'|'DELETE'|'PUT';
-type ProviderContactsResults = {new: t.Contact[], all: t.Contact[]};
+type ProviderContactsResults = {new: Contact[], all: Contact[]};
 
 export type ProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
 export type ProgressCallbacks = {upload?: ProgressCallback|null, download?: ProgressCallback|null};
@@ -461,7 +476,7 @@ export class Api {
         attachments[i].set_data(responses[i].data);
       }
     },
-    search_contacts: async (account_email: string, user_query: string, known_contacts: t.Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
+    search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
       let gmail_query = ['is:sent', Api.GMAIL_USELESS_CONTACTS_FILTER];
       if (user_query) {
         let variations_of_to = user_query.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
@@ -609,7 +624,7 @@ export class Api {
         return await Pgp.message.sign(decrypted_prv, content_text);
       },
       is_valid_hash: (v: string) => /^[A-F0-9]{40}$/.test(v),
-      parse: (text: string): t.ParsedAttest => {
+      parse: (text: string): ParsedAttest => {
         let accepted_values = {
           'ACT': 'action',
           'ATT': 'attester',
@@ -618,7 +633,7 @@ export class Api {
           'OLD': 'fingerprint_old',
           'RAN': 'random',
         } as t.Dict<string>;
-        let result: t.ParsedAttest = {
+        let result: ParsedAttest = {
           success: false,
           content: {},
           error: null as string|null,
@@ -1098,7 +1113,7 @@ export class Api {
       return { content_type: 'multipart/related; boundary=' + boundary, body };
     },
     api_gmail_loop_through_emails_to_compile_contacts: async (account_email: string, query: string, chunked_callback: (r: ProviderContactsResults) => void) => {
-      let all_results: t.Contact[] = [];
+      let all_results: Contact[] = [];
       while(true) {
         let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['to', 'date']);
         if (headers.to) {

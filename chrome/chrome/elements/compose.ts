@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription, KeyInfo, ContactUpdate, Serializable } from './../../js/common/storage.js';
+import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact } from './../../js/common/storage.js';
 import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Str } from './../../js/common/common.js';
 import { XssSafeFactory } from './../../js/common/factory.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
@@ -167,7 +167,7 @@ Catch.try(async () => {
     },
     storage_contact_get: (email: string[]) => Store.db_contact_get(null, email),
     storage_contact_update: (email: string[]|string, update: ContactUpdate) => Store.db_contact_update(null, email, update),
-    storage_contact_save: (contact: t.Contact) => Store.db_contact_save(null, contact),
+    storage_contact_save: (contact: Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: t.DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
     email_provider_draft_get: (draft_id: string) => Api.gmail.draft_get(account_email, draft_id, 'raw'),
@@ -175,7 +175,7 @@ Catch.try(async () => {
     email_provider_draft_update: (draft_id: string, mime_message: string) => Api.gmail.draft_update(account_email, draft_id, mime_message),
     email_provider_draft_delete: (draft_id: string) => Api.gmail.draft_delete(account_email, draft_id),
     email_provider_message_send: (message: SendableMessage, render_upload_progress: ProgressCallback) => Api.gmail.message_send(account_email, message, render_upload_progress),
-    email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: t.Callback) => {
+    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: t.Callback) => {
       Api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
         if(Api.error.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});

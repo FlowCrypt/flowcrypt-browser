@@ -52,23 +52,6 @@ interface FlowCryptManifest extends chrome.runtime.Manifest {
     oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]};
 }
 
-// todo Store
-interface Contact {
-    email: string;
-    name: string | null;
-    pubkey: string | null;
-    has_pgp: 0|1;
-    searchable: string[];
-    client: string | null;
-    attested: boolean | null;
-    fingerprint: string | null;
-    longid: string | null;
-    keywords: string | null;
-    pending_lookup: number;
-    last_use: number | null;
-    date: number | null; // todo - should be removed. email provider search seems to return this?
-}
-
 // todo Attachment
 type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
 
@@ -165,9 +148,6 @@ type SelectorCache = {
     selector: (name: string) => string;
 };
 
-// Todo Pgp
-type EncryptDecryptOutputFormat = 'utf8'|'binary';
-
 type EmailProvider = 'gmail';
 type AccountEventHandlersOptional = {
     render_status_text?: (text: string, show_spinner?: boolean) => void;
@@ -219,20 +199,4 @@ type KeyImportUiCheckResult = {
   fingerprint: string;
   decrypted: OpenPGP.key.Key;
   encrypted: OpenPGP.key.Key;
-};
-
-// todo pgp
-type ParsedAttest = {
-  success: boolean;
-  content: {
-    [key: string]: string|undefined;
-    action?: string;
-    attester?: string;
-    email_hash?: string;
-    fingerprint?: string;
-    fingerprint_old?: string;
-    random?: string;
-  };
-  text: string|null;
-  error: string|null;
 };

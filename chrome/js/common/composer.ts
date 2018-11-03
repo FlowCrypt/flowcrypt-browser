@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Store, Subscription, KeyInfo, ContactUpdate, Serializable} from './storage.js';
+import {Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact} from './storage.js';
 import {Lang} from './lang.js';
 import {Catch, Value, Xss, Str, Mime, Ui, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
 import { Pgp } from './pgp.js';
@@ -26,17 +26,17 @@ interface ComposerAppFunctionsInterface {
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>;
     storage_passphrase_get: () => Promise<string|null>;
     storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise<void>;
-    storage_contact_get: (email: string[]) => Promise<(t.Contact|null)[]>;
+    storage_contact_get: (email: string[]) => Promise<(Contact|null)[]>;
     storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>;
-    storage_contact_save:  (contact: t.Contact) =>  Promise<void>;
-    storage_contact_search: (query: ProviderContactsQuery) => Promise<t.Contact[]>;
-    storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => t.Contact;
+    storage_contact_save:  (contact: Contact) =>  Promise<void>;
+    storage_contact_search: (query: ProviderContactsQuery) => Promise<Contact[]>;
+    storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => Contact;
     email_provider_draft_get: (draft_id: string) => Promise<R.GmailDraftGet>;
     email_provider_draft_create: (mime_message: string) => Promise<R.GmailDraftCreate>;
     email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<R.GmailDraftUpdate>;
     email_provider_draft_delete: (draft_id: string) => Promise<R.GmailDraftDelete>;
     email_provider_message_send: (message: SendableMessage, render_upload_progress: ProgressCallback) => Promise<R.GmailMessageSend>;
-    email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: (r: {new: t.Contact[], all: t.Contact[]}) => void) => void;
+    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void) => void;
     email_provider_determine_reply_message_header_variables: () => Promise<undefined|{last_message_id: string, headers: {'In-Reply-To': string, 'References': string}}>;
     email_provider_extract_armored_block: (message_id: string) => Promise<string>;
     send_message_to_main_window: (channel: string, data?: object) => void;
@@ -117,7 +117,7 @@ export class Composer {
   private my_addresses_on_pks: string[] = [];
   private my_addresses_on_keyserver: string[] = [];
   private recipients_missing_my_key: string[] = [];
-  private ks_lookups_by_email: {[key: string]: PubkeySearchResult|t.Contact} = {};
+  private ks_lookups_by_email: {[key: string]: PubkeySearchResult|Contact} = {};
   private subscribe_result_listener: ((subscription_active: boolean) => void)|undefined;
   private additional_message_headers: {[key: string]: string} = {};
   private button_update_timeout: number|null = null;
@@ -833,7 +833,7 @@ export class Composer {
     }
   }
 
-  private lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed = async (email: string): Promise<t.Contact|"fail"> => {
+  private lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed = async (email: string): Promise<Contact|"fail"> => {
     let [db_contact] = await this.app.storage_contact_get([email]);
     if (db_contact && db_contact.has_pgp && db_contact.pubkey) {
       return db_contact;
@@ -1143,7 +1143,7 @@ export class Composer {
     }
   }
 
-  private render_search_results = (contacts: t.Contact[], query: ProviderContactsQuery) => {
+  private render_search_results = (contacts: Contact[], query: ProviderContactsQuery) => {
     const renderable_contacts = contacts.slice();
     renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
     renderable_contacts.splice(8);
@@ -1270,7 +1270,7 @@ export class Composer {
     this.show_hide_password_or_pubkey_container_and_color_send_button();
   }
 
-  private recipient_key_id_text = (contact: t.Contact) => {
+  private recipient_key_id_text = (contact: Contact) => {
     if (contact.client === 'cryptup' && contact.keywords) {
       return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
     } else if (contact.fingerprint) {
@@ -1280,7 +1280,7 @@ export class Composer {
     }
   }
 
-  private render_pubkey_result = async (email_element: HTMLElement, email: string, contact: t.Contact|"fail"|"wrong") => {
+  private render_pubkey_result = async (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         let sending_address_on_pks = Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks);
@@ -1499,7 +1499,7 @@ export class Composer {
       storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
       storage_contact_get: (email: string[]) => Promise.resolve([]),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
-      storage_contact_save: (contact: t.Contact) => Promise.resolve(),
+      storage_contact_save: (contact: Contact) => Promise.resolve(),
       storage_contact_search: (query: t.DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
       email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMessage}),
@@ -1507,7 +1507,7 @@ export class Composer {
       email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve({}),
       email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
       email_provider_message_send: (message: SendableMessage, render_upload_progress: ProgressCallback) => Promise.reject({message: 'not implemented'}),
-      email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: t.Callback) => multi_cb({new: [], all: []}),
+      email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: t.Callback) => multi_cb({new: [], all: []}),
       email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
       email_provider_extract_armored_block: (message_id) => Promise.resolve(''),
       send_message_to_background_script: (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(null, channel, data),

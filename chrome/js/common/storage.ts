@@ -8,6 +8,22 @@ import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 import { SubscriptionInfo } from './api.js';
 
+export interface Contact {
+  email: string;
+  name: string | null;
+  pubkey: string | null;
+  has_pgp: 0|1;
+  searchable: string[];
+  client: string | null;
+  attested: boolean | null;
+  fingerprint: string | null;
+  longid: string | null;
+  keywords: string | null;
+  pending_lookup: number;
+  last_use: number | null;
+  date: number | null; // todo - should be removed. email provider search seems to return this?
+}
+
 export interface KeyInfo {
   public: string;
   private: string;
@@ -28,19 +44,19 @@ export type FlatTypes = null|undefined|number|string|boolean;
 type SerializableTypes = FlatTypes|string[]|number[]|boolean[]|SubscriptionInfo;
 
 export interface ContactUpdate {
-    email?: string;
-    name?: string | null;
-    pubkey?: string;
-    has_pgp?: 0|1;
-    searchable?: string[];
-    client?: string | null;
-    attested?: boolean | null;
-    fingerprint?: string | null;
-    longid?: string | null;
-    keywords?: string | null;
-    pending_lookup?: number;
-    last_use?: number | null;
-    date?: number | null; // todo - should be removed. email provider search seems to return this?
+  email?: string;
+  name?: string | null;
+  pubkey?: string;
+  has_pgp?: 0|1;
+  searchable?: string[];
+  client?: string | null;
+  attested?: boolean | null;
+  fingerprint?: string | null;
+  longid?: string | null;
+  keywords?: string | null;
+  pending_lookup?: number;
+  last_use?: number | null;
+  date?: number | null; // todo - should be removed. email provider search seems to return this?
 }
 type StoredAuthInfo = {account_email: string|null, uuid: string|null};
 type StoredReplyDraftMeta = string; // draft_id
@@ -430,7 +446,7 @@ export class Store {
     return index;
   }
 
-  static db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null): t.Contact {
+  static db_contact_object(email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null): Contact {
     let fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : null;
     email = Str.parse_email(email).email;
     if(!Str.is_email_valid(email)) {
@@ -453,7 +469,7 @@ export class Store {
     };
   }
 
-  static db_contact_save = (db: IDBDatabase|null, contact: t.Contact|t.Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
+  static db_contact_save = (db: IDBDatabase|null, contact: Contact|Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
     if (db === null) { // relay op through background process
       // todo - currently will silently swallow errors
       BrowserMsg.send_await(null, 'db', {f: 'db_contact_save', args: [contact]}).then(resolve).catch(Catch.rejection);
@@ -510,7 +526,7 @@ export class Store {
     });
   }
 
-  static db_contact_get(db: null|IDBDatabase, email_or_longid: string[]): Promise<(t.Contact|null)[]> {
+  static db_contact_get(db: null|IDBDatabase, email_or_longid: string[]): Promise<(Contact|null)[]> {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
@@ -527,7 +543,7 @@ export class Store {
           let stack_fill = String((new Error()).stack);
           tx.onerror = () => reject(Store.db_error_categorize(tx.error!, stack_fill)); // todo - added ! after ts3 upgrade - investigate
         } else {
-          let results: (t.Contact|null)[] = [];
+          let results: (Contact|null)[] = [];
           for (let single_email_or_longid of email_or_longid) {
             let [contact] = await Store.db_contact_get(db, [single_email_or_longid]);
             results.push(contact);
@@ -538,7 +554,7 @@ export class Store {
     });
   }
 
-  static db_contact_search(db: IDBDatabase|null, query: t.DbContactFilter): Promise<t.Contact[]> {
+  static db_contact_search(db: IDBDatabase|null, query: t.DbContactFilter): Promise<Contact[]> {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
@@ -572,7 +588,7 @@ export class Store {
           }
         }
         if (typeof search !== 'undefined') {
-          let found: t.Contact[] = [];
+          let found: Contact[] = [];
           search.onsuccess = Catch.try(() => {
             let cursor = search!.result; // checked it above
             if (!cursor || found.length === query.limit) {
