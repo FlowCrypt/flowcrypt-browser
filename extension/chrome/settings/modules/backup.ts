@@ -17,11 +17,11 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['account_email', 'action', 'parent_tab_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
+  let urlParams = Env.urlParams(['account_email', 'action', 'parent_tab_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
   let parent_tab_id: string|null = null;
-  if (url_params.action !== 'setup') {
-    parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  if (urlParams.action !== 'setup') {
+    parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
   }
 
   let email_provider: EmailProvider;
@@ -261,8 +261,8 @@ Catch.try(async () => {
 
   let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {
     await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
-    if (url_params.action === 'setup') {
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: url_params.account_email, action: 'finalize' });
+    if (urlParams.action === 'setup') {
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: urlParams.account_email, action: 'finalize' });
     } else {
       await show_status();
     }
@@ -322,9 +322,9 @@ Catch.try(async () => {
   };
 
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
-    if (url_params.action === 'setup') {
+    if (urlParams.action === 'setup') {
       await Store.set(account_email, { key_backup_prompt: false });
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: url_params.account_email });
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: urlParams.account_email });
     } else {
       BrowserMsg.send(parent_tab_id, 'close_page');
     }
@@ -346,7 +346,7 @@ Catch.try(async () => {
     }
   }));
 
-  if (url_params.action === 'setup') {
+  if (urlParams.action === 'setup') {
     $('.back').css('display', 'none');
     $('.action_skip_backup').parent().css('display', 'none');
     if (storage.setup_simple) {
@@ -359,7 +359,7 @@ Catch.try(async () => {
       display_block('step_3_manual');
       $('h1').text('Back up your private key');
     }
-  } else if (url_params.action === 'passphrase_change_gmail_backup') {
+  } else if (urlParams.action === 'passphrase_change_gmail_backup') {
     if (storage.setup_simple) {
       display_block('loading');
       let [primary_ki] = await Store.keysGet(account_email, ['primary']);
@@ -375,7 +375,7 @@ Catch.try(async () => {
       display_block('step_3_manual');
       $('h1').text('Back up your private key');
     }
-  } else if (url_params.action === 'options') {
+  } else if (urlParams.action === 'options') {
     display_block('step_3_manual');
     $('h1').text('Back up your private key');
   } else {

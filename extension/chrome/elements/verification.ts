@@ -11,12 +11,12 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'verification_email_text', 'parent_tab_id', 'subscribe_result_tab_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   let flowcrypt_account = new FlowCryptAccount({}, true);
-  let token = flowcrypt_account.parseTokenEmailText(url_params.verification_email_text as string);
+  let token = flowcrypt_account.parseTokenEmailText(urlParams.verification_email_text as string);
 
   let render_status = (content: string, spinner=false) => {
     Xss.sanitizeRender('body .status', Xss.htmlSanitize(content + (spinner ? ' ' + Ui.spinner('white') : '')));

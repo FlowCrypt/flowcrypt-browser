@@ -10,23 +10,23 @@ Catch.try(async () => {
 
   type RenderableStorage = Dict<{key: string, value: Storable}>;
 
-  let url_params = Env.urlParams(['filter', 'keys', 'controls', 'title']);
+  let urlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
 
   // this is for debugging
-  let controls = url_params.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
+  let controls = urlParams.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
 
-  if (url_params.title) {
-    Xss.sanitizePrepend('#content', `<h1>${Xss.htmlEscape(String(url_params.title))}</h1>`);
+  if (urlParams.title) {
+    Xss.sanitizePrepend('#content', `<h1>${Xss.htmlEscape(String(urlParams.title))}</h1>`);
   }
 
   if (controls) {
     let account_emails = await Store.accountEmailsGet();
     let emails_selector = $('.emails');
-    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
-    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
+    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {controls: urlParams.controls || ''}))}">all</a>`);
+    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {filter: 'global', controls: urlParams.controls || ''}))}">global</a>`);
     Xss.sanitizeAppend('.namespace', '<option value="global">global</option>');
     for (let account_email of account_emails) {
-      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${Xss.htmlEscape(account_email)}</a>`);
+      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: account_email, controls: urlParams.controls || ''}))}">${Xss.htmlEscape(account_email)}</a>`);
       Xss.sanitizeAppend('.namespace', `<option value="${Xss.htmlEscape(account_email)}">${Xss.htmlEscape(account_email)}</option>`);
     }
   }
@@ -43,8 +43,8 @@ Catch.try(async () => {
 
   chrome.storage.local.get(storage => {
     let real_filter: string;
-    if (url_params.filter) {
-      real_filter = Store.index(url_params.filter as string, url_params.keys as string || '') as string;
+    if (urlParams.filter) {
+      real_filter = Store.index(urlParams.filter as string, urlParams.keys as string || '') as string;
     } else {
       real_filter = '';
     }

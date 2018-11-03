@@ -10,8 +10,8 @@ import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['action']);
-  let action = Env.url_param_require.oneof(url_params, 'action', ['inbox', 'settings']);
+  let urlParams = Env.urlParams(['action']);
+  let action = Env.urlParamRequire.oneof(urlParams, 'action', ['inbox', 'settings']);
 
   if (action === 'inbox') {
     $('#title').text('Choose inbox account');
@@ -30,7 +30,7 @@ Catch.try(async () => {
     }
   }
   Xss.sanitizeRender('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
-    if (url_params.action === 'inbox') {
+    if (urlParams.action === 'inbox') {
       await BrowserMsg.sendAwait(null, 'inbox', { account_email: $(target).attr('email') });
       window.close();
     } else {

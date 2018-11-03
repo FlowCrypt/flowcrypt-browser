@@ -13,10 +13,10 @@ import { Mime } from '../../../js/common/mime.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['account_email', 'label_id', 'thread_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let label_id = url_params.label_id ? String(url_params.label_id) : 'INBOX';
-  let thread_id = url_params.thread_id || null;
+  let urlParams = Env.urlParams(['account_email', 'label_id', 'thread_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let label_id = urlParams.label_id ? String(urlParams.label_id) : 'INBOX';
+  let thread_id = urlParams.thread_id || null;
 
   let email_provider;
   let factory: XssSafeFactory;

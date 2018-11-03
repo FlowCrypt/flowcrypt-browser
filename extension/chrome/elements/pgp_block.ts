@@ -19,17 +19,17 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
-  let has_challenge_password = url_params.has_password === true;
-  let frame_id = url_params.frame_id;
-  let is_outgoing = url_params.is_outgoing === true;
-  let signature = url_params.signature || null;
-  let short = url_params.short;
-  let sender_email = url_params.sender_email;
-  let message_id = url_params.message_id;
-  let message = url_params.message;
+  let urlParams = Env.urlParams(['account_email', 'frame_id', 'message', 'parent_tab_id', 'message_id', 'is_outgoing', 'sender_email', 'has_password', 'signature', 'short']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let has_challenge_password = urlParams.has_password === true;
+  let frame_id = urlParams.frame_id;
+  let is_outgoing = urlParams.is_outgoing === true;
+  let signature = urlParams.signature || null;
+  let short = urlParams.short;
+  let sender_email = urlParams.sender_email;
+  let message_id = urlParams.message_id;
+  let message = urlParams.message;
 
   let included_atts: Att[] = [];
   let height_history: number[] = [];

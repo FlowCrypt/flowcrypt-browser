@@ -14,9 +14,9 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'attest_packet', 'parent_tab_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'attest_packet', 'parent_tab_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   let [primary_ki] = await Store.keysGet(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
@@ -26,7 +26,7 @@ Catch.try(async () => {
   let process_attest = async (passphrase: string|null) => {
     if (passphrase !== null) {
       Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
-      let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
+      let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', {account_email, packet: urlParams.attest_packet, passphrase});
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };

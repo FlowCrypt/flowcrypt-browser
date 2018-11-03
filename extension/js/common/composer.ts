@@ -976,7 +976,7 @@ export class Composer {
 
   private respond_to_input_hotkeys = (input_to_keydown_event: KeyboardEvent) => {
     let value = this.S.cached('input_to').val();
-    const keys = Env.key_codes();
+    const keys = Env.keyCodes();
     if (!value && input_to_keydown_event.which === keys.backspace) {
       $('.recipients span').last().remove();
     } else if (value && (input_to_keydown_event.which === keys.enter || input_to_keydown_event.which === keys.tab)) {

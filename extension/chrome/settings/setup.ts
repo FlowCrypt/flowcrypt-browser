@@ -29,11 +29,11 @@ interface SetupOptions {
 Catch.try(async () => {
 
   let unchecked_url_params = Env.urlParams(['account_email', 'action', 'parent_tab_id']);
-  let account_email = Env.url_param_require.string(unchecked_url_params, 'account_email');
+  let account_email = Env.urlParamRequire.string(unchecked_url_params, 'account_email');
   let parent_tab_id: string|null = null;
-  let action = Env.url_param_require.oneof(unchecked_url_params, 'action', ['add_key', 'finalize', undefined]) as 'add_key'|'finalize'|undefined;
+  let action = Env.urlParamRequire.oneof(unchecked_url_params, 'action', ['add_key', 'finalize', undefined]) as 'add_key'|'finalize'|undefined;
   if (action === 'add_key') {
-    parent_tab_id = Env.url_param_require.string(unchecked_url_params, 'parent_tab_id');
+    parent_tab_id = Env.urlParamRequire.string(unchecked_url_params, 'parent_tab_id');
   }
 
   if (account_email) {

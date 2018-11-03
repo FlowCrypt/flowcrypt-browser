@@ -9,13 +9,13 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'bug_report']);
-  let account_email = url_params.account_email as string|undefined;
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
-  let bug_report = url_params.bug_report as string|undefined;
+  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'bug_report']);
+  let acctEmail = urlParams.account_email as string|undefined;
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let bug_report = urlParams.bug_report as string|undefined;
 
-  if(account_email) {
-    $('#input_email').val(account_email).attr('disabled', 'disabled');
+  if(acctEmail) {
+    $('#input_email').val(acctEmail).attr('disabled', 'disabled');
   }
 
   if(bug_report) {
@@ -25,7 +25,7 @@ Catch.try(async () => {
   }
 
   $('.action_send_feedback').click(Ui.event.handle(async target => {
-    let my_email = account_email;
+    let my_email = acctEmail;
     if(!my_email) {
       if(Str.isEmailValid($('#input_email').val() as string)) {
         my_email = $('#input_email').val() as string;

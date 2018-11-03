@@ -94,7 +94,7 @@ Catch.try(async () => {
     };
 
     let hijackGmailHotkeys = () => {
-      let keys = Env.key_codes();
+      let keys = Env.keyCodes();
       let unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
       $(document).keypress(e => {
         Catch.try(() => {

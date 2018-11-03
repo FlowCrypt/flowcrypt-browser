@@ -43,7 +43,7 @@ export class Env {
     }
   }
 
-  public static runtime_id = (orig=false) => {
+  public static runtimeId = (orig=false) => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
       if (orig === true) {
         return chrome.runtime.id;
@@ -56,9 +56,9 @@ export class Env {
 
   public static isBackgroundPage = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
 
-  public static is_extension = () => Env.runtime_id() !== null;
+  public static isExtension = () => Env.runtimeId() !== null;
 
-  public static url_param_require = {
+  public static urlParamRequire = {
     string: (values: UrlParams, name: string): string => Ui.abort_and_render_error_on_url_param_type_mismatch(values, name, 'string') as string,
     oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abort_and_render_error_on_url_param_value_mismatch(values, name, allowed) as string,
   };
@@ -87,7 +87,7 @@ export class Env {
     return link;
   }
 
-  public static key_codes = () => {
+  public static keyCodes = () => {
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 

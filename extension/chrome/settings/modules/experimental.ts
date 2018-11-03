@@ -12,9 +12,9 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['account_email', 'parent_tab_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'parent_tab_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   // this is for debugging
   if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {

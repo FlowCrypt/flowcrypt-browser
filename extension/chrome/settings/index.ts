@@ -15,11 +15,11 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['account_email', 'page', 'page_url_params', 'advanced', 'add_new_account']);
-  let account_email = url_params.account_email as string|undefined;
-  let page_url_params = (typeof url_params.page_url_params === 'string') ? JSON.parse(url_params.page_url_params) : null;
+  let urlParams = Env.urlParams(['account_email', 'page', 'page_url_params', 'advanced', 'add_new_account']);
+  let account_email = urlParams.account_email as string|undefined;
+  let page_url_params = (typeof urlParams.page_url_params === 'string') ? JSON.parse(urlParams.page_url_params) : null;
   let account_emails = await Store.accountEmailsGet();
-  let add_new_account = url_params.add_new_account === true;
+  let add_new_account = urlParams.add_new_account === true;
 
   // let microsoft_auth_attempt = {};
 
@@ -123,7 +123,7 @@ Catch.try(async () => {
         }
         display_orig('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
-        if (url_params.advanced) {
+        if (urlParams.advanced) {
           $("#settings").toggleClass("advanced");
         }
         let private_keys = await Store.keysGet(account_email);
@@ -362,11 +362,11 @@ Catch.try(async () => {
 
   await initialize();
   await Ui.abort_and_render_error_on_unprotected_key(account_email, tab_id);
-  if (url_params.page && typeof url_params.page !== 'undefined' && url_params.page !== 'undefined') {
-    if (url_params.page === '/chrome/settings/modules/auth_denied.htm') {
-      Settings.render_sub_page(account_email || null, tab_id, url_params.page);
+  if (urlParams.page && typeof urlParams.page !== 'undefined' && urlParams.page !== 'undefined') {
+    if (urlParams.page === '/chrome/settings/modules/auth_denied.htm') {
+      Settings.render_sub_page(account_email || null, tab_id, urlParams.page);
     } else {
-      Settings.render_sub_page(account_email || null, tab_id, url_params.page as string, page_url_params);
+      Settings.render_sub_page(account_email || null, tab_id, urlParams.page as string, page_url_params);
     }
   }
 

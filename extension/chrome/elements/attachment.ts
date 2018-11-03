@@ -14,25 +14,25 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted', 'frame_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
-  url_params.size = url_params.size ? parseInt(url_params.size as string) : undefined;
-  let original_name_based_on_filename = url_params.name ? (url_params.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
+  let urlParams = Env.urlParams(['account_email', 'message_id', 'attachment_id', 'name', 'type', 'size', 'url', 'parent_tab_id', 'content', 'decrypted', 'frame_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  urlParams.size = urlParams.size ? parseInt(urlParams.size as string) : undefined;
+  let original_name_based_on_filename = urlParams.name ? (urlParams.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
 
   let decrypted_a: Att|null = null;
   let encrypted_a: Att|null = null;
   try {
-    if(url_params.decrypted) {
-      decrypted_a = new Att({name: original_name_based_on_filename, type: url_params.type as string|undefined, data: url_params.decrypted as string});
+    if(urlParams.decrypted) {
+      decrypted_a = new Att({name: original_name_based_on_filename, type: urlParams.type as string|undefined, data: urlParams.decrypted as string});
     } else {
       encrypted_a = new Att({
         name: original_name_based_on_filename,
-        type: url_params.type as string|undefined,
-        data: url_params.content as string|undefined,
-        msgId: url_params.message_id as string|undefined,
-        id: url_params.attachment_id as string|undefined,
-        url: url_params.url as string|undefined,
+        type: urlParams.type as string|undefined,
+        data: urlParams.content as string|undefined,
+        msgId: urlParams.message_id as string|undefined,
+        id: urlParams.attachment_id as string|undefined,
+        url: urlParams.url as string|undefined,
       });
     }
   } catch(e) {
@@ -47,8 +47,8 @@ Catch.try(async () => {
   let passphrase_interval: number|undefined;
   let missing_passprase_longids: string[] = [];
 
-  $('#type').text(url_params.type as string);
-  $('#name').text(url_params.name as string);
+  $('#type').text(urlParams.type as string);
+  $('#name').text(urlParams.name as string);
 
   $('img#file-format').attr('src', (() => {
     let icon = (name: string) => `/img/fileformat/${name}.png`;
@@ -88,7 +88,7 @@ Catch.try(async () => {
   let get_url_file_size = (original_url: string): Promise<number|null> => new Promise((resolve, reject) => {
     console.info('trying to figure out file size');
     let url;
-    if (Value.is('docs.googleusercontent.com/docs/securesc').in(url_params.url as string)) {
+    if (Value.is('docs.googleusercontent.com/docs/securesc').in(urlParams.url as string)) {
       try {
         let google_drive_file_id = original_url.split('/').pop()!.split('?').shift(); // we catch any errors below
         if (google_drive_file_id) {
@@ -135,20 +135,20 @@ Catch.try(async () => {
       delete result.message;
       console.info(result);
       $('body.attachment').text('Error opening file. Downloading original..');
-      Att.methods.saveToDownloads(new Att({name: url_params.name as string, type: url_params.type as string, data: enc_a.data()}));
+      Att.methods.saveToDownloads(new Att({name: urlParams.name as string, type: urlParams.type as string, data: enc_a.data()}));
     }
   };
 
-  if (!url_params.size && url_params.url) { // download url of an unknown size
-    get_url_file_size(url_params.url as string).then(size => {
+  if (!urlParams.size && urlParams.url) { // download url of an unknown size
+    get_url_file_size(urlParams.url as string).then(size => {
       if(size !== null) {
-        url_params.size = size;
+        urlParams.size = size;
       }
     }).catch(Catch.rejection);
   }
 
   let render_progress = (percent: number, received: number, size: number) => {
-    size = size || url_params.size as number;
+    size = size || urlParams.size as number;
     if (percent) {
       progress_element.text(percent + '%');
     } else if (size) {
@@ -191,13 +191,13 @@ Catch.try(async () => {
   };
 
   let recover_missing_att_id_if_needed = async () => {
-    if (!url_params.url && !url_params.attachment_id && url_params.message_id) {
+    if (!urlParams.url && !urlParams.attachment_id && urlParams.message_id) {
       try {
-        let result = await Api.gmail.msgGet(account_email, url_params.message_id as string, 'full');
+        let result = await Api.gmail.msgGet(account_email, urlParams.message_id as string, 'full');
         if (result && result.payload && result.payload.parts) {
           for (let att_meta of result.payload.parts) {
-            if (att_meta.filename === url_params.name && att_meta.body && att_meta.body.size === url_params.size && att_meta.body.attachmentId) {
-              url_params.attachment_id = att_meta.body.attachmentId;
+            if (att_meta.filename === urlParams.name && att_meta.body && att_meta.body.size === urlParams.size && att_meta.body.attachmentId) {
+              urlParams.attachment_id = att_meta.body.attachmentId;
               break;
             }
           }
@@ -214,16 +214,16 @@ Catch.try(async () => {
   let process_as_a_public_key_and_hide_att_if_appropriate = async () => {
     if (encrypted_a && encrypted_a.msgId && encrypted_a.id && encrypted_a.treatAs() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
-      let att = await Api.gmail.attGet(account_email, url_params.message_id as string, url_params.attachment_id as string);
+      let att = await Api.gmail.attGet(account_email, urlParams.message_id as string, urlParams.attachment_id as string);
       let result = await Pgp.msg.decrypt(account_email, att.data);
       if (result.success && result.content.text) {
         let openpgp_type = Pgp.msg.type(result.content.text);
         if(openpgp_type && openpgp_type.type === 'public_key') {
           if(openpgp_type.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
-            BrowserMsg.send(parent_tab_id, 'render_public_keys', {after_frame_id: url_params.frame_id, traverse_up: 2, public_keys: [result.content.text]});
+            BrowserMsg.send(parent_tab_id, 'render_public_keys', {after_frame_id: urlParams.frame_id, traverse_up: 2, public_keys: [result.content.text]});
             // hide attachment
-            BrowserMsg.send(parent_tab_id, 'set_css', {selector: `#${url_params.frame_id}`, traverse_up: 1, css: {display: 'none'}});
+            BrowserMsg.send(parent_tab_id, 'set_css', {selector: `#${urlParams.frame_id}`, traverse_up: 1, css: {display: 'none'}});
             $('body').text('');
             return true;
           }

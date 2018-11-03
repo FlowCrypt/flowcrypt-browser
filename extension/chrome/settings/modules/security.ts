@@ -13,9 +13,9 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try( async () => {
 
-  let url_params = Env.urlParams(['account_email', 'embedded', 'parent_tab_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'embedded', 'parent_tab_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   await Ui.passphrase_toggle(['passphrase_entry']);
 
@@ -27,7 +27,7 @@ Catch.try( async () => {
 
   let storage = await Store.getAccount(account_email, ['hide_message_password', 'outgoing_language']);
 
-  if (url_params.embedded) {
+  if (urlParams.embedded) {
     $('.change_passhrase_container, .title_container').css('display', 'none');
     $('.line').css('padding', '7px 0');
   }

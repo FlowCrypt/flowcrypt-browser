@@ -12,16 +12,16 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['account_email', 'longid', 'parent_tab_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'longid', 'parent_tab_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
-  let url_my_key_page = Env.urlCreate('my_key.htm', url_params);
+  let url_my_key_page = Env.urlCreate('my_key.htm', urlParams);
   $('.action_show_public_key').attr('href', url_my_key_page);
   let input_private_key = $('.input_private_key');
   let prv_headers = Pgp.armor.headers('private_key');
 
-  let [primary_ki] = await Store.keysGet(account_email, [url_params.longid as string || 'primary']);
+  let [primary_ki] = await Store.keysGet(account_email, [urlParams.longid as string || 'primary']);
 
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 

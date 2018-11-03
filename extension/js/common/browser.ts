@@ -144,7 +144,7 @@ export class Ui {
   }
 
   public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (e.which === Env.key_codes().enter) {
+    if (e.which === Env.keyCodes().enter) {
       callback();
     }
   }

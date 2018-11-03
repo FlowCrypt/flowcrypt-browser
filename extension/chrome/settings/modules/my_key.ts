@@ -14,14 +14,14 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let url_params = Env.urlParams(['account_email', 'longid', 'parent_tab_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'longid', 'parent_tab_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
-  $('.action_view_user_ids').attr('href', Env.urlCreate('my_key_user_ids.htm', url_params));
-  $('.action_view_update').attr('href', Env.urlCreate('my_key_update.htm', url_params));
+  $('.action_view_user_ids').attr('href', Env.urlCreate('my_key_user_ids.htm', urlParams));
+  $('.action_view_update').attr('href', Env.urlCreate('my_key_update.htm', urlParams));
 
-  let [primary_ki] = await Store.keysGet(account_email, [url_params.longid as string || 'primary']);
+  let [primary_ki] = await Store.keysGet(account_email, [urlParams.longid as string || 'primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
   let key = openpgp.key.readArmored(primary_ki.private).keys[0];

@@ -12,13 +12,13 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'emails', 'placement']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'emails', 'placement']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   let close_dialog = () => BrowserMsg.send(parent_tab_id, 'close_dialog');
 
-  for (let email of (url_params.emails as string).split(',')) {
+  for (let email of (urlParams.emails as string).split(',')) {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.htmlEscape(email)}">${Xss.htmlEscape(email)}</option>`);
   }
 
@@ -58,7 +58,7 @@ Catch.try(async () => {
     }
   }));
 
-  if (url_params.placement !== 'settings') {
+  if (urlParams.placement !== 'settings') {
     $('.action_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {
       path: 'index.htm',
       page: '/chrome/settings/modules/contacts.htm',

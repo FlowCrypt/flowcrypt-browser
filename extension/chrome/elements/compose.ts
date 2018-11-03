@@ -15,47 +15,47 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'draft_id', 'placement', 'frame_id', 'is_reply_box', 'from', 'to', 'subject', 'thread_id', 'thread_message_id', 'skip_click_prompt', 'ignore_draft']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   let subscription_when_page_was_opened = await Store.subscription();
   const storage_keys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
   let storage = await Store.getAccount(account_email, storage_keys);
 
   await (async () => { // attempt to recover missing params
-    if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
+    if (!urlParams.is_reply_box || (urlParams.thread_id && urlParams.thread_id !== urlParams.thread_message_id && urlParams.to && urlParams.from && urlParams.subject)) {
       return; // either not a reply box, or reply box & has all needed params
     }
     Xss.sanitizePrepend('#new_message', Ui.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
     let gmail_message_object;
     try {
-      gmail_message_object = await Api.gmail.msgGet(account_email, url_params.thread_message_id as string, 'metadata');
+      gmail_message_object = await Api.gmail.msgGet(account_email, urlParams.thread_message_id as string, 'metadata');
     } catch(e) {
       if(Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       }
-      if (!url_params.from) {
-        url_params.from = account_email;
+      if (!urlParams.from) {
+        urlParams.from = account_email;
       }
-      if (!url_params.subject) {
-        url_params.subject = '';
+      if (!urlParams.subject) {
+        urlParams.subject = '';
       }
-      url_params.thread_id = url_params.thread_id || url_params.thread_message_id as string;
-      console.info('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(url_params.thread_id));
+      urlParams.thread_id = urlParams.thread_id || urlParams.thread_message_id as string;
+      console.info('FlowCrypt: Substituting thread_id: could cause issues. Value:' + String(urlParams.thread_id));
       $('#loader').remove();
       return;
     }
-    url_params.thread_id = gmail_message_object.threadId;
+    urlParams.thread_id = gmail_message_object.threadId;
     let reply = Api.common.replyCorrespondents(account_email, storage.addresses || [], Api.gmail.findHeader(gmail_message_object, 'from'), (Api.gmail.findHeader(gmail_message_object, 'to') || '').split(','));
-    if (!url_params.to) {
-      url_params.to = reply.to.join(',');
+    if (!urlParams.to) {
+      urlParams.to = reply.to.join(',');
     }
-    if (!url_params.from) {
-      url_params.from = reply.from;
+    if (!urlParams.from) {
+      urlParams.from = reply.from;
     }
-    if (!url_params.subject) {
-      url_params.subject = Api.gmail.findHeader(gmail_message_object, 'subject');
+    if (!urlParams.subject) {
+      urlParams.subject = Api.gmail.findHeader(gmail_message_object, 'subject');
     }
     $('#loader').remove();
   })();
@@ -64,15 +64,15 @@ Catch.try(async () => {
 
   const can_read_email = Api.gmail.hasScope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(account_email, tab_id);
-  if (url_params.is_reply_box && url_params.thread_id && !url_params.ignore_draft && storage.drafts_reply && storage.drafts_reply[url_params.thread_id as string]) { // there may be a draft we want to load
-    url_params.draft_id = storage.drafts_reply[url_params.thread_id as string];
+  if (urlParams.is_reply_box && urlParams.thread_id && !urlParams.ignore_draft && storage.drafts_reply && storage.drafts_reply[urlParams.thread_id as string]) { // there may be a draft we want to load
+    urlParams.draft_id = storage.drafts_reply[urlParams.thread_id as string];
   }
 
   let close_msg = () => {
     $('body').attr('data-test-state', 'closed');  // used by automated tests
-    if (url_params.is_reply_box) {
-      BrowserMsg.send(parent_tab_id, 'close_reply_message', {frame_id: url_params.frame_id, thread_id: url_params.thread_id});
-    } else if (url_params.placement === 'settings') {
+    if (urlParams.is_reply_box) {
+      BrowserMsg.send(parent_tab_id, 'close_reply_message', {frame_id: urlParams.frame_id, thread_id: urlParams.thread_id});
+    } else if (urlParams.placement === 'settings') {
       BrowserMsg.send(parent_tab_id, 'close_page');
     } else {
       BrowserMsg.send(parent_tab_id, 'close_new_message');
@@ -173,7 +173,7 @@ Catch.try(async () => {
     storage_contact_search: (query: DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.dbContactObj,
     email_provider_draft_get: (draft_id: string) => Api.gmail.draftGet(account_email, draft_id, 'raw'),
-    email_provider_draft_create: (mime_message: string) => Api.gmail.draftCreate(account_email, mime_message, url_params.thread_id as string),
+    email_provider_draft_create: (mime_message: string) => Api.gmail.draftCreate(account_email, mime_message, urlParams.thread_id as string),
     email_provider_draft_update: (draft_id: string, mime_message: string) => Api.gmail.draftUpdate(account_email, draft_id, mime_message),
     email_provider_draft_delete: (draft_id: string) => Api.gmail.draftDelete(account_email, draft_id),
     email_provider_msg_send: (message: SendableMsg, render_upload_progress: ProgressCb) => Api.gmail.msgSend(account_email, message, render_upload_progress),
@@ -191,7 +191,7 @@ Catch.try(async () => {
     },
     email_provider_determine_reply_msg_header_variables: async () => {
       try {
-        let thread = await Api.gmail.threadGet(account_email, url_params.thread_id as string, 'full');
+        let thread = await Api.gmail.threadGet(account_email, urlParams.thread_id as string, 'full');
         if (thread.messages && thread.messages.length > 0) {
           let thread_message_id_last = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
           let thread_message_referrences_last = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
@@ -216,10 +216,10 @@ Catch.try(async () => {
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {
       BrowserMsg.send(parent_tab_id, 'reinsert_reply_box', {
         account_email,
-        my_email: url_params.from,
-        subject: url_params.subject,
+        my_email: urlParams.from,
+        subject: urlParams.subject,
         their_email: recipients.join(','),
-        thread_id: url_params.thread_id,
+        thread_id: urlParams.thread_id,
         thread_message_id: last_message_id,
       });
     },
@@ -227,7 +227,7 @@ Catch.try(async () => {
       $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
     }}),
     render_add_pubkey_dialog: (emails: string[]) => {
-      if (url_params.placement !== 'settings') {
+      if (urlParams.placement !== 'settings') {
         BrowserMsg.send(parent_tab_id, 'add_pubkey_dialog', {emails});
       } else {
         ($ as JQS).featherlight({iframe: factory.src_add_pubkey_dialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50}); // body element is present
@@ -239,15 +239,15 @@ Catch.try(async () => {
     factory_attachment: (att: Att) => factory.embedded_attachment(att),
   }, {
     account_email,
-    draft_id: url_params.draft_id,
-    thread_id: url_params.thread_id,
-    subject: url_params.subject,
-    from: url_params.from,
-    to: url_params.to,
-    frame_id: url_params.frame_id,
+    draft_id: urlParams.draft_id,
+    thread_id: urlParams.thread_id,
+    subject: urlParams.subject,
+    from: urlParams.from,
+    to: urlParams.to,
+    frame_id: urlParams.frame_id,
     tab_id,
-    is_reply_box: url_params.is_reply_box,
-    skip_click_prompt: url_params.skip_click_prompt,
+    is_reply_box: urlParams.is_reply_box,
+    skip_click_prompt: urlParams.skip_click_prompt,
   }, subscription_when_page_was_opened);
 
   BrowserMsg.listen({
@@ -271,7 +271,7 @@ Catch.try(async () => {
     },
   }, tab_id || undefined);
 
-  if(!url_params.is_reply_box) { // don't want to deal with resizing the frame
+  if(!urlParams.is_reply_box) { // don't want to deal with resizing the frame
     await Ui.abort_and_render_error_on_unprotected_key(account_email);
   }
 

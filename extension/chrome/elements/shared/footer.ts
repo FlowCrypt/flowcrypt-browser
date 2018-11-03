@@ -12,9 +12,9 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'parent_tab_id']); // placement: compose||settings
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
+  let urlParams = Env.urlParams(['account_email', 'parent_tab_id']); // placement: compose||settings
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   let save_footer_if_has_subscription_and_requested = async (requested: boolean, footer: string) => {
     let subscription = await Store.subscription();

@@ -18,17 +18,17 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let url_params = Env.urlParams(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
-  let account_email = Env.url_param_require.string(url_params, 'account_email');
-  let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
-  let armored_pubkey = Env.url_param_require.string(url_params, 'armored_pubkey');
-  let frame_id = Env.url_param_require.string(url_params, 'frame_id');
+  let urlParams = Env.urlParams(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
+  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let armored_pubkey = Env.urlParamRequire.string(urlParams, 'armored_pubkey');
+  let frame_id = Env.urlParamRequire.string(urlParams, 'frame_id');
   // minimized means I have to click to see details. Compact means the details take up very little space.
 
   let pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armored_pubkey).keys;
 
   let send_resize_msg = () => {
-    let desired_height = $('#pgp_block').height()! + (url_params.compact ? 10 : 30); // #pgp_block is defined in template
+    let desired_height = $('#pgp_block').height()! + (urlParams.compact ? 10 : 30); // #pgp_block is defined in template
     BrowserMsg.send(parent_tab_id, 'set_css', {selector: `iframe#${frame_id}`, css: {height: `${desired_height}px`}});
   };
 
@@ -42,13 +42,13 @@ Catch.try(async () => {
   };
 
   let render = async () => {
-    $('.pubkey').text(url_params.armored_pubkey as string);
-    if (url_params.compact) {
+    $('.pubkey').text(urlParams.armored_pubkey as string);
+    if (urlParams.compact) {
       $('.hide_if_compact').remove();
       $('body').css({border: 'none', padding: 0});
       $('.line').removeClass('line');
     }
-    $('.line.fingerprints, .line.add_contact').css('display', url_params.minimized ? 'none' : 'block');
+    $('.line.fingerprints, .line.add_contact').css('display', urlParams.minimized ? 'none' : 'block');
     if (pubkeys.length === 1) {
       $('.line.fingerprints .fingerprint').text(Pgp.key.fingerprint(pubkeys[0], 'spaced') as string);
       $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) || '') || '');
@@ -74,12 +74,12 @@ Catch.try(async () => {
         set_button_text().catch(Catch.rejection);
       }
     } else {
-      let fixed = url_params.armored_pubkey as string;
+      let fixed = urlParams.armored_pubkey as string;
       while(/\n> |\n>\n/.test(fixed)) {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
-      if (fixed !== url_params.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: url_params.account_email, parent_tab_id: url_params.parent_tab_id, frame_id: url_params.frame_id });
+      if (fixed !== urlParams.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
+        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: urlParams.account_email, parent_tab_id: urlParams.parent_tab_id, frame_id: urlParams.frame_id });
       } else {
         $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });

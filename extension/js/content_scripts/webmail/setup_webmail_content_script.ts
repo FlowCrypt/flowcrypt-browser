@@ -203,9 +203,9 @@ export let contentScriptSetupIfVacant = async (webmail_specific: WebmailSpecific
     (window as ContentScriptWindow).account_email_global = null; // used by background script
     (window as ContentScriptWindow).same_world_global = true; // used by background_script
 
-    (window as ContentScriptWindow).destruction_event = Env.runtime_id() + '_destroy';
-    (window as ContentScriptWindow).destroyable_class = Env.runtime_id() + '_destroyable';
-    (window as ContentScriptWindow).reloadable_class = Env.runtime_id() + '_reloadable';
+    (window as ContentScriptWindow).destruction_event = Env.runtimeId() + '_destroy';
+    (window as ContentScriptWindow).destroyable_class = Env.runtimeId() + '_destroyable';
+    (window as ContentScriptWindow).reloadable_class = Env.runtimeId() + '_reloadable';
     (window as ContentScriptWindow).destroyable_intervals = [];
     (window as ContentScriptWindow).destroyable_timeouts = [];
 

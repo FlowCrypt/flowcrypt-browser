@@ -9,9 +9,9 @@ import { StandardError } from '../../js/common/api.js';
 
 (() => {
 
-  let url_params = Env.urlParams(['f', 'args']);
-  let f = String(url_params.f);
-  let args = JSON.parse(String(url_params.args));
+  let urlParams = Env.urlParams(['f', 'args']);
+  let f = String(urlParams.f);
+  let args = JSON.parse(String(urlParams.args));
 
   let test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
     try {

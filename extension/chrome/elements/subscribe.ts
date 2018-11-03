@@ -16,8 +16,8 @@ Catch.try(async () => {
   Ui.event.protect();
 
   let urlParams = Env.urlParams(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
-  let acctEmail = Env.url_param_require.string(urlParams, 'account_email');
-  let parentTabId = Env.url_param_require.string(urlParams, 'parent_tab_id');
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'account_email');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
   let authInfo = await Store.authInfo();
   if (authInfo.account_email) {
