@@ -8,7 +8,7 @@ import { Xss, Ui, KeyImportUI, UserAlert } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { mnemonic } from '../../../js/common/mnemonic.js';
 
-import { Settings } from '../settings.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Api, PubkeySearchResult } from '../../../js/common/api.js';
 
 Catch.try(async () => {

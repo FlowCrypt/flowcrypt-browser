@@ -5,7 +5,7 @@
 import { Store } from '../../../js/common/store.js';
 import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Ui } from '../../../js/common/browser.js';
-import { Settings } from '../settings.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/pgp.js';
 
 declare const openpgp: typeof OpenPGP;

@@ -9,7 +9,7 @@ import { Xss, Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Settings } from '../settings.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
 import { Pgp } from '../../../js/common/pgp.js';
 

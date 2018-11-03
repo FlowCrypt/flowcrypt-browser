@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Store, KeyInfo } from '../../js/common/store.js';
-import { Value, Str, Env, UnreportableError, Catch, UrlParams, JQS, Dict } from '../../js/common/common.js';
-import { Xss, Ui } from '../../js/common/browser.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { Store, KeyInfo } from './store.js';
+import { Value, Str, Env, UnreportableError, Catch, UrlParams, JQS, Dict } from './common.js';
+import { Xss, Ui } from './browser.js';
+import { BrowserMsg } from './extension.js';
 
-import { Lang } from '../../js/common/lang.js';
-import { Rules } from '../../js/common/rules.js';
-import { Api } from '../../js/common/api.js';
-import { Pgp } from '../../js/common/pgp.js';
+import { Lang } from './lang.js';
+import { Rules } from './rules.js';
+import { Api } from './api.js';
+import { Pgp } from './pgp.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types

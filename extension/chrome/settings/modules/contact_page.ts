@@ -8,7 +8,7 @@ import { Attachment } from '../../../js/common/attachment.js';
 import { Xss, Ui, AttachmentUI } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 
-import { Settings } from '../settings.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Api, R } from '../../../js/common/api.js';
 
 Catch.try(async () => {

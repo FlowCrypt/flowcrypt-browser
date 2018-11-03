@@ -7,7 +7,7 @@ import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
 import { Ui } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
-import { Settings } from '../settings.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
 
 declare const openpgp: typeof OpenPGP;

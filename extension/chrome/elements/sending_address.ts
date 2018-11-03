@@ -5,7 +5,7 @@
 import { Store } from '../../js/common/store.js';
 import { Catch, Env, Value } from './../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
-import { Settings } from '../settings/settings.js';
+import { Settings } from '../../js/common/settings.js';
 import { Pgp } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 

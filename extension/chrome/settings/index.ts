@@ -7,7 +7,7 @@ import { Catch, Env, Str, JQS } from '../../js/common/common.js';
 import { Xss, Ui, XssSafeFactory, PassphraseDialogType } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
-import { Settings } from './settings.js';
+import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 
