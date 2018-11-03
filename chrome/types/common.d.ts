@@ -69,7 +69,6 @@ interface Dict<T> {
 type UrlParam = string|number|null|undefined|boolean|string[];
 type UrlParams = Dict<UrlParam>;
 
-
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
 
 // TodoMime
