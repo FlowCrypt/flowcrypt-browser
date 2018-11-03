@@ -8,13 +8,13 @@ let inquirer = require('inquirer');
 var replace = require('gulp-replace');
 
 let config = (path) => JSON.parse(fs.readFileSync(path));
-let source = (path) => Array.isArray(path) ? path.map(source) : `chrome/${path}`;
-let version = config('package.json').version;
+let source = (path) => Array.isArray(path) ? path.map(source) : `../chrome/${path}`;
+let version = config('../package.json').version;
 
-let chromeTo = 'build/chrome';
-let ffTo = 'build/firefox';
-let contentScriptsTo = 'build/_/content_scripts';
-let chromeReleaseZipTo = `release/flowcrypt-chrome-${version.replace(/\./g, '-')}.zip`;
+let chromeTo = '../build/chrome';
+let ffTo = '../build/firefox';
+let contentScriptsTo = '../build/_/content_scripts';
+let chromeReleaseZipTo = `../release/flowcrypt-chrome-${version.replace(/\./g, '-')}.zip`;
 
 let recipe = {
   crash: (reason='ending build process due to previous errors') => {
@@ -38,8 +38,8 @@ let recipe = {
 
 let subTask = {
   flush: () => Promise.all([del(chromeTo), del(ffTo), del(contentScriptsTo)]),
-  runTsc: () => recipe.exec('./node_modules/typescript/bin/tsc'),
-  runTscContentScripts: () => recipe.exec('./node_modules/typescript/bin/tsc --project tsconfig.content_scripts.json'),
+  runTscExtension: () => recipe.exec('../node_modules/typescript/bin/tsc --project tsconfig.extension.json'),
+  runTscContentScripts: () => recipe.exec('../node_modules/typescript/bin/tsc --project tsconfig.content_scripts.json'),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
   chromeBuildSpacesToTabs: () => Promise.all([
     recipe.spacesToTabs(`${chromeTo}/js`),
@@ -56,19 +56,19 @@ let subTask = {
     delete manifest.minimum_chrome_version;
     return manifest;
   }),
-  runFirefox: () => recipe.exec('web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
-  releaseChrome: () => recipe.exec(`cd build; rm -f ../${chromeReleaseZipTo}; zip -rq ../${chromeReleaseZipTo} chrome/*`),
-  releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('./../flowcrypt-script/browser/firefox_release')),
-  chromeResolveModules: () => recipe.exec(`node tooling/resolve-modules`),
-  chromeBundleContentScripts: () => recipe.exec(`node tooling/bundle-content-scripts`),
-  chromeFillValues: () => recipe.exec(`node tooling/fill-values`),
+  runFirefox: () => recipe.exec('web-ext run --source-dir ../build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes'),
+  releaseChrome: () => recipe.exec(`cd build; rm -f ${chromeReleaseZipTo}; zip -rq ${chromeReleaseZipTo} chrome/*`),
+  releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('../../flowcrypt-script/browser/firefox_release')),
+  chromeResolveModules: () => recipe.exec(`node ../build/tooling/resolve-modules`),
+  chromeBundleContentScripts: () => recipe.exec(`node ../build/tooling/bundle-content-scripts`),
+  chromeFillValues: () => recipe.exec(`node ../build/tooling/fill-values`),
 }
 
 let task = {
   build: gulp.series(
     subTask.flush,
     gulp.parallel(
-      subTask.runTsc, 
+      subTask.runTscExtension, 
       subTask.runTscContentScripts,
       subTask.copySourceFiles,
       subTask.copyVersionedManifest,

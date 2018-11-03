@@ -2,7 +2,7 @@
 import { readdirSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import * as path from 'path';
 
-const OUT_DIR = `build/chrome/js/content_scripts`;
+const OUT_DIR = `../build/chrome/js/content_scripts`;
 const {compilerOptions: {outDir: sourceDir}} = JSON.parse(readFileSync('./tsconfig.content_scripts.json').toString());
 
 const get_files_in_dir = (dir: string, file_pattern: RegExp): string[] => {

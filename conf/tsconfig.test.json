@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "sourceMap": true,
+    "outDir": "../build/test"
+  },
+  "files": [
+    "../test/source/test.ts",
+    "../test/source/patterns.ts"
+  ],
+  "exclude": [
+    "**/build/**",
+    "**/node_modules/**"
+  ]
+}

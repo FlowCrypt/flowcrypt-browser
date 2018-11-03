@@ -17,7 +17,7 @@ const get_all_files_in_directory = (dir: string, file_pattern: RegExp): string[]
   return all;
 };
 
-const {compilerOptions} = JSON.parse(readFileSync('./tsconfig.json').toString());
+const {compilerOptions} = JSON.parse(readFileSync('./tsconfig.extension.json').toString());
 const module_map: {[name: string]: string|null} = {};
 for(let module_name of Object.keys(compilerOptions.paths)) {
   if(compilerOptions.paths[module_name].indexOf('COMMENT') !== -1) {

@@ -9,15 +9,13 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "module": "commonjs",
-    "sourceMap": true,
-    "outDir": "build"
+    "sourceMap": false,
+    "outDir": "../build/tooling"
   },
   "files": [
-    "source/test.ts",
-    "source/patterns.ts",
-    "source/resolve-modules.ts",
-    "source/bundle-content-scripts.ts",
-    "source/fill-values.ts"
+    "../tooling/resolve-modules.ts",
+    "../tooling/bundle-content-scripts.ts",
+    "../tooling/fill-values.ts"
   ],
   "exclude": [
     "**/build/**",

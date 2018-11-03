@@ -25,12 +25,12 @@
     "typescript": "3.0.1"
   },
   "scripts": {
-    "test_0_tslint": "./node_modules/tslint/bin/tslint --project tsconfig.json",
-    "test_1_patterns": "node test/build/patterns.js",
-    "test_2_puppeteer": "node ./node_modules/ava/cli --verbose --concurrency=1 test/build/test.js",
-    "prebuild": "cd test && rm -rf ./build && ../node_modules/typescript/bin/tsc && cd .. && cp test/build/resolve-modules.js tooling/ && cp test/build/bundle-content-scripts.js tooling/ && cp test/build/fill-values.js tooling/",
-    "build": "gulp",
-    "pretest": "npm run-script build --silent && cd test && rm -rf ./build && ../node_modules/typescript/bin/tsc && cd ..",
+    "test_0_tslint": "./node_modules/tslint/bin/tslint --project ./conf/tsconfig.extension.json",
+    "test_1_patterns": "node build/test/patterns.js",
+    "test_2_puppeteer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test.js",
+    "prebuild": "rm -rf ./build && ./node_modules/typescript/bin/tsc --project conf/tsconfig.tooling.json",
+    "build": "gulp --gulpfile ./conf/gulpfile.js",
+    "pretest": "npm run-script build --silent && ./node_modules/typescript/bin/tsc --project conf/tsconfig.test.json",
     "test": "npm run-script test_0_tslint && npm run-script test_1_patterns && npm run-script test_2_puppeteer"
   },
   "repository": {
