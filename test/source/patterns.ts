@@ -1,5 +1,5 @@
 
-import { readdirSync, statSync, readFileSync, symlinkSync } from 'fs';
+import { readdirSync, statSync, readFileSync } from 'fs';
 import * as path from 'path';
 
 let errors_found = 0;
@@ -51,7 +51,7 @@ const validate_line = (line: string, location: string) => {
 
 };
 
-const source_file_paths = get_all_files_in_directory('./chrome', /\.ts$/);
+const source_file_paths = get_all_files_in_directory('./extension', /\.ts$/);
 
 for(const source_file_path of source_file_paths) {
   const lines = readFileSync(source_file_path).toString().split('\n');
