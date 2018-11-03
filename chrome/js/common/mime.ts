@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Str, Value, Catch } from './common';
+import { Str, Value, Catch } from './common.js';
 import { SendableMessageBody, RichHeaders, FlatHeaders } from './api.js';
-import { Pgp } from './pgp';
-import { Attachment } from './attachment';
-import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension';
+import { Pgp } from './pgp.js';
+import { Attachment } from './attachment.js';
+import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension.js';
 
 interface MimeContent {
   headers: FlatHeaders;

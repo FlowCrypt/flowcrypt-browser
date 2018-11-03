@@ -3,14 +3,14 @@
 'use strict';
 
 import * as DOMPurify from 'dompurify';
-import { Catch, UnreportableError, Env, Str, Value, Dict, UrlParams, UrlParam } from './common';
-import { BrowserMsg } from './extension';
-import { Store } from './storage';
-import { Api } from './api';
-import { Pgp } from './pgp';
-import { mnemonic } from './mnemonic';
-import { Attachment } from './attachment';
-import { MessageBlock, KeyBlockType } from './mime';
+import { Catch, UnreportableError, Env, Str, Value, Dict, UrlParams, UrlParam } from './common.js';
+import { BrowserMsg } from './extension.js';
+import { Store } from './storage.js';
+import { Api } from './api.js';
+import { Pgp } from './pgp.js';
+import { mnemonic } from './mnemonic.js';
+import { Attachment } from './attachment.js';
+import { MessageBlock, KeyBlockType } from './mime.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;

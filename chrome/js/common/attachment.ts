@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Str, Value, Env, Catch } from './common';
-import { ProgressCallback } from './api';
-import { Xss } from './browser';
-import { KeyInfo } from './storage';
+import { Str, Value, Env, Catch } from './common.js';
+import { ProgressCallback } from './api.js';
+import { Xss } from './browser.js';
+import { KeyInfo } from './storage.js';
 
 export type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
 
