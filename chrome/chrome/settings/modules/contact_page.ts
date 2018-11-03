@@ -5,7 +5,7 @@
 import { Store, Serializable } from '../../../js/common/storage.js';
 import { Catch, Env, Value, Str } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
-import { Xss, Ui, Attach } from '../../../js/common/browser.js';
+import { Xss, Ui, AttachmentUI } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';
@@ -17,7 +17,7 @@ Catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let attach_js = new Attach(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  let attach_js = new AttachmentUI(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let new_photo_file: Attachment;
 
   const S = Ui.build_jquery_selectors({

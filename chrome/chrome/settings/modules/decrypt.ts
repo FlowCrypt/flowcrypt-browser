@@ -4,7 +4,7 @@
 
 import { Catch, Env } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
-import { Xss, Ui, XssSafeFactory, Attach } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, AttachmentUI } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp, DecryptErrorTypes } from '../../../js/common/pgp.js';
 
@@ -18,7 +18,7 @@ Catch.try(async () => {
 
   let original_content: string;
 
-  let attach_js = new Attach(() => ({count: 1, size: 100 * 1024 * 1024, size_mb: 100}));
+  let attach_js = new AttachmentUI(() => ({count: 1, size: 100 * 1024 * 1024, size_mb: 100}));
   attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
   let factory = new XssSafeFactory(account_email, tab_id);
 

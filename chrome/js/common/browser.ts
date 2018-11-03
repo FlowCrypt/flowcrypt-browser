@@ -708,7 +708,7 @@ export class KeyImportUI {
         $('.line.pass_phrase_needed').hide();
       }
     }));
-    let attach = new Attach(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
+    let attach = new AttachmentUI(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
     attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
     attach.set_attachment_added_callback(file => {
       let k;
@@ -856,7 +856,7 @@ export class KeyImportUI {
   }
 }
 
-export class Attach {
+export class AttachmentUI {
 
   private template_path = '/chrome/elements/shared/attach.template.htm';
   private get_limits: () => AttachLimits;

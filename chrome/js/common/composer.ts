@@ -10,7 +10,7 @@ import { BrowserMsg, Extension, BrowserMessageHandler } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMessage, RichHeaders, StandardError, SendableMessageBody } from './api.js';
 import * as t from '../../types/common';
-import { Ui, Xss, Attach } from './browser.js';
+import { Ui, Xss, AttachmentUI } from './browser.js';
 
 declare let openpgp: typeof OpenPGP;
 
@@ -94,7 +94,7 @@ export class Composer {
     input_addresses_container_inner: '#input_addresses_container > div:first',
   });
 
-  private attach: Attach;
+  private attach: AttachmentUI;
   private app: ComposerAppFunctionsInterface;
 
   private SAVE_DRAFT_FREQUENCY = 3000;
@@ -135,7 +135,7 @@ export class Composer {
   private reference_body_height: number;
 
   constructor(app_functions: ComposerAppFunctionsInterface, variables: t.UrlParams, subscription: Subscription) {
-    this.attach = new Attach(() => this.get_max_attachment_size_and_oversize_notice(subscription));
+    this.attach = new AttachmentUI(() => this.get_max_attachment_size_and_oversize_notice(subscription));
     this.app = app_functions;
 
     if(!variables.disable_draft_saving) {
