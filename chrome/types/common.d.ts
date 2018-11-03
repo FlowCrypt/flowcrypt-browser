@@ -124,9 +124,6 @@ interface JQS extends JQueryStatic {
     featherlight: Function; // tslint:disable-line:ban-types
 }
 
-// ui
-type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
-
 // Todo Pgp or Mime?
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
 type CryptoArmorHeaderDefinitions = {

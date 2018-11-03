@@ -10,7 +10,7 @@ import { BrowserMsg, Extension, BrowserMessageHandler } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMessage, RichHeaders, StandardError, SendableMessageBody } from './api.js';
 import * as t from '../../types/common';
-import { Ui, Xss, AttachmentUI } from './browser.js';
+import { Ui, Xss, AttachmentUI, BrowserEventErrorHandler } from './browser.js';
 
 declare let openpgp: typeof OpenPGP;
 
@@ -215,7 +215,7 @@ export class Composer {
     }
   }
 
-  private handle_errors = (could_not_do_what: string): t.BrowserEventErrorHandler => {
+  private handle_errors = (could_not_do_what: string): BrowserEventErrorHandler => {
     return {
       network: () => alert(`Could not ${could_not_do_what} (network error). Please try again.`),
       auth_popup: () => this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email}),

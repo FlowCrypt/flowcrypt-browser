@@ -15,6 +15,7 @@ import { Attachment } from './attachment';
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
 
+export type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
 type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
 type NamedSelectors = t.Dict<JQuery<HTMLElement>>;
@@ -209,7 +210,7 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: t.BrowserEventErrorHandler) => {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
       return function(event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
@@ -222,7 +223,7 @@ export class Ui {
         }
       };
     },
-    __dispatch_err: (e: any, err_handler?: t.BrowserEventErrorHandler) => {
+    __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
       if(Api.error.is_network_error(e) && err_handler && err_handler.network) {
         err_handler.network();
       } else if (Api.error.is_auth_error(e) && err_handler && err_handler.auth) {
@@ -235,7 +236,7 @@ export class Ui {
         Catch.handle_exception(e);
       }
     },
-    prevent: (preventable_event: PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: t.BrowserEventErrorHandler) => {
+    prevent: (preventable_event: PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
       let event_timer: number|undefined;
       let event_fired_on: number|undefined;
       let cb_reset_timer = () => {
