@@ -33,11 +33,6 @@ interface FcWindow extends BrowserWidnow {
 type AnyThirdPartyLibrary = any;
 type Thrown = Error|StandardError|any;
 
-interface FromToHeaders {
-    from: string;
-    to: string[];
-}
-
 interface Challenge {
     question?: string;
     answer: string;
@@ -52,35 +47,6 @@ type UrlParam = string|number|null|undefined|boolean|string[];
 type UrlParams = Dict<UrlParam>;
 
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
-
-// TodoMime
-interface MimeContent {
-    headers: FlatHeaders;
-    attachments: Attachment[];
-    signature: string|undefined;
-    html: string|undefined;
-    text: string|undefined;
-}
-interface MimeParserNode {
-  path: string[];
-  headers: {
-      [key: string]: {value: string}[];
-  };
-  rawContent: string;
-  content: Uint8Array;
-  appendChild: (child: MimeParserNode) => void;
-  contentTransferEncoding: {value: string};
-  charset?: string;
-}
-type KeyBlockType = 'public_key'|'private_key';
-type ReplaceableMessageBlockType = KeyBlockType|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
-type MessageBlockType = 'text'|ReplaceableMessageBlockType;
-interface MessageBlock {
-    type: MessageBlockType;
-    content: string;
-    complete: boolean;
-    signature?: string;
-}
 
 type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
@@ -123,9 +89,3 @@ type NotificationWithHandlers = {notification: string, callbacks: Dict<Callback>
 interface JQS extends JQueryStatic {
     featherlight: Function; // tslint:disable-line:ban-types
 }
-
-// Todo Pgp or Mime?
-type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
-type CryptoArmorHeaderDefinitions = {
-    readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition;
-};

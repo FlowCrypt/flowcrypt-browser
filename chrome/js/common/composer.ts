@@ -4,13 +4,14 @@
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact } from './storage.js';
 import { Lang } from './lang.js';
-import { Catch, Value, Str, Mime, Env, UnreportableError } from './common.js';
+import { Catch, Value, Str, Env, UnreportableError } from './common.js';
 import { Attachment } from './attachment.js';
 import { BrowserMsg, Extension, BrowserMessageHandler } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMessage, RichHeaders, StandardError, SendableMessageBody } from './api.js';
 import * as t from '../../types/common';
 import { Ui, Xss, AttachmentUI, BrowserEventErrorHandler } from './browser.js';
+import { FromToHeaders, Mime } from './mime.js';
 
 declare let openpgp: typeof OpenPGP;
 
@@ -471,7 +472,7 @@ export class Composer {
     }
   }
 
-  private decrypt_and_render_draft = async (encrypted_draft: string, headers: t.FromToHeaders) => {
+  private decrypt_and_render_draft = async (encrypted_draft: string, headers: FromToHeaders) => {
     let passphrase = await this.app.storage_passphrase_get();
     if (passphrase !== null) {
       let result = await Pgp.message.decrypt(this.account_email, encrypted_draft);

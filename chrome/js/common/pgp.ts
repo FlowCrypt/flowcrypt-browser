@@ -6,6 +6,7 @@ import { Store, KeyInfo, Contact } from './storage.js';
 import { Catch, Value, Str } from './common.js';
 import * as t from '../../types/common';
 import { Ui, XssSafeFactory } from './browser.js';
+import { ReplaceableMessageBlockType, MessageBlock, MessageBlockType } from './mime.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -73,11 +74,15 @@ export enum DecryptErrorTypes {
   format = 'format',
   other = 'other',
 }
+type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
+type CryptoArmorHeaderDefinitions = {
+  readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition;
+};
 
 export class Pgp {
 
   private static ARMOR_HEADER_MAX_LENGTH = 50;
-  private static ARMOR_HEADER_DICT: t.CryptoArmorHeaderDefinitions = { // general password_message begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
+  private static ARMOR_HEADER_DICT: CryptoArmorHeaderDefinitions = { // general password_message begin: /^[^\n]+: (Open Message|Nachricht öffnen)/
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     public_key: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     private_key: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
@@ -167,7 +172,7 @@ export class Pgp {
       }
       return null;
     },
-    headers: (block_type: t.ReplaceableMessageBlockType|'null', format='string'): t.CryptoArmorHeaderDefinition => {
+    headers: (block_type: ReplaceableMessageBlockType|'null', format='string'): CryptoArmorHeaderDefinition => {
       let h = Pgp.ARMOR_HEADER_DICT[block_type];
       return {
         begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\\s') : h.begin,
@@ -176,7 +181,7 @@ export class Pgp {
       };
     },
     detect_blocks: (original_text: string) => {
-      let blocks: t.MessageBlock[] = [];
+      let blocks: MessageBlock[] = [];
       let normalized = Str.normalize(original_text);
       let start_at = 0;
       while(true) {
@@ -350,7 +355,7 @@ export class Pgp {
   };
 
   public static message = {
-    type: (data: string|Uint8Array): {armored: boolean, type: t.MessageBlockType}|null => {
+    type: (data: string|Uint8Array): {armored: boolean, type: MessageBlockType}|null => {
       if (!data || !data.length) {
         return null;
       }
@@ -532,14 +537,14 @@ export class Pgp {
   };
 
   public static internal = {
-    crypto_armor_block_object: (type: t.MessageBlockType, content: string, missing_end=false): t.MessageBlock => ({type, content, complete: !missing_end}),
+    crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false): MessageBlock => ({type, content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
-      let result = {found: [] as t.MessageBlock[], continue_at: null as number|null};
+      let result = {found: [] as MessageBlock[], continue_at: null as number|null};
       let begin = original_text.indexOf(Pgp.armor.headers('null').begin, start_at);
       if (begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
         for (let _type of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
-          let type = _type as t.ReplaceableMessageBlockType;
+          let type = _type as ReplaceableMessageBlockType;
           let block_header_def = Pgp.ARMOR_HEADER_DICT[type];
           if (block_header_def.replace) {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);

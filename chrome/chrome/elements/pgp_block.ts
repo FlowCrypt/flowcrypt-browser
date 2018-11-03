@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Env, Value, Str, Mime } from './../../js/common/common.js';
+import { Catch, Env, Value, Str } from './../../js/common/common.js';
 import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
@@ -11,6 +11,7 @@ import { Lang } from './../../js/common/lang.js';
 import * as t from '../../types/common';
 import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
 import { MessageVerifyResult, DecryptErrorTypes, Pgp } from '../../js/common/pgp.js';
+import { Mime } from '../../js/common/mime.js';
 
 declare const anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
 

@@ -3,13 +3,14 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Value, Str, Mime } from '../../../js/common/common.js';
+import { Catch, Env, Value, Str } from '../../../js/common/common.js';
 import { Xss, Ui, XssSafeFactory } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import * as t from '../../../types/common';
 import { Api, R } from '../../../js/common/api.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
+import { Mime } from '../../../js/common/mime.js';
 
 Catch.try(async () => {
 

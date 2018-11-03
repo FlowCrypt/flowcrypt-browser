@@ -11,6 +11,7 @@ import * as t from '../../types/common';
 import { Pgp } from './pgp';
 import { mnemonic } from './mnemonic';
 import { Attachment } from './attachment';
+import { MessageBlock, KeyBlockType } from './mime';
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
@@ -290,7 +291,7 @@ export class Ui {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderable_message_block = (factory: XssSafeFactory, block: t.MessageBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
+  public static renderable_message_block = (factory: XssSafeFactory, block: MessageBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
     if (block.type === 'text' || block.type === 'private_key') {
       return Xss.html_escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
@@ -754,7 +755,7 @@ export class KeyImportUI {
     return normalized;
   }
 
-  private normalize = (type: t.KeyBlockType, armored: string) => {
+  private normalize = (type: KeyBlockType, armored: string) => {
     let headers = Pgp.armor.headers(type);
     let normalized = Pgp.key.normalize(armored);
     if (!normalized) {
@@ -763,7 +764,7 @@ export class KeyImportUI {
     return normalized;
   }
 
-  private read = (type: t.KeyBlockType, normalized: string) => {
+  private read = (type: KeyBlockType, normalized: string) => {
     let headers = Pgp.armor.headers(type);
     let k = openpgp.key.readArmored(normalized).keys[0];
     if (typeof k === 'undefined') {
@@ -780,7 +781,7 @@ export class KeyImportUI {
     return longid;
   }
 
-  private reject_if_not = (type: t.KeyBlockType, k: OpenPGP.key.Key) => {
+  private reject_if_not = (type: KeyBlockType, k: OpenPGP.key.Key) => {
     let headers = Pgp.armor.headers(type);
     if (type === 'private_key' && k.isPublic()) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
