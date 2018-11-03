@@ -6,8 +6,8 @@
     "strictNullChecks": true,
     "sourceMap": false,
     "checkJs": false,
-    "outDir": "../build/chrome",
-    "baseUrl": "../extension",
+    "outDir": "./build/chrome",
+    "baseUrl": "./extension",
     "paths": {
       "jquery": ["lib/jquery.min.js", "COMMENT"],
       "openpgp": ["lib/openpgp.js", "COMMENT"],
@@ -22,14 +22,14 @@
       "featherlight": ["lib/featherlight/featherlight.js", "COMMENT"]
     },
     "typeRoots": [
-      "../extension/types"
+      "./extension/types"
     ]
   },
   "include": [
-    "../extension/**/*.ts"
+    "./extension/**/*.ts"
   ],
   "exclude": [
-    "../extension/js/content_scripts/**/*",
+    "./extension/js/content_scripts/**/*",
     "**/build/**",
     "**/node_modules/**"
   ]

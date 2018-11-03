@@ -38,7 +38,7 @@ let recipe = {
 
 let subTask = {
   flush: () => Promise.all([del(chromeTo), del(ffTo), del(contentScriptsTo)]),
-  runTscExtension: () => recipe.exec('../node_modules/typescript/bin/tsc --project tsconfig.extension.json'),
+  runTscExtension: () => recipe.exec('../node_modules/typescript/bin/tsc --project ../tsconfig.json'),
   runTscContentScripts: () => recipe.exec('../node_modules/typescript/bin/tsc --project tsconfig.content_scripts.json'),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
   chromeBuildSpacesToTabs: () => Promise.all([
