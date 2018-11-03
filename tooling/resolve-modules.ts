@@ -41,7 +41,7 @@ const resolve_imports = (line: string, path: string) => line.replace(/^(import (
   }
 });
 
-const source_file_paths = get_all_files_in_directory(`./${compilerOptions.outDir}`, /\.js$/);
+const source_file_paths = get_all_files_in_directory(`../${compilerOptions.outDir}`, /\.js$/);
 
 for (const source_file_path of source_file_paths) {
   const original = readFileSync(source_file_path).toString();

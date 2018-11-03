@@ -6,7 +6,7 @@
     "strictNullChecks": true,
     "sourceMap": false,
     "checkJs": false,
-    "outDir": "./build/chrome",
+    "outDir": "build/chrome",
     "baseUrl": "./extension",
     "paths": {
       "jquery": ["lib/jquery.min.js", "COMMENT"],

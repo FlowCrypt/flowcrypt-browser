@@ -32,6 +32,11 @@
           "isDefault": true
         },
         "problemMatcher": []
+      },
+      {
+        "type": "npm",
+        "script": "build",
+        "problemMatcher": []
       }
     ]
   }
