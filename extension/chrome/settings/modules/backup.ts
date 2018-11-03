@@ -244,10 +244,10 @@ Catch.try(async () => {
   let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
     let attachment = as_backup_file(account_email, primary_ki.private);
     if (Env.browser().name !== 'firefox') {
-      Att.methods.save_to_downloads(attachment);
+      Att.methods.saveToDownloads(attachment);
       await write_backup_done_and_render(false, 'file');
     } else {
-      Att.methods.save_to_downloads(attachment, $('.backup_action_buttons_container'));
+      Att.methods.saveToDownloads(attachment, $('.backup_action_buttons_container'));
     }
   };
 

@@ -21,7 +21,7 @@ Catch.try(async () => {
 
   let [primary_k] = await Store.keysGet(account_email, ['primary']);
 
-  const att = Att.methods.keyinfo_as_pubkey_att(primary_k);
+  const att = Att.methods.keyinfoAsPubkeyAtt(primary_k);
   let additional_msg_headers: FlatHeaders;
 
   let app_functions = Composer.default_app_functions();

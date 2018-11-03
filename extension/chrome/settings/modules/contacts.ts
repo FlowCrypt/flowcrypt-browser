@@ -29,7 +29,7 @@ Catch.try(async () => {
     Xss.sanitizeRender('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       let all_armored_public_keys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       let export_file = new Att({name: 'public-keys-export.asc', type: 'application/pgp-keys', data: all_armored_public_keys});
-      Att.methods.save_to_downloads(export_file, Env.browser().name === 'firefox' ? $('.line.actions') : null);
+      Att.methods.saveToDownloads(export_file, Env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
     Xss.sanitizeAppend('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(Ui.event.prevent('double', (self) => {

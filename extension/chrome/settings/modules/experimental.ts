@@ -130,7 +130,7 @@ Catch.try(async () => {
     let collect_info_and_download_backup_file = async (account_email: string) => {
       let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
       let backup_text = await collect_info_for_account_backup(account_email);
-      Att.methods.save_to_downloads(new Att({name, type: 'text/plain', data: backup_text}));
+      Att.methods.saveToDownloads(new Att({name, type: 'text/plain', data: backup_text}));
       await Ui.delay(1000);
     };
 

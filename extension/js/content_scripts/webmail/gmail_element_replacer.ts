@@ -17,7 +17,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private recipient_has_pgp_cache: Dict<boolean> = {};
   private addresses: string[];
   private factory: XssSafeFactory;
-  private account_email: string;
+  private acctEmail: string;
   private can_read_emails: boolean;
   private injector: Injector;
   private notifications: Notifications;
@@ -40,7 +40,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   constructor(factory: XssSafeFactory, account_email: string, addresses: string[], can_read_emails: boolean, injector: Injector, notifications: Notifications, gmail_variant: WebmailVariantString) {
     this.factory = factory;
-    this.account_email = account_email;
+    this.acctEmail = account_email;
     this.addresses = addresses;
     this.can_read_emails = can_read_emails;
     this.injector = injector;
@@ -167,7 +167,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private replace_atts = async () => {
     for (let atts_container_el of $(this.selector.atts_container_inner).get()) {
       let atts_container = $(atts_container_el);
-      let new_pgp_atts = this.filter_atts(atts_container.children().not('.evaluated'), Att.methods.pgp_name_patterns()).addClass('evaluated');
+      let new_pgp_atts = this.filter_atts(atts_container.children().not('.evaluated'), Att.methods.pgpNamePatterns()).addClass('evaluated');
       let new_pgp_atts_names = Value.arr.from_dom_node_list(new_pgp_atts.find('.aV3')).map(x => $.trim($(x).text()));
       if (new_pgp_atts.length) {
         let msg_id = this.determine_msg_id(atts_container);
@@ -175,18 +175,18 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.can_read_emails) {
             Xss.sanitizePrepend(new_pgp_atts, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
             try {
-              let msg = await Api.gmail.msgGet(this.account_email, msg_id, 'full');
+              let msg = await Api.gmail.msgGet(this.acctEmail, msg_id, 'full');
               await this.process_atts(msg_id, Api.gmail.findAtts(msg), atts_container, false, new_pgp_atts_names);
             } catch (e) {
               if (Api.err.isAuthPopupNeeded(e)) {
-                this.notifications.show_auth_popup_needed(this.account_email);
+                this.notifications.show_auth_popup_needed(this.acctEmail);
               }
               $(new_pgp_atts).find('.attachment_loader').text('Failed to load');
             }
           } else {
             let status_msg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
             $(new_pgp_atts).prepend(this.factory.embedded_attachment_status(status_msg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
-              BrowserMsg.send(null, 'settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm' });
+              BrowserMsg.send(null, 'settings', { account_email: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {
@@ -196,55 +196,55 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private process_atts = async (msg_id: string, att_metas: Att[], atts_container_inner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, new_pgp_atts_names:string[]=[]) => {
-    let msg_el = this.get_msg_body_el(msg_id);
-    let sender_email = this.get_sender_email(msg_el);
-    let is_outgoing = Value.is(sender_email).in(this.addresses);
-    atts_container_inner = $(atts_container_inner);
-    atts_container_inner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
-    let rendered_atts_count = att_metas.length;
-    for (let a of att_metas) {
+  private process_atts = async (msgId: string, attMetas: Att[], attsContainerInner: JQuery<HTMLElement>|HTMLElement, skip_google_drive:boolean, newPgpAttsNames:string[]=[]) => {
+    let msgEl = this.get_msg_body_el(msgId);
+    let senderEmail = this.get_sender_email(msgEl);
+    let isOutgoing = Value.is(senderEmail).in(this.addresses);
+    attsContainerInner = $(attsContainerInner);
+    attsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
+    let renderedAttsCount = attMetas.length;
+    for (let a of attMetas) {
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      let treat_as = a.treat_as();
-      let att_sel = this.filter_atts(atts_container_inner.children().not('.attachment_processed'), [a.name]).first();
-      if (treat_as !== 'standard') {
-        this.hide_att(att_sel, atts_container_inner);
-        rendered_atts_count--;
-        if (treat_as === 'encrypted') { // actual encrypted attachment - show it
-          atts_container_inner.prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
-          rendered_atts_count++;
-        } else if (treat_as === 'message') {
-          let is_ambiguous_asc_file = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
-          let is_ambiguous_noname_file = !a.name || a.name === 'noname'; // may not even be OpenPGP related
-          if (is_ambiguous_asc_file || is_ambiguous_noname_file) { // Inspect a chunk
-            let file_chunk = await Api.gmail.att_get_chunk(this.account_email, msg_id, a.id!); // .id is present when fetched from api
-            let openpgp_type = Pgp.msg.type(file_chunk);
-            if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
-              rendered_atts_count = await this.render_public_key_from_file(a, atts_container_inner, msg_el, is_outgoing, att_sel, rendered_atts_count);
-            } else if (openpgp_type && Value.is(openpgp_type.type).in(['message', 'signed_message'])) {
-              msg_el = this.update_msg_body_el_DANGEROUSLY(msg_el, 'append', this.factory.embedded_message('', msg_id, false, sender_email, false)); // xss-safe-factory
+      let treatAs = a.treatAs();
+      let att_sel = this.filter_atts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
+      if (treatAs !== 'standard') {
+        this.hideAtt(att_sel, attsContainerInner);
+        renderedAttsCount--;
+        if (treatAs === 'encrypted') { // actual encrypted attachment - show it
+          attsContainerInner.prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
+          renderedAttsCount++;
+        } else if (treatAs === 'message') {
+          let isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
+          let isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
+          if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
+            let file_chunk = await Api.gmail.att_get_chunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+            let openpgpType = Pgp.msg.type(file_chunk);
+            if (openpgpType && openpgpType.type === 'public_key' && openpgpType.armored) { // if it looks like OpenPGP public key
+              renderedAttsCount = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, att_sel, renderedAttsCount);
+            } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signed_message'])) {
+              msgEl = this.update_msg_body_el_DANGEROUSLY(msgEl, 'append', this.factory.embedded_message('', msgId, false, senderEmail, false)); // xss-safe-factory
             } else {
               att_sel.show().children('.attachment_loader').text('Unknown OpenPGP format');
-              rendered_atts_count++;
+              renderedAttsCount++;
             }
           } else {
-            msg_el = this.update_msg_body_el_DANGEROUSLY(msg_el, 'append', this.factory.embedded_message('', msg_id, false, sender_email, false)); // xss-safe-factory
+            msgEl = this.update_msg_body_el_DANGEROUSLY(msgEl, 'append', this.factory.embedded_message('', msgId, false, senderEmail, false)); // xss-safe-factory
           }
-        } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          rendered_atts_count = await this.render_public_key_from_file(a, atts_container_inner, msg_el, is_outgoing, att_sel, rendered_atts_count);
-        } else if (treat_as === 'signature') {
-          let signed_content = msg_el[0] ? Str.normalize_spaces(msg_el[0].innerText).trim() : '';
-          let embedded_signed_msg_xss_safe = this.factory.embedded_message(signed_content, msg_id, false, sender_email, false, true);
-          let replace = !msg_el.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msg_el.text());
-          msg_el = this.update_msg_body_el_DANGEROUSLY(msg_el, replace ? 'set': 'append', embedded_signed_msg_xss_safe); // xss-safe-factory
+        } else if (treatAs === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
+          renderedAttsCount = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, att_sel, renderedAttsCount);
+        } else if (treatAs === 'signature') {
+          let signed_content = msgEl[0] ? Str.normalize_spaces(msgEl[0].innerText).trim() : '';
+          let embedded_signed_msg_xss_safe = this.factory.embedded_message(signed_content, msgId, false, senderEmail, false, true);
+          let replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
+          msgEl = this.update_msg_body_el_DANGEROUSLY(msgEl, replace ? 'set': 'append', embedded_signed_msg_xss_safe); // xss-safe-factory
         }
-      } else if(treat_as === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
-        let file_chunk = await Api.gmail.att_get_chunk(this.account_email, msg_id, a.id!); // .id is present when fetched from api
+      } else if(treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
+        let file_chunk = await Api.gmail.att_get_chunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
         let openpgp_type = Pgp.msg.type(file_chunk);
         if (openpgp_type && openpgp_type.type === 'public_key' && openpgp_type.armored) { // if it looks like OpenPGP public key
-          rendered_atts_count = await this.render_public_key_from_file(a, atts_container_inner, msg_el, is_outgoing, att_sel, rendered_atts_count);
-          this.hide_att(att_sel, atts_container_inner);
-          rendered_atts_count--;
+          renderedAttsCount = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, att_sel, renderedAttsCount);
+          this.hideAtt(att_sel, attsContainerInner);
+          renderedAttsCount--;
         } else {
           att_sel.addClass('attachment_processed').children('.attachment_loader').remove();
         }
@@ -252,30 +252,30 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         att_sel.addClass('attachment_processed').children('.attachment_loader').remove();
       }
     }
-    if (rendered_atts_count === 0) {
-      atts_container_inner.parents(this.selector.atts_container_outer).first().hide();
+    if (renderedAttsCount === 0) {
+      attsContainerInner.parents(this.selector.atts_container_outer).first().hide();
     }
-    let not_processed_atts_loaders = atts_container_inner.find('.attachment_loader');
-    if (!skip_google_drive && not_processed_atts_loaders.length && msg_el.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
+    let notProcessedAttsLoaders = attsContainerInner.find('.attachment_loader');
+    if (!skip_google_drive && notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
-      let google_drive_atts: Att[] = [];
-      not_processed_atts_loaders.each((i, loader_element) => {
-        let download_url = $(loader_element).parent().attr('download_url');
-        if (download_url) {
-          let meta = download_url.split(':');
-          google_drive_atts.push(new Att({msg_id, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treat_as: 'encrypted'}));
+      let googleDriveAtts: Att[] = [];
+      notProcessedAttsLoaders.each((i, loader_element) => {
+        let downloadUrl = $(loader_element).parent().attr('download_url');
+        if (downloadUrl) {
+          let meta = downloadUrl.split(':');
+          googleDriveAtts.push(new Att({msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted'}));
         } else {
           console.info('Missing Google Drive attachments download_url');
         }
       });
-      await this.process_atts(msg_id, google_drive_atts, atts_container_inner, true);
+      await this.process_atts(msgId, googleDriveAtts, attsContainerInner, true);
     }
   }
 
-  private render_public_key_from_file = async (att_meta: Att, atts_container_inner: JQuery<HTMLElement>, msg_el: JQuery<HTMLElement>, is_outgoing: boolean, att_sel: JQuery<HTMLElement>, n_rendered_atts: number) => {
+  private renderPublicKeyFromFile = async (att_meta: Att, atts_container_inner: JQuery<HTMLElement>, msg_el: JQuery<HTMLElement>, is_outgoing: boolean, att_sel: JQuery<HTMLElement>, n_rendered_atts: number) => {
     let downloaded_att;
     try {
-      downloaded_att = await Api.gmail.att_get(this.account_email, att_meta.msgId!, att_meta.id!); // .id is present when fetched from api
+      downloaded_att = await Api.gmail.att_get(this.acctEmail, att_meta.msgId!, att_meta.id!); // .id is present when fetched from api
     } catch (e) {
       atts_container_inner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       n_rendered_atts++;
@@ -309,7 +309,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }).closest('span.aZo, span.a5r');
   }
 
-  private hide_att = (atachment_element: JQuery<HTMLElement>|HTMLElement, atts_container_sel: JQuery<HTMLElement>|HTMLElement) => {
+  private hideAtt = (atachment_element: JQuery<HTMLElement>|HTMLElement, atts_container_sel: JQuery<HTMLElement>|HTMLElement) => {
     atachment_element = $(atachment_element);
     atts_container_sel = $(atts_container_sel);
     atachment_element.hide();
@@ -384,7 +384,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private get_conversation_params = (convo_root_el: JQuery<HTMLElement>) => {
-    let headers = Api.common.replyCorrespondents(this.account_email, this.addresses, this.dom_get_msg_sender(convo_root_el), this.dom_get_msg_recipients(convo_root_el));
+    let headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.dom_get_msg_sender(convo_root_el), this.dom_get_msg_recipients(convo_root_el));
     return {
       subject: this.dom_get_msg_subject(convo_root_el),
       reply_to: headers.to,

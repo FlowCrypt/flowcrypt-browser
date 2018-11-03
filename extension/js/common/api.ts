@@ -434,7 +434,7 @@ export class Api {
       }
       if (msgOrPayloadOrPart.hasOwnProperty('body') && (msgOrPayloadOrPart as R.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
         internalResults.push(new Att({
-          msg_id: internalMsgId,
+          msgId: internalMsgId,
           id: (msgOrPayloadOrPart as R.GmailMsg$payload$part).body!.attachmentId,
           length: (msgOrPayloadOrPart as R.GmailMsg$payload$part).body!.size,
           name: (msgOrPayloadOrPart as R.GmailMsg$payload$part).filename,
@@ -499,7 +499,7 @@ export class Api {
           return armoredMsgFromBodies;
         } else if (atts.length) {
           for (let att of atts) {
-            if (att.treat_as() === 'message') {
+            if (att.treatAs() === 'message') {
               await Api.gmail.fetchAtts(acctEmail, [att]);
               let armoredMsg = Pgp.armor.clip(att.asText());
               if (armoredMsg) {

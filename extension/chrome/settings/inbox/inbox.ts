@@ -54,10 +54,10 @@ Catch.try(async () => {
     $('body').one('click', Catch.try(notifications.clear));
   };
 
-  Catch.set_timeout(() => $('#banner a').css('color', 'red'), 500);
-  Catch.set_timeout(() => $('#banner a').css('color', ''), 1000);
-  Catch.set_timeout(() => $('#banner a').css('color', 'red'), 1500);
-  Catch.set_timeout(() => $('#banner a').css('color', ''), 2000);
+  Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
+  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 1000);
+  Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 1500);
+  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
 
   BrowserMsg.listen({
     notification_show,
@@ -348,7 +348,7 @@ Catch.try(async () => {
       }
       let {atts} = await Mime.decode(Str.base64urlDecode(m.raw!));
       if(atts.length) {
-        r += `<div class="attachments">${atts.filter(a => a.treat_as() === 'encrypted').map(factory.embedded_attachment).join('')}</div>`;
+        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(factory.embedded_attachment).join('')}</div>`;
       }
       r = `<p class="message_header">From: ${Xss.htmlEscape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory

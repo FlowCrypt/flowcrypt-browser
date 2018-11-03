@@ -345,7 +345,7 @@ export class Catch {
     return window.setInterval(Catch.try(cb), ms); // error-handled: else setInterval will silently swallow errors
   }
 
-  public static set_timeout = (cb: () => void, ms: number): number => {
+  public static setHandledTimeout = (cb: () => void, ms: number): number => {
     return window.setTimeout(Catch.try(cb), ms); // error-handled: else setTimeout will silently swallow errors
   }
 
@@ -415,7 +415,7 @@ export class Str {
 
   public static base64urlDecode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
-  public static from_uint8 = (u8a: Uint8Array|string): string => {
+  public static fromUint8 = (u8a: Uint8Array|string): string => {
     if(typeof u8a === 'string') {
       return u8a;
     }
@@ -427,7 +427,7 @@ export class Str {
     return c.join('');
   }
 
-  public static to_uint8 = (raw: string|Uint8Array): Uint8Array => {
+  public static toUint8 = (raw: string|Uint8Array): Uint8Array => {
     if(raw instanceof Uint8Array) {
       return raw;
     }

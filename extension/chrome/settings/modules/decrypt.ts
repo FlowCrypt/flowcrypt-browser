@@ -41,10 +41,10 @@ Catch.try(async () => {
   }));
 
   let decrypt_and_download = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    let result = await Pgp.msg.decrypt(account_email, encrypted.as_bytes(), null, true);
+    let result = await Pgp.msg.decrypt(account_email, encrypted.asBytes(), null, true);
     if (result.success) {
       let attachment = new Att({name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8!}); // uint8!: requested uint8 above
-      Att.methods.save_to_downloads(attachment);
+      Att.methods.saveToDownloads(attachment);
     } else if (result.error.type === DecryptErrTypes.need_passphrase) {
       $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // xss-safe-factory
     } else {

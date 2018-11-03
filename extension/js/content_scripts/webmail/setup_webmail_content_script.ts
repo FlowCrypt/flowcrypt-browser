@@ -238,7 +238,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
     };
 
     (window as ContentScriptWindow).TrySetDestroyableTimeout = (code, ms) => {
-      let id = Catch.set_timeout(code, ms);
+      let id = Catch.setHandledTimeout(code, ms);
       (window as ContentScriptWindow).destroyable_timeouts.push(id);
       return id;
     };

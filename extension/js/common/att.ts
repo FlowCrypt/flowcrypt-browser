@@ -7,9 +7,9 @@ import { ProgressCb } from './api.js';
 import { Xss } from './browser.js';
 import { KeyInfo } from './store.js';
 
-type Att$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
+type Att$treatAs = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 type AttMeta = { data?: string|Uint8Array|null; type?:string|null; name?: string|null; length?: number|null; url?: string|null;
-  inline?: boolean|null; id?: string|null; msg_id?: string|null; treat_as?: Att$treat_as; cid?: string|null; };
+  inline?: boolean|null; id?: string|null; msgId?: string|null; treatAs?: Att$treatAs; cid?: string|null; };
 
 export type FlowCryptAttLinkData = {name: string, type: string, size: number};
 
@@ -17,7 +17,7 @@ export class Att {
 
   private text: string|null = null;
   private bytes: Uint8Array|null = null;
-  private treat_as_value: Att$treat_as|null = null;
+  private treatAsValue: Att$treatAs|null = null;
 
   public length: number;
   public type: string;
@@ -28,11 +28,11 @@ export class Att {
   public inline: boolean;
   public cid: string|null;
 
-  constructor({data, type, name, length, url, inline, id, msg_id, treat_as, cid}: AttMeta) {
+  constructor({data, type, name, length, url, inline, id, msgId, treatAs, cid}: AttMeta) {
     if(typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Att: one of data|url|id has to be set');
     }
-    if(id && !msg_id) {
+    if(id && !msgId) {
       throw new Error('Att: if id is set, message_id must be set too');
     }
     if(data !== null && typeof data !== 'undefined') {
@@ -44,13 +44,13 @@ export class Att {
     this.url = url || null;
     this.inline = inline !== true;
     this.id = id || null;
-    this.msgId = msg_id || null;
-    this.treat_as_value = treat_as || null;
+    this.msgId = msgId || null;
+    this.treatAsValue = treatAs || null;
     this.cid = cid || null;
   }
 
   public setData = (data: string|Uint8Array) => {
-    if(this.has_data()) {
+    if(this.hasData()) {
       throw new Error('Att: data already set');
     }
     if(data instanceof Uint8Array) {
@@ -61,7 +61,7 @@ export class Att {
     this.length = data.length;
   }
 
-  public has_data = () => {
+  public hasData = () => {
     if(this.bytes === null && this.text === null) {
       return false;
     }
@@ -80,7 +80,7 @@ export class Att {
 
   public asText = (): string => {
     if(this.text === null && this.bytes !== null) {
-      this.text = Str.from_uint8(this.bytes);
+      this.text = Str.fromUint8(this.bytes);
     }
     if(this.text !== null) {
       return this.text;
@@ -88,9 +88,9 @@ export class Att {
     throw new Error('Att has no data set');
   }
 
-  public as_bytes = (): Uint8Array => {
+  public asBytes = (): Uint8Array => {
     if(this.bytes === null && this.text !== null) {
-      this.bytes = Str.to_uint8(this.text);
+      this.bytes = Str.toUint8(this.text);
     }
     if (this.bytes !== null) {
       return this.bytes;
@@ -98,12 +98,12 @@ export class Att {
     throw new Error('Att has no data set');
   }
 
-  public treat_as = (): Att$treat_as => {
+  public treatAs = (): Att$treatAs => {
     // todo - should return a probability in the range of certain-likely-maybe
     // could also return possible types as an array - which makes basic usage more difficult - to think through
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
-    if(this.treat_as_value) { // pre-set
-      return this.treat_as_value;
+    if(this.treatAsValue) { // pre-set
+      return this.treatAsValue;
     } else if (Value.is(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
@@ -126,13 +126,13 @@ export class Att {
   }
 
   public static methods = {
-    object_url_create: (content: Uint8Array|string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
-    object_url_consume: async (url: string) => {
-      let uint8 = await Att.methods.download_as_uint8(url, null);
+    objUrlCreate: (content: Uint8Array|string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
+    objUrlConsume: async (url: string) => {
+      let uint8 = await Att.methods.downloadAsUint8(url, null);
       window.URL.revokeObjectURL(url);
       return uint8;
     },
-    download_as_uint8: (url: string, progress:ProgressCb|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
+    downloadAsUint8: (url: string, progress:ProgressCb|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
@@ -143,21 +143,21 @@ export class Att {
       request.onload = e => resolve(new Uint8Array(request.response));
       request.send();
     }),
-    save_to_downloads: (attachment: Att, render_in:JQuery<HTMLElement>|null=null) => {
-      let blob = new Blob([attachment.data()], {type: attachment.type});
+    saveToDownloads: (att: Att, renderIn:JQuery<HTMLElement>|null=null) => {
+      let blob = new Blob([att.data()], {type: att.type});
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveBlob(blob, attachment.name);
+        window.navigator.msSaveBlob(blob, att.name);
       } else {
         let a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(blob);
-        a.download = Xss.htmlEscape(attachment.name);
-        if (render_in) {
+        a.download = Xss.htmlEscape(att.name);
+        if (renderIn) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          Xss.sanitizeRender(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
-          render_in.append(a); // xss-escaped attachment name above
-          render_in.css('height', 'auto');
-          render_in.find('a').click(e => {
+          Xss.sanitizeRender(renderIn, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
+          renderIn.append(a); // xss-escaped attachment name above
+          renderIn.css('height', 'auto');
+          renderIn.find('a').click(e => {
             alert('Please use right-click and select Save Link As');
             e.preventDefault();
             e.stopPropagation();
@@ -181,12 +181,12 @@ export class Att {
               }
             }
           }
-          Catch.set_timeout(() => window.URL.revokeObjectURL(a.href), 0);
+          Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
         }
       }
     },
-    pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfo_as_pubkey_att: (ki: KeyInfo) => new Att({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
+    pgpNamePatterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
+    keyinfoAsPubkeyAtt: (ki: KeyInfo) => new Att({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
   };
 
 }

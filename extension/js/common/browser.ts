@@ -38,7 +38,7 @@ export class Ui {
 
   public static retry_link = (caption:string='retry') => `<a href="${Xss.htmlEscape(window.location.href)}">${Xss.htmlEscape(caption)}</a>`;
 
-  public static delay = (ms: number) => new Promise(resolve => Catch.set_timeout(resolve, ms));
+  public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
   public static spinner = (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
     let path = `/img/svgs/spinner-${color}-small.svg`;
@@ -181,7 +181,7 @@ export class Ui {
     if (el) {
       el.scrollIntoView();
       for (let delay of repeat) { // useful if mobile keyboard is about to show up
-        Catch.set_timeout(() => el.scrollIntoView(), delay);
+        Catch.setHandledTimeout(() => el.scrollIntoView(), delay);
       }
     }
   }
@@ -252,13 +252,13 @@ export class Ui {
       return function() {
         if (preventable_event === 'spree') {
           clearTimeout(event_timer);
-          event_timer = Catch.set_timeout(() => cb_with_errors_handled(this), Ui.EVENT_SPREE_MS);
+          event_timer = Catch.setHandledTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SPREE_MS);
         } else if (preventable_event === 'slowspree') {
           clearTimeout(event_timer);
-          event_timer = Catch.set_timeout(() => cb_with_errors_handled(this), Ui.EVENT_SLOW_SPREE_MS);
+          event_timer = Catch.setHandledTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SLOW_SPREE_MS);
         } else if (preventable_event === 'veryslowspree') {
           clearTimeout(event_timer);
-          event_timer = Catch.set_timeout(() => cb_with_errors_handled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
+          event_timer = Catch.setHandledTimeout(() => cb_with_errors_handled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
           if (event_fired_on) {
             if (preventable_event === 'parallel') {
@@ -323,7 +323,7 @@ export class Ui {
         }
       }, 50);
     }),
-    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = Catch.set_timeout) => new Promise(resolve => set_timeout(resolve, ms)),
+    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
   };
 
   public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
@@ -495,8 +495,8 @@ export class XssSafeFactory {
   }
 
   src_pgp_attachment_iframe = (a: Att) => {
-    if(!a.id && !a.url && a.has_data()) { // data provided directly, pass as object url
-      a.url = Att.methods.object_url_create(a.as_bytes());
+    if(!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
+      a.url = Att.methods.objUrlCreate(a.asBytes());
     }
     return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: a.msgId, name: a.name, type: a.type, size: a.length, attachment_id: a.id, url: a.url });
   }

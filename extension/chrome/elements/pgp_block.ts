@@ -123,7 +123,7 @@ Catch.try(async () => {
     // resize window now
     send_resize_message();
     // start auto-resizing the window after 1s
-    Catch.set_timeout(() => $(window).resize(Ui.event.prevent('spree', send_resize_message)), 1000);
+    Catch.setHandledTimeout(() => $(window).resize(Ui.event.prevent('spree', send_resize_message)), 1000);
   };
 
   let button_html = (text: string, add_classes: string) => {
@@ -183,13 +183,13 @@ Catch.try(async () => {
     let decrypted = await BgExec.crypto_msg_decrypt(account_email, encrypted.data(), await decrypt_pwd(), true);
     if (decrypted.success) {
       let att = new Att({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
-      Att.methods.save_to_downloads(att, render_in);
+      Att.methods.saveToDownloads(att, render_in);
       send_resize_message();
     } else {
       delete decrypted.message;
       console.info(decrypted);
       alert('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
-      Att.methods.save_to_downloads(encrypted, render_in);
+      Att.methods.saveToDownloads(encrypted, render_in);
       send_resize_message();
     }
   };
@@ -213,12 +213,12 @@ Catch.try(async () => {
     send_resize_message();
     $('div.attachment').click(Ui.event.prevent('double', async target => {
       let att = included_atts[Number($(target).attr('index') as string)];
-      if (att.has_data()) {
-        Att.methods.save_to_downloads(att, $(target));
+      if (att.hasData()) {
+        Att.methods.saveToDownloads(att, $(target));
         send_resize_message();
       } else {
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
-        att.setData(await Att.methods.download_as_uint8(att.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || att.length)));
+        att.setData(await Att.methods.downloadAsUint8(att.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || att.length)));
         await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
         await decrypt_and_save_att_to_downloads(att, $(target));
@@ -310,7 +310,7 @@ Catch.try(async () => {
     render_pgp_signature_check_result(signature_result);
     let public_keys: string[] = [];
     if (decrypted_content instanceof Uint8Array) {
-      decrypted_content = Str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
+      decrypted_content = Str.fromUint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
     }
     if (!Mime.resembles_msg(decrypted_content)) {
       let fc_atts: Att[] = [];
@@ -340,7 +340,7 @@ Catch.try(async () => {
       }
       let renderable_atts: Att[] = [];
       for (let att of decoded.atts) {
-        if (att.treat_as() !== 'public_key') {
+        if (att.treatAs() !== 'public_key') {
           renderable_atts.push(att);
         } else {
           public_keys.push(att.asText());
@@ -506,8 +506,8 @@ Catch.try(async () => {
         let m_link_result = await Api.fc.linkMessage(short as string);
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
-          let download_uint_result = await Att.methods.download_as_uint8(m_link_result.url, null);
-          message = Str.from_uint8(download_uint_result);
+          let download_uint_result = await Att.methods.downloadAsUint8(m_link_result.url, null);
+          message = Str.fromUint8(download_uint_result);
           await decrypt_and_render();
         } else {
           await render_password_encrypted_message_load_fail(password_message_link_result);

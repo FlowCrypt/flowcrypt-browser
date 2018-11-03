@@ -399,7 +399,7 @@ export class Composer {
     if (!delay) {
       do_reset();
     } else {
-      Catch.set_timeout(do_reset, delay);
+      Catch.setHandledTimeout(do_reset, delay);
     }
   }
 
@@ -639,7 +639,7 @@ export class Composer {
     plaintext = await this.add_reply_token_to_msg_body_if_needed(recipients, subject, plaintext, challenge, subscription);
     let atts = await this.attach.collect_and_encrypt_atts(armored_pubkeys, challenge);
     if (atts.length && challenge) { // these will be password encrypted attachments
-      this.button_update_timeout = Catch.set_timeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
+      this.button_update_timeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       let att_admin_codes = await this.upload_atts_to_fc(atts, subscription);
       plaintext = this.add_uploaded_file_links_to_msg_body(plaintext, atts);
       await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, att_admin_codes);
@@ -823,7 +823,7 @@ export class Composer {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.S.cached('icon_pubkey').is('.active')) {
-      msg.atts.push(Att.methods.keyinfo_as_pubkey_att(await this.app.storage_get_key(this.account_email)));
+      msg.atts.push(Att.methods.keyinfoAsPubkeyAtt(await this.app.storage_get_key(this.account_email)));
     }
     let msg_sent_res = await this.app.email_provider_msg_send(msg, this.render_upload_progress);
     const is_signed = this.S.cached('icon_sign').is('.active');
@@ -1074,7 +1074,7 @@ export class Composer {
       $('.new_message_button').click(() => this.app.send_msg_to_main_window('open_new_message'));
     }
     this.resize_reply_box();
-    Catch.set_timeout(() => this.app.send_msg_to_main_window('scroll_to_bottom_of_conversation'), 300);
+    Catch.setHandledTimeout(() => this.app.send_msg_to_main_window('scroll_to_bottom_of_conversation'), 300);
   }
 
   private parse_and_render_recipients = async () => {
@@ -1102,7 +1102,7 @@ export class Composer {
     if (possibly_bogus_address === q || Value.is(q).in(possibly_bogus_address)) {
       possibly_bogus_recipient.remove();
     }
-    Catch.set_timeout(async () => {
+    Catch.setHandledTimeout(async () => {
       if (!Value.is(email).in(this.get_recipients_from_dom())) {
         this.S.cached('input_to').val(Str.parseEmail(email).email);
         await this.parse_and_render_recipients();
@@ -1420,7 +1420,7 @@ export class Composer {
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.parse_and_render_recipients(); // this will force firefox to render them on load
       }
-      Catch.set_timeout(() => { // delay automatic resizing until a second later
+      Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
         $(window).resize(Ui.event.prevent('veryslowspree', () => this.resize_reply_box()));
         this.S.cached('input_text').keyup(() => this.resize_reply_box());
       }, 1000);

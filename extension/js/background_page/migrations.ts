@@ -129,10 +129,10 @@ let report_useful_errors = (e: any) => {
 };
 
 export let schedule_cryptup_subscription_level_check = (background_process_start_reason: 'update' | 'chrome_update' | 'browser_start' | string) => {
-  Catch.set_timeout(() => {
+  Catch.setHandledTimeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      Catch.set_timeout(() => Api.fc.accountCheckSync().catch(report_useful_errors), Value.int.hours_as_miliseconds(Math.random() * 3)); // random 0-3 hours
+      Catch.setHandledTimeout(() => Api.fc.accountCheckSync().catch(report_useful_errors), Value.int.hours_as_miliseconds(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
       Api.fc.accountCheckSync().catch(report_useful_errors); // now

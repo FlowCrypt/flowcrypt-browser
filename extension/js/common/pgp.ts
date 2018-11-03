@@ -194,9 +194,9 @@ export class Pgp {
   };
 
   public static hash = {
-    sha1: (string: string) => Str.to_hex(Str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
+    sha1: (string: string) => Str.to_hex(Str.fromUint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
     double_sha1_upper: (string: string) => Pgp.hash.sha1(Pgp.hash.sha1(string)).toUpperCase(),
-    sha256: (string: string) => Str.to_hex(Str.from_uint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, string))),
+    sha256: (string: string) => Str.to_hex(Str.fromUint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, string))),
     challenge_answer: (answer: string) => Pgp.internal.crypto_hash_sha256_loop(answer),
   };
 
@@ -317,7 +317,7 @@ export class Pgp {
       let d = data.slice(0, 50); // only interested in first 50 bytes
       // noinspection SuspiciousInstanceOfGuard
       if (d instanceof Uint8Array) {
-        d = Str.from_uint8(d);
+        d = Str.fromUint8(d);
       }
       let first_byte = d[0].charCodeAt(0); // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
       if ((first_byte & 0b10000000) === 0b10000000) { // 1XXX XXXX - potential pgp packet tag
@@ -368,10 +368,10 @@ export class Pgp {
     },
     verify_detached: async (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array): Promise<MsgVerifyResult> => {
       if (plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
-        plaintext = Str.from_uint8(plaintext);
+        plaintext = Str.fromUint8(plaintext);
       }
       if (signature_text instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
-        signature_text = Str.from_uint8(signature_text);
+        signature_text = Str.fromUint8(signature_text);
       }
       let message = openpgp.message.fromText(plaintext);
       message.appendSignature(signature_text);
@@ -445,7 +445,7 @@ export class Pgp {
       if (typeof m === 'string') {
         message = openpgp.message.readArmored(m);
       } else if (m instanceof Uint8Array) {
-        message = openpgp.message.readArmored(Str.from_uint8(m));
+        message = openpgp.message.readArmored(Str.fromUint8(m));
       } else {
         message = m;
       }
@@ -487,7 +487,7 @@ export class Pgp {
     random: () => { // eg TDW6-DU5M-TANI-LJXY
       let secure_random_array = new Uint8Array(128);
       window.crypto.getRandomValues(secure_random_array);
-      return btoa(Str.from_uint8(secure_random_array)).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
+      return btoa(Str.fromUint8(secure_random_array)).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
     },
   };
 
@@ -560,16 +560,16 @@ export class Pgp {
     },
     crypto_key_ids: (armored_pubkey: string) => openpgp.key.readArmored(armored_pubkey).keys[0].getKeyIds(),
     crypto_message_prepare_for_decrypt: (data: string|Uint8Array): {is_armored: boolean, is_cleartext: false, message: OpenPGP.message.Message}|{is_armored: boolean, is_cleartext: true, message: OpenPGP.cleartext.CleartextMessage} => {
-      let first_100_bytes = Str.from_uint8(data.slice(0, 100));
+      let first_100_bytes = Str.fromUint8(data.slice(0, 100));
       let is_armored_encrypted = Value.is(Pgp.armor.headers('message').begin).in(first_100_bytes);
       let is_armored_signed_only = Value.is(Pgp.armor.headers('signed_message').begin).in(first_100_bytes);
       let is_armored = is_armored_encrypted || is_armored_signed_only;
       if (is_armored_encrypted) {
-        return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(Str.from_uint8(data))};
+        return {is_armored, is_cleartext: false, message: openpgp.message.readArmored(Str.fromUint8(data))};
       } else if (is_armored_signed_only) {
-        return {is_armored, is_cleartext: true, message: openpgp.cleartext.readArmored(Str.from_uint8(data))};
+        return {is_armored, is_cleartext: true, message: openpgp.cleartext.readArmored(Str.fromUint8(data))};
       } else {
-        return {is_armored, is_cleartext: false, message: openpgp.message.read(Str.to_uint8(data))};
+        return {is_armored, is_cleartext: false, message: openpgp.message.read(Str.toUint8(data))};
       }
     },
     crypto_message_get_sorted_keys_for_message: async (account_email: string, message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage): Promise<InternalSortedKeysForDecrypt> => {

@@ -59,7 +59,7 @@ export class BgAttests {
 
   private static watch_for_attest_email = (account_email: string) => {
     clearInterval(BgAttests.currently_watching[account_email]);
-    Catch.set_timeout(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_TIMEOUT);
+    Catch.setHandledTimeout(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_TIMEOUT);
     BgAttests.currently_watching[account_email] = Catch.setHandledInterval(() => BgAttests.check_email_for_attests_and_respond(account_email), BgAttests.CHECK_INTERVAL);
   }
 

@@ -80,7 +80,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
 
     for(let atts_container_el of $('div.OW').get()) {
       let atts_container = $(atts_container_el);
-      let new_pgp_msgs = atts_container.children(Att.methods.pgp_name_patterns().map(this.get_att_sel).join(',')).not('.evaluated').addClass('evaluated');
+      let new_pgp_msgs = atts_container.children(Att.methods.pgpNamePatterns().map(this.get_att_sel).join(',')).not('.evaluated').addClass('evaluated');
       if (new_pgp_msgs.length) {
         let msg_root_container = atts_container.parents('.ap');
         let msg_el = msg_root_container.find(this.msg_text_el_selector);
@@ -105,21 +105,21 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   // todo - mostly the same as gmail/replace.ts
-  private process_atts = (msg_id: string, msg_el: JQuery<HTMLElement>, att_metas: Att[], atts_container: JQuery<HTMLElement>|HTMLElement, skip_google_drive=false) => {
+  private process_atts = (msgId: string, msg_el: JQuery<HTMLElement>, att_metas: Att[], atts_container: JQuery<HTMLElement>|HTMLElement, skip_google_drive=false) => {
     let sender_email = this.dom_extract_sender_email(msg_el);
     let is_outgoing = Value.is(sender_email).in(this.addresses);
     atts_container = $(atts_container);
     for (let a of att_metas) {
-      let treat_as = a.treat_as();
+      let treat_as = a.treatAs();
       if (treat_as !== 'standard') {
         let att_sel = (atts_container as JQuery<HTMLElement>).find(this.get_att_sel(a.name)).first();
         this.hide_att(att_sel, atts_container);
         if (treat_as === 'encrypted') { // actual encrypted attachment - show it
           (atts_container as JQuery<HTMLElement>).prepend(this.factory.embedded_attachment(a)); // xss-safe-factory
         } else if (treat_as === 'message') {
-          msg_el.append(this.factory.embedded_message('', msg_id, false, sender_email || '', false)).css('display', 'block'); // xss-safe-factory
+          msg_el.append(this.factory.embedded_message('', msgId, false, sender_email || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treat_as === 'public_key') { // todo - pubkey should be fetched in pgp_pubkey.js
-          Api.gmail.att_get(this.account_email, msg_id, a.id!).then(downloaded_att => {
+          Api.gmail.att_get(this.account_email, msgId, a.id!).then(downloaded_att => {
             if (Value.is(Pgp.armor.headers('null').begin).in(downloaded_att.data)) {
               msg_el.append(this.factory.embedded_pubkey(downloaded_att.data, is_outgoing)); // xss-safe-factory
             } else {
@@ -128,7 +128,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
             }
           }).catch(e => (atts_container as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
         } else if (treat_as === 'signature') {
-          let embedded_signed_msg_xss_safe = this.factory.embedded_message(Str.normalize_spaces(msg_el[0].innerText).trim(), msg_id, false, sender_email || '', false, true);
+          let embedded_signed_msg_xss_safe = this.factory.embedded_message(Str.normalize_spaces(msg_el[0].innerText).trim(), msgId, false, sender_email || '', false, true);
           if (!msg_el.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msg_el.text())) {
             msg_el.addClass('evaluated');
             msg_el.html(embedded_signed_msg_xss_safe).css('display', 'block'); // xss-safe-factory
@@ -145,12 +145,12 @@ export class InboxElementReplacer implements WebmailElementReplacer {
       not_processed_atts_loaders.each((i, loader_element) => {
         try {
           let meta = $(loader_element).parent().attr('download_url')!.split(':');
-          google_drive_atts.push(new Att({msg_id, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treat_as: 'encrypted'}));
+          google_drive_atts.push(new Att({msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted'}));
         } catch (e) {
           Catch.report(e);
         }
       });
-      this.process_atts(msg_id, msg_el, google_drive_atts, atts_container, true);
+      this.process_atts(msgId, msg_el, google_drive_atts, atts_container, true);
     }
   }
 

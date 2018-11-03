@@ -27,7 +27,7 @@ export class Mime {
       blocks = blocks.concat(Pgp.armor.detect_blocks(decoded.text).blocks);
     }
     for (let file of decoded.atts) {
-      let treat_as = file.treat_as();
+      let treat_as = file.treatAs();
       if (treat_as === 'message') {
         let armored = Pgp.armor.clip(file.asText());
         if (armored) {
@@ -80,7 +80,7 @@ export class Mime {
     let m = msg.slice(0, 1000);
     // noinspection SuspiciousInstanceOfGuard
     if (m instanceof Uint8Array) {
-      m = Str.from_uint8(m);
+      m = Str.fromUint8(m);
     }
     m = m.toLowerCase();
     let contentType = m.match(/content-type: +[0-9a-z\-\/]+/);

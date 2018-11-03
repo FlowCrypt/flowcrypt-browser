@@ -44,7 +44,7 @@ Catch.try(async () => {
   $('.show_when_showing_private').css('display', 'none');
 
   $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    Att.methods.save_to_downloads(Att.methods.keyinfo_as_pubkey_att(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
+    Att.methods.saveToDownloads(Att.methods.keyinfoAsPubkeyAtt(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_show_other_type').click(Ui.event.handle(() => {
