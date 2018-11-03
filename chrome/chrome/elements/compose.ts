@@ -3,11 +3,12 @@
 'use strict';
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact } from './../../js/common/storage.js';
-import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Str } from './../../js/common/common.js';
+import { Catch, Ui, Env, Xss, Attachment, Value, Str } from './../../js/common/common.js';
 import { XssSafeFactory } from './../../js/common/factory.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 import * as t from '../../types/common';
 import { Api, ProgressCallback, SendableMessage } from '../../js/common/api.js';
+import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 

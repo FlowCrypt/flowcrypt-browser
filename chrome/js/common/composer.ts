@@ -4,7 +4,8 @@
 
 import {Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact} from './storage.js';
 import {Lang} from './lang.js';
-import {Catch, Value, Xss, Str, Mime, Ui, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
+import {Catch, Value, Xss, Str, Mime, Ui, Attachment, Env, UnreportableError} from './common.js';
+import {BrowserMsg, Extension, BrowserMessageHandler} from './extension.js';
 import { Pgp } from './pgp.js';
 import {Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMessage, RichHeaders, StandardError, SendableMessageBody} from './api.js';
 import {Attach} from './attach.js';
@@ -299,7 +300,7 @@ export class Composer {
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
   }
 
-  show_subscribe_dialog_and_wait_for_response: t.BrowserMessageHandler = (data, sender, respond: (subscribed: boolean) => void) => {
+  show_subscribe_dialog_and_wait_for_response: BrowserMessageHandler = (data, sender, respond: (subscribed: boolean) => void) => {
     this.subscribe_result_listener = respond;
     this.app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
   }

@@ -3,8 +3,8 @@
 'use strict';
 
 import {Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes} from '../common/storage.js';
-import {Env, Catch, Value, BrowserMsg} from '../common/common.js';
-import {BgExec} from '../common/bg_exec.js';
+import {Env, Catch, Value} from '../common/common.js';
+import {BgExec, BrowserMessageHandler, BrowserMessageRequestDb, BrowserMessageRequestSessionSet, BrowserMessageRequestSessionGet, BrowserMsg} from '../common/extension.js';
 import {BgAttests} from './attests.js';
 import {inject_cryptup_into_webmail_if_needed} from './inject.js';
 import {migrate_account, migrate_global, schedule_cryptup_subscription_level_check} from './migrations.js';
@@ -51,17 +51,17 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let open_settings_page_handler: t.BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: t.Dict<FlatTypes>, add_new_account?: boolean}, sender, respond) => {
+  let open_settings_page_handler: BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: t.Dict<FlatTypes>, add_new_account?: boolean}, sender, respond) => {
     await open_settings_page(message.path, message.account_email, message.page, message.page_url_params, message.add_new_account === true);
     respond();
   };
 
-  let open_inbox_page_handler: t.BrowserMessageHandler = async (message: {account_email: string, thread_id?: string, folder?: string}, sender, respond) => {
+  let open_inbox_page_handler: BrowserMessageHandler = async (message: {account_email: string, thread_id?: string, folder?: string}, sender, respond) => {
     await open_flowcrypt_tab(Env.url_create(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
     respond();
   };
 
-  let get_active_tab_info: t.BrowserMessageHandler = (message: t.Dict<any>|null, sender, respond) => {
+  let get_active_tab_info: BrowserMessageHandler = (message: t.Dict<any>|null, sender, respond) => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (tabs) => {
       if (tabs.length) {
         if (tabs[0].id !== undefined) {
@@ -90,7 +90,7 @@ chrome.runtime.onInstalled.addListener(event => {
     });
   });
 
-  let update_uninstall_url: t.BrowserMessageHandler = async (request: t.Dict<any>|null, sender, respond) => {
+  let update_uninstall_url: BrowserMessageHandler = async (request: t.Dict<any>|null, sender, respond) => {
     respond();
     let account_emails = await Store.account_emails_get();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
@@ -99,7 +99,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let db_operation = (request: t.BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: t.Callback, db: IDBDatabase) => {
+  let db_operation = (request: BrowserMessageRequestDb, sender: chrome.runtime.MessageSender|'background', respond: t.Callback, db: IDBDatabase) => {
     Catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
@@ -130,9 +130,9 @@ chrome.runtime.onInstalled.addListener(event => {
 
   BrowserMsg.listen_background({
     bg_exec: BgExec.background_request_handler,
-    db: (request, sender, respond) => db_operation(request as t.BrowserMessageRequestDb, sender, respond, db),
-    session_set: (r: t.BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(Catch.rejection),
-    session_get: (r: t.BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(Catch.rejection),
+    db: (request, sender, respond) => db_operation(request as BrowserMessageRequestDb, sender, respond, db),
+    session_set: (r: BrowserMessageRequestSessionSet, sender, respond) => Store.session_set(r.account_email, r.key, r.value).then(respond).catch(Catch.rejection),
+    session_get: (r: BrowserMessageRequestSessionGet, sender, respond) => Store.session_get(r.account_email, r.key).then(respond).catch(Catch.rejection),
     close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
     migrate_account,
     settings: open_settings_page_handler,

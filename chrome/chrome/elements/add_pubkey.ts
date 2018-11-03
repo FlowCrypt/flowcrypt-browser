@@ -2,10 +2,11 @@
 
 'use strict';
 
-import { Catch, Ui, Env, BrowserMsg, Xss } from './../../js/common/common.js';
+import { Catch, Ui, Env, Xss } from './../../js/common/common.js';
 import { Store } from './../../js/common/storage.js';
 import { KeyImportUI, UserAlert } from './../../js/common/key_import.js';
 import { Pgp } from '../../js/common/pgp.js';
+import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 

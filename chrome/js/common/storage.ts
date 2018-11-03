@@ -2,11 +2,12 @@
 
 'use strict';
 
-import {Catch, Value, Str, BrowserMsg, Env} from './common.js';
+import {Catch, Value, Str, Env} from './common.js';
 import {mnemonic} from './mnemonic.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 import { SubscriptionInfo } from './api.js';
+import { BrowserMsg } from './extension.js';
 
 export interface Contact {
   email: string;

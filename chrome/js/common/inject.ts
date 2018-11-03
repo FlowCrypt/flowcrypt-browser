@@ -5,6 +5,7 @@
 import {XssSafeFactory} from './factory.js';
 import {Catch, Ui} from './common.js';
 import * as t from '../../types/common';
+import { ContentScriptWindow } from './extension.js';
 
 export class Injector {
 
@@ -44,7 +45,7 @@ export class Injector {
 
   buttons = () => {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
-      (window as t.ContentScriptWindow).TrySetDestroyableTimeout(this.buttons, 300);
+      (window as ContentScriptWindow).TrySetDestroyableTimeout(this.buttons, 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
         let container;

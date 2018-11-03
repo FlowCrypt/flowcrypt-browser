@@ -7,6 +7,7 @@ import {Catch, Value, Str} from '../common/common.js';
 import * as t from '../../types/common';
 import { Api, R } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
+import { BrowserMessageHandler } from '../common/extension.js';
 
 declare let openpgp: typeof OpenPGP;
 
@@ -42,7 +43,7 @@ export class BgAttests {
     }
   }
 
-  static attest_requested_handler: t.BrowserMessageHandler = async (request: {account_email: string}, sender, respond) => {
+  static attest_requested_handler: BrowserMessageHandler = async (request: {account_email: string}, sender, respond) => {
     respond();
     await BgAttests.get_pending_attest_requests();
     BgAttests.watch_for_attest_email(request.account_email);

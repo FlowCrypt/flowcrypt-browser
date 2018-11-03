@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store, Serializable } from '../../../js/common/storage.js';
-import { Catch, Env, Xss, Ui, BrowserMsg, Value, Attachment, Str } from '../../../js/common/common.js';
+import { Catch, Env, Xss, Ui, Value, Attachment, Str } from '../../../js/common/common.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
 import { Attach } from '../../../js/common/attach.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';

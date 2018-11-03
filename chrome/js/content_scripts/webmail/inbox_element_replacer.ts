@@ -4,10 +4,11 @@
 
 import {Injector} from '../../common/inject.js';
 import {XssSafeFactory} from '../../common/factory.js';
-import {Catch, BrowserMsg, Value, Ui, Attachment, Xss, Str} from '../../common/common.js';
+import {Catch, Value, Ui, Attachment, Xss, Str} from '../../common/common.js';
 import * as t from '../../../types/common';
 import { Api } from '../../common/api.js';
 import { Pgp } from '../../common/pgp.js';
+import { BrowserMsg } from '../../common/extension.js';
 
 export class InboxElementReplacer implements t.WebmailElementReplacer {
 

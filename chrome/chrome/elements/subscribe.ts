@@ -3,12 +3,13 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Ui, Env, BrowserMsg, Xss, Str } from './../../js/common/common.js';
+import { Catch, Ui, Env, Xss, Str } from './../../js/common/common.js';
 import { FlowCryptAccount } from './../../js/common/account.js';
 import { XssSafeFactory } from './../../js/common/factory.js';
 import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api.js';
 import * as t from './../../types/common';
+import { BrowserMessageHandler, BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
@@ -46,7 +47,7 @@ Catch.try(async () => {
     }
   };
 
-  let stripe_credit_card_entered_handler: t.BrowserMessageHandler = async (data: {token: string}, sender, respond) => {
+  let stripe_credit_card_entered_handler: BrowserMessageHandler = async (data: {token: string}, sender, respond) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
       await flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token);

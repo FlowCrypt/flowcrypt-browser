@@ -33,25 +33,6 @@ interface FcWindow extends BrowserWidnow {
 type AnyThirdPartyLibrary = any;
 type Thrown = Error|StandardError|any;
 
-interface ContentScriptWindow extends FcWindow {
-    TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
-    TrySetDestroyableInterval: (code: () => void, ms: number) => number;
-    injected: true; // background script will use this to test if scripts were already injected, and inject if not
-    account_email_global: null|string; // used by background script
-    same_world_global: true; // used by background_script
-    destruction_event: string;
-    destroyable_class: string;
-    reloadable_class: string;
-    destroyable_intervals: number[];
-    destroyable_timeouts: number[];
-    destroy: () => void;
-    vacant: () => boolean;
-}
-
-interface FlowCryptManifest extends chrome.runtime.Manifest {
-    oauth2: {client_id:string, url_code:string, url_tokens:string, url_redirect:string, state_header:string, scopes:string[]};
-}
-
 // todo Attachment
 type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
 
@@ -129,13 +110,6 @@ type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embed
 type Callback = (r?: any) => void;
 
 // Todo BrowserMsg
-type BrowserMessageRequestDb = {f: string, args: any[]};
-type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
-type BrowserMessageRequestSessionGet = {account_email: string, key: string};
-type BrowserMessageRequest = null|Dict<any>;
-type BrowserMessageResponse = any|Dict<any>;
-type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: Callback) => void|Promise<void>;
-
 type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
 type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};

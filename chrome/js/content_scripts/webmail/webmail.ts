@@ -14,6 +14,7 @@ import {GmailElementReplacer} from './gmail_element_replacer.js';
 import {content_script_setup_if_vacant} from './setup.js';
 import * as t from '../../../types/common';
 import { Api } from '../../common/api.js';
+import { ContentScriptWindow } from '../../common/extension.js';
 
 Catch.try(async () => {
 
@@ -81,7 +82,7 @@ Catch.try(async () => {
       replacer = new GmailElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, notifications, host_page_info.gmail_variant);
       await notifications.show_initial(account_email);
       replacer.everything();
-      replace_pgp_elements_interval = (window as t.ContentScriptWindow).TrySetDestroyableInterval(() => {
+      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
         if (typeof (window as t.FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
@@ -129,7 +130,7 @@ Catch.try(async () => {
       replacer = new InboxElementReplacer(factory, account_email, storage.addresses || [account_email], can_read_emails, injector, null);
       await notifications.show_initial(account_email);
       replacer.everything();
-      replace_pgp_elements_interval = (window as t.ContentScriptWindow).TrySetDestroyableInterval(() => {
+      replace_pgp_elements_interval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
         if (typeof (window as t.FcWindow).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated

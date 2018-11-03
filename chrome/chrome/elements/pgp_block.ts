@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Str, Mime } from './../../js/common/common.js';
-import { BgExec } from './../../js/common/bg_exec.js';
+import { Catch, Ui, Env, Xss, Attachment, Value, Str, Mime } from './../../js/common/common.js';
+import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';
 import * as t from '../../types/common';
 import { Api, GmailResponseFormat, R } from '../../js/common/api.js';

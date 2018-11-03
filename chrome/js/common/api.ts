@@ -3,9 +3,10 @@
 'use strict';
 
 import { Store, GlobalStore, Serializable, AccountStore, Contact } from './storage.js';
-import { Catch, Value, Str, Attachment, Env, BrowserMsg, Mime, Ui } from './common.js';
+import { Catch, Value, Str, Attachment, Env, Mime, Ui } from './common.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
+import { FlowCryptManifest, BrowserMsg } from './extension.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -89,8 +90,8 @@ export namespace R { // responses
   export type GmailMessage$payload$part = {body?: GmailMessage$payload$body, filename?: string, mimeType?: string, headers?: GmailMessage$header[]};
   export type GmailMessage$payload = {parts?: GmailMessage$payload$part[], headers?: GmailMessage$header[], mimeType?: string, body?: GmailMessage$payload$body};
   export type GmailMessage$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
-  export type GmailMessage = {id: string, historyId: string, threadId?: string|null, payload: GmailMessage$payload, raw?: string, internalDate?: number|string, labelIds: GmailMessage$labelId[],
-    snippet?: string};
+  export type GmailMessage = {id: string, historyId: string, threadId?: string|null, payload: GmailMessage$payload, raw?: string, internalDate?: number|string,
+    labelIds: GmailMessage$labelId[], snippet?: string};
   export type GmailMessageList$message = {id: string, threadId: string};
   export type GmailMessageList = {messages?: GmailMessageList$message[], resultSizeEstimate: number};
   export type GmailLabels$label = {id: string, name: string, messageListVisibility: 'show'|'hide', labelListVisibility: 'labelShow'|'labelHide', type: 'user'|'system',
@@ -114,7 +115,7 @@ export class Api {
 
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
   private static GMAIL_SCOPE_DICT: t.Dict<string> = {read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose'};
-  private static GOOGLE_OAUTH2 = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as t.FlowCryptManifest).oauth2 : null;
+  private static GOOGLE_OAUTH2 = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest ? (chrome.runtime.getManifest() as FlowCryptManifest).oauth2 : null;
   public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup', 'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
   public static auth = {

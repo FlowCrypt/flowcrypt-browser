@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Xss, Ui, BrowserMsg, Attachment } from '../../../js/common/common.js';
+import { Catch, Env, Xss, Ui, Attachment } from '../../../js/common/common.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { XssSafeFactory } from '../../../js/common/factory.js';
 

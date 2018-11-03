@@ -10,12 +10,12 @@ import {XssSafeFactory} from './factory.js';
 import * as t from '../../types/common';
 import { Api, ProgressCallback, SendableMessageBody, RichHeaders, FlatHeaders, StandardError } from './api.js';
 import { Pgp } from './pgp.js';
+import { BrowserMsg } from './extension.js';
 
 declare let $_HOST_html_to_text: (html: string) => string;
 declare const openpgp: typeof OpenPGP;
 
 export class UnreportableError extends Error {}
-export class TabIdRequiredError extends Error {}
 
 export class Attachment {
 
@@ -192,34 +192,6 @@ export class Attachment {
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
     keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
   };
-
-}
-
-export class Extension { // todo - move extension-specific common.js code here
-
-  public static prepare_bug_report = (name: string, details?: t.Dict<FlatTypes>, error?: Error|any): string => {
-    let bug_report: t.Dict<string> = {
-      name,
-      stack: Catch.stack_trace(),
-    };
-    try {
-      bug_report.error = JSON.stringify(error, null, 2);
-    } catch(e) {
-      bug_report.error_as_string = String(error);
-      bug_report.error_serialization_error = String(e);
-    }
-    try {
-      bug_report.details = JSON.stringify(details, null, 2);
-    } catch(e) {
-      bug_report.details_as_string = String(details);
-      bug_report.details_serialization_error = String(e);
-    }
-    let result = '';
-    for(let k of Object.keys(bug_report)) {
-      result += `\n[${k}]\n${bug_report[k]}\n`;
-    }
-    return result;
-  }
 
 }
 
@@ -595,156 +567,6 @@ export class Ui {
   };
 
   public static e = (name: string, attrs: t.Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
-
-}
-
-export class BrowserMsg {
-
-  public static MAX_SIZE = 1024 * 1024; // 1MB
-  private static HANDLERS_REGISTERED_BACKGROUND: t.Dict<t.BrowserMessageHandler>|null = null;
-  private static HANDLERS_REGISTERED_FRAME: t.Dict<t.BrowserMessageHandler> = {};
-  private static HANDLERS_STANDARD = {
-    set_css: (data: {css: t.Dict<string|number>, selector: string, traverse_up?: number}) => {
-      let element = $(data.selector);
-      let traverse_up_levels = data.traverse_up as number || 0;
-      for (let i = 0; i < traverse_up_levels; i++) {
-        element = element.parent();
-      }
-      element.css(data.css);
-    },
-  } as t.Dict<t.BrowserMessageHandler>;
-
-  public static send = (destination_string: string|null, name: string, data: t.Dict<any>|null=null) => {
-    BrowserMsg.send_await(destination_string, name, data).catch(Catch.rejection);
-  }
-
-  public static send_await = (destination_string: string|null, name: string, data: t.Dict<any>|null=null): Promise<t.BrowserMessageResponse> => new Promise(resolve => {
-    let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: Catch.stack_trace() };
-    let try_resolve_no_undefined = (r?: t.BrowserMessageResponse) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
-    let is_background_page = Env.is_background_page();
-    if (typeof  destination_string === 'undefined') { // don't know where to send the message
-      Catch.log('BrowserMsg.send to:undefined');
-      try_resolve_no_undefined();
-    } else if (is_background_page && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && msg.to === null) {
-      BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
-    } else if (is_background_page) {
-      chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
-    } else {
-      chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
-    }
-  })
-
-  public static tab_id = async (): Promise<string|null|undefined> => {
-    let r = await BrowserMsg.send_await(null, '_tab_', null);
-    if(typeof r === 'string' || typeof r === 'undefined' || r === null) {
-      return r; // for compatibility reasons when upgrading from 5.7.2 - can be removed later
-    } else {
-      return r.tab_id; // new format
-    }
-  }
-
-  public static required_tab_id = async (): Promise<string> => {
-    let tab_id;
-    for(let i = 0; i < 10; i++) { // up to 10 attempts. Sometimes returns undefined right after browser start
-      tab_id = await BrowserMsg.tab_id();
-      if(tab_id) {
-        return tab_id;
-      }
-      await Ui.time.sleep(200); // sleep 200ms between attempts
-    }
-    throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
-  }
-
-  public static listen = (handlers: t.Dict<t.BrowserMessageHandler>, listen_for_tab_id='all') => {
-    for (let name of Object.keys(handlers)) {
-      // newly registered handlers with the same name will overwrite the old ones if BrowserMsg.listen is declared twice for the same frame
-      // original handlers not mentioned in newly set handlers will continue to work
-      BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = handlers[name];
-    }
-    for (let name of Object.keys(BrowserMsg.HANDLERS_STANDARD)) {
-      if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[name] !== 'function') {
-        BrowserMsg.HANDLERS_REGISTERED_FRAME[name] = BrowserMsg.HANDLERS_STANDARD[name]; // standard handlers are only added if not already set above
-      }
-    }
-    let processed:string[] = [];
-    chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-      try {
-        if (msg.to === listen_for_tab_id || msg.to === 'broadcast') {
-          if (!Value.is(msg.uid).in(processed)) {
-            processed.push(msg.uid);
-            if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
-              let r = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name](msg.data, sender, respond);
-              if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
-                // todo - a way to callback the error to be re-thrown to caller stack
-                (r as Promise<void>).catch(Catch.rejection);
-              }
-            } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              if (BrowserMsg.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-                Catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
-              } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
-                console.log('BrowserMsg.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
-              }
-            }
-          }
-        }
-        return !!respond; // indicate that this listener intends to respond
-      } catch(e) {
-        // todo - a way to callback the error to be re-thrown to caller stack
-        Catch.handle_exception(e);
-      }
-    });
-  }
-
-  public static listen_background = (handlers: t.Dict<t.BrowserMessageHandler>) => {
-    if (!BrowserMsg.HANDLERS_REGISTERED_BACKGROUND) {
-      BrowserMsg.HANDLERS_REGISTERED_BACKGROUND = handlers;
-    } else {
-      for (let name of Object.keys(handlers)) {
-        BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name] = handlers[name];
-      }
-    }
-    chrome.runtime.onMessage.addListener((msg, sender, respond) => {
-      try {
-        let safe_respond = (response: any) => {
-          try { // avoiding unnecessary errors when target tab gets closed
-            respond(response);
-          } catch (e) {
-            // todo - the sender should still know - could have PageClosedError
-            if (e.message !== 'Attempting to use a disconnected port object') {
-              Catch.handle_exception(e);
-              throw e;
-            }
-          }
-        };
-        if (msg.to && msg.to !== 'broadcast') {
-          msg.sender = sender;
-          chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
-        } else if (Value.is(msg.name).in(Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND!))) { // is !null because added above
-          let r = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND![msg.name](msg.data, sender, safe_respond); // is !null because checked above
-          if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
-            // todo - a way to callback the error to be re-thrown to caller stack
-            (r as Promise<void>).catch(Catch.rejection);
-          }
-        } else if (msg.to !== 'broadcast') {
-          Catch.report('BrowserMsg.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
-        }
-        return !!respond; // indicate that we intend to respond later
-      } catch (e) {
-        // todo - a way to callback the error to be re-thrown to caller stack
-        Catch.handle_exception(e);
-      }
-    });
-  }
-
-  private static browser_message_destination_parse = (destination_string: string|null) => {
-    let parsed = { tab: null as null|number, frame: null as null|number };
-    if (destination_string) {
-      parsed.tab = Number(destination_string.split(':')[0]);
-      // @ts-ignore - adding nonsense into isNaN
-      parsed.frame = !isNaN(destination_string.split(':')[1]) ? Number(destination_string.split(':')[1]) : null;
-    }
-    return parsed;
-  }
 
 }
 

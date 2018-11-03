@@ -2,9 +2,10 @@
 
 'use strict';
 
-import { Catch, Env, Xss, Ui, BrowserMsg } from '../../../js/common/common.js';
+import { Catch, Env, Xss, Ui } from '../../../js/common/common.js';
 import { XssSafeFactory } from '../../../js/common/factory.js';
 import { Pgp, DecryptErrorTypes } from '../../../js/common/pgp.js';
+import { BrowserMsg } from '../../../js/common/extension.js';
 
 declare const openpgp: typeof OpenPGP;
 
