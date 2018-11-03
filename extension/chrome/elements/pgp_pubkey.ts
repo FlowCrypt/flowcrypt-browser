@@ -69,7 +69,7 @@ Catch.try(async () => {
         } else {
           $('.email').text('more than one person');
           $('.input_email').css({display: 'none'});
-          Xss.sanitize_append('.add_contact', Xss.html_escape(' for ' + pubkeys.map(pubkey => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.isEmailValid(e)).join(', ')));
+          Xss.sanitizeAppend('.add_contact', Xss.htmlEscape(' for ' + pubkeys.map(pubkey => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.isEmailValid(e)).join(', ')));
         }
         set_button_text().catch(Catch.rejection);
       }
@@ -97,13 +97,13 @@ Catch.try(async () => {
         }
       }
       await Store.db_contact_save(null, contacts);
-      Xss.sanitize_replace(target, '<span class="good">added public keys</span>');
+      Xss.sanitizeReplace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
     } else if (pubkeys.length) {
       if (Str.isEmailValid($('.input_email').val() as string)) { // text input
         let contact = Store.dbContactObj($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
         await Store.db_contact_save(null, contact);
-        Xss.sanitize_replace(target, `<span class="good">${Xss.html_escape(String($('.input_email').val()))} added</span>`);
+        Xss.sanitizeReplace(target, `<span class="good">${Xss.htmlEscape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
       } else {
         alert('This email is invalid, please check for typos. Not added.');

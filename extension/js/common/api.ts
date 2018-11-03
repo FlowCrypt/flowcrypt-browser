@@ -732,7 +732,7 @@ export class Api {
     accountCheck: (emails: string[]) => Api.internal.apiFcCall('account/check', {
       emails,
     }) as Promise<R.FcAccountCheck>,
-    account_check_sync: async () => { // callbacks true on updated, false not updated, null for could not fetch
+    accountCheckSync: async () => { // callbacks true on updated, false not updated, null for could not fetch
       let emails = await Store.accountEmailsGet();
       if (emails.length) {
         let response = await Api.fc.accountCheck(emails);

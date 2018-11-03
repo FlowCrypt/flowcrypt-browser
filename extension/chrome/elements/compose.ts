@@ -27,7 +27,7 @@ Catch.try(async () => {
     if (!url_params.is_reply_box || (url_params.thread_id && url_params.thread_id !== url_params.thread_message_id && url_params.to && url_params.from && url_params.subject)) {
       return; // either not a reply box, or reply box & has all needed params
     }
-    Xss.sanitize_prepend('#new_message', Ui.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
+    Xss.sanitizePrepend('#new_message', Ui.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
     let gmail_message_object;
     try {
       gmail_message_object = await Api.gmail.msgGet(account_email, url_params.thread_message_id as string, 'metadata');

@@ -33,7 +33,7 @@ Catch.try(async () => {
 
   let rules = new Rules(account_email);
   if (!rules.can_backup_keys()) {
-    Xss.sanitize_render('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.key_backups_not_allowed}</div>`);
+    Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.key_backups_not_allowed}</div>`);
     return;
   }
 
@@ -58,20 +58,20 @@ Catch.try(async () => {
         keys = await Api.gmail.fetchKeyBackups(account_email);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
-          Xss.sanitize_render('#content', `Could not check for backups: no internet. ${Ui.retry_link()}`);
+          Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retry_link()}`);
         } else if(Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-          Xss.sanitize_render('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retry_link()}`);
+          Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retry_link()}`);
         } else {
           Catch.handle_exception(e);
-          Xss.sanitize_render('#content', `Could not check for backups: unknown error. ${Ui.retry_link()}`);
+          Xss.sanitizeRender('#content', `Could not check for backups: unknown error. ${Ui.retry_link()}`);
         }
         return;
       }
       display_block('step_0_status');
       if (keys && keys.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
-        Xss.sanitize_render('#step_0_status .container', '<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
+        Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
         $('.action_go_manual').click(Ui.event.handle(() => {
           display_block('step_3_manual');
           $('h1').text('Back up your private key');
@@ -79,21 +79,21 @@ Catch.try(async () => {
       } else if (storage.key_backup_method) {
         if (storage.key_backup_method === 'file') {
           $('.status_summary').text('You have previously backed up your key into a file.');
-          Xss.sanitize_render('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
           }));
         } else if (storage.key_backup_method === 'print') {
           $('.status_summary').text('You have previously backed up your key by printing it.');
-          Xss.sanitize_render('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
           }));
         } else { // inbox or other methods
           $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-          Xss.sanitize_render('#step_0_status .container', '<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
@@ -102,7 +102,7 @@ Catch.try(async () => {
       } else {
         if (storage.setup_simple) {
           $('.status_summary').text('No backups found on this account. You can store a backup of your key in email inbox. Your key will be protected by a pass phrase of your choice.');
-          Xss.sanitize_render('#step_0_status .container', '<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
+          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
           $('.action_go_backup').click(Ui.event.handle(() => {
             display_block('step_1_password');
             $('h1').text('Set Backup Pass Phrase');
@@ -113,7 +113,7 @@ Catch.try(async () => {
           }));
         } else {
           $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
-          Xss.sanitize_render('#step_0_status .container', '<div class="button long green action_go_manual">BACK UP MY KEY</div>');
+          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">BACK UP MY KEY</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
             display_block('step_3_manual');
             $('h1').text('Back up your private key');
@@ -124,7 +124,7 @@ Catch.try(async () => {
       display_block('step_0_status');
       $('.status_summary').text('FlowCrypt cannot check your backups.');
       let pemissions_button_if_gmail = email_provider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
-      Xss.sanitize_render('#step_0_status .container', `${pemissions_button_if_gmail}<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>`);
+      Xss.sanitizeRender('#step_0_status .container', `${pemissions_button_if_gmail}<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>`);
       $('.action_go_manual').click(Ui.event.handle(() => {
         display_block('step_3_manual');
         $('h1').text('Back up your private key');
@@ -157,7 +157,7 @@ Catch.try(async () => {
       $('#password2').focus();
     } else {
       let btn_text = $(target).text();
-      Xss.sanitize_render(target, Ui.spinner('white'));
+      Xss.sanitizeRender(target, Ui.spinner('white'));
       let [primary_ki] = await Store.keysGet(account_email, ['primary']);
       Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
@@ -222,7 +222,7 @@ Catch.try(async () => {
     }
     let btn = $('.action_manual_backup');
     let orig_btn_text = btn.text();
-    Xss.sanitize_render(btn, Ui.spinner('white'));
+    Xss.sanitizeRender(btn, Ui.spinner('white'));
     try {
       await do_backup_on_email_provider(account_email, primary_ki.private);
     } catch (e) {
@@ -368,7 +368,7 @@ Catch.try(async () => {
         await do_backup_on_email_provider(account_email, primary_ki.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');
       } catch (e) {
-        Xss.sanitize_render('#content', 'Connection failed, please <a href="#" class="reload">try again</a>.');
+        Xss.sanitizeRender('#content', 'Connection failed, please <a href="#" class="reload">try again</a>.');
         $('.reload').click(() => window.location.reload());
       }
     } else { // should never happen on this action. Just in case.

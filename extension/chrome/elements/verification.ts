@@ -16,10 +16,10 @@ Catch.try(async () => {
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
   let flowcrypt_account = new FlowCryptAccount({}, true);
-  let token = flowcrypt_account.parse_token_email_text(url_params.verification_email_text as string);
+  let token = flowcrypt_account.parseTokenEmailText(url_params.verification_email_text as string);
 
   let render_status = (content: string, spinner=false) => {
-    Xss.sanitize_render('body .status', Xss.html_sanitize(content + (spinner ? ' ' + Ui.spinner('white') : '')));
+    Xss.sanitizeRender('body .status', Xss.htmlSanitize(content + (spinner ? ' ' + Ui.spinner('white') : '')));
   };
 
   if (!token) {

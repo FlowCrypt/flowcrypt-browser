@@ -63,8 +63,8 @@ Catch.try(async () => {
 
   let rules = new Rules(account_email);
   if (!rules.can_create_keys()) {
-    let forbidden = `${Lang.setup.creating_keys_not_allowed_please_import} <a href="${Xss.html_escape(window.location.href)}">Back</a>`;
-    Xss.sanitize_render('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
+    let forbidden = `${Lang.setup.creating_keys_not_allowed_please_import} <a href="${Xss.htmlEscape(window.location.href)}">Back</a>`;
+    Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
 
@@ -150,7 +150,7 @@ Catch.try(async () => {
         if (keyserver_result.has_cryptup) {
           // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           display_block('step_2b_manual_enter');
-          Xss.sanitize_prepend('#step_2b_manual_enter', '<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+          Xss.sanitizePrepend('#step_2b_manual_enter', '<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
         } else if (rules.can_create_keys()) {
           // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           display_block('step_1_easy_or_manual');
@@ -171,7 +171,7 @@ Catch.try(async () => {
   let render_add_key_from_backup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     let fetched_keys;
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
-    Xss.sanitize_render($('h1').parent(), '<h1>Recover key from backup</h1>');
+    Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
       fetched_keys = await Api.gmail.fetchKeyBackups(account_email);
@@ -276,7 +276,7 @@ Catch.try(async () => {
       await save_keys([prv], options);
     } catch (e) {
       Catch.handle_exception(e);
-      Xss.sanitize_render('#step_2_easy_generating, #step_2a_manual_create', 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
+      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
     }
   };
 
@@ -361,13 +361,13 @@ Catch.try(async () => {
     let n_bups = recovered_keys.length;
     let t_left = (n_bups - n_got > 1) ? 'are ' + (n_bups - n_got) + ' backups' : 'is one backup';
     if (action !== 'add_key') {
-      Xss.sanitize_render('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
-      Xss.sanitize_replace('#step_2_recovery .line_skip_recovery', Ui.e('div', {class: 'line', html: Ui.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', `You successfully recovered ${n_got} of ${n_bups} backups. There ${t_left} left.<br><br>Try a different pass phrase to unlock all backups.`);
+      Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', {class: 'line', html: Ui.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
       $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
         window.location.href = Env.urlCreate('index.htm', { account_email });
       }));
     } else {
-      Xss.sanitize_render('#step_2_recovery .recovery_status', `There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${t_left} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
   }));
@@ -423,7 +423,7 @@ Catch.try(async () => {
     };
     try {
       let checked = await key_import_ui.check_prv(account_email, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
-      Xss.sanitize_render('#step_2b_manual_enter .action_save_private', Ui.spinner('white'));
+      Xss.sanitizeRender('#step_2b_manual_enter .action_save_private', Ui.spinner('white'));
       await save_keys([checked.encrypted], options);
       await pre_finalize_setup(options);
       await finalize_setup(options);
@@ -488,7 +488,7 @@ Catch.try(async () => {
     }
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
-      Xss.sanitize_render('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
+      Xss.sanitizeRender('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
       let userinfo = await get_and_save_google_user_info();
       let options: SetupOptions = {
         full_name: userinfo.full_name,

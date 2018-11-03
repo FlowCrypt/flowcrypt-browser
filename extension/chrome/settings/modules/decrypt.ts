@@ -32,7 +32,7 @@ Catch.try(async () => {
     let ids = attach_js.get_att_ids();
     if (ids.length === 1) {
       orig_content = $(self).html();
-      Xss.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
+      Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
       let collected = await attach_js.collect_att(ids[0]);
       await decrypt_and_download(collected);
     } else {
@@ -52,7 +52,7 @@ Catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    Xss.sanitize_render('.action_decrypt_and_download', orig_content);
+    Xss.sanitizeRender('.action_decrypt_and_download', orig_content);
   };
 
 })();

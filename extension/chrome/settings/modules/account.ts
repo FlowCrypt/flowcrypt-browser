@@ -14,9 +14,9 @@ Catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  Xss.sanitize_render('.loading', Ui.spinner('green', 'large_spinner'));
+  Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
 
-  await Api.fc.account_check_sync();
+  await Api.fc.accountCheckSync();
   let auth_info = await Store.authInfo();
   let subscription = await Store.subscription();
 
@@ -34,7 +34,7 @@ Catch.try(async () => {
   } else {
     $('.expire_label').text('Until');
     $('.price').text('free');
-    Xss.sanitize_render('.method', 'trial <a href="#" class="action_go_subscription">upgrade</a>');
+    Xss.sanitizeRender('.method', 'trial <a href="#" class="action_go_subscription">upgrade</a>');
     $('.action_go_subscription').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&placement=settings')));
   }
   if (subscription.method !== 'group') {

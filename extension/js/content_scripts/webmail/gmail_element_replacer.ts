@@ -97,7 +97,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private add_cryptup_conversation_icon = (container_selector: JQuery<HTMLElement>, icon_html: string, icon_selector: string, on_click: () => void) => {
     container_selector.addClass('appended').children('.use_secure_reply, .show_original_conversation').remove(); // remove previous FlowCrypt buttons, if any
-    Xss.sanitize_append(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent('double', Catch.try(on_click)));
+    Xss.sanitizeAppend(container_selector, icon_html).children(icon_selector).off().click(Ui.event.prevent('double', Catch.try(on_click)));
   }
 
   private replace_conversation_buttons = (force:boolean=false) => {
@@ -149,12 +149,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         let button;
         let [full_link, name, button_href_id] = found_cryptup_link;
         if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${Xss.html_escape(button_href_id)}">Open draft</a>`;
+          button = `<a href="#" class="open_draft_${Xss.htmlEscape(button_href_id)}">Open draft</a>`;
         } else if (name === 'draft_reply') {
-          button = `<a href="#inbox/${Xss.html_escape(button_href_id)}">Open draft</a>`;
+          button = `<a href="#inbox/${Xss.htmlEscape(button_href_id)}">Open draft</a>`;
         }
         if (button) {
-          Xss.sanitize_replace(contenteditable, button);
+          Xss.sanitizeReplace(contenteditable, button);
           $(`a.open_draft_${button_href_id}`).click(Ui.event.handle(() => {
             $('div.new_message').remove();
             $('body').append(this.factory.embedded_compose(button_href_id)); // xss-safe-factory
@@ -173,7 +173,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         let msg_id = this.determine_msg_id(atts_container);
         if (msg_id) {
           if (this.can_read_emails) {
-            Xss.sanitize_prepend(new_pgp_atts, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
+            Xss.sanitizePrepend(new_pgp_atts, this.factory.embedded_attachment_status('Getting file info..' + Ui.spinner('green')));
             try {
               let msg = await Api.gmail.msgGet(this.account_email, msg_id, 'full');
               await this.process_atts(msg_id, Api.gmail.findAtts(msg), atts_container, false, new_pgp_atts_names);
@@ -412,7 +412,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           let reply_box = $(reply_box_element);
           if (mid_convo_draft || already_has_encrypted_reply_box) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             reply_box.attr('class', 'reply_message_evaluated');
-            Xss.sanitize_append(reply_box, '<font>&nbsp;&nbsp;Draft skipped</font>');
+            Xss.sanitizeAppend(reply_box, '<font>&nbsp;&nbsp;Draft skipped</font>');
             reply_box.children(':not(font)').hide();
           } else {
             let secure_reply_box_xss_safe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embedded_reply(this.get_conversation_params(convo_root_el!), editable)}</div>`;

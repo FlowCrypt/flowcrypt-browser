@@ -31,7 +31,7 @@ Catch.try(async () => {
   const send_button_text = 'Send Response';
 
   for (let to of (url_params.to as string).split(',')) {
-    Xss.sanitize_append('.recipients', Ui.e('span', {text: to}));
+    Xss.sanitizeAppend('.recipients', Ui.e('span', {text: to}));
   }
 
   // render
@@ -69,7 +69,7 @@ Catch.try(async () => {
     try {
       await Api.gmail.msgSend(account_email, message);
       BrowserMsg.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
-      Xss.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
+      Xss.sanitizeReplace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if(Api.err.isAuthPopupNeeded(e)) {
         $(target).text(send_button_text);

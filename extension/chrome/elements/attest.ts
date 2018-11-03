@@ -25,7 +25,7 @@ Catch.try(async () => {
 
   let process_attest = async (passphrase: string|null) => {
     if (passphrase !== null) {
-      Xss.sanitize_render('.status', 'Verifying..' + Ui.spinner('green'));
+      Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
       let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', {account_email, packet: url_params.attest_packet, passphrase});
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
@@ -41,7 +41,7 @@ Catch.try(async () => {
     return;
   }
 
-  Xss.sanitize_render('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
+  Xss.sanitizeRender('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
   $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
   let tab_id = await BrowserMsg.required_tab_id();
   BrowserMsg.listen({

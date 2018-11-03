@@ -132,11 +132,11 @@ export let schedule_cryptup_subscription_level_check = (background_process_start
   Catch.set_timeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      Catch.set_timeout(() => Api.fc.account_check_sync().catch(report_useful_errors), Value.int.hours_as_miliseconds(Math.random() * 3)); // random 0-3 hours
+      Catch.set_timeout(() => Api.fc.accountCheckSync().catch(report_useful_errors), Value.int.hours_as_miliseconds(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
-      Api.fc.account_check_sync().catch(report_useful_errors); // now
+      Api.fc.accountCheckSync().catch(report_useful_errors); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  Catch.setHandledInterval(() => Api.fc.account_check_sync().catch(report_useful_errors), Value.int.hours_as_miliseconds(23 + Math.random())); // random 23-24 hours
+  Catch.setHandledInterval(() => Api.fc.accountCheckSync().catch(report_useful_errors), Value.int.hours_as_miliseconds(23 + Math.random())); // random 23-24 hours
 };

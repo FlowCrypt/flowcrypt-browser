@@ -7,11 +7,11 @@ import { Env, Str, Catch, Dict } from './common.js';
 import { Api } from './api.js';
 
 type AccountEventHandlersOptional = {
-  render_status_text?: (text: string, show_spinner?: boolean) => void;
-  find_matching_tokens_from_email?: (account_email: string, uuid: string) => Promise<string[]|null>; };
+  renderStatusText?: (text: string, show_spinner?: boolean) => void;
+  findMatchingTokensFromEmail?: (acctEmail: string, uuid: string) => Promise<string[]|null>; };
 type AccountEventHandlers = {
-  render_status_text: (text: string, show_spinner?: boolean) => void;
-  find_matching_tokens_from_email: (account_email: string, uuid: string) => Promise<string[]|null>; };
+  renderStatusText: (text: string, show_spinner?: boolean) => void;
+  findMatchingTokensFromEmail: (acctEmail: string, uuid: string) => Promise<string[]|null>; };
 
 export type PaymentMethod = 'stripe'|'group'|'trial';
 export type ProductLevel = 'pro'|null;
@@ -22,113 +22,113 @@ export class FlowCryptAccount {
   PRODUCTS: Dict<Product> = {
     null: {id: null, method: null, name: null, level: null},
     trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
-    advanced_monthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
+    advancedMonthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
   };
 
-  private can_read_email: boolean;
-  private cryptup_verification_email_sender = 'verify@cryptup.org';
-  private event_handlers: AccountEventHandlers;
+  private canReadEmail: boolean;
+  private cryptupVerificationEmailSender = 'verify@cryptup.org';
+  private eventHandlers: AccountEventHandlers;
 
-  constructor(handlers: AccountEventHandlersOptional, can_read_email: boolean) {
-    this.event_handlers = {
-      render_status_text: handlers.render_status_text || ((text: string, show_spinner?:boolean) => undefined),
-      find_matching_tokens_from_email: handlers.find_matching_tokens_from_email || this.fetch_token_emails_on_gmail_and_find_matching_token,
+  constructor(handlers: AccountEventHandlersOptional, canReadEmail: boolean) {
+    this.eventHandlers = {
+      renderStatusText: handlers.renderStatusText || ((text: string, show_spinner?:boolean) => undefined),
+      findMatchingTokensFromEmail: handlers.findMatchingTokensFromEmail || this.fetchTokenEmailsOnGmailAndFindMatchingToken,
     };
-    this.can_read_email = can_read_email;
+    this.canReadEmail = canReadEmail;
   }
 
-  subscribe = async (account_email: string, chosen_product: Product, source: string|null) => {
-    this.event_handlers.render_status_text(chosen_product.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
-    await Api.fc.account_check_sync();
+  subscribe = async (acctEmail: string, chosenProduct: Product, source: string|null) => {
+    this.eventHandlers.renderStatusText(chosenProduct.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
+    await Api.fc.accountCheckSync();
     try {
-      return await this.do_subscribe(chosen_product, source);
+      return await this.doSubscribe(chosenProduct, source);
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
-        await this.save_subscription_attempt(chosen_product, source);
-        let response = await this.register(account_email);
-        return await this.do_subscribe(chosen_product, source);
+        await this.saveSubscriptionAttempt(chosenProduct, source);
+        let response = await this.register(acctEmail);
+        return await this.doSubscribe(chosenProduct, source);
       }
       throw e;
     }
   }
 
-  register = async (account_email: string) => { // register_and_attempt_to_verify
-    this.event_handlers.render_status_text('registering..', true);
-    let response = await Api.fc.accountLogin(account_email);
+  register = async (acctEmail: string) => { // register_and_attempt_to_verify
+    this.eventHandlers.renderStatusText('registering..', true);
+    let response = await Api.fc.accountLogin(acctEmail);
     if (response.verified) {
       return response;
     }
-    if (this.can_read_email) {
-      this.event_handlers.render_status_text('verifying..', true);
-      let tokens = await this.wait_for_token_email(30);
+    if (this.canReadEmail) {
+      this.eventHandlers.renderStatusText('verifying..', true);
+      let tokens = await this.waitForTokenEmail(30);
       if (tokens && tokens.length) {
-        return await this.verify(account_email, tokens);
+        return await this.verify(acctEmail, tokens);
       } else {
-        throw {code: null, internal: 'email', message: `Please check your inbox (${account_email}) for a verification email`};
+        throw {code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email`};
       }
     } else {
-      throw {code: null, internal: 'email', message: `Please check your inbox (${account_email}) for a verification email`};
+      throw {code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email`};
     }
   }
 
-  verify = async (account_email: string, tokens: string[]) => {
-    this.event_handlers.render_status_text('verifying your email address..', true);
-    let last_token_error;
+  verify = async (acctEmail: string, tokens: string[]) => {
+    this.eventHandlers.renderStatusText('verifying your email address..', true);
+    let lastTokenErr;
     for (let token of tokens) {
       try {
-        return await Api.fc.accountLogin(account_email, token);
+        return await Api.fc.accountLogin(acctEmail, token);
       } catch (e) {
         if (Api.err.isStandardErr(e, 'token')) {
-          last_token_error = e;
+          lastTokenErr = e;
         } else {
           throw e;
         }
       }
     }
-    throw last_token_error;
+    throw lastTokenErr;
   }
 
-  register_new_device = async (account_email: string) => {
+  registerNewDevice = async (acctEmail: string) => {
     await Store.set(null, { cryptup_account_uuid: undefined });
-    this.event_handlers.render_status_text('checking..', true);
-    return await this.register(account_email);
+    this.eventHandlers.renderStatusText('checking..', true);
+    return await this.register(acctEmail);
   }
 
-  save_subscription_attempt = async (product: Product, source: string|null) => {
+  saveSubscriptionAttempt = async (product: Product, source: string|null) => {
     (product as any as SubscriptionAttempt).source = source;
     await Store.set(null, { 'cryptup_subscription_attempt': product as any as SubscriptionAttempt });
   }
 
-  parse_token_email_text = (verification_email_text: string, stored_uuid_to_cross_check?: string): string|undefined => {
-    let token_link_match = verification_email_text.match(/account\/login?([^\s"<]+)/g);
-    if (token_link_match !== null) {
-      let token_link_params = Env.urlParams(['account', 'uuid', 'token'], token_link_match[0].split('?')[1]);
-      if ((!stored_uuid_to_cross_check || token_link_params.uuid === stored_uuid_to_cross_check) && token_link_params.token) {
-        return token_link_params.token as string;
+  parseTokenEmailText = (verifEmailText: string, storedUuidToCrossCheck?: string): string|undefined => {
+    let tokenLinkMatch = verifEmailText.match(/account\/login?([^\s"<]+)/g);
+    if (tokenLinkMatch !== null) {
+      let tokenLinkParams = Env.urlParams(['account', 'uuid', 'token'], tokenLinkMatch[0].split('?')[1]);
+      if ((!storedUuidToCrossCheck || tokenLinkParams.uuid === storedUuidToCrossCheck) && tokenLinkParams.token) {
+        return tokenLinkParams.token as string;
       }
     }
   }
 
-  private do_subscribe = async (chosen_product: Product, source:string|null=null) => {
+  private doSubscribe = async (chosenProduct: Product, source:string|null=null) => {
     await Store.remove(null, ['cryptup_subscription_attempt']);
     // todo - deal with auth error? would need to know account_email for new registration
-    let response = await Api.fc.accountSubscribe(chosen_product.id!, chosen_product.method!, source);
-    if (response.subscription.level === chosen_product.level && response.subscription.method === chosen_product.method) {
+    let response = await Api.fc.accountSubscribe(chosenProduct.id!, chosenProduct.method!, source);
+    if (response.subscription.level === chosenProduct.level && response.subscription.method === chosenProduct.method) {
       return response.subscription;
     }
     throw {code: null, message: 'Something went wrong when upgrading, please email human@flowcrypt.com to get this resolved.', internal: 'mismatch'};
   }
 
-  private fetch_token_emails_on_gmail_and_find_matching_token = async (account_email: string, uuid: string): Promise<string[]|null> => {
+  private fetchTokenEmailsOnGmailAndFindMatchingToken = async (acctEmail: string, uuid: string): Promise<string[]|null> => {
     let tokens: string[] = [];
-    let response = await Api.gmail.msgList(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
+    let response = await Api.gmail.msgList(acctEmail, 'from:' + this.cryptupVerificationEmailSender + ' to:' + acctEmail + ' in:anywhere', true);
     if (!response.messages) {
       return null;
     }
-    let msgs = await Api.gmail.msgsGet(account_email, response.messages.map(m => m.id), 'full');
-    for (let gmail_msg_obj of msgs) {
-      if (gmail_msg_obj.payload.mimeType === 'text/plain' && gmail_msg_obj.payload.body && gmail_msg_obj.payload.body.size > 0 && gmail_msg_obj.payload.body.data) {
-        let token = this.parse_token_email_text(Str.base64urlDecode(gmail_msg_obj.payload.body.data), uuid);
+    let msgs = await Api.gmail.msgsGet(acctEmail, response.messages.map(m => m.id), 'full');
+    for (let gmailMsg of msgs) {
+      if (gmailMsg.payload.mimeType === 'text/plain' && gmailMsg.payload.body && gmailMsg.payload.body.size > 0 && gmailMsg.payload.body.data) {
+        let token = this.parseTokenEmailText(Str.base64urlDecode(gmailMsg.payload.body.data), uuid);
         if (token && typeof token === 'string') {
           tokens.push(token);
         }
@@ -142,16 +142,16 @@ export class FlowCryptAccount {
     return new Promise(resolve => Catch.set_timeout(resolve, seconds * 1000));
   }
 
-  private wait_for_token_email = async (timeout: number) => {
+  private waitForTokenEmail = async (timeout: number) => {
     let end = Date.now() + timeout * 1000;
     while (Date.now() < end) {
       if ((end - Date.now()) < 20000) { // 20s left
-        this.event_handlers.render_status_text('Still working..');
+        this.eventHandlers.renderStatusText('Still working..');
       } else if ((end - Date.now()) < 10000) { // 10s left
-        this.event_handlers.render_status_text('A little while more..');
+        this.eventHandlers.renderStatusText('A little while more..');
       }
-      let auth_info = await Store.authInfo();
-      let tokens = await this.event_handlers.find_matching_tokens_from_email(auth_info.account_email!, auth_info.uuid!);
+      let authInfo = await Store.authInfo();
+      let tokens = await this.eventHandlers.findMatchingTokensFromEmail(authInfo.account_email!, authInfo.uuid!);
       if (tokens) {
         return tokens;
       } else {

@@ -23,13 +23,13 @@ Catch.try(async () => {
   let ul_emails = '';
   for (let email of Object.keys(account_storages)) {
     if (account_storages[email].setup_done === true) {
-      let picture_escaped = Xss.html_escape(account_storages[email].picture || '/img/svgs/profile-icon.svg');
-      let email_escaped = Xss.html_escape(email);
+      let picture_escaped = Xss.htmlEscape(account_storages[email].picture || '/img/svgs/profile-icon.svg');
+      let email_escaped = Xss.htmlEscape(email);
       ul_emails += `<li><a class="button gray2 long" href="#" email="${email_escaped}"><img class="picture" src="${picture_escaped}">${email_escaped}</a></li>`;
       Settings.update_profile_picture_if_missing(email).catch(Catch.handle_exception); // will show next time page is rendered
     }
   }
-  Xss.sanitize_render('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
+  Xss.sanitizeRender('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
     if (url_params.action === 'inbox') {
       await BrowserMsg.sendAwait(null, 'inbox', { account_email: $(target).attr('email') });
       window.close();

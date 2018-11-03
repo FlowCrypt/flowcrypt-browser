@@ -44,14 +44,14 @@ Catch.try(async () => {
   if (all_private_keys.length > 1) {
     let html: string;
     if (selected_private_keys.length === 1) {
-      html = `For key: <span class="good">${Xss.html_escape(mnemonic(selected_private_keys[0].longid) || '')}</span> (KeyWords)`;
+      html = `For key: <span class="good">${Xss.htmlEscape(mnemonic(selected_private_keys[0].longid) || '')}</span> (KeyWords)`;
     } else {
       html = 'Pass phrase needed for any of the following keys:';
       for (let i of selected_private_keys.keys()) {
-        html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.html_escape(mnemonic(selected_private_keys[i].longid) || '')}</div>`;
+        html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.htmlEscape(mnemonic(selected_private_keys[i].longid) || '')}</div>`;
       }
     }
-    Xss.sanitize_render('.which_key', html);
+    Xss.sanitizeRender('.which_key', html);
     $('.which_key').css('display', 'block');
   }
 

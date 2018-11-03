@@ -138,7 +138,7 @@ export class Settings {
       close_on_click = false;
     }
     ($ as JQS).featherlight({ closeOnClick: close_on_click, iframe: new_location, iframeWidth: width, iframeHeight: height, variant });
-    Xss.sanitize_prepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
+    Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
 
   }
 
@@ -265,9 +265,9 @@ export class Settings {
         uids.push(account_email);
       }
       container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
-      Xss.sanitize_render(container, [
+      Xss.sanitizeRender(container, [
         '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
-        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.html_escape(uid) + '</div>').join('') + '</div>',
+        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.htmlEscape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
         '  Choose expiration of updated key',
         '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',
@@ -297,7 +297,7 @@ export class Settings {
           alert('Please select key expiration');
         } else {
           $(target).off();
-          Xss.sanitize_render(target, Ui.spinner('white'));
+          Xss.sanitizeRender(target, Ui.spinner('white'));
           let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - orig_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
           await Pgp.key.decrypt(orig_prv, [passphrase]);
           let reformatted;
@@ -315,7 +315,7 @@ export class Settings {
             resolve(reformatted.key);
           } else {
             alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            Xss.sanitize_replace(target, Ui.e('a', {href: back_url, text: 'Go back and try something else'}));
+            Xss.sanitizeReplace(target, Ui.e('a', {href: back_url, text: 'Go back and try something else'}));
           }
         }
       }));
@@ -325,7 +325,7 @@ export class Settings {
   static abort_and_render_error_if_keyinfo_empty = (ki: KeyInfo|undefined, do_throw:boolean=true) => {
     if (!ki) {
       let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
-      Xss.sanitize_render('#content', `${msg} ${Ui.retry_link()}`);
+      Xss.sanitizeRender('#content', `${msg} ${Ui.retry_link()}`);
       if (do_throw) {
         throw new UnreportableError(msg);
       }

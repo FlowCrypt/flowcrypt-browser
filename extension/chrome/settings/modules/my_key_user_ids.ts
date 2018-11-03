@@ -23,7 +23,7 @@ Catch.try(async () => {
   let key = openpgp.key.readArmored(primary_ki.private).keys[0];
 
   let user_ids = key.users.map((u: any) => u.userId.userid); // todo - create a common function in settings.js for here and setup.js user_ids
-  Xss.sanitize_render('.user_ids', user_ids.map((uid: string) => `<div>${Xss.html_escape(uid)}</div>`).join(''));
+  Xss.sanitizeRender('.user_ids', user_ids.map((uid: string) => `<div>${Xss.htmlEscape(uid)}</div>`).join(''));
 
   $('.email').text(account_email);
   $('.key_words').text(primary_ki.keywords);

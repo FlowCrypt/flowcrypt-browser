@@ -16,7 +16,7 @@ Catch.try(async () => {
 
   const render_call_result = (api: string, variables: Dict<any>, result: any, error: any=null) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${JSON.stringify(error)})</pre>`;
-    Xss.sanitize_append('#content', r);
+    Xss.sanitizeAppend('#content', r);
   };
 
   if(which === 'google_account') {
@@ -34,10 +34,10 @@ Catch.try(async () => {
       render_call_result('google.plus.people_me', variables, null, e);
     }
   } else if(which === 'flowcrypt_account') {
-    Xss.sanitize_append('#content', `Unsupported which: ${Xss.html_escape(which)} (not implemented)`);
+    Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.htmlEscape(which)} (not implemented)`);
   } else if (which === 'flowcrypt_subscription') {
-    Xss.sanitize_append('#content', `Unsupported which: ${Xss.html_escape(which)} (not implemented)`);
+    Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.htmlEscape(which)} (not implemented)`);
   } else {
-    Xss.sanitize_append('#content', `Unknown which: ${Xss.html_escape(which)}`);
+    Xss.sanitizeAppend('#content', `Unknown which: ${Xss.htmlEscape(which)}`);
   }
 })();

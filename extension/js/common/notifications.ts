@@ -49,7 +49,7 @@ export class Notifications {
   }
 
   show = (text: string, callbacks:Dict<() => void>={}) => {
-    Xss.sanitize_render('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
+    Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let orig_close_cb = callbacks.close;
       callbacks.close = Catch.try(() => {

@@ -574,7 +574,7 @@ export class Str {
 
   public static to_utc_timestamp = (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string);
 
-  public static datetime_to_date = (date: string) => Xss.html_escape(date.substr(0, 10));
+  public static datetime_to_date = (date: string) => Xss.htmlEscape(date.substr(0, 10));
 
   private static base64url_utf_encode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

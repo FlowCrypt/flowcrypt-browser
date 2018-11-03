@@ -36,7 +36,7 @@ export class Ui {
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
-  public static retry_link = (caption:string='retry') => `<a href="${Xss.html_escape(window.location.href)}">${Xss.html_escape(caption)}</a>`;
+  public static retry_link = (caption:string='retry') => `<a href="${Xss.htmlEscape(window.location.href)}">${Xss.htmlEscape(caption)}</a>`;
 
   public static delay = (ms: number) => new Promise(resolve => Catch.set_timeout(resolve, ms));
 
@@ -48,8 +48,8 @@ export class Ui {
 
   public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
-      let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.html_escape(buttons[id].color || 'green')} overlay_action_${Xss.html_escape(id)}">${Xss.html_escape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
-      Xss.sanitize_append('body', `
+      let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.htmlEscape(buttons[id].color || 'green')} overlay_action_${Xss.htmlEscape(id)}">${Xss.htmlEscape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
+      Xss.sanitizeAppend('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
             <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
@@ -91,8 +91,8 @@ export class Ui {
   public static abort_and_render_error_on_url_param_type_mismatch = (values: UrlParams, name: string, expected_type: string): UrlParam => {
     let actual_type = typeof values[name];
     if (actual_type !== expected_type) {
-      let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be of type ${Xss.html_escape(expected_type)} but got ${Xss.html_escape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Xss.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be of type ${Xss.htmlEscape(expected_type)} but got ${Xss.htmlEscape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      Xss.sanitizeRender('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
     return values[name];
@@ -100,8 +100,8 @@ export class Ui {
 
   public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
     if (expected_values.indexOf(values[name]) === -1) {
-      let msg = `Cannot render page (expected ${Xss.html_escape(name)} to be one of ${Xss.html_escape(expected_values.map(String).join(','))} but got ${Xss.html_escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Xss.sanitize_render('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be one of ${Xss.htmlEscape(expected_values.map(String).join(','))} but got ${Xss.htmlEscape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      Xss.sanitizeRender('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
     return values[name];
@@ -132,11 +132,11 @@ export class Ui {
       $('#toggle_' + id).click(Ui.event.handle(target => {
         if (passphrase_input.attr('type') === 'password') {
           $('#' + id).attr('type', 'text');
-          Xss.sanitize_render(target, button_hide);
+          Xss.sanitizeRender(target, button_hide);
           Store.set(null, { hide_pass_phrases: false }).catch(Catch.rejection);
         } else {
           $('#' + id).attr('type', 'password');
-          Xss.sanitize_render(target, button_show);
+          Xss.sanitizeRender(target, button_show);
           Store.set(null, { hide_pass_phrases: true }).catch(Catch.rejection);
         }
       }));
@@ -287,7 +287,7 @@ export class Ui {
    */
   public static renderable_msg_block = (factory: XssSafeFactory, block: MsgBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
     if (block.type === 'text' || block.type === 'private_key') {
-      return Xss.html_escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
+      return Xss.htmlEscape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
       return factory.embedded_message(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
     } else if (block.type === 'signed_message') {
@@ -336,23 +336,23 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
   private static HREF_REGEX_CACHE = null as null|RegExp;
 
-  public static sanitize_render = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Xss.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitizeRender = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Xss.htmlSanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_append = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Xss.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitizeAppend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Xss.htmlSanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_prepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Xss.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitizePrepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Xss.htmlSanitize(dirty_html)); // xss-sanitized
 
-  public static sanitize_replace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Xss.html_sanitize(dirty_html)); // xss-sanitized
+  public static sanitizeReplace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirty_html)); // xss-sanitized
 
-  public static html_sanitize = (dirty_html: string): string => { // originaly text_or_html
+  public static htmlSanitize = (dirty_html: string): string => { // originaly text_or_html
     return DOMPurify.sanitize(dirty_html, {
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
-      ALLOWED_URI_REGEXP: Xss.sanitize_href_regexp(),
+      ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
   }
 
-  public static html_sanitize_keep_basic_tags = (dirty_html: string): string => {
+  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string): string => {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
@@ -375,18 +375,18 @@ export class Xss {
         (node as Element).setAttribute('target', '_blank');
       }
     });
-    let clean_html = DOMPurify.sanitize(dirty_html, {
+    let cleanHtml = DOMPurify.sanitize(dirtyHtml, {
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
       ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
-      ALLOWED_URI_REGEXP: Xss.sanitize_href_regexp(),
+      ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
     });
     DOMPurify.removeAllHooks();
-    return clean_html;
+    return cleanHtml;
   }
 
-  public static html_sanitize_and_strip_all_tags = (dirty_html: string, output_newline: string): string => {
-    let html = Xss.html_sanitize_keep_basic_tags(dirty_html);
+  public static htmlSanitizeAndStripAllTags = (dirty_html: string, output_newline: string): string => {
+    let html = Xss.htmlSanitizeKeepBasicTags(dirty_html);
     let random = Str.random(5);
     let br = `CU_BR_${random}`;
     let block_start = `CU_BS_${random}`;
@@ -408,14 +408,14 @@ export class Xss {
     return text;
   }
 
-  public static html_escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  public static htmlEscape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
 
-  public static html_unescape = (str: string) => {
+  public static htmlUnescape = (str: string) => {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
     return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
   }
 
-  private static sanitize_href_regexp = () => { // allow href links that have same origin as our extension + cid
+  private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
     if(Xss.HREF_REGEX_CACHE === null) {
       if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
         Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
@@ -446,8 +446,8 @@ export class XssSafeFactory {
   private hide_gmail_new_message_in_thread_notification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(account_email: string, parent_tab_id: string, reloadable_class:string='', destroyable_class:string='', set_params:UrlParams={}) {
-    this.reloadable_class = Xss.html_escape(reloadable_class);
-    this.destroyable_class = Xss.html_escape(destroyable_class);
+    this.reloadable_class = Xss.htmlEscape(reloadable_class);
+    this.destroyable_class = Xss.htmlEscape(destroyable_class);
     this.set_params = set_params;
     this.set_params.account_email = account_email;
     this.set_params.parent_tab_id = parent_tab_id;
@@ -585,7 +585,7 @@ export class XssSafeFactory {
   }
 
   embedded_attachment_status = (content: string) => {
-    return Ui.e('div', {class: 'attachment_loader', html: Xss.html_sanitize(content)});
+    return Ui.e('div', {class: 'attachment_loader', html: Xss.htmlSanitize(content)});
   }
 
   embedded_attest = (attest_packet: string) => {

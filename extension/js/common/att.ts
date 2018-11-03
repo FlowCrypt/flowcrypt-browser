@@ -150,11 +150,11 @@ export class Att {
       } else {
         let a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(blob);
-        a.download = Xss.html_escape(attachment.name);
+        a.download = Xss.htmlEscape(attachment.name);
         if (render_in) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          Xss.sanitize_render(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
+          Xss.sanitizeRender(render_in, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
           render_in.append(a); // xss-escaped attachment name above
           render_in.css('height', 'auto');
           render_in.find('a').click(e => {

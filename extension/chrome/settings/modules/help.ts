@@ -36,7 +36,7 @@ Catch.try(async () => {
     }
     let orig_btn_text = $(target).text();
     let button = this;
-    Xss.sanitize_render(target, Ui.spinner('white'));
+    Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
     let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  Catch.version();
     try {

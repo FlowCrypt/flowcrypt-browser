@@ -36,7 +36,7 @@ Catch.try(async () => {
       return;
     }
     orig_content = $(self).html();
-    Xss.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
+    Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
     let result = await Pgp.msg.decrypt(account_email, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
@@ -47,7 +47,7 @@ Catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    Xss.sanitize_render(self, orig_content);
+    Xss.sanitizeRender(self, orig_content);
   }));
 
 })();

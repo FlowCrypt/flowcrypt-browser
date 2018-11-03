@@ -279,7 +279,7 @@ export class Composer {
       if (clipboard_html_data) {
         e.preventDefault();
         e.stopPropagation();
-        let sanitized = Xss.html_sanitize_and_strip_all_tags(clipboard_html_data, '<br>');
+        let sanitized = Xss.htmlSanitizeAndStripAllTags(clipboard_html_data, '<br>');
         this.simulate_ctrl_v(sanitized);
       }
     };
@@ -347,7 +347,7 @@ export class Composer {
 
   private initial_draft_load = async () => {
     if (this.is_reply_box) {
-      Xss.sanitize_render(this.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
+      Xss.sanitizeRender(this.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
       let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
@@ -364,10 +364,10 @@ export class Composer {
       }
     } catch (e) {
       if(Api.err.isNetErr(e)) {
-        Xss.sanitize_render('body', `Failed to load draft. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retry_link()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
-        Xss.sanitize_render('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retry_link()}`);
       } else if (this.is_reply_box && Api.err.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         await Ui.time.sleep(500);
@@ -392,7 +392,7 @@ export class Composer {
   }
 
   private reset_send_btn = (delay:number|null=null) => {
-    const do_reset = () => Xss.sanitize_render(this.S.cached('send_btn'), '<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
+    const do_reset = () => Xss.sanitizeRender(this.S.cached('send_btn'), '<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
     if (this.button_update_timeout !== null) {
       clearTimeout(this.button_update_timeout);
     }
@@ -478,7 +478,7 @@ export class Composer {
       let result = await Pgp.msg.decrypt(this.account_email, encrypted_draft);
       if (result.success) {
         this.S.cached('prompt').css({display: 'none'});
-        Xss.sanitize_render(this.S.cached('input_text'), await Xss.html_sanitize_keep_basic_tags(result.content.text!.replace(/\n/g, '<br>')));
+        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.text!.replace(/\n/g, '<br>')));
         if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
@@ -497,10 +497,10 @@ export class Composer {
     } else {
       let prompt_text = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
       if(this.is_reply_box) {
-        Xss.sanitize_render(this.S.cached('prompt'), prompt_text).css({display: 'block'});
+        Xss.sanitizeRender(this.S.cached('prompt'), prompt_text).css({display: 'block'});
         this.resize_reply_box();
       } else {
-        Xss.sanitize_render(this.S.cached('prompt'), `${prompt_text}<br><br><a href="#" class="action_close">close</a>`).css({display: 'block', height: '100%'});
+        Xss.sanitizeRender(this.S.cached('prompt'), `${prompt_text}<br><br><a href="#" class="action_close">close</a>`).css({display: 'block', height: '100%'});
       }
       this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(target => this.app.send_msg_to_main_window('passphrase_dialog', {type: 'draft', longids: 'primary'})));
       this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(target => this.app.close_msg()));
@@ -608,7 +608,7 @@ export class Composer {
   }
 
   private extract_as_text = (element_selector: 'input_text'|'input_intro') => {
-    return Xss.html_unescape(Xss.html_sanitize_and_strip_all_tags(this.S.cached(element_selector)[0].innerHTML, '\n'));
+    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.S.cached(element_selector)[0].innerHTML, '\n'));
   }
 
   private extract_process_send_msg = async () => {
@@ -618,7 +618,7 @@ export class Composer {
       const plaintext = this.extract_as_text('input_text');
       this.throw_if_form_not_ready(recipients);
       this.S.now('send_btn_span').text('Loading');
-      Xss.sanitize_render(this.S.now('send_btn_i'), Ui.spinner('white'));
+      Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       let subscription = await this.app.storage_get_subscription();
       let {armored_pubkeys, emails_without_pubkeys} = await this.collect_all_available_public_keys(this.account_email, recipients);
@@ -1014,7 +1014,7 @@ export class Composer {
   }
 
   private append_forwarded_msg = (text: string) => {
-    Xss.sanitize_append(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${text.replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
+    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${text.replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
     this.resize_reply_box();
   }
 
@@ -1024,7 +1024,7 @@ export class Composer {
       armored_msg = await this.app.email_provider_extract_armored_block(msg_id);
     } catch (e) {
       if (e.data) {
-        Xss.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.html_escape(e.data)}`);
+        Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.htmlEscape(e.data)}`);
       } else if(Api.err.isNetErr(e)) {
         // todo: retry
       } else if(Api.err.isAuthPopupNeeded(e)) {
@@ -1043,13 +1043,13 @@ export class Composer {
         if(typeof mime_parse_result.text !== 'undefined') {
           this.append_forwarded_msg(mime_parse_result.text.replace(/\n/g, '<br>'));
         } else if (typeof mime_parse_result.html !== 'undefined') {
-          this.append_forwarded_msg(Xss.html_sanitize_and_strip_all_tags(mime_parse_result.html!, '<br>'));
+          this.append_forwarded_msg(Xss.htmlSanitizeAndStripAllTags(mime_parse_result.html!, '<br>'));
         } else {
           this.append_forwarded_msg((result.content.text! || '').replace(/\n/g, '<br>')); // not sure about the replace, time will tell
         }
       }
     } else {
-      Xss.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${armored_msg.replace(/\n/g, '<br/>\n')}`);
+      Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${armored_msg.replace(/\n/g, '<br/>\n')}`);
     }
   }
 
@@ -1068,7 +1068,7 @@ export class Composer {
         }
       }
     } else {
-      Xss.sanitize_render(this.S.cached('prompt'), 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
+      Xss.sanitizeRender(this.S.cached('prompt'), 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       this.S.cached('prompt').attr('style', 'border:none !important');
       $('.auth_settings').click(() => this.app.send_msg_to_background_script('settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm'}));
       $('.new_message_button').click(() => this.app.send_msg_to_main_window('open_new_message'));
@@ -1082,10 +1082,10 @@ export class Composer {
     if (Value.is(',').in(input_to)) {
       const emails = input_to.split(',');
       for (let i = 0; i < emails.length - 1; i++) {
-        Xss.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.html_escape(emails[i])} ${Ui.spinner('green')}</span>`);
+        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.htmlEscape(emails[i])} ${Ui.spinner('green')}</span>`);
       }
     } else if (!this.S.cached('input_to').is(':focus') && input_to) {
-      Xss.sanitize_append(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.html_escape(input_to)} ${Ui.spinner('green')}</span>`);
+      Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.htmlEscape(input_to)} ${Ui.spinner('green')}</span>`);
     } else {
       return;
     }
@@ -1153,7 +1153,7 @@ export class Composer {
     if (renderable_contacts.length > 0 || this.contact_search_in_progress) {
       let ul_html = '';
       for (let contact of renderable_contacts) {
-        ul_html += `<li class="select_contact" data-test="action-select-contact" email="${Xss.html_escape(contact.email.replace(/<\/?b>/g, ''))}">`;
+        ul_html += `<li class="select_contact" data-test="action-select-contact" email="${Xss.htmlEscape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.has_pgp) {
           ul_html += '<img src="/img/svgs/locked-icon-green.svg" />';
         } else {
@@ -1167,16 +1167,16 @@ export class Composer {
           display_email = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
         }
         if (contact.name) {
-          ul_html += (Xss.html_escape(contact.name) + ' &lt;' + Xss.html_escape(display_email) + '&gt;');
+          ul_html += (Xss.htmlEscape(contact.name) + ' &lt;' + Xss.htmlEscape(display_email) + '&gt;');
         } else {
-          ul_html += Xss.html_escape(display_email);
+          ul_html += Xss.htmlEscape(display_email);
         }
         ul_html += '</li>';
       }
       if (this.contact_search_in_progress) {
         ul_html += '<li class="loading">loading...</li>';
       }
-      Xss.sanitize_render(this.S.cached('contacts').find('ul'), ul_html);
+      Xss.sanitizeRender(this.S.cached('contacts').find('ul'), ul_html);
       this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', (target: HTMLElement) => {
         let email = $(target).attr('email');
         if (email) {
@@ -1303,30 +1303,30 @@ export class Composer {
     }
     $(email_element).children('img, i').remove();
     let content_html = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-    Xss.sanitize_append(email_element, content_html).find('img.close-icon').click(Ui.event.handle(target => this.remove_receiver(target), this.handle_errors('remove recipient')));
+    Xss.sanitizeAppend(email_element, content_html).find('img.close-icon').click(Ui.event.handle(target => this.remove_receiver(target), this.handle_errors('remove recipient')));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
-      Xss.sanitize_replace($(email_element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
+      Xss.sanitizeReplace($(email_element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
       $(email_element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.remove_receiver(target), this.handle_errors('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
     } else if (contact.pubkey && await Pgp.key.usable_but_expired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
       $(email_element).addClass("expired");
-      Xss.sanitize_prepend(email_element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
+      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipient_key_id_text(contact));
     } else if (contact.pubkey && contact.attested) {
       $(email_element).addClass("attested");
-      Xss.sanitize_prepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
+      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + this.recipient_key_id_text(contact));
     } else if (contact.pubkey) {
       $(email_element).addClass("has_pgp");
-      Xss.sanitize_prepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
+      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Does use encryption' + this.recipient_key_id_text(contact));
     } else {
       $(email_element).addClass("no_pgp");
-      Xss.sanitize_prepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
+      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.show_hide_pw_or_pubkey_container_and_color_send_btn();
@@ -1364,14 +1364,14 @@ export class Composer {
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_message_successful').find('div.replied_from').text(this.supplied_from);
     this.S.cached('reply_message_successful').find('div.replied_to span').text(this.supplied_to);
-    Xss.sanitize_render(this.S.cached('reply_message_successful').find('div.replied_body'), Xss.html_escape(plaintext).replace(/\n/g, '<br>'));
+    Xss.sanitizeRender(this.S.cached('reply_message_successful').find('div.replied_body'), Xss.htmlEscape(plaintext).replace(/\n/g, '<br>'));
     const email_footer = this.app.storage_get_email_footer();
     if (email_footer) {
-      const renderable_escaped_email_footer = Xss.html_escape(email_footer).replace(/\n/g, '<br>');
+      const renderable_escaped_email_footer = Xss.htmlEscape(email_footer).replace(/\n/g, '<br>');
       if (is_signed) {
-        Xss.sanitize_append(this.S.cached('replied_body'), `<br><br>${renderable_escaped_email_footer}`);
+        Xss.sanitizeAppend(this.S.cached('replied_body'), `<br><br>${renderable_escaped_email_footer}`);
       } else {
-        Xss.sanitize_render(this.S.cached('reply_message_successful').find('.email_footer'), `<br> ${renderable_escaped_email_footer}`);
+        Xss.sanitizeRender(this.S.cached('reply_message_successful').find('.email_footer'), `<br> ${renderable_escaped_email_footer}`);
       }
     }
     let t = new Date();
@@ -1430,9 +1430,9 @@ export class Composer {
       if (addresses.length > 1) {
         let input_addr_container = $('#input_addresses_container');
         input_addr_container.addClass('show_send_from');
-        Xss.sanitize_append(input_addr_container, '<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
+        Xss.sanitizeAppend(input_addr_container, '<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
         input_addr_container.find('#input_from_settings').click(Ui.event.handle(() => this.app.render_sending_address_dialog(), this.handle_errors(`open sending address dialog`)));
-        Xss.sanitize_append(input_addr_container.find('#input_from'), addresses.map(a => `<option value="${Xss.html_escape(a)}">${Xss.html_escape(a)}</option>`).join('')).change(() => this.update_pubkey_icon());
+        Xss.sanitizeAppend(input_addr_container.find('#input_from'), addresses.map(a => `<option value="${Xss.htmlEscape(a)}">${Xss.htmlEscape(a)}</option>`).join('')).change(() => this.update_pubkey_icon());
         if (Env.browser().name === 'firefox') {
           input_addr_container.find('#input_from_settings').css('margin-top', '20px');
         }
@@ -1452,7 +1452,7 @@ export class Composer {
 
   private format_password_protected_email = (short_id: string, orig_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
     const msg_url = `${this.FC_WEB_URL}/${short_id}`;
-    const a = `<a href="${Xss.html_escape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_msg[lang]}</a>`;
+    const a = `<a href="${Xss.htmlEscape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_msg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
     const text = [];
     const html = [];
@@ -1464,8 +1464,8 @@ export class Composer {
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.msg_encrypted_html[lang] + a + '<br><br>');
-    html.push(Lang.compose.alternatively_copy_paste[lang] + Xss.html_escape(msg_url) + '<br><br><br>');
-    const html_fc_web_url_link = '<a href="' + Xss.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.html_escape(this.FC_WEB_URL) + '</a>';
+    html.push(Lang.compose.alternatively_copy_paste[lang] + Xss.htmlEscape(msg_url) + '<br><br><br>');
+    const html_fc_web_url_link = '<a href="' + Xss.htmlEscape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.htmlEscape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       const html_pgp_msg = orig_body['text/html'] ? orig_body['text/html'] : (orig_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
       html.push('<div style="color: #999;">' + html_pgp_msg + '</div>');

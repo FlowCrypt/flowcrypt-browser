@@ -16,25 +16,25 @@ Catch.try(async () => {
   let controls = url_params.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
 
   if (url_params.title) {
-    Xss.sanitize_prepend('#content', `<h1>${Xss.html_escape(String(url_params.title))}</h1>`);
+    Xss.sanitizePrepend('#content', `<h1>${Xss.htmlEscape(String(url_params.title))}</h1>`);
   }
 
   if (controls) {
     let account_emails = await Store.accountEmailsGet();
     let emails_selector = $('.emails');
-    Xss.sanitize_append(emails_selector, `<a href="${Xss.html_escape(Env.urlCreate('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
-    Xss.sanitize_append(emails_selector, `<a href="${Xss.html_escape(Env.urlCreate('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
-    Xss.sanitize_append('.namespace', '<option value="global">global</option>');
+    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {controls: url_params.controls || ''}))}">all</a>`);
+    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {filter: 'global', controls: url_params.controls || ''}))}">global</a>`);
+    Xss.sanitizeAppend('.namespace', '<option value="global">global</option>');
     for (let account_email of account_emails) {
-      Xss.sanitize_append('.emails', `<a href="${Xss.html_escape(Env.urlCreate('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${Xss.html_escape(account_email)}</a>`);
-      Xss.sanitize_append('.namespace', `<option value="${Xss.html_escape(account_email)}">${Xss.html_escape(account_email)}</option>`);
+      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: account_email, controls: url_params.controls || ''}))}">${Xss.htmlEscape(account_email)}</a>`);
+      Xss.sanitizeAppend('.namespace', `<option value="${Xss.htmlEscape(account_email)}">${Xss.htmlEscape(account_email)}</option>`);
     }
   }
 
   const render = (obj: RenderableStorage) => {
     for (let filtered_key of Object.keys(obj)) {
       let del = controls ? ' <span class="bad delete" key="' + obj[filtered_key].key + '" style="cursor: pointer;">[X]</span>' : '';
-      Xss.sanitize_append('.pre', `<div><b>${filtered_key + del}</b> ${Str.pretty_print(obj[filtered_key].value)}</div>`);
+      Xss.sanitizeAppend('.pre', `<div><b>${filtered_key + del}</b> ${Str.pretty_print(obj[filtered_key].value)}</div>`);
     }
     $('.delete').click(Ui.event.handle(self => {
       chrome.storage.local.remove($(self).attr('key')!, () => window.location.reload()); // we set the attr key above

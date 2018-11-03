@@ -167,14 +167,14 @@ Catch.try(async () => {
       } catch (e) {
         if (Api.err.isAuthErr(e)) {
           let action_reauth = Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
-          Xss.sanitize_render(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
+          Xss.sanitizeRender(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
         } else if (Api.err.isNetErr(e)) {
-          Xss.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
+          Xss.sanitizeRender(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
           status_container.text('ecp error');
-          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:error`).attr('title', `FlowCrypt Account Error: ${Xss.html_escape(String(e))}`);
+          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:error`).attr('title', `FlowCrypt Account Error: ${Xss.htmlEscape(String(e))}`);
           Catch.handle_exception(e);
         }
       }
@@ -220,7 +220,7 @@ Catch.try(async () => {
       } else if (Api.err.isNetErr(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
-        $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.html_escape(String(e))}`);
+        $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.htmlEscape(String(e))}`);
         Catch.handle_exception(e);
       }
     }
@@ -229,7 +229,7 @@ Catch.try(async () => {
   let render_subscription_status_header = async () => {
     let liveness = '';
     try {
-      await Api.fc.account_check_sync();
+      await Api.fc.accountCheckSync();
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
@@ -270,15 +270,15 @@ Catch.try(async () => {
       let ki = private_keys[i];
       let prv = openpgp.key.readArmored(ki.private).keys[0];
       let date = Str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      let escaped_primary_or_remove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.html_escape(ki.longid) + '">remove</a>)';
-      let escaped_email = Xss.html_escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
-      let escaped_link = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${Xss.html_escape(ki.longid)}">${escaped_email}</a>`;
-      html += `<div class="row key-content-row key_${Xss.html_escape(ki.longid)}">`;
-      html += `  <div class="col-sm-12">${escaped_link} from ${Xss.html_escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escaped_primary_or_remove}</div>`;
-      html += `  <div class="col-sm-12">KeyWords: <span class="good">${Xss.html_escape(ki.keywords)}</span></div>`;
+      let escaped_primary_or_remove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.htmlEscape(ki.longid) + '">remove</a>)';
+      let escaped_email = Xss.htmlEscape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
+      let escaped_link = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${Xss.htmlEscape(ki.longid)}">${escaped_email}</a>`;
+      html += `<div class="row key-content-row key_${Xss.htmlEscape(ki.longid)}">`;
+      html += `  <div class="col-sm-12">${escaped_link} from ${Xss.htmlEscape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escaped_primary_or_remove}</div>`;
+      html += `  <div class="col-sm-12">KeyWords: <span class="good">${Xss.htmlEscape(ki.keywords)}</span></div>`;
       html += `</div>`;
     }
-    Xss.sanitize_append('.key_list', html);
+    Xss.sanitizeAppend('.key_list', html);
     $('.action_show_key').click(Ui.event.handle(target => {
       // the UI below only gets rendered when account_email is available
       Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
@@ -353,9 +353,9 @@ Catch.try(async () => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
-      `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.html_escape(email)}</div>`,
+      `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.htmlEscape(email)}</div>`,
       '  </div>',
-      `  <div><img class="profile-img" src="${Xss.html_escape(picture)}" alt=""></div>`,
+      `  <div><img class="profile-img" src="${Xss.htmlEscape(picture)}" alt=""></div>`,
       '</div>',
     ].join('');
   };
@@ -372,7 +372,7 @@ Catch.try(async () => {
 
   let account_storages = await Store.get_accounts(account_emails, ['picture']);
   for (let email of account_emails) {
-    Xss.sanitize_prepend('#alt-accounts', menu_account_html(email, account_storages[email].picture));
+    Xss.sanitizePrepend('#alt-accounts', menu_account_html(email, account_storages[email].picture));
   }
   $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
     $(self).off().attr('src', '/img/svgs/profile-icon.svg');

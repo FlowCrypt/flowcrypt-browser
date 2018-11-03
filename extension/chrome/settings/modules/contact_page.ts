@@ -39,9 +39,9 @@ Catch.try(async () => {
   let render_fields = (result: R.FcAccountUpdate$result) => {
     if (result.alias) {
       let me = Api.fc.url('me', result.alias);
-      let me_escaped = Xss.html_escape(me);
-      let me_escaped_display = Xss.html_escape(me.replace('https://', ''));
-      Xss.sanitize_render(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
+      let me_escaped = Xss.htmlEscape(me);
+      let me_escaped_display = Xss.htmlEscape(me.replace('https://', ''));
+      Xss.sanitizeRender(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${me_escaped}" target="_blank">${me_escaped_display}</a></span>`);
       S.cached('hide_if_active').css('display', 'none');
       S.cached('show_if_active').css('display', 'inline-block');
       S.cached('input_email').val(result.email);
@@ -54,17 +54,17 @@ Catch.try(async () => {
       attach_js.initialize_attach_dialog('fineuploader', 'select_photo');
       attach_js.set_att_added_callback((file: Att) => {
         new_photo_file = file;
-        Xss.sanitize_replace('#select_photo', Ui.e('span', {text: file.name}));
+        Xss.sanitizeReplace('#select_photo', Ui.e('span', {text: file.name}));
       });
     } else {
       S.cached('management_account').text(result.email).parent().removeClass('display_none');
-      Xss.sanitize_render(S.cached('status'), 'Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
+      Xss.sanitizeRender(S.cached('status'), 'Your contact page is currently <b class="bad">disabled</b>. <a href="#" class="action_enable">Enable contact page</a>');
       S.now('action_enable').click(Ui.event.prevent('double', enable_contact_page));
     }
   };
 
   let enable_contact_page = async () => {
-    Xss.sanitize_render(S.cached('status'), 'Enabling..' + Ui.spinner('green'));
+    Xss.sanitizeRender(S.cached('status'), 'Enabling..' + Ui.spinner('green'));
     let auth_info = await Store.authInfo();
     let storage = await Store.getAccount(auth_info.account_email!, ['full_name']);
     try {
@@ -89,7 +89,7 @@ Catch.try(async () => {
       alert('Please add intro text');
     } else {
       S.cached('show_if_active').css('display', 'none');
-      Xss.sanitize_render(S.cached('status'), 'Updating ' + Ui.spinner('green'));
+      Xss.sanitizeRender(S.cached('status'), 'Updating ' + Ui.spinner('green'));
       let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
         update.photo_content = btoa(new_photo_file.asText());
@@ -117,13 +117,13 @@ Catch.try(async () => {
     }
   };
 
-  Xss.sanitize_render(S.cached('status'), 'Loading..' + Ui.spinner('green'));
+  Xss.sanitizeRender(S.cached('status'), 'Loading..' + Ui.spinner('green'));
   try {
     let response = await Api.fc.accountUpdate();
     render_fields(response.result);
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
-      Xss.sanitize_render(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
+      Xss.sanitizeRender(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
       S.now('subscribe').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
