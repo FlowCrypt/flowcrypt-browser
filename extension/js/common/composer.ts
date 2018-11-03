@@ -243,7 +243,7 @@ export class Composer {
   }
 
   private initialize_actions = () => {
-    this.S.cached('icon_pubkey').attr('title', Lang.compose.include_pubkey_icon_title);
+    this.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
     this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.show_hide_pw_or_pubkey_container_and_color_send_btn()));
     this.S.cached('input_password').focus(() => this.show_hide_pw_or_pubkey_container_and_color_send_btn());
     this.S.cached('input_password').blur(() => this.show_hide_pw_or_pubkey_container_and_color_send_btn());
@@ -1135,7 +1135,7 @@ export class Composer {
     } else if (auth_result && auth_result.success === false && auth_result.result === 'Denied' && auth_result.error === 'access_denied') {
       alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
     } else {
-      alert(Lang.general.something_went_wrong_try_again);
+      alert(Lang.general.somethingWentWrongTryAgain);
     }
   }
 
@@ -1237,9 +1237,9 @@ export class Composer {
       }
     } else { // set icon to specific state
       if (include) {
-        this.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.include_pubkey_icon_title_active);
+        this.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
       } else {
-        this.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.include_pubkey_icon_title);
+        this.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
       }
     }
   }
@@ -1260,12 +1260,12 @@ export class Composer {
     if (!this.S.cached('icon_sign').is('.active')) {
       this.S.cached('icon_sign').addClass('active');
       this.S.cached('compose_table').addClass('sign');
-      this.S.cached('title').text(Lang.compose.header_title_compose_sign);
+      this.S.cached('title').text(Lang.compose.headerTitleComposeSign);
       this.S.cached('input_password').val('');
     } else {
       this.S.cached('icon_sign').removeClass('active');
       this.S.cached('compose_table').removeClass('sign');
-      this.S.cached('title').text(Lang.compose.header_title_compose_encrypt);
+      this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
     }
     if (Value.is(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
       this.reset_send_btn();
@@ -1451,8 +1451,8 @@ export class Composer {
   }
 
   private format_password_protected_email = (short_id: string, orig_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
-    const msg_url = `${this.FC_WEB_URL}/${short_id}`;
-    const a = `<a href="${Xss.htmlEscape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_msg[lang]}</a>`;
+    const msgUrl = `${this.FC_WEB_URL}/${short_id}`;
+    const a = `<a href="${Xss.htmlEscape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
     const text = [];
     const html = [];
@@ -1460,11 +1460,11 @@ export class Composer {
       text.push(intro + '\n');
       html.push(intro.replace(/\n/, '<br>') + '<br><br>');
     }
-    text.push(Lang.compose.msg_encrypted_text[lang] + msg_url + '\n');
+    text.push(Lang.compose.msgEncryptedText[lang] + msgUrl + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
-    html.push(Lang.compose.msg_encrypted_html[lang] + a + '<br><br>');
-    html.push(Lang.compose.alternatively_copy_paste[lang] + Xss.htmlEscape(msg_url) + '<br><br><br>');
+    html.push(Lang.compose.msgEncryptedHtml[lang] + a + '<br><br>');
+    html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.htmlEscape(msgUrl) + '<br><br><br>');
     const html_fc_web_url_link = '<a href="' + Xss.htmlEscape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.htmlEscape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       const html_pgp_msg = orig_body['text/html'] ? orig_body['text/html'] : (orig_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');

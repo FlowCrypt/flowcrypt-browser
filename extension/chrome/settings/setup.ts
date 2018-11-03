@@ -63,7 +63,7 @@ Catch.try(async () => {
 
   let rules = new Rules(account_email);
   if (!rules.can_create_keys()) {
-    let forbidden = `${Lang.setup.creating_keys_not_allowed_please_import} <a href="${Xss.htmlEscape(window.location.href)}">Back</a>`;
+    let forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.htmlEscape(window.location.href)}">Back</a>`;
     Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }

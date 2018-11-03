@@ -210,6 +210,6 @@ Catch.try(async () => {
   BrowserMsg.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id || undefined);
-  $('.stripe_checkout').html(`${Lang.account.credit_or_debit}<br><br>${new XssSafeFactory(acctEmail, tab_id).embedded_stripe_checkout()}<br>${Ui.retry_link('back')}`); // xss-safe-factory
+  $('.stripe_checkout').html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(acctEmail, tab_id).embedded_stripe_checkout()}<br>${Ui.retry_link('back')}`); // xss-safe-factory
 
 })();

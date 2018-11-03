@@ -163,11 +163,11 @@ Catch.try(async () => {
   let handle_private_key_mismatch = async (account_email: string, message: string) => { // todo - make it work for multiple stored keys
     let msg_diagnosis = await BgExec.diagnose_msg_pubkeys(account_email, message);
     if (msg_diagnosis.found_match) {
-      await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.encrypted_correctly_file_bug);
+      await render_error(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug);
     } else if (msg_diagnosis.receivers === 1) {
-      await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.single_sender + Lang.pgp_block.ask_resend + button_html('account settings', 'gray2 settings_keyserver'));
+      await render_error(Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend + button_html('account settings', 'gray2 settings_keyserver'));
     } else {
-      await render_error(Lang.pgp_block.your_key_cant_open_import_if_have + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;' + button_html('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
+      await render_error(Lang.pgpBlock.yourKeyCantOpenImportIfHave + button_html('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;' + button_html('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + button_html('settings', 'gray2 settings_keyserver'));
     }
   };
 
@@ -360,7 +360,7 @@ Catch.try(async () => {
     if (typeof signature !== 'string') {
       let result = await BgExec.crypto_msg_decrypt(account_email, message as string|Uint8Array, await decrypt_pwd(optional_password));
       if (typeof result === 'undefined') {
-        await render_error(Lang.general.restart_browser_and_try_again);
+        await render_error(Lang.general.restartBrowserAndTryAgain);
       } else if (result.success) {
         if (has_challenge_password && optional_password) {
           user_entered_message_password = optional_password;
@@ -376,14 +376,14 @@ Catch.try(async () => {
           console.info(`re-fetching message ${message_id} from api because looks like bad formatting: ${!msg_fetched_from_api ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await render_error(Lang.pgp_block.bad_format + '\n\n' + result.error.error);
+          await render_error(Lang.pgpBlock.badFormat + '\n\n' + result.error.error);
         }
       } else if (result.longids.need_passphrase.length) {
         await render_passphrase_prompt(result.longids.need_passphrase);
       } else {
         let [primary_k] = await Store.keysGet(account_email, ['primary']);
         if (!result.longids.chosen && !primary_k) {
-          await render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
+          await render_error(Lang.pgpBlock.notProperlySetUp + button_html('FlowCrypt settings', 'green settings'));
         } else if (result.error.type === DecryptErrTypes.key_mismatch) {
           if (has_challenge_password && !optional_password) {
             await render_password_prompt('first');
@@ -397,10 +397,10 @@ Catch.try(async () => {
         } else if (result.error.type === DecryptErrTypes.no_mdc) {
           await render_error('This message may not be safe to open: missing MDC. To open this message, please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
         } else if (result.error) {
-          await render_error(`${Lang.pgp_block.cant_open}\n\n<em>${result.error.type}: ${result.error.error}</em>`);
+          await render_error(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.error}</em>`);
         } else { // should generally not happen
           delete result.message;
-          await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.write_me + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+          await render_error(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
         }
       }
     } else {
@@ -414,7 +414,7 @@ Catch.try(async () => {
     let passphrases = await Promise.all(missing_or_wrong_pp_k_longids.map(longid => Store.passphrase_get(account_email, longid)));
     for (let i of missing_or_wrong_pp_k_longids.keys()) {
       missing_or_wrong_passprases[missing_or_wrong_pp_k_longids[i]] = passphrases[i];
-      await render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_msg, undefined);
+      await render_error('<a href="#" class="enter_passphrase">' + Lang.pgpBlock.enterPassphrase + '</a> ' + Lang.pgpBlock.toOpenMsg, undefined);
       clearInterval(passphrase_interval);
       passphrase_interval = Catch.setHandledInterval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(Ui.event.handle(() => {
@@ -426,7 +426,7 @@ Catch.try(async () => {
   };
 
   let render_password_prompt = async (attempt: 'first' | 'retry') => {
-    let prompt = `<p>${attempt === 'first' ? '' : Lang.pgp_block.wrong_password}${Lang.pgp_block.decrypt_password_prompt}</p>`;
+    let prompt = `<p>${attempt === 'first' ? '' : Lang.pgpBlock.wrongPassword}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     prompt += '<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p><div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div></p>';
     prompt += armored_message_as_html();
     await render_content(prompt, true);
@@ -453,13 +453,13 @@ Catch.try(async () => {
 
   let render_password_encrypted_message_load_fail = async (link_result: R.FcLinkMsg) => {
     if (link_result.expired) {
-      let expiration_m = Lang.pgp_block.msg_expired_on + Str.datetime_to_date(link_result.expire) + '. ' + Lang.pgp_block.msgs_dont_expire + '\n\n';
+      let expiration_m = Lang.pgpBlock.msgExpiredOn + Str.datetime_to_date(link_result.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
       if (link_result.deleted) {
-        expiration_m += Lang.pgp_block.msg_destroyed;
+        expiration_m += Lang.pgpBlock.msgDestroyed;
       } else if (is_outgoing && admin_codes) {
         expiration_m += '<div class="button gray2 extend_expiration">renew message</div>';
       } else if (!is_outgoing) {
-        expiration_m += Lang.pgp_block.ask_sender_renew;
+        expiration_m += Lang.pgpBlock.askSenderRenew;
       }
       expiration_m += '\n\n<div class="button gray2 action_security">security settings</div>';
       await render_error(expiration_m, null);
@@ -467,9 +467,9 @@ Catch.try(async () => {
       $('.action_security').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {page: '/chrome/settings/modules/security.htm'})));
       $('.extend_expiration').click(Ui.event.handle(render_message_expiration_renew_options));
     } else if (!link_result.url) {
-      await render_error(Lang.pgp_block.cannot_locate + Lang.pgp_block.broken_link);
+      await render_error(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink);
     } else {
-      await render_error(Lang.pgp_block.cannot_locate + Lang.general.write_me_to_fix_it + ' Details:\n\n' + Xss.htmlEscape(JSON.stringify(link_result)));
+      await render_error(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.htmlEscape(JSON.stringify(link_result)));
     }
   };
 
@@ -536,7 +536,7 @@ Catch.try(async () => {
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
       } else if (Api.err.isStandardErr(e, 'format')) {
         console.log(e.data);
-        await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + Lang.pgp_block.dont_know_how_open, e.data);
+        await render_error(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else {
         Catch.handle_exception(e);
         await render_error(String(e));
@@ -549,7 +549,7 @@ Catch.try(async () => {
   if (storage.setup_done) {
     await initialize();
   } else {
-    await render_error(Lang.pgp_block.refresh_window, message as string || '');
+    await render_error(Lang.pgpBlock.refreshWindow, message as string || '');
   }
 
 })();

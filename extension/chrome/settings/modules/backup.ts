@@ -33,7 +33,7 @@ Catch.try(async () => {
 
   let rules = new Rules(account_email);
   if (!rules.can_backup_keys()) {
-    Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.key_backups_not_allowed}</div>`);
+    Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
     return;
   }
 
