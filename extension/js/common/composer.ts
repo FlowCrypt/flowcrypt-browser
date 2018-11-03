@@ -60,7 +60,7 @@ export class ComposerResetBtnTrigger extends Error {}
 
 export class Composer {
 
-  private S = Ui.build_jquery_selectors({
+  private S = Ui.buildJquerySels({
     body: 'body',
     compose_table: 'table#compose',
     header: '#section_header',
@@ -364,10 +364,10 @@ export class Composer {
       }
     } catch (e) {
       if(Api.err.isNetErr(e)) {
-        Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
-        Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.is_reply_box && Api.err.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         await Ui.time.sleep(500);

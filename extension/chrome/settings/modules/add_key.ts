@@ -15,7 +15,7 @@ Catch.try(async () => {
   let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
   let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
-  await Ui.passphrase_toggle(['input_passphrase']);
+  await Ui.passphraseToggle(['input_passphrase']);
   let key_import_ui = new KeyImportUI({reject_known: true});
   key_import_ui.init_prv_import_source_form(account_email, parent_tab_id);
 

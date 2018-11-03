@@ -272,7 +272,7 @@ Catch.try(async () => {
   }, tab_id || undefined);
 
   if(!urlParams.is_reply_box) { // don't want to deal with resizing the frame
-    await Ui.abort_and_render_error_on_unprotected_key(account_email);
+    await Ui.abortAndRenderErrOnUnprotectedKey(account_email);
   }
 
 })();

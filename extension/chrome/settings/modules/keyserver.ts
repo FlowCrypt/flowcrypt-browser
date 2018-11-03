@@ -142,9 +142,9 @@ Catch.try(async () => {
     render_diagnosis(diagnosis, storage.attests_requested || []);
   } catch (e) {
     if (Api.err.isNetErr(e)) {
-      Xss.sanitizeRender('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('.summary', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
-      Xss.sanitizeRender('.summary', `Failed to load. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('.summary', `Failed to load. ${Ui.retryLink()}`);
       Catch.handle_exception(e);
     }
   }

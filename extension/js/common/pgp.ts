@@ -169,7 +169,7 @@ export class Pgp {
       }
       let r = '';
       for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, msg_id, sender_email, is_outgoing);
+        r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, msg_id, sender_email, is_outgoing);
       }
       return r;
     },

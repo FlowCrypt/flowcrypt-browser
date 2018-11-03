@@ -11,6 +11,7 @@ import { Pgp } from './pgp.js';
 import { mnemonic } from './mnemonic.js';
 import { Att } from './att.js';
 import { MsgBlock, KeyBlockType } from './mime.js';
+import { Settings } from './settings.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
@@ -18,7 +19,7 @@ declare const qq: any;
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
 type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
 type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
-type NamedSelectors = Dict<JQuery<HTMLElement>>;
+type NamedSels = Dict<JQuery<HTMLElement>>;
 type KeyImportUiCheckResult = { normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
   encrypted: OpenPGP.key.Key; };
 
@@ -27,7 +28,7 @@ export type Challenge = { question?: string; answer: string; };
 export type WebmailVariantString = null|'html'|'standard'|'new';
 export type PassphraseDialogType = 'embedded'|'sign'|'attest';
 export type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
-export type SelectorCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; selector: (name: string) => string; };
+export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 
 export class Ui {
 
@@ -36,7 +37,7 @@ export class Ui {
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
-  public static retry_link = (caption:string='retry') => `<a href="${Xss.htmlEscape(window.location.href)}">${Xss.htmlEscape(caption)}</a>`;
+  public static retryLink = (caption:string='retry') => `<a href="${Xss.htmlEscape(window.location.href)}">${Xss.htmlEscape(caption)}</a>`;
 
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
@@ -46,7 +47,7 @@ export class Ui {
     return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static render_overlay_prompt_await_user_choice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
       let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.htmlEscape(buttons[id].color || 'green')} overlay_action_${Xss.htmlEscape(id)}">${Xss.htmlEscape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
       Xss.sanitizeAppend('body', `
@@ -69,74 +70,74 @@ export class Ui {
     });
   }
 
-  public static abort_and_render_error_on_unprotected_key = async (account_email?: string, tab_id?: string) => {
-    if(account_email) {
-      let [primary_ki] = await Store.keysGet(account_email, ['primary']);
-      let {setup_done, setup_simple} = await Store.getAccount(account_email, ['setup_simple', 'setup_done']);
-      if(setup_done && setup_simple && primary_ki && openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) {
+  public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
+    if(acctEmail) {
+      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      let {setup_done, setup_simple} = await Store.getAccount(acctEmail, ['setup_simple', 'setup_done']);
+      if(setup_done && setup_simple && primaryKi && openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) {
         if(window.location.pathname === '/chrome/settings/index.htm') {
           // @ts-ignore - this lets it compile in content script that is missing Settings
-          Settings.render_sub_page(account_email, tab_id!, '/chrome/settings/modules/change_passphrase.htm');
+          Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
           let msg = `Protect your key with a pass phrase to finish setup.`;
-          let r = await Ui.render_overlay_prompt_await_user_choice({finish_setup: {}, later: {color: 'gray'}}, msg);
+          let r = await Ui.renderOverlayPromptAwaitUserChoice({finishSetup: {}, later: {color: 'gray'}}, msg);
           if(r === 'finish_setup') {
-            BrowserMsg.send(null, 'settings', {account_email});
+            BrowserMsg.send(null, 'settings', {acctEmail});
           }
         }
       }
     }
   }
 
-  public static abort_and_render_error_on_url_param_type_mismatch = (values: UrlParams, name: string, expected_type: string): UrlParam => {
-    let actual_type = typeof values[name];
-    if (actual_type !== expected_type) {
-      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be of type ${Xss.htmlEscape(expected_type)} but got ${Xss.htmlEscape(actual_type)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+  public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
+    let actualType = typeof values[name];
+    if (actualType !== expectedType) {
+      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be of type ${Xss.htmlEscape(expectedType)} but got ${Xss.htmlEscape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
     return values[name];
   }
 
-  public static abort_and_render_error_on_url_param_value_mismatch = <T>(values: Dict<T>, name: string, expected_values: T[]): T => {
-    if (expected_values.indexOf(values[name]) === -1) {
-      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be one of ${Xss.htmlEscape(expected_values.map(String).join(','))} but got ${Xss.htmlEscape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+  public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
+    if (expectedVals.indexOf(values[name]) === -1) {
+      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be one of ${Xss.htmlEscape(expectedVals.map(String).join(','))} but got ${Xss.htmlEscape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
       throw new UnreportableError(msg);
     }
     return values[name];
   }
 
-  public static passphrase_toggle = async (pass_phrase_input_ids: string[], force_initial_show_or_hide:"show"|"hide"|null=null) => {
-    let button_hide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
-    let button_show = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-    let {hide_pass_phrases} = await Store.get_global(['hide_pass_phrases']);
+  public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide:"show"|"hide"|null=null) => {
+    let buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
+    let buttonShow = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
+    let {hidePassphrases} = await Store.get_global(['hide_pass_phrases']);
     let show: boolean;
-    if (force_initial_show_or_hide === 'hide') {
+    if (forceInitialShowOrHide === 'hide') {
       show = false;
-    } else if (force_initial_show_or_hide === 'show') {
+    } else if (forceInitialShowOrHide === 'show') {
       show = true;
     } else {
-      show = !hide_pass_phrases;
+      show = !hidePassphrases;
     }
-    for (let id of pass_phrase_input_ids) {
-      let passphrase_input = $('#' + id);
-      passphrase_input.addClass('toggled_passphrase');
+    for (let id of passphraseInputIds) {
+      let passphraseInput = $('#' + id);
+      passphraseInput.addClass('toggled_passphrase');
       if (show) {
-        passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_hide + '</label>');
-        passphrase_input.attr('type', 'text');
+        passphraseInput.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + buttonHide + '</label>');
+        passphraseInput.attr('type', 'text');
       } else {
-        passphrase_input.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + button_show + '</label>');
-        passphrase_input.attr('type', 'password');
+        passphraseInput.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + buttonShow + '</label>');
+        passphraseInput.attr('type', 'password');
       }
       $('#toggle_' + id).click(Ui.event.handle(target => {
-        if (passphrase_input.attr('type') === 'password') {
+        if (passphraseInput.attr('type') === 'password') {
           $('#' + id).attr('type', 'text');
-          Xss.sanitizeRender(target, button_hide);
+          Xss.sanitizeRender(target, buttonHide);
           Store.set(null, { hide_pass_phrases: false }).catch(Catch.rejection);
         } else {
           $('#' + id).attr('type', 'password');
-          Xss.sanitizeRender(target, button_show);
+          Xss.sanitizeRender(target, buttonShow);
           Store.set(null, { hide_pass_phrases: true }).catch(Catch.rejection);
         }
       }));
@@ -149,35 +150,35 @@ export class Ui {
     }
   }
 
-  public static build_jquery_selectors = (selectors: Dict<string>): SelectorCache => {
-    let cache: NamedSelectors = {};
+  public static buildJquerySels = (sels: Dict<string>): SelCache => {
+    let cache: NamedSels = {};
     return {
       cached: (name: string) => {
         if (!cache[name]) {
-          if (typeof selectors[name] === 'undefined') {
+          if (typeof sels[name] === 'undefined') {
             Catch.report('unknown selector name: ' + name);
           }
-          cache[name] = $(selectors[name]);
+          cache[name] = $(sels[name]);
         }
         return cache[name];
       },
       now: (name: string) => {
-        if (typeof selectors[name] === 'undefined') {
+        if (typeof sels[name] === 'undefined') {
           Catch.report('unknown selector name: ' + name);
         }
-        return $(selectors[name]);
+        return $(sels[name]);
       },
-      selector: (name: string) => {
-        if (typeof selectors[name] === 'undefined') {
+      sel: (name: string) => {
+        if (typeof sels[name] === 'undefined') {
           Catch.report('unknown selector name: ' + name);
         }
-        return selectors[name];
+        return sels[name];
       }
     };
   }
 
-  public static scroll = (selector: string|JQuery<HTMLElement>, repeat:number[]=[]) => {
-    let el = $(selector as string).first()[0]; // as string due to JQuery TS quirk
+  public static scroll = (sel: string|JQuery<HTMLElement>, repeat:number[]=[]) => {
+    let el = $(sel as string).first()[0]; // as string due to JQuery TS quirk
     if (el) {
       el.scrollIntoView();
       for (let delay of repeat) { // useful if mobile keyboard is about to show up
@@ -211,67 +212,67 @@ export class Ui {
         try {
           r = cb(this, event);
           if(typeof r === 'object' && typeof r.catch === 'function') {
-            r.catch(e => Ui.event.__dispatch_err(e, err_handler));
+            r.catch(e => Ui.event._dispatchErr(e, err_handler));
           }
         } catch(e) {
-          Ui.event.__dispatch_err(e, err_handler);
+          Ui.event._dispatchErr(e, err_handler);
         }
       };
     },
-    __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
-      if(Api.err.isNetErr(e) && err_handler && err_handler.network) {
-        err_handler.network();
-      } else if (Api.err.isAuthErr(e) && err_handler && err_handler.auth) {
-        err_handler.auth();
-      } else if (Api.err.isAuthPopupNeeded(e) && err_handler && err_handler.auth_popup) {
-        err_handler.auth_popup();
-      } else if (err_handler && err_handler.other) {
-        err_handler.other(e);
+    _dispatchErr: (e: any, errHandler?: BrowserEventErrorHandler) => {
+      if(Api.err.isNetErr(e) && errHandler && errHandler.network) {
+        errHandler.network();
+      } else if (Api.err.isAuthErr(e) && errHandler && errHandler.auth) {
+        errHandler.auth();
+      } else if (Api.err.isAuthPopupNeeded(e) && errHandler && errHandler.auth_popup) {
+        errHandler.auth_popup();
+      } else if (errHandler && errHandler.other) {
+        errHandler.other(e);
       } else {
         Catch.handle_exception(e);
       }
     },
-    prevent: (preventable_event: PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
-      let event_timer: number|undefined;
-      let event_fired_on: number|undefined;
-      let cb_reset_timer = () => {
-        event_timer = undefined;
-        event_fired_on = undefined;
+    prevent: (preventableEvent: PreventableEventName, cb: (e: HTMLElement, resetTimer: () => void) => void|Promise<void>, errHandler?: BrowserEventErrorHandler) => {
+      let eventTimer: number|undefined;
+      let eventFiredOn: number|undefined;
+      let cbResetTimer = () => {
+        eventTimer = undefined;
+        eventFiredOn = undefined;
       };
-      let cb_with_errors_handled = (e: HTMLElement) => {
+      let cbWithErrsHandled = (e: HTMLElement) => {
         let r;
         try {
-          r = cb(e, cb_reset_timer);
+          r = cb(e, cbResetTimer);
           if(typeof r === 'object' && typeof r.catch === 'function') {
-            r.catch(e => Ui.event.__dispatch_err(e, err_handler));
+            r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch(e) {
-          Ui.event.__dispatch_err(e, err_handler);
+          Ui.event._dispatchErr(e, errHandler);
         }
       };
       return function() {
-        if (preventable_event === 'spree') {
-          clearTimeout(event_timer);
-          event_timer = Catch.setHandledTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SPREE_MS);
-        } else if (preventable_event === 'slowspree') {
-          clearTimeout(event_timer);
-          event_timer = Catch.setHandledTimeout(() => cb_with_errors_handled(this), Ui.EVENT_SLOW_SPREE_MS);
-        } else if (preventable_event === 'veryslowspree') {
-          clearTimeout(event_timer);
-          event_timer = Catch.setHandledTimeout(() => cb_with_errors_handled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
+        if (preventableEvent === 'spree') {
+          clearTimeout(eventTimer);
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_SPREE_MS);
+        } else if (preventableEvent === 'slowspree') {
+          clearTimeout(eventTimer);
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_SLOW_SPREE_MS);
+        } else if (preventableEvent === 'veryslowspree') {
+          clearTimeout(eventTimer);
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
-          if (event_fired_on) {
-            if (preventable_event === 'parallel') {
+          if (eventFiredOn) {
+            if (preventableEvent === 'parallel') {
               // event handling is still being processed. Do not call back
-            } else if (preventable_event === 'double') {
-              if (Date.now() - event_fired_on > Ui.EVENT_DOUBLE_MS) {
-                event_fired_on = Date.now();
-                cb_with_errors_handled(this);
+            } else if (preventableEvent === 'double') {
+              if (Date.now() - eventFiredOn > Ui.EVENT_DOUBLE_MS) {
+                eventFiredOn = Date.now();
+                cbWithErrsHandled(this);
               }
             }
           } else {
-            event_fired_on = Date.now();
-            cb_with_errors_handled(this);
+            eventFiredOn = Date.now();
+            cbWithErrsHandled(this);
           }
         }
       };
@@ -285,17 +286,17 @@ export class Ui {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderable_msg_block = (factory: XssSafeFactory, block: MsgBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId:string|null=null, senderEmail:string|null=null, isOutgoing: boolean|null=null) => {
     if (block.type === 'text' || block.type === 'private_key') {
       return Xss.htmlEscape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
-      return factory.embedded_message(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', message_id, is_outgoing, sender_email, false);
+      return factory.embedded_message(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'signed_message') {
-      return factory.embedded_message(block.content, message_id, is_outgoing, sender_email, false);
+      return factory.embedded_message(block.content, msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'public_key') {
-      return factory.embedded_pubkey(Pgp.armor.normalize(block.content, 'public_key'), is_outgoing);
+      return factory.embedded_pubkey(Pgp.armor.normalize(block.content, 'public_key'), isOutgoing);
     } else if (block.type === 'password_message') {
-      return factory.embedded_message('', message_id, is_outgoing, sender_email, true, null, block.content); // here block.content is message short id
+      return factory.embedded_message('', msgId, isOutgoing, senderEmail, true, null, block.content); // here block.content is message short id
     } else if (block.type === 'attest_packet') {
       return factory.embedded_attest(block.content);
     } else if (block.type === 'cryptup_verification') {
@@ -307,9 +308,9 @@ export class Ui {
   }
 
   public static time = {
-    wait: (until_this_function_evaluates_true: () => boolean|undefined) => new Promise((success, error) => {
+    wait: (untilThisFunctionEvalsTrue: () => boolean|undefined) => new Promise((success, error) => {
       let interval = Catch.setHandledInterval(() => {
-        let result = until_this_function_evaluates_true();
+        let result = untilThisFunctionEvalsTrue();
         if (result === true) {
           clearInterval(interval);
           if (success) {
@@ -344,8 +345,8 @@ export class Xss {
 
   public static sanitizeReplace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirty_html)); // xss-sanitized
 
-  public static htmlSanitize = (dirty_html: string): string => { // originaly text_or_html
-    return DOMPurify.sanitize(dirty_html, {
+  public static htmlSanitize = (dirtyHtml: string): string => { // originaly text_or_html
+    return DOMPurify.sanitize(dirtyHtml, {
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),

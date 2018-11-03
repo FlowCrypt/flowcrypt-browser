@@ -49,7 +49,7 @@ export interface GlobalStore extends BaseStore {
   account_emails?: string; // stringified array
   errors?: string[];
   settings_seen?: boolean;
-  hide_pass_phrases?: boolean;
+  hidePassphrases?: boolean;
   cryptup_account_email?: string|null;
   cryptup_account_uuid?: string|null;
   cryptup_account_subscription?: SubscriptionInfo|null;

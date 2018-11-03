@@ -16,7 +16,7 @@ Catch.try(async () => {
   let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
   let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
-  await Ui.passphrase_toggle(['original_password', 'password', 'password2']);
+  await Ui.passphraseToggle(['original_password', 'password', 'password2']);
 
   let private_keys = await Store.keysGet(account_email);
   if (private_keys.length > 1) {

@@ -4,14 +4,14 @@
 
 import { Catch } from './common.js';
 import { ContentScriptWindow } from './extension.js';
-import { Ui, XssSafeFactory, SelectorCache, WebMailName, WebmailVariantString } from './browser.js';
+import { Ui, XssSafeFactory, SelCache, WebMailName, WebmailVariantString } from './browser.js';
 
 export class Injector {
 
   private factory: XssSafeFactory;
   private webmail_name: WebMailName;
   private webmail_variant: WebmailVariantString;
-  private S: SelectorCache;
+  private S: SelCache;
   private compose_button_container_selector = {
     'gmail': 'div.aic',
     'inbox': 'div.jp',
@@ -23,7 +23,7 @@ export class Injector {
     this.webmail_name = webmail_name;
     this.webmail_variant = webmail_variant;
     this.factory = factory;
-    this.S = Ui.build_jquery_selectors({
+    this.S = Ui.buildJquerySels({
       body: 'body',
       compose_button_container: this.compose_button_container_selector[this.webmail_name],
       compose_button: 'div.new_message_button',
@@ -50,11 +50,11 @@ export class Injector {
         let container;
         if (this.webmail_name === 'inbox') {
           container = this.S.now('compose_button_container').append(this.factory.button_compose(this.webmail_name)); // xss-safe-factory
-          container.find(this.S.selector('compose_button')).hover(Catch.try(() => this.S.cached('compose_button_label').css('opacity', 1)), Catch.try(() => this.S.cached('compose_button_label').css('opacity', '')));
+          container.find(this.S.sel('compose_button')).hover(Catch.try(() => this.S.cached('compose_button_label').css('opacity', 1)), Catch.try(() => this.S.cached('compose_button_label').css('opacity', '')));
         } else {
           container = this.S.now('compose_button_container').prepend(this.factory.button_compose(this.webmail_name)); // xss-safe-factory
         }
-        container.find(this.S.selector('compose_button')).click(Ui.event.handle(() => this.open_compose_window()));
+        container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.open_compose_window()));
       }
     }
   }

@@ -35,7 +35,7 @@ Catch.try(async () => {
   } else if (type === 'attachment') {
     $('h1').text('Enter your pass phrase to decrypt a file');
   }
-  await Ui.passphrase_toggle(['passphrase']);
+  await Ui.passphraseToggle(['passphrase']);
   $('#passphrase').focus();
 
   let all_private_keys = await Store.keysGet(account_email);

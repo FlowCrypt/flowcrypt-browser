@@ -30,7 +30,7 @@ Catch.try(async () => {
     let renderErr = (msg: string, e?: any) => {
       msg = Xss.htmlEscape(msg);
       let debug = e ? `<pre>${Xss.htmlEscape(JSON.stringify(e, null, 2))}</pre>` : '';
-      Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retry_link()}</div><br><br>${debug}`);
+      Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
     };
     if(Api.err.isNetErr(e)) {
       renderErr('network error');
@@ -94,12 +94,12 @@ Catch.try(async () => {
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
       // todo - handle auth error - add device
-      Xss.sanitizeRender('#content', `Failed to load - unknown device. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('#content', `Failed to load - unknown device. ${Ui.retryLink()}`);
     } else if (Api.err.isNetErr(e)) {
-      Xss.sanitizeRender('#content', `Failed to load due to internet connection. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('#content', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
       Catch.handle_exception(e);
-      Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retryLink()}`);
     }
   }
 
@@ -210,6 +210,6 @@ Catch.try(async () => {
   BrowserMsg.listen({
     stripe_result: stripe_credit_card_entered_handler,
   }, tab_id || undefined);
-  $('.stripe_checkout').html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(acctEmail, tab_id).embedded_stripe_checkout()}<br>${Ui.retry_link('back')}`); // xss-safe-factory
+  $('.stripe_checkout').html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(acctEmail, tab_id).embedded_stripe_checkout()}<br>${Ui.retryLink('back')}`); // xss-safe-factory
 
 })();

@@ -123,7 +123,7 @@ export class Settings {
     return Env.urlCreate(page, page_params) + (add_url_text_or_params || '');
   }
 
-  static render_sub_page = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
+  static renderSubPage = (account_email: string|null, tab_id: string, page: string, add_url_text_or_params:string|UrlParams|null=null) => {
     let new_location = Settings.prepare_new_settings_location_url(account_email, tab_id, page, add_url_text_or_params);
     let width, height, variant, close_on_click;
     if (page !== '/chrome/elements/compose.htm') {
@@ -325,7 +325,7 @@ export class Settings {
   static abort_and_render_error_if_keyinfo_empty = (ki: KeyInfo|undefined, do_throw:boolean=true) => {
     if (!ki) {
       let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
-      Xss.sanitizeRender('#content', `${msg} ${Ui.retry_link()}`);
+      Xss.sanitizeRender('#content', `${msg} ${Ui.retryLink()}`);
       if (do_throw) {
         throw new UnreportableError(msg);
       }
@@ -338,7 +338,7 @@ export class Settings {
     if(!Api.err.isNetErr(e)) {
       Catch.handle_exception(e);
     }
-    while(await Ui.render_overlay_prompt_await_user_choice({retry: {}}, user_msg) === 'retry') {
+    while(await Ui.renderOverlayPromptAwaitUserChoice({retry: {}}, user_msg) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {
@@ -378,7 +378,7 @@ export class Settings {
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: response.acctEmail });
       }
     } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
-      Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
+      Settings.renderSubPage(account_email || null, tab_id, '/chrome/settings/modules/auth_denied.htm');
     } else {
       Catch.log('failed to log into google', response);
       alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com to fix it.');

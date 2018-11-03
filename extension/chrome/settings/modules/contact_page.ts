@@ -20,7 +20,7 @@ Catch.try(async () => {
   let attach_js = new AttUI(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let new_photo_file: Att;
 
-  const S = Ui.build_jquery_selectors({
+  const S = Ui.buildJquerySels({
     'status': '.status',
     'subscribe': '.action_subscribe',
     'hide_if_active': '.hide_if_active',

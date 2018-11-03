@@ -40,7 +40,7 @@ Catch.try(async () => {
 
   BrowserMsg.listen({
     open_page: (data: {page: string, add_url_text: string}, sender, respond) => {
-      Settings.render_sub_page(account_email || null, tab_id, data.page, data.add_url_text);
+      Settings.renderSubPage(account_email || null, tab_id, data.page, data.add_url_text);
     },
     redirect: (data: {location: string}) => {
       window.location.href = data.location;
@@ -166,7 +166,7 @@ Catch.try(async () => {
         }
       } catch (e) {
         if (Api.err.isAuthErr(e)) {
-          let action_reauth = Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
+          let action_reauth = Ui.event.handle(() => Settings.renderSubPage(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
           Xss.sanitizeRender(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
         } else if (Api.err.isNetErr(e)) {
@@ -242,7 +242,7 @@ Catch.try(async () => {
     let subscription = await Store.subscription();
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(() => Settings.render_sub_page(account_email || null, tab_id, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(() => Settings.renderSubPage(account_email || null, tab_id, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -281,7 +281,7 @@ Catch.try(async () => {
     Xss.sanitizeAppend('.key_list', html);
     $('.action_show_key').click(Ui.event.handle(target => {
       // the UI below only gets rendered when account_email is available
-      Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+      Settings.renderSubPage(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
     $('.action_remove_key').click(Ui.event.handle(async target => {
       // the UI below only gets rendered when account_email is available
@@ -303,14 +303,14 @@ Catch.try(async () => {
   $.get(chrome.extension.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
 
   $('.show_settings_page').click(Ui.event.handle(target => {
-    Settings.render_sub_page(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+    Settings.renderSubPage(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
   }));
 
   $('.action_show_encrypted_inbox').click(Ui.event.handle(target => {
     window.location.href = Env.urlCreate('/chrome/settings/inbox/inbox.htm', {account_email});
   }));
 
-  $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
+  $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.renderSubPage(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
 
   $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.new_google_account_authentication_prompt(tab_id)));
 
@@ -337,7 +337,7 @@ Catch.try(async () => {
     $(".add-account").toggleClass("hidden");
   }));
 
-  $('#status-row #status_google').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
+  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
   // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
   // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
 
@@ -361,12 +361,12 @@ Catch.try(async () => {
   };
 
   await initialize();
-  await Ui.abort_and_render_error_on_unprotected_key(account_email, tab_id);
+  await Ui.abortAndRenderErrOnUnprotectedKey(account_email, tab_id);
   if (urlParams.page && typeof urlParams.page !== 'undefined' && urlParams.page !== 'undefined') {
     if (urlParams.page === '/chrome/settings/modules/auth_denied.htm') {
-      Settings.render_sub_page(account_email || null, tab_id, urlParams.page);
+      Settings.renderSubPage(account_email || null, tab_id, urlParams.page);
     } else {
-      Settings.render_sub_page(account_email || null, tab_id, urlParams.page as string, page_url_params);
+      Settings.renderSubPage(account_email || null, tab_id, urlParams.page as string, page_url_params);
     }
   }
 

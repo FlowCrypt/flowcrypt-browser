@@ -46,8 +46,8 @@ Catch.try(async () => {
   $('h1').text('Set Up FlowCrypt');
   $('.email-address').text(account_email);
   $('.back').css('visibility', 'hidden');
-  await Ui.passphrase_toggle(['step_2b_manual_enter_passphrase'], 'hide');
-  await Ui.passphrase_toggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
+  await Ui.passphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
+  await Ui.passphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
   let storage = await Store.getAccount(account_email, [
     'setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
@@ -297,7 +297,7 @@ Catch.try(async () => {
     }
   };
 
-  $('.action_show_help').click(Ui.event.handle(() => Settings.render_sub_page(account_email, tab_id, '/chrome/settings/modules/help.htm')));
+  $('.action_show_help').click(Ui.event.handle(() => Settings.renderSubPage(account_email, tab_id, '/chrome/settings/modules/help.htm')));
 
   $('.back').off().click(Ui.event.handle(() => {
     $('h1').text('Set Up');

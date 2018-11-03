@@ -24,7 +24,7 @@ Catch.try(async () => {
   let notifications: Notifications;
   let all_labels: R.GmailLabels$label[];
 
-  let S = Ui.build_jquery_selectors({
+  let S = Ui.buildJquerySels({
     threads: '.threads',
     thread: '.thread',
     body: 'body',
@@ -275,12 +275,12 @@ Catch.try(async () => {
       render_menu_and_label_styles(labels);
     } catch(e) {
       if(Api.err.isNetErr(e)) {
-        notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+        notification_show({notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       } else if(Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
-        notification_show({notification: `Error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+        notification_show({notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       }
     }
   };
@@ -293,16 +293,16 @@ Catch.try(async () => {
       if((threads || []).length) {
         await Promise.all(threads.map(t => render_inbox_item(t.id)));
       } else {
-        Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${label_id} yet. ${Ui.retry_link()}</p>`);
+        Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${label_id} yet. ${Ui.retryLink()}</p>`);
       }
     } catch(e) {
       if(Api.err.isNetErr(e)) {
-        notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+        notification_show({notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       } else if(Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
-        notification_show({notification: `Error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
+        notification_show({notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       }
     }
   };
@@ -321,7 +321,7 @@ Catch.try(async () => {
       // await Api.gmail.thread_modify(account_email, thread_id, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
       if(Api.err.isNetErr(e)) {
-        Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);
       } else if(Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {
@@ -344,7 +344,7 @@ Catch.try(async () => {
       let {blocks, headers} = await Mime.process(Str.base64urlDecode(m.raw!));
       let r = '';
       for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+        r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
       }
       let {atts} = await Mime.decode(Str.base64urlDecode(m.raw!));
       if(atts.length) {
@@ -354,7 +354,7 @@ Catch.try(async () => {
       $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory
     } catch (e) {
       if(Api.err.isNetErr(e)) {
-        Xss.sanitizeAppend('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retry_link()}`));
+        Xss.sanitizeAppend('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
       } else if (Api.err.isAuthPopupNeeded(e)) {
         render_and_handle_auth_popup_notification();
       } else {

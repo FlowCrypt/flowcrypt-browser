@@ -180,12 +180,12 @@ Catch.try(async () => {
     } catch(e) {
       if(Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        Xss.sanitizeRender('body.attachment', `Error downloading file: google auth needed. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('body.attachment', `Error downloading file: google auth needed. ${Ui.retryLink()}`);
       } else if(Api.err.isNetErr(e)) {
-        Xss.sanitizeRender('body.attachment', `Error downloading file: no internet. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('body.attachment', `Error downloading file: no internet. ${Ui.retryLink()}`);
       } else {
         Catch.handle_exception(e);
-        Xss.sanitizeRender('body.attachment', `Error downloading file: unknown error. ${Ui.retry_link()}`);
+        Xss.sanitizeRender('body.attachment', `Error downloading file: unknown error. ${Ui.retryLink()}`);
       }
     }
   };
@@ -241,12 +241,12 @@ Catch.try(async () => {
   } catch (e) {
     if(Api.err.isAuthPopupNeeded(e)) {
       BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-      Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
     } else if(Api.err.isNetErr(e)) {
-      Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
     } else {
       Catch.handle_exception(e);
-      Xss.sanitizeRender('body.attachment', `Error downloading file - unknown error. ${Ui.retry_link()}`);
+      Xss.sanitizeRender('body.attachment', `Error downloading file - unknown error. ${Ui.retryLink()}`);
     }
   }
 

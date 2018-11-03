@@ -528,10 +528,10 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        await render_error(`Could not load message due to network error. ${Ui.retry_link()}`);
+        await render_error(`Could not load message due to network error. ${Ui.retryLink()}`);
       } else if(Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        await render_error(`Could not load message due to missing auth. ${Ui.retry_link()}`);
+        await render_error(`Could not load message due to missing auth. ${Ui.retryLink()}`);
       } else if (Value.is(Pgp.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
       } else if (Api.err.isStandardErr(e, 'format')) {

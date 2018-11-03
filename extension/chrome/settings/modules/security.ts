@@ -17,7 +17,7 @@ Catch.try( async () => {
   let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
   let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
 
-  await Ui.passphrase_toggle(['passphrase_entry']);
+  await Ui.passphraseToggle(['passphrase_entry']);
 
   let [primary_ki] = await Store.keysGet(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki, false);

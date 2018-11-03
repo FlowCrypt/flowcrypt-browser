@@ -26,7 +26,7 @@ Catch.try(async () => {
 
   let email_provider: EmailProvider;
 
-  await Ui.passphrase_toggle(['password', 'password2']);
+  await Ui.passphraseToggle(['password', 'password2']);
 
   let storage = await Store.getAccount(account_email, ['setup_simple', 'email_provider']);
   email_provider = storage.email_provider || 'gmail';
@@ -58,13 +58,13 @@ Catch.try(async () => {
         keys = await Api.gmail.fetchKeyBackups(account_email);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
-          Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retry_link()}`);
+          Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
         } else if(Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-          Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retry_link()}`);
+          Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
           Catch.handle_exception(e);
-          Xss.sanitizeRender('#content', `Could not check for backups: unknown error. ${Ui.retry_link()}`);
+          Xss.sanitizeRender('#content', `Could not check for backups: unknown error. ${Ui.retryLink()}`);
         }
         return;
       }

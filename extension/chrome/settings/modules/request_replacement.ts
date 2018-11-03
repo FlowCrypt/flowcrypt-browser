@@ -68,7 +68,7 @@ Catch.try(async () => {
     let r = await Api.attester.lookupEmail([account_email]);
     keyserver_result = r.results[0];
   } catch (e) {
-    Xss.sanitizeRender('#status', `Internet connection dropped. ${Ui.retry_link()}`);
+    Xss.sanitizeRender('#status', `Internet connection dropped. ${Ui.retryLink()}`);
     return;
   }
 
