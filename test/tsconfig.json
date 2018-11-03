@@ -1,25 +1,26 @@
 {
   "compilerOptions": {
-      "target": "ES2017",
-      "lib": [
-          "es6",
-          "dom"
-      ],
-      "alwaysStrict": true,
-      "noImplicitAny": true,
-      "strictNullChecks": true,
-      "module": "commonjs",
-      "sourceMap": true,
-      "outDir": "build"
+    "target": "ES2017",
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "module": "commonjs",
+    "sourceMap": true,
+    "outDir": "build"
   },
   "files": [
-      "source/test.ts",
-      "source/patterns.ts",
-      "source/resolve-modules.ts",
-      "source/bundle-content-scripts.ts"
+    "source/test.ts",
+    "source/patterns.ts",
+    "source/resolve-modules.ts",
+    "source/bundle-content-scripts.ts",
+    "source/fill-values.ts"
   ],
   "exclude": [
-      "**/build/**",
-      "**/node_modules/**"
+    "**/build/**",
+    "**/node_modules/**"
   ]
 }

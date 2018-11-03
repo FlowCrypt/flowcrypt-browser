@@ -43,14 +43,17 @@ build_content_script(([] as string[]).concat(
   get_files_in_dir(`${sourceDir}/content_scripts/webmail`, /\.js$/),
 ), 'webmail_bundle.js');
 
-// oAuth window
-build_content_script([
-  `${sourceDir}/common/common.js`,
-  `${sourceDir}/content_scripts/checkout/stripe.js`,
-], 'stripe_bundle.js');
-
 // checkout
 build_content_script([
   `${sourceDir}/common/common.js`,
+  `${sourceDir}/common/extension.js`,
+  `${sourceDir}/content_scripts/checkout/stripe.js`,
+], 'stripe_bundle.js');
+
+// oAuth window
+build_content_script([
+  `${sourceDir}/common/common.js`,
+  `${sourceDir}/common/extension.js`,
+  `${sourceDir}/common/browser.js`,
   `${sourceDir}/content_scripts/oauth_window/google.js`,
 ], 'google_bundle.js');

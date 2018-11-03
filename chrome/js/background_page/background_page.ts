@@ -25,7 +25,7 @@ chrome.runtime.onInstalled.addListener(event => {
   let db: IDBDatabase;
 
   await migrate_global();
-  await Store.set(null, { version: Catch.version('int') as number|null });
+  await Store.set(null, { version: Catch.version('int') });
   let storage = await Store.get_global(['settings_seen', 'errors']);
 
   let open_flowcrypt_tab = async (url: string) => {

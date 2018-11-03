@@ -13,7 +13,7 @@ declare let openpgp: typeof OpenPGP;
 
 export let migrate_account: BrowserMessageHandler = async (data: {account_email: string}, sender, respond_done) => {
   if(data.account_email) {
-    await Store.set(data.account_email, { version: Catch.version('int') as number|null });
+    await Store.set(data.account_email, { version: Catch.version('int') });
     respond_done();
     await account_update_status_keyserver(data.account_email);
     await account_update_status_pks(data.account_email);

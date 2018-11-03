@@ -61,6 +61,7 @@ let subTask = {
   releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('./../flowcrypt-script/browser/firefox_release')),
   chromeResolveModules: () => recipe.exec(`node tooling/resolve-modules`),
   chromeBundleContentScripts: () => recipe.exec(`node tooling/bundle-content-scripts`),
+  chromeFillValues: () => recipe.exec(`node tooling/fill-values`),
 }
 
 let task = {
@@ -74,6 +75,7 @@ let task = {
     ),
     subTask.chromeBuildSpacesToTabs,
     subTask.chromeResolveModules,
+    subTask.chromeFillValues,
     subTask.chromeBundleContentScripts,
     subTask.copyChromeToFirefox,
     subTask.copyChromeToFirefoxEditedManifest,
