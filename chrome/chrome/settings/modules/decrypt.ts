@@ -3,11 +3,10 @@
 'use strict';
 
 import { Catch, Env, Attachment } from '../../../js/common/common.js';
-import { Xss, Ui } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp, DecryptErrorTypes } from '../../../js/common/pgp.js';
 import { Attach } from '../../../js/common/attach.js';
-import { XssSafeFactory } from '../../../js/common/factory.js';
 
 Catch.try(async () => {
 

@@ -4,8 +4,7 @@
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact } from './../../js/common/storage.js';
 import { Catch, Env, Attachment, Value, Str } from './../../js/common/common.js';
-import { Xss, Ui } from '../../js/common/browser.js';
-import { XssSafeFactory } from './../../js/common/factory.js';
+import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 import * as t from '../../types/common';
 import { Api, ProgressCallback, SendableMessage } from '../../js/common/api.js';

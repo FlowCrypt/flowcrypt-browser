@@ -4,10 +4,9 @@
 
 import { Store } from '../../../js/common/storage.js';
 import { Catch, Env, Attachment } from '../../../js/common/common.js';
-import { Xss, Ui } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/pgp.js';
-import { XssSafeFactory } from '../../../js/common/factory.js';
 
 Catch.try(async () => {
 

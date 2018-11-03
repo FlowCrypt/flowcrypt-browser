@@ -4,9 +4,8 @@
 
 import { Store } from './../../js/common/storage.js';
 import { Catch, Env, Str } from './../../js/common/common.js';
-import { Xss, Ui } from '../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
 import { FlowCryptAccount } from './../../js/common/account.js';
-import { XssSafeFactory } from './../../js/common/factory.js';
 import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api.js';
 import * as t from './../../types/common';

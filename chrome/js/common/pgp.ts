@@ -5,8 +5,7 @@
 import { Store, KeyInfo, Contact } from './storage.js';
 import { Catch, Value, Str } from './common.js';
 import * as t from '../../types/common';
-import { XssSafeFactory } from './factory.js';
-import { Ui } from './browser.js';
+import { Ui, XssSafeFactory } from './browser.js';
 
 declare const openpgp: typeof OpenPGP;
 

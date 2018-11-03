@@ -4,13 +4,12 @@
 
 import {Catch, Value, Attachment, Str} from '../../common/common.js';
 import {Injector} from '../../common/inject.js';
-import {XssSafeFactory} from '../../common/factory.js';
 import {Notifications} from '../../common/notifications.js';
 import * as t from '../../../types/common';
 import { Api } from '../../common/api.js';
 import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui } from '../../common/browser.js';
+import { Xss, Ui, XssSafeFactory } from '../../common/browser.js';
 
 export class GmailElementReplacer implements t.WebmailElementReplacer {
 
