@@ -5,7 +5,7 @@
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
 import { Catch, Str, Value, Env } from '../../common/common.js';
-import { Store } from '../../common/storage.js';
+import { Store } from '../../common/store.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { InboxElementReplacer } from './inbox_element_replacer.js';

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, FlatTypes, KeyInfo } from '../common/storage.js';
+import { Store, FlatTypes, KeyInfo } from '../common/store.js';
 import { Catch, Value, Str, Dict } from '../common/common.js';
 
 import { Api } from '../common/api.js';

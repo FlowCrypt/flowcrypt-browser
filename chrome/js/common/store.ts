@@ -4,7 +4,6 @@
 
 import { Catch, Value, Str, Env, Dict, EmailProvider } from './common.js';
 import { mnemonic } from './mnemonic.js';
-
 import { Pgp } from './pgp.js';
 import { SubscriptionInfo } from './api.js';
 import { BrowserMsg } from './extension.js';
@@ -19,56 +18,27 @@ type StoredAttestLog = {attempt: number, packet?: string, success: boolean, resu
 
 export type KeyBackupMethod = 'file'|'inbox'|'none'|'print';
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
-export type Contact = {
-  email: string;
-  name: string | null;
-  pubkey: string | null;
-  has_pgp: 0|1;
-  searchable: string[];
-  client: string | null;
-  attested: boolean | null;
-  fingerprint: string | null;
-  longid: string | null;
-  keywords: string | null;
-  pending_lookup: number;
-  last_use: number | null;
-  date: number | null; // todo - should be removed. email provider search seems to return this?
-};
-export type KeyInfo = {
-  public: string;
-  private: string;
-  fingerprint: string;
-  longid: string;
-  primary: boolean;
-  decrypted?: OpenPGP.key.Key;
-  keywords: string;
-};
+export type Contact = { email: string; name: string | null; pubkey: string | null; has_pgp: 0|1; searchable: string[];
+  client: string | null; attested: boolean | null; fingerprint: string | null; longid: string | null; keywords: string | null;
+  pending_lookup: number; last_use: number | null;
+  date: number | null; /* todo - should be removed. email provider search seems to return this? */ };
+export type KeyInfo = { public: string; private: string; fingerprint: string; longid: string; primary: boolean;
+  decrypted?: OpenPGP.key.Key; keywords: string; };
 export type StorageType = 'session'|'local';
 export type FlatTypes = null|undefined|number|string|boolean;
-export type ContactUpdate = {
-  email?: string;
-  name?: string | null;
-  pubkey?: string;
-  has_pgp?: 0|1;
-  searchable?: string[];
-  client?: string | null;
-  attested?: boolean | null;
-  fingerprint?: string | null;
-  longid?: string | null;
-  keywords?: string | null;
-  pending_lookup?: number;
-  last_use?: number | null;
-  date?: number | null; // todo - should be removed. email provider search seems to return this?
-};
+export type ContactUpdate = { email?: string; name?: string | null; pubkey?: string; has_pgp?: 0|1; searchable?: string[];
+  client?: string | null; attested?: boolean | null; fingerprint?: string | null; longid?: string | null; keywords?: string | null;
+  pending_lookup?: number; last_use?: number | null;
+  date?: number | null; /* todo - should be removed. email provider search seems to return this? */ };
 export type Storable = FlatTypes|string[]|KeyInfo[]|Dict<StoredReplyDraftMeta>|Dict<StoredComposeDraftMeta>|Dict<StoredAdminCode>|SubscriptionAttempt|SubscriptionInfo|StoredAttestLog[];
 export type Serializable = SerializableTypes|SerializableTypes[]|Dict<SerializableTypes>|Dict<SerializableTypes>[];
 
-export interface SubscriptionAttempt extends Product {
-  source: string|null;
-}
-
 interface RawStore {
   [key: string]: Storable;
+}
+
+export interface SubscriptionAttempt extends Product {
+  source: string|null;
 }
 
 export interface BaseStore extends RawStore {

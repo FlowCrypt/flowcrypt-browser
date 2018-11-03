@@ -5,7 +5,7 @@
 
 import { Catch, Env, Dict } from './../../../js/common/common.js';
 import { Ui } from '../../../js/common/browser.js';
-import { Store } from './../../../js/common/storage.js';
+import { Store } from '../../../js/common/store.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 
 Catch.try(async () => {

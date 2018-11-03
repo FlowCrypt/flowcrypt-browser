@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from '../../common/storage.js';
+import { Store } from '../../common/store.js';
 import { Catch, Env, Value } from '../../common/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications, NotificationWithHandlers } from '../../common/notifications.js';

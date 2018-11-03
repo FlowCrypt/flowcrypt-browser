@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Contact } from './../../js/common/storage.js';
+import { Store, Contact } from '../../js/common/store.js';
 import { Catch, Env, Str } from './../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { mnemonic } from './../../js/common/mnemonic.js';

@@ -5,7 +5,7 @@
 import * as DOMPurify from 'dompurify';
 import { Catch, UnreportableError, Env, Str, Value, Dict, UrlParams, UrlParam } from './common.js';
 import { BrowserMsg } from './extension.js';
-import { Store } from './storage.js';
+import { Store } from './store.js';
 import { Api } from './api.js';
 import { Pgp } from './pgp.js';
 import { mnemonic } from './mnemonic.js';

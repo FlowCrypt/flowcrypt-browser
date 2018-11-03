@@ -5,7 +5,7 @@
 import { Str, Value, Env, Catch } from './common.js';
 import { ProgressCallback } from './api.js';
 import { Xss } from './browser.js';
-import { KeyInfo } from './storage.js';
+import { KeyInfo } from './store.js';
 
 type Attachment$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 type AttachmentMeta = { data?: string|Uint8Array|null; type?:string|null; name?: string|null; length?: number|null; url?: string|null;

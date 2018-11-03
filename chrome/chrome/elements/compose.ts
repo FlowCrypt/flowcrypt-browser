@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from './../../js/common/storage.js';
+import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from '../../js/common/store.js';
 import { Catch, Env, Value, Str, Dict, JQS } from './../../js/common/common.js';
 import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';

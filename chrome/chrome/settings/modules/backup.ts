@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, KeyInfo, KeyBackupMethod } from '../../../js/common/storage.js';
+import { Store, KeyInfo, KeyBackupMethod } from '../../../js/common/store.js';
 import { Catch, Env, Value, UnreportableError, EmailProvider } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
 import { Xss, Ui } from '../../../js/common/browser.js';

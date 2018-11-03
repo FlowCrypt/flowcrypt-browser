@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/storage.js';
+import { Store } from '../../../js/common/store.js';
 import { Catch, Env, Value } from '../../../js/common/common.js';
 import { Xss, Ui, KeyImportUI, UserAlert, KeyCanBeFixed } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';

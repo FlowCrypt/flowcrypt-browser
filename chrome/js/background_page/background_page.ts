@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes } from '../common/storage.js';
+import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes } from '../common/store.js';
 import { Env, Catch, Value, Dict } from '../common/common.js';
 import { BgExec, BrowserMessageHandler, BrowserMessageRequestDb, BrowserMessageRequestSessionSet, BrowserMessageRequestSessionGet, BrowserMsg } from '../common/extension.js';
 import { BgAttests } from './attests.js';

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, SubscriptionAttempt } from './storage.js';
+import { Store, SubscriptionAttempt } from './store.js';
 import { Env, Str, Catch, Dict } from './common.js';
 
 import { Api } from './api.js';

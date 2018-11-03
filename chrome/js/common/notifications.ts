@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from './storage.js';
+import { Store } from './store.js';
 import { Catch, Dict } from './common.js';
 
 import { Api } from './api.js';

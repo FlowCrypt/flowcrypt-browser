@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Storable, BaseStore } from '../../js/common/storage.js';
+import { Store, Storable, BaseStore } from '../../js/common/store.js';
 import { Catch, Env, Value, Str, Dict } from '../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 

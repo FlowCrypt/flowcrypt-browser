@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription, Serializable } from './../../js/common/storage.js';
+import { Store, Subscription, Serializable } from '../../js/common/store.js';
 import { Catch, Env, Dict } from './../../js/common/common.js';
 import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui } from '../../js/common/browser.js';

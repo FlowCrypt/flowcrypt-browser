@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { Store, FlatTypes, Serializable } from './storage.js';
+import { Store, FlatTypes, Serializable } from './store.js';
 import { Pgp } from './pgp.js';
 import { BrowserMsg, FcWindow } from './extension.js';
 import { Xss, Ui, WebMailName } from './browser.js';

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, KeyInfo, Contact } from './storage.js';
+import { Store, KeyInfo, Contact } from './store.js';
 import { Catch, Value, Str } from './common.js';
 import { Ui, XssSafeFactory, Challenge } from './browser.js';
 import { ReplaceableMessageBlockType, MessageBlock, MessageBlockType } from './mime.js';

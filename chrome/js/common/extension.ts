@@ -2,7 +2,7 @@
 import { Str, Catch, Env, Value, Dict } from './common.js';
 import { Pgp, DiagnoseMessagePubkeysResult, DecryptResult, MessageVerifyResult } from './pgp.js';
 
-import { FlatTypes } from './storage.js';
+import { FlatTypes } from './store.js';
 import { Ui } from './browser.js';
 import { Attachment } from './attachment.js';
 

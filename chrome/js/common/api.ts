@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, GlobalStore, Serializable, AccountStore, Contact } from './storage.js';
+import { Store, GlobalStore, Serializable, AccountStore, Contact } from './store.js';
 import { Catch, Value, Str, Env, Dict } from './common.js';
 
 import { Pgp } from './pgp.js';
