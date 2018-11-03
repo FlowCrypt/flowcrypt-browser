@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Catch, Ui, Env, Xss } from './../../js/common/common.js';
+import { Catch, Env } from './../../js/common/common.js';
+import { Xss, Ui, KeyImportUI, UserAlert } from '../../js/common/browser.js';
 import { Store } from './../../js/common/storage.js';
-import { KeyImportUI, UserAlert } from './../../js/common/key_import.js';
 import { Pgp } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 

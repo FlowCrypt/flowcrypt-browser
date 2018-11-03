@@ -3,10 +3,11 @@
 'use strict';
 
 import {Store} from './storage.js';
-import {Catch, Xss, Ui} from './common.js';
+import {Catch} from './common.js';
 import * as t from '../../types/common';
 import { Api } from './api.js';
 import { BrowserMsg } from './extension.js';
+import { Xss, Ui } from './browser.js';
 
 export class Notifications {
 

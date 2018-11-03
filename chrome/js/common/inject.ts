@@ -3,9 +3,10 @@
 'use strict';
 
 import {XssSafeFactory} from './factory.js';
-import {Catch, Ui} from './common.js';
+import {Catch} from './common.js';
 import * as t from '../../types/common';
 import { ContentScriptWindow } from './extension.js';
+import { Ui } from './browser.js';
 
 export class Injector {
 

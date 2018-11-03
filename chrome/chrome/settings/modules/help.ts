@@ -2,7 +2,8 @@
 
 'use strict';
 
-import { Catch, Env, Xss, Ui, Str } from '../../../js/common/common.js';
+import { Catch, Env, Str } from '../../../js/common/common.js';
+import { Xss, Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Api } from '../../../js/common/api.js';
 

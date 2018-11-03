@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Ui, Env, Xss, Str } from './../../js/common/common.js';
+import { Catch, Env, Str } from './../../js/common/common.js';
+import { Xss, Ui } from '../../js/common/browser.js';
 import { FlowCryptAccount } from './../../js/common/account.js';
 import { XssSafeFactory } from './../../js/common/factory.js';
 import { Lang } from './../../js/common/lang.js';

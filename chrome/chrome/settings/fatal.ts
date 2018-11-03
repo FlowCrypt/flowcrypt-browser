@@ -2,7 +2,8 @@
 
 'use strict';
 
-import { Env, Xss } from '../../js/common/common.js';
+import { Env } from '../../js/common/common.js';
+import { Xss } from '../../js/common/browser.js';
 
 (() => {
 

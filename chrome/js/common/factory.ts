@@ -2,8 +2,9 @@
 
 'use strict';
 
-import {Catch, Value, Xss, Str, Ui, Attachment, Env} from './common.js';
+import {Catch, Value, Str, Attachment, Env} from './common.js';
 import * as t from '../../types/common';
+import { Xss, Ui } from './browser.js';
 
 export class XssSafeFactory {
 

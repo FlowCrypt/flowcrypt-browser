@@ -3,9 +3,9 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Xss, Ui } from '../../../js/common/common.js';
+import { Catch, Env } from '../../../js/common/common.js';
+import { Xss, Ui, KeyImportUI, UserAlert } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
-import { KeyImportUI, UserAlert } from '../../../js/common/key_import.js';
 import { mnemonic } from '../../../js/common/mnemonic.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';

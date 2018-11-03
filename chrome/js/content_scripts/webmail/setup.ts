@@ -3,12 +3,13 @@
 'use strict';
 
 import {Store} from '../../common/storage.js';
-import {Catch, Env, Value, Ui} from '../../common/common.js';
+import {Catch, Env, Value} from '../../common/common.js';
 import {Injector} from '../../common/inject.js';
 import {XssSafeFactory} from '../../common/factory.js';
 import {Notifications} from '../../common/notifications.js';
 import {WebmailSpecificInfo, NotificationWithHandlers, PassphraseDialogType} from '../../../types/common.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError } from '../../common/extension.js';
+import { Ui } from '../../common/browser.js';
 
 export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpecificInfo) => {
 

@@ -2,7 +2,8 @@
 
 'use strict';
 
-import { Catch, Xss, Ui } from "./../../js/common/common.js";
+import { Catch } from "./../../js/common/common.js";
+import { Xss, Ui } from '../../js/common/browser.js';
 import { Store } from "./../../js/common/storage.js";
 
 Catch.try(async () => {
