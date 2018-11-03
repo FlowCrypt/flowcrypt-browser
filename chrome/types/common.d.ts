@@ -69,8 +69,6 @@ interface Dict<T> {
 type UrlParam = string|number|null|undefined|boolean|string[];
 type UrlParams = Dict<UrlParam>;
 
-// Todo Ui
-type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
 
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
 
@@ -114,14 +112,6 @@ type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
 type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
 
-// Todo Ui
-type NamedSelectors = Dict<JQuery<HTMLElement>>;
-type SelectorCache = {
-    cached: (name: string) => JQuery<HTMLElement>;
-    now: (name: string) => JQuery<HTMLElement>;
-    selector: (name: string) => string;
-};
-
 type EmailProvider = 'gmail';
 type AccountEventHandlersOptional = {
     render_status_text?: (text: string, show_spinner?: boolean) => void;
@@ -163,14 +153,4 @@ type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, net
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
 type CryptoArmorHeaderDefinitions = {
     readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition;
-};
-
-// Todo KeyImportUi
-type KeyImportUiCheckResult = {
-  normalized: string;
-  longid: string;
-  passphrase: string;
-  fingerprint: string;
-  decrypted: OpenPGP.key.Key;
-  encrypted: OpenPGP.key.Key;
 };

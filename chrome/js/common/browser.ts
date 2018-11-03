@@ -14,6 +14,23 @@ import { Attach } from './attach';
 
 declare const openpgp: typeof OpenPGP;
 
+type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
+type NamedSelectors = t.Dict<JQuery<HTMLElement>>;
+export type SelectorCache = {
+    cached: (name: string) => JQuery<HTMLElement>;
+    now: (name: string) => JQuery<HTMLElement>;
+    selector: (name: string) => string;
+};
+
+type KeyImportUiCheckResult = {
+  normalized: string;
+  longid: string;
+  passphrase: string;
+  fingerprint: string;
+  decrypted: OpenPGP.key.Key;
+  encrypted: OpenPGP.key.Key;
+};
+
 export class Ui {
 
   public static EVENT_DOUBLE_MS = 1000;
@@ -134,8 +151,8 @@ export class Ui {
     }
   }
 
-  public static build_jquery_selectors = (selectors: t.Dict<string>): t.SelectorCache => {
-    let cache: t.NamedSelectors = {};
+  public static build_jquery_selectors = (selectors: t.Dict<string>): SelectorCache => {
+    let cache: NamedSelectors = {};
     return {
       cached: (name: string) => {
         if (!cache[name]) {
@@ -216,7 +233,7 @@ export class Ui {
         Catch.handle_exception(e);
       }
     },
-    prevent: (preventable_event: t.PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: t.BrowserEventErrorHandler) => {
+    prevent: (preventable_event: PreventableEventName, cb: (e: HTMLElement, reset_timer: () => void) => void|Promise<void>, err_handler?: t.BrowserEventErrorHandler) => {
       let event_timer: number|undefined;
       let event_fired_on: number|undefined;
       let cb_reset_timer = () => {
@@ -712,7 +729,7 @@ export class KeyImportUI {
     });
   }
 
-  check_prv = async (account_email: string, armored: string, passphrase: string): Promise<t.KeyImportUiCheckResult> => {
+  check_prv = async (account_email: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
     let normalized = this.normalize('private_key', armored);
     let decrypted = this.read('private_key', normalized);
     let encrypted = this.read('private_key', normalized);

@@ -5,14 +5,14 @@
 import { Catch } from './common.js';
 import * as t from '../../types/common';
 import { ContentScriptWindow } from './extension.js';
-import { Ui, XssSafeFactory } from './browser.js';
+import { Ui, XssSafeFactory, SelectorCache } from './browser.js';
 
 export class Injector {
 
   private factory: XssSafeFactory;
   private webmail_name: t.WebMailName;
   private webmail_variant: t.WebmailVariantString;
-  private S: t.SelectorCache;
+  private S: SelectorCache;
   private compose_button_container_selector = {
     'gmail': 'div.aic',
     'inbox': 'div.jp',
