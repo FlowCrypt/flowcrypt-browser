@@ -3,12 +3,13 @@
 'use strict';
 
 import { Injector } from '../../common/inject.js';
-import { Catch, Value, Attachment, Str } from '../../common/common.js';
+import { Catch, Value, Str } from '../../common/common.js';
 import * as t from '../../../types/common';
 import { Api } from '../../common/api.js';
 import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory } from '../../common/browser.js';
+import { Attachment } from '../../common/attachment.js';
 
 export class InboxElementReplacer implements t.WebmailElementReplacer {
 

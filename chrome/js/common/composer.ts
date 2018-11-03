@@ -4,13 +4,13 @@
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact } from './storage.js';
 import { Lang } from './lang.js';
-import { Catch, Value, Str, Mime, Attachment, Env, UnreportableError } from './common.js';
+import { Catch, Value, Str, Mime, Env, UnreportableError } from './common.js';
+import { Attachment } from './attachment.js';
 import { BrowserMsg, Extension, BrowserMessageHandler } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMessage, RichHeaders, StandardError, SendableMessageBody } from './api.js';
-import { Attach } from './attach.js';
 import * as t from '../../types/common';
-import { Ui, Xss } from './browser.js';
+import { Ui, Xss, Attach } from './browser.js';
 
 declare let openpgp: typeof OpenPGP;
 

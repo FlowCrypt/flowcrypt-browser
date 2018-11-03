@@ -1,12 +1,12 @@
 
 export type bogus = never; // that way TS understands this is to be treated as a module
 
-import { Attachment } from '../js/common/common.js';
 import { Injector } from '../js/common/inject.js';
 import { Notifications } from '../js/common/notifications.js';
 import { DecryptResult, DiagnoseMessagePubkeysResult, MessageVerifyResult } from '../js/common/pgp.js';
 import { FlatHeaders, StandardError } from '../js/common/api.js';
 import { XssSafeFactory } from '../js/common/browser.js';
+import { Attachment } from '../js/common/attachment.js';
 
 interface BrowserWidnow extends Window {
     XMLHttpRequest: any;
@@ -32,24 +32,6 @@ interface FcWindow extends BrowserWidnow {
 
 type AnyThirdPartyLibrary = any;
 type Thrown = Error|StandardError|any;
-
-// todo Attachment
-type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
-
-type Attachment$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
-
-type AttachmentMeta = {
-  data?: string|Uint8Array|null;
-  type?:string|null;
-  name?: string|null;
-  length?: number|null;
-  url?: string|null;
-  inline?: boolean|null;
-  id?: string|null;
-  message_id?: string|null;
-  treat_as?: Attachment$treat_as;
-  cid?: string|null;
-};
 
 interface FromToHeaders {
     from: string;
@@ -106,7 +88,6 @@ type PassphraseDialogType = 'embedded'|'sign'|'attest';
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
 type Callback = (r?: any) => void;
 
-// Todo BrowserMsg
 type PaymentMethod = 'stripe'|'group'|'trial';
 type ProductLevel = 'pro'|null;
 type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
@@ -143,9 +124,7 @@ interface JQS extends JQueryStatic {
     featherlight: Function; // tslint:disable-line:ban-types
 }
 
-// todo Attachment
-type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
-
+// ui
 type BrowserEventErrorHandler = {auth?: () => void, auth_popup?: () => void, network?: () => void, other?: (e: any) => void};
 
 // Todo Pgp or Mime?

@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store, Subscription, Serializable } from './../../js/common/storage.js';
-import { Catch, Env, Attachment } from './../../js/common/common.js';
+import { Catch, Env } from './../../js/common/common.js';
+import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import * as t from './../../types/common';
 import { Composer } from './../../js/common/composer.js';

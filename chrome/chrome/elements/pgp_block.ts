@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store } from './../../js/common/storage.js';
-import { Catch, Env, Attachment, Value, Str, Mime } from './../../js/common/common.js';
+import { Catch, Env, Value, Str, Mime } from './../../js/common/common.js';
+import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';

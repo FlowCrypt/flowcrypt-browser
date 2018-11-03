@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact } from './../../js/common/storage.js';
-import { Catch, Env, Attachment, Value, Str } from './../../js/common/common.js';
+import { Catch, Env, Value, Str } from './../../js/common/common.js';
+import { Attachment } from '../../js/common/attachment.js';
 import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 import * as t from '../../types/common';

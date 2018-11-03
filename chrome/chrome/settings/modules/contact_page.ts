@@ -3,10 +3,10 @@
 'use strict';
 
 import { Store, Serializable } from '../../../js/common/storage.js';
-import { Catch, Env, Value, Attachment, Str } from '../../../js/common/common.js';
-import { Xss, Ui } from '../../../js/common/browser.js';
+import { Catch, Env, Value, Str } from '../../../js/common/common.js';
+import { Attachment } from '../../../js/common/attachment.js';
+import { Xss, Ui, Attach } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
-import { Attach } from '../../../js/common/attach.js';
 import * as t from '../../../types/common';
 import { Settings } from '../settings.js';
 import { Api, R } from '../../../js/common/api.js';

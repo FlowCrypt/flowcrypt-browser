@@ -3,11 +3,12 @@
 'use strict';
 
 import { Store, GlobalStore, Serializable, AccountStore, Contact } from './storage.js';
-import { Catch, Value, Str, Attachment, Env, Mime } from './common.js';
+import { Catch, Value, Str, Env, Mime } from './common.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 import { FlowCryptManifest, BrowserMsg } from './extension.js';
 import { Ui } from './browser.js';
+import { Attachment } from './attachment.js';
 
 declare const openpgp: typeof OpenPGP;
 

@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store } from '../../../js/common/storage.js';
-import { Catch, Env, Attachment } from '../../../js/common/common.js';
+import { Catch, Env } from '../../../js/common/common.js';
+import { Attachment } from '../../../js/common/attachment.js';
 import { Ui } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { Settings } from '../settings.js';

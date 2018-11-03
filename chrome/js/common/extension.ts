@@ -1,9 +1,10 @@
 
-import { Str, Attachment, Catch, Env, Value } from './common.js';
+import { Str, Catch, Env, Value } from './common.js';
 import { Pgp, DiagnoseMessagePubkeysResult, DecryptResult, MessageVerifyResult } from './pgp.js';
 import * as t from '../../types/common';
 import { FlatTypes } from './storage.js';
 import { Ui } from './browser.js';
+import { Attachment } from './attachment.js';
 
 type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
 type BgExecRequest = {path: string, args: any[]};

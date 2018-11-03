@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store, KeyInfo } from '../../../js/common/storage.js';
-import { Catch, Env, Value, Attachment, UnreportableError } from '../../../js/common/common.js';
+import { Catch, Env, Value, UnreportableError } from '../../../js/common/common.js';
+import { Attachment } from '../../../js/common/attachment.js';
 import { Xss, Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
