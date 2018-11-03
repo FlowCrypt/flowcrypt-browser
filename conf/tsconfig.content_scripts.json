@@ -8,22 +8,22 @@
     "sourceMap": false,
     "checkJs": false,
     "outDir": "../build/_/content_scripts",
-    "baseUrl": "../chrome",
+    "baseUrl": "../extension",
     "paths": {
       "dompurify": ["types/purify.d.ts"]
     },
     "typeRoots": [
-      "../chrome/types"
+      "../extension/types"
     ]
   },
   "include": [
-    "../chrome/types/*.ts",
-    "../chrome/js/common/storage.ts",
-    "../chrome/js/common/common.ts",
-    "../chrome/js/common/factory.ts",
-    "../chrome/js/common/inject.ts",
-    "../chrome/js/common/notifications.ts",
-    "../chrome/js/content_scripts/**/*.ts"
+    "../extension/types/*.ts",
+    "../extension/js/common/storage.ts",
+    "../extension/js/common/common.ts",
+    "../extension/js/common/factory.ts",
+    "../extension/js/common/inject.ts",
+    "../extension/js/common/notifications.ts",
+    "../extension/js/content_scripts/**/*.ts"
   ],
   "exclude": [
     "**/build/**",

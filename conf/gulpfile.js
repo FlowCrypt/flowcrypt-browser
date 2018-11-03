@@ -8,7 +8,7 @@ let inquirer = require('inquirer');
 var replace = require('gulp-replace');
 
 let config = (path) => JSON.parse(fs.readFileSync(path));
-let source = (path) => Array.isArray(path) ? path.map(source) : `../chrome/${path}`;
+let source = (path) => Array.isArray(path) ? path.map(source) : `../extension/${path}`;
 let version = config('../package.json').version;
 
 let chromeTo = '../build/chrome';
