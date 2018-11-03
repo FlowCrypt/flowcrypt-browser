@@ -207,9 +207,9 @@ Catch.try(async () => {
         thread_item.find('.msg_count').text(`(${thread.messages.length})`);
       }
     } catch (e) {
-      if(Api.error.is_network_error(e)) {
+      if(Api.err.is_net_err(e)) {
         Xss.sanitize_render(thread_item.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => render_inbox_item(thread_id)));
-      } else if(Api.error.is_auth_popup_needed(e)) {
+      } else if(Api.err.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -274,9 +274,9 @@ Catch.try(async () => {
       let {labels} = await Api.gmail.labels_get(account_email);
       render_menu_and_label_styles(labels);
     } catch(e) {
-      if(Api.error.is_network_error(e)) {
+      if(Api.err.is_net_err(e)) {
         notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
-      } else if(Api.error.is_auth_popup_needed(e)) {
+      } else if(Api.err.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -296,9 +296,9 @@ Catch.try(async () => {
         Xss.sanitize_render('.threads', `<p>No encrypted messages in ${label_id} yet. ${Ui.retry_link()}</p>`);
       }
     } catch(e) {
-      if(Api.error.is_network_error(e)) {
+      if(Api.err.is_net_err(e)) {
         notification_show({notification: `Connection error trying to get list of messages ${Ui.retry_link()}`, callbacks: {}});
-      } else if(Api.error.is_auth_popup_needed(e)) {
+      } else if(Api.err.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -320,9 +320,9 @@ Catch.try(async () => {
       render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
       // await Api.gmail.thread_modify(account_email, thread_id, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
-      if(Api.error.is_network_error(e)) {
+      if(Api.err.is_net_err(e)) {
         Xss.sanitize_render('.thread', `<br>Failed to load thread - network error. ${Ui.retry_link()}`);
-      } else if(Api.error.is_auth_popup_needed(e)) {
+      } else if(Api.err.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);
@@ -353,9 +353,9 @@ Catch.try(async () => {
       r = `<p class="message_header">From: ${Xss.html_escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory
     } catch (e) {
-      if(Api.error.is_network_error(e)) {
+      if(Api.err.is_net_err(e)) {
         Xss.sanitize_append('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retry_link()}`));
-      } else if (Api.error.is_auth_popup_needed(e)) {
+      } else if (Api.err.is_auth_popup_needed(e)) {
         render_and_handle_auth_popup_notification();
       } else {
         Catch.handle_exception(e);

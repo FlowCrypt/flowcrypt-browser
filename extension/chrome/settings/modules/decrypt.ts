@@ -16,7 +16,7 @@ Catch.try(async () => {
 
   let tab_id = await BrowserMsg.required_tab_id();
 
-  let original_content: string;
+  let orig_content: string;
 
   let attach_js = new AttUI(() => ({count: 1, size: 100 * 1024 * 1024, size_mb: 100}));
   attach_js.initialize_attach_dialog('fineuploader', 'fineuploader_button');
@@ -31,7 +31,7 @@ Catch.try(async () => {
   $('.action_decrypt_and_download').click(Ui.event.prevent('double', async (self) => {
     let ids = attach_js.get_att_ids();
     if (ids.length === 1) {
-      original_content = $(self).html();
+      orig_content = $(self).html();
       Xss.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
       let collected = await attach_js.collect_att(ids[0]);
       await decrypt_and_download(collected);
@@ -52,7 +52,7 @@ Catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    Xss.sanitize_render('.action_decrypt_and_download', original_content);
+    Xss.sanitize_render('.action_decrypt_and_download', orig_content);
   };
 
 })();

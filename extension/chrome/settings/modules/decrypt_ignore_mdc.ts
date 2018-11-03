@@ -19,7 +19,7 @@ Catch.try(async () => {
 
   let tab_id = await BrowserMsg.required_tab_id();
 
-  let original_content: string;
+  let orig_content: string;
 
   let factory = new XssSafeFactory(account_email, tab_id);
 
@@ -35,7 +35,7 @@ Catch.try(async () => {
       alert('Please paste an encrypted message');
       return;
     }
-    original_content = $(self).html();
+    orig_content = $(self).html();
     Xss.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
     let result = await Pgp.msg.decrypt(account_email, encrypted);
     if (result.success) {
@@ -47,7 +47,7 @@ Catch.try(async () => {
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    Xss.sanitize_render(self, original_content);
+    Xss.sanitize_render(self, orig_content);
   }));
 
 })();

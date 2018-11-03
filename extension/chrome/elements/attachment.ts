@@ -178,10 +178,10 @@ Catch.try(async () => {
         throw Error('Missing both id and url');
       }
     } catch(e) {
-      if(Api.error.is_auth_popup_needed(e)) {
+      if(Api.err.is_auth_popup_needed(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         Xss.sanitize_render('body.attachment', `Error downloading file: google auth needed. ${Ui.retry_link()}`);
-      } else if(Api.error.is_network_error(e)) {
+      } else if(Api.err.is_net_err(e)) {
         Xss.sanitize_render('body.attachment', `Error downloading file: no internet. ${Ui.retry_link()}`);
       } else {
         Catch.handle_exception(e);
@@ -239,10 +239,10 @@ Catch.try(async () => {
       $('#download').click(Ui.event.prevent('double', save_to_downloads));
     }
   } catch (e) {
-    if(Api.error.is_auth_popup_needed(e)) {
+    if(Api.err.is_auth_popup_needed(e)) {
       BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       Xss.sanitize_render('body.attachment', `Error downloading file - google auth needed. ${Ui.retry_link()}`);
-    } else if(Api.error.is_network_error(e)) {
+    } else if(Api.err.is_net_err(e)) {
       Xss.sanitize_render('body.attachment', `Error downloading file - no internet. ${Ui.retry_link()}`);
     } else {
       Catch.handle_exception(e);

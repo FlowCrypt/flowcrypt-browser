@@ -293,7 +293,7 @@ Catch.try(async () => {
         throw r;
       }
     } catch (e) {
-      if (Api.error.is_auth_error(e)) {
+      if (Api.err.is_auth_err(e)) {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
         BrowserMsg.send(parent_tab_id, 'subscribe_dialog', { source: 'auth_error' });
       } else {
@@ -527,14 +527,14 @@ Catch.try(async () => {
         }
       }
     } catch (e) {
-      if (Api.error.is_network_error(e)) {
+      if (Api.err.is_net_err(e)) {
         await render_error(`Could not load message due to network error. ${Ui.retry_link()}`);
-      } else if(Api.error.is_auth_popup_needed(e)) {
+      } else if(Api.err.is_auth_popup_needed(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         await render_error(`Could not load message due to missing auth. ${Ui.retry_link()}`);
       } else if (Value.is(Pgp.armor.headers('public_key').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.url_create('pgp_pubkey.htm', { armored_pubkey: e.data, minimized: Boolean(is_outgoing), account_email, parent_tab_id, frame_id });
-      } else if (Api.error.is_standard_error(e, 'format')) {
+      } else if (Api.err.is_standard_err(e, 'format')) {
         console.log(e.data);
         await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.bad_format + Lang.pgp_block.dont_know_how_open, e.data);
       } else {

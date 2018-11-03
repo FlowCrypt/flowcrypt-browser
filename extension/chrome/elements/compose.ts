@@ -32,7 +32,7 @@ Catch.try(async () => {
     try {
       gmail_message_object = await Api.gmail.msg_get(account_email, url_params.thread_message_id as string, 'metadata');
     } catch(e) {
-      if(Api.error.is_auth_popup_needed(e)) {
+      if(Api.err.is_auth_popup_needed(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
       }
       if (!url_params.from) {
@@ -104,9 +104,9 @@ Catch.try(async () => {
           return false;
         }
       } catch(e) {
-        if(Api.error.is_auth_popup_needed(e)) {
+        if(Api.err.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if(!Api.error.is_network_error(e)) {
+        } else if(!Api.err.is_net_err(e)) {
           Catch.handle_exception(e);
         }
         return undefined;
@@ -179,9 +179,9 @@ Catch.try(async () => {
     email_provider_msg_send: (message: SendableMsg, render_upload_progress: ProgressCallback) => Api.gmail.msg_send(account_email, message, render_upload_progress),
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: any) => { // todo remove the any
       Api.gmail.search_contacts(account_email, query, known_contacts, multi_cb).catch(e => {
-        if(Api.error.is_auth_popup_needed(e)) {
+        if(Api.err.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if (Api.error.is_network_error(e)) {
+        } else if (Api.err.is_net_err(e)) {
           // todo: render network error
         } else {
           Catch.handle_exception(e);
@@ -200,9 +200,9 @@ Catch.try(async () => {
           return;
         }
       } catch (e) {
-        if(Api.error.is_auth_popup_needed(e)) {
+        if(Api.err.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-        } else if (Api.error.is_network_error(e)) {
+        } else if (Api.err.is_net_err(e)) {
           // todo: render retry
         } else {
           Catch.handle_exception(e);

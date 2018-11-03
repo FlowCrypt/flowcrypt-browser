@@ -103,9 +103,9 @@ Catch.try(async () => {
         let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
         await Store.set(account_email, { addresses: Value.arr.unique(addresses.concat(account_email)) });
       } catch(e) {
-        if(Api.error.is_network_error(e)) {
+        if(Api.err.is_net_err(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
+        } else if(parent_tab_id && Api.err.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
@@ -141,7 +141,7 @@ Catch.try(async () => {
     $('.summary').text('');
     render_diagnosis(diagnosis, storage.attests_requested || []);
   } catch (e) {
-    if (Api.error.is_network_error(e)) {
+    if (Api.err.is_net_err(e)) {
       Xss.sanitize_render('.summary', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
       Xss.sanitize_render('.summary', `Failed to load. ${Ui.retry_link()}`);

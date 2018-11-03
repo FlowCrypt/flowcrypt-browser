@@ -208,12 +208,12 @@ export class Settings {
     let old_account_email_index_prefix = Store.index(old_account_email, '') as string;
     let new_account_email_index_prefix = Store.index(new_account_email, '') as string;
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    let destination_account_private_keys = await Store.keys_get(new_account_email);
-    let destination_account_pass_phrases: Dict<string> = {};
-    for(let ki of destination_account_private_keys) {
+    let dest_account_private_keys = await Store.keys_get(new_account_email);
+    let dest_account_pass_phrases: Dict<string> = {};
+    for(let ki of dest_account_private_keys) {
       let pp = await Store.passphrase_get(new_account_email, ki.longid, true);
       if(pp) {
-        destination_account_pass_phrases[ki.longid] = pp;
+        dest_account_pass_phrases[ki.longid] = pp;
       }
     }
     if (!old_account_email_index_prefix) {
@@ -243,11 +243,11 @@ export class Settings {
             sessionStorage.removeItem(session_storage_index);
           }
         }
-        for(let ki of destination_account_private_keys) {
+        for(let ki of dest_account_private_keys) {
           await Store.keys_add(new_account_email, ki.private);
         }
-        for(let longid of Object.keys(destination_account_pass_phrases)) {
-          await Store.passphrase_save('local', new_account_email, longid, destination_account_pass_phrases[longid]);
+        for(let longid of Object.keys(dest_account_pass_phrases)) {
+          await Store.passphrase_save('local', new_account_email, longid, dest_account_pass_phrases[longid]);
         }
         await Settings.account_storage_reset(old_account_email);
         await Store.account_emails_remove(old_account_email);
@@ -258,9 +258,9 @@ export class Settings {
     });
   })
 
-  static render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user = (account_email: string, container: string|JQuery<HTMLElement>, original_prv: OpenPGP.key.Key, passphrase: string, back_url: string): Promise<OpenPGP.key.Key> => {
+  static render_prv_compatibility_fix_ui_and_wait_until_submitted_by_user = (account_email: string, container: string|JQuery<HTMLElement>, orig_prv: OpenPGP.key.Key, passphrase: string, back_url: string): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      let uids = original_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.is_email_valid(Str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
+      let uids = orig_prv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.is_email_valid(Str.parse_email(u.userid).email)).map(u => u!.userid) as string[];
       if (!uids.length) {
         uids.push(account_email);
       }
@@ -298,12 +298,12 @@ export class Settings {
         } else {
           $(target).off();
           Xss.sanitize_render(target, Ui.spinner('white'));
-          let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - original_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
-          await Pgp.key.decrypt(original_prv, [passphrase]);
+          let expire_seconds = (expire_years === 'never') ? 0 : Math.floor((Date.now() - orig_prv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expire_years));
+          await Pgp.key.decrypt(orig_prv, [passphrase]);
           let reformatted;
           let userIds = uids.map(uid => Str.parse_email(uid)).map(u => ({email: u.email, name: u.name || ''}));
           try {
-            reformatted = await openpgp.reformatKey({privateKey: original_prv, passphrase, userIds, keyExpirationTime: expire_seconds}) as {key: OpenPGP.key.Key};
+            reformatted = await openpgp.reformatKey({privateKey: orig_prv, passphrase, userIds, keyExpirationTime: expire_seconds}) as {key: OpenPGP.key.Key};
           } catch (e) {
             reject(e);
             return;
@@ -335,14 +335,14 @@ export class Settings {
   static prompt_to_retry = async (type: 'REQUIRED', e: Error, user_msg: string, retry_callback: () => Promise<void>): Promise<void> => {
     // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
-    if(!Api.error.is_network_error(e)) {
+    if(!Api.err.is_net_err(e)) {
       Catch.handle_exception(e);
     }
     while(await Ui.render_overlay_prompt_await_user_choice({retry: {}}, user_msg) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {
-        if(!Api.error.is_network_error(e2)) {
+        if(!Api.err.is_net_err(e2)) {
           Catch.handle_exception(e2);
         }
       }
@@ -393,7 +393,7 @@ export class Settings {
         let {image} = await Api.google.plus.people_me(account_email);
         await Store.set(account_email, {picture: image.url});
       } catch(e) {
-        if(!Api.error.is_auth_popup_needed(e) && !Api.error.is_auth_error(e) && !Api.error.is_network_error(e)) {
+        if(!Api.err.is_auth_popup_needed(e) && !Api.err.is_auth_err(e) && !Api.err.is_net_err(e)) {
           Catch.handle_exception(e);
         }
       }

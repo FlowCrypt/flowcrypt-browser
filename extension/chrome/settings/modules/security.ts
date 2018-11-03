@@ -100,9 +100,9 @@ Catch.try( async () => {
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(on_default_expire_user_change));
     } catch (e) {
-      if (Api.error.is_auth_error(e)) {
+      if (Api.err.is_auth_err(e)) {
         Xss.sanitize_render('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error')));
-      } else if (Api.error.is_network_error(e)) {
+      } else if (Api.err.is_net_err(e)) {
         Xss.sanitize_render('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
         Catch.handle_exception(e);

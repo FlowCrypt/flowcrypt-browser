@@ -57,9 +57,9 @@ Catch.try(async () => {
       try {
         keys = await Api.gmail.fetch_key_backups(account_email);
       } catch (e) {
-        if (Api.error.is_network_error(e)) {
+        if (Api.err.is_net_err(e)) {
           Xss.sanitize_render('#content', `Could not check for backups: no internet. ${Ui.retry_link()}`);
-        } else if(Api.error.is_auth_popup_needed(e)) {
+        } else if(Api.err.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           Xss.sanitize_render('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retry_link()}`);
         } else {
@@ -167,9 +167,9 @@ Catch.try(async () => {
       try {
         await do_backup_on_email_provider(account_email, prv.armor());
       } catch (e) {
-        if(Api.error.is_network_error(e)) {
+        if(Api.err.is_net_err(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
+        } else if(parent_tab_id && Api.err.is_auth_popup_needed(e)) {
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
@@ -221,14 +221,14 @@ Catch.try(async () => {
       return;
     }
     let btn = $('.action_manual_backup');
-    let original_btn_text = btn.text();
+    let orig_btn_text = btn.text();
     Xss.sanitize_render(btn, Ui.spinner('white'));
     try {
       await do_backup_on_email_provider(account_email, primary_ki.private);
     } catch (e) {
-      if(Api.error.is_network_error(e)) {
+      if(Api.err.is_net_err(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
-      } else if(parent_tab_id && Api.error.is_auth_popup_needed(e)) {
+      } else if(parent_tab_id && Api.err.is_auth_popup_needed(e)) {
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
@@ -236,7 +236,7 @@ Catch.try(async () => {
         return alert(`Error happened: ${e.message}`);
       }
     } finally {
-      btn.text(original_btn_text);
+      btn.text(orig_btn_text);
     }
     await write_backup_done_and_render(false, 'inbox');
   };

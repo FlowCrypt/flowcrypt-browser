@@ -133,7 +133,7 @@ export class Composer {
   private supplied_from: string;
   private supplied_to: string;
   private frame_id: string;
-  private reference_body_height: number;
+  private ref_body_height: number;
 
   constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
     this.attach = new AttUI(() => this.get_max_attachment_size_and_oversize_notice(subscription));
@@ -363,12 +363,12 @@ export class Composer {
         }
       }
     } catch (e) {
-      if(Api.error.is_network_error(e)) {
+      if(Api.err.is_net_err(e)) {
         Xss.sanitize_render('body', `Failed to load draft. ${Ui.retry_link()}`);
-      } else if (Api.error.is_auth_popup_needed(e)) {
+      } else if (Api.err.is_auth_popup_needed(e)) {
         this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
         Xss.sanitize_render('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retry_link()}`);
-      } else if (this.is_reply_box && Api.error.is_not_found(e)) {
+      } else if (this.is_reply_box && Api.err.is_not_found(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
         await Ui.time.sleep(500);
         await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
@@ -441,9 +441,9 @@ export class Composer {
           this.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
-        if(Api.error.is_network_error(e)) {
+        if(Api.err.is_net_err(e)) {
           this.S.cached('send_btn_note').text('Not saved (network)');
-        } else if (Api.error.is_auth_popup_needed(e)) {
+        } else if (Api.err.is_auth_popup_needed(e)) {
           this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
@@ -463,9 +463,9 @@ export class Composer {
       try {
         await this.app.email_provider_draft_delete(this.draft_id);
       } catch(e) {
-        if (Api.error.is_auth_popup_needed(e)) {
+        if (Api.err.is_auth_popup_needed(e)) {
           this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
-        } else if(!Api.error.is_network_error(e)) {
+        } else if(!Api.err.is_net_err(e)) {
           Catch.handle_exception(e);
         }
       }
@@ -572,16 +572,16 @@ export class Composer {
   }
 
   private handle_send_error(e: Error|StandardError) {
-    if(Api.error.is_network_error(e)) {
+    if(Api.err.is_net_err(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
-    } else if(Api.error.is_auth_popup_needed(e)) {
+    } else if(Api.err.is_auth_popup_needed(e)) {
       this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
       alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
-    } else if (Api.error.is_auth_error(e)) {
+    } else if (Api.err.is_auth_err(e)) {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
         this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
       }
-    } else if(Api.error.is_bad_request(e)) {
+    } else if(Api.err.is_bad_request(e)) {
       if(confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
         let page = '/chrome/settings/modules/help.htm';
         let page_url_params = {bug_report: Extension.prepare_bug_report('composer: send: bad request', {}, e)};
@@ -711,7 +711,7 @@ export class Composer {
       }
       return admin_codes;
     } catch (e) {
-      if (Api.error.is_auth_error(e)) {
+      if (Api.err.is_auth_err(e)) {
         throw e;
       } else {
         throw new ComposerNetworkError(e && typeof e === 'object' && e.message ? e.message : 'Some files failed to upload, please try again');
@@ -732,7 +732,7 @@ export class Composer {
       const size_mb = att.length / (1024 * 1024);
       const size_text = size_mb < 0.1 ? '' : ` ${(Math.round(size_mb * 10) / 10)}MB`;
       const link_text = `Att: ${att.name} (${att.type})${size_text}`;
-      const cryptup_data = Str.html_attribute_encode({size: att.length, type: att.type, name: att.name});
+      const cryptup_data = Str.html_attr_encode({size: att.length, type: att.type, name: att.name});
       plaintext += `<a href="${att.url}" class="cryptup_file" cryptup-data="${cryptup_data}">${link_text}</a>\n`;
     }
     return plaintext;
@@ -746,18 +746,18 @@ export class Composer {
     try {
       response = await Api.fc.message_token();
     } catch (msg_token_err) {
-      if (Api.error.is_auth_error(msg_token_err)) {
+      if (Api.err.is_auth_err(msg_token_err)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
           this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
         }
         throw new ComposerResetBtnTrigger();
-      } else if (Api.error.is_standard_error(msg_token_err, 'subscription')) {
+      } else if (Api.err.is_standard_err(msg_token_err, 'subscription')) {
         return plaintext;
       } else {
         throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + msg_token_err.message);
       }
     }
-    return plaintext + '\n\n' + Ui.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.html_attribute_encode({
+    return plaintext + '\n\n' + Ui.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.html_attr_encode({
       sender: this.supplied_from || this.get_sender_from_dom(),
       recipient: Value.arr.without_value(Value.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
       subject,
@@ -862,7 +862,7 @@ export class Composer {
           return this.PUBKEY_LOOKUP_RESULT_FAIL;
         }
       } catch (e) {
-        if(!Api.error.is_network_error(e) && !Api.error.is_server_error(e)) {
+        if(!Api.err.is_net_err(e) && !Api.err.is_server_err(e)) {
           Catch.handle_exception(e);
         }
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
@@ -919,19 +919,19 @@ export class Composer {
    * (else ff will keep expanding body element beyond frame view)
    * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
    *
-   * @param update_reference_body_height - set to true to take a new snapshot of intended html body height
+   * @param update_ref_body_height - set to true to take a new snapshot of intended html body height
    */
-  private set_input_text_height_manually_if_needed = (update_reference_body_height:boolean=false) => {
+  private set_input_text_height_manually_if_needed = (update_ref_body_height:boolean=false) => {
     if (!this.is_reply_box && Env.browser().name === 'firefox') {
       let cell_height_except_text = 0;
       this.S.cached('all_cells_except_text').each(function() {
         let cell = $(this);
         cell_height_except_text += cell.is(':visible') ? (cell.parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
       });
-      if (update_reference_body_height || !this.reference_body_height) {
-        this.reference_body_height = this.S.cached('body').height() || 605;
+      if (update_ref_body_height || !this.ref_body_height) {
+        this.ref_body_height = this.S.cached('body').height() || 605;
       }
-      this.S.cached('input_text').css('height', this.reference_body_height - cell_height_except_text);
+      this.S.cached('input_text').css('height', this.ref_body_height - cell_height_except_text);
     }
   }
 
@@ -1025,9 +1025,9 @@ export class Composer {
     } catch (e) {
       if (e.data) {
         Xss.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.html_escape(e.data)}`);
-      } else if(Api.error.is_network_error(e)) {
+      } else if(Api.err.is_net_err(e)) {
         // todo: retry
-      } else if(Api.error.is_auth_popup_needed(e)) {
+      } else if(Api.err.is_auth_popup_needed(e)) {
         this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
       } else {
         Catch.handle_exception(e);
@@ -1450,7 +1450,7 @@ export class Composer {
     }
   }
 
-  private format_password_protected_email = (short_id: string, original_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
+  private format_password_protected_email = (short_id: string, orig_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
     const msg_url = `${this.FC_WEB_URL}/${short_id}`;
     const a = `<a href="${Xss.html_escape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_msg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
@@ -1467,19 +1467,19 @@ export class Composer {
     html.push(Lang.compose.alternatively_copy_paste[lang] + Xss.html_escape(msg_url) + '<br><br><br>');
     const html_fc_web_url_link = '<a href="' + Xss.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.html_escape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      const html_pgp_msg = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
+      const html_pgp_msg = orig_body['text/html'] ? orig_body['text/html'] : (orig_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
       html.push('<div style="color: #999;">' + html_pgp_msg + '</div>');
-      text.push(original_body['text/plain']);
+      text.push(orig_body['text/plain']);
     }
     html.push('</div>');
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
 
-  private format_email_text_footer = (original_body: SendableMsgBody): SendableMsgBody => {
+  private format_email_text_footer = (orig_body: SendableMsgBody): SendableMsgBody => {
     const email_footer = this.app.storage_get_email_footer();
-    const body: SendableMsgBody = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
-    if (typeof original_body['text/html'] !== 'undefined') {
-      body['text/html'] = original_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
+    const body: SendableMsgBody = {'text/plain': orig_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
+    if (typeof orig_body['text/html'] !== 'undefined') {
+      body['text/html'] = orig_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
     }
     return body;
   }

@@ -24,7 +24,7 @@ export const Lang = {
     refresh_page: 'Refresh page to see more information.',
     wrong_password: 'Wrong password. ',
     decrypt_password_prompt: 'Please enter password to decrypt the message',
-    connection_error: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
+    conn_error: 'Could not connect to email provider to open the message, please refresh the page to try again. ',
     dont_know_how_open: 'Please email us at human@flowcrypt.com to submit a bug report, and mention what software was used to send this message to you. We usually fix similar incompatibilities within one week. ',
     enter_passphrase: 'Enter passphrase',
     to_open_msg: 'to open this message.',

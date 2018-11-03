@@ -72,8 +72,8 @@ export class Mime {
 
   public static reply_headers = (parsed_mime_msg: MimeContent) => {
     let msg_id = parsed_mime_msg.headers['message-id'] || '';
-    let references = parsed_mime_msg.headers['in-reply-to'] || '';
-    return { 'in-reply-to': msg_id, 'references': references + ' ' + msg_id };
+    let refs = parsed_mime_msg.headers['in-reply-to'] || '';
+    return { 'in-reply-to': msg_id, 'references': refs + ' ' + msg_id };
   }
 
   public static resembles_msg = (msg: string|Uint8Array) => {

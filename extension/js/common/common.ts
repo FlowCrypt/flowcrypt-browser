@@ -43,9 +43,9 @@ export class Env {
     }
   }
 
-  public static runtime_id = (original=false) => {
+  public static runtime_id = (orig=false) => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
-      if (original === true) {
+      if (orig === true) {
         return chrome.runtime.id;
       } else {
         return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
@@ -101,7 +101,7 @@ export class Catch {
 
   public static RUNTIME_VERSION = VERSION;
   public static RUNTIME_ENVIRONMENT = 'undetermined';
-  private static ORIGINAL_ON_ERROR = window.onerror;
+  private static ORIG_ONERROR = window.onerror;
 
   public static handle_error = (error_msg: string|undefined, url: string, line: number, col: number, err: string|Error|Dict<Serializable>, is_manually_called: boolean) => {
     if (typeof err === 'string') {
@@ -139,8 +139,8 @@ export class Catch {
       console.error(err);
       console.log('%c' + error_msg, 'color: #F00; font-weight: bold;');
     }
-    if (is_manually_called !== true && Catch.ORIGINAL_ON_ERROR && Catch.ORIGINAL_ON_ERROR !== (Catch.handle_error as ErrorEventHandler)) {
-      Catch.ORIGINAL_ON_ERROR.apply(null, arguments); // Call any previously assigned handler
+    if (is_manually_called !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.handle_error as ErrorEventHandler)) {
+      Catch.ORIG_ONERROR.apply(null, arguments); // Call any previously assigned handler
     }
     if (err instanceof Error && (err.stack || '').indexOf('PRIVATE') !== -1) {
       return;
@@ -407,9 +407,9 @@ export class Str {
 
   public static regex_escape = (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  public static html_attribute_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
+  public static html_attr_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
 
-  public static html_attribute_decode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
+  public static html_attr_decode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
 
   public static base64url_encode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
@@ -520,7 +520,7 @@ export class Str {
         let element = $(found_link);
         let fc_data = element.attr('cryptup-data');
         if (fc_data) {
-          let a: FlowCryptAttLinkData = Str.html_attribute_decode(fc_data);
+          let a: FlowCryptAttLinkData = Str.html_attr_decode(fc_data);
           if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
             fc_attachments.push(new Att({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
           }
@@ -536,7 +536,7 @@ export class Str {
     if (fc_token_element.length) {
       let fc_data = fc_token_element.attr('cryptup-data');
       if (fc_data) {
-        return Str.html_attribute_decode(fc_data);
+        return Str.html_attr_decode(fc_data);
       }
     }
   }

@@ -178,7 +178,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               let msg = await Api.gmail.msg_get(this.account_email, msg_id, 'full');
               await this.process_atts(msg_id, Api.gmail.find_atts(msg), atts_container, false, new_pgp_atts_names);
             } catch (e) {
-              if (Api.error.is_auth_popup_needed(e)) {
+              if (Api.err.is_auth_popup_needed(e)) {
                 this.notifications.show_auth_popup_needed(this.account_email);
               }
               $(new_pgp_atts).find('.attachment_loader').text('Failed to load');
@@ -417,12 +417,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           } else {
             let secure_reply_box_xss_safe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embedded_reply(this.get_conversation_params(convo_root_el!), editable)}</div>`;
             if (reply_box.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
-              let original_children = reply_box.children();
+              let orig_children = reply_box.children();
               reply_box.addClass('reply_message_evaluated').append(secure_reply_box_xss_safe); // xss-safe-factory
               if (this.gmail_variant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
-                original_children.attr('style', this.css_hidden);
+                orig_children.attr('style', this.css_hidden);
               } else { // in old gmail, we can safely hide it without causing freezes navigating away
-                original_children.hide();
+                orig_children.hide();
               }
             } else { // non-activated reply box: replaced so that originally bound events would go with it (prevents inbox freezing)
               reply_box.replaceWith(secure_reply_box_xss_safe); // xss-safe-factory

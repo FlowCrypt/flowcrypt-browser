@@ -34,7 +34,7 @@ Catch.try(async () => {
         return;
       }
     }
-    let original_button_text = $(target).text();
+    let orig_btn_text = $(target).text();
     let button = this;
     Xss.sanitize_render(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
@@ -46,14 +46,14 @@ Catch.try(async () => {
         alert(`Message sent! You will find your response in ${my_email}, check your email later. Thanks!`);
         BrowserMsg.send(parent_tab_id, 'close_page');
       } else {
-        $(button).text(original_button_text);
+        $(button).text(orig_btn_text);
         alert('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
-      if(!Api.error.is_network_error(e)) {
+      if(!Api.err.is_net_err(e)) {
         Catch.handle_exception(e);
       }
-      $(button).text(original_button_text);
+      $(button).text(orig_btn_text);
       alert('There was an error sending message. Our direct email is human@flowcrypt.com');
     }
   }));

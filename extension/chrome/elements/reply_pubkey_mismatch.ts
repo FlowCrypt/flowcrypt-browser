@@ -49,9 +49,9 @@ Catch.try(async () => {
       additional_msg_headers = { 'In-Reply-To': thread_msg_id_last, 'References': thread_msg_refs_last + ' ' + thread_msg_id_last };
     }
   } catch (e) {
-    if(Api.error.is_auth_popup_needed(e)) {
+    if(Api.err.is_auth_popup_needed(e)) {
       BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
-    } else if (Api.error.is_network_error(e)) {
+    } else if (Api.err.is_net_err(e)) {
       // todo - render retry button
     } else {
       Catch.handle_exception(e);
@@ -71,11 +71,11 @@ Catch.try(async () => {
       BrowserMsg.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
       Xss.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
-      if(Api.error.is_auth_popup_needed(e)) {
+      if(Api.err.is_auth_popup_needed(e)) {
         $(target).text(send_button_text);
         BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         alert('Google account permission needed, please re-connect account and try again.');
-      } else if(Api.error.is_network_error(e)) {
+      } else if(Api.err.is_net_err(e)) {
         $(target).text(send_button_text);
         alert('No internet connection, please try again.');
       } else {

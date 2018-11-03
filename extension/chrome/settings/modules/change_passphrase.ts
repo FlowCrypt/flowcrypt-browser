@@ -28,7 +28,7 @@ Catch.try(async () => {
   let [primary_ki] = await Store.keys_get(account_email, ['primary']);
   Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
 
-  let original_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
+  let orig_passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
 
   let display_block = (name: string) => {
     let blocks = ['step_0_enter', 'step_1_password', 'step_2_confirm', 'step_3_done'];
@@ -38,10 +38,10 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  if (original_passphrase === null) {
+  if (orig_passphrase === null) {
     display_block('step_0_enter');
   } else {
-    if (original_passphrase === '') {
+    if (orig_passphrase === '') {
       $('h1').text('Set a pass phrase');
     } else {
       $('h1').text('Change your pass phrase');
@@ -52,7 +52,7 @@ Catch.try(async () => {
   $('.action_enter').click(Ui.event.handle(async () => {
     let key = openpgp.key.readArmored(primary_ki.private).keys[0];
     if(await Pgp.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
-      original_passphrase = $('#original_password').val() as string; // text input
+      orig_passphrase = $('#original_password').val() as string; // text input
       display_block('step_1_password');
     } else {
       alert('Pass phrase did not match, please try again.');
@@ -87,7 +87,7 @@ Catch.try(async () => {
     } else {
       let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
       if(!prv.isDecrypted()) {
-        await Pgp.key.decrypt(prv, [original_passphrase!]); // !null because we checked for this above, and user entry cannot be null
+        await Pgp.key.decrypt(prv, [orig_passphrase!]); // !null because we checked for this above, and user entry cannot be null
       }
       await Settings.openpgp_key_encrypt(prv, new_passphrase);
       let stored_passphrase = await Store.passphrase_get(account_email, primary_ki.longid, true);

@@ -91,7 +91,7 @@ let account_update_status_keyserver = async (account_email: string) => { // chec
       }
       await Store.set(account_email, { addresses_keyserver });
     } catch(e) {
-      if(!Api.error.is_network_error(e)) {
+      if(!Api.err.is_net_err(e)) {
         Catch.handle_exception(e);
       }
     }
@@ -123,7 +123,7 @@ let account_update_status_pks = async (account_email: string) => { // checks if 
 };
 
 let report_useful_errors = (e: any) => {
-  if(!Api.error.is_network_error(e) && !Api.error.is_server_error(e)) {
+  if(!Api.err.is_net_err(e) && !Api.err.is_server_err(e)) {
     Catch.handle_exception(e);
   }
 };

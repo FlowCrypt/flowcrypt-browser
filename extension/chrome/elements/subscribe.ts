@@ -23,8 +23,8 @@ Catch.try(async () => {
   if (auth_info.account_email) {
     account_email = auth_info.account_email; // todo - allow user to select and confirm email address
   }
-  let original_button_content: string;
-  let original_button_selector: JQuery<HTMLElement>;
+  let orig_btn_content: string;
+  let orig_btn_sel: JQuery<HTMLElement>;
 
   let handle_error_response = (e: any) => {
     let render_err = (msg: string, e?: any) => {
@@ -32,11 +32,11 @@ Catch.try(async () => {
       let debug = e ? `<pre>${Xss.html_escape(JSON.stringify(e, null, 2))}</pre>` : '';
       Xss.sanitize_render('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retry_link()}</div><br><br>${debug}`);
     };
-    if(Api.error.is_network_error(e)) {
+    if(Api.err.is_net_err(e)) {
       render_err('network error');
-    } else if (Api.error.is_auth_error(e)) {
+    } else if (Api.err.is_auth_err(e)) {
       render_err('auth error', e);
-    } else if(Api.error.is_standard_error(e, 'email')) {
+    } else if(Api.err.is_standard_err(e, 'email')) {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
       render_status_text(e.message || e.error.message);
@@ -62,13 +62,13 @@ Catch.try(async () => {
   };
 
   let button_spin = (element: HTMLElement) => {
-    original_button_content = $(element).html();
-    original_button_selector = $(element);
+    orig_btn_content = $(element).html();
+    orig_btn_sel = $(element);
     Xss.sanitize_render(element, Ui.spinner('white'));
   };
 
   let button_restore = () => {
-    Xss.sanitize_render(original_button_selector, original_button_content);
+    Xss.sanitize_render(orig_btn_sel, orig_btn_content);
   };
 
   let handle_successful_upgrade = () => {
@@ -92,10 +92,10 @@ Catch.try(async () => {
   try {
     await Api.fc.account_check_sync();
   } catch (e) {
-    if (Api.error.is_auth_error(e)) {
+    if (Api.err.is_auth_err(e)) {
       // todo - handle auth error - add device
       Xss.sanitize_render('#content', `Failed to load - unknown device. ${Ui.retry_link()}`);
-    } else if (Api.error.is_network_error(e)) {
+    } else if (Api.err.is_net_err(e)) {
       Xss.sanitize_render('#content', `Failed to load due to internet connection. ${Ui.retry_link()}`);
     } else {
       Catch.handle_exception(e);
@@ -199,7 +199,7 @@ Catch.try(async () => {
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');
       } catch(e) {
-        if(!Api.error.is_auth_error(e) && !Api.error.is_network_error(e)) {
+        if(!Api.err.is_auth_err(e) && !Api.err.is_net_err(e)) {
           Catch.handle_exception(e);
         }
       }

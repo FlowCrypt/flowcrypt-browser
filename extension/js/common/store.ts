@@ -145,7 +145,7 @@ export class Store {
     }
   }
 
-  private static account_storage_object_keys_to_original(account_or_accounts: string|string[], storage_object: RawStore): BaseStore | Dict<BaseStore> {
+  private static account_storage_object_keys_to_orig(account_or_accounts: string|string[], storage_object: RawStore): BaseStore | Dict<BaseStore> {
     if (typeof account_or_accounts === 'string') {
       let fixed_keys_object: BaseStore = {};
       for (let k of Object.keys(storage_object)) {
@@ -158,7 +158,7 @@ export class Store {
     } else {
       let results_by_account: Dict<BaseStore> = {};
       for (let account of account_or_accounts) {
-        results_by_account[account] = Store.account_storage_object_keys_to_original(account, storage_object) as BaseStore;
+        results_by_account[account] = Store.account_storage_object_keys_to_orig(account, storage_object) as BaseStore;
       }
       return results_by_account;
     }
@@ -273,7 +273,7 @@ export class Store {
   static get_global(keys: string[]): Promise<GlobalStore> {
     return new Promise(resolve => {
       chrome.storage.local.get(Store.index(Store.global_storage_scope, keys) as string[], (storage_object: RawStore) => {
-        resolve(Store.account_storage_object_keys_to_original(Store.global_storage_scope, storage_object) as GlobalStore);
+        resolve(Store.account_storage_object_keys_to_orig(Store.global_storage_scope, storage_object) as GlobalStore);
       });
     });
   }
@@ -281,7 +281,7 @@ export class Store {
   static get_account(account: string, keys: string[]): Promise<AccountStore> {
     return new Promise(resolve => {
       chrome.storage.local.get(Store.index(account, keys) as string[], (storage_object: RawStore) => {
-        resolve(Store.account_storage_object_keys_to_original(account, storage_object) as AccountStore);
+        resolve(Store.account_storage_object_keys_to_orig(account, storage_object) as AccountStore);
       });
     });
   }
@@ -289,7 +289,7 @@ export class Store {
   static get_accounts(accounts: string[], keys: string[]): Promise<Dict<AccountStore>> {
     return new Promise(resolve => {
       chrome.storage.local.get(Store.index(accounts, keys) as string[], (storage_object: RawStore) => {
-        resolve(Store.account_storage_object_keys_to_original(accounts, storage_object) as Dict<AccountStore>);
+        resolve(Store.account_storage_object_keys_to_orig(accounts, storage_object) as Dict<AccountStore>);
       });
     });
   }

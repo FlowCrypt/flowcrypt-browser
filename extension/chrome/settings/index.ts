@@ -92,7 +92,7 @@ Catch.try(async () => {
     },
   }, tab_id);
 
-  let display_original = (selector: string) => {
+  let display_orig = (selector: string) => {
     let filterable = $(selector);
     filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
     filterable.filter('table').css('display', 'table');
@@ -121,7 +121,7 @@ Catch.try(async () => {
         if (!Api.gmail.has_scope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
-        display_original('.hide_if_setup_not_done');
+        display_orig('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
         if (url_params.advanced) {
           $("#settings").toggleClass("advanced");
@@ -132,7 +132,7 @@ Catch.try(async () => {
         }
         add_key_rows_html(private_keys);
       } else {
-        display_original('.show_if_setup_not_done');
+        display_orig('.show_if_setup_not_done');
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     } else {
@@ -165,11 +165,11 @@ Catch.try(async () => {
           status_container.find('.status-indicator').addClass('inactive');
         }
       } catch (e) {
-        if (Api.error.is_auth_error(e)) {
+        if (Api.err.is_auth_err(e)) {
           let action_reauth = Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
           Xss.sanitize_render(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
-        } else if (Api.error.is_network_error(e)) {
+        } else if (Api.err.is_net_err(e)) {
           Xss.sanitize_render(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
           $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
         } else {
@@ -211,13 +211,13 @@ Catch.try(async () => {
         }
       }
     } catch (e) {
-      if (Api.error.is_auth_popup_needed(e)) {
+      if (Api.err.is_auth_popup_needed(e)) {
         $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
           .off().click(Ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
-      } else if (Api.error.is_auth_error(e)) {
+      } else if (Api.err.is_auth_err(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
           .off().click(Ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
-      } else if (Api.error.is_network_error(e)) {
+      } else if (Api.err.is_net_err(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.html_escape(String(e))}`);
@@ -232,7 +232,7 @@ Catch.try(async () => {
       await Api.fc.account_check_sync();
       liveness = 'live';
     } catch (e) {
-      if (!Api.error.is_network_error(e)) {
+      if (!Api.err.is_net_err(e)) {
         Catch.handle_exception(e);
         liveness = 'err';
       } else {

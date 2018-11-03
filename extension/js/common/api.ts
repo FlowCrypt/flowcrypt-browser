@@ -124,13 +124,13 @@ export class Api {
     parse_id_token: (id_token: string) => JSON.parse(atob(id_token.split(/\./g)[1])),
   };
 
-  public static error = {
-    is_network_error: (e: Thrown) => {
+  public static err = {
+    is_net_err: (e: Thrown) => {
       if(e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
       if (e && typeof e === 'object') {
-        if (Api.error.is_standard_error(e, 'network')) { // StandardError
+        if (Api.err.is_standard_err(e, 'network')) { // StandardError
           return true;
         }
         if (e.status === 0 && e.statusText === 'error') { // $.ajax network error
@@ -139,9 +139,9 @@ export class Api {
       }
       return false;
     },
-    is_auth_error: (e: Thrown) => {
+    is_auth_err: (e: Thrown) => {
       if (e && typeof e === 'object') {
-        if(Api.error.is_standard_error(e, 'auth')) {
+        if(Api.err.is_standard_err(e, 'auth')) {
           return true; // API auth error response
         }
         if (e.status === 401) { // $.ajax auth error
@@ -150,7 +150,7 @@ export class Api {
       }
       return false;
     },
-    is_standard_error: (e: Thrown, internal_type: string) => {
+    is_standard_err: (e: Thrown, internal_type: string) => {
       if(e && typeof e === 'object') {
         if(e.internal === internal_type) {
           return true;
@@ -171,7 +171,7 @@ export class Api {
     },
     is_not_found: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
     is_bad_request: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
-    is_server_error: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
+    is_server_err: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
   };
 
   public static google = {
@@ -1004,7 +1004,7 @@ export class Api {
       try {
         return await $.ajax(request);
       } catch (e) {
-        if (Api.error.is_auth_error(e)) { // force refresh token
+        if (Api.err.is_auth_err(e)) { // force refresh token
           request.headers!.Authorization = await Api.internal.google_api_authorization_header(account_email, true);
           return await $.ajax(request);
         }

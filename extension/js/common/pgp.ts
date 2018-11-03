@@ -135,9 +135,9 @@ export class Pgp {
         replace: h.replace,
       };
     },
-    detect_blocks: (original_text: string) => {
+    detect_blocks: (orig_text: string) => {
       let blocks: MsgBlock[] = [];
-      let normalized = Str.normalize(original_text);
+      let normalized = Str.normalize(orig_text);
       let start_at = 0;
       while(true) {
         let r = Pgp.internal.crypto_armor_detect_block_next(normalized, start_at);
@@ -162,14 +162,14 @@ export class Pgp {
      *
      * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
      */
-    replace_blocks: (factory: XssSafeFactory, original_text: string, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
-      let {blocks} = Pgp.armor.detect_blocks(original_text);
+    replace_blocks: (factory: XssSafeFactory, orig_text: string, msg_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
+      let {blocks} = Pgp.armor.detect_blocks(orig_text);
       if (blocks.length === 1 && blocks[0].type === 'text') {
         return;
       }
       let r = '';
       for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, message_id, sender_email, is_outgoing);
+        r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, msg_id, sender_email, is_outgoing);
       }
       return r;
     },
@@ -493,11 +493,11 @@ export class Pgp {
 
   public static internal = {
     crypto_armor_block_object: (type: MsgBlockType, content: string, missing_end=false): MsgBlock => ({type, content, complete: !missing_end}),
-    crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
+    crypto_armor_detect_block_next: (orig_text: string, start_at: number) => {
       let result = {found: [] as MsgBlock[], continue_at: null as number|null};
-      let begin = original_text.indexOf(Pgp.armor.headers('null').begin, start_at);
+      let begin = orig_text.indexOf(Pgp.armor.headers('null').begin, start_at);
       if (begin !== -1) { // found
-        let potential_begin_header = original_text.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
+        let potential_begin_header = orig_text.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
         for (let _type of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
           let type = _type as ReplaceableMsgBlockType;
           let block_header_def = Pgp.ARMOR_HEADER_DICT[type];
@@ -505,7 +505,7 @@ export class Pgp {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
             if (index_of_confirmed_begin === 0 || (type === 'password_message' && index_of_confirmed_begin >= 0 && index_of_confirmed_begin < 15)) { // identified beginning of a specific block
               if (begin > start_at) {
-                let potential_text_before_block_begun = original_text.substring(start_at, begin).trim();
+                let potential_text_before_block_begun = orig_text.substring(start_at, begin).trim();
                 if (potential_text_before_block_begun) {
                   result.found.push(Pgp.internal.crypto_armor_block_object('text', potential_text_before_block_begun));
                 }
@@ -513,11 +513,11 @@ export class Pgp {
               let end_index: number = -1;
               let found_block_end_header_length = 0;
               if (typeof block_header_def.end === 'string') {
-                end_index = original_text.indexOf(block_header_def.end, begin + block_header_def.begin.length);
+                end_index = orig_text.indexOf(block_header_def.end, begin + block_header_def.begin.length);
                 found_block_end_header_length = block_header_def.end.length;
               } else { // regexp
-                let original_text_after_begin_index = original_text.substring(begin);
-                let regexp_end = original_text_after_begin_index.match(block_header_def.end);
+                let orig_text_after_begin_index = orig_text.substring(begin);
+                let regexp_end = orig_text_after_begin_index.match(block_header_def.end);
                 if (regexp_end !== null) {
                   end_index = regexp_end.index ? begin + regexp_end.index : -1;
                   found_block_end_header_length = regexp_end[0].length;
@@ -525,9 +525,9 @@ export class Pgp {
               }
               if (end_index !== -1) { // identified end of the same block
                 if (type !== 'password_message') {
-                  result.found.push(Pgp.internal.crypto_armor_block_object(type, original_text.substring(begin, end_index + found_block_end_header_length).trim()));
+                  result.found.push(Pgp.internal.crypto_armor_block_object(type, orig_text.substring(begin, end_index + found_block_end_header_length).trim()));
                 } else {
-                  let pm_full_text = original_text.substring(begin, end_index + found_block_end_header_length).trim();
+                  let pm_full_text = orig_text.substring(begin, end_index + found_block_end_header_length).trim();
                   let pm_short_id_match = pm_full_text.match(/[a-zA-Z0-9]{10}$/);
                   if (pm_short_id_match) {
                     result.found.push(Pgp.internal.crypto_armor_block_object(type, pm_short_id_match[0]));
@@ -537,15 +537,15 @@ export class Pgp {
                 }
                 result.continue_at = end_index + found_block_end_header_length;
               } else { // corresponding end not found
-                result.found.push(Pgp.internal.crypto_armor_block_object(type, original_text.substr(begin), true));
+                result.found.push(Pgp.internal.crypto_armor_block_object(type, orig_text.substr(begin), true));
               }
               break;
             }
           }
         }
       }
-      if (original_text && !result.found.length) { // didn't find any blocks, but input is non-empty
-        let potential_text = original_text.substr(start_at).trim();
+      if (orig_text && !result.found.length) { // didn't find any blocks, but input is non-empty
+        let potential_text = orig_text.substr(start_at).trim();
         if (potential_text) {
           result.found.push(Pgp.internal.crypto_armor_block_object('text', potential_text));
         }

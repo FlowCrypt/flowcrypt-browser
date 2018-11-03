@@ -219,11 +219,11 @@ export class Ui {
       };
     },
     __dispatch_err: (e: any, err_handler?: BrowserEventErrorHandler) => {
-      if(Api.error.is_network_error(e) && err_handler && err_handler.network) {
+      if(Api.err.is_net_err(e) && err_handler && err_handler.network) {
         err_handler.network();
-      } else if (Api.error.is_auth_error(e) && err_handler && err_handler.auth) {
+      } else if (Api.err.is_auth_err(e) && err_handler && err_handler.auth) {
         err_handler.auth();
-      } else if (Api.error.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
+      } else if (Api.err.is_auth_popup_needed(e) && err_handler && err_handler.auth_popup) {
         err_handler.auth_popup();
       } else if (err_handler && err_handler.other) {
         err_handler.other(e);
@@ -641,11 +641,11 @@ export class XssSafeFactory {
   private iframe = (src: string, classes:string[]=[], element_attrs:UrlParams={}) => {
     let id = Env.url_params(['frame_id'], src).frame_id as string;
     let class_attr = (classes || []).concat(this.reloadable_class).join(' ');
-    let attributes: Dict<string> = {id, class: class_attr, src};
+    let attrs: Dict<string> = {id, class: class_attr, src};
     for (let name of Object.keys(element_attrs)) {
-      attributes[name] = String(element_attrs[name]);
+      attrs[name] = String(element_attrs[name]);
     }
-    return Ui.e('iframe', attributes);
+    return Ui.e('iframe', attrs);
   }
 
   private div_dialog_DANGEROUS = (content_MUST_BE_XSS_SAFE: string, data_test: string) => { // xss-dangerous-function

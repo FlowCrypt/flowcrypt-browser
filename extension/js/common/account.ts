@@ -43,7 +43,7 @@ export class FlowCryptAccount {
     try {
       return await this.do_subscribe(chosen_product, source);
     } catch (e) {
-      if (Api.error.is_auth_error(e)) {
+      if (Api.err.is_auth_err(e)) {
         await this.save_subscription_attempt(chosen_product, source);
         let response = await this.register(account_email);
         return await this.do_subscribe(chosen_product, source);
@@ -78,7 +78,7 @@ export class FlowCryptAccount {
       try {
         return await Api.fc.account_login(account_email, token);
       } catch (e) {
-        if (Api.error.is_standard_error(e, 'token')) {
+        if (Api.err.is_standard_err(e, 'token')) {
           last_token_error = e;
         } else {
           throw e;

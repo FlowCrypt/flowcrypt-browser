@@ -79,13 +79,13 @@ export class BgAttests {
           try {
             msgs = await BgAttests.fetch_attest_emails(account_email);
           } catch(e) {
-            if(Api.error.is_network_error(e)) {
+            if(Api.err.is_net_err(e)) {
               console.info('cannot fetch attest emails - network error - ' + account_email);
               return;
-            } else if(Api.error.is_auth_popup_needed(e) || Api.error.is_auth_error(e)) {
+            } else if(Api.err.is_auth_popup_needed(e) || Api.err.is_auth_err(e)) {
               console.info('cannot fetch attest emails - Google auth or token error in bg page - ' + account_email);
               return;
-            } else if(Api.error.is_server_error(e)) {
+            } else if(Api.err.is_server_err(e)) {
               console.info('cannot fetch attest emails - Google server error ' + account_email);
               return;
             } else {
@@ -142,7 +142,7 @@ export class BgAttests {
                 throw new AttestError(`Refused by Attester. Email human@flowcrypt.com to find out why.\n\n${JSON.stringify(api_r)}`, attest_packet_text, account_email);
               }
             } catch (e) {
-              if(Api.error.is_network_error(e)) {
+              if(Api.err.is_net_err(e)) {
                 throw new AttestError('Attester API not available (network error)', attest_packet_text, account_email);
               }
               throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${e.message}`, attest_packet_text, account_email);

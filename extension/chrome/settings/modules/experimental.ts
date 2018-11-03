@@ -47,9 +47,9 @@ Catch.try(async () => {
         let all = await Settings.refresh_account_aliases(account_email);
         alert('Updated to: ' + all.join(', '));
       } catch(e) {
-        if(Api.error.is_network_error(e)) {
+        if(Api.err.is_net_err(e)) {
           alert('Network error, please try again');
-        } else if(Api.error.is_auth_popup_needed(e)) {
+        } else if(Api.err.is_auth_popup_needed(e)) {
           alert('Error: account needs to be re-connected first.');
           BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
         } else {
