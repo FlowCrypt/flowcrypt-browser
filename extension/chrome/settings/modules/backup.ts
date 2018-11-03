@@ -204,19 +204,19 @@ Catch.try(async () => {
   };
 
   let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
-    let email_message = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
-    let email_attachments = [as_backup_file(account_email, armored_key)];
-    let message = await Api.common.message(account_email, account_email, account_email, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': email_message}, email_attachments);
+    let email_msg = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
+    let email_atts = [as_backup_file(account_email, armored_key)];
+    let msg = await Api.common.msg(account_email, account_email, account_email, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': email_msg}, email_atts);
     if (email_provider === 'gmail') {
-      return await Api.gmail.message_send(account_email, message);
+      return await Api.gmail.msg_send(account_email, msg);
     } else {
       throw Error(`Backup method not implemented for ${email_provider}`);
     }
   };
 
   let backup_on_email_provider_and_update_ui = async (primary_ki: KeyInfo) => {
-    let pass_phrase = await Store.passphrase_get(account_email, primary_ki.longid);
-    if (!pass_phrase || !await is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
+    let pp = await Store.passphrase_get(account_email, primary_ki.longid);
+    if (!pp || !await is_pass_phrase_strong_enough(primary_ki, pp)) {
       alert('Your key is not protected with a strong pass phrase, skipping');
       return;
     }

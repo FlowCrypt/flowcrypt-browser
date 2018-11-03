@@ -9,7 +9,7 @@ import { FlowCryptAccount } from './../../js/common/account.js';
 import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api.js';
 
-import { BrowserMessageHandler, BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsgHandler, BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
@@ -47,7 +47,7 @@ Catch.try(async () => {
     }
   };
 
-  let stripe_credit_card_entered_handler: BrowserMessageHandler = async (data: {token: string}, sender, respond) => {
+  let stripe_credit_card_entered_handler: BrowserMsgHandler = async (data: {token: string}, sender, respond) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
       await flowcrypt_account.subscribe(account_email, flowcrypt_account.PRODUCTS.advanced_monthly, data.token);

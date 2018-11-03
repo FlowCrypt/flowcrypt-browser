@@ -178,7 +178,7 @@ Catch.try(async () => {
     }
   };
 
-  let renderable_labels = (label_ids: (R.GmailMessage$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+  let renderable_labels = (label_ids: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return label_ids.map(id => renderable_label(id, placement)).join('');
   };
 
@@ -336,15 +336,15 @@ Catch.try(async () => {
     return Ui.e('div', {id, class: 'message line', html});
   };
 
-  let render_message = async (message: R.GmailMessage) => {
+  let render_message = async (message: R.GmailMsg) => {
     let html_id = thread_message_id(message.id);
     let from = Api.gmail.find_header(message, 'from') || 'unknown';
     try {
-      let m = await Api.gmail.message_get(account_email, message.id, 'raw');
+      let m = await Api.gmail.msg_get(account_email, message.id, 'raw');
       let {blocks, headers} = await Mime.process(Str.base64url_decode(m.raw!));
       let r = '';
       for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderable_message_block(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+        r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
       }
       let {attachments} = await Mime.decode(Str.base64url_decode(m.raw!));
       if(attachments.length) {
@@ -365,7 +365,7 @@ Catch.try(async () => {
     }
   };
 
-  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: R.GmailMessage) => {
+  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: R.GmailMsg) => {
     let params: UrlParams;
     if(last_message) {
       let to = Api.gmail.find_header(last_message, 'to');

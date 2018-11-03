@@ -10,7 +10,7 @@ import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';
 
 import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
-import { MessageVerifyResult, DecryptErrorTypes, Pgp } from '../../js/common/pgp.js';
+import { MsgVerifyResult, DecryptErrTypes, Pgp } from '../../js/common/pgp.js';
 import { Mime } from '../../js/common/mime.js';
 
 declare const anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
@@ -37,7 +37,7 @@ Catch.try(async () => {
   let passphrase_interval: number|undefined;
   let missing_or_wrong_passprases: Dict<string|null> = {};
   let can_read_emails: undefined|boolean;
-  let password_message_link_result: R.FcLinkMessage;
+  let password_message_link_result: R.FcLinkMsg;
   let admin_codes: string[];
   let user_entered_message_password: string|undefined;
 
@@ -161,7 +161,7 @@ Catch.try(async () => {
   };
 
   let handle_private_key_mismatch = async (account_email: string, message: string) => { // todo - make it work for multiple stored keys
-    let msg_diagnosis = await BgExec.diagnose_message_pubkeys(account_email, message);
+    let msg_diagnosis = await BgExec.diagnose_msg_pubkeys(account_email, message);
     if (msg_diagnosis.found_match) {
       await render_error(Lang.pgp_block.cant_open + Lang.pgp_block.encrypted_correctly_file_bug);
     } else if (msg_diagnosis.receivers === 1) {
@@ -180,7 +180,7 @@ Catch.try(async () => {
   };
 
   let decrypt_and_save_attachment_to_downloads = async (encrypted: Attachment, render_in: JQuery<HTMLElement>) => {
-    let decrypted = await BgExec.crypto_message_decrypt(account_email, encrypted.data(), await decrypt_pwd(), true);
+    let decrypted = await BgExec.crypto_msg_decrypt(account_email, encrypted.data(), await decrypt_pwd(), true);
     if (decrypted.success) {
       let attachment = new Attachment({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
       Attachment.methods.save_to_downloads(attachment, render_in);
@@ -226,7 +226,7 @@ Catch.try(async () => {
     }));
   };
 
-  let render_pgp_signature_check_result = (signature: MessageVerifyResult|null) => {
+  let render_pgp_signature_check_result = (signature: MsgVerifyResult|null) => {
     if (signature) {
       let signer_email = signature.contact ? signature.contact.name || sender_email : sender_email;
       $('#pgp_signature > .cursive > span').text(String(signer_email) || 'Unknown Signer');
@@ -305,14 +305,14 @@ Catch.try(async () => {
     }
   };
 
-  let decide_decrypted_content_formatting_and_render = async (decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MessageVerifyResult|null) => {
+  let decide_decrypted_content_formatting_and_render = async (decrypted_content: Uint8Array|string, is_encrypted: boolean, signature_result: MsgVerifyResult|null) => {
     set_frame_color(is_encrypted ? 'green' : 'gray');
     render_pgp_signature_check_result(signature_result);
     let public_keys: string[] = [];
     if (decrypted_content instanceof Uint8Array) {
       decrypted_content = Str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
     }
-    if (!Mime.resembles_message(decrypted_content)) {
+    if (!Mime.resembles_msg(decrypted_content)) {
       let fc_attachments: Attachment[] = [];
       decrypted_content = Str.extract_fc_attachments(decrypted_content, fc_attachments);
       decrypted_content = Str.strip_fc_reply_token(decrypted_content);
@@ -358,7 +358,7 @@ Catch.try(async () => {
 
   let decrypt_and_render = async (optional_password:string|null=null) => {
     if (typeof signature !== 'string') {
-      let result = await BgExec.crypto_message_decrypt(account_email, message as string|Uint8Array, await decrypt_pwd(optional_password));
+      let result = await BgExec.crypto_msg_decrypt(account_email, message as string|Uint8Array, await decrypt_pwd(optional_password));
       if (typeof result === 'undefined') {
         await render_error(Lang.general.restart_browser_and_try_again);
       } else if (result.success) {
@@ -371,7 +371,7 @@ Catch.try(async () => {
         } else {
           await decide_decrypted_content_formatting_and_render(result.content.text!, Boolean(result.is_encrypted), result.signature); // text!: did not request uint8
         }
-      } else if (result.error.type === DecryptErrorTypes.format) {
+      } else if (result.error.type === DecryptErrTypes.format) {
         if (can_read_emails && message_fetched_from_api !== 'raw') {
           console.info(`re-fetching message ${message_id} from api because looks like bad formatting: ${!message_fetched_from_api ? 'full' : 'raw'}`);
           await initialize(true);
@@ -384,17 +384,17 @@ Catch.try(async () => {
         let [primary_k] = await Store.keys_get(account_email, ['primary']);
         if (!result.longids.chosen && !primary_k) {
           await render_error(Lang.pgp_block.not_properly_set_up + button_html('FlowCrypt settings', 'green settings'));
-        } else if (result.error.type === DecryptErrorTypes.key_mismatch) {
+        } else if (result.error.type === DecryptErrTypes.key_mismatch) {
           if (has_challenge_password && !optional_password) {
             await render_password_prompt('first');
           } else {
             await handle_private_key_mismatch(account_email, message as string);
           }
-        } else if (result.error.type === DecryptErrorTypes.wrong_password) {
+        } else if (result.error.type === DecryptErrTypes.wrong_password) {
           await render_password_prompt('retry');
-        } else if (result.error.type === DecryptErrorTypes.use_password) {
+        } else if (result.error.type === DecryptErrTypes.use_password) {
           await render_password_prompt('first');
-        } else if (result.error.type === DecryptErrorTypes.no_mdc) {
+        } else if (result.error.type === DecryptErrTypes.no_mdc) {
           await render_error('This message may not be safe to open: missing MDC. To open this message, please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
         } else if (result.error) {
           await render_error(`${Lang.pgp_block.cant_open}\n\n<em>${result.error.type}: ${result.error.error}</em>`);
@@ -404,7 +404,7 @@ Catch.try(async () => {
         }
       }
     } else {
-      let signature_result = await BgExec.crypto_message_verify_detached(account_email, message as string|Uint8Array, signature);
+      let signature_result = await BgExec.crypto_msg_verify_detached(account_email, message as string|Uint8Array, signature);
       await decide_decrypted_content_formatting_and_render(message as string, false, signature_result);
     }
   };
@@ -414,7 +414,7 @@ Catch.try(async () => {
     let passphrases = await Promise.all(missing_or_wrong_pp_k_longids.map(longid => Store.passphrase_get(account_email, longid)));
     for (let i of missing_or_wrong_pp_k_longids.keys()) {
       missing_or_wrong_passprases[missing_or_wrong_pp_k_longids[i]] = passphrases[i];
-      await render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_message, undefined);
+      await render_error('<a href="#" class="enter_passphrase">' + Lang.pgp_block.enter_passphrase + '</a> ' + Lang.pgp_block.to_open_msg, undefined);
       clearInterval(passphrase_interval);
       passphrase_interval = Catch.set_interval(check_passphrase_changed, 1000);
       $('.enter_passphrase').click(Ui.event.handle(() => {
@@ -451,11 +451,11 @@ Catch.try(async () => {
     }
   };
 
-  let render_password_encrypted_message_load_fail = async (link_result: R.FcLinkMessage) => {
+  let render_password_encrypted_message_load_fail = async (link_result: R.FcLinkMsg) => {
     if (link_result.expired) {
-      let expiration_m = Lang.pgp_block.message_expired_on + Str.datetime_to_date(link_result.expire) + '. ' + Lang.pgp_block.messages_dont_expire + '\n\n';
+      let expiration_m = Lang.pgp_block.msg_expired_on + Str.datetime_to_date(link_result.expire) + '. ' + Lang.pgp_block.msgs_dont_expire + '\n\n';
       if (link_result.deleted) {
-        expiration_m += Lang.pgp_block.message_destroyed;
+        expiration_m += Lang.pgp_block.msg_destroyed;
       } else if (is_outgoing && admin_codes) {
         expiration_m += '<div class="button gray2 extend_expiration">renew message</div>';
       } else if (!is_outgoing) {
@@ -477,7 +477,7 @@ Catch.try(async () => {
     try {
       if (can_read_emails && message && signature === true) {
         render_text('Loading signature...');
-        let result = await Api.gmail.message_get(account_email, message_id as string, 'raw');
+        let result = await Api.gmail.msg_get(account_email, message_id as string, 'raw');
         if (!result.raw) {
           await decrypt_and_render();
         } else {

@@ -6,9 +6,9 @@ import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbC
 import { Lang } from './lang.js';
 import { Catch, Value, Str, Env, UnreportableError, Dict, UrlParams } from './common.js';
 import { Attachment } from './attachment.js';
-import { BrowserMsg, Extension, BrowserMessageHandler, BrowserWidnow } from './extension.js';
+import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
-import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMessage, RichHeaders, StandardError, SendableMessageBody } from './api.js';
+import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, StandardError, SendableMsgBody } from './api.js';
 
 import { Ui, Xss, AttachmentUI, BrowserEventErrorHandler, Challenge } from './browser.js';
 import { FromToHeaders, Mime } from './mime.js';
@@ -23,34 +23,34 @@ interface ComposerAppFunctionsInterface {
     storage_get_addresses_keyserver: () => string[];
     storage_get_email_footer: () => string|null;
     storage_set_email_footer: (footer: string|null) => Promise<void>;
-    storage_get_hide_message_password: () => boolean;
+    storage_get_hide_msg_password: () => boolean;
     storage_get_subscription: () => Promise<Subscription>;
     storage_get_key: (sender_email: string) => Promise<KeyInfo>;
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>;
     storage_passphrase_get: () => Promise<string|null>;
-    storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise<void>;
+    storage_add_admin_codes: (short_id: string, msg_admin_code: string, attachment_admin_codes: string[]) => Promise<void>;
     storage_contact_get: (email: string[]) => Promise<(Contact|null)[]>;
     storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>;
     storage_contact_save:  (contact: Contact) =>  Promise<void>;
     storage_contact_search: (query: ProviderContactsQuery) => Promise<Contact[]>;
     storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => Contact;
     email_provider_draft_get: (draft_id: string) => Promise<R.GmailDraftGet>;
-    email_provider_draft_create: (mime_message: string) => Promise<R.GmailDraftCreate>;
-    email_provider_draft_update: (draft_id: string, mime_message: string) => Promise<R.GmailDraftUpdate>;
+    email_provider_draft_create: (mime_msg: string) => Promise<R.GmailDraftCreate>;
+    email_provider_draft_update: (draft_id: string, mime_msg: string) => Promise<R.GmailDraftUpdate>;
     email_provider_draft_delete: (draft_id: string) => Promise<R.GmailDraftDelete>;
-    email_provider_message_send: (message: SendableMessage, render_upload_progress: ProgressCallback) => Promise<R.GmailMessageSend>;
+    email_provider_msg_send: (msg: SendableMsg, render_upload_progress: ProgressCallback) => Promise<R.GmailMsgSend>;
     email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void) => void;
-    email_provider_determine_reply_message_header_variables: () => Promise<undefined|{last_message_id: string, headers: {'In-Reply-To': string, 'References': string}}>;
-    email_provider_extract_armored_block: (message_id: string) => Promise<string>;
-    send_message_to_main_window: (channel: string, data?: object) => void;
-    send_message_to_background_script: (channel: string, data?: object) => void;
+    email_provider_determine_reply_msg_header_variables: () => Promise<undefined|{last_msg_id: string, headers: {'In-Reply-To': string, 'References': string}}>;
+    email_provider_extract_armored_block: (msg_id: string) => Promise<string>;
+    send_msg_to_main_window: (channel: string, data?: object) => void;
+    send_msg_to_background_script: (channel: string, data?: object) => void;
     render_footer_dialog: () => void;
     render_add_pubkey_dialog: (emails: string[]) => void;
-    render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => void;
+    render_reinsert_reply_box: (last_msg_id: string, recipients: string[]) => void;
     render_help_dialog: () => void;
     render_sending_address_dialog: () => void;
     factory_attachment: (attachment: Attachment) => string;
-    close_message: () => void;
+    close_msg: () => void;
 }
 
 export class ComposerUserError extends Error {}
@@ -87,7 +87,7 @@ export class Composer {
     icon_help: '.action_feedback',
     icon_sign: '.icon.action_sign',
     prompt: 'div#initial_prompt',
-    reply_message_successful: '#reply_message_successful_container',
+    reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
     replied_attachments: '#attachments',
     contacts: '#contacts',
@@ -122,7 +122,7 @@ export class Composer {
   private recipients_missing_my_key: string[] = [];
   private ks_lookups_by_email: {[key: string]: PubkeySearchResult|Contact} = {};
   private subscribe_result_listener: ((subscription_active: boolean) => void)|undefined;
-  private additional_message_headers: {[key: string]: string} = {};
+  private additional_msg_headers: {[key: string]: string} = {};
   private button_update_timeout: number|null = null;
   private is_reply_box: boolean;
   private tab_id: string;
@@ -159,11 +159,11 @@ export class Composer {
       this.update_footer_icon();
     } else if (this.app.storage_get_email_footer()) { // footer set but subscription not active - subscription expired
       this.app.storage_set_email_footer(null).catch(Catch.handle_exception);
-      this.app.send_message_to_main_window('notification_show', {
+      this.app.send_msg_to_main_window('notification_show', {
         notification: 'Your FlowCrypt ' + (subscription.method === 'trial' ? 'trial' : 'subscription') + ' has ended. Custom email signature (email footer) will no longer be used. <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>',
       });
     }
-    if (this.app.storage_get_hide_message_password()) {
+    if (this.app.storage_get_hide_msg_password()) {
       this.S.cached('input_password').attr('type', 'password');
     }
     this.initialize_compose_box(variables).catch(Catch.rejection);
@@ -219,10 +219,10 @@ export class Composer {
   private handle_errors = (could_not_do_what: string): BrowserEventErrorHandler => {
     return {
       network: () => alert(`Could not ${could_not_do_what} (network error). Please try again.`),
-      auth_popup: () => this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email}),
+      auth_popup: () => this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email}),
       auth: () => {
         if (confirm(`Could not ${could_not_do_what}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
+          this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
         }
       },
       other: (e: any) => {
@@ -244,9 +244,9 @@ export class Composer {
 
   private initialize_actions = () => {
     this.S.cached('icon_pubkey').attr('title', Lang.compose.include_pubkey_icon_title);
-    this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.show_hide_password_or_pubkey_container_and_color_send_button()));
-    this.S.cached('input_password').focus(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
-    this.S.cached('input_password').blur(() => this.show_hide_password_or_pubkey_container_and_color_send_button());
+    this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.show_hide_pw_or_pubkey_container_and_color_send_btn()));
+    this.S.cached('input_password').focus(() => this.show_hide_pw_or_pubkey_container_and_color_send_btn());
+    this.S.cached('input_password').blur(() => this.show_hide_pw_or_pubkey_container_and_color_send_btn());
     this.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       let no_pgp_emails = this.get_recipients_from_dom('no_pgp');
       this.app.render_add_pubkey_dialog(no_pgp_emails);
@@ -296,15 +296,15 @@ export class Composer {
     }, this.handle_errors(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
       await this.draft_delete();
-      this.app.close_message();
+      this.app.close_msg();
     }, this.handle_errors('delete draft')));
     this.S.cached('body').bind({drop: Ui.event.stop(), dragover: Ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
   }
 
-  show_subscribe_dialog_and_wait_for_response: BrowserMessageHandler = (data, sender, respond: (subscribed: boolean) => void) => {
+  show_subscribe_dialog_and_wait_for_response: BrowserMsgHandler = (data, sender, respond: (subscribed: boolean) => void) => {
     this.subscribe_result_listener = respond;
-    this.app.send_message_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
+    this.app.send_msg_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
   }
 
   private initialize_compose_box = async (variables: UrlParams) => {
@@ -320,7 +320,7 @@ export class Composer {
     } else {
       if (this.is_reply_box) {
         if (variables.skip_click_prompt) {
-          await this.render_reply_message_compose_table();
+          await this.render_reply_msg_compose_table();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             if ($(target).attr('id') === 'a_reply') {
@@ -328,7 +328,7 @@ export class Composer {
             } else if ($(target).attr('id') === 'a_forward') {
               this.supplied_to = '';
             }
-            await this.render_reply_message_compose_table((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward');
+            await this.render_reply_msg_compose_table((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward');
           }, this.handle_errors(`activate repply box`)));
         }
       }
@@ -351,22 +351,22 @@ export class Composer {
     }
     try {
       let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
-      let parsed_message = await Mime.decode(Str.base64url_decode(draft_get_response.message.raw!));
-      let armored = Pgp.armor.clip(parsed_message.text || Pgp.armor.strip(parsed_message.html || '') || '');
+      let parsed_msg = await Mime.decode(Str.base64url_decode(draft_get_response.message.raw!));
+      let armored = Pgp.armor.clip(parsed_msg.text || Pgp.armor.strip(parsed_msg.html || '') || '');
       if (armored) {
-        this.S.cached('input_subject').val(parsed_message.headers.subject || '');
-        await this.decrypt_and_render_draft(armored, Mime.headers_to_from(parsed_message));
+        this.S.cached('input_subject').val(parsed_msg.headers.subject || '');
+        await this.decrypt_and_render_draft(armored, Mime.headers_to_from(parsed_msg));
       } else {
         console.info('Api.gmail.draft_get Mime.decode else {}');
         if (this.is_reply_box) {
-          await this.render_reply_message_compose_table();
+          await this.render_reply_msg_compose_table();
         }
       }
     } catch (e) {
       if(Api.error.is_network_error(e)) {
         Xss.sanitize_render('body', `Failed to load draft. ${Ui.retry_link()}`);
       } else if (Api.error.is_auth_popup_needed(e)) {
-        this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+        this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
         Xss.sanitize_render('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retry_link()}`);
       } else if (this.is_reply_box && Api.error.is_not_found(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
@@ -378,7 +378,7 @@ export class Composer {
         console.info('Api.gmail.draft_get success===false');
         Catch.handle_exception(e);
         if (this.is_reply_box) {
-          await this.render_reply_message_compose_table();
+          await this.render_reply_msg_compose_table();
         }
       }
     }
@@ -415,7 +415,7 @@ export class Composer {
       this.draft_save_in_progress = true;
       this.S.cached('send_btn_note').text('Saving');
       let primary_ki = await this.app.storage_get_key(this.account_email);
-      let encrypted = await Pgp.message.encrypt([primary_ki.public], null, null, this.extract_as_text('input_text'), null, true) as OpenPGP.EncryptArmorResult;
+      let encrypted = await Pgp.msg.encrypt([primary_ki.public], null, null, this.extract_as_text('input_text'), null, true) as OpenPGP.EncryptArmorResult;
       let body;
       if (this.thread_id) { // replied message
         body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
@@ -425,10 +425,10 @@ export class Composer {
         body = encrypted.data;
       }
       let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
-      let mime_message = await Mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, []);
+      let mime_msg = await Mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, []);
       try {
         if (!this.draft_id) {
-          let new_draft = await this.app.email_provider_draft_create(mime_message);
+          let new_draft = await this.app.email_provider_draft_create(mime_msg);
           this.S.cached('send_btn_note').text('Saved');
           this.draft_id = new_draft.id;
           await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
@@ -437,14 +437,14 @@ export class Composer {
           // save_draft_in_process will remain true because well.. it's still in process
           await this.draft_save(true); // force_save = true
         } else {
-          await this.app.email_provider_draft_update(this.draft_id, mime_message);
+          await this.app.email_provider_draft_update(this.draft_id, mime_msg);
           this.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
         if(Api.error.is_network_error(e)) {
           this.S.cached('send_btn_note').text('Not saved (network)');
         } else if (Api.error.is_auth_popup_needed(e)) {
-          this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+          this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
           Catch.handle_exception(e);
@@ -464,7 +464,7 @@ export class Composer {
         await this.app.email_provider_draft_delete(this.draft_id);
       } catch(e) {
         if (Api.error.is_auth_popup_needed(e)) {
-          this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+          this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
         } else if(!Api.error.is_network_error(e)) {
           Catch.handle_exception(e);
         }
@@ -475,7 +475,7 @@ export class Composer {
   private decrypt_and_render_draft = async (encrypted_draft: string, headers: FromToHeaders) => {
     let passphrase = await this.app.storage_passphrase_get();
     if (passphrase !== null) {
-      let result = await Pgp.message.decrypt(this.account_email, encrypted_draft);
+      let result = await Pgp.msg.decrypt(this.account_email, encrypted_draft);
       if (result.success) {
         this.S.cached('prompt').css({display: 'none'});
         Xss.sanitize_render(this.S.cached('input_text'), await Xss.html_sanitize_keep_basic_tags(result.content.text!.replace(/\n/g, '<br>')));
@@ -492,7 +492,7 @@ export class Composer {
         this.set_input_text_height_manually_if_needed();
       }
       if(this.is_reply_box) {
-        await this.render_reply_message_compose_table();
+        await this.render_reply_msg_compose_table();
       }
     } else {
       let prompt_text = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
@@ -502,8 +502,8 @@ export class Composer {
       } else {
         Xss.sanitize_render(this.S.cached('prompt'), `${prompt_text}<br><br><a href="#" class="action_close">close</a>`).css({display: 'block', height: '100%'});
       }
-      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(target => this.app.send_message_to_main_window('passphrase_dialog', {type: 'draft', longids: 'primary'})));
-      this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(target => this.app.close_message()));
+      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(target => this.app.send_msg_to_main_window('passphrase_dialog', {type: 'draft', longids: 'primary'})));
+      this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(target => this.app.close_msg()));
       await this.when_master_passphrase_entered();
       await this.decrypt_and_render_draft(encrypted_draft, headers);
     }
@@ -575,17 +575,17 @@ export class Composer {
     if(Api.error.is_network_error(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
     } else if(Api.error.is_auth_popup_needed(e)) {
-      this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+      this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
       alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.error.is_auth_error(e)) {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
+        this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
       }
     } else if(Api.error.is_bad_request(e)) {
       if(confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
         let page = '/chrome/settings/modules/help.htm';
         let page_url_params = {bug_report: Extension.prepare_bug_report('composer: send: bad request', {}, e)};
-        this.app.send_message_to_background_script('settings', {account_email: this.account_email, page, page_url_params});
+        this.app.send_msg_to_background_script('settings', {account_email: this.account_email, page, page_url_params});
       }
     } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
       Catch.report('StandardError | failed to send message', e);
@@ -611,7 +611,7 @@ export class Composer {
     return Xss.html_unescape(Xss.html_sanitize_and_strip_all_tags(this.S.cached(element_selector)[0].innerHTML, '\n'));
   }
 
-  private extract_process_send_message = async () => {
+  private extract_process_send_msg = async () => {
     try {
       const recipients = this.get_recipients_from_dom();
       const subject = this.supplied_subject || String($('#input_subject').val()); // replies have subject in url params
@@ -636,12 +636,12 @@ export class Composer {
 
   private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
-    plaintext = await this.add_reply_token_to_message_body_if_needed(recipients, subject, plaintext, challenge, subscription);
+    plaintext = await this.add_reply_token_to_msg_body_if_needed(recipients, subject, plaintext, challenge, subscription);
     let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
     if (attachments.length && challenge) { // these will be password encrypted attachments
       this.button_update_timeout = Catch.set_timeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       let attachment_admin_codes = await this.upload_attachments_to_fc(attachments, subscription);
-      plaintext = this.add_uploaded_file_links_to_message_body(plaintext, attachments);
+      plaintext = this.add_uploaded_file_links_to_msg_body(plaintext, attachments);
       await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
     } else {
       await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription);
@@ -655,7 +655,7 @@ export class Composer {
       const prv = openpgp.key.readArmored(primary_k.private).keys[0];
       let passphrase = await this.app.storage_passphrase_get();
       if (passphrase === null && !prv.isDecrypted()) {
-        this.app.send_message_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
+        this.app.send_msg_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
         if ((await this.when_master_passphrase_entered(60)) !== null) { // pass phrase entered
           await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
         } else { // timeout - reset - no passphrase entered
@@ -681,12 +681,12 @@ export class Composer {
         if(!prv.isDecrypted()) {
           await Pgp.key.decrypt(prv, [passphrase!]); // checked !== null above
         }
-        let signed_data = await Pgp.message.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
+        let signed_data = await Pgp.msg.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
         let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
         this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(Catch.rejection);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = {'text/plain': signed_data};
-        await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+        await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -696,7 +696,7 @@ export class Composer {
 
   private upload_attachments_to_fc = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: R.FcMessagePresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
+      let pf_response: R.FcMsgPresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
       const items: any[] = [];
       for (let i of pf_response.approvals.keys()) {
         items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
@@ -726,7 +726,7 @@ export class Composer {
     }
   }
 
-  private add_uploaded_file_links_to_message_body = (plaintext: string, attachments: Attachment[]) => {
+  private add_uploaded_file_links_to_msg_body = (plaintext: string, attachments: Attachment[]) => {
     plaintext += '\n\n';
     for (let a of attachments) {
       const size_mb = a.length / (1024 * 1024);
@@ -738,23 +738,23 @@ export class Composer {
     return plaintext;
   }
 
-  private add_reply_token_to_message_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string> => {
+  private add_reply_token_to_msg_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string> => {
     if (!challenge || !subscription.active) {
       return plaintext;
     }
     let response;
     try {
       response = await Api.fc.message_token();
-    } catch (message_token_error) {
-      if (Api.error.is_auth_error(message_token_error)) {
+    } catch (msg_token_err) {
+      if (Api.error.is_auth_error(msg_token_err)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          this.app.send_message_to_main_window('subscribe_dialog', {source: 'auth_error'});
+          this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
         }
         throw new ComposerResetBtnTrigger();
-      } else if (Api.error.is_standard_error(message_token_error, 'subscription')) {
+      } else if (Api.error.is_standard_error(msg_token_err, 'subscription')) {
         return plaintext;
       } else {
-        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + message_token_error.message);
+        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + msg_token_err.message);
       }
     }
     return plaintext + '\n\n' + Ui.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.html_attribute_encode({
@@ -765,7 +765,7 @@ export class Composer {
     })});
   }
 
-  private encrypt_message_as_of_date_if_some_are_expired = async (armored_pubkeys: string[]): Promise<Date|null> => {
+  private encrypt_msg_as_of_date_if_some_are_expired = async (armored_pubkeys: string[]): Promise<Date|null> => {
     let usable_until: number[] = [];
     let usable_from: number[] = [];
     for(let armored_pubkey of armored_pubkeys) {
@@ -795,9 +795,9 @@ export class Composer {
   }
 
   private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
-    let encrypt_as_of_date = await this.encrypt_message_as_of_date_if_some_are_expired(armored_pubkeys);
-    let encrypted = await Pgp.message.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
-    let body: SendableMessageBody = {'text/plain': encrypted.data};
+    let encrypt_as_of_date = await this.encrypt_msg_as_of_date_if_some_are_expired(armored_pubkeys);
+    let encrypted = await Pgp.msg.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
+    let body: SendableMsgBody = {'text/plain': encrypted.data};
     await this.app.storage_contact_update(recipients, {last_use: Date.now()});
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (challenge) {
@@ -808,31 +808,31 @@ export class Composer {
       body = this.format_password_protected_email(short, body, armored_pubkeys, storage.outgoing_language || 'EN');
       body = this.format_email_text_footer(body);
       await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
-      await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
     } else {
       body = this.format_email_text_footer(body);
-      await this.do_send_message(await Api.common.message(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
     }
   }
 
-  private do_send_message = async (message: SendableMessage, plaintext: string) => {
-    for (let k of Object.keys(this.additional_message_headers)) {
-      message.headers[k] = this.additional_message_headers[k];
+  private do_send_msg = async (msg: SendableMsg, plaintext: string) => {
+    for (let k of Object.keys(this.additional_msg_headers)) {
+      msg.headers[k] = this.additional_msg_headers[k];
     }
-    for (let a of message.attachments) {
+    for (let a of msg.attachments) {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.S.cached('icon_pubkey').is('.active')) {
-      message.attachments.push(Attachment.methods.keyinfo_as_pubkey_attachment(await this.app.storage_get_key(this.account_email)));
+      msg.attachments.push(Attachment.methods.keyinfo_as_pubkey_attachment(await this.app.storage_get_key(this.account_email)));
     }
-    let message_sent_response = await this.app.email_provider_message_send(message, this.render_upload_progress);
+    let msg_sent_res = await this.app.email_provider_msg_send(msg, this.render_upload_progress);
     const is_signed = this.S.cached('icon_sign').is('.active');
-    this.app.send_message_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (this.is_reply_box ? 'reply' : 'message') + ' has been sent.'});
+    this.app.send_msg_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (this.is_reply_box ? 'reply' : 'message') + ' has been sent.'});
     await this.draft_delete();
     if (this.is_reply_box) {
-      this.render_reply_success(message, plaintext, message_sent_response.id);
+      this.render_reply_success(msg, plaintext, msg_sent_res.id);
     } else {
-      this.app.close_message();
+      this.app.close_msg();
     }
   }
 
@@ -891,7 +891,7 @@ export class Composer {
     }
   }
 
-  private show_message_password_ui_and_color_button = () => {
+  private show_msg_pw_ui_and_color_button = () => {
     this.S.cached('password_or_pubkey').css('display', 'table-row');
     this.S.cached('password_or_pubkey').css('display', 'table-row');
     if (this.S.cached('input_password').val() || this.S.cached('input_password').is(':focus')) {
@@ -935,7 +935,7 @@ export class Composer {
     }
   }
 
-  private hide_message_password_ui = () => {
+  private hide_msg_pw_ui = () => {
     this.S.cached('password_or_pubkey').css('display', 'none');
     this.S.cached('input_password').val('');
     this.S.cached('add_intro').css('display', 'none');
@@ -944,24 +944,24 @@ export class Composer {
     this.set_input_text_height_manually_if_needed();
   }
 
-  private show_hide_password_or_pubkey_container_and_color_send_button = () => {
+  private show_hide_pw_or_pubkey_container_and_color_send_btn = () => {
     this.reset_send_btn();
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     let was_previously_visible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
     if (!$('.recipients span').length) {
-      this.hide_message_password_ui();
+      this.hide_msg_pw_ui();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     } else if (this.S.cached('icon_sign').is('.active')) {
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     } else if ($('.recipients span.no_pgp').length) {
-      this.show_message_password_ui_and_color_button();
+      this.show_msg_pw_ui_and_color_button();
     } else if ($('.recipients span.failed, .recipients span.wrong').length) {
       this.S.now('send_btn_span').text(this.BTN_WRONG_ENTRY);
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.S.cached('send_btn').removeClass('green').addClass('gray');
     } else {
-      this.hide_message_password_ui();
+      this.hide_msg_pw_ui();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     }
     if (this.is_reply_box) {
@@ -1008,73 +1008,73 @@ export class Composer {
       }
       if (current_height !== this.last_reply_box_table_height && Math.abs(current_height - this.last_reply_box_table_height) > 2) { // more then two pixel difference compared to last time
         this.last_reply_box_table_height = current_height;
-        this.app.send_message_to_main_window('set_css', {selector: `iframe#${this.frame_id}`, css: {height: `${(Math.max(min_height, current_height) + add_extra)}px`}});
+        this.app.send_msg_to_main_window('set_css', {selector: `iframe#${this.frame_id}`, css: {height: `${(Math.max(min_height, current_height) + add_extra)}px`}});
       }
     }
   }
 
-  private append_forwarded_message = (text: string) => {
+  private append_forwarded_msg = (text: string) => {
     Xss.sanitize_append(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${text.replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
     this.resize_reply_box();
   }
 
-  private retrieve_decrypt_and_add_forwarded_message = async (message_id: string) => {
-    let armored_message: string;
+  private retrieve_decrypt_and_add_forwarded_msg = async (msg_id: string) => {
+    let armored_msg: string;
     try {
-      armored_message = await this.app.email_provider_extract_armored_block(message_id);
+      armored_msg = await this.app.email_provider_extract_armored_block(msg_id);
     } catch (e) {
       if (e.data) {
         Xss.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.html_escape(e.data)}`);
       } else if(Api.error.is_network_error(e)) {
         // todo: retry
       } else if(Api.error.is_auth_popup_needed(e)) {
-        this.app.send_message_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+        this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
       } else {
         Catch.handle_exception(e);
       }
       return;
     }
-    let result = await Pgp.message.decrypt(this.account_email, armored_message);
+    let result = await Pgp.msg.decrypt(this.account_email, armored_msg);
     if (result.success) {
-      if (!Mime.resembles_message(result.content.text!)) {
-        this.append_forwarded_message(result.content.text!.replace(/\n/g, '<br>'));
+      if (!Mime.resembles_msg(result.content.text!)) {
+        this.append_forwarded_msg(result.content.text!.replace(/\n/g, '<br>'));
       } else {
         let mime_parse_result = await Mime.decode(result.content.text!);
         if(typeof mime_parse_result.text !== 'undefined') {
-          this.append_forwarded_message(mime_parse_result.text.replace(/\n/g, '<br>'));
+          this.append_forwarded_msg(mime_parse_result.text.replace(/\n/g, '<br>'));
         } else if (typeof mime_parse_result.html !== 'undefined') {
-          this.append_forwarded_message(Xss.html_sanitize_and_strip_all_tags(mime_parse_result.html!, '<br>'));
+          this.append_forwarded_msg(Xss.html_sanitize_and_strip_all_tags(mime_parse_result.html!, '<br>'));
         } else {
-          this.append_forwarded_message((result.content.text! || '').replace(/\n/g, '<br>')); // not sure about the replace, time will tell
+          this.append_forwarded_msg((result.content.text! || '').replace(/\n/g, '<br>')); // not sure about the replace, time will tell
         }
       }
     } else {
-      Xss.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${armored_message.replace(/\n/g, '<br/>\n')}`);
+      Xss.sanitize_append(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${armored_msg.replace(/\n/g, '<br/>\n')}`);
     }
   }
 
-  private render_reply_message_compose_table = async (method:"forward"|"reply"="reply") => {
+  private render_reply_msg_compose_table = async (method:"forward"|"reply"="reply") => {
     this.S.cached('prompt').css({display: 'none'});
     this.S.cached('input_to').val(this.supplied_to + (this.supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.render_compose_table();
     if (this.can_read_emails) {
-      let determined = await this.app.email_provider_determine_reply_message_header_variables();
-      if (determined && determined.last_message_id && determined.headers) {
-        this.additional_message_headers['In-Reply-To'] = determined.headers['In-Reply-To'];
-        this.additional_message_headers.References = determined.headers.References;
+      let determined = await this.app.email_provider_determine_reply_msg_header_variables();
+      if (determined && determined.last_msg_id && determined.headers) {
+        this.additional_msg_headers['In-Reply-To'] = determined.headers['In-Reply-To'];
+        this.additional_msg_headers.References = determined.headers.References;
         if (method === 'forward') {
           this.supplied_subject = 'Fwd: ' + this.supplied_subject;
-          await this.retrieve_decrypt_and_add_forwarded_message(determined.last_message_id);
+          await this.retrieve_decrypt_and_add_forwarded_msg(determined.last_msg_id);
         }
       }
     } else {
       Xss.sanitize_render(this.S.cached('prompt'), 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       this.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => this.app.send_message_to_background_script('settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm'}));
-      $('.new_message_button').click(() => this.app.send_message_to_main_window('open_new_message'));
+      $('.auth_settings').click(() => this.app.send_msg_to_background_script('settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm'}));
+      $('.new_message_button').click(() => this.app.send_msg_to_main_window('open_new_message'));
     }
     this.resize_reply_box();
-    Catch.set_timeout(() => this.app.send_message_to_main_window('scroll_to_bottom_of_conversation'), 300);
+    Catch.set_timeout(() => this.app.send_msg_to_main_window('scroll_to_bottom_of_conversation'), 300);
   }
 
   private parse_and_render_recipients = async () => {
@@ -1120,7 +1120,7 @@ export class Composer {
     this.recipients_missing_my_key = Value.arr.without_value(this.recipients_missing_my_key, $(element).parent().text());
     $(element).parent().remove();
     this.resize_input_to();
-    this.show_hide_password_or_pubkey_container_and_color_send_button();
+    this.show_hide_pw_or_pubkey_container_and_color_send_btn();
     this.update_pubkey_icon();
   }
 
@@ -1270,7 +1270,7 @@ export class Composer {
     if (Value.is(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
       this.reset_send_btn();
     }
-    this.show_hide_password_or_pubkey_container_and_color_send_button();
+    this.show_hide_pw_or_pubkey_container_and_color_send_btn();
   }
 
   private recipient_key_id_text = (contact: Contact) => {
@@ -1329,7 +1329,7 @@ export class Composer {
       Xss.sanitize_prepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
-    this.show_hide_password_or_pubkey_container_and_color_send_button();
+    this.show_hide_pw_or_pubkey_container_and_color_send_btn();
   }
 
   private get_recipients_from_dom = (filter:"no_pgp"|null=null): string[] => {
@@ -1354,9 +1354,9 @@ export class Composer {
     }
   }
 
-  private render_reply_success = (message: SendableMessage, plaintext: string, message_id: string) => {
+  private render_reply_success = (msg: SendableMsg, plaintext: string, msg_id: string) => {
     let is_signed = this.S.cached('icon_sign').is('.active');
-    this.app.render_reinsert_reply_box(message_id, message.headers.To.split(',').map(a => Str.parse_email(a).email));
+    this.app.render_reinsert_reply_box(msg_id, msg.headers.To.split(',').map(a => Str.parse_email(a).email));
     if (is_signed) {
       this.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
@@ -1378,9 +1378,9 @@ export class Composer {
     let time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     this.S.cached('reply_message_successful').find('div.replied_time').text(time);
     this.S.cached('reply_message_successful').css('display', 'block');
-    if (message.attachments.length) {
-      this.S.cached('replied_attachments').html(message.attachments.map(a => { // xss-safe-factory
-        a.message_id = message_id;
+    if (msg.attachments.length) {
+      this.S.cached('replied_attachments').html(msg.attachments.map(a => { // xss-safe-factory
+        a.message_id = msg_id;
         return this.app.factory_attachment(a);
       }).join('')).css('display', 'block');
     }
@@ -1397,8 +1397,8 @@ export class Composer {
     if (Env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
-    this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extract_process_send_message()));
-    this.S.cached('send_btn').keypress(Ui.enter(() => this.extract_process_send_message()));
+    this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extract_process_send_msg()));
+    this.S.cached('send_btn').keypress(Ui.enter(() => this.extract_process_send_msg()));
     this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.search_contacts()));
     this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parse_and_render_recipients().catch(Catch.rejection)));
@@ -1425,7 +1425,7 @@ export class Composer {
         this.S.cached('input_text').keyup(() => this.resize_reply_box());
       }, 1000);
     } else {
-      $('.close_new_message').click(Ui.event.handle(() => this.app.close_message(), this.handle_errors(`close message`)));
+      $('.close_new_message').click(Ui.event.handle(() => this.app.close_msg(), this.handle_errors(`close message`)));
       let addresses = this.app.storage_get_addresses() as string[];
       if (addresses.length > 1) {
         let input_addr_container = $('#input_addresses_container');
@@ -1441,18 +1441,18 @@ export class Composer {
     }
   }
 
-  private should_save_draft = (message_body: string) => {
-    if (message_body && message_body !== this.last_draft) {
-      this.last_draft = message_body;
+  private should_save_draft = (msg_body: string) => {
+    if (msg_body && msg_body !== this.last_draft) {
+      this.last_draft = msg_body;
       return true;
     } else {
       return false;
     }
   }
 
-  private format_password_protected_email = (short_id: string, original_body: SendableMessageBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
+  private format_password_protected_email = (short_id: string, original_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
     const msg_url = `${this.FC_WEB_URL}/${short_id}`;
-    const a = `<a href="${Xss.html_escape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_message[lang]}</a>`;
+    const a = `<a href="${Xss.html_escape(msg_url)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.open_msg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
     const text = [];
     const html = [];
@@ -1460,24 +1460,24 @@ export class Composer {
       text.push(intro + '\n');
       html.push(intro.replace(/\n/, '<br>') + '<br><br>');
     }
-    text.push(Lang.compose.message_encrypted_text[lang] + msg_url + '\n');
+    text.push(Lang.compose.msg_encrypted_text[lang] + msg_url + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
-    html.push(Lang.compose.message_encrypted_html[lang] + a + '<br><br>');
+    html.push(Lang.compose.msg_encrypted_html[lang] + a + '<br><br>');
     html.push(Lang.compose.alternatively_copy_paste[lang] + Xss.html_escape(msg_url) + '<br><br><br>');
     const html_fc_web_url_link = '<a href="' + Xss.html_escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.html_escape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      const html_pgp_message = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
-      html.push('<div style="color: #999;">' + html_pgp_message + '</div>');
+      const html_pgp_msg = original_body['text/html'] ? original_body['text/html'] : (original_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
+      html.push('<div style="color: #999;">' + html_pgp_msg + '</div>');
       text.push(original_body['text/plain']);
     }
     html.push('</div>');
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
 
-  private format_email_text_footer = (original_body: SendableMessageBody): SendableMessageBody => {
+  private format_email_text_footer = (original_body: SendableMsgBody): SendableMsgBody => {
     const email_footer = this.app.storage_get_email_footer();
-    const body: SendableMessageBody = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
+    const body: SendableMsgBody = {'text/plain': original_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
     if (typeof original_body['text/html'] !== 'undefined') {
       body['text/html'] = original_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
     }
@@ -1486,7 +1486,7 @@ export class Composer {
 
   static default_app_functions = (): ComposerAppFunctionsInterface => {
     return {
-      send_message_to_main_window: (channel: string, data: Dict<Serializable>) => null,
+      send_msg_to_main_window: (channel: string, data: Dict<Serializable>) => null,
       can_read_email: () => false,
       does_recipient_have_my_pubkey: (their_email: string): Promise<boolean|undefined> => Promise.resolve(false),
       storage_get_addresses: () => [],
@@ -1494,32 +1494,32 @@ export class Composer {
       storage_get_addresses_keyserver: () => [],
       storage_get_email_footer: () => null,
       storage_set_email_footer: () => Promise.resolve(),
-      storage_get_hide_message_password: () => false,
+      storage_get_hide_msg_password: () => false,
       storage_get_subscription: () => Promise.resolve(new Subscription(null)),
       storage_set_draft_meta: () => Promise.resolve(),
       storage_get_key: () => { throw new Error('storage_get_key not implemented'); },
       storage_passphrase_get: () => Promise.resolve(null),
-      storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
+      storage_add_admin_codes: (short_id: string, msg_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
       storage_contact_get: (email: string[]) => Promise.resolve([]),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
       storage_contact_save: (contact: Contact) => Promise.resolve(),
       storage_contact_search: (query: DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
-      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMessage}),
-      email_provider_draft_create: (mime_message: string) => Promise.reject(null),
-      email_provider_draft_update: (draft_id: string, mime_message: string) => Promise.resolve({}),
+      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMsg}),
+      email_provider_draft_create: (mime_msg: string) => Promise.reject(null),
+      email_provider_draft_update: (draft_id: string, mime_msg: string) => Promise.resolve({}),
       email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
-      email_provider_message_send: (message: SendableMessage, render_upload_progress: ProgressCallback) => Promise.reject({message: 'not implemented'}),
+      email_provider_msg_send: (msg: SendableMsg, render_upload_progress: ProgressCallback) => Promise.reject({message: 'not implemented'}),
       email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: any) => void) => multi_cb({new: [], all: []}),
-      email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
-      email_provider_extract_armored_block: (message_id) => Promise.resolve(''),
-      send_message_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
-      render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => Promise.resolve(),
+      email_provider_determine_reply_msg_header_variables: () => Promise.resolve(undefined),
+      email_provider_extract_armored_block: (msg_id) => Promise.resolve(''),
+      send_msg_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
+      render_reinsert_reply_box: (last_msg_id: string, recipients: string[]) => Promise.resolve(),
       render_footer_dialog: () => null,
       render_add_pubkey_dialog: (emails: string[]) => null,
       render_help_dialog: () => null,
       render_sending_address_dialog: () => null,
-      close_message: () => null,
+      close_msg: () => null,
       factory_attachment: (attachment: Attachment) => `<div>${attachment.name}</div>`,
     };
   }

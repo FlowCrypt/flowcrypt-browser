@@ -121,14 +121,14 @@ export class FlowCryptAccount {
 
   private fetch_token_emails_on_gmail_and_find_matching_token = async (account_email: string, uuid: string): Promise<string[]|null> => {
     let tokens: string[] = [];
-    let response = await Api.gmail.message_list(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
+    let response = await Api.gmail.msg_list(account_email, 'from:' + this.cryptup_verification_email_sender + ' to:' + account_email + ' in:anywhere', true);
     if (!response.messages) {
       return null;
     }
-    let messages = await Api.gmail.messages_get(account_email, response.messages.map(m => m.id), 'full');
-    for (let gmail_message_object of messages) {
-      if (gmail_message_object.payload.mimeType === 'text/plain' && gmail_message_object.payload.body && gmail_message_object.payload.body.size > 0 && gmail_message_object.payload.body.data) {
-        let token = this.parse_token_email_text(Str.base64url_decode(gmail_message_object.payload.body.data), uuid);
+    let msgs = await Api.gmail.msgs_get(account_email, response.messages.map(m => m.id), 'full');
+    for (let gmail_msg_obj of msgs) {
+      if (gmail_msg_obj.payload.mimeType === 'text/plain' && gmail_msg_obj.payload.body && gmail_msg_obj.payload.body.size > 0 && gmail_msg_obj.payload.body.data) {
+        let token = this.parse_token_email_text(Str.base64url_decode(gmail_msg_obj.payload.body.data), uuid);
         if (token && typeof token === 'string') {
           tokens.push(token);
         }

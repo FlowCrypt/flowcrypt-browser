@@ -27,7 +27,7 @@ Catch.try(async () => {
 
   let pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armored_pubkey).keys;
 
-  let send_resize_message = () => {
+  let send_resize_msg = () => {
     let desired_height = $('#pgp_block').height()! + (url_params.compact ? 10 : 30); // #pgp_block is defined in template
     BrowserMsg.send(parent_tab_id, 'set_css', {selector: `iframe#${frame_id}`, css: {height: `${desired_height}px`}});
   };
@@ -117,10 +117,10 @@ Catch.try(async () => {
   $('.action_show_full').click(Ui.event.handle(target => {
     $(target).css('display', 'none');
     $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
-    send_resize_message();
+    send_resize_msg();
   }));
 
   await render();
-  send_resize_message();
+  send_resize_msg();
 
 })();

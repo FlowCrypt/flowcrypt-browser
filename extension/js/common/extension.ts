@@ -1,6 +1,6 @@
 
 import { Str, Catch, Env, Value, Dict } from './common.js';
-import { Pgp, DiagnoseMessagePubkeysResult, DecryptResult, MessageVerifyResult } from './pgp.js';
+import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from './pgp.js';
 
 import { FlatTypes } from './store.js';
 import { Ui } from './browser.js';
@@ -8,17 +8,17 @@ import { Attachment } from './attachment.js';
 
 type Codec = {encode: (text: string, mode: 'fatal'|'html') => string, decode: (text: string) => string, labels: string[], version: string};
 
-type PossibleBgExecResults = DecryptResult|DiagnoseMessagePubkeysResult|MessageVerifyResult|string;
+type PossibleBgExecResults = DecryptResult|DiagnoseMsgPubkeysResult|MsgVerifyResult|string;
 type BgExecRequest = {path: string, args: any[]};
 type BgExecResponse = {result?: PossibleBgExecResults, exception?: {name: string, message: string, stack: string}};
-type BrowserMessageRequest = null|Dict<any>;
-type BrowserMessageResponse = any|Dict<any>;
+type BrowserMsgReq = null|Dict<any>;
+type BrowserMsgRes = any|Dict<any>;
 
 export type AnyThirdPartyLibrary = any;
-export type BrowserMessageRequestDb = {f: string, args: any[]};
-export type BrowserMessageRequestSessionSet = {account_email: string, key: string, value: string|undefined};
-export type BrowserMessageRequestSessionGet = {account_email: string, key: string};
-export type BrowserMessageHandler = (request: BrowserMessageRequest, sender: chrome.runtime.MessageSender|'background', respond: (r?: any) => void) => void|Promise<void>;
+export type BrowserMsgReqtDb = {f: string, args: any[]};
+export type BrowserMsgReqSessionSet = {account_email: string, key: string, value: string|undefined};
+export type BrowserMsgReqSessionGet = {account_email: string, key: string};
+export type BrowserMsgHandler = (request: BrowserMsgReq, sender: chrome.runtime.MessageSender|'background', respond: (r?: any) => void) => void|Promise<void>;
 
 export interface BrowserWidnow extends Window {
   XMLHttpRequest: any;
@@ -88,8 +88,8 @@ export class Extension { // todo - move extension-specific common.js code here
 export class BrowserMsg {
 
   public static MAX_SIZE = 1024 * 1024; // 1MB
-  private static HANDLERS_REGISTERED_BACKGROUND: Dict<BrowserMessageHandler>|null = null;
-  private static HANDLERS_REGISTERED_FRAME: Dict<BrowserMessageHandler> = {};
+  private static HANDLERS_REGISTERED_BACKGROUND: Dict<BrowserMsgHandler>|null = null;
+  private static HANDLERS_REGISTERED_FRAME: Dict<BrowserMsgHandler> = {};
   private static HANDLERS_STANDARD = {
     set_css: (data: {css: Dict<string|number>, selector: string, traverse_up?: number}) => {
       let element = $(data.selector);
@@ -99,15 +99,15 @@ export class BrowserMsg {
       }
       element.css(data.css);
     },
-  } as Dict<BrowserMessageHandler>;
+  } as Dict<BrowserMsgHandler>;
 
   public static send = (destination_string: string|null, name: string, data: Dict<any>|null=null) => {
     BrowserMsg.send_await(destination_string, name, data).catch(Catch.rejection);
   }
 
-  public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMessageResponse> => new Promise(resolve => {
+  public static send_await = (destination_string: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMsgRes> => new Promise(resolve => {
     let msg = { name, data, to: destination_string || null, uid: Str.random(10), stack: Catch.stack_trace() };
-    let try_resolve_no_undefined = (r?: BrowserMessageResponse) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
+    let try_resolve_no_undefined = (r?: BrowserMsgRes) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     let is_background_page = Env.is_background_page();
     if (typeof  destination_string === 'undefined') { // don't know where to send the message
       Catch.log('BrowserMsg.send to:undefined');
@@ -115,7 +115,7 @@ export class BrowserMsg {
     } else if (is_background_page && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && msg.to === null) {
       BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name](msg.data, 'background', try_resolve_no_undefined); // calling from background script to background script: skip messaging completely
     } else if (is_background_page) {
-      chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
+      chrome.tabs.sendMessage(BrowserMsg.browser_msg_dest_parse(msg.to).tab!, msg, {}, try_resolve_no_undefined);
     } else {
       chrome.runtime.sendMessage(msg, try_resolve_no_undefined);
     }
@@ -142,7 +142,7 @@ export class BrowserMsg {
     throw new TabIdRequiredError(`Tab id is required, but received '${String(tab_id)}' after 10 attempts`);
   }
 
-  public static listen = (handlers: Dict<BrowserMessageHandler>, listen_for_tab_id='all') => {
+  public static listen = (handlers: Dict<BrowserMsgHandler>, listen_for_tab_id='all') => {
     for (let name of Object.keys(handlers)) {
       // newly registered handlers with the same name will overwrite the old ones if BrowserMsg.listen is declared twice for the same frame
       // original handlers not mentioned in newly set handlers will continue to work
@@ -166,7 +166,7 @@ export class BrowserMsg {
                 (r as Promise<void>).catch(Catch.rejection);
               }
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              if (BrowserMsg.browser_message_destination_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+              if (BrowserMsg.browser_msg_dest_parse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
                 Catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
               } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
                 console.log('BrowserMsg.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');
@@ -182,7 +182,7 @@ export class BrowserMsg {
     });
   }
 
-  public static listen_background = (handlers: Dict<BrowserMessageHandler>) => {
+  public static listen_background = (handlers: Dict<BrowserMsgHandler>) => {
     if (!BrowserMsg.HANDLERS_REGISTERED_BACKGROUND) {
       BrowserMsg.HANDLERS_REGISTERED_BACKGROUND = handlers;
     } else {
@@ -205,7 +205,7 @@ export class BrowserMsg {
         };
         if (msg.to && msg.to !== 'broadcast') {
           msg.sender = sender;
-          chrome.tabs.sendMessage(BrowserMsg.browser_message_destination_parse(msg.to).tab!, msg, {}, safe_respond);
+          chrome.tabs.sendMessage(BrowserMsg.browser_msg_dest_parse(msg.to).tab!, msg, {}, safe_respond);
         } else if (Value.is(msg.name).in(Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND!))) { // is !null because added above
           let r = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND![msg.name](msg.data, sender, safe_respond); // is !null because checked above
           if(r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
@@ -223,7 +223,7 @@ export class BrowserMsg {
     });
   }
 
-  private static browser_message_destination_parse = (destination_string: string|null) => {
+  private static browser_msg_dest_parse = (destination_string: string|null) => {
     let parsed = { tab: null as null|number, frame: null as null|number };
     if (destination_string) {
       parsed.tab = Number(destination_string.split(':')[0]);
@@ -239,7 +239,7 @@ export class BgExec {
 
   private static MAX_MESSAGE_SIZE = 1024 * 1024;
 
-  public static background_request_handler: BrowserMessageHandler = async (message: BgExecRequest, sender, respond: (r: BgExecResponse) => void) => {
+  public static background_request_handler: BrowserMsgHandler = async (message: BgExecRequest, sender, respond: (r: BgExecResponse) => void) => {
     try {
       let arg_promises = BgExec.arg_object_urls_consume(message.args);
       let args = await Promise.all(arg_promises);
@@ -266,15 +266,15 @@ export class BgExec {
     }
   }
 
-  public static diagnose_message_pubkeys = (account_email: string, message: string) => {
-    return BgExec.request_to_process_in_background('Pgp.message.diagnose_pubkeys', [account_email, message]) as Promise<DiagnoseMessagePubkeysResult>;
+  public static diagnose_msg_pubkeys = (account_email: string, message: string) => {
+    return BgExec.request_to_process_in_background('Pgp.message.diagnose_pubkeys', [account_email, message]) as Promise<DiagnoseMsgPubkeysResult>;
   }
 
   public static crypto_hash_challenge_answer = (password: string) => {
     return BgExec.request_to_process_in_background('Pgp.hash.challenge_answer', [password]) as Promise<string>;
   }
 
-  public static crypto_message_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd:string|null=null, get_uint8=false) => {
+  public static crypto_msg_decrypt = async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd:string|null=null, get_uint8=false) => {
     let result = await BgExec.request_to_process_in_background('Pgp.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
@@ -287,8 +287,8 @@ export class BgExec {
     return result;
   }
 
-  public static crypto_message_verify_detached = (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => {
-    return BgExec.request_to_process_in_background('Pgp.message.verify_detached', [account_email, message, signature]) as Promise<MessageVerifyResult>;
+  public static crypto_msg_verify_detached = (account_email: string, message: string|Uint8Array, signature: string|Uint8Array) => {
+    return BgExec.request_to_process_in_background('Pgp.message.verify_detached', [account_email, message, signature]) as Promise<MsgVerifyResult>;
   }
 
   private static execute_and_format_result = async (path: string, resolved_args: any[]): Promise<PossibleBgExecResults> => {
@@ -297,21 +297,21 @@ export class BgExec {
     if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       let resolved = await returned;
       if (path === 'Pgp.message.decrypt') {
-        BgExec.crypto_message_decrypt_result_create_blobs(resolved as DecryptResult);
+        BgExec.crypto_msg_decrypt_result_create_blobs(resolved as DecryptResult);
       }
       return resolved;
     }
     return returned as PossibleBgExecResults; // direct result
   }
 
-  private static crypto_message_decrypt_result_create_blobs = (decrypt_result: DecryptResult) => {
-    if (decrypt_result && decrypt_result.success && decrypt_result.content) {
-      if(decrypt_result.content.text && decrypt_result.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
-        decrypt_result.content.blob = {blob_type: 'text', blob_url: Attachment.methods.object_url_create(decrypt_result.content.text)};
-        decrypt_result.content.text = undefined; // replaced with a blob
-      } else if(decrypt_result.content.uint8 && decrypt_result.content.uint8 instanceof Uint8Array) {
-        decrypt_result.content.blob = {blob_type: 'uint8', blob_url: Attachment.methods.object_url_create(decrypt_result.content.uint8)};
-        decrypt_result.content.uint8 = undefined; // replaced with a blob
+  private static crypto_msg_decrypt_result_create_blobs = (decrypt_res: DecryptResult) => {
+    if (decrypt_res && decrypt_res.success && decrypt_res.content) {
+      if(decrypt_res.content.text && decrypt_res.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
+        decrypt_res.content.blob = {blob_type: 'text', blob_url: Attachment.methods.object_url_create(decrypt_res.content.text)};
+        decrypt_res.content.text = undefined; // replaced with a blob
+      } else if(decrypt_res.content.uint8 && decrypt_res.content.uint8 instanceof Uint8Array) {
+        decrypt_res.content.blob = {blob_type: 'uint8', blob_url: Attachment.methods.object_url_create(decrypt_res.content.uint8)};
+        decrypt_res.content.uint8 = undefined; // replaced with a blob
       }
     }
   }

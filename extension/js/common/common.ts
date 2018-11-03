@@ -103,49 +103,49 @@ export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIGINAL_ON_ERROR = window.onerror;
 
-  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|Dict<Serializable>, is_manually_called: boolean) => {
-    if (typeof error === 'string') {
-      error_message = error;
-      error = { name: 'thrown_string', message: error_message, stack: error_message };
+  public static handle_error = (error_msg: string|undefined, url: string, line: number, col: number, err: string|Error|Dict<Serializable>, is_manually_called: boolean) => {
+    if (typeof err === 'string') {
+      error_msg = err;
+      err = { name: 'thrown_string', message: error_msg, stack: error_msg };
     }
-    if (error_message && url && typeof line !== 'undefined' && !col && !error && !is_manually_called) { // safari has limited support
-      error = { name: 'safari_error', message: error_message, stack: error_message };
+    if (error_msg && url && typeof line !== 'undefined' && !col && !err && !is_manually_called) { // safari has limited support
+      err = { name: 'safari_error', message: error_msg, stack: error_msg };
     }
-    if (typeof error_message === 'undefined' && line === 0 && col === 0 && is_manually_called && typeof error === 'object' && !(error instanceof Error)) {
+    if (typeof error_msg === 'undefined' && line === 0 && col === 0 && is_manually_called && typeof err === 'object' && !(err instanceof Error)) {
       let stringified;
       try { // this sometimes happen with unhandled Promise.then(_, reject)
-        stringified = JSON.stringify(error);
+        stringified = JSON.stringify(err);
       } catch (cannot) {
-        stringified = 'typeof: ' + (typeof error) + '\n' + String(error);
+        stringified = 'typeof: ' + (typeof err) + '\n' + String(err);
       }
-      error = { name: 'thrown_object', message: error.message || '(unknown)', stack: stringified};
-      error_message = 'thrown_object';
+      err = { name: 'thrown_object', message: err.message || '(unknown)', stack: stringified};
+      error_msg = 'thrown_object';
     }
-    let user_log_message = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
-    let ignored_errors = [
+    let user_log_msg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
+    let ignored_errs = [
       'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
       'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
       'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
     ];
-    if (!error) {
+    if (!err) {
       return;
     }
-    if (error instanceof Error && ignored_errors.indexOf(error.message) !== -1) {
+    if (err instanceof Error && ignored_errs.indexOf(err.message) !== -1) {
       return true;
     }
-    if (error instanceof Error && error.stack) {
-      console.log('%c[' + error_message + ']\n' + error.stack, 'color: #F00; font-weight: bold;');
+    if (err instanceof Error && err.stack) {
+      console.log('%c[' + error_msg + ']\n' + err.stack, 'color: #F00; font-weight: bold;');
     } else {
-      console.error(error);
-      console.log('%c' + error_message, 'color: #F00; font-weight: bold;');
+      console.error(err);
+      console.log('%c' + error_msg, 'color: #F00; font-weight: bold;');
     }
     if (is_manually_called !== true && Catch.ORIGINAL_ON_ERROR && Catch.ORIGINAL_ON_ERROR !== (Catch.handle_error as ErrorEventHandler)) {
       Catch.ORIGINAL_ON_ERROR.apply(null, arguments); // Call any previously assigned handler
     }
-    if (error instanceof Error && (error.stack || '').indexOf('PRIVATE') !== -1) {
+    if (err instanceof Error && (err.stack || '').indexOf('PRIVATE') !== -1) {
       return;
     }
-    if (error instanceof UnreportableError) {
+    if (err instanceof UnreportableError) {
       return;
     }
     try {
@@ -153,12 +153,12 @@ export class Catch {
         url: 'https://flowcrypt.com/api/help/error',
         method: 'POST',
         data: JSON.stringify({
-          name: ((error as Error).name || '').substring(0, 50), // todo - remove cast & debug
-          message: (error_message || '').substring(0, 200),
+          name: ((err as Error).name || '').substring(0, 50), // todo - remove cast & debug
+          message: (error_msg || '').substring(0, 200),
           url: (url || '').substring(0, 100),
           line: line || 0,
           col: col || 0,
-          trace: (error as Error).stack || '', // todo - remove cast & debug
+          trace: (err as Error).stack || '', // todo - remove cast & debug
           version: Catch.RUNTIME_VERSION,
           environment: Catch.RUNTIME_ENVIRONMENT,
         }),
@@ -168,18 +168,18 @@ export class Catch {
         async: true,
         success: (response) => {
           if (response.saved === true) {
-            console.log('%cFlowCrypt ERROR:' + user_log_message, 'font-weight: bold;');
+            console.log('%cFlowCrypt ERROR:' + user_log_msg, 'font-weight: bold;');
           } else {
-            console.log('%cFlowCrypt EXCEPTION:' + user_log_message, 'font-weight: bold;');
+            console.log('%cFlowCrypt EXCEPTION:' + user_log_msg, 'font-weight: bold;');
           }
         },
         error: (XMLHttpRequest, status, error) => {
-          console.log('%cFlowCrypt FAILED:' + user_log_message, 'font-weight: bold;');
+          console.log('%cFlowCrypt FAILED:' + user_log_msg, 'font-weight: bold;');
         },
       });
     } catch (ajax_err) {
       console.log(ajax_err.message);
-      console.log('%cFlowCrypt ISSUE:' + user_log_message, 'font-weight: bold;');
+      console.log('%cFlowCrypt ISSUE:' + user_log_msg, 'font-weight: bold;');
     }
     try {
       if (typeof Store.get_account === 'function' && typeof Store.set === 'function') {
@@ -187,16 +187,16 @@ export class Catch {
           if (typeof s.errors === 'undefined') {
             s.errors = [];
           }
-          if(error instanceof Error) {
-            s.errors.unshift(error.stack || error_message || String(error));
+          if(err instanceof Error) {
+            s.errors.unshift(err.stack || error_msg || String(err));
           } else {
-            s.errors.unshift(error_message || String(error));
+            s.errors.unshift(error_msg || String(err));
           }
           Store.set(null, s).catch(console.error);
         }).catch(console.error);
       }
     } catch (storage_err) {
-      console.log('failed to locally log error "' + String(error_message) + '" because: ' + storage_err.message);
+      console.log('failed to locally log error "' + String(error_msg) + '" because: ' + storage_err.message);
     }
     return true;
   }

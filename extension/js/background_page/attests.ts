@@ -6,7 +6,7 @@ import { Store } from '../common/store.js';
 import { Catch, Value, Str, Dict } from '../common/common.js';
 import { Api, R } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
-import { BrowserMessageHandler } from '../common/extension.js';
+import { BrowserMsgHandler } from '../common/extension.js';
 
 declare let openpgp: typeof OpenPGP;
 
@@ -16,8 +16,8 @@ class AttestError extends Error implements AttestResult {
   attest_packet_text: null|string;
   account_email: string;
   success: false;
-  constructor(message: string, attest_packet_text: string|null, account_email: string) {
-    super(message);
+  constructor(msg: string, attest_packet_text: string|null, account_email: string) {
+    super(msg);
     this.attest_packet_text = attest_packet_text;
     this.account_email = account_email;
   }
@@ -42,7 +42,7 @@ export class BgAttests {
     }
   }
 
-  static attest_requested_handler: BrowserMessageHandler = async (request: {account_email: string}, sender, respond) => {
+  static attest_requested_handler: BrowserMsgHandler = async (request: {account_email: string}, sender, respond) => {
     respond();
     await BgAttests.get_pending_attest_requests();
     BgAttests.watch_for_attest_email(request.account_email);
@@ -75,9 +75,9 @@ export class BgAttests {
       let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
       if (passphrase !== null) {
         if (storage.attests_requested && storage.attests_requested.length && BgAttests.attest_ts_can_read_emails[account_email]) {
-          let messages: R.GmailMessage[];
+          let msgs: R.GmailMsg[];
           try {
-            messages = await BgAttests.fetch_attest_emails(account_email);
+            msgs = await BgAttests.fetch_attest_emails(account_email);
           } catch(e) {
             if(Api.error.is_network_error(e)) {
               console.info('cannot fetch attest emails - network error - ' + account_email);
@@ -92,9 +92,9 @@ export class BgAttests {
               throw e;
             }
           }
-          for (let message of messages) {
-            if (message.payload.mimeType === 'text/plain' && message.payload.body && message.payload.body.size > 0 && message.payload.body.data) {
-              await BgAttests.process_attest_and_log_result(account_email, Str.base64url_decode(message.payload.body.data), passphrase);
+          for (let msg of msgs) {
+            if (msg.payload.mimeType === 'text/plain' && msg.payload.body && msg.payload.body.size > 0 && msg.payload.body.data) {
+              await BgAttests.process_attest_and_log_result(account_email, Str.base64url_decode(msg.payload.body.data), passphrase);
             }
           }
         } else {
@@ -127,7 +127,7 @@ export class BgAttests {
           if(attest.content.attester && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expected_fingerprint && attest.content.email_hash === expected_email_hash) {
             let signed;
             try {
-              signed = await Pgp.message.sign(key, attest.text);
+              signed = await Pgp.msg.sign(key, attest.text);
             } catch (e) {
               throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${e.message}`, attest_packet_text, account_email);
             }
@@ -174,7 +174,7 @@ export class BgAttests {
     }
   }
 
-  private static fetch_attest_emails = async (account_email: string): Promise<R.GmailMessage[]> => {
+  private static fetch_attest_emails = async (account_email: string): Promise<R.GmailMsg[]> => {
     let q = [
       '(from:"' + BgAttests.get_attester_emails().join('" OR from: "') + '")',
       'to:' + account_email, // for now limited to account email only. Alternative addresses won't work.
@@ -182,8 +182,8 @@ export class BgAttests {
       '"' + BgAttests.packet_headers.begin + '"',
       '"' + BgAttests.packet_headers.end + '"',
     ];
-    let list_response = await Api.gmail.message_list(account_email, q.join(' '), true);
-    return Api.gmail.messages_get(account_email, (list_response.messages || []).map(m => m.id), 'full');
+    let list_response = await Api.gmail.msg_list(account_email, q.join(' '), true);
+    return Api.gmail.msgs_get(account_email, (list_response.messages || []).map(m => m.id), 'full');
   }
 
   private static get_pending_attest_requests = async () => {

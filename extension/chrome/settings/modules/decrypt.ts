@@ -6,7 +6,7 @@ import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Attachment } from '../../../js/common/attachment.js';
 import { Xss, Ui, XssSafeFactory, AttachmentUI } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
-import { Pgp, DecryptErrorTypes } from '../../../js/common/pgp.js';
+import { Pgp, DecryptErrTypes } from '../../../js/common/pgp.js';
 
 Catch.try(async () => {
 
@@ -41,11 +41,11 @@ Catch.try(async () => {
   }));
 
   let decrypt_and_download = async (encrypted: Attachment) => { // todo - this is more or less copy-pasted from attachment.js, should use common function
-    let result = await Pgp.message.decrypt(account_email, encrypted.as_bytes(), null, true);
+    let result = await Pgp.msg.decrypt(account_email, encrypted.as_bytes(), null, true);
     if (result.success) {
       let attachment = new Attachment({name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8!}); // uint8!: requested uint8 above
       Attachment.methods.save_to_downloads(attachment);
-    } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
+    } else if (result.error.type === DecryptErrTypes.need_passphrase) {
       $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // xss-safe-factory
     } else {
       delete result.message;

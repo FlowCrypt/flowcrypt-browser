@@ -5,7 +5,7 @@
 import { Store, KeyInfo, Contact } from './store.js';
 import { Catch, Value, Str } from './common.js';
 import { Ui, XssSafeFactory, Challenge } from './browser.js';
-import { ReplaceableMessageBlockType, MessageBlock, MessageBlockType } from './mime.js';
+import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -13,18 +13,18 @@ type InternalSortedKeysForDecrypt = { verification_contacts: Contact[]; for_veri
   prv_matching: KeyInfo[]; prv_for_decrypt: KeyInfo[]; prv_for_decrypt_decrypted: KeyInfo[]; prv_for_decrypt_without_passphrases: KeyInfo[]; };
 type ConsummableBrowserBlob = {blob_type: 'text'|'uint8', blob_url: string};
 type DecrytSuccess$content = { blob?: ConsummableBrowserBlob; text?: string; uint8?: Uint8Array; filename: string|null; };
-type DecryptSuccess = { success: true; content: DecrytSuccess$content, signature: MessageVerifyResult|null; is_encrypted: boolean|null; };
-type DecryptError$error = { type: DecryptErrorTypes; error?: string; };
+type DecryptSuccess = { success: true; content: DecrytSuccess$content, signature: MsgVerifyResult|null; is_encrypted: boolean|null; };
+type DecryptError$error = { type: DecryptErrTypes; error?: string; };
 type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; need_passphrase: string[]; };
 type DecryptError = { success: false; error: DecryptError$error; longids: DecryptError$longids;
   is_encrypted: null|boolean; signature: null; message?: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage; };
 type CryptoArmorHeaderDefinition = {begin: string, middle?: string, end: string|RegExp, replace: boolean};
-type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMessageBlockType|'null'|'signature']: CryptoArmorHeaderDefinition; };
+type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType|'null'|'signature']: CryptoArmorHeaderDefinition; };
 
-export type MessageVerifyResult = { signer: string|null; contact: Contact|null; match: boolean|null; error: null|string; };
+export type MsgVerifyResult = { signer: string|null; contact: Contact|null; match: boolean|null; error: null|string; };
 export type DecryptResult = DecryptSuccess|DecryptError;
-export type DiagnoseMessagePubkeysResult = { found_match: boolean, receivers: number, };
-export enum DecryptErrorTypes {
+export type DiagnoseMsgPubkeysResult = { found_match: boolean, receivers: number, };
+export enum DecryptErrTypes {
   key_mismatch = 'key_mismatch',
   use_password = 'use_password',
   wrong_password = 'wrong_password',
@@ -127,7 +127,7 @@ export class Pgp {
       }
       return null;
     },
-    headers: (block_type: ReplaceableMessageBlockType|'null', format='string'): CryptoArmorHeaderDefinition => {
+    headers: (block_type: ReplaceableMsgBlockType|'null', format='string'): CryptoArmorHeaderDefinition => {
       let h = Pgp.ARMOR_HEADER_DICT[block_type];
       return {
         begin: (typeof h.begin === 'string' && format === 're') ? h.begin.replace(/ /g, '\\\s') : h.begin,
@@ -136,7 +136,7 @@ export class Pgp {
       };
     },
     detect_blocks: (original_text: string) => {
-      let blocks: MessageBlock[] = [];
+      let blocks: MsgBlock[] = [];
       let normalized = Str.normalize(original_text);
       let start_at = 0;
       while(true) {
@@ -169,7 +169,7 @@ export class Pgp {
       }
       let r = '';
       for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderable_message_block(factory, block, message_id, sender_email, is_outgoing);
+        r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, message_id, sender_email, is_outgoing);
       }
       return r;
     },
@@ -309,8 +309,8 @@ export class Pgp {
     },
   };
 
-  public static message = {
-    type: (data: string|Uint8Array): {armored: boolean, type: MessageBlockType}|null => {
+  public static msg = {
+    type: (data: string|Uint8Array): {armored: boolean, type: MsgBlockType}|null => {
       if (!data || !data.length) {
         return null;
       }
@@ -347,7 +347,7 @@ export class Pgp {
       return (sign_result as OpenPGP.SignArmorResult).data;
     },
     verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: Contact|null=null) => {
-      let signature: MessageVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
+      let signature: MsgVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
       try {
         for (let verify_result of await message.verify(keys_for_verification)) {
           signature.match = Value.is(signature.match).in([true, null]) && verify_result.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
@@ -366,7 +366,7 @@ export class Pgp {
       }
       return signature;
     },
-    verify_detached: async (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array): Promise<MessageVerifyResult> => {
+    verify_detached: async (account_email: string, plaintext: string|Uint8Array, signature_text: string|Uint8Array): Promise<MsgVerifyResult> => {
       if (plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
         plaintext = Str.from_uint8(plaintext);
       }
@@ -376,7 +376,7 @@ export class Pgp {
       let message = openpgp.message.fromText(plaintext);
       message.appendSignature(signature_text);
       let keys = await Pgp.internal.crypto_message_get_sorted_keys_for_message(account_email, message);
-      return await Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]);
+      return await Pgp.msg.verify(message, keys.for_verification, keys.verification_contacts[0]);
     },
     decrypt: async (account_email: string, encrypted_data: string|Uint8Array, msg_pwd: string|null=null, get_uint8=false): Promise<DecryptSuccess|DecryptError> => {
       let prepared;
@@ -384,7 +384,7 @@ export class Pgp {
       try {
         prepared = Pgp.internal.crypto_message_prepare_for_decrypt(encrypted_data);
       } catch (format_error) {
-        return {success: false, error: {type: DecryptErrorTypes.format, error: format_error.message}, longids, is_encrypted: null, signature: null};
+        return {success: false, error: {type: DecryptErrTypes.format, error: format_error.message}, longids, is_encrypted: null, signature: null};
       }
       let keys = await Pgp.internal.crypto_message_get_sorted_keys_for_message(account_email, prepared.message);
       longids.message = keys.encrypted_for;
@@ -393,17 +393,17 @@ export class Pgp {
       longids.need_passphrase = keys.prv_for_decrypt_without_passphrases.map(ki => ki.longid);
       let is_encrypted = !prepared.is_cleartext;
       if (!is_encrypted) {
-        return {success: true, content: {text: prepared.message.getText(), filename: null}, is_encrypted, signature: await Pgp.message.verify(prepared.message, keys.for_verification, keys.verification_contacts[0])};
+        return {success: true, content: {text: prepared.message.getText(), filename: null}, is_encrypted, signature: await Pgp.msg.verify(prepared.message, keys.for_verification, keys.verification_contacts[0])};
       }
       if (!keys.prv_for_decrypt_decrypted.length && !msg_pwd) {
-        return {success: false, error: {type: DecryptErrorTypes.need_passphrase}, signature: null, message: prepared.message, longids, is_encrypted};
+        return {success: false, error: {type: DecryptErrTypes.need_passphrase}, signature: null, message: prepared.message, longids, is_encrypted};
       }
       try {
         let packets = (prepared.message as OpenPGP.message.Message).packets;
         let is_sym_encrypted = packets.filter(p => p.tag === openpgp.enums.packet.symEncryptedSessionKey).length > 0;
         let is_pub_encrypted = packets.filter(p => p.tag === openpgp.enums.packet.publicKeyEncryptedSessionKey).length > 0;
         if(is_sym_encrypted && !is_pub_encrypted && !msg_pwd) {
-          return {success: false, error: {type: DecryptErrorTypes.use_password}, longids, is_encrypted, signature: null};
+          return {success: false, error: {type: DecryptErrTypes.use_password}, longids, is_encrypted, signature: null};
         }
         let msg_passwords = msg_pwd ? [msg_pwd] : null;
         let decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prv_for_decrypt_decrypted.map(ki => ki.decrypted!), msg_passwords);
@@ -440,7 +440,7 @@ export class Pgp {
       }
       return await openpgp.encrypt(options);
     },
-    diagnose_pubkeys: async (account_email: string, m: string|Uint8Array|OpenPGP.message.Message): Promise<DiagnoseMessagePubkeysResult> => {
+    diagnose_pubkeys: async (account_email: string, m: string|Uint8Array|OpenPGP.message.Message): Promise<DiagnoseMsgPubkeysResult> => {
       let message: OpenPGP.message.Message;
       if (typeof m === 'string') {
         message = openpgp.message.readArmored(m);
@@ -492,14 +492,14 @@ export class Pgp {
   };
 
   public static internal = {
-    crypto_armor_block_object: (type: MessageBlockType, content: string, missing_end=false): MessageBlock => ({type, content, complete: !missing_end}),
+    crypto_armor_block_object: (type: MsgBlockType, content: string, missing_end=false): MsgBlock => ({type, content, complete: !missing_end}),
     crypto_armor_detect_block_next: (original_text: string, start_at: number) => {
-      let result = {found: [] as MessageBlock[], continue_at: null as number|null};
+      let result = {found: [] as MsgBlock[], continue_at: null as number|null};
       let begin = original_text.indexOf(Pgp.armor.headers('null').begin, start_at);
       if (begin !== -1) { // found
         let potential_begin_header = original_text.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
         for (let _type of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
-          let type = _type as ReplaceableMessageBlockType;
+          let type = _type as ReplaceableMsgBlockType;
           let block_header_def = Pgp.ARMOR_HEADER_DICT[type];
           if (block_header_def.replace) {
             let index_of_confirmed_begin = potential_begin_header.indexOf(block_header_def.begin);
@@ -613,15 +613,15 @@ export class Pgp {
     crypto_message_decrypt_categorize_error: (decrypt_error: Error, message_password: string|null): DecryptError$error => {
       let e = String(decrypt_error).replace('Error: ', '').replace('Error decrypting message: ', '');
       if (Value.is(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !message_password) {
-        return {type: DecryptErrorTypes.key_mismatch, error: e};
+        return {type: DecryptErrTypes.key_mismatch, error: e};
       } else if (message_password && Value.is(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
-        return {type: DecryptErrorTypes.wrong_password, error: e};
+        return {type: DecryptErrTypes.wrong_password, error: e};
       } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
-        return {type: DecryptErrorTypes.no_mdc, error: e};
+        return {type: DecryptErrTypes.no_mdc, error: e};
       } else if (e === 'Decryption error') {
-        return {type: DecryptErrorTypes.format, error: e};
+        return {type: DecryptErrTypes.format, error: e};
       } else {
-        return {type: DecryptErrorTypes.other, error: e};
+        return {type: DecryptErrTypes.other, error: e};
       }
     },
     readable_crack_time: (total_seconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form

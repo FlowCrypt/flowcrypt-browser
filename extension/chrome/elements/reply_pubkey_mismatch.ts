@@ -25,7 +25,7 @@ Catch.try(async () => {
   let additional_message_headers: FlatHeaders;
 
   let app_functions = Composer.default_app_functions();
-  app_functions.send_message_to_main_window = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
+  app_functions.send_msg_to_main_window = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id, disable_draft_saving: true}, new Subscription(null));
 
   const send_button_text = 'Send Response';
@@ -62,12 +62,12 @@ Catch.try(async () => {
   // send
   $('#send_btn').click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
-    let message = await Api.common.message(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
+    let message = await Api.common.msg(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
     for (let k of Object.keys(additional_message_headers)) {
       message.headers[k] = additional_message_headers[k];
     }
     try {
-      await Api.gmail.message_send(account_email, message);
+      await Api.gmail.msg_send(account_email, message);
       BrowserMsg.send(parent_tab_id, 'notification_show', { notification: 'Message sent.' });
       Xss.sanitize_replace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {

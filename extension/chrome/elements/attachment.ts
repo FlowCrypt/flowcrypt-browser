@@ -6,7 +6,7 @@ import { Store } from '../../js/common/store.js';
 import { Catch, Env, Value } from './../../js/common/common.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { Api } from '../../js/common/api.js';
-import { Pgp, DecryptErrorTypes } from '../../js/common/pgp.js';
+import { Pgp, DecryptErrTypes } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Attachment } from '../../js/common/attachment.js';
 
@@ -119,7 +119,7 @@ Catch.try(async () => {
   });
 
   let decrypt_and_save_attachment_to_downloads = async (enc_a: Attachment) => {
-    let result = await Pgp.message.decrypt(account_email, enc_a.data(), null, true);
+    let result = await Pgp.msg.decrypt(account_email, enc_a.data(), null, true);
     Xss.sanitize_render('#download', original_html_content).removeClass('visible');
     if (result.success) {
       let name = result.content.filename;
@@ -127,7 +127,7 @@ Catch.try(async () => {
         name = enc_a.name;
       }
       Attachment.methods.save_to_downloads(new Attachment({name, type: enc_a.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
-    } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
+    } else if (result.error.type === DecryptErrTypes.need_passphrase) {
       BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attachment', longids: result.longids.need_passphrase});
       clearInterval(passphrase_interval);
       passphrase_interval = Catch.set_interval(check_passphrase_entered, 1000);
@@ -193,7 +193,7 @@ Catch.try(async () => {
   let recover_missing_attachment_id_if_needed = async () => {
     if (!url_params.url && !url_params.attachment_id && url_params.message_id) {
       try {
-        let result = await Api.gmail.message_get(account_email, url_params.message_id as string, 'full');
+        let result = await Api.gmail.msg_get(account_email, url_params.message_id as string, 'full');
         if (result && result.payload && result.payload.parts) {
           for (let attachment_meta of result.payload.parts) {
             if (attachment_meta.filename === url_params.name && attachment_meta.body && attachment_meta.body.size === url_params.size && attachment_meta.body.attachmentId) {
@@ -215,9 +215,9 @@ Catch.try(async () => {
     if (encrypted_a && encrypted_a.message_id && encrypted_a.id && encrypted_a.treat_as() === 'public_key') {
       // this is encrypted public key - download && decrypt & parse & render
       let attachment = await Api.gmail.attachment_get(account_email, url_params.message_id as string, url_params.attachment_id as string);
-      let result = await Pgp.message.decrypt(account_email, attachment.data);
+      let result = await Pgp.msg.decrypt(account_email, attachment.data);
       if (result.success && result.content.text) {
-        let openpgp_type = Pgp.message.type(result.content.text);
+        let openpgp_type = Pgp.msg.type(result.content.text);
         if(openpgp_type && openpgp_type.type === 'public_key') {
           if(openpgp_type.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey

@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Value, Catch } from './common.js';
-import { SendableMessageBody, RichHeaders, FlatHeaders } from './api.js';
+import { SendableMsgBody, RichHeaders, FlatHeaders } from './api.js';
 import { Pgp } from './pgp.js';
 import { Attachment } from './attachment.js';
 import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension.js';
@@ -13,16 +13,16 @@ type MimeParserNode = { path: string[]; headers: { [key: string]: {value: string
   appendChild: (child: MimeParserNode) => void; contentTransferEncoding: {value: string}; charset?: string; };
 
 export type KeyBlockType = 'public_key'|'private_key';
-export type ReplaceableMessageBlockType = KeyBlockType|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
-export type MessageBlockType = 'text'|ReplaceableMessageBlockType;
-export type MessageBlock = { type: MessageBlockType; content: string; complete: boolean; signature?: string; };
+export type ReplaceableMsgBlockType = KeyBlockType|'attest_packet'|'cryptup_verification'|'signed_message'|'message'|'password_message';
+export type MsgBlockType = 'text'|ReplaceableMsgBlockType;
+export type MsgBlock = { type: MsgBlockType; content: string; complete: boolean; signature?: string; };
 export type FromToHeaders = { from: string; to: string[]; };
 
 export class Mime {
 
   public static process = async (mime_message: string) => {
     let decoded = await Mime.decode(mime_message);
-    let blocks: MessageBlock[] = [];
+    let blocks: MsgBlock[] = [];
     if (decoded.text) {  // may be undefined or empty
       blocks = blocks.concat(Pgp.armor.detect_blocks(decoded.text).blocks);
     }
@@ -50,16 +50,16 @@ export class Mime {
     return {headers: decoded.headers, blocks};
   }
 
-  public static headers_to_from = (parsed_mime_message: MimeContent): FromToHeaders => {
+  public static headers_to_from = (parsed_mime_msg: MimeContent): FromToHeaders => {
     let header_to: string[] = [];
     let header_from;
     // @ts-ignore - I should check this - does it really have .address?
-    if (parsed_mime_message.headers.from && parsed_mime_message.headers.from.length && parsed_mime_message.headers.from[0] && parsed_mime_message.headers.from[0].address) {
+    if (parsed_mime_msg.headers.from && parsed_mime_msg.headers.from.length && parsed_mime_msg.headers.from[0] && parsed_mime_msg.headers.from[0].address) {
       // @ts-ignore - I should check this - does it really have .address?
-      header_from = parsed_mime_message.headers.from[0].address;
+      header_from = parsed_mime_msg.headers.from[0].address;
     }
-    if (parsed_mime_message.headers.to && parsed_mime_message.headers.to.length) {
-      for (let to of parsed_mime_message.headers.to) {
+    if (parsed_mime_msg.headers.to && parsed_mime_msg.headers.to.length) {
+      for (let to of parsed_mime_msg.headers.to) {
         // @ts-ignore - I should check this - does it really have .address?
         if (to.address) {
           // @ts-ignore - I should check this - does it really have .address?
@@ -70,14 +70,14 @@ export class Mime {
     return { from: header_from, to: header_to };
   }
 
-  public static reply_headers = (parsed_mime_message: MimeContent) => {
-    let message_id = parsed_mime_message.headers['message-id'] || '';
-    let references = parsed_mime_message.headers['in-reply-to'] || '';
-    return { 'in-reply-to': message_id, 'references': references + ' ' + message_id };
+  public static reply_headers = (parsed_mime_msg: MimeContent) => {
+    let msg_id = parsed_mime_msg.headers['message-id'] || '';
+    let references = parsed_mime_msg.headers['in-reply-to'] || '';
+    return { 'in-reply-to': msg_id, 'references': references + ' ' + msg_id };
   }
 
-  public static resembles_message = (message: string|Uint8Array) => {
-    let m = message.slice(0, 1000);
+  public static resembles_msg = (msg: string|Uint8Array) => {
+    let m = msg.slice(0, 1000);
     // noinspection SuspiciousInstanceOfGuard
     if (m instanceof Uint8Array) {
       m = Str.from_uint8(m);
@@ -93,7 +93,7 @@ export class Mime {
     return Boolean(contentType.index === 0 && m.match(/boundary=/));
   }
 
-  public static decode = (mime_message: string): Promise<MimeContent> => {
+  public static decode = (mime_msg: string): Promise<MimeContent> => {
     return new Promise(async resolve => {
       let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
       try {
@@ -134,7 +134,7 @@ export class Mime {
           }
           resolve(mime_content);
         };
-        parser.write(mime_message);
+        parser.write(mime_msg);
         parser.end();
       } catch (e) {
         Catch.handle_exception(e);
@@ -143,7 +143,7 @@ export class Mime {
     });
   }
 
-  public static encode = async (body:string|SendableMessageBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
+  public static encode = async (body:string|SendableMsgBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
     let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
     let root_node = new MimeBuilder('multipart/mixed');
     for (let key of Object.keys(headers)) {
@@ -170,7 +170,7 @@ export class Mime {
     return root_node.build();
   }
 
-  public static signed = (mime_message: string) => {
+  public static signed = (mime_msg: string) => {
     /*
       Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
       Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
@@ -190,39 +190,39 @@ export class Mime {
 
       --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1--
       */
-    let signed_header_index = mime_message.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
+    let signed_header_index = mime_msg.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
     if (signed_header_index !== -1) {
-      mime_message = mime_message.substr(signed_header_index);
-      let first_boundary_index = mime_message.substr(0, 1000).toLowerCase().indexOf('boundary=');
+      mime_msg = mime_msg.substr(signed_header_index);
+      let first_boundary_index = mime_msg.substr(0, 1000).toLowerCase().indexOf('boundary=');
       if (first_boundary_index) {
-        let boundary = mime_message.substr(first_boundary_index, 100);
+        let boundary = mime_msg.substr(first_boundary_index, 100);
         boundary = (boundary.match(/boundary="[^"]{1,70}"/gi) || boundary.match(/boundary=[a-z0-9][a-z0-9 ]{0,68}[a-z0-9]/gi) || [])[0];
         if (boundary) {
           boundary = boundary.replace(/^boundary="?|"$/gi, '');
           let boundary_begin = '\r\n--' + boundary + '\r\n';
           let boundary_end = '--' + boundary + '--';
-          let end_index = mime_message.indexOf(boundary_end);
+          let end_index = mime_msg.indexOf(boundary_end);
           if (end_index !== -1) {
-            mime_message = mime_message.substr(0, end_index + boundary_end.length);
-            if (mime_message) {
-              let result = { full: mime_message, signed: null as string|null, signature: null as string|null };
-              let first_part_start_index = mime_message.indexOf(boundary_begin);
+            mime_msg = mime_msg.substr(0, end_index + boundary_end.length);
+            if (mime_msg) {
+              let res = { full: mime_msg, signed: null as string|null, signature: null as string|null };
+              let first_part_start_index = mime_msg.indexOf(boundary_begin);
               if (first_part_start_index !== -1) {
                 first_part_start_index += boundary_begin.length;
-                let first_part_end_index = mime_message.indexOf(boundary_begin, first_part_start_index);
+                let first_part_end_index = mime_msg.indexOf(boundary_begin, first_part_start_index);
                 let second_part_start_index = first_part_end_index + boundary_begin.length;
-                let second_part_end_index = mime_message.indexOf(boundary_end, second_part_start_index);
+                let second_part_end_index = mime_msg.indexOf(boundary_end, second_part_start_index);
                 if (second_part_end_index !== -1) {
-                  let first_part = mime_message.substr(first_part_start_index, first_part_end_index - first_part_start_index);
-                  let second_part = mime_message.substr(second_part_start_index, second_part_end_index - second_part_start_index);
+                  let first_part = mime_msg.substr(first_part_start_index, first_part_end_index - first_part_start_index);
+                  let second_part = mime_msg.substr(second_part_start_index, second_part_end_index - second_part_start_index);
                   if (first_part.match(/^content-type: application\/pgp-signature/gi) !== null && Value.is('-----BEGIN PGP SIGNATURE-----').in(first_part) && Value.is('-----END PGP SIGNATURE-----').in(first_part)) {
-                    result.signature = Pgp.armor.clip(first_part);
-                    result.signed = second_part;
+                    res.signature = Pgp.armor.clip(first_part);
+                    res.signed = second_part;
                   } else {
-                    result.signature = Pgp.armor.clip(second_part);
-                    result.signed = first_part;
+                    res.signature = Pgp.armor.clip(second_part);
+                    res.signed = first_part;
                   }
-                  return result;
+                  return res;
                 }
               }
             }

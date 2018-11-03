@@ -10,7 +10,7 @@ import { Api } from './api.js';
 import { Pgp } from './pgp.js';
 import { mnemonic } from './mnemonic.js';
 import { Attachment } from './attachment.js';
-import { MessageBlock, KeyBlockType } from './mime.js';
+import { MsgBlock, KeyBlockType } from './mime.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
@@ -285,7 +285,7 @@ export class Ui {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderable_message_block = (factory: XssSafeFactory, block: MessageBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
+  public static renderable_msg_block = (factory: XssSafeFactory, block: MsgBlock, message_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
     if (block.type === 'text' || block.type === 'private_key') {
       return Xss.html_escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
@@ -913,7 +913,7 @@ export class AttachmentUI {
     for (let id of Object.keys(this.attached_files)) {
       let file = this.attached_files[id];
       let file_data = await this.read_attachment_data_as_uint8(id);
-      let encrypted = await Pgp.message.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false) as OpenPGP.EncryptBinaryResult;
+      let encrypted = await Pgp.msg.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false) as OpenPGP.EncryptBinaryResult;
       attachments.push(new Attachment({name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write()}));
     }
     return attachments;

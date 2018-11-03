@@ -7,11 +7,11 @@ import { Catch, Value, Str, Dict } from '../common/common.js';
 
 import { Api } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
-import { BrowserMessageHandler } from '../common/extension.js';
+import { BrowserMsgHandler } from '../common/extension.js';
 
 declare let openpgp: typeof OpenPGP;
 
-export let migrate_account: BrowserMessageHandler = async (data: {account_email: string}, sender, respond_done) => {
+export let migrate_account: BrowserMsgHandler = async (data: {account_email: string}, sender, respond_done) => {
   if(data.account_email) {
     await Store.set(data.account_email, { version: Catch.version('int') });
     respond_done();

@@ -89,7 +89,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
     }
   };
 
-  let browser_message_listen = (account_email: string, tab_id: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
+  let browser_msg_listen = (account_email: string, tab_id: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
     BrowserMsg.listen({
       open_new_message: () => {
         inject.open_compose_window();
@@ -174,7 +174,7 @@ export let content_script_setup_if_vacant = async (webmail_specific: WebmailSpec
       let account_email = await wait_for_account_email();
       let {tab_id, notifications, factory, inject} = await initialize_internal_variables(account_email);
       await show_notifications_and_wait_until_account_set_up(account_email, notifications);
-      browser_message_listen(account_email, tab_id, inject, factory, notifications);
+      browser_msg_listen(account_email, tab_id, inject, factory, notifications);
       await BrowserMsg.send_await(null, 'migrate_account', {account_email});
       await webmail_specific.start(account_email, inject, notifications, factory, notify_murdered);
     } catch(e) {

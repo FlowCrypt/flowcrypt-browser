@@ -45,8 +45,8 @@ Catch.try(async () => {
   $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
   let tab_id = await BrowserMsg.required_tab_id();
   BrowserMsg.listen({
-    passphrase_entry: async (message: {entered: boolean}, sender, respond) => {
-      if (message.entered) {
+    passphrase_entry: async (msg: {entered: boolean}, sender, respond) => {
+      if (msg.entered) {
         let pp = await Store.passphrase_get(account_email, primary_ki.longid);
         await process_attest(pp);
       }

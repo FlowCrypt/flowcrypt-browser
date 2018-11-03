@@ -24,7 +24,7 @@ export class Settings {
     let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
     let results = [];
     while (true) {
-      let headers = await Api.gmail.fetch_messages_based_on_query_and_extract_first_available_header(account_email, query, ['from']);
+      let headers = await Api.gmail.fetch_msgs_based_on_query_and_extract_first_available_header(account_email, query, ['from']);
       if (!headers.from) {
         return results.filter(email => !Value.is(email).in(Settings.ignore_email_aliases));
       }
@@ -332,13 +332,13 @@ export class Settings {
     }
   }
 
-  static prompt_to_retry = async (type: 'REQUIRED', e: Error, user_message: string, retry_callback: () => Promise<void>): Promise<void> => {
+  static prompt_to_retry = async (type: 'REQUIRED', e: Error, user_msg: string, retry_callback: () => Promise<void>): Promise<void> => {
     // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
     if(!Api.error.is_network_error(e)) {
       Catch.handle_exception(e);
     }
-    while(await Ui.render_overlay_prompt_await_user_choice({retry: {}}, user_message) === 'retry') {
+    while(await Ui.render_overlay_prompt_await_user_choice({retry: {}}, user_msg) === 'retry') {
       try {
         return await retry_callback();
       } catch (e2) {

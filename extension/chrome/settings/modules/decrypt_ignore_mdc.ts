@@ -4,7 +4,7 @@
 
 import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Xss, Ui, XssSafeFactory } from '../../../js/common/browser.js';
-import { Pgp, DecryptErrorTypes } from '../../../js/common/pgp.js';
+import { Pgp, DecryptErrTypes } from '../../../js/common/pgp.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -37,10 +37,10 @@ Catch.try(async () => {
     }
     original_content = $(self).html();
     Xss.sanitize_render(self, 'Decrypting.. ' + Ui.spinner('white'));
-    let result = await Pgp.message.decrypt(account_email, encrypted);
+    let result = await Pgp.msg.decrypt(account_email, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
-    } else if (result.error.type === DecryptErrorTypes.need_passphrase) {
+    } else if (result.error.type === DecryptErrTypes.need_passphrase) {
       $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // xss-safe-factory
     } else {
       delete result.message;
