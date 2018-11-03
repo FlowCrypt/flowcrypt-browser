@@ -10,8 +10,7 @@ import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { InboxElementReplacer } from './inbox_element_replacer.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
-import { content_script_setup_if_vacant, WebmailVariantObject } from './setup.js';
-
+import { content_script_setup_if_vacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { Api } from '../../common/api.js';
 import { ContentScriptWindow, FcWindow } from '../../common/extension.js';
 import { XssSafeFactory } from '../../common/browser.js';

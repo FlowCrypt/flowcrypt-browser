@@ -9,7 +9,7 @@ import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory, WebmailVariantString } from '../../common/browser.js';
 import { Attachment } from '../../common/attachment.js';
-import { WebmailElementReplacer } from './setup.js';
+import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 
 export class InboxElementReplacer implements WebmailElementReplacer {
 
