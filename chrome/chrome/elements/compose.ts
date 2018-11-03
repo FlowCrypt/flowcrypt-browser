@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription } from './../../js/common/storage.js';
+import { Store, Subscription, KeyInfo, ContactUpdate, Serializable } from './../../js/common/storage.js';
 import { Catch, Ui, Env, BrowserMsg, Xss, Attachment, Value, Str } from './../../js/common/common.js';
 import { XssSafeFactory } from './../../js/common/factory.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
@@ -120,7 +120,7 @@ Catch.try(async () => {
     },
     storage_get_hide_message_password: () => !!storage.hide_message_password,
     storage_get_subscription: () => Store.subscription(),
-    storage_get_key: async (sender_email: string): Promise<t.KeyInfo> => {
+    storage_get_key: async (sender_email: string): Promise<KeyInfo> => {
       let [primary_k] = await Store.keys_get(account_email, ['primary']);
       if (primary_k) {
         return primary_k;
@@ -166,7 +166,7 @@ Catch.try(async () => {
       await Store.set(null, admin_code_storage);
     },
     storage_contact_get: (email: string[]) => Store.db_contact_get(null, email),
-    storage_contact_update: (email: string[]|string, update: t.ContactUpdate) => Store.db_contact_update(null, email, update),
+    storage_contact_update: (email: string[]|string, update: ContactUpdate) => Store.db_contact_update(null, email, update),
     storage_contact_save: (contact: t.Contact) => Store.db_contact_save(null, contact),
     storage_contact_search: (query: t.DbContactFilter) => Store.db_contact_search(null, query),
     storage_contact_object: Store.db_contact_object,
@@ -209,8 +209,8 @@ Catch.try(async () => {
       }
     },
     email_provider_extract_armored_block: (message_id: string) => Api.gmail.extract_armored_block(account_email, message_id, 'full'),
-    send_message_to_main_window: (channel: string, data: t.Dict<t.Serializable>) => BrowserMsg.send(parent_tab_id, channel, data),
-    send_message_to_background_script: (channel: string, data: t.Dict<t.Serializable>) => BrowserMsg.send(null, channel, data),
+    send_message_to_main_window: (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data),
+    send_message_to_background_script: (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(null, channel, data),
     render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => {
       BrowserMsg.send(parent_tab_id, 'reinsert_reply_box', {
         account_email,

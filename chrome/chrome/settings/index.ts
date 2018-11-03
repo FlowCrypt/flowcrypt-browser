@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from '../../js/common/storage.js';
+import { Store, KeyInfo } from '../../js/common/storage.js';
 import { Catch, Env, BrowserMsg, Ui, Xss, Str } from '../../js/common/common.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
@@ -264,7 +264,7 @@ Catch.try(async () => {
     }
   };
 
-  let add_key_rows_html = (private_keys: t.KeyInfo[]) => {
+  let add_key_rows_html = (private_keys: KeyInfo[]) => {
     let html = '';
     for (let i = 0; i < private_keys.length; i++) {
       let ki = private_keys[i];

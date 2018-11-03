@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Store, Subscription} from './storage.js';
+import {Store, Subscription, KeyInfo, ContactUpdate, Serializable} from './storage.js';
 import {Lang} from './lang.js';
 import {Catch, Value, Xss, Str, Mime, Ui, Attachment, Env, BrowserMsg, Extension, UnreportableError} from './common.js';
 import { Pgp } from './pgp.js';
@@ -22,12 +22,12 @@ interface ComposerAppFunctionsInterface {
     storage_set_email_footer: (footer: string|null) => Promise<void>;
     storage_get_hide_message_password: () => boolean;
     storage_get_subscription: () => Promise<Subscription>;
-    storage_get_key: (sender_email: string) => Promise<t.KeyInfo>;
+    storage_get_key: (sender_email: string) => Promise<KeyInfo>;
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>;
     storage_passphrase_get: () => Promise<string|null>;
     storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise<void>;
     storage_contact_get: (email: string[]) => Promise<(t.Contact|null)[]>;
-    storage_contact_update: (email: string|string[], update: t.ContactUpdate) => Promise<void>;
+    storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>;
     storage_contact_save:  (contact: t.Contact) =>  Promise<void>;
     storage_contact_search: (query: ProviderContactsQuery) => Promise<t.Contact[]>;
     storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => t.Contact;
@@ -1483,7 +1483,7 @@ export class Composer {
 
   static default_app_functions = (): ComposerAppFunctionsInterface => {
     return {
-      send_message_to_main_window: (channel: string, data: t.Dict<t.Serializable>) => null,
+      send_message_to_main_window: (channel: string, data: t.Dict<Serializable>) => null,
       can_read_email: () => false,
       does_recipient_have_my_pubkey: (their_email: string): Promise<boolean|undefined> => Promise.resolve(false),
       storage_get_addresses: () => [],
@@ -1498,7 +1498,7 @@ export class Composer {
       storage_passphrase_get: () => Promise.resolve(null),
       storage_add_admin_codes: (short_id: string, message_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
       storage_contact_get: (email: string[]) => Promise.resolve([]),
-      storage_contact_update: (email: string[]|string, update: t.ContactUpdate) => Promise.resolve(),
+      storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
       storage_contact_save: (contact: t.Contact) => Promise.resolve(),
       storage_contact_search: (query: t.DbContactFilter) => Promise.resolve([]),
       storage_contact_object: Store.db_contact_object,
@@ -1510,7 +1510,7 @@ export class Composer {
       email_provider_search_contacts: (query: string, known_contacts: t.Contact[], multi_cb: t.Callback) => multi_cb({new: [], all: []}),
       email_provider_determine_reply_message_header_variables: () => Promise.resolve(undefined),
       email_provider_extract_armored_block: (message_id) => Promise.resolve(''),
-      send_message_to_background_script: (channel: string, data: t.Dict<t.Serializable>) => BrowserMsg.send(null, channel, data),
+      send_message_to_background_script: (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(null, channel, data),
       render_reinsert_reply_box: (last_message_id: string, recipients: string[]) => Promise.resolve(),
       render_footer_dialog: () => null,
       render_add_pubkey_dialog: (emails: string[]) => null,

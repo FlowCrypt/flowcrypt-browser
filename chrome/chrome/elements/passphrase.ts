@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from './../../js/common/storage.js';
+import { Store, StorageType } from './../../js/common/storage.js';
 import { Catch, Ui, Env, BrowserMsg, Xss, Value } from './../../js/common/common.js';
 import { mnemonic } from './../../js/common/mnemonic.js';
 import * as t from '../../types/common';
@@ -74,7 +74,7 @@ Catch.try(async () => {
 
   $('.action_ok').click(Ui.event.handle(async () => {
     let pass = $('#passphrase').val() as string; // it's a text input
-    let storage_type: t.StorageType = $('.forget').prop('checked') ? 'session' : 'local';
+    let storage_type: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let at_least_one_matched = false;
     for (let keyinfo of selected_private_keys) { // if passphrase matches more keys, it will save them all
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from '../../js/common/storage.js';
+import { Store, KeyInfo } from '../../js/common/storage.js';
 import { Value, Str, Env, BrowserMsg, Ui, Xss, UnreportableError, Catch } from '../../js/common/common.js';
 import * as t from '../../types/common';
 import { Lang } from '../../js/common/lang.js';
@@ -320,7 +320,7 @@ export class Settings {
     });
   }
 
-  static abort_and_render_error_if_keyinfo_empty = (ki: t.KeyInfo|undefined, do_throw:boolean=true) => {
+  static abort_and_render_error_if_keyinfo_empty = (ki: KeyInfo|undefined, do_throw:boolean=true) => {
     if (!ki) {
       let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
       Xss.sanitize_render('#content', `${msg} ${Ui.retry_link()}`);

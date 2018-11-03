@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from './storage.js';
+import { Store, KeyInfo } from './storage.js';
 import { Catch, Value, Str, Ui } from './common.js';
 import * as t from '../../types/common';
 import { XssSafeFactory } from './factory.js';
@@ -21,10 +21,10 @@ interface InternalSortedKeysForDecrypt {
   for_verification: OpenPGP.key.Key[];
   encrypted_for: string[];
   signed_by: string[];
-  prv_matching: t.KeyInfo[];
-  prv_for_decrypt: t.KeyInfo[];
-  prv_for_decrypt_decrypted: t.KeyInfo[];
-  prv_for_decrypt_without_passphrases: t.KeyInfo[];
+  prv_matching: KeyInfo[];
+  prv_for_decrypt: KeyInfo[];
+  prv_for_decrypt_decrypted: KeyInfo[];
+  prv_for_decrypt_without_passphrases: KeyInfo[];
 }
 
 interface DecryptSuccess {

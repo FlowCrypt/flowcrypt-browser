@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/storage.js';
+import { Store, KeyInfo } from '../../../js/common/storage.js';
 import { Catch, Env, Xss, Ui, BrowserMsg, Value, Attachment, UnreportableError } from '../../../js/common/common.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -181,7 +181,7 @@ Catch.try(async () => {
     }
   }));
 
-  let is_master_private_key_encrypted = async (ki: t.KeyInfo) => {
+  let is_master_private_key_encrypted = async (ki: KeyInfo) => {
     let k = openpgp.key.readArmored(ki.private).keys[0];
     if (k.primaryKey.isDecrypted()) {
       return false;
@@ -212,7 +212,7 @@ Catch.try(async () => {
     }
   };
 
-  let backup_on_email_provider_and_update_ui = async (primary_ki: t.KeyInfo) => {
+  let backup_on_email_provider_and_update_ui = async (primary_ki: KeyInfo) => {
     let pass_phrase = await Store.passphrase_get(account_email, primary_ki.longid);
     if (!pass_phrase || !await is_pass_phrase_strong_enough(primary_ki, pass_phrase)) {
       alert('Your key is not protected with a strong pass phrase, skipping');
@@ -239,7 +239,7 @@ Catch.try(async () => {
     await write_backup_done_and_render(false, 'inbox');
   };
 
-  let backup_as_file = async (primary_ki: t.KeyInfo) => { // todo - add a non-encrypted download option
+  let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
     let attachment = as_backup_file(account_email, primary_ki.private);
     if (Env.browser().name !== 'firefox') {
       Attachment.methods.save_to_downloads(attachment);
@@ -249,11 +249,11 @@ Catch.try(async () => {
     }
   };
 
-  let backup_by_print = async (primary_ki: t.KeyInfo) => { // todo - implement + add a non-encrypted print option
+  let backup_by_print = async (primary_ki: KeyInfo) => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
   };
 
-  let backup_refused = async (ki: t.KeyInfo) => {
+  let backup_refused = async (ki: KeyInfo) => {
     await write_backup_done_and_render(Value.int.get_future_timestamp_in_months(3), 'none');
   };
 
@@ -285,7 +285,7 @@ Catch.try(async () => {
     }
   }));
 
-  let is_pass_phrase_strong_enough = async (ki: t.KeyInfo, pass_phrase: string) => {
+  let is_pass_phrase_strong_enough = async (ki: KeyInfo, pass_phrase: string) => {
     let k = Pgp.key.read(ki.private);
     if(k.isDecrypted()) {
       return false;

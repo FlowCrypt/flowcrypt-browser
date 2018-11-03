@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Store} from './storage.js';
+import {Store, SubscriptionAttempt} from './storage.js';
 import {Env, Str, Catch} from './common.js';
 import * as t from '../../types/common';
 import { Api } from './api.js';
@@ -85,8 +85,8 @@ export class FlowCryptAccount {
   }
 
   save_subscription_attempt = async (product: t.Product, source: string|null) => {
-    (product as t.SubscriptionAttempt).source = source;
-    await Store.set(null, { 'cryptup_subscription_attempt': product as t.SubscriptionAttempt });
+    (product as SubscriptionAttempt).source = source;
+    await Store.set(null, { 'cryptup_subscription_attempt': product as SubscriptionAttempt });
   }
 
   parse_token_email_text = (verification_email_text: string, stored_uuid_to_cross_check?: string): string|undefined => {

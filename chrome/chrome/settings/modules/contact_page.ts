@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/storage.js';
+import { Store, Serializable } from '../../../js/common/storage.js';
 import { Catch, Env, Xss, Ui, BrowserMsg, Value, Attachment, Str } from '../../../js/common/common.js';
 import { Attach } from '../../../js/common/attach.js';
 import * as t from '../../../types/common';
@@ -88,7 +88,7 @@ Catch.try(async () => {
     } else {
       S.cached('show_if_active').css('display', 'none');
       Xss.sanitize_render(S.cached('status'), 'Updating ' + Ui.spinner('green'));
-      let update: t.Dict<t.Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
+      let update: t.Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
       if (new_photo_file) {
         update.photo_content = btoa(new_photo_file.as_text());
       }

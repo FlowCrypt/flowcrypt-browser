@@ -5,7 +5,7 @@
 'use strict';
 
 import * as DOMPurify from 'dompurify';
-import {Store} from './storage.js';
+import {Store, FlatTypes, Serializable, KeyInfo} from './storage.js';
 import {XssSafeFactory} from './factory.js';
 import * as t from '../../types/common';
 import { Api, ProgressCallback } from './api.js';
@@ -190,14 +190,14 @@ export class Attachment {
       }
     },
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfo_as_pubkey_attachment: (ki: t.KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
+    keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
   };
 
 }
 
 export class Extension { // todo - move extension-specific common.js code here
 
-  public static prepare_bug_report = (name: string, details?: t.Dict<t.FlatTypes>, error?: Error|any): string => {
+  public static prepare_bug_report = (name: string, details?: t.Dict<FlatTypes>, error?: Error|any): string => {
     let bug_report: t.Dict<string> = {
       name,
       stack: Catch.stack_trace(),
@@ -1347,7 +1347,7 @@ export class Catch {
   private static RUNTIME: t.Dict<string> = {};
   private static ORIGINAL_ON_ERROR = window.onerror;
 
-  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|t.Dict<t.Serializable>, is_manually_called: boolean, version: string, env: string) => {
+  public static handle_error = (error_message: string|undefined, url: string, line: number, col: number, error: string|Error|t.Dict<Serializable>, is_manually_called: boolean, version: string, env: string) => {
     if (typeof error === 'string') {
       error_message = error;
       error = { name: 'thrown_string', message: error_message, stack: error_message };
@@ -1460,7 +1460,7 @@ export class Catch {
     Catch.handle_error(exception.message, window.location.href, line, col, exception, true, Catch.RUNTIME.version, Catch.RUNTIME.environment);
   }
 
-  public static report = (name: string, details:Error|t.Serializable|t.StandardError|PromiseRejectionEvent=undefined) => {
+  public static report = (name: string, details:Error|Serializable|t.StandardError|PromiseRejectionEvent=undefined) => {
     try {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
@@ -1477,7 +1477,7 @@ export class Catch {
     }
   }
 
-  public static log = (name: string, details:t.Serializable|Error|t.Dict<t.Serializable>=undefined) => {
+  public static log = (name: string, details:Serializable|Error|t.Dict<Serializable>=undefined) => {
     name = 'Catch.log: ' + name;
     console.log(name);
     try {
@@ -1622,7 +1622,7 @@ export class Catch {
 export class Value {
 
   public static arr = {
-    unique: <T extends t.FlatTypes>(array: T[]): T[] => {
+    unique: <T extends FlatTypes>(array: T[]): T[] => {
       let unique: T[] = [];
       for (let v of array) {
         if (!Value.is(v).in(unique)) {
@@ -1672,7 +1672,7 @@ export class Value {
 
   public static noop = (): void => undefined;
 
-  public static is = (v: t.FlatTypes) => ({in: (array_or_str: t.FlatTypes[]|string): boolean => Value.arr.contains(array_or_str, v)});  // Value.this(v).in(array_or_string)
+  public static is = (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => Value.arr.contains(array_or_str, v)});  // Value.this(v).in(array_or_string)
 
 }
 

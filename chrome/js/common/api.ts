@@ -2,31 +2,33 @@
 
 'use strict';
 
-import { Store } from './storage.js';
+import { Store, GlobalStore, Serializable, AccountStore } from './storage.js';
 import { Catch, Value, Str, Attachment, Env, BrowserMsg, Mime, Ui } from './common.js';
 import * as t from '../../types/common';
 import { Pgp } from './pgp.js';
 
 declare const openpgp: typeof OpenPGP;
 
-export type ProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
-export type ProgressCallbacks = {upload?: ProgressCallback|null, download?: ProgressCallback|null};
-export type GmailResponseFormat = 'raw'|'full'|'metadata';
-export type ProviderContactsQuery = {substring: string};
-
+type SubscriptionLevel = 'pro'|null;
 type RequestFormat = 'JSON'|'FORM';
 type ResponseFormat = 'json';
 type RequestMethod = 'POST'|'GET'|'DELETE'|'PUT';
 type ProviderContactsResults = {new: t.Contact[], all: t.Contact[]};
 
+export type ProgressCallback = (percent: number|null, loaded: number|null, total: number|null) => void;
+export type ProgressCallbacks = {upload?: ProgressCallback|null, download?: ProgressCallback|null};
+export type GmailResponseFormat = 'raw'|'full'|'metadata';
+export type ProviderContactsQuery = {substring: string};
+export interface SubscriptionInfo { active: boolean|null; method: t.PaymentMethod|null; level: SubscriptionLevel; expire: string|null; }
+
 export namespace R { // responses
 
   export type FcHelpFeedback = {sent: boolean};
-  export type FcAccountLogin = {registered: boolean, verified: boolean, subscription: t.SubscriptionInfo};
+  export type FcAccountLogin = {registered: boolean, verified: boolean, subscription: SubscriptionInfo};
   export type FcAccountUpdate$result = {alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number};
   export type FcAccountUpdate = {result: FcAccountUpdate$result, updated: boolean};
-  export type FcAccountSubscribe = {subscription: t.SubscriptionInfo};
-  export type FcAccountCheck = {email: string|null, subscription: {level: t.SubscriptionLevel, expire: string, expired: boolean, method: t.PaymentMethod|null}|null};
+  export type FcAccountSubscribe = {subscription: SubscriptionInfo};
+  export type FcAccountCheck = {email: string|null, subscription: {level: SubscriptionLevel, expire: string, expired: boolean, method: t.PaymentMethod|null}|null};
 
   export type FcMessagePresignFiles = {approvals: {base_url: string, fields: {key: string}}[]};
   export type FcMessageConfirmFiles = {confirmed: string[], admin_codes: string[]};
@@ -684,7 +686,7 @@ export class Api {
       client,
       metrics: null,
     }),
-    account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: t.SubscriptionInfo}> => {
+    account_login: async (account_email: string, token:string|null=null): Promise<{verified: boolean, subscription: SubscriptionInfo}> => {
       let auth_info = await Store.auth_info();
       let uuid = auth_info.uuid || Pgp.hash.sha1(Str.random(40));
       let account = auth_info.account_email || account_email;
@@ -708,7 +710,7 @@ export class Api {
         let response = await Api.fc.account_check(emails);
         let auth_info = await Store.auth_info();
         let subscription = await Store.subscription();
-        let local_storage_update: t.GlobalStore = {};
+        let local_storage_update: GlobalStore = {};
         if (response.email) {
           if (response.email !== auth_info.account_email) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
@@ -740,9 +742,9 @@ export class Api {
         }
       }
     },
-    account_update: async (update_values?: t.Dict<t.Serializable>): Promise<R.FcAccountUpdate> => {
+    account_update: async (update_values?: t.Dict<Serializable>): Promise<R.FcAccountUpdate> => {
       let auth_info = await Store.auth_info();
-      let request = {account: auth_info.account_email, uuid: auth_info.uuid} as t.Dict<t.Serializable>;
+      let request = {account: auth_info.account_email, uuid: auth_info.uuid} as t.Dict<Serializable>;
       if (update_values) {
         for (let k of Object.keys(update_values)) {
           request[k] = update_values[k];
@@ -834,7 +836,7 @@ export class Api {
   };
 
   public static aws = {
-    s3_upload: (items: {base_url:string, fields: t.Dict<t.Serializable|Attachment>, attachment: Attachment}[], progress_callback: ProgressCallback) => {
+    s3_upload: (items: {base_url:string, fields: t.Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ProgressCallback) => {
       let progress = Value.arr.zeroes(items.length);
       let promises:Promise<void>[] = [];
       if (!items.length) {
@@ -928,7 +930,7 @@ export class Api {
       login_hint: auth_request.account_email,
     }),
     google_auth_save_tokens: async (account_email: string, tokens_object: t.GoogleAuthTokensResponse, scopes: string[]) => {
-      let to_save: t.AccountStore = {
+      let to_save: AccountStore = {
         google_token_access: tokens_object.access_token,
         google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
         google_token_scopes: scopes,
@@ -987,13 +989,13 @@ export class Api {
         throw e;
       }
     },
-    api_google_call: async (account_email: string, method: RequestMethod, url: string, parameters: t.Dict<t.Serializable>|string) => {
+    api_google_call: async (account_email: string, method: RequestMethod, url: string, parameters: t.Dict<Serializable>|string) => {
       let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
       let headers = { Authorization: await Api.internal.google_api_authorization_header(account_email) };
       let request = {url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true};
       return await Api.internal.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    api_gmail_call: async (account_email: string, method: RequestMethod, resource: string, parameters: t.Dict<t.Serializable>|string|null, progress: ProgressCallbacks|null=null, contentType:string|null=null) => {
+    api_gmail_call: async (account_email: string, method: RequestMethod, resource: string, parameters: t.Dict<Serializable>|string|null, progress: ProgressCallbacks|null=null, contentType:string|null=null) => {
       progress = progress || {};
       let data;
       let url;
@@ -1014,7 +1016,7 @@ export class Api {
       let request = {xhr, url, method, data, headers, crossDomain: true, contentType, async: true};
       return await Api.internal.api_google_call_retry_auth_error_one_time(account_email, request);
     },
-    google_api_is_auth_token_valid: (s: t.AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
+    google_api_is_auth_token_valid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
     google_api_authorization_header: async (account_email: string, force_refresh=false): Promise<string> => {
       if (!account_email) {
         throw new Error('missing account_email in api_gmail_call');

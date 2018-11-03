@@ -2,7 +2,7 @@
 
 'use strict';
 
-import {Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError} from '../common/storage.js';
+import {Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes} from '../common/storage.js';
 import {Env, Catch, Value, BrowserMsg} from '../common/common.js';
 import {BgExec} from '../common/bg_exec.js';
 import {BgAttests} from './attests.js';
@@ -38,7 +38,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:t.Dict<t.FlatTypes>|null=null, add_new_account=false) => {
+  let open_settings_page = async (path:string='index.htm', account_email:string|null=null, page:string='', _page_url_params:t.Dict<FlatTypes>|null=null, add_new_account=false) => {
     let base_path = chrome.extension.getURL(`chrome/settings/${path}`);
     let page_url_params = _page_url_params ? JSON.stringify(_page_url_params) : null;
     if (account_email) {
@@ -51,7 +51,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let open_settings_page_handler: t.BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: t.Dict<t.FlatTypes>, add_new_account?: boolean}, sender, respond) => {
+  let open_settings_page_handler: t.BrowserMessageHandler = async (message: {path: string, account_email: string, page: string, page_url_params: t.Dict<FlatTypes>, add_new_account?: boolean}, sender, respond) => {
     await open_settings_page(message.path, message.account_email, message.page, message.page_url_params, message.add_new_account === true);
     respond();
   };

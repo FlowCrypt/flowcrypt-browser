@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription } from './../../js/common/storage.js';
+import { Store, Subscription, Serializable } from './../../js/common/storage.js';
 import { Catch, Ui, Env, BrowserMsg, Xss, Attachment } from './../../js/common/common.js';
 import * as t from './../../types/common';
 import { Composer } from './../../js/common/composer.js';
@@ -22,7 +22,7 @@ Catch.try(async () => {
   let additional_message_headers: t.FlatHeaders;
 
   let app_functions = Composer.default_app_functions();
-  app_functions.send_message_to_main_window = (channel: string, data: t.Dict<t.Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
+  app_functions.send_message_to_main_window = (channel: string, data: t.Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
   let composer = new Composer(app_functions, {is_reply_box: true, frame_id: url_params.frame_id, disable_draft_saving: true}, new Subscription(null));
 
   const send_button_text = 'Send Response';
