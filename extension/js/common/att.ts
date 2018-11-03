@@ -7,33 +7,33 @@ import { ProgressCallback } from './api.js';
 import { Xss } from './browser.js';
 import { KeyInfo } from './store.js';
 
-type Attachment$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
-type AttachmentMeta = { data?: string|Uint8Array|null; type?:string|null; name?: string|null; length?: number|null; url?: string|null;
-  inline?: boolean|null; id?: string|null; message_id?: string|null; treat_as?: Attachment$treat_as; cid?: string|null; };
+type Att$treat_as = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
+type AttMeta = { data?: string|Uint8Array|null; type?:string|null; name?: string|null; length?: number|null; url?: string|null;
+  inline?: boolean|null; id?: string|null; msg_id?: string|null; treat_as?: Att$treat_as; cid?: string|null; };
 
-export type FlowCryptAttachmentLinkData = {name: string, type: string, size: number};
+export type FlowCryptAttLinkData = {name: string, type: string, size: number};
 
-export class Attachment {
+export class Att {
 
   private text: string|null = null;
   private bytes: Uint8Array|null = null;
-  private treat_as_value: Attachment$treat_as|null = null;
+  private treat_as_value: Att$treat_as|null = null;
 
   public length: number;
   public type: string;
   public name: string;
   public url: string|null;
   public id: string|null;
-  public message_id: string|null;
+  public msg_id: string|null;
   public inline: boolean;
   public cid: string|null;
 
-  constructor({data, type, name, length, url, inline, id, message_id, treat_as, cid}: AttachmentMeta) {
+  constructor({data, type, name, length, url, inline, id, msg_id, treat_as, cid}: AttMeta) {
     if(typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
-      throw new Error('Attachment: one of data|url|id has to be set');
+      throw new Error('Att: one of data|url|id has to be set');
     }
-    if(id && !message_id) {
-      throw new Error('Attachment: if id is set, message_id must be set too');
+    if(id && !msg_id) {
+      throw new Error('Att: if id is set, message_id must be set too');
     }
     if(data !== null && typeof data !== 'undefined') {
       this.set_data(data);
@@ -44,14 +44,14 @@ export class Attachment {
     this.url = url || null;
     this.inline = inline !== true;
     this.id = id || null;
-    this.message_id = message_id || null;
+    this.msg_id = msg_id || null;
     this.treat_as_value = treat_as || null;
     this.cid = cid || null;
   }
 
   public set_data = (data: string|Uint8Array) => {
     if(this.has_data()) {
-      throw new Error('Attachment: data already set');
+      throw new Error('Att: data already set');
     }
     if(data instanceof Uint8Array) {
       this.bytes = data;
@@ -75,7 +75,7 @@ export class Attachment {
     if (this.text !== null) {
       return this.text;
     }
-    throw new Error('Attachment has no data set');
+    throw new Error('Att has no data set');
   }
 
   public as_text = (): string => {
@@ -85,7 +85,7 @@ export class Attachment {
     if(this.text !== null) {
       return this.text;
     }
-    throw new Error('Attachment has no data set');
+    throw new Error('Att has no data set');
   }
 
   public as_bytes = (): Uint8Array => {
@@ -95,10 +95,10 @@ export class Attachment {
     if (this.bytes !== null) {
       return this.bytes;
     }
-    throw new Error('Attachment has no data set');
+    throw new Error('Att has no data set');
   }
 
-  public treat_as = (): Attachment$treat_as => {
+  public treat_as = (): Att$treat_as => {
     // todo - should return a probability in the range of certain-likely-maybe
     // could also return possible types as an array - which makes basic usage more difficult - to think through
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
@@ -128,7 +128,7 @@ export class Attachment {
   public static methods = {
     object_url_create: (content: Uint8Array|string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
     object_url_consume: async (url: string) => {
-      let uint8 = await Attachment.methods.download_as_uint8(url, null);
+      let uint8 = await Att.methods.download_as_uint8(url, null);
       window.URL.revokeObjectURL(url);
       return uint8;
     },
@@ -143,7 +143,7 @@ export class Attachment {
       request.onload = e => resolve(new Uint8Array(request.response));
       request.send();
     }),
-    save_to_downloads: (attachment: Attachment, render_in:JQuery<HTMLElement>|null=null) => {
+    save_to_downloads: (attachment: Att, render_in:JQuery<HTMLElement>|null=null) => {
       let blob = new Blob([attachment.data()], {type: attachment.type});
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveBlob(blob, attachment.name);
@@ -186,7 +186,7 @@ export class Attachment {
       }
     },
     pgp_name_patterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfo_as_pubkey_attachment: (ki: KeyInfo) => new Attachment({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
+    keyinfo_as_pubkey_att: (ki: KeyInfo) => new Att({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
   };
 
 }

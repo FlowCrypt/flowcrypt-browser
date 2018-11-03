@@ -4,7 +4,7 @@
 
 import { Store, Subscription, Serializable } from '../../js/common/store.js';
 import { Catch, Env, Dict } from './../../js/common/common.js';
-import { Attachment } from '../../js/common/attachment.js';
+import { Att } from '../../js/common/att.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 
 import { Composer } from './../../js/common/composer.js';
@@ -21,8 +21,8 @@ Catch.try(async () => {
 
   let [primary_k] = await Store.keys_get(account_email, ['primary']);
 
-  const attachment = Attachment.methods.keyinfo_as_pubkey_attachment(primary_k);
-  let additional_message_headers: FlatHeaders;
+  const att = Att.methods.keyinfo_as_pubkey_att(primary_k);
+  let additional_msg_headers: FlatHeaders;
 
   let app_functions = Composer.default_app_functions();
   app_functions.send_msg_to_main_window = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parent_tab_id, channel, data);
@@ -35,7 +35,7 @@ Catch.try(async () => {
   }
 
   // render
-  $('.pubkey_file_name').text(attachment.name);
+  $('.pubkey_file_name').text(att.name);
   composer.resize_reply_box();
   BrowserMsg.send(parent_tab_id, 'scroll_to_bottom_of_conversation');
   $('#input_text').focus();
@@ -44,9 +44,9 @@ Catch.try(async () => {
   try {
     let thread = await Api.gmail.thread_get(account_email, url_params.thread_id as string, 'full');
     if (thread.messages && thread.messages.length > 0) {
-      let thread_message_id_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-      let thread_message_referrences_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
-      additional_message_headers = { 'In-Reply-To': thread_message_id_last, 'References': thread_message_referrences_last + ' ' + thread_message_id_last };
+      let thread_msg_id_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      let thread_msg_refs_last = Api.gmail.find_header(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+      additional_msg_headers = { 'In-Reply-To': thread_msg_id_last, 'References': thread_msg_refs_last + ' ' + thread_msg_id_last };
     }
   } catch (e) {
     if(Api.error.is_auth_popup_needed(e)) {
@@ -62,9 +62,9 @@ Catch.try(async () => {
   // send
   $('#send_btn').click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
-    let message = await Api.common.msg(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [attachment], url_params.thread_id as string);
-    for (let k of Object.keys(additional_message_headers)) {
-      message.headers[k] = additional_message_headers[k];
+    let message = await Api.common.msg(account_email, url_params.from as string, url_params.to as string, url_params.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [att], url_params.thread_id as string);
+    for (let k of Object.keys(additional_msg_headers)) {
+      message.headers[k] = additional_msg_headers[k];
     }
     try {
       await Api.gmail.msg_send(account_email, message);

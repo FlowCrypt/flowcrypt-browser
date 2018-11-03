@@ -4,8 +4,8 @@
 
 import { Store, Serializable } from '../../../js/common/store.js';
 import { Catch, Env, Value, Str, Dict } from '../../../js/common/common.js';
-import { Attachment } from '../../../js/common/attachment.js';
-import { Xss, Ui, AttachmentUI } from '../../../js/common/browser.js';
+import { Att } from '../../../js/common/att.js';
+import { Xss, Ui, AttUI } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 
 import { Settings } from '../../../js/common/settings.js';
@@ -17,8 +17,8 @@ Catch.try(async () => {
   let account_email = Env.url_param_require.string(url_params, 'account_email');
   let parent_tab_id = Env.url_param_require.string(url_params, 'parent_tab_id');
 
-  let attach_js = new AttachmentUI(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
-  let new_photo_file: Attachment;
+  let attach_js = new AttUI(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  let new_photo_file: Att;
 
   const S = Ui.build_jquery_selectors({
     'status': '.status',
@@ -52,7 +52,7 @@ Catch.try(async () => {
         S.cached('photo').attr('src', result.photo);
       }
       attach_js.initialize_attach_dialog('fineuploader', 'select_photo');
-      attach_js.set_attachment_added_callback((file: Attachment) => {
+      attach_js.set_att_added_callback((file: Att) => {
         new_photo_file = file;
         Xss.sanitize_replace('#select_photo', Ui.e('span', {text: file.name}));
       });

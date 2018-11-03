@@ -4,7 +4,7 @@
 
 import { Store, KeyInfo, KeyBackupMethod } from '../../../js/common/store.js';
 import { Catch, Env, Value, UnreportableError, EmailProvider } from '../../../js/common/common.js';
-import { Attachment } from '../../../js/common/attachment.js';
+import { Att } from '../../../js/common/att.js';
 import { Xss, Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
@@ -200,7 +200,7 @@ Catch.try(async () => {
   };
 
   let as_backup_file = (account_email: string, armored_key: string) => {
-    return new Attachment({name: `cryptup-backup-${account_email.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armored_key});
+    return new Att({name: `cryptup-backup-${account_email.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armored_key});
   };
 
   let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
@@ -244,10 +244,10 @@ Catch.try(async () => {
   let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
     let attachment = as_backup_file(account_email, primary_ki.private);
     if (Env.browser().name !== 'firefox') {
-      Attachment.methods.save_to_downloads(attachment);
+      Att.methods.save_to_downloads(attachment);
       await write_backup_done_and_render(false, 'file');
     } else {
-      Attachment.methods.save_to_downloads(attachment, $('.backup_action_buttons_container'));
+      Att.methods.save_to_downloads(attachment, $('.backup_action_buttons_container'));
     }
   };
 

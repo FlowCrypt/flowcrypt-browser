@@ -10,7 +10,7 @@ import { Store, FlatTypes, Serializable } from './store.js';
 import { Pgp } from './pgp.js';
 import { FcWindow } from './extension.js';
 import { Xss, Ui, WebMailName } from './browser.js';
-import { Attachment, FlowCryptAttachmentLinkData } from './attachment.js';
+import { Att, FlowCryptAttLinkData } from './att.js';
 import { StandardError } from './api.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -409,7 +409,7 @@ export class Str {
 
   public static html_attribute_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
 
-  public static html_attribute_decode = (encoded: string): FlowCryptAttachmentLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
+  public static html_attribute_decode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
 
   public static base64url_encode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
@@ -514,15 +514,15 @@ export class Str {
     return str;
   }
 
-  public static extract_fc_attachments = (decrypted_content: string, fc_attachments: Attachment[]) => {
+  public static extract_fc_atts = (decrypted_content: string, fc_attachments: Att[]) => {
     if (Value.is('cryptup_file').in(decrypted_content)) {
       decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, found_link => {
         let element = $(found_link);
         let fc_data = element.attr('cryptup-data');
         if (fc_data) {
-          let a: FlowCryptAttachmentLinkData = Str.html_attribute_decode(fc_data);
+          let a: FlowCryptAttLinkData = Str.html_attribute_decode(fc_data);
           if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
-            fc_attachments.push(new Attachment({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
+            fc_attachments.push(new Att({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
           }
         }
         return '';

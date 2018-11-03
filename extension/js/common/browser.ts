@@ -9,7 +9,7 @@ import { Store } from './store.js';
 import { Api } from './api.js';
 import { Pgp } from './pgp.js';
 import { mnemonic } from './mnemonic.js';
-import { Attachment } from './attachment.js';
+import { Att } from './att.js';
 import { MsgBlock, KeyBlockType } from './mime.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -494,11 +494,11 @@ export class XssSafeFactory {
     return this.frame_src(this.ext_url('chrome/elements/sending_address.htm'), { placement });
   }
 
-  src_pgp_attachment_iframe = (a: Attachment) => {
+  src_pgp_attachment_iframe = (a: Att) => {
     if(!a.id && !a.url && a.has_data()) { // data provided directly, pass as object url
-      a.url = Attachment.methods.object_url_create(a.as_bytes());
+      a.url = Att.methods.object_url_create(a.as_bytes());
     }
-    return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: a.message_id, name: a.name, type: a.type, size: a.length, attachment_id: a.id, url: a.url });
+    return this.frame_src(this.ext_url('chrome/elements/attachment.htm'), {frame_id: this.new_id(), message_id: a.msg_id, name: a.name, type: a.type, size: a.length, attachment_id: a.id, url: a.url });
   }
 
   src_pgp_block_iframe = (message: string, message_id: string|null, is_outgoing: boolean|null, sender_email: string|null, has_password: boolean, signature: string|null|boolean, short: string|null) => {
@@ -564,7 +564,7 @@ export class XssSafeFactory {
     return this.iframe(this.src_verification_dialog(verif_email_text), ['short', 'embedded'], {scrolling: 'no'});
   }
 
-  embedded_attachment = (meta: Attachment) => {
+  embedded_attachment = (meta: Att) => {
     return Ui.e('span', {class: 'pgp_attachment', html: this.iframe(this.src_pgp_attachment_iframe(meta))});
   }
 
@@ -704,9 +704,9 @@ export class KeyImportUI {
         $('.line.pass_phrase_needed').hide();
       }
     }));
-    let attach = new AttachmentUI(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
+    let attach = new AttUI(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
     attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
-    attach.set_attachment_added_callback(file => {
+    attach.set_att_added_callback(file => {
       let k;
       if (Value.is(Pgp.armor.headers('private_key').begin).in(file.as_text())) {
         let first_prv = Pgp.armor.detect_blocks(file.as_text()).blocks.filter(b => b.type === 'private_key')[0];
@@ -852,13 +852,13 @@ export class KeyImportUI {
   }
 }
 
-export class AttachmentUI {
+export class AttUI {
 
   private template_path = '/chrome/elements/shared/attach.template.htm';
   private get_limits: () => AttachLimits;
   private attached_files: Dict<File> = {};
   private uploader: any = undefined;
-  private attachment_added_callback: (r: any) => void;
+  private att_added_callback: (r: any) => void;
 
   constructor(get_limits: () => AttachLimits) {
     this.get_limits = get_limits;
@@ -875,55 +875,55 @@ export class AttachmentUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (id: string, name: string) => Catch.try(() => this.process_new_attachment(id, name))(),
-          onCancel: (id: string) => Catch.try(() => this.cancel_attachment(id))(),
+          onSubmitted: (id: string, name: string) => Catch.try(() => this.process_new_att(id, name))(),
+          onCancel: (id: string) => Catch.try(() => this.cancel_att(id))(),
         },
       };
       this.uploader = new qq.FineUploader(config);
     });
   }
 
-  set_attachment_added_callback = (cb: (r: any) => void) => {
-    this.attachment_added_callback = cb;
+  set_att_added_callback = (cb: (r: any) => void) => {
+    this.att_added_callback = cb;
   }
 
-  has_attachment = () => {
+  has_att = () => {
     return Object.keys(this.attached_files).length > 0;
   }
 
-  get_attachment_ids = () => {
+  get_att_ids = () => {
     return Object.keys(this.attached_files);
   }
 
-  collect_attachment = async (id: string) => {
-    let file_data = await this.read_attachment_data_as_uint8(id);
-    return new Attachment({name: this.attached_files[id].name, type: this.attached_files[id].type, data: file_data});
+  collect_att = async (id: string) => {
+    let file_data = await this.read_att_data_as_uint8(id);
+    return new Att({name: this.attached_files[id].name, type: this.attached_files[id].type, data: file_data});
   }
 
-  collect_attachments = async () => {
-    let attachments: Attachment[] = [];
+  collect_atts = async () => {
+    let atts: Att[] = [];
     for (let id of Object.keys(this.attached_files)) {
-      attachments.push(await this.collect_attachment(id));
+      atts.push(await this.collect_att(id));
     }
-    return attachments;
+    return atts;
   }
 
-  collect_and_encrypt_attachments = async (armored_pubkeys: string[], challenge: Challenge|null): Promise<Attachment[]> => {
-    let attachments: Attachment[] = [];
+  collect_and_encrypt_atts = async (armored_pubkeys: string[], challenge: Challenge|null): Promise<Att[]> => {
+    let atts: Att[] = [];
     for (let id of Object.keys(this.attached_files)) {
       let file = this.attached_files[id];
-      let file_data = await this.read_attachment_data_as_uint8(id);
+      let file_data = await this.read_att_data_as_uint8(id);
       let encrypted = await Pgp.msg.encrypt(armored_pubkeys, null, challenge, file_data, file.name, false) as OpenPGP.EncryptBinaryResult;
-      attachments.push(new Attachment({name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write()}));
+      atts.push(new Att({name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write()}));
     }
-    return attachments;
+    return atts;
   }
 
-  private cancel_attachment = (id: string) => {
+  private cancel_att = (id: string) => {
     delete this.attached_files[id];
   }
 
-  private process_new_attachment = (id: string, name: string) => {
+  private process_new_att = (id: string, name: string) => {
     let limits = this.get_limits();
     if (limits.count && Object.keys(this.attached_files).length >= limits.count) {
       alert('Amount of attached files is limited to ' + limits.count);
@@ -940,8 +940,8 @@ export class AttachmentUI {
         return;
       }
       this.attached_files[id] = new_file;
-      if (typeof this.attachment_added_callback === 'function') {
-        this.collect_attachment(id).then((a) => this.attachment_added_callback(a)).catch(Catch.rejection);
+      if (typeof this.att_added_callback === 'function') {
+        this.collect_att(id).then((a) => this.att_added_callback(a)).catch(Catch.rejection);
       }
     }
   }
@@ -954,7 +954,7 @@ export class AttachmentUI {
     return sum;
   }
 
-  private read_attachment_data_as_uint8 = (id: string): Promise<Uint8Array> => {
+  private read_att_data_as_uint8 = (id: string): Promise<Uint8Array> => {
     return new Promise(resolve => {
       let reader = new FileReader();
       reader.onload = () => {

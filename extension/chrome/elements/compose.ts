@@ -4,7 +4,7 @@
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from '../../js/common/store.js';
 import { Catch, Env, Value, Str, Dict, JQS } from './../../js/common/common.js';
-import { Attachment } from '../../js/common/attachment.js';
+import { Att } from '../../js/common/att.js';
 import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 
@@ -236,7 +236,7 @@ Catch.try(async () => {
     render_help_dialog: () => BrowserMsg.send(null, 'settings', { account_email, page: '/chrome/settings/modules/help.htm' }),
     render_sending_address_dialog: () => ($ as JQS).featherlight({iframe: factory.src_sending_address_dialog('compose'), iframeWidth: 490, iframeHeight: 500}),
     close_msg,
-    factory_attachment: (attachment: Attachment) => factory.embedded_attachment(attachment),
+    factory_attachment: (att: Att) => factory.embedded_attachment(att),
   }, {
     account_email,
     draft_id: url_params.draft_id,

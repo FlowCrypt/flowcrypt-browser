@@ -4,7 +4,7 @@
 
 import { Store } from '../../../js/common/store.js';
 import { Catch, Env, Dict } from '../../../js/common/common.js';
-import { Attachment } from '../../../js/common/attachment.js';
+import { Att } from '../../../js/common/att.js';
 import { Ui } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -44,7 +44,7 @@ Catch.try(async () => {
   $('.show_when_showing_private').css('display', 'none');
 
   $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    Attachment.methods.save_to_downloads(Attachment.methods.keyinfo_as_pubkey_attachment(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
+    Att.methods.save_to_downloads(Att.methods.keyinfo_as_pubkey_att(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_show_other_type').click(Ui.event.handle(() => {

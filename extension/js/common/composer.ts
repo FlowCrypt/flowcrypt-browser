@@ -5,12 +5,12 @@
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from './store.js';
 import { Lang } from './lang.js';
 import { Catch, Value, Str, Env, UnreportableError, Dict, UrlParams } from './common.js';
-import { Attachment } from './attachment.js';
+import { Att } from './att.js';
 import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCallback, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, StandardError, SendableMsgBody } from './api.js';
 
-import { Ui, Xss, AttachmentUI, BrowserEventErrorHandler, Challenge } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrorHandler, Challenge } from './browser.js';
 import { FromToHeaders, Mime } from './mime.js';
 
 declare let openpgp: typeof OpenPGP;
@@ -28,7 +28,7 @@ interface ComposerAppFunctionsInterface {
     storage_get_key: (sender_email: string) => Promise<KeyInfo>;
     storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>;
     storage_passphrase_get: () => Promise<string|null>;
-    storage_add_admin_codes: (short_id: string, msg_admin_code: string, attachment_admin_codes: string[]) => Promise<void>;
+    storage_add_admin_codes: (short_id: string, msg_admin_code: string, att_admin_codes: string[]) => Promise<void>;
     storage_contact_get: (email: string[]) => Promise<(Contact|null)[]>;
     storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>;
     storage_contact_save:  (contact: Contact) =>  Promise<void>;
@@ -49,7 +49,7 @@ interface ComposerAppFunctionsInterface {
     render_reinsert_reply_box: (last_msg_id: string, recipients: string[]) => void;
     render_help_dialog: () => void;
     render_sending_address_dialog: () => void;
-    factory_attachment: (attachment: Attachment) => string;
+    factory_attachment: (att: Att) => string;
     close_msg: () => void;
 }
 
@@ -95,7 +95,7 @@ export class Composer {
     input_addresses_container_inner: '#input_addresses_container > div:first',
   });
 
-  private attach: AttachmentUI;
+  private attach: AttUI;
   private app: ComposerAppFunctionsInterface;
 
   private SAVE_DRAFT_FREQUENCY = 3000;
@@ -136,7 +136,7 @@ export class Composer {
   private reference_body_height: number;
 
   constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
-    this.attach = new AttachmentUI(() => this.get_max_attachment_size_and_oversize_notice(subscription));
+    this.attach = new AttUI(() => this.get_max_attachment_size_and_oversize_notice(subscription));
     this.app = app_functions;
 
     if(!variables.disable_draft_saving) {
@@ -203,8 +203,8 @@ export class Composer {
         },
       };
     } else {
-      let allow_huge_attachments = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      let size_mb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.account_email)).in(allow_huge_attachments)) ? 200 : 25;
+      let allow_huge_atts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
+      let size_mb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.account_email)).in(allow_huge_atts)) ? 200 : 25;
       return {
         size_mb,
         size: size_mb * 1024 * 1024,
@@ -637,14 +637,14 @@ export class Composer {
   private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.add_reply_token_to_msg_body_if_needed(recipients, subject, plaintext, challenge, subscription);
-    let attachments = await this.attach.collect_and_encrypt_attachments(armored_pubkeys, challenge);
-    if (attachments.length && challenge) { // these will be password encrypted attachments
+    let atts = await this.attach.collect_and_encrypt_atts(armored_pubkeys, challenge);
+    if (atts.length && challenge) { // these will be password encrypted attachments
       this.button_update_timeout = Catch.set_timeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
-      let attachment_admin_codes = await this.upload_attachments_to_fc(attachments, subscription);
-      plaintext = this.add_uploaded_file_links_to_msg_body(plaintext, attachments);
-      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, attachment_admin_codes);
+      let att_admin_codes = await this.upload_atts_to_fc(atts, subscription);
+      plaintext = this.add_uploaded_file_links_to_msg_body(plaintext, atts);
+      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, att_admin_codes);
     } else {
-      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, attachments, recipients, subject, subscription);
+      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, atts, recipients, subject, subscription);
     }
   }
 
@@ -682,11 +682,11 @@ export class Composer {
           await Pgp.key.decrypt(prv, [passphrase!]); // checked !== null above
         }
         let signed_data = await Pgp.msg.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
-        let attachments = await this.attach.collect_attachments(); // todo - not signing attachments
+        let atts = await this.attach.collect_atts(); // todo - not signing attachments
         this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(Catch.rejection);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = {'text/plain': signed_data};
-        await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+        await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, atts, this.thread_id), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -694,20 +694,20 @@ export class Composer {
     }
   }
 
-  private upload_attachments_to_fc = async (attachments: Attachment[], subscription: Subscription): Promise<string[]> => {
+  private upload_atts_to_fc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: R.FcMsgPresignFiles = await Api.fc.message_presign_files(attachments, subscription.active ? 'uuid' : null);
+      let pf_response: R.FcMsgPresignFiles = await Api.fc.message_presign_files(atts, subscription.active ? 'uuid' : null);
       const items: any[] = [];
       for (let i of pf_response.approvals.keys()) {
-        items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: attachments[i]});
+        items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: atts[i]});
       }
       await Api.aws.s3_upload(items, this.render_upload_progress);
       let {admin_codes, confirmed} = await Api.fc.message_confirm_files(items.map((item) => item.fields.key));
       if(!confirmed || confirmed.length !== items.length) {
-        throw new Error('Attachments did not upload properly, please try again');
+        throw new Error('Atts did not upload properly, please try again');
       }
-      for (let i of attachments.keys()) {
-        attachments[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
+      for (let i of atts.keys()) {
+        atts[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
       }
       return admin_codes;
     } catch (e) {
@@ -720,20 +720,20 @@ export class Composer {
   }
 
   private render_upload_progress = (progress: number) => {
-    if (this.attach.has_attachment()) {
+    if (this.attach.has_att()) {
       progress = Math.floor(progress);
       this.S.now('send_btn_span').text(`${this.BTN_SENDING} ${progress < 100 ?  `${progress}%` : ''}`);
     }
   }
 
-  private add_uploaded_file_links_to_msg_body = (plaintext: string, attachments: Attachment[]) => {
+  private add_uploaded_file_links_to_msg_body = (plaintext: string, atts: Att[]) => {
     plaintext += '\n\n';
-    for (let a of attachments) {
-      const size_mb = a.length / (1024 * 1024);
+    for (let att of atts) {
+      const size_mb = att.length / (1024 * 1024);
       const size_text = size_mb < 0.1 ? '' : ` ${(Math.round(size_mb * 10) / 10)}MB`;
-      const link_text = `Attachment: ${a.name} (${a.type})${size_text}`;
-      const cryptup_data = Str.html_attribute_encode({size: a.length, type: a.type, name: a.name});
-      plaintext += `<a href="${a.url}" class="cryptup_file" cryptup-data="${cryptup_data}">${link_text}</a>\n`;
+      const link_text = `Att: ${att.name} (${att.type})${size_text}`;
+      const cryptup_data = Str.html_attribute_encode({size: att.length, type: att.type, name: att.name});
+      plaintext += `<a href="${att.url}" class="cryptup_file" cryptup-data="${cryptup_data}">${link_text}</a>\n`;
     }
     return plaintext;
   }
@@ -794,7 +794,7 @@ export class Composer {
     return new Date(usable_time_until); // latest date none of the keys were expired
   }
 
-  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, attachments: Attachment[], recipients: string[], subject: string, subscription: Subscription, attachment_admin_codes:string[]=[]) => {
+  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, atts: Att[], recipients: string[], subject: string, subscription: Subscription, att_admin_codes:string[]=[]) => {
     let encrypt_as_of_date = await this.encrypt_msg_as_of_date_if_some_are_expired(armored_pubkeys);
     let encrypted = await Pgp.msg.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
     let body: SendableMsgBody = {'text/plain': encrypted.data};
@@ -807,11 +807,11 @@ export class Composer {
       let storage = await Store.get_account(this.account_email, ['outgoing_language']);
       body = this.format_password_protected_email(short, body, armored_pubkeys, storage.outgoing_language || 'EN');
       body = this.format_email_text_footer(body);
-      await this.app.storage_add_admin_codes(short, admin_code, attachment_admin_codes);
-      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.app.storage_add_admin_codes(short, admin_code, att_admin_codes);
+      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, atts, this.thread_id), plaintext);
     } else {
       body = this.format_email_text_footer(body);
-      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, attachments, this.thread_id), plaintext);
+      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, atts, this.thread_id), plaintext);
     }
   }
 
@@ -819,11 +819,11 @@ export class Composer {
     for (let k of Object.keys(this.additional_msg_headers)) {
       msg.headers[k] = this.additional_msg_headers[k];
     }
-    for (let a of msg.attachments) {
+    for (let a of msg.atts) {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.S.cached('icon_pubkey').is('.active')) {
-      msg.attachments.push(Attachment.methods.keyinfo_as_pubkey_attachment(await this.app.storage_get_key(this.account_email)));
+      msg.atts.push(Att.methods.keyinfo_as_pubkey_att(await this.app.storage_get_key(this.account_email)));
     }
     let msg_sent_res = await this.app.email_provider_msg_send(msg, this.render_upload_progress);
     const is_signed = this.S.cached('icon_sign').is('.active');
@@ -1378,9 +1378,9 @@ export class Composer {
     let time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     this.S.cached('reply_message_successful').find('div.replied_time').text(time);
     this.S.cached('reply_message_successful').css('display', 'block');
-    if (msg.attachments.length) {
-      this.S.cached('replied_attachments').html(msg.attachments.map(a => { // xss-safe-factory
-        a.message_id = msg_id;
+    if (msg.atts.length) {
+      this.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
+        a.msg_id = msg_id;
         return this.app.factory_attachment(a);
       }).join('')).css('display', 'block');
     }
@@ -1499,7 +1499,7 @@ export class Composer {
       storage_set_draft_meta: () => Promise.resolve(),
       storage_get_key: () => { throw new Error('storage_get_key not implemented'); },
       storage_passphrase_get: () => Promise.resolve(null),
-      storage_add_admin_codes: (short_id: string, msg_admin_code: string, attachment_admin_codes: string[]) => Promise.resolve(),
+      storage_add_admin_codes: (short_id: string, msg_admin_code: string, att_admin_codes: string[]) => Promise.resolve(),
       storage_contact_get: (email: string[]) => Promise.resolve([]),
       storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
       storage_contact_save: (contact: Contact) => Promise.resolve(),
@@ -1520,7 +1520,7 @@ export class Composer {
       render_help_dialog: () => null,
       render_sending_address_dialog: () => null,
       close_msg: () => null,
-      factory_attachment: (attachment: Attachment) => `<div>${attachment.name}</div>`,
+      factory_attachment: (att: Att) => `<div>${att.name}</div>`,
     };
   }
 

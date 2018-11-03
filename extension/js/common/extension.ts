@@ -4,7 +4,7 @@ import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from '.
 
 import { FlatTypes } from './store.js';
 import { Ui } from './browser.js';
-import { Attachment } from './attachment.js';
+import { Att } from './att.js';
 
 type Codec = {encode: (text: string, mode: 'fatal'|'html') => string, decode: (text: string) => string, labels: string[], version: string};
 
@@ -278,9 +278,9 @@ export class BgExec {
     let result = await BgExec.request_to_process_in_background('Pgp.message.decrypt', [account_email, encrypted_data, msg_pwd, get_uint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if(result.content.blob.blob_type === 'text') {
-        result.content.text = Str.from_uint8(await Attachment.methods.object_url_consume(result.content.blob.blob_url));
+        result.content.text = Str.from_uint8(await Att.methods.object_url_consume(result.content.blob.blob_url));
       } else {
-        result.content.uint8 = await Attachment.methods.object_url_consume(result.content.blob.blob_url);
+        result.content.uint8 = await Att.methods.object_url_consume(result.content.blob.blob_url);
       }
       result.content.blob = undefined;
     }
@@ -307,10 +307,10 @@ export class BgExec {
   private static crypto_msg_decrypt_result_create_blobs = (decrypt_res: DecryptResult) => {
     if (decrypt_res && decrypt_res.success && decrypt_res.content) {
       if(decrypt_res.content.text && decrypt_res.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
-        decrypt_res.content.blob = {blob_type: 'text', blob_url: Attachment.methods.object_url_create(decrypt_res.content.text)};
+        decrypt_res.content.blob = {blob_type: 'text', blob_url: Att.methods.object_url_create(decrypt_res.content.text)};
         decrypt_res.content.text = undefined; // replaced with a blob
       } else if(decrypt_res.content.uint8 && decrypt_res.content.uint8 instanceof Uint8Array) {
-        decrypt_res.content.blob = {blob_type: 'uint8', blob_url: Attachment.methods.object_url_create(decrypt_res.content.uint8)};
+        decrypt_res.content.blob = {blob_type: 'uint8', blob_url: Att.methods.object_url_create(decrypt_res.content.uint8)};
         decrypt_res.content.uint8 = undefined; // replaced with a blob
       }
     }
@@ -320,9 +320,9 @@ export class BgExec {
 
   private static should_be_object_url = (arg: any) => (typeof arg === 'string' && arg.length > BrowserMsg.MAX_SIZE) || arg instanceof Uint8Array;
 
-  private static arg_object_urls_consume = (args: any[]) => args.map((arg: any) => BgExec.is_object_url(arg) ? Attachment.methods.object_url_consume(arg) : arg);
+  private static arg_object_urls_consume = (args: any[]) => args.map((arg: any) => BgExec.is_object_url(arg) ? Att.methods.object_url_consume(arg) : arg);
 
-  private static arg_object_urls_create = (args: any[]) => args.map(arg => BgExec.should_be_object_url(arg) ? Attachment.methods.object_url_create(arg) : arg);
+  private static arg_object_urls_create = (args: any[]) => args.map(arg => BgExec.should_be_object_url(arg) ? Att.methods.object_url_create(arg) : arg);
 
   private static resolve_path_to_callable_function = (path: string): Function => {  // tslint:disable-line:ban-types
     let f:Function|object|null = null; // tslint:disable-line:ban-types

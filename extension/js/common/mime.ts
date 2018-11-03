@@ -5,10 +5,10 @@
 import { Str, Value, Catch } from './common.js';
 import { SendableMsgBody, RichHeaders, FlatHeaders } from './api.js';
 import { Pgp } from './pgp.js';
-import { Attachment } from './attachment.js';
+import { Att } from './att.js';
 import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension.js';
 
-type MimeContent = { headers: FlatHeaders; attachments: Attachment[]; signature: string|undefined; html: string|undefined; text: string|undefined; };
+type MimeContent = { headers: FlatHeaders; atts: Att[]; signature: string|undefined; html: string|undefined; text: string|undefined; };
 type MimeParserNode = { path: string[]; headers: { [key: string]: {value: string}[]; }; rawContent: string; content: Uint8Array;
   appendChild: (child: MimeParserNode) => void; contentTransferEncoding: {value: string}; charset?: string; };
 
@@ -26,7 +26,7 @@ export class Mime {
     if (decoded.text) {  // may be undefined or empty
       blocks = blocks.concat(Pgp.armor.detect_blocks(decoded.text).blocks);
     }
-    for (let file of decoded.attachments) {
+    for (let file of decoded.atts) {
       let treat_as = file.treat_as();
       if (treat_as === 'message') {
         let armored = Pgp.armor.clip(file.as_text());
@@ -95,7 +95,7 @@ export class Mime {
 
   public static decode = (mime_msg: string): Promise<MimeContent> => {
     return new Promise(async resolve => {
-      let mime_content = {attachments: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
+      let mime_content = {atts: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
       try {
         let MimeParser = (window as BrowserWidnow)['emailjs-mime-parser'];
         let parser = new MimeParser();
@@ -124,7 +124,7 @@ export class Mime {
             } else if (Mime.get_node_type(node) === 'text/plain' && !Mime.get_node_filename(node)) {
               mime_content.text = Mime.get_node_content_as_text(node);
             } else {
-              mime_content.attachments.push(new Attachment({
+              mime_content.atts.push(new Att({
                 name: Mime.get_node_filename(node),
                 type: Mime.get_node_type(node),
                 data: node.content,
@@ -143,7 +143,7 @@ export class Mime {
     });
   }
 
-  public static encode = async (body:string|SendableMsgBody, headers: RichHeaders, attachments:Attachment[]=[]): Promise<string> => {
+  public static encode = async (body:string|SendableMsgBody, headers: RichHeaders, atts:Att[]=[]): Promise<string> => {
     let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
     let root_node = new MimeBuilder('multipart/mixed');
     for (let key of Object.keys(headers)) {
@@ -162,10 +162,10 @@ export class Mime {
       }
     }
     root_node.appendChild(content_node);
-    for (let attachment of attachments) {
-      let type = `${attachment.type}; name="${attachment.name}"`;
-      let header = {'Content-Disposition': 'attachment', 'X-Attachment-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
-      root_node.appendChild(new MimeBuilder(type, { filename: attachment.name }).setHeader(header).setContent(attachment.data()));
+    for (let att of atts) {
+      let type = `${att.type}; name="${att.name}"`;
+      let header = {'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
+      root_node.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.data()));
     }
     return root_node.build();
   }

@@ -346,9 +346,9 @@ Catch.try(async () => {
       for (let block of blocks) {
         r += (r ? '\n\n' : '') + Ui.renderable_msg_block(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
       }
-      let {attachments} = await Mime.decode(Str.base64url_decode(m.raw!));
-      if(attachments.length) {
-        r += `<div class="attachments">${attachments.filter(a => a.treat_as() === 'encrypted').map(factory.embedded_attachment).join('')}</div>`;
+      let {atts} = await Mime.decode(Str.base64url_decode(m.raw!));
+      if(atts.length) {
+        r += `<div class="attachments">${atts.filter(a => a.treat_as() === 'encrypted').map(factory.embedded_attachment).join('')}</div>`;
       }
       r = `<p class="message_header">From: ${Xss.html_escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory

@@ -8,7 +8,7 @@ import { Catch, Value, Str, Env, Dict } from './common.js';
 import { Pgp } from './pgp.js';
 import { FlowCryptManifest, BrowserMsg, BrowserWidnow, FcWindow } from './extension.js';
 import { Ui } from './browser.js';
-import { Attachment } from './attachment.js';
+import { Att } from './att.js';
 import { Mime } from './mime.js';
 import { PaymentMethod } from './account.js';
 
@@ -41,8 +41,7 @@ export type ProgressCallbacks = {upload?: ProgressCallback|null, download?: Prog
 export type GmailResponseFormat = 'raw'|'full'|'metadata';
 export type ProviderContactsQuery = {substring: string};
 export type SendableMsgBody = { [key: string]: string|undefined; 'text/plain'?: string; 'text/html'?: string; };
-export type SendableMsg = { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMsgBody; attachments: Attachment[];
-  thread: string|null; };
+export type SendableMsg = { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread: string|null; };
 export type StandardError = { code: number|null; message: string; internal: string|null; data?: string; stack?: string; };
 export type SubscriptionInfo = { active: boolean|null; method: PaymentMethod|null; level: SubscriptionLevel; expire: string|null; };
 export type PubkeySearchResult = { email: string; pubkey: string|null; attested: boolean|null; has_cryptup: boolean|null; longid: string|null; };
@@ -85,7 +84,7 @@ export namespace R { // responses
   export type GmailLabels$label = {id: string, name: string, messageListVisibility: 'show'|'hide', labelListVisibility: 'labelShow'|'labelHide', type: 'user'|'system',
     messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: {textColor: string, backgroundColor: string}};
   export type GmailLabels = {labels: GmailLabels$label[]};
-  export type GmailAttachment = {attachmentId: string, size: number, data: string};
+  export type GmailAtt = {attachmentId: string, size: number, data: string};
   export type GmailMsgSend = {id: string};
   export type GmailThreadGet = {id: string, historyId: string, messages: GmailMsg[]};
   export type GmailThreadList = {threads: {historyId: string, id: string, snippet: string}[], nextPageToken: string, resultSizeEstimate: number};
@@ -216,7 +215,7 @@ export class Api {
   };
 
   public static common = {
-    msg: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMsgBody, attachments:Attachment[]=[], thread_referrence:string|null=null): Promise<SendableMsg> => {
+    msg: async (account_email: string, from:string='', to:string|string[]=[], subject:string='', body: SendableMsgBody, atts:Att[]=[], thread_ref:string|null=null): Promise<SendableMsg> => {
       let [primary_ki] = await Store.keys_get(account_email, ['primary']);
       return {
         headers: primary_ki ? {OpenPGP: `id=${primary_ki.fingerprint}`} : {},
@@ -224,14 +223,14 @@ export class Api {
         to: Array.isArray(to) ? to as string[] : (to as string).split(','),
         subject,
         body: typeof body === 'object' ? body : {'text/plain': body},
-        attachments,
-        thread: thread_referrence,
+        atts,
+        thread: thread_ref,
       };
     },
-    reply_correspondents: (account_email: string, addresses: string[], last_message_sender: string|null, last_message_recipients: string[]) => {
-      let reply_to_estimate = last_message_recipients;
-      if (last_message_sender) {
-        reply_to_estimate.unshift(last_message_sender);
+    reply_correspondents: (account_email: string, addresses: string[], last_msg_sender: string|null, last_msg_recipients: string[]) => {
+      let reply_to_estimate = last_msg_recipients;
+      if (last_msg_sender) {
+        reply_to_estimate.unshift(last_msg_sender);
       }
       let reply_to:string[] = [];
       let my_email = account_email;
@@ -317,7 +316,7 @@ export class Api {
       message.headers.From = message.from;
       message.headers.To = message.to.join(',');
       message.headers.Subject = message.subject;
-      let mime_message = await Mime.encode(message.body, message.headers, message.attachments);
+      let mime_message = await Mime.encode(message.body, message.headers, message.atts);
       let request = Api.internal.encode_as_multipart_related({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mime_message });
       return Api.internal.api_gmail_call(account_email, 'POST', 'messages/send', request.body, {upload: progress_callback || Value.noop}, request.content_type);
     },
@@ -332,12 +331,12 @@ export class Api {
       return Promise.all(message_ids.map(id => Api.gmail.msg_get(account_email, id, format)));
     },
     labels_get: (account_email: string): Promise<R.GmailLabels> => Api.internal.api_gmail_call(account_email, 'GET', `labels`, {}),
-    attachment_get: async (account_email: string, message_id: string, attachment_id: string, progress_callback:ProgressCallback|null=null): Promise<R.GmailAttachment> => {
-      let r: R.GmailAttachment = await Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${attachment_id}`, {}, {download: progress_callback});
+    att_get: async (account_email: string, message_id: string, att_id: string, progress_callback:ProgressCallback|null=null): Promise<R.GmailAtt> => {
+      let r: R.GmailAtt = await Api.internal.api_gmail_call(account_email, 'GET', `messages/${message_id}/attachments/${att_id}`, {}, {download: progress_callback});
       r.data = Str.base64url_decode(r.data);
       return r;
     },
-    attachment_get_chunk: (account_email: string, message_id: string, attachment_id: string): Promise<string> => new Promise(async (resolve, reject) => {
+    att_get_chunk: (account_email: string, message_id: string, att_id: string): Promise<string> => new Promise(async (resolve, reject) => {
       let min_bytes = 1000;
       let processed = 0;
       let process_chunk_and_resolve = (chunk: string) => {
@@ -377,7 +376,7 @@ export class Api {
       };
       Api.internal.google_api_authorization_header(account_email).then(auth_token => {
         let r = new XMLHttpRequest();
-        r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${message_id}/attachments/${attachment_id}`, true);
+        r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${message_id}/attachments/${att_id}`, true);
         r.setRequestHeader('Authorization', auth_token);
         r.send();
         let status: number;
@@ -423,7 +422,7 @@ export class Api {
       }
       return null;
     },
-    find_atts: (msg_or_payload_or_part: R.GmailMsg|R.GmailMsg$payload|R.GmailMsg$payload$part, internal_results:Attachment[]=[], internal_msg_id:string|null=null) => {
+    find_atts: (msg_or_payload_or_part: R.GmailMsg|R.GmailMsg$payload|R.GmailMsg$payload$part, internal_results:Att[]=[], internal_msg_id:string|null=null) => {
       if (msg_or_payload_or_part.hasOwnProperty('payload')) {
         internal_msg_id = (msg_or_payload_or_part as R.GmailMsg).id;
         Api.gmail.find_atts((msg_or_payload_or_part as R.GmailMsg).payload, internal_results, internal_msg_id);
@@ -434,8 +433,8 @@ export class Api {
         }
       }
       if (msg_or_payload_or_part.hasOwnProperty('body') && (msg_or_payload_or_part as R.GmailMsg$payload$part).body!.hasOwnProperty('attachmentId')) {
-        internal_results.push(new Attachment({
-          message_id: internal_msg_id,
+        internal_results.push(new Att({
+          msg_id: internal_msg_id,
           id: (msg_or_payload_or_part as R.GmailMsg$payload$part).body!.attachmentId,
           length: (msg_or_payload_or_part as R.GmailMsg$payload$part).body!.size,
           name: (msg_or_payload_or_part as R.GmailMsg$payload$part).filename,
@@ -459,10 +458,10 @@ export class Api {
       }
       return internal_results as SendableMsgBody;
     },
-    fetch_attachments: async (account_email: string, attachments: Attachment[]) => {
-      let responses = await Promise.all(attachments.map(a => Api.gmail.attachment_get(account_email, a.message_id!, a.id!)));
+    fetch_atts: async (account_email: string, atts: Att[]) => {
+      let responses = await Promise.all(atts.map(a => Api.gmail.att_get(account_email, a.msg_id!, a.id!)));
       for (let i of responses.keys()) {
-        attachments[i].set_data(responses[i].data);
+        atts[i].set_data(responses[i].data);
       }
     },
     search_contacts: async (account_email: string, user_query: string, known_contacts: Contact[], chunked_callback: (r: ProviderContactsResults) => void) => { // This will keep triggering callback with new emails as they are being discovered
@@ -491,19 +490,19 @@ export class Api {
       let gmail_message_object = await Api.gmail.msg_get(account_email, message_id, format);
       if (format === 'full') {
         let bodies = Api.gmail.find_bodies(gmail_message_object);
-        let attachments = Api.gmail.find_atts(gmail_message_object);
+        let atts = Api.gmail.find_atts(gmail_message_object);
         let armored_message_from_bodies = Pgp.armor.clip(Str.base64url_decode(bodies['text/plain'] || '')) || Pgp.armor.clip(Pgp.armor.strip(Str.base64url_decode(bodies['text/html'] || '')));
         if (armored_message_from_bodies) {
           return armored_message_from_bodies;
-        } else if (attachments.length) {
-          for (let attachment of attachments) {
-            if (attachment.treat_as() === 'message') {
-              await Api.gmail.fetch_attachments(account_email, [attachment]);
-              let armored_message = Pgp.armor.clip(attachment.as_text());
+        } else if (atts.length) {
+          for (let att of atts) {
+            if (att.treat_as() === 'message') {
+              await Api.gmail.fetch_atts(account_email, [att]);
+              let armored_message = Pgp.armor.clip(att.as_text());
               if (armored_message) {
                 return armored_message;
               } else {
-                throw {code: null, internal: 'format', message: 'Problem extracting armored message', data: attachment.as_text()};
+                throw {code: null, internal: 'format', message: 'Problem extracting armored message', data: att.as_text()};
               }
             }
           }
@@ -536,15 +535,15 @@ export class Api {
       }
       let msg_ids = response.messages.map(m => m.id);
       let msgs = await Api.gmail.msgs_get(account_email, msg_ids, 'full');
-      let attachments:Attachment[] = [];
+      let atts:Att[] = [];
       for (let msg of msgs) {
-        attachments = attachments.concat(Api.gmail.find_atts(msg));
+        atts = atts.concat(Api.gmail.find_atts(msg));
       }
-      await Api.gmail.fetch_attachments(account_email, attachments);
+      await Api.gmail.fetch_atts(account_email, atts);
       let keys: OpenPGP.key.Key[] = [];
-      for (let attachment of attachments) {
+      for (let att of atts) {
         try {
-          let key = openpgp.key.readArmored(attachment.as_text()).keys[0];
+          let key = openpgp.key.readArmored(att.as_text()).keys[0];
           if (key.isPrivate()) {
             keys.push(key);
           }
@@ -790,9 +789,9 @@ export class Api {
       await Store.set(null, { cryptup_account_subscription: response.subscription });
       return response;
     },
-    message_presign_files: async (attachments: Attachment[], auth_method: FcAuthMethods): Promise<R.FcMsgPresignFiles> => {
+    message_presign_files: async (atts: Att[], auth_method: FcAuthMethods): Promise<R.FcMsgPresignFiles> => {
       let response: R.FcMsgPresignFiles;
-      let lengths = attachments.map(a => a.length);
+      let lengths = atts.map(a => a.length);
       if (!auth_method) {
         response = await Api.internal.api_fc_call('message/presign_files', {
           lengths,
@@ -811,7 +810,7 @@ export class Api {
           lengths,
         });
       }
-      if (response.approvals && response.approvals.length === attachments.length) {
+      if (response.approvals && response.approvals.length === atts.length) {
         return response;
       }
       throw new Error('Could not verify that all files were uploaded properly, please try again.');
@@ -823,7 +822,7 @@ export class Api {
       if (encrypted_data_armored.length > 100000) {
         throw {code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.'};
       }
-      let content = new Attachment({name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted_data_armored});
+      let content = new Att({name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encrypted_data_armored});
       if (!auth_method) {
         return await Api.internal.api_fc_call('message/upload', {content}, 'FORM');
       } else {
@@ -862,7 +861,7 @@ export class Api {
   };
 
   public static aws = {
-    s3_upload: (items: {base_url:string, fields: Dict<Serializable|Attachment>, attachment: Attachment}[], progress_callback: ProgressCallback) => {
+    s3_upload: (items: {base_url:string, fields: Dict<Serializable|Att>, att: Att}[], progress_callback: ProgressCallback) => {
       let progress = Value.arr.zeroes(items.length);
       let promises:Promise<void>[] = [];
       if (!items.length) {
@@ -870,7 +869,7 @@ export class Api {
       }
       for (let i of items.keys()) {
         let values = items[i].fields;
-        values.file = new Attachment({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].attachment.data()});
+        values.file = new Att({name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].att.data()});
         promises.push(Api.internal.api_call(items[i].base_url, '', values, 'FORM', {upload: (single_file_progress: number) => {
           progress[i] = single_file_progress;
           Ui.event.prevent('spree', () => {
@@ -908,8 +907,8 @@ export class Api {
       } else if (format === 'FORM') {
         formatted_data = new FormData();
         for (let form_field_name of Object.keys(fields)) {
-          let a: Attachment|string = fields[form_field_name];
-          if (a instanceof Attachment) {
+          let a: Att|string = fields[form_field_name];
+          if (a instanceof Att) {
             formatted_data.append(form_field_name, new Blob([a.data()], {type: a.type}), a.name); // xss-none
           } else {
             formatted_data.append(form_field_name, a); // xss-none

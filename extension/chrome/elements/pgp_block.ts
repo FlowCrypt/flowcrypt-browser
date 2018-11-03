@@ -4,7 +4,7 @@
 
 import { Store } from '../../js/common/store.js';
 import { Catch, Env, Value, Str, Dict } from './../../js/common/common.js';
-import { Attachment } from '../../js/common/attachment.js';
+import { Att } from '../../js/common/att.js';
 import { Xss, Ui } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';
@@ -31,9 +31,9 @@ Catch.try(async () => {
   let message_id = url_params.message_id;
   let message = url_params.message;
 
-  let included_attachments: Attachment[] = [];
+  let included_atts: Att[] = [];
   let height_history: number[] = [];
-  let message_fetched_from_api: false|GmailResponseFormat = false;
+  let msg_fetched_from_api: false|GmailResponseFormat = false;
   let passphrase_interval: number|undefined;
   let missing_or_wrong_passprases: Dict<string|null> = {};
   let can_read_emails: undefined|boolean;
@@ -81,7 +81,7 @@ Catch.try(async () => {
     img.addEventListener('load', () => send_resize_message());
     if(a.href.indexOf('cid:') === 0) { // image included in the email
       let content_id = a.href.replace(/^cid:/g, '');
-      let content = included_attachments.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${content_id}>`)[0];
+      let content = included_atts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${content_id}>`)[0];
       if(content) {
         img.src = `data:${a.type};base64,${btoa(content.as_text())}`;
         a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
@@ -179,17 +179,17 @@ Catch.try(async () => {
     return pwd;
   };
 
-  let decrypt_and_save_attachment_to_downloads = async (encrypted: Attachment, render_in: JQuery<HTMLElement>) => {
+  let decrypt_and_save_att_to_downloads = async (encrypted: Att, render_in: JQuery<HTMLElement>) => {
     let decrypted = await BgExec.crypto_msg_decrypt(account_email, encrypted.data(), await decrypt_pwd(), true);
     if (decrypted.success) {
-      let attachment = new Attachment({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
-      Attachment.methods.save_to_downloads(attachment, render_in);
+      let att = new Att({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
+      Att.methods.save_to_downloads(att, render_in);
       send_resize_message();
     } else {
       delete decrypted.message;
       console.info(decrypted);
       alert('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
-      Attachment.methods.save_to_downloads(encrypted, render_in);
+      Att.methods.save_to_downloads(encrypted, render_in);
       send_resize_message();
     }
   };
@@ -202,26 +202,26 @@ Catch.try(async () => {
     }
   };
 
-  let render_inner_attachments = (attachments: Attachment[]) => {
+  let render_inner_atts = (atts: Att[]) => {
     Xss.sanitize_append('#pgp_block', '<div id="attachments"></div>');
-    included_attachments = attachments;
-    for (let i of attachments.keys()) {
-      let name = (attachments[i].name ? Xss.html_escape(attachments[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
-      let size = Str.number_format(Math.ceil(attachments[i].length / 1024)) + 'KB';
+    included_atts = atts;
+    for (let i of atts.keys()) {
+      let name = (atts[i].name ? Xss.html_escape(atts[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
+      let size = Str.number_format(Math.ceil(atts[i].length / 1024)) + 'KB';
       Xss.sanitize_append('#attachments', `<div class="attachment" index="${Number(i)}"><b>${Xss.html_escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
     }
     send_resize_message();
     $('div.attachment').click(Ui.event.prevent('double', async target => {
-      let attachment = included_attachments[Number($(target).attr('index') as string)];
-      if (attachment.has_data()) {
-        Attachment.methods.save_to_downloads(attachment, $(target));
+      let att = included_atts[Number($(target).attr('index') as string)];
+      if (att.has_data()) {
+        Att.methods.save_to_downloads(att, $(target));
         send_resize_message();
       } else {
         Xss.sanitize_prepend($(target).find('.progress'), Ui.spinner('green'));
-        attachment.set_data(await Attachment.methods.download_as_uint8(attachment.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || attachment.length)));
+        att.set_data(await Att.methods.download_as_uint8(att.url!, (perc, load, total) => render_progress($(target).find('.progress .percent'), perc, load, total || att.length)));
         await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
-        await decrypt_and_save_attachment_to_downloads(attachment, $(target));
+        await decrypt_and_save_att_to_downloads(att, $(target));
       }
     }));
   };
@@ -313,8 +313,8 @@ Catch.try(async () => {
       decrypted_content = Str.from_uint8(decrypted_content); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
     }
     if (!Mime.resembles_msg(decrypted_content)) {
-      let fc_attachments: Attachment[] = [];
-      decrypted_content = Str.extract_fc_attachments(decrypted_content, fc_attachments);
+      let fc_atts: Att[] = [];
+      decrypted_content = Str.extract_fc_atts(decrypted_content, fc_atts);
       decrypted_content = Str.strip_fc_reply_token(decrypted_content);
       decrypted_content = Str.strip_public_keys(decrypted_content, public_keys);
       if (public_keys.length) {
@@ -322,8 +322,8 @@ Catch.try(async () => {
       }
       decrypted_content = Xss.html_escape(decrypted_content);
       await render_content(do_anchor(decrypted_content.replace(/\n/g, '<br>')), false);
-      if (fc_attachments.length) {
-        render_inner_attachments(fc_attachments);
+      if (fc_atts.length) {
+        render_inner_atts(fc_atts);
       }
       if (password_message_link_result && password_message_link_result.expire) {
         render_future_expiration(password_message_link_result.expire);
@@ -338,16 +338,16 @@ Catch.try(async () => {
       } else {
         await render_content((decrypted_content || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
       }
-      let renderable_attachments: Attachment[] = [];
-      for (let attachment of decoded.attachments) {
-        if (attachment.treat_as() !== 'public_key') {
-          renderable_attachments.push(attachment);
+      let renderable_atts: Att[] = [];
+      for (let att of decoded.atts) {
+        if (att.treat_as() !== 'public_key') {
+          renderable_atts.push(att);
         } else {
-          public_keys.push(attachment.as_text());
+          public_keys.push(att.as_text());
         }
       }
-      if (renderable_attachments.length) {
-        render_inner_attachments(decoded.attachments);
+      if (renderable_atts.length) {
+        render_inner_atts(decoded.atts);
       }
       if (public_keys.length) {
         BrowserMsg.send(parent_tab_id, 'render_public_keys', {after_frame_id: frame_id, public_keys});
@@ -365,15 +365,15 @@ Catch.try(async () => {
         if (has_challenge_password && optional_password) {
           user_entered_message_password = optional_password;
         }
-        if (result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && message_fetched_from_api !== 'raw') {
-          console.info(`re-fetching message ${message_id} from api because failed signature check: ${!message_fetched_from_api ? 'full' : 'raw'}`);
+        if (result.success && result.signature && result.signature.contact && !result.signature.match && can_read_emails && msg_fetched_from_api !== 'raw') {
+          console.info(`re-fetching message ${message_id} from api because failed signature check: ${!msg_fetched_from_api ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
           await decide_decrypted_content_formatting_and_render(result.content.text!, Boolean(result.is_encrypted), result.signature); // text!: did not request uint8
         }
       } else if (result.error.type === DecryptErrTypes.format) {
-        if (can_read_emails && message_fetched_from_api !== 'raw') {
-          console.info(`re-fetching message ${message_id} from api because looks like bad formatting: ${!message_fetched_from_api ? 'full' : 'raw'}`);
+        if (can_read_emails && msg_fetched_from_api !== 'raw') {
+          console.info(`re-fetching message ${message_id} from api because looks like bad formatting: ${!msg_fetched_from_api ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
           await render_error(Lang.pgp_block.bad_format + '\n\n' + result.error.error);
@@ -481,7 +481,7 @@ Catch.try(async () => {
         if (!result.raw) {
           await decrypt_and_render();
         } else {
-          message_fetched_from_api = 'raw';
+          msg_fetched_from_api = 'raw';
           let mime_message = Str.base64url_decode(result.raw);
           let parsed = Mime.signed(mime_message);
           if (parsed) {
@@ -506,7 +506,7 @@ Catch.try(async () => {
         let m_link_result = await Api.fc.link_message(short as string);
         password_message_link_result = m_link_result;
         if (m_link_result.url) {
-          let download_uint_result = await Attachment.methods.download_as_uint8(m_link_result.url, null);
+          let download_uint_result = await Att.methods.download_as_uint8(m_link_result.url, null);
           message = Str.from_uint8(download_uint_result);
           await decrypt_and_render();
         } else {
@@ -515,10 +515,10 @@ Catch.try(async () => {
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (can_read_emails) {
           render_text('Retrieving message...');
-          let format: GmailResponseFormat = (!message_fetched_from_api) ? 'full' : 'raw';
+          let format: GmailResponseFormat = (!msg_fetched_from_api) ? 'full' : 'raw';
           message = await Api.gmail.extract_armored_block(account_email, message_id as string, format);
           render_text('Decrypting...');
-          message_fetched_from_api = format;
+          msg_fetched_from_api = format;
           await decrypt_and_render();
         } else { // gmail message read auth not allowed
           Xss.sanitize_render('#pgp_block', 'This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');

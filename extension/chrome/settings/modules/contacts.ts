@@ -4,7 +4,7 @@
 
 import { Store } from '../../../js/common/store.js';
 import { Catch, Env, Dict } from '../../../js/common/common.js';
-import { Attachment } from '../../../js/common/attachment.js';
+import { Att } from '../../../js/common/att.js';
 import { Xss, Ui, XssSafeFactory } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/pgp.js';
@@ -28,8 +28,8 @@ Catch.try(async () => {
 
     Xss.sanitize_render('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       let all_armored_public_keys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
-      let export_file = new Attachment({name: 'public-keys-export.asc', type: 'application/pgp-keys', data: all_armored_public_keys});
-      Attachment.methods.save_to_downloads(export_file, Env.browser().name === 'firefox' ? $('.line.actions') : null);
+      let export_file = new Att({name: 'public-keys-export.asc', type: 'application/pgp-keys', data: all_armored_public_keys});
+      Att.methods.save_to_downloads(export_file, Env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
     Xss.sanitize_append('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;').find('.action_view_bulk_import').off().click(Ui.event.prevent('double', (self) => {
