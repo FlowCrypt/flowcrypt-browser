@@ -13,16 +13,16 @@ import { Mime } from '../../../js/common/mime.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'label_id', 'thread_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let label_id = urlParams.label_id ? String(urlParams.label_id) : 'INBOX';
-  let thread_id = urlParams.thread_id || null;
+  let urlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let labelId = urlParams.labelId ? String(urlParams.labelId) : 'INBOX';
+  let threadId = urlParams.threadId || null;
 
-  let email_provider;
+  let emailProvider;
   let factory: XssSafeFactory;
   let injector: Injector;
   let notifications: Notifications;
-  let all_labels: R.GmailLabels$label[];
+  let allLabels: R.GmailLabels$label[];
 
   let S = Ui.buildJquerySels({
     threads: '.threads',
@@ -33,23 +33,23 @@ Catch.try(async () => {
   let LABEL = {INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'};
   let FOLDERS = ['INBOX','STARRED','SENT','DRAFT','TRASH']; // 'UNREAD', 'SPAM'
 
-  let tab_id = await BrowserMsg.required_tab_id();
-  notifications = new Notifications(tab_id);
-  factory = new XssSafeFactory(account_email, tab_id);
+  let tabId = await BrowserMsg.requiredTabId();
+  notifications = new Notifications(tabId);
+  factory = new XssSafeFactory(acctEmail, tabId);
   injector = new Injector('settings', null, factory);
-  let storage = await Store.getAccount(account_email, ['email_provider', 'picture', 'addresses']);
-  email_provider = storage.email_provider || 'gmail';
-  S.cached('body').prepend(factory.meta_notification_container()); // xss-safe-factory
+  let storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'addresses']);
+  emailProvider = storage.email_provider || 'gmail';
+  S.cached('body').prepend(factory.metaNotificationContainer()); // xss-safe-factory
   if(storage.picture) {
     $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
       $(self).off().attr('src', '/img/svgs/profile-icon.svg');
     }));
   }
 
-  $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send(null, 'settings', {account_email})));
-  $('.action_choose_account').get(0).title = account_email;
+  $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send(null, 'settings', {acctEmail})));
+  $('.action_choose_account').get(0).title = acctEmail;
 
-  let notification_show = (data: NotificationWithHandlers) => {
+  let notificationShow = (data: NotificationWithHandlers) => {
     notifications.show(data.notification, data.callbacks);
     $('body').one('click', Catch.try(notifications.clear));
   };
@@ -60,73 +60,73 @@ Catch.try(async () => {
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
 
   BrowserMsg.listen({
-    notification_show,
+    notification_show: notificationShow,
     close_new_message: (data) => {
       $('div.new_message').remove();
     },
-    close_reply_message: (data: {frame_id: string}) => {
-      $('iframe#' + data.frame_id).remove();
+    close_reply_message: (data: {frameId: string}) => {
+      $('iframe#' + data.frameId).remove();
     },
-    reinsert_reply_box: (data: {thread_id: string, thread_message_id: string}) => {
-      render_reply_box(data.thread_id, data.thread_message_id);
+    reinsert_reply_box: (data: {threadId: string, threadMsgId: string}) => {
+      renderReplyBox(data.threadId, data.threadMsgId);
     },
     passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
+        $('body').append(factory.dialogPassphrase(data.longids, data.type)); // xss-safe-factory
       }
     },
     subscribe_dialog: (data) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog_subscribe(null, data ? data.source : null, data ? data.subscribe_result_tab_id : null)); // xss-safe-factory
+        $('body').append(factory.dialogSubscribe(null, data ? data.source : null, data ? data.subscribeResultTabId : null)); // xss-safe-factory
       }
     },
     add_pubkey_dialog: (data: {emails: string[]}) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialog_add_pubkey(data.emails)); // xss-safe-factory
+        $('body').append(factory.dialogAddPubkey(data.emails)); // xss-safe-factory
       }
     },
     close_dialog: (data) => {
       $('#cryptup_dialog').remove();
     },
     scroll_to_bottom_of_conversation: () => {
-      let scrollable_element = $('.thread').get(0);
-      scrollable_element.scrollTop = scrollable_element.scrollHeight; // scroll to the bottom of conversation where the reply box is
+      let scrollableEl = $('.thread').get(0);
+      scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
     },
-    render_public_keys: (data: {public_keys: string[], after_frame_id: string, traverse_up?: number}) => {
-      let traverse_up_levels = data.traverse_up as number || 0;
-      let append_after = $('iframe#' + data.after_frame_id);
-      for (let i = 0; i < traverse_up_levels; i++) {
-        append_after = append_after.parent();
+    render_public_keys: (data: {publicKeys: string[], afterFrameFd: string, traverseUp?: number}) => {
+      let traverseUpLevels = data.traverseUp as number || 0;
+      let appendAfter = $('iframe#' + data.afterFrameFd);
+      for (let i = 0; i < traverseUpLevels; i++) {
+        appendAfter = appendAfter.parent();
       }
-      for (let armored_pubkey of data.public_keys) {
-        append_after.after(factory.embedded_pubkey(armored_pubkey, false));
+      for (let armoredPubkey of data.publicKeys) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
       }
     },
     reply_pubkey_mismatch: () => {
-      let reply_iframe = $('iframe.reply_message').get(0) as HTMLIFrameElement|undefined;
-      if(reply_iframe) {
-        reply_iframe.src = reply_iframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
+      let replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement|undefined;
+      if(replyIframe) {
+        replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
       }
     },
-  }, tab_id);
+  }, tabId);
 
-  let update_url = (title: string, params: UrlParams) => {
-    let new_url_search = Env.urlCreate('', params);
-    if(new_url_search !== window.location.search) {
-      window.history.pushState({}, title, new_url_search);
+  let updateUrl = (title: string, params: UrlParams) => {
+    let newUrlSearch = Env.urlCreate('', params);
+    if(newUrlSearch !== window.location.search) {
+      window.history.pushState({}, title, newUrlSearch);
     }
   };
 
-  let load_url = (params: UrlParams) => {
-    let new_url_search = Env.urlCreate('', params);
-    if(new_url_search !== window.location.search) {
-      window.location.search = new_url_search;
+  let loadUrl = (params: UrlParams) => {
+    let newUrlSearch = Env.urlCreate('', params);
+    if(newUrlSearch !== window.location.search) {
+      window.location.search = newUrlSearch;
     } else {
       window.location.reload();
     }
   };
 
-  let display_block = (name: string, title: string) => {
+  let displayBlock = (name: string, title: string) => {
     if (name === 'thread') {
       S.cached('threads').css('display', 'none');
       S.cached('thread').css('display', 'block');
@@ -138,16 +138,16 @@ Catch.try(async () => {
     }
   };
 
-  let render_and_handle_auth_popup_notification = () => {
-    notification_show({notification: `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, callbacks: {
+  let renderAndHandleAuthPopupNotification = () => {
+    notificationShow({notification: `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, callbacks: {
       action_auth_popup: async () => {
-        await Api.google.authPopup(account_email, tab_id);
+        await Api.google.authPopup(acctEmail, tabId);
         window.location.reload();
       }
     }});
   };
 
-  let format_date = (date_from_api: string | number | undefined): string => {
+  let formatDate = (date_from_api: string | number | undefined): string => {
     let date = new Date(Number(date_from_api));
     if(date.toLocaleDateString() === new Date().toLocaleDateString()) {
       return date.toLocaleTimeString();
@@ -155,8 +155,8 @@ Catch.try(async () => {
     return date.toLocaleDateString();
   };
 
-  let renderable_label = (label_id: string, placement: 'messages' | 'menu' | 'labels') => {
-    let label = all_labels.find(l => l.id === label_id);
+  let renderableLabel = (label_id: string, placement: 'messages' | 'menu' | 'labels') => {
+    let label = allLabels.find(l => l.id === label_id);
     if(!label) {
       return '';
     }
@@ -178,47 +178,47 @@ Catch.try(async () => {
     }
   };
 
-  let renderable_labels = (label_ids: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
-    return label_ids.map(id => renderable_label(id, placement)).join('');
+  let renderableLabels = (label_ids: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+    return label_ids.map(id => renderableLabel(id, placement)).join('');
   };
 
-  let render_inbox_item = async (thread_id: string) => {
-    inbox_thread_item_add(thread_id);
-    let thread_item = $('.threads #' + thread_list_item_id(thread_id));
+  let renderInboxItem = async (threadId: string) => {
+    inboxThreadItemAdd(threadId);
+    let threadItem = $('.threads #' + threadListItemId(threadId));
     try {
-      let thread = await Api.gmail.threadGet(account_email, thread_id, 'metadata');
-      let first_message = thread.messages[0];
-      let last_message = thread.messages[thread.messages.length - 1];
+      let thread = await Api.gmail.threadGet(acctEmail, threadId, 'metadata');
+      let firstMsg = thread.messages[0];
+      let lastMsg = thread.messages[thread.messages.length - 1];
 
-      thread_item.find('.subject').text(Api.gmail.findHeader(first_message, 'subject') || '(no subject)');
-      Xss.sanitizeAppend(thread_item.find('.subject'), renderable_labels(first_message.labelIds, 'messages'));
-      let from_header_value = Api.gmail.findHeader(first_message, 'from');
-      if (from_header_value) {
-        let from = Str.parseEmail(from_header_value);
-        thread_item.find('.from').text(from.name || from.email);
+      threadItem.find('.subject').text(Api.gmail.findHeader(firstMsg, 'subject') || '(no subject)');
+      Xss.sanitizeAppend(threadItem.find('.subject'), renderableLabels(firstMsg.labelIds, 'messages'));
+      let fromHeaderVal = Api.gmail.findHeader(firstMsg, 'from');
+      if (fromHeaderVal) {
+        let from = Str.parseEmail(fromHeaderVal);
+        threadItem.find('.from').text(from.name || from.email);
       }
-      thread_item.find('.loading').text('');
-      thread_item.find('.date').text(format_date(last_message.internalDate));
-      thread_item.addClass('loaded').click(Ui.event.handle(() => render_thread(thread.id, thread)));
-      if(Value.is(LABEL.UNREAD).in(last_message.labelIds)) {
-        thread_item.css({'font-weight': 'bold', 'background': 'white'});
+      threadItem.find('.loading').text('');
+      threadItem.find('.date').text(formatDate(lastMsg.internalDate));
+      threadItem.addClass('loaded').click(Ui.event.handle(() => renderThread(thread.id, thread)));
+      if(Value.is(LABEL.UNREAD).in(lastMsg.labelIds)) {
+        threadItem.css({'font-weight': 'bold', 'background': 'white'});
       }
       if(thread.messages.length > 1) {
-        thread_item.find('.msg_count').text(`(${thread.messages.length})`);
+        threadItem.find('.msg_count').text(`(${thread.messages.length})`);
       }
     } catch (e) {
       if(Api.err.isNetErr(e)) {
-        Xss.sanitizeRender(thread_item.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => render_inbox_item(thread_id)));
+        Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => renderInboxItem(threadId)));
       } else if(Api.err.isAuthPopupNeeded(e)) {
-        render_and_handle_auth_popup_notification();
+        renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handle_exception(e);
-        thread_item.find('.loading').text('Failed to load');
+        Catch.handleException(e);
+        threadItem.find('.loading').text('Failed to load');
       }
     }
   };
 
-  let add_label_styles = (labels: R.GmailLabels$label[]) => {
+  let addLabelStyles = (labels: R.GmailLabels$label[]) => {
     let style = '';
     for(let label of labels) {
       if(label.color) {
@@ -231,33 +231,33 @@ Catch.try(async () => {
     $('body').append(`<style>${style}</style>`); // xss-escaped
   };
 
-  let render_folder = (label_element: HTMLSpanElement) => {
+  let renderFolder = (label_element: HTMLSpanElement) => {
     for(let cls of label_element.classList) {
-      let label_id = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
-      if(label_id) {
-        load_url({account_email, label_id});
+      let labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
+      if(labelId) {
+        loadUrl({acctEmail, labelId});
         return;
       }
     }
-    load_url({account_email});
+    loadUrl({acctEmail});
   };
 
-  let get_label_name = (label_id: string) => {
+  let getLabelName = (label_id: string) => {
     if(label_id === 'ALL') {
       return 'all folders';
     }
-    let label = all_labels.find(l => l.id === label_id);
+    let label = allLabels.find(l => l.id === label_id);
     if(label) {
       return label.name;
     }
     return 'UNKNOWN LABEL';
   };
 
-  let render_menu_and_label_styles = (labels: R.GmailLabels$label[]) => {
-    all_labels = labels;
-    add_label_styles(labels);
-    Xss.sanitizeAppend('.menu', `<br>${renderable_labels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
-    Xss.sanitizeAppend('.menu', '<br>' + renderable_labels(labels.sort((a, b) => {
+  let renderMenuAndLabelStyles = (labels: R.GmailLabels$label[]) => {
+    allLabels = labels;
+    addLabelStyles(labels);
+    Xss.sanitizeAppend('.menu', `<br>${renderableLabels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
+    Xss.sanitizeAppend('.menu', '<br>' + renderableLabels(labels.sort((a, b) => {
       if(a.name > b.name) {
         return 1;
       } else if(a.name < b.name) {
@@ -266,81 +266,81 @@ Catch.try(async () => {
         return 0;
       }
     }).map(l => l.id), 'labels'));
-    $('.menu > .label').click(Ui.event.handle(render_folder));
+    $('.menu > .label').click(Ui.event.handle(renderFolder));
   };
 
-  let render_menu = async () => {
+  let renderMenu = async () => {
     try {
-      let {labels} = await Api.gmail.labelsGet(account_email);
-      render_menu_and_label_styles(labels);
+      let {labels} = await Api.gmail.labelsGet(acctEmail);
+      renderMenuAndLabelStyles(labels);
     } catch(e) {
       if(Api.err.isNetErr(e)) {
-        notification_show({notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
+        notificationShow({notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       } else if(Api.err.isAuthPopupNeeded(e)) {
-        render_and_handle_auth_popup_notification();
+        renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handle_exception(e);
-        notification_show({notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
+        Catch.handleException(e);
+        notificationShow({notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       }
     }
   };
 
-  let render_inbox = async (label_id: string) => {
-    $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.open_compose_window()));
-    display_block('inbox', `Messages in ${get_label_name(label_id)}`);
+  let renderInbox = async (label_id: string) => {
+    $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.openComposeWin()));
+    displayBlock('inbox', `Messages in ${getLabelName(label_id)}`);
     try {
-      let {threads} = await Api.gmail.threadList(account_email, label_id);
+      let {threads} = await Api.gmail.threadList(acctEmail, label_id);
       if((threads || []).length) {
-        await Promise.all(threads.map(t => render_inbox_item(t.id)));
+        await Promise.all(threads.map(t => renderInboxItem(t.id)));
       } else {
         Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${label_id} yet. ${Ui.retryLink()}</p>`);
       }
     } catch(e) {
       if(Api.err.isNetErr(e)) {
-        notification_show({notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
+        notificationShow({notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       } else if(Api.err.isAuthPopupNeeded(e)) {
-        render_and_handle_auth_popup_notification();
+        renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handle_exception(e);
-        notification_show({notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
+        Catch.handleException(e);
+        notificationShow({notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {}});
       }
     }
   };
 
-  let render_thread = async (thread_id: string, thread?: R.GmailThreadGet) => {
-    display_block('thread', 'Loading..');
+  let renderThread = async (threadId: string, thread?: R.GmailThreadGet) => {
+    displayBlock('thread', 'Loading..');
     try {
-      thread = thread || await Api.gmail.threadGet(account_email, thread_id, 'metadata');
+      thread = thread || await Api.gmail.threadGet(acctEmail, threadId, 'metadata');
       let subject = Api.gmail.findHeader(thread.messages[0], 'subject') || '(no subject)';
-      update_url(`${subject} - FlowCrypt Inbox`, {account_email, thread_id});
-      display_block('thread', subject);
+      updateUrl(`${subject} - FlowCrypt Inbox`, {acctEmail, threadId});
+      displayBlock('thread', subject);
       for(let m of thread.messages) {
-        await render_message(m);
+        await renderMsg(m);
       }
-      render_reply_box(thread_id, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
-      // await Api.gmail.thread_modify(account_email, thread_id, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
+      renderReplyBox(threadId, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
+      // await Api.gmail.thread_modify(account_email, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
       if(Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);
       } else if(Api.err.isAuthPopupNeeded(e)) {
-        render_and_handle_auth_popup_notification();
+        renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
         let printable = Xss.htmlEscape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeRender('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
       }
     }
   };
 
-  let wrap_message = (id: string, html: string) => {
+  let wrapMsg = (id: string, html: string) => {
     return Ui.e('div', {id, class: 'message line', html});
   };
 
-  let render_message = async (message: R.GmailMsg) => {
-    let html_id = thread_message_id(message.id);
+  let renderMsg = async (message: R.GmailMsg) => {
+    let htmlId = threadMsgId(message.id);
     let from = Api.gmail.findHeader(message, 'from') || 'unknown';
     try {
-      let m = await Api.gmail.msgGet(account_email, message.id, 'raw');
+      let m = await Api.gmail.msgGet(acctEmail, message.id, 'raw');
       let {blocks, headers} = await Mime.process(Str.base64urlDecode(m.raw!));
       let r = '';
       for (let block of blocks) {
@@ -348,61 +348,61 @@ Catch.try(async () => {
       }
       let {atts} = await Mime.decode(Str.base64urlDecode(m.raw!));
       if(atts.length) {
-        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(factory.embedded_attachment).join('')}</div>`;
+        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(factory.embeddedAtta).join('')}</div>`;
       }
       r = `<p class="message_header">From: ${Xss.htmlEscape(from)} <span style="float:right;">${headers.date}</p>` + r;
-      $('.thread').append(wrap_message(html_id, r)); // xss-safe-factory
+      $('.thread').append(wrapMsg(htmlId, r)); // xss-safe-factory
     } catch (e) {
       if(Api.err.isNetErr(e)) {
-        Xss.sanitizeAppend('.thread', wrap_message(html_id, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
+        Xss.sanitizeAppend('.thread', wrapMsg(htmlId, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        render_and_handle_auth_popup_notification();
+        renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
         let printable = Xss.htmlEscape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
-        Xss.sanitizeAppend('.thread', wrap_message(html_id, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
+        Xss.sanitizeAppend('.thread', wrapMsg(htmlId, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }
     }
   };
 
-  let render_reply_box = (thread_id: string, thread_message_id: string, last_message?: R.GmailMsg) => {
+  let renderReplyBox = (threadId: string, threadMsgId: string, last_message?: R.GmailMsg) => {
     let params: UrlParams;
     if(last_message) {
       let to = Api.gmail.findHeader(last_message, 'to');
-      let to_arr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
-      let headers = Api.common.replyCorrespondents(account_email, storage.addresses || [], Api.gmail.findHeader(last_message, 'from'), to_arr);
+      let toArr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
+      let headers = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Api.gmail.findHeader(last_message, 'from'), toArr);
       let subject = Api.gmail.findHeader(last_message, 'subject');
-      params = {subject, reply_to: headers.to, addresses: storage.addresses || [], my_email: headers.from, thread_id, thread_message_id};
+      params = {subject, reply_to: headers.to, addresses: storage.addresses || [], my_email: headers.from, threadId, threadMsgId};
     } else {
-      params = {thread_id, thread_message_id};
+      params = {threadId, threadMsgId};
     }
-    S.cached('thread').append(Ui.e('div', {class: 'reply line', html: factory.embedded_reply(params, false, false)})); // xss-safe-factory
+    S.cached('thread').append(Ui.e('div', {class: 'reply line', html: factory.embeddedReply(params, false, false)})); // xss-safe-factory
   };
 
-  let thread_message_id = (message_id: string) => {
-    return 'message_id_' + message_id;
+  let threadMsgId = (msgId: string) => {
+    return 'message_id_' + msgId;
   };
 
-  let thread_list_item_id = (thread_id: string) => {
-    return 'list_thread_id_' + thread_id;
+  let threadListItemId = (threadId: string) => {
+    return 'list_thread_id_' + threadId;
   };
 
-  let inbox_thread_item_add = (thread_id: string) => {
+  let inboxThreadItemAdd = (threadId: string) => {
     Xss.sanitizeAppend(S.cached('threads'), Ui.e('div', {
       class: 'line',
-      id: thread_list_item_id(thread_id),
+      id: threadListItemId(threadId),
       html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from_container"><span class="from"></span><span class="msg_count"></span></span><span class="subject"></span><span class="date"></span>',
     }));
   };
 
-  if (email_provider !== 'gmail') {
-    $('body').text('Not supported for ' + email_provider);
+  if (emailProvider !== 'gmail') {
+    $('body').text('Not supported for ' + emailProvider);
   } else {
-    await render_menu();
-    if (thread_id) {
-      await render_thread(thread_id as string);
+    await renderMenu();
+    if (threadId) {
+      await renderThread(threadId as string);
     } else {
-      await render_inbox(label_id);
+      await renderInbox(labelId);
     }
   }
 })();

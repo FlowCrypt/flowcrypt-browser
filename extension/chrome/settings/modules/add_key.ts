@@ -4,38 +4,38 @@
 
 import { Store } from '../../../js/common/store.js';
 import { Catch, Env, Value } from '../../../js/common/common.js';
-import { Xss, Ui, KeyImportUI, UserAlert, KeyCanBeFixed } from '../../../js/common/browser.js';
+import { Xss, Ui, KeyImportUi, UserAlert, KeyCanBeFixed } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { Api } from '../../../js/common/api.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   await Ui.passphraseToggle(['input_passphrase']);
-  let key_import_ui = new KeyImportUI({reject_known: true});
-  key_import_ui.init_prv_import_source_form(account_email, parent_tab_id);
+  let keyImportUi = new KeyImportUi({rejectKnown: true});
+  keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId);
 
   Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
 
-  let keyinfos = await Store.keysGet(account_email);
-  let private_keys_long_ids = keyinfos.map(ki => ki.longid);
-  let key_backups;
+  let keyinfos = await Store.keysGet(acctEmail);
+  let privateKeysLongIds = keyinfos.map(ki => ki.longid);
+  let keyBackups;
 
   try {
-    key_backups = await Api.gmail.fetchKeyBackups(account_email);
-    if (key_backups.length) {
-      let not_imported_backup_longids: string[] = [];
-      for (let longid of Value.arr.unique(key_backups.map(Pgp.key.longid))) {
-        if (longid && !Value.is(longid).in(private_keys_long_ids)) {
-          not_imported_backup_longids.push(longid);
+    keyBackups = await Api.gmail.fetchKeyBackups(acctEmail);
+    if (keyBackups.length) {
+      let notImportedBackupLongids: string[] = [];
+      for (let longid of Value.arr.unique(keyBackups.map(Pgp.key.longid))) {
+        if (longid && !Value.is(longid).in(privateKeysLongIds)) {
+          notImportedBackupLongids.push(longid);
         }
       }
-      if (not_imported_backup_longids.length) {
-        $('label[for=source_backup]').text('Load from backup (' + not_imported_backup_longids.length + ' new to import)');
+      if (notImportedBackupLongids.length) {
+        $('label[for=source_backup]').text('Load from backup (' + notImportedBackupLongids.length + ' new to import)');
       } else {
         $('label[for=source_backup]').text('Load from backup (already loaded)').css('color', '#AAA');
         $('#source_backup').prop('disabled', true);
@@ -46,7 +46,7 @@ Catch.try(async () => {
     }
   } catch (e) {
     if(Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
     }
     $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');
     $('#source_backup').prop('disabled', true);
@@ -57,11 +57,11 @@ Catch.try(async () => {
 
   $('.action_add_private_key').click(Ui.event.prevent('double', async () => {
     try {
-      let checked = await key_import_ui.check_prv(account_email, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
+      let checked = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if(checked) {
-        await Store.keys_add(account_email, checked.normalized); // resulting new_key checked above
-        await Store.passphrase_save($('.input_passphrase_save').prop('checked') ? 'local' : 'session', account_email, checked.longid, checked.passphrase);
-        BrowserMsg.send(parent_tab_id, 'reload', { advanced: true });
+        await Store.keysAdd(acctEmail, checked.normalized); // resulting new_key checked above
+        await Store.passphraseSave($('.input_passphrase_save').prop('checked') ? 'local' : 'session', acctEmail, checked.longid, checked.passphrase);
+        BrowserMsg.send(parentTabId, 'reload', { advanced: true });
       }
     } catch(e) {
       if(e instanceof UserAlert) {
@@ -69,7 +69,7 @@ Catch.try(async () => {
       } else if(e instanceof KeyCanBeFixed) {
         return alert(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
       } else {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

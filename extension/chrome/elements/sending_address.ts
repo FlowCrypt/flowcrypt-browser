@@ -11,39 +11,39 @@ import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'placement']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['accountEmail', 'parentTabId', 'placement']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   let hash = Pgp.hash.sha1;
   let container = $('.emails');
 
-  let storage = await Store.getAccount(account_email, ['addresses']);
-  let addresses = storage.addresses || [urlParams.account_email];
+  let storage = await Store.getAcct(acctEmail, ['addresses']);
+  let addresses = storage.addresses || [urlParams.acctEmail];
 
-  let address_to_html_radio = (a: string) => {
+  let emailAddrToHtmlRadio = (a: string) => {
     a = Xss.htmlEscape(a);
     return `<input type="radio" name="a" value="${a}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
   };
 
-  Xss.sanitizeRender(container, addresses.map(address_to_html_radio).join(''));
+  Xss.sanitizeRender(container, addresses.map(emailAddrToHtmlRadio).join(''));
   container.find('input').first().prop('checked', true);
   container.find('input').click(Ui.event.handle(async target => {
-    let chosen_sending_address = $(target).val() as string;
-    if (chosen_sending_address !== addresses[0]) {
-      let ordered_addresses = Value.arr.unique([chosen_sending_address].concat(storage.addresses || []));
-      await Store.set(account_email, {addresses: ordered_addresses});
+    let chosenSendingAddr = $(target).val() as string;
+    if (chosenSendingAddr !== addresses[0]) {
+      let orderedAddrs = Value.arr.unique([chosenSendingAddr].concat(storage.addresses || []));
+      await Store.set(acctEmail, {addresses: orderedAddrs});
       window.location.reload();
     }
   }));
 
   $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (target, done) => {
     Xss.sanitizeRender(target, Ui.spinner('green'));
-    let addresses = await Settings.fetch_account_aliases_from_gmail(account_email);
-    await Store.set(account_email, { addresses: Value.arr.unique(addresses.concat(account_email)) });
+    let addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+    await Store.set(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
     window.location.reload();
     done();
   }));
 
-  $('.action_close').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_dialog')));
+  $('.action_close').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_dialog')));
 
 })();

@@ -11,39 +11,40 @@ import { BrowserMsgHandler } from '../common/extension.js';
 
 declare let openpgp: typeof OpenPGP;
 
-export let migrate_account: BrowserMsgHandler = async (data: {account_email: string}, sender, respond_done) => {
-  if(data.account_email) {
-    await Store.set(data.account_email, { version: Catch.version('int') });
+export let migrateAcct: BrowserMsgHandler = async (data: {acctEmail: string}, sender, respond_done) => {
+  if(data.acctEmail) {
+    await Store.set(data.acctEmail, { version: Catch.version('int') });
     respond_done();
-    await account_update_status_keyserver(data.account_email);
-    await account_update_status_pks(data.account_email);
+    await accountUpdateStatusKeyserver(data.acctEmail);
+    await accountUpdateStatusPks(data.acctEmail);
   } else {
     Catch.report('not migrating account: no account_email provided');
   }
 };
 
-export let migrate_global = async () => {
-  await migrate_local_storage_to_extension_storage();
+export let migrateGlobal = async () => {
+  await migrateLocalStorageToExtensionStorage();
 };
 
-let migrate_local_storage_to_extension_storage = () => new Promise(resolve => {
+let migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {
+  // todo - deprecate and show error like dberror
   if (window.localStorage.length === 0) {
     resolve(); // nothing in localStorage
   } else {
     let values: Dict<FlatTypes> = {};
-    for (let legacy_storage_key of Object.keys(localStorage)) {
-      let value = legacy_local_storage_read(localStorage.getItem(legacy_storage_key)!);
-      if (legacy_storage_key === 'settings_seen') {
+    for (let legacyStorageKey of Object.keys(localStorage)) {
+      let value = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey)!);
+      if (legacyStorageKey === 'settings_seen') {
         values.cryptup_global_settings_seen = true;
-      } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_keys$/g)) {
-        values[legacy_storage_key] = value;
-      } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
+      } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_keys$/g)) {
+        values[legacyStorageKey] = value;
+      } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
         try {
-          let primary_longid = legacy_local_storage_read(localStorage.getItem(legacy_storage_key.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
-          values[legacy_storage_key.replace('master_passphrase', 'passphrase_' + primary_longid)] = value;
+          let primaryLongid = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
+          values[legacyStorageKey.replace('master_passphrase', 'passphrase_' + primaryLongid)] = value;
         } catch (e) {} // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
-      } else if (legacy_storage_key.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
-        values[legacy_storage_key] = value;
+      } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
+        values[legacyStorageKey] = value;
       }
     }
     chrome.storage.local.set(values, () => {
@@ -53,7 +54,7 @@ let migrate_local_storage_to_extension_storage = () => new Promise(resolve => {
   }
 });
 
-let legacy_local_storage_read = (value: string) => {
+let legacyLocalStorageRead = (value: string) => {
   if (typeof value === 'undefined') {
     return value;
   } else if (value === 'null#null') {
@@ -71,72 +72,73 @@ let legacy_local_storage_read = (value: string) => {
   }
 };
 
-let account_update_status_keyserver = async (account_email: string) => { // checks which emails were registered on Attester
-  let keyinfos = await Store.keysGet(account_email);
-  let my_longids = keyinfos.map(ki => ki.longid);
-  let storage = await Store.getAccount(account_email, ['addresses', 'addresses_keyserver']);
+let accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks which emails were registered on Attester
+  let keyinfos = await Store.keysGet(acctEmail);
+  let myLongids = keyinfos.map(ki => ki.longid);
+  let storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
     let unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
     if(unique.length < storage.addresses.length) {
       storage.addresses = unique;
-      await Store.set(account_email, storage); // fix duplicate email addresses
+      await Store.set(acctEmail, storage); // fix duplicate email addresses
     }
     try {
       let {results} = await Api.attester.lookupEmail(storage.addresses);
-      let addresses_keyserver = [];
+      let addressesKeyserver = [];
       for (let result of results) {
-        if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(my_longids)) {
-          addresses_keyserver.push(result.email);
+        if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(myLongids)) {
+          addressesKeyserver.push(result.email);
         }
       }
-      await Store.set(account_email, { addresses_keyserver });
+      await Store.set(acctEmail, { addressesKeyserver });
     } catch(e) {
       if(!Api.err.isNetErr(e)) {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
       }
     }
   }
 };
 
-let account_update_status_pks = async (account_email: string) => { // checks if any new emails were registered on pks lately
-  let keyinfos = await Store.keysGet(account_email);
-  let my_longids = keyinfos.map(ki => ki.longid);
+let accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new emails were registered on pks lately
+  // todo - deprecate in certain situations
+  let keyinfos = await Store.keysGet(acctEmail);
+  let myLongids = keyinfos.map(ki => ki.longid);
   let hkp = new openpgp.HKP('https://pgp.key-server.io');
-  let storage = await Store.getAccount(account_email, ['addresses', 'addresses_pks']);
-  let addresses_pks = storage.addresses_pks || [];
-  for (let email of storage.addresses || [account_email]) {
-    if (!Value.is(email).in(addresses_pks)) {
+  let storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
+  let addressesPks = storage.addresses_pks || [];
+  for (let email of storage.addresses || [acctEmail]) {
+    if (!Value.is(email).in(addressesPks)) {
       try {
         let pubkey = await hkp.lookup({ query: email });
         if (typeof pubkey !== 'undefined') {
-          if (Value.is(Pgp.key.longid(pubkey)).in(my_longids)) {
-            addresses_pks.push(email);
+          if (Value.is(Pgp.key.longid(pubkey)).in(myLongids)) {
+            addressesPks.push(email);
             console.info(email + ' newly found matching pubkey on PKS');
           }
         }
       } catch (e) {
-        report_useful_errors(e);
+        reportUsefulErrs(e);
       }
     }
   }
-  await Store.set(account_email, { addresses_pks });
+  await Store.set(acctEmail, { addressesPks });
 };
 
-let report_useful_errors = (e: any) => {
+let reportUsefulErrs = (e: any) => {
   if(!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
-    Catch.handle_exception(e);
+    Catch.handleException(e);
   }
 };
 
-export let schedule_cryptup_subscription_level_check = (background_process_start_reason: 'update' | 'chrome_update' | 'browser_start' | string) => {
+export let scheduleFcSubscriptionLevelCheck = (background_process_start_reason: 'update' | 'chrome_update' | 'browser_start' | string) => {
   Catch.setHandledTimeout(() => {
     if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      Catch.setHandledTimeout(() => Api.fc.accountCheckSync().catch(report_useful_errors), Value.int.hours_as_miliseconds(Math.random() * 3)); // random 0-3 hours
+      Catch.setHandledTimeout(() => Api.fc.accountCheckSync().catch(reportUsefulErrs), Value.int.hoursAsMiliseconds(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
-      Api.fc.accountCheckSync().catch(report_useful_errors); // now
+      Api.fc.accountCheckSync().catch(reportUsefulErrs); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  Catch.setHandledInterval(() => Api.fc.accountCheckSync().catch(report_useful_errors), Value.int.hours_as_miliseconds(23 + Math.random())); // random 23-24 hours
+  Catch.setHandledInterval(() => Api.fc.accountCheckSync().catch(reportUsefulErrs), Value.int.hoursAsMiliseconds(23 + Math.random())); // random 23-24 hours
 };

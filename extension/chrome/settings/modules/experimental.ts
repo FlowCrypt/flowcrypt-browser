@@ -12,48 +12,48 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   // this is for debugging
   if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
     Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.htmlEscape(Env.urlCreate('/chrome/dev/storage.htm', {controls: true }))}">Storage</a>`);
   }
 
-  if (account_email) {
+  if (acctEmail) {
 
-    let {dev_outlook_allow} = await Store.get_global(['dev_outlook_allow']);
+    let {dev_outlook_allow} = await Store.getGlobal(['dev_outlook_allow']);
     if (dev_outlook_allow === true) {
       $('.action_allow_outlook').prop('checked', true);
     }
 
-    $('.email').text(account_email);
+    $('.email').text(acctEmail);
 
     $('.action_allow_outlook').change(Ui.event.handle(async target => {
       await Store.set(null, {'dev_outlook_allow': $(target).prop('checked')});
       window.location.reload();
     }));
 
-    $('.action_open_decrypt').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt.htm')));
+    $('.action_open_decrypt').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt.htm')));
 
-    $('.action_open_decrypt_ignore_mdc').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/decrypt_ignore_mdc.htm')));
+    $('.action_open_decrypt_ignore_mdc').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt_ignore_mdc.htm')));
 
-    $('.action_backup').click(Ui.event.prevent('double', () => collect_info_and_download_backup_file(account_email).catch(Catch.rejection)));
+    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.rejection)));
 
     $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
       try {
-        let all = await Settings.refresh_account_aliases(account_email);
+        let all = await Settings.refreshAcctAliases(acctEmail);
         alert('Updated to: ' + all.join(', '));
       } catch(e) {
         if(Api.err.isNetErr(e)) {
           alert('Network error, please try again');
         } else if(Api.err.isAuthPopupNeeded(e)) {
           alert('Error: account needs to be re-connected first.');
-          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
         } else {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
           alert(`Error happened: ${e.message}`);
         }
       }
@@ -64,53 +64,53 @@ Catch.try(async () => {
     $('.action_exception').click(() => Catch.test());
 
     $('.action_reset_account').click(Ui.event.prevent('double', async () => {
-      if (confirm('This will remove all your FlowCrypt settings for ' + account_email + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
-        await collect_info_and_download_backup_file(account_email);
+      if (confirm('This will remove all your FlowCrypt settings for ' + acctEmail + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
+        await collectInfoAndDownloadBackupFile(acctEmail);
         if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
-          await Settings.account_storage_reset(account_email);
+          await Settings.account_storage_reset(acctEmail);
           window.parent.location.reload();
         }
       }
     }));
 
-    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/dev/storage.htm', Env.urlCreate('', {filter: account_email, keys: 'attest_log', title: `Attest Log - ${account_email}`}).replace('?', '&'))));
+    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/dev/storage.htm', Env.urlCreate('', {filter: acctEmail, keys: 'attest_log', title: `Attest Log - ${acctEmail}`}).replace('?', '&'))));
 
     $('.action_flush_attest_info').click(Ui.event.handle(async () => {
-      await Store.remove(account_email, ['attests_requested', 'attests_processed', 'attest_log']);
+      await Store.remove(acctEmail, ['attests_requested', 'attests_processed', 'attest_log']);
       alert('Internal attest info flushed');
       window.location.reload();
     }));
 
     $('.action_reset_managing_auth').click(Ui.event.handle(async () => {
       await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
-      BrowserMsg.send(parent_tab_id, 'reload');
+      BrowserMsg.send(parentTabId, 'reload');
     }));
 
     $('.action_make_google_auth_token_unusable').click(Ui.event.handle(async () => {
-      await Store.set(account_email, {google_token_access: 'flowcrypt_test_bad_access_token'});
-      BrowserMsg.send(parent_tab_id, 'reload');
+      await Store.set(acctEmail, {google_token_access: 'flowcrypt_test_bad_access_token'});
+      BrowserMsg.send(parentTabId, 'reload');
     }));
 
     $('.action_make_google_refresh_token_unusable').click(Ui.event.handle(async () => {
-      await Store.set(account_email, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'});
-      BrowserMsg.send(parent_tab_id, 'reload');
+      await Store.set(acctEmail, {google_token_refresh: 'flowcrypt_test_bad_refresh_token'});
+      BrowserMsg.send(parentTabId, 'reload');
     }));
 
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
-      if(confirm(`Your current account email is ${account_email}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`)) {
-        let tab_id = await BrowserMsg.required_tab_id();
-        let response = await Api.google.authPopup(account_email, tab_id);
+      if(confirm(`Your current account email is ${acctEmail}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`)) {
+        let tabId = await BrowserMsg.requiredTabId();
+        let response = await Api.google.authPopup(acctEmail, tabId);
         if (response && response.success === true && response.acctEmail) {
-          if(response.acctEmail === account_email) {
-            alert(`Account email address seems to be the same, nothing to update: ${account_email}`);
+          if(response.acctEmail === acctEmail) {
+            alert(`Account email address seems to be the same, nothing to update: ${acctEmail}`);
           } else if(response.acctEmail) {
-            if(confirm(`Change your Google Account email from ${account_email} to ${response.acctEmail}?`)) {
+            if(confirm(`Change your Google Account email from ${acctEmail} to ${response.acctEmail}?`)) {
               try {
-                await Settings.account_storage_change_email(account_email, response.acctEmail);
+                await Settings.acctStorageChangeEmail(acctEmail, response.acctEmail);
                 alert(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
-                BrowserMsg.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', account_email: response.acctEmail});
+                BrowserMsg.send(null, 'settings', {path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail});
               } catch(e) {
-                Catch.handle_exception(e);
+                Catch.handleException(e);
                 alert('There was an error changing google account, please write human@flowcrypt.com');
               }
             }
@@ -127,14 +127,14 @@ Catch.try(async () => {
       }
     }));
 
-    let collect_info_and_download_backup_file = async (account_email: string) => {
-      let name = 'FlowCrypt_BACKUP_FILE_' + account_email.replace('[^a-z0-9]+', '') + '.txt';
-      let backup_text = await collect_info_for_account_backup(account_email);
-      Att.methods.saveToDownloads(new Att({name, type: 'text/plain', data: backup_text}));
+    let collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
+      let name = 'FlowCrypt_BACKUP_FILE_' + acctEmail.replace('[^a-z0-9]+', '') + '.txt';
+      let backupText = await collectInfoForAccountBackup(acctEmail);
+      Att.methods.saveToDownloads(new Att({name, type: 'text/plain', data: backupText}));
       await Ui.delay(1000);
     };
 
-    let collect_info_for_account_backup = async (account_email: string) => {
+    let collectInfoForAccountBackup = async (acctEmail: string) => {
       let text = [
         'This file contains sensitive information, please put it in a safe place.',
         '',
@@ -145,14 +145,14 @@ Catch.try(async () => {
         'If this key was registered on a keyserver (typically they are), you will need this same key (and pass phrase!) to replace it.',
         'In other words, losing this key or pass phrase may cause people to have trouble writing you encrypted emails, even if you use another key (on FlowCrypt or elsewhere) later on!',
         '',
-        'account_email: ' + account_email,
+        'acctEmail: ' + acctEmail,
       ];
-      let global_storage = await Store.get_global(['version']);
-      let account_storage = await Store.getAccount(account_email, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
-      text.push('global_storage: ' + JSON.stringify(global_storage));
-      text.push('account_storage: ' + JSON.stringify(account_storage));
+      let globalStorage = await Store.getGlobal(['version']);
+      let acctStorage = await Store.getAcct(acctEmail, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
+      text.push('global_storage: ' + JSON.stringify(globalStorage));
+      text.push('account_storage: ' + JSON.stringify(acctStorage));
       text.push('');
-      let keyinfos = await Store.keysGet(account_email);
+      let keyinfos = await Store.keysGet(acctEmail);
       for (let keyinfo of keyinfos) {
         text.push('');
         text.push('key_longid: ' + keyinfo.longid);

@@ -11,21 +11,21 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'longid', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   $('.action_show_public_key').attr('href', Env.urlCreate('my_key.htm', urlParams));
 
-  let [primary_ki] = await Store.keysGet(account_email, [urlParams.longid as string || 'primary']);
-  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
+  let [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
+  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  let key = openpgp.key.readArmored(primary_ki.private).keys[0];
+  let key = openpgp.key.readArmored(primaryKi.private).keys[0];
 
-  let user_ids = key.users.map((u: any) => u.userId.userid); // todo - create a common function in settings.js for here and setup.js user_ids
-  Xss.sanitizeRender('.user_ids', user_ids.map((uid: string) => `<div>${Xss.htmlEscape(uid)}</div>`).join(''));
+  let userIds = key.users.map((u: any) => u.userId.userid); // todo - create a common function in settings.js for here and setup.js user_ids
+  Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.htmlEscape(uid)}</div>`).join(''));
 
-  $('.email').text(account_email);
-  $('.key_words').text(primary_ki.keywords);
+  $('.email').text(acctEmail);
+  $('.key_words').text(primaryKi.keywords);
 
 })();

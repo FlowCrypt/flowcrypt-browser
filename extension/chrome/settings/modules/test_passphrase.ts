@@ -13,25 +13,25 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   await Ui.passphraseToggle(['password']);
 
-  let [primary_ki] = await Store.keysGet(account_email, ['primary']);
-  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
+  let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   $('.action_verify').click(Ui.event.handle(async () => {
-    let key = openpgp.key.readArmored(primary_ki.private).keys[0];
+    let key = openpgp.key.readArmored(primaryKi.private).keys[0];
     if (await Pgp.key.decrypt(key, [$('#password').val() as string]) === true) { // text input
       Xss.sanitizeRender('#content', '<div class="line">Your pass phrase matches. Good job! You\'re all set.</div><div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>');
-      $('.close').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_page')));
+      $('.close').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_page')));
     } else {
       alert('Pass phrase did not match. Please try again. If you are not able to recover your pass phrase, please change it, so that do don\'t get locked out of your encrypted messages.');
     }
   }));
 
-  $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirect_sub_page(account_email, parent_tab_id, '/chrome/settings/modules/change_passphrase.htm')));
+  $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
 
 })();

@@ -8,7 +8,7 @@ import { Store } from "../../js/common/store.js";
 
 Catch.try(async () => {
 
-  let storage = await Store.get_global(['errors']);
+  let storage = await Store.getGlobal(['errors']);
   if (storage.errors && storage.errors.length > 0) {
     let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
     Xss.sanitizeRender('.pre', errors);

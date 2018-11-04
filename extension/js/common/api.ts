@@ -324,15 +324,15 @@ export class Api {
       q,
       includeSpamTrash: include_deleted,
     }),
-    msgGet: (acctEmail: string, message_id: string, format: GmailResponseFormat): Promise<R.GmailMsg> => Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${message_id}`, {
+    msgGet: (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}`, {
       format: format || 'full',
     }),
     msgsGet: (acctEmail: string, message_ids: string[], format: GmailResponseFormat): Promise<R.GmailMsg[]> => {
       return Promise.all(message_ids.map(id => Api.gmail.msgGet(acctEmail, id, format)));
     },
     labelsGet: (acctEmail: string): Promise<R.GmailLabels> => Api.internal.apiGmailCall(acctEmail, 'GET', `labels`, {}),
-    attGet: async (account_email: string, message_id: string, att_id: string, progress_callback:ProgressCb|null=null): Promise<R.GmailAtt> => {
-      let r: R.GmailAtt = await Api.internal.apiGmailCall(account_email, 'GET', `messages/${message_id}/attachments/${att_id}`, {}, {download: progress_callback});
+    attGet: async (acctEmail: string, msgId: string, att_id: string, progress_callback:ProgressCb|null=null): Promise<R.GmailAtt> => {
+      let r: R.GmailAtt = await Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${att_id}`, {}, {download: progress_callback});
       r.data = Str.base64urlDecode(r.data);
       return r;
     },
@@ -476,8 +476,8 @@ export class Api {
         }
         gmailQuery.push(`(to:${variationsOfTo.join(' OR to:')})`);
       }
-      let filtered_contacts = knownContacts.filter(c => Str.isEmailValid(c.email));
-      for (let contact of filtered_contacts) {
+      let filteredContacts = knownContacts.filter(c => Str.isEmailValid(c.email));
+      for (let contact of filteredContacts) {
         gmailQuery.push(`-to:${contact.email}`);
       }
       await Api.internal.apiGmailLoopThroughEmailsToCompileContacts(acctEmail, gmailQuery.join(' '), chunkedCb);
@@ -516,9 +516,9 @@ export class Api {
       } else { // format === raw
         let mimeMsg = await Mime.decode(Str.base64urlDecode(gmailMsg.raw!));
         if (mimeMsg.text !== undefined) {
-          let armored_msg = Pgp.armor.clip(mimeMsg.text); // todo - the message might be in attachments
-          if (armored_msg) {
-            return armored_msg;
+          let armoredMsg = Pgp.armor.clip(mimeMsg.text); // todo - the message might be in attachments
+          if (armoredMsg) {
+            return armoredMsg;
           } else {
             throw {code: null, internal: 'format', message: 'Could not find armored message in parsed raw mime', data: mimeMsg};
           }
@@ -566,15 +566,15 @@ export class Api {
       attest,
     }),
     initialConfirm: (signedAttestPacket: string): Promise<R.AttInitialConfirm> => Api.internal.apiAttesterCall('initial/confirm', {
-      signed_message: signedAttestPacket,
+      signedMsg: signedAttestPacket,
     }),
     replaceRequest: (email: string, signedAttestPacket: string, newPubkey: string): Promise<R.AttReplaceRequest> => Api.internal.apiAttesterCall('replace/request', {
-      signed_message: signedAttestPacket,
+      signedMsg: signedAttestPacket,
       newPubkey,
       email,
     }),
     replaceConfirm: (signedAttestPacket: string): Promise<R.AttReplaceConfirm> => Api.internal.apiAttesterCall('replace/confirm', {
-      signed_message: signedAttestPacket,
+      signedMsg: signedAttestPacket,
     }),
     testWelcome: (email: string, pubkey: string): Promise<R.AttTestWelcome> => Api.internal.apiAttesterCall('test/welcome', {
       email,
@@ -582,7 +582,7 @@ export class Api {
     }),
     diagnoseKeyserverPubkeys: async (acctEmail: string) => {
       let diagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} as Dict<{attested: boolean, pubkey: string|null, match: boolean}> };
-      let {addresses} = await Store.getAccount(acctEmail, ['addresses']);
+      let {addresses} = await Store.getAcct(acctEmail, ['addresses']);
       let storedKeys = await Store.keysGet(acctEmail);
       let storedKeysLongids = storedKeys.map(ki => ki.longid);
       let {results} = await Api.attester.lookupEmail(Value.arr.unique([acctEmail].concat(addresses || [])));
@@ -630,7 +630,7 @@ export class Api {
           error: null as string|null,
           text: null as string|null,
         };
-        let packetHeaders = Pgp.armor.headers('attest_packet', 're');
+        let packetHeaders = Pgp.armor.headers('attestPacket', 're');
         let matches = text.match(RegExp(packetHeaders.begin + '([^]+)' + packetHeaders.end, 'm'));
         if (matches && matches[1]) {
           result.text = matches[1].replace(/^\s+|\s+$/g, '');
@@ -717,7 +717,7 @@ export class Api {
     accountLogin: async (acctEmail: string, token:string|null=null): Promise<{verified: boolean, subscription: SubscriptionInfo}> => {
       let authInfo = await Store.authInfo();
       let uuid = authInfo.uuid || Pgp.hash.sha1(Str.random(40));
-      let account = authInfo.account_email || acctEmail;
+      let account = authInfo.acctEmail || acctEmail;
       let response: R.FcAccountLogin = await Api.internal.apiFcCall('account/login', {
         account,
         uuid,
@@ -733,20 +733,20 @@ export class Api {
       emails,
     }) as Promise<R.FcAccountCheck>,
     accountCheckSync: async () => { // callbacks true on updated, false not updated, null for could not fetch
-      let emails = await Store.accountEmailsGet();
+      let emails = await Store.acctEmailsGet();
       if (emails.length) {
         let response = await Api.fc.accountCheck(emails);
         let authInfo = await Store.authInfo();
         let subscription = await Store.subscription();
         let localStorageUpdate: GlobalStore = {};
         if (response.email) {
-          if (response.email !== authInfo.account_email) {
+          if (response.email !== authInfo.acctEmail) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
             localStorageUpdate.cryptup_account_email = response.email;
             localStorageUpdate.cryptup_account_uuid = Pgp.hash.sha1(Str.random(40));
           }
         } else {
-          if (authInfo.account_email) {
+          if (authInfo.acctEmail) {
             localStorageUpdate.cryptup_account_email = null;
             localStorageUpdate.cryptup_account_uuid = null;
           }
@@ -772,7 +772,7 @@ export class Api {
     },
     accountUpdate: async (updateValues?: Dict<Serializable>): Promise<R.FcAccountUpdate> => {
       let authInfo = await Store.authInfo();
-      let request = {account: authInfo.account_email, uuid: authInfo.uuid} as Dict<Serializable>;
+      let request = {account: authInfo.acctEmail, uuid: authInfo.uuid} as Dict<Serializable>;
       if (updateValues) {
         for (let k of Object.keys(updateValues)) {
           request[k] = updateValues[k];
@@ -783,7 +783,7 @@ export class Api {
     accountSubscribe: async (product: string, method: string, paymentSourceToken:string|null=null): Promise<R.FcAccountSubscribe> => {
       let authInfo = await Store.authInfo();
       let response: R.FcAccountSubscribe = await Api.internal.apiFcCall('account/subscribe', {
-        account: authInfo.account_email,
+        account: authInfo.acctEmail,
         uuid: authInfo.uuid,
         method,
         source: paymentSourceToken,
@@ -800,10 +800,10 @@ export class Api {
           lengths,
         });
       } else if (authMethod === 'uuid') {
-        let auth_info = await Store.authInfo();
+        let authInfo = await Store.authInfo();
         response = await Api.internal.apiFcCall('message/presign_files', {
-          account: auth_info.account_email,
-          uuid: auth_info.uuid,
+          account: authInfo.acctEmail,
+          uuid: authInfo.uuid,
           lengths,
         });
       } else {
@@ -830,16 +830,16 @@ export class Api {
         return await Api.internal.apiFcCall('message/upload', {content}, 'FORM');
       } else {
         let authInfo = await Store.authInfo();
-        return await Api.internal.apiFcCall('message/upload', {account: authInfo.account_email, uuid: authInfo.uuid, content}, 'FORM');
+        return await Api.internal.apiFcCall('message/upload', {account: authInfo.acctEmail, uuid: authInfo.uuid, content}, 'FORM');
       }
     },
     messageToken: async (): Promise<R.FcMsgToken> => {
       let authInfo = await Store.authInfo();
-      return await Api.internal.apiFcCall('message/token', {account: authInfo.account_email, uuid: authInfo.uuid});
+      return await Api.internal.apiFcCall('message/token', {account: authInfo.acctEmail, uuid: authInfo.uuid});
     },
     messageExpiration: async (admin_codes: string[], add_days:null|number=null): Promise<R.ApirFcMsgExpiration> => {
       let authInfo = await Store.authInfo();
-      return await Api.internal.apiFcCall('message/expiration', {account: authInfo.account_email, uuid: authInfo.uuid, admin_codes, add_days});
+      return await Api.internal.apiFcCall('message/expiration', {account: authInfo.acctEmail, uuid: authInfo.uuid, admin_codes, add_days});
     },
     messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.apiFcCall('message/reply', {
       short,
@@ -902,10 +902,10 @@ export class Api {
     apiCall: async (baseUrl: string, path: string, fields: Dict<any>, format: RequestFormat, progress: ProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ResponseFormat='json', method:RequestMethod='POST') => {
       progress = progress || {} as ProgressCallbacks;
       let formattedData: FormData|string;
-      let content_type: string|false;
+      let contentType: string|false;
       if (format === 'JSON' && fields !== null) {
         formattedData = JSON.stringify(fields);
-        content_type = 'application/json; charset=UTF-8';
+        contentType = 'application/json; charset=UTF-8';
       } else if (format === 'FORM') {
         formattedData = new FormData();
         for (let formFieldName of Object.keys(fields)) {
@@ -916,7 +916,7 @@ export class Api {
             formattedData.append(formFieldName, a); // xss-none
           }
         }
-        content_type = false;
+        contentType = false;
       } else {
         throw Error('unknown format:' + String(format));
       }
@@ -929,7 +929,7 @@ export class Api {
         crossDomain: true,
         headers,
         processData: false,
-        contentType: content_type,
+        contentType,
         async: true,
         timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
       };
@@ -956,16 +956,16 @@ export class Api {
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     }),
-    googleAuthSaveTokens: async (account_email: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
-      let to_save: AccountStore = {
+    googleAuthSaveTokens: async (acctEmail: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
+      let toSave: AccountStore = {
         google_token_access: tokens_object.access_token,
         google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
         google_token_scopes: scopes,
       };
       if (typeof tokens_object.refresh_token !== 'undefined') {
-        to_save.google_token_refresh = tokens_object.refresh_token;
+        toSave.google_token_refresh = tokens_object.refresh_token;
       }
-      await Store.set(account_email, to_save);
+      await Store.set(acctEmail, toSave);
     },
     googleAuthGetTokens: (code: string) => $.ajax({
       url: Env.urlCreate(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'authorization_code', code, client_id: Api.GOOGLE_OAUTH2!.client_id, redirect_uri: Api.GOOGLE_OAUTH2!.url_redirect }),
@@ -990,7 +990,7 @@ export class Api {
         let _ = await Api.internal.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
         let {emailAddress: acctEmail} = await Api.gmail.usersMeProfile(null, tokensObj.access_token);
         if(result.state.acctEmail !== acctEmail) {
-          Catch.report('google_auth_window_result_handler: result.state.account_email !== me.emailAddress');
+          Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress');
         }
         await Api.internal.googleAuthSaveTokens(acctEmail, tokensObj, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
         return { acctEmail, success: true, result: 'Success', messageId: result.state.messageId };
@@ -1044,11 +1044,11 @@ export class Api {
       return await Api.internal.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
     },
     googleApiIsAuthTokenValid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
-    googleApiAuthHeader: async (account_email: string, force_refresh=false): Promise<string> => {
-      if (!account_email) {
+    googleApiAuthHeader: async (acctEmail: string, force_refresh=false): Promise<string> => {
+      if (!acctEmail) {
         throw new Error('missing account_email in api_gmail_call');
       }
-      let storage = await Store.getAccount(account_email, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
+      let storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
       if (!storage.google_token_access || !storage.google_token_refresh) {
         throw new Error('Account not connected to FlowCrypt Browser Extension');
       } else if (Api.internal.googleApiIsAuthTokenValid(storage) && !force_refresh) {
@@ -1056,8 +1056,8 @@ export class Api {
       } else { // refresh token
         let refreshTokenRes = await Api.internal.googleAuthRefreshToken(storage.google_token_refresh);
         let _ = await Api.internal.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        await Api.internal.googleAuthSaveTokens(account_email, refreshTokenRes, storage.google_token_scopes || []);
-        let auth = await Store.getAccount(account_email, ['google_token_access', 'google_token_expires']);
+        await Api.internal.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
+        let auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
         if (Api.internal.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
           return `Bearer ${auth.google_token_access}`;
         } else {
@@ -1068,7 +1068,7 @@ export class Api {
     apiGoogleAuthPopupPrepareAuthReqScopes: async (acctEmail: string|null, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {
       let currentTokensScopes: string[] = [];
       if (acctEmail) {
-        let storage = await Store.getAccount(acctEmail, ['google_token_scopes']);
+        let storage = await Store.getAcct(acctEmail, ['google_token_scopes']);
         currentTokensScopes = storage.google_token_scopes || [];
       }
       let authReqScopes = requestedScopes || [];
@@ -1140,7 +1140,7 @@ export class Api {
       }
       return {};
     },
-    apiAttesterPacketArmor: (contentText: string) => `${Pgp.armor.headers('attest_packet').begin}\n${contentText}\n${Pgp.armor.headers('attest_packet').end}`,
+    apiAttesterPacketArmor: (contentText: string) => `${Pgp.armor.headers('attestPacket').begin}\n${contentText}\n${Pgp.armor.headers('attestPacket').end}`,
     apiAttesterCall: (path: string, values: Dict<any>) => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', null, {'api-version': '3'} as FlatHeaders),
     apiFcCall: (path: string, values: Dict<any>, format='JSON' as RequestFormat) => Api.internal.apiCall(Api.fc.url('api'), path, values, format, null, {'api-version': '3'} as FlatHeaders),
   };

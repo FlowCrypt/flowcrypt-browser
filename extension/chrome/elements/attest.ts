@@ -14,43 +14,43 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['account_email', 'attest_packet', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'attestPacket', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let [primary_ki] = await Store.keysGet(account_email, ['primary']);
-  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
+  let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  let passphrase = await Store.passphrase_get(account_email, primary_ki.longid);
+  let passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
 
-  let process_attest = async (passphrase: string|null) => {
+  let processAttest = async (passphrase: string|null) => {
     if (passphrase !== null) {
       Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
-      let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', {account_email, packet: urlParams.attest_packet, passphrase});
+      let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', {acctEmail, packet: urlParams.attestPacket, passphrase});
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };
 
-  if(openpgp.key.readArmored(primary_ki.private).keys[0].isDecrypted()) { // unencrypted private key
+  if(openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) { // unencrypted private key
     $('.status').text('Not allowed to attest keys that do not have a pass phrase. Please go to FlowCrypt Settings -> Security -> Change pass phrase');
     return;
   }
 
   if (passphrase !== null && passphrase) {
-    await process_attest(passphrase);
+    await processAttest(passphrase);
     return;
   }
 
   Xss.sanitizeRender('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
-  $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
-  let tab_id = await BrowserMsg.required_tab_id();
+  $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
+  let tabId = await BrowserMsg.requiredTabId();
   BrowserMsg.listen({
     passphrase_entry: async (msg: {entered: boolean}, sender, respond) => {
       if (msg.entered) {
-        let pp = await Store.passphrase_get(account_email, primary_ki.longid);
-        await process_attest(pp);
+        let pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
+        await processAttest(pp);
       }
     },
-  }, tab_id);
+  }, tabId);
 
 })();

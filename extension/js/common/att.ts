@@ -7,7 +7,7 @@ import { ProgressCb } from './api.js';
 import { Xss } from './browser.js';
 import { KeyInfo } from './store.js';
 
-type Att$treatAs = "public_key" | "message" | "hidden" | "signature" | "encrypted" | "standard";
+type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 type AttMeta = { data?: string|Uint8Array|null; type?:string|null; name?: string|null; length?: number|null; url?: string|null;
   inline?: boolean|null; id?: string|null; msgId?: string|null; treatAs?: Att$treatAs; cid?: string|null; };
 
@@ -33,7 +33,7 @@ export class Att {
       throw new Error('Att: one of data|url|id has to be set');
     }
     if(id && !msgId) {
-      throw new Error('Att: if id is set, message_id must be set too');
+      throw new Error('Att: if id is set, msgId must be set too');
     }
     if(data !== null && typeof data !== 'undefined') {
       this.setData(data);
@@ -115,9 +115,9 @@ export class Att {
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encrypted';
     } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
-      return 'public_key';
+      return 'publicKey';
     } else if (Value.is('public').in(this.name.toLowerCase()) && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
-      return 'public_key';
+      return 'publicKey';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
       return 'message';
     } else {

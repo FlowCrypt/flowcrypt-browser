@@ -42,7 +42,7 @@ Catch.try(async () => {
     };
 
     let getInsightsFromHostVariables = () => {
-      let insights: WebmailVariantObject = {new_data_layer: null, newUi: null, email: null, gmailVariant: null};
+      let insights: WebmailVariantObject = {newDataLayer: null, newUi: null, email: null, gmailVariant: null};
       $('body').append(['<script>', '(function() {', // xss-direct - not sanitized because adding a <script> in intentional here
         'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
         'let e = document.getElementById("FC_VAR_PASS");',
@@ -52,9 +52,9 @@ Catch.try(async () => {
       try {
         let extracted = JSON.parse($('body > div#FC_VAR_PASS').text()).map(String);
         if (extracted[0] === 'true') {
-          insights.new_data_layer = true;
+          insights.newDataLayer = true;
         } else if (extracted[0] === 'false') {
-          insights.new_data_layer = false;
+          insights.newDataLayer = false;
         }
         if (extracted[1] === 'true') {
           insights.newUi = true;
@@ -64,7 +64,7 @@ Catch.try(async () => {
         if (Str.isEmailValid(extracted[2])) {
           insights.email = extracted[2].trim().toLowerCase();
         }
-        if (insights.new_data_layer === null && insights.newUi === null && insights.email === null) {
+        if (insights.newDataLayer === null && insights.newUi === null && insights.email === null) {
           insights.gmailVariant = 'html';
         } else if (insights.newUi === false) {
           insights.gmailVariant = 'standard';
@@ -77,9 +77,9 @@ Catch.try(async () => {
 
     let start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
-      let storage = await Store.getAccount(acctEmail, ['addresses', 'google_token_scopes']);
+      let storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
       let canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
-      injector.buttons();
+      injector.btns();
       replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
       replacer.everything();
@@ -125,9 +125,9 @@ Catch.try(async () => {
     let fullName = '';
 
     let start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
-      let storage = await Store.getAccount(acctEmail, ['addresses', 'google_token_scopes']);
+      let storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
       let canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
-      injector.buttons();
+      injector.btns();
       replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, null);
       await notifications.showInitial(acctEmail);
       replacer.everything();
@@ -147,10 +147,10 @@ Catch.try(async () => {
       getUserAccountEmail: () => {
         let creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
         if (creds.length === 2 &&  creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
-          let account_email = creds[1].innerText.toLowerCase();
+          let acctEmail = creds[1].innerText.toLowerCase();
           fullName =  creds[0].innerText;
-          console.info('Loading for ' + account_email + ' (' + fullName + ')');
-          return account_email;
+          console.info('Loading for ' + acctEmail + ' (' + fullName + ')');
+          return acctEmail;
         }
       },
       getUserFullName: () => fullName,

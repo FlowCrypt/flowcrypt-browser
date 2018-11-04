@@ -20,21 +20,21 @@ Catch.try(async () => {
   }
 
   if (controls) {
-    let account_emails = await Store.accountEmailsGet();
-    let emails_selector = $('.emails');
-    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {controls: urlParams.controls || ''}))}">all</a>`);
-    Xss.sanitizeAppend(emails_selector, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {filter: 'global', controls: urlParams.controls || ''}))}">global</a>`);
+    let acctEmails = await Store.acctEmailsGet();
+    let emailsSel = $('.emails');
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {controls: urlParams.controls || ''}))}">all</a>`);
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {filter: 'global', controls: urlParams.controls || ''}))}">global</a>`);
     Xss.sanitizeAppend('.namespace', '<option value="global">global</option>');
-    for (let account_email of account_emails) {
-      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: account_email, controls: urlParams.controls || ''}))}">${Xss.htmlEscape(account_email)}</a>`);
-      Xss.sanitizeAppend('.namespace', `<option value="${Xss.htmlEscape(account_email)}">${Xss.htmlEscape(account_email)}</option>`);
+    for (let acctEmail of acctEmails) {
+      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: acctEmail, controls: urlParams.controls || ''}))}">${Xss.htmlEscape(acctEmail)}</a>`);
+      Xss.sanitizeAppend('.namespace', `<option value="${Xss.htmlEscape(acctEmail)}">${Xss.htmlEscape(acctEmail)}</option>`);
     }
   }
 
   const render = (obj: RenderableStorage) => {
-    for (let filtered_key of Object.keys(obj)) {
-      let del = controls ? ' <span class="bad delete" key="' + obj[filtered_key].key + '" style="cursor: pointer;">[X]</span>' : '';
-      Xss.sanitizeAppend('.pre', `<div><b>${filtered_key + del}</b> ${Str.pretty_print(obj[filtered_key].value)}</div>`);
+    for (let filteredKey of Object.keys(obj)) {
+      let del = controls ? ' <span class="bad delete" key="' + obj[filteredKey].key + '" style="cursor: pointer;">[X]</span>' : '';
+      Xss.sanitizeAppend('.pre', `<div><b>${filteredKey + del}</b> ${Str.pretty_print(obj[filteredKey].value)}</div>`);
     }
     $('.delete').click(Ui.event.handle(self => {
       chrome.storage.local.remove($(self).attr('key')!, () => window.location.reload()); // we set the attr key above
@@ -42,16 +42,16 @@ Catch.try(async () => {
   };
 
   chrome.storage.local.get(storage => {
-    let real_filter: string;
+    let realFilter: string;
     if (urlParams.filter) {
-      real_filter = Store.index(urlParams.filter as string, urlParams.keys as string || '') as string;
+      realFilter = Store.index(urlParams.filter as string, urlParams.keys as string || '') as string;
     } else {
-      real_filter = '';
+      realFilter = '';
     }
     let filtered: RenderableStorage = {};
     for (let key of Object.keys(storage)) {
-      if (Value.is(real_filter).in(key)) {
-        filtered[key.replace(real_filter, '')] = {key, value: storage[key]};
+      if (Value.is(realFilter).in(key)) {
+        filtered[key.replace(realFilter, '')] = {key, value: storage[key]};
       }
     }
     if (!Object.keys(filtered).length) {
@@ -64,15 +64,15 @@ Catch.try(async () => {
     $('#controls, #filters').css('display', 'block');
     $('.save').click(Ui.event.handle(async () => {
       try {
-        let namespace_selector = $('.namespace');
-        let key_selector = $('.key');
-        if (namespace_selector.val() === '-- namespace --' || $('.type').val() === '-- type --' || !key_selector.val()) {
+        let namespaceSel = $('.namespace');
+        let keySel = $('.key');
+        if (namespaceSel.val() === '-- namespace --' || $('.type').val() === '-- type --' || !keySel.val()) {
           alert('Namespace, key and type need to be filled');
         } else {
-          let storage_update: BaseStore = {};
-          storage_update[key_selector.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
-          let account_email = namespace_selector.val() === 'global' ? null : decodeURIComponent(namespace_selector.val() as string); // it's a text input
-          await Store.set(account_email, storage_update);
+          let storageUpdate: BaseStore = {};
+          storageUpdate[keySel.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
+          let acctEmail = namespaceSel.val() === 'global' ? null : decodeURIComponent(namespaceSel.val() as string); // it's a text input
+          await Store.set(acctEmail, storageUpdate);
           window.location.reload();
         }
       } catch (e) {

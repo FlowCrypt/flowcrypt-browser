@@ -63,24 +63,51 @@ export class Env {
     oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed) as string,
   };
 
-  public static urlParams = (expected_keys: string[], string:string|null=null) => {
-    let url = (string || window.location.search.replace('?', ''));
-    let value_pairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    let url_data: UrlParams = {};
-    for (let value_pair of value_pairs) {
-      let pair = value_pair.split('=');
-      if (Value.is(pair[0]).in(expected_keys)) {
-        url_data[pair[0]] = typeof Env.URL_PARAM_DICT[pair[1]] !== 'undefined' ? Env.URL_PARAM_DICT[pair[1]] : decodeURIComponent(pair[1]);
-      }
+  private static snakeCaseToCamelCase = (s: string) => s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
+
+  private static camelCaseToSnakeCase = (s: string) => s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
+
+  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
+    if(typeof rawParamNameDict[expectedParamName] === 'undefined') {
+      return undefined; // param name not found in param name dict
     }
-    return url_data;
+    let rawValue = rawParms[rawParamNameDict[expectedParamName]];
+    if(typeof rawValue === 'undefined') {
+      return undefined; // original param name not found in raw params
+    }
+    if(typeof Env.URL_PARAM_DICT[rawValue] !== 'undefined') {
+      return Env.URL_PARAM_DICT[rawValue]; // raw value was converted using a value dict to get proper: true, false, undefined, null
+    }
+    return decodeURIComponent(rawValue);
+  }
+
+  /**
+   * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
+   */
+  public static urlParams = (expectedKeys: string[], string:string|null=null) => {
+    let url = (string || window.location.search.replace('?', ''));
+    let valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
+    let rawParms: Dict<string> = {};
+    let rawParamNameDict: Dict<string> = {};
+    for (let valuePair of valuePairs) {
+      let pair = valuePair.split('=');
+      rawParms[pair[0]] = pair[1];
+      rawParamNameDict[pair[0]] = pair[0];
+      rawParamNameDict[Env.snakeCaseToCamelCase(pair[0])] = pair[0];
+      rawParamNameDict[Env.camelCaseToSnakeCase(pair[0])] = pair[0];
+    }
+    let processedParams: UrlParams = {};
+    for (let expectedKey of expectedKeys) {
+      processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParms);
+    }
+    return processedParams;
   }
 
   public static urlCreate = (link: string, params: UrlParams) => {
     for (let key of Object.keys(params)) {
       let value = params[key];
       if (typeof value !== 'undefined') {
-        let transformed = Value.obj.key_by_value(Env.URL_PARAM_DICT, value);
+        let transformed = Value.obj.keyByValue(Env.URL_PARAM_DICT, value);
         link += (!Value.is('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
       }
     }
@@ -121,8 +148,8 @@ export class Catch {
       err = { name: 'thrown_object', message: err.message || '(unknown)', stack: stringified};
       error_msg = 'thrown_object';
     }
-    let user_log_msg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
-    let ignored_errs = [
+    let userLogMsg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
+    let ignoredErrs = [
       'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
       'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
       'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
@@ -130,7 +157,7 @@ export class Catch {
     if (!err) {
       return;
     }
-    if (err instanceof Error && ignored_errs.indexOf(err.message) !== -1) {
+    if (err instanceof Error && ignoredErrs.indexOf(err.message) !== -1) {
       return true;
     }
     if (err instanceof Error && err.stack) {
@@ -168,22 +195,22 @@ export class Catch {
         async: true,
         success: (response) => {
           if (response.saved === true) {
-            console.log('%cFlowCrypt ERROR:' + user_log_msg, 'font-weight: bold;');
+            console.log('%cFlowCrypt ERROR:' + userLogMsg, 'font-weight: bold;');
           } else {
-            console.log('%cFlowCrypt EXCEPTION:' + user_log_msg, 'font-weight: bold;');
+            console.log('%cFlowCrypt EXCEPTION:' + userLogMsg, 'font-weight: bold;');
           }
         },
         error: (XMLHttpRequest, status, error) => {
-          console.log('%cFlowCrypt FAILED:' + user_log_msg, 'font-weight: bold;');
+          console.log('%cFlowCrypt FAILED:' + userLogMsg, 'font-weight: bold;');
         },
       });
     } catch (ajax_err) {
       console.log(ajax_err.message);
-      console.log('%cFlowCrypt ISSUE:' + user_log_msg, 'font-weight: bold;');
+      console.log('%cFlowCrypt ISSUE:' + userLogMsg, 'font-weight: bold;');
     }
     try {
-      if (typeof Store.getAccount === 'function' && typeof Store.set === 'function') {
-        Store.get_global(['errors']).then(s => {
+      if (typeof Store.getAcct === 'function' && typeof Store.set === 'function') {
+        Store.getGlobal(['errors']).then(s => {
           if (typeof s.errors === 'undefined') {
             s.errors = [];
           }
@@ -201,11 +228,11 @@ export class Catch {
     return true;
   }
 
-  public static handle_exception = (exception: any) => {
+  public static handleException = (exception: any) => {
     let line, col;
     try {
-      let caller_line = exception.stack!.split('\n')[1]; // will be catched below
-      let matched = caller_line.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      let callerLine = exception.stack!.split('\n')[1]; // will be catched below
+      let matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
       line = Number(matched![1]); // will be catched below
       col = Number(matched![2]); // will be catched below
     } catch (line_err) {
@@ -228,7 +255,7 @@ export class Catch {
         }
       }
       e.stack = e.stack + '\n\n\ndetails: ' + details;
-      Catch.handle_exception(e);
+      Catch.handleException(e);
     }
   }
 
@@ -249,7 +276,7 @@ export class Catch {
       }
       e.stack = e.stack + '\n\n\ndetails: ' + details;
       try {
-        Store.get_global(['errors']).then(s => {
+        Store.getGlobal(['errors']).then(s => {
           if (typeof s.errors === 'undefined') {
             s.errors = [];
           }
@@ -277,12 +304,12 @@ export class Catch {
         r.catch(Catch.rejection);
       }
     } catch (code_err) {
-      Catch.handle_exception(code_err);
+      Catch.handleException(code_err);
     }
   }
 
   public static environment = (url=window.location.href): string => {
-    let browser_name = Env.browser().name;
+    let browserName = Env.browser().name;
     let env = 'unknown';
     if (url.indexOf('bnjglocicd') !== -1) {
       env = 'ex:prod';
@@ -303,7 +330,7 @@ export class Catch {
     } else if (/moz-extension:\/\/.+/.test(url)) {
       env = 'ex';
     }
-    return browser_name + ':' + env;
+    return browserName + ':' + env;
   }
 
   public static test = () => {
@@ -328,7 +355,7 @@ export class Catch {
   public static rejection = (e: PromiseRejectionEvent|StandardError|Error) => {
     if(!(e instanceof UnreportableError)) {
       if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
-        Catch.handle_exception((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
+        Catch.handleException((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
         if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
           let stack = (e as StandardError).stack;
@@ -407,9 +434,9 @@ export class Str {
 
   public static regex_escape = (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-  public static html_attr_encode = (values: Dict<any>): string => Str.base64url_utf_encode(JSON.stringify(values));
+  public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
 
-  public static html_attr_decode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64url_utf_decode(encoded));
+  public static html_attr_decode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64urlUtfDecode(encoded));
 
   public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
@@ -439,61 +466,61 @@ export class Str {
     return uint8;
   }
 
-  public static from_equal_sign_notation_as_utf = (str: string): string => {
+  public static fromEqualSignNotationAsUtf = (str: string): string => {
     return str.replace(/(=[A-F0-9]{2})+/g, equal_sign_utf_part => {
-      return Str.uint8_as_utf(equal_sign_utf_part.replace(/^=/, '').split('=').map((two_hex_digits) => parseInt(two_hex_digits, 16)));
+      return Str.uint8AsUtf(equal_sign_utf_part.replace(/^=/, '').split('=').map((two_hex_digits) => parseInt(two_hex_digits, 16)));
     });
   }
 
-  public static uint8_as_utf = (a: Uint8Array|number[]) => { // tom
+  public static uint8AsUtf = (a: Uint8Array|number[]) => { // tom
     let length = a.length;
-    let bytes_left_in_char = 0;
+    let bytesLeftInChar = 0;
     let utf8_string = '';
-    let binary_char = '';
+    let binaryChar = '';
     for (let i = 0; i < length; i++) {
       if (a[i] < 128) {
-        if (bytes_left_in_char) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
+        if (bytesLeftInChar) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
           utf8_string += String.fromCharCode(a[i-1]);
         }
-        bytes_left_in_char = 0;
-        binary_char = '';
+        bytesLeftInChar = 0;
+        binaryChar = '';
         utf8_string += String.fromCharCode(a[i]);
       } else {
-        if (!bytes_left_in_char) { // beginning of new multi-byte character
+        if (!bytesLeftInChar) { // beginning of new multi-byte character
           if (a[i] >= 128 && a[i] < 192) { // 10xx xxxx
             utf8_string += String.fromCharCode(a[i]); // extended 8-bit ASCII compatibility, european ASCII characters
           } else if (a[i] >= 192 && a[i] < 224) { // 110x xxxx
-            bytes_left_in_char = 1;
-            binary_char = a[i].toString(2).substr(3);
+            bytesLeftInChar = 1;
+            binaryChar = a[i].toString(2).substr(3);
           } else if (a[i] >= 224 && a[i] < 240) { // 1110 xxxx
-            bytes_left_in_char = 2;
-            binary_char = a[i].toString(2).substr(4);
+            bytesLeftInChar = 2;
+            binaryChar = a[i].toString(2).substr(4);
           } else if (a[i] >= 240 && a[i] < 248) { // 1111 0xxx
-            bytes_left_in_char = 3;
-            binary_char = a[i].toString(2).substr(5);
+            bytesLeftInChar = 3;
+            binaryChar = a[i].toString(2).substr(5);
           } else if (a[i] >= 248 && a[i] < 252) { // 1111 10xx
-            bytes_left_in_char = 4;
-            binary_char = a[i].toString(2).substr(6);
+            bytesLeftInChar = 4;
+            binaryChar = a[i].toString(2).substr(6);
           } else if (a[i] >= 252 && a[i] < 254) { // 1111 110x
-            bytes_left_in_char = 5;
-            binary_char = a[i].toString(2).substr(7);
+            bytesLeftInChar = 5;
+            binaryChar = a[i].toString(2).substr(7);
           } else {
             console.log('Str.uint8_as_utf: invalid utf-8 character beginning byte: ' + a[i]);
           }
         } else { // continuation of a multi-byte character
-          binary_char += a[i].toString(2).substr(2);
-          bytes_left_in_char--;
+          binaryChar += a[i].toString(2).substr(2);
+          bytesLeftInChar--;
         }
-        if (binary_char && !bytes_left_in_char) {
-          utf8_string += String.fromCharCode(parseInt(binary_char, 2));
-          binary_char = '';
+        if (binaryChar && !bytesLeftInChar) {
+          utf8_string += String.fromCharCode(parseInt(binaryChar, 2));
+          binaryChar = '';
         }
       }
     }
     return utf8_string;
   }
 
-  public static to_hex = (s: string): string => { // http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
+  public static toHex = (s: string): string => { // http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
     let o = '';
     s += '';
     for (let i = 0; i < s.length; i++) {
@@ -503,7 +530,7 @@ export class Str {
     return o;
   }
 
-  public static from_hex = (hex: string): string => {
+  public static fromHex = (hex: string): string => {
     let str = '';
     for (let i = 0; i < hex.length; i += 2) {
       let v = parseInt(hex.substr(i, 2), 16);
@@ -514,13 +541,13 @@ export class Str {
     return str;
   }
 
-  public static extract_fc_atts = (decrypted_content: string, fc_attachments: Att[]) => {
+  public static extractFcAtts = (decrypted_content: string, fc_attachments: Att[]) => {
     if (Value.is('cryptup_file').in(decrypted_content)) {
       decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, found_link => {
         let element = $(found_link);
-        let fc_data = element.attr('cryptup-data');
-        if (fc_data) {
-          let a: FlowCryptAttLinkData = Str.html_attr_decode(fc_data);
+        let fcData = element.attr('cryptup-data');
+        if (fcData) {
+          let a: FlowCryptAttLinkData = Str.html_attr_decode(fcData);
           if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
             fc_attachments.push(new Att({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
           }
@@ -531,22 +558,22 @@ export class Str {
     return decrypted_content;
   }
 
-  public static extract_fc_reply_token = (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
-    let fc_token_element = $(Ui.e('div', {html: decrypted_content})).find('.cryptup_reply');
-    if (fc_token_element.length) {
-      let fc_data = fc_token_element.attr('cryptup-data');
-      if (fc_data) {
-        return Str.html_attr_decode(fc_data);
+  public static extractFcReplyToken = (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
+    let fcTokenElement = $(Ui.e('div', {html: decrypted_content})).find('.cryptup_reply');
+    if (fcTokenElement.length) {
+      let fcData = fcTokenElement.attr('cryptup-data');
+      if (fcData) {
+        return Str.html_attr_decode(fcData);
       }
     }
   }
 
-  public static strip_fc_reply_token = (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  public static stripFcTeplyToken = (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
 
-  public static strip_public_keys = (decrypted_content: string, found_public_keys: string[]) => {
-    let {blocks, normalized} = Pgp.armor.detect_blocks(decrypted_content);
+  public static stripPublicKeys = (decrypted_content: string, found_public_keys: string[]) => {
+    let {blocks, normalized} = Pgp.armor.detectBlocks(decrypted_content);
     for (let block of blocks) {
-      if (block.type === 'public_key') {
+      if (block.type === 'publicKey') {
         found_public_keys.push(block.content);
         normalized = normalized.replace(block.content, '');
       }
@@ -554,7 +581,7 @@ export class Str {
     return normalized;
   }
 
-  public static int_to_hex = (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
+  public static intToHex = (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
     let dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
     while(dec.length) {
       s = Number(dec.shift());
@@ -572,15 +599,15 @@ export class Str {
 
   public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 
-  public static to_utc_timestamp = (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string);
+  public static toUtcTimestamp = (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string);
 
-  public static datetime_to_date = (date: string) => Xss.htmlEscape(date.substr(0, 10));
+  public static datetimeToDate = (date: string) => Xss.htmlEscape(date.substr(0, 10));
 
-  private static base64url_utf_encode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+  private static base64urlUtfEncode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  private static base64url_utf_decode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+  private static base64urlUtfDecode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     return (typeof str === 'undefined') ? str : decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
   }
 
@@ -598,18 +625,18 @@ export class Value {
       }
       return unique;
     },
-    from_dom_node_list: (obj: NodeList|JQuery<HTMLElement>): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+    fromDomNodeList: (obj: NodeList|JQuery<HTMLElement>): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
       let array = [];
       for (let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
         array[i] = obj[i];
       }
       return array;
     },
-    without_key: <T>(array: T[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
-    without_value: <T>(array: T[], without_value: T) => {
+    withoutKey: <T>(array: T[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
+    withoutVal: <T>(array: T[], withoutVal: T) => {
       let result: T[] = [];
       for (let value of array) {
-        if (value !== without_value) {
+        if (value !== withoutVal) {
           result.push(value);
         }
       }
@@ -622,7 +649,7 @@ export class Value {
   };
 
   public static obj = {
-    key_by_value: <T>(obj: Dict<T>, v: T) => {
+    keyByValue: <T>(obj: Dict<T>, v: T) => {
       for (let k of Object.keys(obj)) {
         if (obj[k] === v) {
           return k;
@@ -632,14 +659,14 @@ export class Value {
   };
 
   public static int = {
-    random: (min_value: number, max_value: number) => min_value + Math.round(Math.random() * (max_value - min_value)),
-    get_future_timestamp_in_months: (months_to_add: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * months_to_add,
-    hours_as_miliseconds: (h: number) =>  h * 1000 * 60 * 60,
+    lousyRandom: (minVal: number, maxVal: number) => minVal + Math.round(Math.random() * (maxVal - minVal)),
+    getFutureTimestampInMonths: (monthsToAdd: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * monthsToAdd,
+    hoursAsMiliseconds: (h: number) =>  h * 1000 * 60 * 60,
   };
 
   public static noop = (): void => undefined;
 
-  public static is = (v: FlatTypes) => ({in: (array_or_str: FlatTypes[]|string): boolean => Value.arr.contains(array_or_str, v)});  // Value.this(v).in(array_or_string)
+  public static is = (v: FlatTypes) => ({in: (arrayOrStr: FlatTypes[]|string): boolean => Value.arr.contains(arrayOrStr, v)});  // Value.this(v).in(array_or_string)
 
 }
 

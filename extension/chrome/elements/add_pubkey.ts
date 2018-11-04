@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch, Env, Dict } from './../../js/common/common.js';
-import { Xss, Ui, KeyImportUI, UserAlert } from '../../js/common/browser.js';
+import { Xss, Ui, KeyImportUi, UserAlert } from '../../js/common/browser.js';
 import { Store } from '../../js/common/store.js';
 import { Pgp } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -12,17 +12,17 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'emails', 'placement']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let close_dialog = () => BrowserMsg.send(parent_tab_id, 'close_dialog');
+  let closeDialog = () => BrowserMsg.send(parentTabId, 'close_dialog');
 
   for (let email of (urlParams.emails as string).split(',')) {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.htmlEscape(email)}">${Xss.htmlEscape(email)}</option>`);
   }
 
-  let contacts = await Store.db_contact_search(null, {has_pgp: true});
+  let contacts = await Store.dbContactSearch(null, {has_pgp: true});
 
   Xss.sanitizeAppend('select.copy_from_email', '<option value=""></option>');
   for (let contact of contacts) {
@@ -31,7 +31,7 @@ Catch.try(async () => {
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {
-      let [contact] = await Store.db_contact_get(null, [$(target).val() as string]);
+      let [contact] = await Store.dbContactGet(null, [$(target).val() as string]);
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
@@ -44,15 +44,15 @@ Catch.try(async () => {
 
   $('.action_ok').click(Ui.event.handle(async () => {
     try {
-      let key_import_ui = new KeyImportUI({check_encryption: true});
-      let normalized = await key_import_ui.check_pub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
-      await Store.db_contact_save(null, Store.dbContactObj($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
-      close_dialog();
+      let keyImportUi = new KeyImportUi({checkEncryption: true});
+      let normalized = await keyImportUi.checkPub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
+      await Store.dbContactSave(null, Store.dbContactObj($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
+      closeDialog();
     } catch (e) {
       if(e instanceof UserAlert) {
         return alert(e.message);
       } else {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
         return alert(`Error happened when processing the public key: ${e.message}`);
       }
     }
@@ -62,12 +62,12 @@ Catch.try(async () => {
     $('.action_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {
       path: 'index.htm',
       page: '/chrome/settings/modules/contacts.htm',
-      account_email,
+      acctEmail,
     })));
   } else {
     $('#content').addClass('inside_compose');
   }
 
-  $('.action_close').click(Ui.event.handle(close_dialog));
+  $('.action_close').click(Ui.event.handle(closeDialog));
 
 })();

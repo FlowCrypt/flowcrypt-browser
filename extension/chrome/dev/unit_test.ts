@@ -28,7 +28,7 @@ import { StandardError } from '../../js/common/api.js';
   };
 
   if (f === 'Pgp.armor.detect_blocks' && args.length === 1 && typeof args[0] === 'string') {
-    return test(Pgp.armor.detect_blocks, args);
+    return test(Pgp.armor.detectBlocks, args);
   } else {
     return finish('Unknown unit test f');
   }

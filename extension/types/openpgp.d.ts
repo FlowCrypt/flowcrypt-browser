@@ -668,14 +668,14 @@ declare namespace OpenPGP {
     function read(type: typeof keyStatus, e: keyStatus): keyStatusNames|string|any;
     function read(type: typeof keyFlags, e: keyFlags): keyFlagsNames|string|any;
 
-    export type armorNames = 'multipart_section' | 'multipart_last' | 'signed' | 'message' | 'public_key' | 'private_key';
+    export type armorNames = 'multipart_section' | 'multipart_last' | 'signed' | 'message' | 'publicKey' | 'privateKey';
     enum armor {
       multipart_section = 0,
       multipart_last = 1,
       signed = 2,
       message = 3,
-      public_key = 4,
-      private_key = 5,
+      publicKey = 4,
+      privateKey = 5,
       signature = 6,
     }
 

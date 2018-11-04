@@ -9,23 +9,23 @@ import { Ui, XssSafeFactory, SelCache, WebMailName, WebmailVariantString } from 
 export class Injector {
 
   private factory: XssSafeFactory;
-  private webmail_name: WebMailName;
-  private webmail_variant: WebmailVariantString;
+  private webmailName: WebMailName;
+  private webmailVariant: WebmailVariantString;
   private S: SelCache;
-  private compose_button_container_selector = {
+  private composeBtnContainerSel = {
     'gmail': 'div.aic',
     'inbox': 'div.jp',
     'outlook': 'div._fce_b',
     'settings': '#does_not_have',
   };
 
-  constructor(webmail_name: WebMailName, webmail_variant: WebmailVariantString, factory: XssSafeFactory) {
-    this.webmail_name = webmail_name;
-    this.webmail_variant = webmail_variant;
+  constructor(webmail_name: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {
+    this.webmailName = webmail_name;
+    this.webmailVariant = webmailVariant;
     this.factory = factory;
     this.S = Ui.buildJquerySels({
       body: 'body',
-      compose_button_container: this.compose_button_container_selector[this.webmail_name],
+      compose_button_container: this.composeBtnContainerSel[this.webmailName],
       compose_button: 'div.new_message_button',
       compose_button_label: '#cryptup_compose_button_label',
       compose_window: 'div.new_message',
@@ -33,28 +33,28 @@ export class Injector {
   }
 
   meta = () => {
-    this.S.cached('body').addClass(`cryptup_${this.webmail_name} cryptup_${this.webmail_name}_${this.webmail_variant}`).append(this.factory.meta_stylesheet('webmail') + this.factory.meta_notification_container());  // xss-safe-factory
+    this.S.cached('body').addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant}`).append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer());  // xss-safe-factory
   }
 
-  open_compose_window = () => {
+  openComposeWin = () => {
     if (this.S.now('compose_window').length === 0) {
-      this.S.cached('body').append(this.factory.embedded_compose()); // xss-safe-factory
+      this.S.cached('body').append(this.factory.embeddedCompose()); // xss-safe-factory
     }
   }
 
-  buttons = () => {
+  btns = () => {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
-      (window as ContentScriptWindow).TrySetDestroyableTimeout(this.buttons, 300);
+      (window as ContentScriptWindow).TrySetDestroyableTimeout(this.btns, 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
         let container;
-        if (this.webmail_name === 'inbox') {
-          container = this.S.now('compose_button_container').append(this.factory.button_compose(this.webmail_name)); // xss-safe-factory
+        if (this.webmailName === 'inbox') {
+          container = this.S.now('compose_button_container').append(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
           container.find(this.S.sel('compose_button')).hover(Catch.try(() => this.S.cached('compose_button_label').css('opacity', 1)), Catch.try(() => this.S.cached('compose_button_label').css('opacity', '')));
         } else {
-          container = this.S.now('compose_button_container').prepend(this.factory.button_compose(this.webmail_name)); // xss-safe-factory
+          container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
         }
-        container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.open_compose_window()));
+        container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.openComposeWin()));
       }
     }
   }

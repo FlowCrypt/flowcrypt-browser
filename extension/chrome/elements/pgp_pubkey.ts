@@ -18,31 +18,31 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['account_email', 'armored_pubkey', 'parent_tab_id', 'minimized', 'compact', 'frame_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
-  let armored_pubkey = Env.urlParamRequire.string(urlParams, 'armored_pubkey');
-  let frame_id = Env.urlParamRequire.string(urlParams, 'frame_id');
+  let urlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  let armoredPubkey = Env.urlParamRequire.string(urlParams, 'armoredPubkey');
+  let frameId = Env.urlParamRequire.string(urlParams, 'frameId');
   // minimized means I have to click to see details. Compact means the details take up very little space.
 
-  let pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armored_pubkey).keys;
+  let pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armoredPubkey).keys;
 
-  let send_resize_msg = () => {
-    let desired_height = $('#pgp_block').height()! + (urlParams.compact ? 10 : 30); // #pgp_block is defined in template
-    BrowserMsg.send(parent_tab_id, 'set_css', {selector: `iframe#${frame_id}`, css: {height: `${desired_height}px`}});
+  let sendResizeMsg = () => {
+    let desiredHeight = $('#pgp_block').height()! + (urlParams.compact ? 10 : 30); // #pgp_block is defined in template
+    BrowserMsg.send(parentTabId, 'set_css', {selector: `iframe#${frameId}`, css: {height: `${desiredHeight}px`}});
   };
 
-  let set_button_text = async () => {
+  let setBtnText = async () => {
     if (pubkeys.length > 1) {
       $('.action_add_contact').text('import ' + pubkeys.length + ' public keys');
     } else {
-      let [contact] = await Store.db_contact_get(null, [$('.input_email').val() as string]); // text input
+      let [contact] = await Store.dbContactGet(null, [$('.input_email').val() as string]); // text input
       $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
     }
   };
 
   let render = async () => {
-    $('.pubkey').text(urlParams.armored_pubkey as string);
+    $('.pubkey').text(urlParams.armoredPubkey as string);
     if (urlParams.compact) {
       $('.hide_if_compact').remove();
       $('body').css({border: 'none', padding: 0});
@@ -71,15 +71,15 @@ Catch.try(async () => {
           $('.input_email').css({display: 'none'});
           Xss.sanitizeAppend('.add_contact', Xss.htmlEscape(' for ' + pubkeys.map(pubkey => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.isEmailValid(e)).join(', ')));
         }
-        set_button_text().catch(Catch.rejection);
+        setBtnText().catch(Catch.rejection);
       }
     } else {
-      let fixed = urlParams.armored_pubkey as string;
+      let fixed = urlParams.armoredPubkey as string;
       while(/\n> |\n>\n/.test(fixed)) {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
-      if (fixed !== urlParams.armored_pubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armored_pubkey: fixed, minimized: true, account_email: urlParams.account_email, parent_tab_id: urlParams.parent_tab_id, frame_id: urlParams.frame_id });
+      if (fixed !== urlParams.armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
+        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail: urlParams.acctEmail, parentTabId: urlParams.parentTabId, frameId: urlParams.frameId });
       } else {
         $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
@@ -91,18 +91,18 @@ Catch.try(async () => {
     if (pubkeys.length > 1) {
       let contacts: Contact[] = [];
       for (let pubkey of pubkeys) {
-        let email_address = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
-        if (Str.isEmailValid(email_address)) {
-          contacts.push(Store.dbContactObj(email_address, null, 'pgp', pubkey.armor(), null, false, Date.now()));
+        let emailAddr = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
+        if (Str.isEmailValid(emailAddr)) {
+          contacts.push(Store.dbContactObj(emailAddr, null, 'pgp', pubkey.armor(), null, false, Date.now()));
         }
       }
-      await Store.db_contact_save(null, contacts);
+      await Store.dbContactSave(null, contacts);
       Xss.sanitizeReplace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
     } else if (pubkeys.length) {
       if (Str.isEmailValid($('.input_email').val() as string)) { // text input
         let contact = Store.dbContactObj($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
-        await Store.db_contact_save(null, contact);
+        await Store.dbContactSave(null, contact);
         Xss.sanitizeReplace(target, `<span class="good">${Xss.htmlEscape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
       } else {
@@ -112,15 +112,15 @@ Catch.try(async () => {
     }
   }));
 
-  $('.input_email').keyup(() => set_button_text());
+  $('.input_email').keyup(() => setBtnText());
 
   $('.action_show_full').click(Ui.event.handle(target => {
     $(target).css('display', 'none');
     $('pre.pubkey, .line.fingerprints, .line.add_contact').css('display', 'block');
-    send_resize_msg();
+    sendResizeMsg();
   }));
 
   await render();
-  send_resize_msg();
+  sendResizeMsg();
 
 })();

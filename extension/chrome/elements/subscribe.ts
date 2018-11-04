@@ -5,7 +5,7 @@
 import { Store } from '../../js/common/store.js';
 import { Catch, Env, Str } from './../../js/common/common.js';
 import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
-import { FlowCryptAccount } from './../../js/common/account.js';
+import { FcAcct } from './../../js/common/account.js';
 import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api.js';
 
@@ -15,16 +15,16 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['account_email', 'placement', 'source', 'parent_tab_id', 'subscribe_result_tab_id']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'placement', 'source', 'parentTabId', 'subscribeResultTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   let authInfo = await Store.authInfo();
-  if (authInfo.account_email) {
-    acctEmail = authInfo.account_email; // todo - allow user to select and confirm email address
+  if (authInfo.acctEmail) {
+    acctEmail = authInfo.acctEmail; // todo - allow user to select and confirm email address
   }
-  let orig_btn_content: string;
-  let orig_btn_sel: JQuery<HTMLElement>;
+  let origBtnContent: string;
+  let origBtnSel: JQuery<HTMLElement>;
 
   let handleErrRes = (e: any) => {
     let renderErr = (msg: string, e?: any) => {
@@ -40,18 +40,18 @@ Catch.try(async () => {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
       renderStatusText(e.message || e.error.message);
-      button_restore();
+      btnRestore();
     } else {
       renderErr('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);
       Catch.report('problem during subscribe.js', e);
     }
   };
 
-  let stripe_credit_card_entered_handler: BrowserMsgHandler = async (data: {token: string}, sender, respond) => {
+  let stripeCcEnteredHandler: BrowserMsgHandler = async (data: {token: string}, sender, respond) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
-      await flowcrypt_account.subscribe(acctEmail, flowcrypt_account.PRODUCTS.advanced_monthly, data.token);
-      handle_successful_upgrade();
+      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advanced_monthly, data.token);
+      handleSuccessfulUpgrade();
     } catch(e) {
       handleErrRes(e);
     }
@@ -61,25 +61,25 @@ Catch.try(async () => {
     $('.status').text(content);
   };
 
-  let button_spin = (element: HTMLElement) => {
-    orig_btn_content = $(element).html();
-    orig_btn_sel = $(element);
+  let btnSpin = (element: HTMLElement) => {
+    origBtnContent = $(element).html();
+    origBtnSel = $(element);
     Xss.sanitizeRender(element, Ui.spinner('white'));
   };
 
-  let button_restore = () => {
-    Xss.sanitizeRender(orig_btn_sel, orig_btn_content);
+  let btnRestore = () => {
+    Xss.sanitizeRender(origBtnSel, origBtnContent);
   };
 
-  let handle_successful_upgrade = () => {
+  let handleSuccessfulUpgrade = () => {
     BrowserMsg.send(parentTabId, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
-    if (urlParams.subscribe_result_tab_id) {
-      BrowserMsg.send(urlParams.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
+    if (urlParams.subscribeResultTabId) {
+      BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', {active: true});
     }
-    close_dialog();
+    closeDialog();
   };
 
-  let close_dialog = () => {
+  let closeDialog = () => {
     if (urlParams.placement === 'settings_compose') {
       window.close();
     } else if (urlParams.placement === 'settings') {
@@ -98,15 +98,15 @@ Catch.try(async () => {
     } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('#content', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
-      Catch.handle_exception(e);
+      Catch.handleException(e);
       Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retryLink()}`);
     }
   }
 
   let subscription = await Store.subscription();
-  let {google_token_scopes} = await Store.getAccount(acctEmail, ['google_token_scopes']);
-  let can_read_email = Api.gmail.hasScope(google_token_scopes || [] , 'read');
-  let flowcrypt_account = new FlowCryptAccount({renderStatusText}, can_read_email);
+  let {google_token_scopes} = await Store.getAcct(acctEmail, ['google_token_scopes']);
+  let canReadEmail = Api.gmail.hasScope(google_token_scopes || [] , 'read');
+  let fcAccount = new FcAcct({renderStatusText}, canReadEmail);
 
   if (urlParams.placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -114,7 +114,7 @@ Catch.try(async () => {
   } else {
     $('body').css('overflow', 'hidden');
   }
-  if (urlParams.source !== 'auth_error') {
+  if (urlParams.source !== 'authErr') {
     $('.list_table').css('display', 'block');
   } else {
     $('.action_get_trial').addClass('action_add_device').removeClass('action_get_trial').text('Add Device');
@@ -127,15 +127,15 @@ Catch.try(async () => {
     $('.stripe_checkout').css('display', 'block');
   }));
 
-  $('.action_contact_page').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', account_email: urlParams.account_email})));
+  $('.action_contact_page').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', acctEmail: urlParams.acctEmail})));
 
-  $('.action_close').click(Ui.event.handle(close_dialog));
+  $('.action_close').click(Ui.event.handle(closeDialog));
 
   $('.action_get_trial').click(Ui.event.prevent('parallel', async (target, done) => {
-    button_spin(target);
+    btnSpin(target);
     try {
-      await flowcrypt_account.subscribe(acctEmail, flowcrypt_account.PRODUCTS.trial, null);
-      handle_successful_upgrade();
+      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.trial, null);
+      handleSuccessfulUpgrade();
     } catch(e) {
       handleErrRes(e);
     }
@@ -143,10 +143,10 @@ Catch.try(async () => {
   }));
 
   $('.action_add_device').click(Ui.event.prevent('parallel', async (target, done) => {
-    button_spin(target);
+    btnSpin(target);
     try {
-      await flowcrypt_account.registerNewDevice(acctEmail);
-      close_dialog();
+      await fcAccount.registerNewDevice(acctEmail);
+      closeDialog();
     } catch(e) {
       handleErrRes(e);
     }
@@ -156,7 +156,7 @@ Catch.try(async () => {
   if (!subscription.active) {
     if (subscription.level && subscription.expire) {
       if (subscription.method === 'trial') {
-        $('.status').text('Your trial has expired on ' + Str.datetime_to_date(subscription.expire) + '. Upgrade now to continue using FlowCrypt Advanced.');
+        $('.status').text('Your trial has expired on ' + Str.datetimeToDate(subscription.expire) + '. Upgrade now to continue using FlowCrypt Advanced.');
       } else if (subscription.method === 'group') {
         $('.status').text('Your group licensing is due for renewal. Please check with company leadership.');
       } else {
@@ -173,7 +173,7 @@ Catch.try(async () => {
     // todo - upgrade to business
   }
   if (subscription.active) {
-    if (urlParams.source !== 'auth_error') {
+    if (urlParams.source !== 'authErr') {
       if (subscription.method === 'trial') {
         $('.list_table').css('display', 'none');
         $('.action_get_trial').css('display', 'none');
@@ -181,10 +181,10 @@ Catch.try(async () => {
       } else {
         Xss.sanitizeRender('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
         $('.action_close').click(Ui.event.handle(() => {
-          if (urlParams.subscribe_result_tab_id) {
-            BrowserMsg.send(urlParams.subscribe_result_tab_id as string, 'subscribe_result', {active: true});
+          if (urlParams.subscribeResultTabId) {
+            BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', {active: true});
           }
-          close_dialog();
+          closeDialog();
         }));
       }
     } else {
@@ -200,16 +200,16 @@ Catch.try(async () => {
         $('.action_close').removeClass('gray').addClass('green').text('ok');
       } catch(e) {
         if(!Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
         }
       }
     }
   }
 
-  let tab_id = await BrowserMsg.required_tab_id();
+  let tabId = await BrowserMsg.requiredTabId();
   BrowserMsg.listen({
-    stripe_result: stripe_credit_card_entered_handler,
-  }, tab_id || undefined);
-  $('.stripe_checkout').html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(acctEmail, tab_id).embedded_stripe_checkout()}<br>${Ui.retryLink('back')}`); // xss-safe-factory
+    stripe_result: stripeCcEnteredHandler,
+  }, tabId || undefined);
+  $('.stripe_checkout').html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(acctEmail, tabId).embeddedStripeCheckout()}<br>${Ui.retryLink('back')}`); // xss-safe-factory
 
 })();

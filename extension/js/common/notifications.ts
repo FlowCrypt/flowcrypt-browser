@@ -13,28 +13,28 @@ export type NotificationWithHandlers = {notification: string, callbacks: Dict<()
 
 export class Notifications {
 
-  private tab_id: string;
+  private tabId: string;
 
-  constructor(tab_id: string) {
-    this.tab_id = tab_id;
+  constructor(tabId: string) {
+    this.tabId = tabId;
   }
 
-  showInitial = async (account_email: string) => {
-    let account_storage = await Store.getAccount(account_email, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
-    if (!account_storage.notification_setup_done_seen) {
-      await Store.set(account_email, { notification_setup_done_seen: true });
+  showInitial = async (acctEmail: string) => {
+    let acctStorage = await Store.getAcct(acctEmail, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
+    if (!acctStorage.notification_setup_done_seen) {
+      await Store.set(acctEmail, { notification_setup_done_seen: true });
       this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
-    } else if (account_storage.key_backup_prompt !== false && account_storage.setup_simple === true) {
+    } else if (acctStorage.key_backup_prompt !== false && acctStorage.setup_simple === true) {
       this.show('<a href="#" class="action_backup">Back up your FlowCrypt key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
-        action_backup: () => BrowserMsg.send(null, 'settings', { account_email, page: '/chrome/settings/modules/backup.htm' }),
+        action_backup: () => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/backup.htm' }),
       });
     }
   }
 
-  show_auth_popup_needed = (account_email: string) => {
+  showAuthPopupNeeded = (acctEmail: string) => {
     this.show(`Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: () => {
-        Api.google.authPopup(account_email, this.tab_id).then(auth_result => {
+        Api.google.authPopup(acctEmail, this.tabId).then(auth_result => {
           this.show(`${auth_result.success ? 'Connected successfully' : 'Failed to connect'}. <a href="#" class="close">Close</a>`);
         }, error => {
           console.info(error);
@@ -51,9 +51,9 @@ export class Notifications {
   show = (text: string, callbacks:Dict<() => void>={}) => {
     Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
-      let orig_close_cb = callbacks.close;
+      let origCloseCb = callbacks.close;
       callbacks.close = Catch.try(() => {
-        orig_close_cb();
+        origCloseCb();
         this.clear();
       });
     } else {
@@ -63,7 +63,7 @@ export class Notifications {
       callbacks.reload = Catch.try(() => window.location.reload());
     }
     if (typeof callbacks.subscribe === 'undefined') {
-      callbacks.subscribe = Catch.try(() => BrowserMsg.send(this.tab_id, 'subscribe_dialog'));
+      callbacks.subscribe = Catch.try(() => BrowserMsg.send(this.tabId, 'subscribe_dialog'));
     }
     for (let name of Object.keys(callbacks)) {
       $(`.webmail_notifications a.${name}`).click(Ui.event.prevent('double', callbacks[name]));

@@ -16,41 +16,41 @@ import { FromToHeaders, Mime } from './mime.js';
 declare let openpgp: typeof OpenPGP;
 
 interface ComposerAppFunctionsInterface {
-    can_read_email: () => boolean;
-    does_recipient_have_my_pubkey: (email: string) => Promise<boolean|undefined>;
-    storage_get_addresses: () => string[];
-    storage_get_addresses_pks: () => string[];
-    storage_get_addresses_keyserver: () => string[];
-    storage_get_email_footer: () => string|null;
-    storage_set_email_footer: (footer: string|null) => Promise<void>;
-    storage_get_hide_msg_password: () => boolean;
-    storage_get_subscription: () => Promise<Subscription>;
-    storage_get_key: (sender_email: string) => Promise<KeyInfo>;
-    storage_set_draft_meta: (store_if_true: boolean, draft_id: string, thread_id: string, recipients: string[]|null, subject: string|null) => Promise<void>;
-    storage_passphrase_get: () => Promise<string|null>;
-    storage_add_admin_codes: (short_id: string, msg_admin_code: string, att_admin_codes: string[]) => Promise<void>;
-    storage_contact_get: (email: string[]) => Promise<(Contact|null)[]>;
-    storage_contact_update: (email: string|string[], update: ContactUpdate) => Promise<void>;
-    storage_contact_save:  (contact: Contact) =>  Promise<void>;
-    storage_contact_search: (query: ProviderContactsQuery) => Promise<Contact[]>;
-    storage_contact_object: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pending_lookup:boolean|number, last_use: number|null) => Contact;
-    email_provider_draft_get: (draft_id: string) => Promise<R.GmailDraftGet>;
-    email_provider_draft_create: (mime_msg: string) => Promise<R.GmailDraftCreate>;
-    email_provider_draft_update: (draft_id: string, mime_msg: string) => Promise<R.GmailDraftUpdate>;
-    email_provider_draft_delete: (draft_id: string) => Promise<R.GmailDraftDelete>;
-    email_provider_msg_send: (msg: SendableMsg, render_upload_progress: ProgressCb) => Promise<R.GmailMsgSend>;
-    email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: {new: Contact[], all: Contact[]}) => void) => void;
-    email_provider_determine_reply_msg_header_variables: () => Promise<undefined|{last_msg_id: string, headers: {'In-Reply-To': string, 'References': string}}>;
-    email_provider_extract_armored_block: (msg_id: string) => Promise<string>;
-    send_msg_to_main_window: (channel: string, data?: object) => void;
-    send_msg_to_background_script: (channel: string, data?: object) => void;
-    render_footer_dialog: () => void;
-    render_add_pubkey_dialog: (emails: string[]) => void;
-    render_reinsert_reply_box: (last_msg_id: string, recipients: string[]) => void;
-    render_help_dialog: () => void;
-    render_sending_address_dialog: () => void;
-    factory_attachment: (att: Att) => string;
-    close_msg: () => void;
+    canReadEmails: () => boolean;
+    doesRecipientHaveMyPubkey: (email: string) => Promise<boolean|undefined>;
+    storageGetAddresses: () => string[];
+    storageGetAddressesPks: () => string[];
+    storageGetAddressesKeyserver: () => string[];
+    storageEmailFooterGet: () => string|null;
+    storageEmailFooterSet: (footer: string|null) => Promise<void>;
+    storageGetHideMsgPassword: () => boolean;
+    storageGetSubscription: () => Promise<Subscription>;
+    storageGetKey: (senderEmail: string) => Promise<KeyInfo>;
+    storageSetDraftMeta: (storeIfTrue: boolean, draftId: string, threadId: string, recipients: string[]|null, subject: string|null) => Promise<void>;
+    storagePassphraseGet: () => Promise<string|null>;
+    storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise<void>;
+    storageContactGet: (email: string[]) => Promise<(Contact|null)[]>;
+    storageContactUpdate: (email: string|string[], update: ContactUpdate) => Promise<void>;
+    storageContactSave:  (contact: Contact) =>  Promise<void>;
+    storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
+    storageContactObj: (email: string, name: string|null, client: string|null, pubkey: string|null, attested: boolean|null, pendingLookup:boolean|number, lastUse: number|null) => Contact;
+    emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet>;
+    emailProviderDraftCreate: (mimeMsg: string) => Promise<R.GmailDraftCreate>;
+    emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
+    emailProviderDraftDelete: (draftId: string) => Promise<R.GmailDraftDelete>;
+    emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<R.GmailMsgSend>;
+    emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: (r: {new: Contact[], all: Contact[]}) => void) => void;
+    emailProviderDetermineReplyMsgHeaderVariables: () => Promise<undefined|{lastMsgId: string, headers: {'In-Reply-To': string, 'References': string}}>;
+    emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
+    sendMsgToMainWin: (channel: string, data?: object) => void;
+    sendMsgToBgScript: (channel: string, data?: object) => void;
+    renderFooterDialog: () => void;
+    renderAddPubkeyDialog: (emails: string[]) => void;
+    renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
+    renderHelpDialog: () => void;
+    renderSendingAddrDialog: () => void;
+    factoryAtt: (att: Att) => string;
+    closeMsg: () => void;
 }
 
 export class ComposerUserError extends Error {}
@@ -108,93 +108,93 @@ export class Composer {
   private BTN_SENDING = 'Sending..';
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
 
-  private last_draft = '';
-  private can_read_emails: boolean;
-  private last_reply_box_table_height = 0;
-  private contact_search_in_progress = false;
-  private added_pubkey_db_lookup_interval: number;
-  private save_draft_interval: number;
-  private draft_save_in_progress = false;
-  private passphrase_interval: number;
-  private include_pubkey_toggled_manually = false;
-  private my_addresses_on_pks: string[] = [];
-  private my_addresses_on_keyserver: string[] = [];
-  private recipients_missing_my_key: string[] = [];
-  private ks_lookups_by_email: {[key: string]: PubkeySearchResult|Contact} = {};
-  private subscribe_result_listener: ((subscription_active: boolean) => void)|undefined;
-  private additional_msg_headers: {[key: string]: string} = {};
-  private button_update_timeout: number|null = null;
-  private is_reply_box: boolean;
-  private tab_id: string;
-  private account_email: string;
-  private thread_id: string;
-  private draft_id:string;
-  private supplied_subject:string;
-  private supplied_from: string;
-  private supplied_to: string;
-  private frame_id: string;
-  private ref_body_height: number;
+  private lastDraft = '';
+  private canReadEmails: boolean;
+  private lastReplyBoxTableHeight = 0;
+  private contactSearchInProgress = false;
+  private addedPubkeyDbLookupInterval: number;
+  private saveDraftInterval: number;
+  private draftSaveInProgress = false;
+  private passphraseInterval: number;
+  private includePubkeyToggledManually = false;
+  private myAddrsOnPks: string[] = [];
+  private myAddrsOnKeyserver: string[] = [];
+  private recipientsMissingMyKey: string[] = [];
+  private ksLookupsByEmail: {[key: string]: PubkeySearchResult|Contact} = {};
+  private subscribeResListener: ((subscription_active: boolean) => void)|undefined;
+  private additionalMsgHeaders: {[key: string]: string} = {};
+  private btnUpdateTimeout: number|null = null;
+  private isReplyBox: boolean;
+  private tabId: string;
+  private acctEmail: string;
+  private threadId: string;
+  private draftId:string;
+  private suppliedSubject:string;
+  private suppliedFrom: string;
+  private suppliedTo: string;
+  private frameId: string;
+  private refBodyHeight: number;
 
-  constructor(app_functions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
-    this.attach = new AttUI(() => this.get_max_attachment_size_and_oversize_notice(subscription));
-    this.app = app_functions;
+  constructor(appFunctions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
+    this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice(subscription));
+    this.app = appFunctions;
 
-    if(!variables.disable_draft_saving) {
-      this.save_draft_interval = Catch.setHandledInterval(() => this.draft_save(), this.SAVE_DRAFT_FREQUENCY);
+    if(!variables.disableDraftSaving) {
+      this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
     }
 
-    this.account_email = variables.account_email as string;
-    this.draft_id = variables.draft_id as string;
-    this.thread_id = variables.thread_id as string;
-    this.supplied_subject = variables.subject as string;
-    this.supplied_from = variables.from as string;
-    this.supplied_to = variables.to as string;
-    this.frame_id = variables.frame_id as string;
-    this.tab_id = variables.tab_id as string;
-    this.is_reply_box = variables.is_reply_box as boolean;
-    this.my_addresses_on_pks = this.app.storage_get_addresses_pks() || [];
-    this.my_addresses_on_keyserver = this.app.storage_get_addresses_keyserver() || [];
-    this.can_read_emails = this.app.can_read_email();
+    this.acctEmail = variables.acctEmail as string;
+    this.draftId = variables.draftId as string;
+    this.threadId = variables.threadId as string;
+    this.suppliedSubject = variables.subject as string;
+    this.suppliedFrom = variables.from as string;
+    this.suppliedTo = variables.to as string;
+    this.frameId = variables.frameId as string;
+    this.tabId = variables.tabId as string;
+    this.isReplyBox = variables.isReplyBox as boolean;
+    this.myAddrsOnPks = this.app.storageGetAddressesPks() || [];
+    this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
+    this.canReadEmails = this.app.canReadEmails();
     if (subscription.active) {
-      this.update_footer_icon();
-    } else if (this.app.storage_get_email_footer()) { // footer set but subscription not active - subscription expired
-      this.app.storage_set_email_footer(null).catch(Catch.handle_exception);
-      this.app.send_msg_to_main_window('notification_show', {
+      this.updateFooterIcon();
+    } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
+      this.app.storageEmailFooterSet(null).catch(Catch.handleException);
+      this.app.sendMsgToMainWin('notification_show', {
         notification: 'Your FlowCrypt ' + (subscription.method === 'trial' ? 'trial' : 'subscription') + ' has ended. Custom email signature (email footer) will no longer be used. <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>',
       });
     }
-    if (this.app.storage_get_hide_msg_password()) {
+    if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initialize_compose_box(variables).catch(Catch.rejection);
-    this.initialize_actions();
+    this.initComposeBox(variables).catch(Catch.rejection);
+    this.initActions();
   }
 
-  private get_max_attachment_size_and_oversize_notice = (subscription: Subscription) => {
+  private getMaxAttSizeAndOversizeNotice = (subscription: Subscription) => {
     if (!subscription.active) {
       return {
-        size_mb: 5,
+        sizeMb: 5,
         size: 5 * 1024 * 1024,
         count: 10,
         oversize: () => {
-          let get_advanced = 'The files are over 5 MB. Advanced users can send files up to 25 MB.';
+          let getAdvanced = 'The files are over 5 MB. Advanced users can send files up to 25 MB.';
           if (!subscription.method) {
-            get_advanced += '\n\nTry it free for 30 days.';
+            getAdvanced += '\n\nTry it free for 30 days.';
           } else if (subscription.method === 'trial') {
-            get_advanced += '\n\nYour trial has expired, please consider supporting our efforts by upgrading.';
+            getAdvanced += '\n\nYour trial has expired, please consider supporting our efforts by upgrading.';
           } else if (subscription.method === 'group') {
-            get_advanced += '\n\nGroup billing is due for renewal. Please check with your leadership.';
+            getAdvanced += '\n\nGroup billing is due for renewal. Please check with your leadership.';
           } else if (subscription.method === 'stripe') {
-            get_advanced += '\n\nPlease renew your subscription to continue sending large files.';
+            getAdvanced += '\n\nPlease renew your subscription to continue sending large files.';
           } else {
-            get_advanced += '\n\nClick ok to see subscribe options.';
+            getAdvanced += '\n\nClick ok to see subscribe options.';
           }
           if (subscription.method === 'group') {
-            alert(get_advanced);
+            alert(getAdvanced);
           } else {
-            if (confirm(get_advanced)) {
-              this.show_subscribe_dialog_and_wait_for_response(null, {}, (new_subscription_active: boolean) => {
-                if (new_subscription_active) {
+            if (confirm(getAdvanced)) {
+              this.showSubscribeDialogAndWaitForRes(null, {}, (newSubscriptionActive: boolean) => {
+                if (newSubscriptionActive) {
                   alert('You\'re all set, now you can add your file again.');
                 }
               });
@@ -203,279 +203,279 @@ export class Composer {
         },
       };
     } else {
-      let allow_huge_atts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      let size_mb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.account_email)).in(allow_huge_atts)) ? 200 : 25;
+      let allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
+      let sizeMb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
       return {
-        size_mb,
-        size: size_mb * 1024 * 1024,
+        sizeMb,
+        size: sizeMb * 1024 * 1024,
         count: 10,
-        oversize: (combined_size: number) => {
-          alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combined_size / (1024 * 1024)) + ' MB.');
+        oversize: (combinedSize: number) => {
+          alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.');
         },
       };
     }
   }
 
-  private handle_errors = (could_not_do_what: string): BrowserEventErrorHandler => {
+  private handleErrs = (couldNotDoWhat: string): BrowserEventErrorHandler => {
     return {
-      network: () => alert(`Could not ${could_not_do_what} (network error). Please try again.`),
-      auth_popup: () => this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email}),
+      network: () => alert(`Could not ${couldNotDoWhat} (network error). Please try again.`),
+      authPopup: () => this.app.sendMsgToMainWin('notification_show_auth_popup_needed', {acctEmail: this.acctEmail}),
       auth: () => {
-        if (confirm(`Could not ${could_not_do_what}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
+        if (confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
+          this.app.sendMsgToMainWin('subscribe_dialog', {source: 'authErr'});
         }
       },
       other: (e: any) => {
         // todo - add an alert that action could not be finished
         // alert(`Could not ${could_not_do_what} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
         if(e instanceof Error) {
-          e.stack = (e.stack || '') + `\n\n[compose action: ${could_not_do_what}]`;
+          e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
         } else if (typeof e === 'object' && e && typeof e.stack === 'undefined') {
           try {
-            e.stack = `[compose action: ${could_not_do_what}]`;
+            e.stack = `[compose action: ${couldNotDoWhat}]`;
           } catch (e) {
             // no need
           }
         }
-        Catch.handle_exception(e);
+        Catch.handleException(e);
       },
     };
   }
 
-  private initialize_actions = () => {
+  private initActions = () => {
     this.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.show_hide_pw_or_pubkey_container_and_color_send_btn()));
-    this.S.cached('input_password').focus(() => this.show_hide_pw_or_pubkey_container_and_color_send_btn());
-    this.S.cached('input_password').blur(() => this.show_hide_pw_or_pubkey_container_and_color_send_btn());
+    this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHidePwdOrPubkeyContainerAndColorSendBtn()));
+    this.S.cached('input_password').focus(() => this.showHidePwdOrPubkeyContainerAndColorSendBtn());
+    this.S.cached('input_password').blur(() => this.showHidePwdOrPubkeyContainerAndColorSendBtn());
     this.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
-      let no_pgp_emails = this.get_recipients_from_dom('no_pgp');
-      this.app.render_add_pubkey_dialog(no_pgp_emails);
-      clearInterval(this.added_pubkey_db_lookup_interval); // todo - get rid of Catch.set_interval. just supply tab_id and wait for direct callback
-      this.added_pubkey_db_lookup_interval = Catch.setHandledInterval(async () => {
-        for (let email of no_pgp_emails) {
-          let [contact] = await this.app.storage_contact_get([email]);
+      let noPgpEmails = this.getRecipientsFromDom('no_pgp');
+      this.app.renderAddPubkeyDialog(noPgpEmails);
+      clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
+      this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
+        for (let email of noPgpEmails) {
+          let [contact] = await this.app.storageContactGet([email]);
           if (contact && contact.has_pgp) {
             $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
             $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
-            clearInterval(this.added_pubkey_db_lookup_interval);
-            await this.evaluate_rendered_recipients();
+            clearInterval(this.addedPubkeyDbLookupInterval);
+            await this.evaluateRenderedRecipients();
           }
         }
       }, 1000);
-    }, this.handle_errors('add recipient public key')));
+    }, this.handleErrs('add recipient public key')));
     this.S.cached('add_intro').click(Ui.event.handle(target => {
       $(target).css('display', 'none');
       this.S.cached('intro_container').css('display', 'table-row');
       this.S.cached('input_intro').focus();
-      this.set_input_text_height_manually_if_needed();
-    }, this.handle_errors(`add intro`)));
-    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.render_help_dialog(), this.handle_errors(`render help dialog`)));
+      this.setInputTextHeightManuallyIfNeeded();
+    }, this.handleErrs(`add intro`)));
+    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.handleErrs(`render help dialog`)));
     this.S.now('input_from').change(() => {
       // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
       // because they might not have a pubkey for the alternative address, and might get confused
     });
     this.S.cached('input_text').get(0).onpaste = async e => {
-      let clipboard_html_data = e.clipboardData.getData('text/html');
-      if (clipboard_html_data) {
+      let clipboardHtmlData = e.clipboardData.getData('text/html');
+      if (clipboardHtmlData) {
         e.preventDefault();
         e.stopPropagation();
-        let sanitized = Xss.htmlSanitizeAndStripAllTags(clipboard_html_data, '<br>');
-        this.simulate_ctrl_v(sanitized);
+        let sanitized = Xss.htmlSanitizeAndStripAllTags(clipboardHtmlData, '<br>');
+        this.simulateCtrlV(sanitized);
       }
     };
     this.S.cached('icon_pubkey').click(Ui.event.handle(target => {
-      this.include_pubkey_toggled_manually = true;
-      this.update_pubkey_icon(!$(target).is('.active'));
-    }, this.handle_errors(`set/unset pubkey attachment`)));
+      this.includePubkeyToggledManually = true;
+      this.updatePubkeyIcon(!$(target).is('.active'));
+    }, this.handleErrs(`set/unset pubkey attachment`)));
     this.S.cached('icon_footer').click(Ui.event.handle(target => {
       if (!$(target).is('.active')) {
-        this.app.render_footer_dialog();
+        this.app.renderFooterDialog();
       } else {
-        this.update_footer_icon(!$(target).is('.active'));
+        this.updateFooterIcon(!$(target).is('.active'));
       }
-    }, this.handle_errors(`change footer`)));
+    }, this.handleErrs(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
-      await this.draft_delete();
-      this.app.close_msg();
-    }, this.handle_errors('delete draft')));
+      await this.draftDelete();
+      this.app.closeMsg();
+    }, this.handleErrs('delete draft')));
     this.S.cached('body').bind({drop: Ui.event.stop(), dragover: Ui.event.stop()}); // prevents files dropped out of the intended drop area to screw up the page
-    this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggle_sign_icon(), this.handle_errors(`enable/disable signing`)));
+    this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.handleErrs(`enable/disable signing`)));
   }
 
-  show_subscribe_dialog_and_wait_for_response: BrowserMsgHandler = (data, sender, respond: (subscribed: boolean) => void) => {
-    this.subscribe_result_listener = respond;
-    this.app.send_msg_to_main_window('subscribe_dialog', {subscribe_result_tab_id: this.tab_id});
+  showSubscribeDialogAndWaitForRes: BrowserMsgHandler = (data, sender, respond: (subscribed: boolean) => void) => {
+    this.subscribeResListener = respond;
+    this.app.sendMsgToMainWin('subscribe_dialog', {subscribeResultTabId: this.tabId});
   }
 
-  private initialize_compose_box = async (variables: UrlParams) => {
-    if(this.is_reply_box) {
+  private initComposeBox = async (variables: UrlParams) => {
+    if(this.isReplyBox) {
       this.S.cached('header').remove();
       this.S.cached('subject').remove();
       this.S.cached('contacts').css('top', '39px');
       this.S.cached('compose_table').css({'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf'});
       this.S.cached('input_text').css('overflow-y', 'hidden');
     }
-    if (this.draft_id) {
-      await this.initial_draft_load();
+    if (this.draftId) {
+      await this.initialDraftLoad();
     } else {
-      if (this.is_reply_box) {
-        if (variables.skip_click_prompt) {
-          await this.render_reply_msg_compose_table();
+      if (this.isReplyBox) {
+        if (variables.skipClickPrompt) {
+          await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             if ($(target).attr('id') === 'a_reply') {
-              this.supplied_to = this.supplied_to.split(',')[0];
+              this.suppliedTo = this.suppliedTo.split(',')[0];
             } else if ($(target).attr('id') === 'a_forward') {
-              this.supplied_to = '';
+              this.suppliedTo = '';
             }
-            await this.render_reply_msg_compose_table((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward');
-          }, this.handle_errors(`activate repply box`)));
+            await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply'|'forward');
+          }, this.handleErrs(`activate repply box`)));
         }
       }
     }
-    if (this.is_reply_box) {
-      if (!variables.skip_click_prompt && !this.draft_id) {
+    if (this.isReplyBox) {
+      if (!variables.skipClickPrompt && !this.draftId) {
         this.S.cached('prompt').css('display', 'block');
       }
-      $(document).ready(() => this.resize_reply_box());
+      $(document).ready(() => this.resizeReplyBox());
     } else {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
-      await this.render_compose_table();
+      await this.renderComposeTable();
     }
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private initial_draft_load = async () => {
-    if (this.is_reply_box) {
+  private initialDraftLoad = async () => {
+    if (this.isReplyBox) {
       Xss.sanitizeRender(this.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
-      let draft_get_response = await this.app.email_provider_draft_get(this.draft_id);
-      let parsed_msg = await Mime.decode(Str.base64urlDecode(draft_get_response.message.raw!));
-      let armored = Pgp.armor.clip(parsed_msg.text || Pgp.armor.strip(parsed_msg.html || '') || '');
+      let draftGetRes = await this.app.emailProviderDraftGet(this.draftId);
+      let parsedMsg = await Mime.decode(Str.base64urlDecode(draftGetRes.message.raw!));
+      let armored = Pgp.armor.clip(parsedMsg.text || Pgp.armor.strip(parsedMsg.html || '') || '');
       if (armored) {
-        this.S.cached('input_subject').val(parsed_msg.headers.subject || '');
-        await this.decrypt_and_render_draft(armored, Mime.headers_to_from(parsed_msg));
+        this.S.cached('input_subject').val(parsedMsg.headers.subject || '');
+        await this.decryptAndRenderDraft(armored, Mime.headersToFrom(parsedMsg));
       } else {
         console.info('Api.gmail.draft_get Mime.decode else {}');
-        if (this.is_reply_box) {
-          await this.render_reply_msg_compose_table();
+        if (this.isReplyBox) {
+          await this.renderReplyMsgComposeTable();
         }
       }
     } catch (e) {
       if(Api.err.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+        this.app.sendMsgToMainWin('notification_show_auth_popup_needed', {acctEmail: this.acctEmail});
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
-      } else if (this.is_reply_box && Api.err.isNotFound(e)) {
-        Catch.log('about to reload reply_message automatically: get draft 404', this.account_email);
+      } else if (this.isReplyBox && Api.err.isNotFound(e)) {
+        Catch.log('about to reload reply_message automatically: get draft 404', this.acctEmail);
         await Ui.time.sleep(500);
-        await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
+        await this.app.storageSetDraftMeta(false, this.draftId, this.threadId, null, null);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
       } else {
         console.info('Api.gmail.draft_get success===false');
-        Catch.handle_exception(e);
-        if (this.is_reply_box) {
-          await this.render_reply_msg_compose_table();
+        Catch.handleException(e);
+        if (this.isReplyBox) {
+          await this.renderReplyMsgComposeTable();
         }
       }
     }
   }
 
-  process_subscribe_result = (new_subscription: Subscription) => {
-    if (typeof this.subscribe_result_listener === 'function') {
-      this.subscribe_result_listener(new_subscription.active || false);
-      this.subscribe_result_listener = undefined;
+  processSubscribeRes = (newSubscription: Subscription) => {
+    if (typeof this.subscribeResListener === 'function') {
+      this.subscribeResListener(newSubscription.active || false);
+      this.subscribeResListener = undefined;
     }
   }
 
-  private reset_send_btn = (delay:number|null=null) => {
-    const do_reset = () => Xss.sanitizeRender(this.S.cached('send_btn'), '<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
-    if (this.button_update_timeout !== null) {
-      clearTimeout(this.button_update_timeout);
+  private resetSendBtn = (delay:number|null=null) => {
+    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), '<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
+    if (this.btnUpdateTimeout !== null) {
+      clearTimeout(this.btnUpdateTimeout);
     }
     if (!delay) {
-      do_reset();
+      doReset();
     } else {
-      Catch.setHandledTimeout(do_reset, delay);
+      Catch.setHandledTimeout(doReset, delay);
     }
   }
 
-  passphrase_entry = (entered: boolean) => {
+  passphraseEntry = (entered: boolean) => {
     if (!entered) {
-      this.reset_send_btn();
-      clearInterval(this.passphrase_interval);
+      this.resetSendBtn();
+      clearInterval(this.passphraseInterval);
     }
   }
 
-  private draft_save = async (force_save:boolean=false) => {
-    if (this.should_save_draft(this.S.cached('input_text').text()) || force_save) {
-      this.draft_save_in_progress = true;
+  private draftSave = async (forceSave:boolean=false) => {
+    if (this.shouldSaveDraft(this.S.cached('input_text').text()) || forceSave) {
+      this.draftSaveInProgress = true;
       this.S.cached('send_btn_note').text('Saving');
-      let primary_ki = await this.app.storage_get_key(this.account_email);
-      let encrypted = await Pgp.msg.encrypt([primary_ki.public], null, null, this.extract_as_text('input_text'), null, true) as OpenPGP.EncryptArmorResult;
+      let primaryKi = await this.app.storageGetKey(this.acctEmail);
+      let encrypted = await Pgp.msg.encrypt([primaryKi.public], null, null, this.extractAsText('input_text'), null, true) as OpenPGP.EncryptArmorResult;
       let body;
-      if (this.thread_id) { // replied message
-        body = '[cryptup:link:draft_reply:' + this.thread_id + ']\n\n' + encrypted.data;
-      } else if (this.draft_id) {
-        body = '[cryptup:link:draft_compose:' + this.draft_id + ']\n\n' + encrypted.data;
+      if (this.threadId) { // replied message
+        body = '[cryptup:link:draft_reply:' + this.threadId + ']\n\n' + encrypted.data;
+      } else if (this.draftId) {
+        body = '[cryptup:link:draft_compose:' + this.draftId + ']\n\n' + encrypted.data;
       } else {
         body = encrypted.data;
       }
-      let subject = String(this.S.cached('input_subject').val() || this.supplied_subject || 'FlowCrypt draft');
-      let mime_msg = await Mime.encode(body as string, {To: this.get_recipients_from_dom(), From: this.supplied_from || this.get_sender_from_dom(), Subject: subject} as RichHeaders, []);
+      let subject = String(this.S.cached('input_subject').val() || this.suppliedSubject || 'FlowCrypt draft');
+      let mimeMsg = await Mime.encode(body as string, {To: this.getRecipientsFromDom(), From: this.suppliedFrom || this.getSenderFromDom(), Subject: subject} as RichHeaders, []);
       try {
-        if (!this.draft_id) {
-          let new_draft = await this.app.email_provider_draft_create(mime_msg);
+        if (!this.draftId) {
+          let newDraft = await this.app.emailProviderDraftCreate(mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
-          this.draft_id = new_draft.id;
-          await this.app.storage_set_draft_meta(true, new_draft.id, this.thread_id, this.get_recipients_from_dom(), this.S.cached('input_subject').val() as string); // text input
+          this.draftId = newDraft.id;
+          await this.app.storageSetDraftMeta(true, newDraft.id, this.threadId, this.getRecipientsFromDom(), this.S.cached('input_subject').val() as string); // text input
           // recursing one more time, because we need the draft_id we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // save_draft_in_process will remain true because well.. it's still in process
-          await this.draft_save(true); // force_save = true
+          await this.draftSave(true); // force_save = true
         } else {
-          await this.app.email_provider_draft_update(this.draft_id, mime_msg);
+          await this.app.emailProviderDraftUpdate(this.draftId, mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
         if(Api.err.isNetErr(e)) {
           this.S.cached('send_btn_note').text('Not saved (network)');
         } else if (Api.err.isAuthPopupNeeded(e)) {
-          this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+          this.app.sendMsgToMainWin('notification_show_auth_popup_needed', {acctEmail: this.acctEmail});
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
           this.S.cached('send_btn_note').text('Not saved');
         }
       }
-      this.draft_save_in_progress = false;
+      this.draftSaveInProgress = false;
     }
   }
 
-  private draft_delete = async () => {
-    clearInterval(this.save_draft_interval);
-    await Ui.time.wait(() => !this.draft_save_in_progress ? true : undefined);
-    if (this.draft_id) {
-      await this.app.storage_set_draft_meta(false, this.draft_id, this.thread_id, null, null);
+  private draftDelete = async () => {
+    clearInterval(this.saveDraftInterval);
+    await Ui.time.wait(() => !this.draftSaveInProgress ? true : undefined);
+    if (this.draftId) {
+      await this.app.storageSetDraftMeta(false, this.draftId, this.threadId, null, null);
       try {
-        await this.app.email_provider_draft_delete(this.draft_id);
+        await this.app.emailProviderDraftDelete(this.draftId);
       } catch(e) {
         if (Api.err.isAuthPopupNeeded(e)) {
-          this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+          this.app.sendMsgToMainWin('notification_show_auth_popup_needed', {acctEmail: this.acctEmail});
         } else if(!Api.err.isNetErr(e)) {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
         }
       }
     }
   }
 
-  private decrypt_and_render_draft = async (encrypted_draft: string, headers: FromToHeaders) => {
-    let passphrase = await this.app.storage_passphrase_get();
+  private decryptAndRenderDraft = async (encryptedDraft: string, headers: FromToHeaders) => {
+    let passphrase = await this.app.storagePassphraseGet();
     if (passphrase !== null) {
-      let result = await Pgp.msg.decrypt(this.account_email, encrypted_draft);
+      let result = await Pgp.msg.decrypt(this.acctEmail, encryptedDraft);
       if (result.success) {
         this.S.cached('prompt').css({display: 'none'});
         Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.text!.replace(/\n/g, '<br>')));
@@ -487,64 +487,64 @@ export class Composer {
         if (headers && headers.from) {
           this.S.now('input_from').val(headers.from);
         }
-        this.set_input_text_height_manually_if_needed();
+        this.setInputTextHeightManuallyIfNeeded();
       } else {
-        this.set_input_text_height_manually_if_needed();
+        this.setInputTextHeightManuallyIfNeeded();
       }
-      if(this.is_reply_box) {
-        await this.render_reply_msg_compose_table();
+      if(this.isReplyBox) {
+        await this.renderReplyMsgComposeTable();
       }
     } else {
-      let prompt_text = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
-      if(this.is_reply_box) {
-        Xss.sanitizeRender(this.S.cached('prompt'), prompt_text).css({display: 'block'});
-        this.resize_reply_box();
+      let promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
+      if(this.isReplyBox) {
+        Xss.sanitizeRender(this.S.cached('prompt'), promptText).css({display: 'block'});
+        this.resizeReplyBox();
       } else {
-        Xss.sanitizeRender(this.S.cached('prompt'), `${prompt_text}<br><br><a href="#" class="action_close">close</a>`).css({display: 'block', height: '100%'});
+        Xss.sanitizeRender(this.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({display: 'block', height: '100%'});
       }
-      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(target => this.app.send_msg_to_main_window('passphrase_dialog', {type: 'draft', longids: 'primary'})));
-      this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(target => this.app.close_msg()));
-      await this.when_master_passphrase_entered();
-      await this.decrypt_and_render_draft(encrypted_draft, headers);
+      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(target => this.app.sendMsgToMainWin('passphrase_dialog', {type: 'draft', longids: 'primary'})));
+      this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(target => this.app.closeMsg()));
+      await this.whenMasterPassphraseEntered();
+      await this.decryptAndRenderDraft(encryptedDraft, headers);
     }
   }
 
-  private when_master_passphrase_entered = (seconds_timeout:number|null=null): Promise<string|null> => {
+  private whenMasterPassphraseEntered = (secondsTimeout:number|null=null): Promise<string|null> => {
     return new Promise(resolve => {
-      clearInterval(this.passphrase_interval);
-      const timeout_at = seconds_timeout ? Date.now() + seconds_timeout * 1000 : null;
-      this.passphrase_interval = Catch.setHandledInterval(async () => {
-        let passphrase = await this.app.storage_passphrase_get();
+      clearInterval(this.passphraseInterval);
+      const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : null;
+      this.passphraseInterval = Catch.setHandledInterval(async () => {
+        let passphrase = await this.app.storagePassphraseGet();
         if (passphrase !== null) {
-          clearInterval(this.passphrase_interval);
+          clearInterval(this.passphraseInterval);
           resolve(passphrase);
-        } else if (timeout_at && Date.now() > timeout_at) {
-          clearInterval(this.passphrase_interval);
+        } else if (timeoutAt && Date.now() > timeoutAt) {
+          clearInterval(this.passphraseInterval);
           resolve(null);
         }
       }, 1000);
     });
   }
 
-  private collect_all_available_public_keys = async (account_email: string, recipients: string[]): Promise<{armored_pubkeys: string[], emails_without_pubkeys: string[]}> => {
-    let contacts = await this.app.storage_contact_get(recipients);
-    let {public: armored_public_key} = await this.app.storage_get_key(account_email);
-    const armored_pubkeys = [armored_public_key];
-    const emails_without_pubkeys = [];
+  private collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]): Promise<{armoredPubkeys: string[], emailsWithoutPubkeys: string[]}> => {
+    let contacts = await this.app.storageContactGet(recipients);
+    let {public: armoredPublicKey} = await this.app.storageGetKey(acctEmail);
+    const armoredPubkeys = [armoredPublicKey];
+    const emailsWithoutPubkeys = [];
     for (let i of contacts.keys()) {
       let contact = contacts[i];
       if (contact && contact.has_pgp && contact.pubkey) {
-        armored_pubkeys.push(contact.pubkey);
-      } else if (contact && this.ks_lookups_by_email[contact.email] && this.ks_lookups_by_email[contact.email].pubkey) {
-        armored_pubkeys.push(this.ks_lookups_by_email[contact.email].pubkey!); // checked !null right above. Null evaluates to false.
+        armoredPubkeys.push(contact.pubkey);
+      } else if (contact && this.ksLookupsByEmail[contact.email] && this.ksLookupsByEmail[contact.email].pubkey) {
+        armoredPubkeys.push(this.ksLookupsByEmail[contact.email].pubkey!); // checked !null right above. Null evaluates to false.
       } else {
-        emails_without_pubkeys.push(recipients[i]);
+        emailsWithoutPubkeys.push(recipients[i]);
       }
     }
-    return {armored_pubkeys, emails_without_pubkeys};
+    return {armoredPubkeys, emailsWithoutPubkeys};
   }
 
-  private throw_if_form_not_ready = (recipients: string[]): void => {
+  private throwIfFormNotReady = (recipients: string[]): void => {
     if (Value.is(this.S.now('send_btn_span').text().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
       return; // all good
     }
@@ -557,12 +557,12 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throw_if_form_values_invalid = (recipients: string[], emails_without_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null) => {
-    const is_encrypt = !this.S.cached('icon_sign').is('.active');
+  private throwIfFormValsInvalid = (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null) => {
+    const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
     }
-    if (is_encrypt && emails_without_pubkeys.length && (!challenge || !challenge.answer)) {
+    if (shouldEncrypt && emailsWithoutPubkeys.length && (!challenge || !challenge.answer)) {
       this.S.cached('input_password').focus();
       throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
     }
@@ -571,21 +571,21 @@ export class Composer {
     }
   }
 
-  private handle_send_error(e: Error|StandardError) {
+  private handleSendErr(e: Error|StandardError) {
     if(Api.err.isNetErr(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
     } else if(Api.err.isAuthPopupNeeded(e)) {
-      this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+      this.app.sendMsgToMainWin('notification_show_auth_popup_needed', {acctEmail: this.acctEmail});
       alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.err.isAuthErr(e)) {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
+        this.app.sendMsgToMainWin('subscribe_dialog', {source: 'authErr'});
       }
     } else if(Api.err.isBadReq(e)) {
       if(confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
         let page = '/chrome/settings/modules/help.htm';
-        let page_url_params = {bug_report: Extension.prepare_bug_report('composer: send: bad request', {}, e)};
-        this.app.send_msg_to_background_script('settings', {account_email: this.account_email, page, page_url_params});
+        let pageUrlParams = {bugReport: Extension.prepareBugReport('composer: send: bad request', {}, e)};
+        this.app.sendMsgToBgScript('settings', {acctEmail: this.acctEmail, page, pageUrlParams});
       }
     } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
       Catch.report('StandardError | failed to send message', e);
@@ -595,7 +595,7 @@ export class Composer {
     } else {
       if(!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
         if(e instanceof Error) {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
         } else {
           Catch.report('Thrown object | failed to send message', e);
         }
@@ -603,64 +603,64 @@ export class Composer {
       }
     }
     if (!(e instanceof ComposerNotReadyError)) {
-      this.reset_send_btn(100);
+      this.resetSendBtn(100);
     }
   }
 
-  private extract_as_text = (element_selector: 'input_text'|'input_intro') => {
-    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.S.cached(element_selector)[0].innerHTML, '\n'));
+  private extractAsText = (elSel: 'input_text'|'input_intro') => {
+    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.S.cached(elSel)[0].innerHTML, '\n'));
   }
 
-  private extract_process_send_msg = async () => {
+  private extractProcessSendMsg = async () => {
     try {
-      const recipients = this.get_recipients_from_dom();
-      const subject = this.supplied_subject || String($('#input_subject').val()); // replies have subject in url params
-      const plaintext = this.extract_as_text('input_text');
-      this.throw_if_form_not_ready(recipients);
+      const recipients = this.getRecipientsFromDom();
+      const subject = this.suppliedSubject || String($('#input_subject').val()); // replies have subject in url params
+      const plaintext = this.extractAsText('input_text');
+      this.throwIfFormNotReady(recipients);
       this.S.now('send_btn_span').text('Loading');
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
-      let subscription = await this.app.storage_get_subscription();
-      let {armored_pubkeys, emails_without_pubkeys} = await this.collect_all_available_public_keys(this.account_email, recipients);
-      const challenge = emails_without_pubkeys.length ? {answer: String(this.S.cached('input_password').val())} : null;
-      this.throw_if_form_values_invalid(recipients, emails_without_pubkeys, subject, plaintext, challenge);
+      let subscription = await this.app.storageGetSubscription();
+      let {armoredPubkeys, emailsWithoutPubkeys} = await this.collectAllAvailablePublicKeys(this.acctEmail, recipients);
+      const challenge = emailsWithoutPubkeys.length ? {answer: String(this.S.cached('input_password').val())} : null;
+      this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, challenge);
       if (this.S.cached('icon_sign').is('.active')) {
-        await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+        await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
       } else {
-        await this.encrypt_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+        await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
       }
     } catch (e) {
-      this.handle_send_error(e);
+      this.handleSendErr(e);
     }
   }
 
-  private encrypt_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
+  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
-    plaintext = await this.add_reply_token_to_msg_body_if_needed(recipients, subject, plaintext, challenge, subscription);
-    let atts = await this.attach.collect_and_encrypt_atts(armored_pubkeys, challenge);
+    plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients, subject, plaintext, challenge, subscription);
+    let atts = await this.attach.collectEncryptAtts(armoredPubkeys, challenge);
     if (atts.length && challenge) { // these will be password encrypted attachments
-      this.button_update_timeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
-      let att_admin_codes = await this.upload_atts_to_fc(atts, subscription);
-      plaintext = this.add_uploaded_file_links_to_msg_body(plaintext, atts);
-      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, [], recipients, subject, subscription, att_admin_codes);
+      this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
+      let attAdminCodes = await this.uploadAttsToFc(atts, subscription);
+      plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
+      await this.doEncryptFormatSend(armoredPubkeys, challenge, plaintext, [], recipients, subject, subscription, attAdminCodes);
     } else {
-      await this.do_encrypt_format_and_send(armored_pubkeys, challenge, plaintext, atts, recipients, subject, subscription);
+      await this.doEncryptFormatSend(armoredPubkeys, challenge, plaintext, atts, recipients, subject, subscription);
     }
   }
 
-  private sign_and_send = async (recipients: string[], armored_pubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
+  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
-    let [primary_k] = await Store.keysGet(this.account_email, ['primary']);
-    if (primary_k) {
-      const prv = openpgp.key.readArmored(primary_k.private).keys[0];
-      let passphrase = await this.app.storage_passphrase_get();
+    let [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    if (primaryKi) {
+      const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
+      let passphrase = await this.app.storagePassphraseGet();
       if (passphrase === null && !prv.isDecrypted()) {
-        this.app.send_msg_to_main_window('passphrase_dialog', {type: 'sign', longids: 'primary'});
-        if ((await this.when_master_passphrase_entered(60)) !== null) { // pass phrase entered
-          await this.sign_and_send(recipients, armored_pubkeys, subject, plaintext, challenge, subscription);
+        this.app.sendMsgToMainWin('passphrase_dialog', {type: 'sign', longids: 'primary'});
+        if ((await this.whenMasterPassphraseEntered(60)) !== null) { // pass phrase entered
+          await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
         } else { // timeout - reset - no passphrase entered
-          clearInterval(this.passphrase_interval);
-          this.reset_send_btn();
+          clearInterval(this.passphraseInterval);
+          this.resetSendBtn();
         }
       } else {
         let MimeCodec = (window as BrowserWidnow)['emailjs-mime-codec'];
@@ -681,33 +681,33 @@ export class Composer {
         if(!prv.isDecrypted()) {
           await Pgp.key.decrypt(prv, [passphrase!]); // checked !== null above
         }
-        let signed_data = await Pgp.msg.sign(prv, this.format_email_text_footer({'text/plain': plaintext})['text/plain'] || '');
-        let atts = await this.attach.collect_atts(); // todo - not signing attachments
-        this.app.storage_contact_update(recipients, {last_use: Date.now()}).catch(Catch.rejection);
+        let signedData = await Pgp.msg.sign(prv, this.formatEmailTextFooter({'text/plain': plaintext})['text/plain'] || '');
+        let atts = await this.attach.collectAtts(); // todo - not signing attachments
+        this.app.storageContactUpdate(recipients, {last_use: Date.now()}).catch(Catch.rejection);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
-        const body = {'text/plain': signed_data};
-        await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, atts, this.thread_id), plaintext);
+        const body = {'text/plain': signedData};
+        await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
-      this.reset_send_btn();
+      this.resetSendBtn();
     }
   }
 
-  private upload_atts_to_fc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
+  private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
     try {
-      let pf_response: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : null);
-      const items: any[] = [];
-      for (let i of pf_response.approvals.keys()) {
-        items.push({base_url: pf_response.approvals[i].base_url, fields: pf_response.approvals[i].fields, attachment: atts[i]});
+      let pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : null);
+      const items: any[] = []; // todo - stop using "any"
+      for (let i of pfRes.approvals.keys()) {
+        items.push({base_url: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, attachment: atts[i]});
       }
-      await Api.aws.s3Upload(items, this.render_upload_progress);
+      await Api.aws.s3Upload(items, this.renderUploadProgress);
       let {admin_codes, confirmed} = await Api.fc.messageConfirmFiles(items.map((item) => item.fields.key));
       if(!confirmed || confirmed.length !== items.length) {
         throw new Error('Atts did not upload properly, please try again');
       }
       for (let i of atts.keys()) {
-        atts[i].url = pf_response.approvals[i].base_url + pf_response.approvals[i].fields.key;
+        atts[i].url = pfRes.approvals[i].base_url + pfRes.approvals[i].fields.key;
       }
       return admin_codes;
     } catch (e) {
@@ -719,179 +719,180 @@ export class Composer {
     }
   }
 
-  private render_upload_progress = (progress: number) => {
-    if (this.attach.has_att()) {
+  private renderUploadProgress = (progress: number) => {
+    if (this.attach.hasAtt()) {
       progress = Math.floor(progress);
       this.S.now('send_btn_span').text(`${this.BTN_SENDING} ${progress < 100 ?  `${progress}%` : ''}`);
     }
   }
 
-  private add_uploaded_file_links_to_msg_body = (plaintext: string, atts: Att[]) => {
+  private addUploadedFileLinksToMsgBody = (plaintext: string, atts: Att[]) => {
     plaintext += '\n\n';
     for (let att of atts) {
-      const size_mb = att.length / (1024 * 1024);
-      const size_text = size_mb < 0.1 ? '' : ` ${(Math.round(size_mb * 10) / 10)}MB`;
-      const link_text = `Att: ${att.name} (${att.type})${size_text}`;
-      const cryptup_data = Str.html_attr_encode({size: att.length, type: att.type, name: att.name});
-      plaintext += `<a href="${att.url}" class="cryptup_file" cryptup-data="${cryptup_data}">${link_text}</a>\n`;
+      const sizeMb = att.length / (1024 * 1024);
+      const sizeText = sizeMb < 0.1 ? '' : ` ${(Math.round(sizeMb * 10) / 10)}MB`;
+      const linkText = `Att: ${att.name} (${att.type})${sizeText}`;
+      const fcData = Str.htmlAttrEncode({size: att.length, type: att.type, name: att.name});
+      plaintext += `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`;
     }
     return plaintext;
   }
 
-  private add_reply_token_to_msg_body_if_needed = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string> => {
+  private addReplyTokenToMsgBodyIfNeeded = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge|null, subscription: Subscription): Promise<string> => {
     if (!challenge || !subscription.active) {
       return plaintext;
     }
     let response;
     try {
       response = await Api.fc.messageToken();
-    } catch (msg_token_err) {
-      if (Api.err.isAuthErr(msg_token_err)) {
+    } catch (msgTokenErr) {
+      if (Api.err.isAuthErr(msgTokenErr)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          this.app.send_msg_to_main_window('subscribe_dialog', {source: 'auth_error'});
+          this.app.sendMsgToMainWin('subscribe_dialog', {source: 'authErr'});
         }
         throw new ComposerResetBtnTrigger();
-      } else if (Api.err.isStandardErr(msg_token_err, 'subscription')) {
+      } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
         return plaintext;
       } else {
-        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + msg_token_err.message);
+        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + msgTokenErr.message);
       }
     }
-    return plaintext + '\n\n' + Ui.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.html_attr_encode({
-      sender: this.supplied_from || this.get_sender_from_dom(),
-      recipient: Value.arr.without_value(Value.arr.without_value(recipients, this.supplied_from || this.get_sender_from_dom()), this.account_email),
+    return plaintext + '\n\n' + Ui.e('div', {'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.htmlAttrEncode({
+      sender: this.suppliedFrom || this.getSenderFromDom(),
+      recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.suppliedFrom || this.getSenderFromDom()), this.acctEmail),
       subject,
       token: response.token,
     })});
   }
 
-  private encrypt_msg_as_of_date_if_some_are_expired = async (armored_pubkeys: string[]): Promise<Date|null> => {
-    let usable_until: number[] = [];
-    let usable_from: number[] = [];
-    for(let armored_pubkey of armored_pubkeys) {
-      let k = openpgp.key.readArmored(armored_pubkey).keys[0];
-      let one_second_before_expiration = await Pgp.key.date_before_expiration(k);
-      usable_from.push(k.getCreationTime().getTime());
-      if(one_second_before_expiration !== null) { // key does expire
-        usable_until.push(one_second_before_expiration.getTime());
+  private encryptMsgAsOfDateIfSomeAreExpired = async (armoredPubkeys: string[]): Promise<Date|null> => {
+    // todo - disallow in certain situations
+    let usableUntil: number[] = [];
+    let usableFrom: number[] = [];
+    for(let armoredPubkey of armoredPubkeys) {
+      let k = openpgp.key.readArmored(armoredPubkey).keys[0];
+      let oneSecondBeforeExpiration = await Pgp.key.dateBeforeExpiration(k);
+      usableFrom.push(k.getCreationTime().getTime());
+      if(oneSecondBeforeExpiration !== null) { // key does expire
+        usableUntil.push(oneSecondBeforeExpiration.getTime());
       }
     }
-    if(!usable_until.length) { // none of the keys expire
+    if(!usableUntil.length) { // none of the keys expire
       return null;
     }
-    if(Math.max(...usable_until) > Date.now()) { // all keys either don't expire or expire in the future
+    if(Math.max(...usableUntil) > Date.now()) { // all keys either don't expire or expire in the future
       return null;
     }
-    let usable_time_from = Math.max(...usable_from);
-    let usable_time_until = Math.min(...usable_until);
-    if(usable_time_from > usable_time_until) { // used public keys have no intersection of usable dates
+    let usableTimeFrom = Math.max(...usableFrom);
+    let usableTimeUntil = Math.min(...usableUntil);
+    if(usableTimeFrom > usableTimeUntil) { // used public keys have no intersection of usable dates
       alert('The public key of one of your recipients has been expired for too long.\n\nPlease ask the recipient to send you an updated Public Key.');
       throw new ComposerResetBtnTrigger();
     }
     if(!confirm('The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)')) {
       throw new ComposerResetBtnTrigger();
     }
-    return new Date(usable_time_until); // latest date none of the keys were expired
+    return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private do_encrypt_format_and_send = async (armored_pubkeys: string[], challenge: Challenge|null, plaintext: string, atts: Att[], recipients: string[], subject: string, subscription: Subscription, att_admin_codes:string[]=[]) => {
-    let encrypt_as_of_date = await this.encrypt_msg_as_of_date_if_some_are_expired(armored_pubkeys);
-    let encrypted = await Pgp.msg.encrypt(armored_pubkeys, null, challenge, plaintext, null, true, encrypt_as_of_date) as OpenPGP.EncryptArmorResult;
+  private doEncryptFormatSend = async (armoredPubkeys: string[], challenge: Challenge|null, plaintext: string, atts: Att[], recipients: string[], subject: string, subscription: Subscription, att_admin_codes:string[]=[]) => {
+    let encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(armoredPubkeys);
+    let encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, plaintext, null, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
     let body: SendableMsgBody = {'text/plain': encrypted.data};
-    await this.app.storage_contact_update(recipients, {last_use: Date.now()});
+    await this.app.storageContactUpdate(recipients, {last_use: Date.now()});
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (challenge) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
       let {short, admin_code} = await Api.fc.messageUpload(body['text/plain']!, subscription.active ? 'uuid' : null);
-      let storage = await Store.getAccount(this.account_email, ['outgoing_language']);
-      body = this.format_password_protected_email(short, body, armored_pubkeys, storage.outgoing_language || 'EN');
-      body = this.format_email_text_footer(body);
-      await this.app.storage_add_admin_codes(short, admin_code, att_admin_codes);
-      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, atts, this.thread_id), plaintext);
+      let storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
+      body = this.formatPasswordProtectedEmail(short, body, armoredPubkeys, storage.outgoing_language || 'EN');
+      body = this.formatEmailTextFooter(body);
+      await this.app.storageAddAdminCodes(short, admin_code, att_admin_codes);
+      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
     } else {
-      body = this.format_email_text_footer(body);
-      await this.do_send_msg(await Api.common.msg(this.account_email, this.supplied_from || this.get_sender_from_dom(), recipients, subject, body, atts, this.thread_id), plaintext);
+      body = this.formatEmailTextFooter(body);
+      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
     }
   }
 
-  private do_send_msg = async (msg: SendableMsg, plaintext: string) => {
-    for (let k of Object.keys(this.additional_msg_headers)) {
-      msg.headers[k] = this.additional_msg_headers[k];
+  private doSendMsg = async (msg: SendableMsg, plaintext: string) => {
+    for (let k of Object.keys(this.additionalMsgHeaders)) {
+      msg.headers[k] = this.additionalMsgHeaders[k];
     }
     for (let a of msg.atts) {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.S.cached('icon_pubkey').is('.active')) {
-      msg.atts.push(Att.methods.keyinfoAsPubkeyAtt(await this.app.storage_get_key(this.account_email)));
+      msg.atts.push(Att.methods.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.acctEmail)));
     }
-    let msg_sent_res = await this.app.email_provider_msg_send(msg, this.render_upload_progress);
-    const is_signed = this.S.cached('icon_sign').is('.active');
-    this.app.send_msg_to_main_window('notification_show', {notification: 'Your ' + (is_signed ? 'signed' : 'encrypted') + ' ' + (this.is_reply_box ? 'reply' : 'message') + ' has been sent.'});
-    await this.draft_delete();
-    if (this.is_reply_box) {
-      this.render_reply_success(msg, plaintext, msg_sent_res.id);
+    let msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+    const isSigned = this.S.cached('icon_sign').is('.active');
+    this.app.sendMsgToMainWin('notification_show', {notification: 'Your ' + (isSigned ? 'signed' : 'encrypted') + ' ' + (this.isReplyBox ? 'reply' : 'message') + ' has been sent.'});
+    await this.draftDelete();
+    if (this.isReplyBox) {
+      this.renderReplySuccess(msg, plaintext, msgSentRes.id);
     } else {
-      this.app.close_msg();
+      this.app.closeMsg();
     }
   }
 
-  private lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed = async (email: string): Promise<Contact|"fail"> => {
-    let [db_contact] = await this.app.storage_contact_get([email]);
-    if (db_contact && db_contact.has_pgp && db_contact.pubkey) {
-      return db_contact;
+  private lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact|"fail"> => {
+    let [dbContact] = await this.app.storageContactGet([email]);
+    if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
+      return dbContact;
     } else {
       try {
-        let {results: [lookup_result]} = await Api.attester.lookupEmail([email]);
-        if (lookup_result && lookup_result.email) {
-          if (lookup_result.pubkey) {
-            const parsed = openpgp.key.readArmored(lookup_result.pubkey);
+        let {results: [lookupResult]} = await Api.attester.lookupEmail([email]);
+        if (lookupResult && lookupResult.email) {
+          if (lookupResult.pubkey) {
+            const parsed = openpgp.key.readArmored(lookupResult.pubkey);
             if (!parsed.keys[0]) {
-              Catch.log('Dropping found but incompatible public key', {for: lookup_result.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null});
-              lookup_result.pubkey = null;
+              Catch.log('Dropping found but incompatible public key', {for: lookupResult.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null});
+              lookupResult.pubkey = null;
             } else if ((await parsed.keys[0].getEncryptionKey()) === null) {
-              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: lookup_result.email, fingerprint: Pgp.key.fingerprint(parsed.keys[0])});
-              lookup_result.pubkey = null;
+              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', {for: lookupResult.email, fingerprint: Pgp.key.fingerprint(parsed.keys[0])});
+              lookupResult.pubkey = null;
             }
           }
-          let ks_contact = this.app.storage_contact_object(lookup_result.email, db_contact && db_contact.name ? db_contact.name : null, lookup_result.has_cryptup ? 'cryptup' : 'pgp', lookup_result.pubkey, lookup_result.attested, false, Date.now());
-          this.ks_lookups_by_email[lookup_result.email] = ks_contact;
-          await this.app.storage_contact_save(ks_contact);
-          return ks_contact;
+          let ksContact = this.app.storageContactObj(lookupResult.email, dbContact && dbContact.name ? dbContact.name : null, lookupResult.has_cryptup ? 'cryptup' : 'pgp', lookupResult.pubkey, lookupResult.attested, false, Date.now());
+          this.ksLookupsByEmail[lookupResult.email] = ksContact;
+          await this.app.storageContactSave(ksContact);
+          return ksContact;
         } else  {
           return this.PUBKEY_LOOKUP_RESULT_FAIL;
         }
       } catch (e) {
         if(!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
         }
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
       }
     }
   }
 
-  private evaluate_rendered_recipients = async () => {
-    for (let email_element of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
-      const email = Str.parseEmail($(email_element).text()).email;
+  private evaluateRenderedRecipients = async () => {
+    for (let emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
+      const email = Str.parseEmail($(emailEl).text()).email;
       if (Str.isEmailValid(email)) {
         this.S.now('send_btn_span').text(this.BTN_LOADING);
-        this.set_input_text_height_manually_if_needed();
-        let pubkey_lookup_result = await this.lookup_pubkey_from_db_or_keyserver_and_update_db_if_needed(email);
-        await this.render_pubkey_result(email_element, email, pubkey_lookup_result);
+        this.setInputTextHeightManuallyIfNeeded();
+        let pubkeyLookupRes = await this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
+        await this.renderPubkeyResult(emailEl, email, pubkeyLookupRes);
       } else {
-        await this.render_pubkey_result(email_element, email, this.PUBKEY_LOOKUP_RESULT_WRONG);
+        await this.renderPubkeyResult(emailEl, email, this.PUBKEY_LOOKUP_RESULT_WRONG);
       }
     }
-    this.set_input_text_height_manually_if_needed();
+    this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private get_password_validation_warning = () => {
+  private getPwdValidationWarning = () => {
     if (!this.S.cached('input_password').val()) {
       return 'No password entered';
     }
   }
 
-  private show_msg_pw_ui_and_color_button = () => {
+  private showMsgPwdUiAndColorBtn = () => {
     this.S.cached('password_or_pubkey').css('display', 'table-row');
     this.S.cached('password_or_pubkey').css('display', 'table-row');
     if (this.S.cached('input_password').val() || this.S.cached('input_password').is(':focus')) {
@@ -901,7 +902,7 @@ export class Composer {
       this.S.cached('password_label').css('display', 'none');
       this.S.cached('input_password').attr('placeholder', 'one time password');
     }
-    if (this.get_password_validation_warning()) {
+    if (this.getPwdValidationWarning()) {
       this.S.cached('send_btn').removeClass('green').addClass('gray');
     } else {
       this.S.cached('send_btn').removeClass('gray').addClass('green');
@@ -911,7 +912,7 @@ export class Composer {
     } else {
       this.S.cached('add_intro').css('display', 'block');
     }
-    this.set_input_text_height_manually_if_needed();
+    this.setInputTextHeightManuallyIfNeeded();
   }
 
   /**
@@ -921,65 +922,65 @@ export class Composer {
    *
    * @param update_ref_body_height - set to true to take a new snapshot of intended html body height
    */
-  private set_input_text_height_manually_if_needed = (update_ref_body_height:boolean=false) => {
-    if (!this.is_reply_box && Env.browser().name === 'firefox') {
-      let cell_height_except_text = 0;
+  private setInputTextHeightManuallyIfNeeded = (update_ref_body_height:boolean=false) => {
+    if (!this.isReplyBox && Env.browser().name === 'firefox') {
+      let cellHeightExceptText = 0;
       this.S.cached('all_cells_except_text').each(function() {
         let cell = $(this);
-        cell_height_except_text += cell.is(':visible') ? (cell.parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
+        cellHeightExceptText += cell.is(':visible') ? (cell.parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
       });
-      if (update_ref_body_height || !this.ref_body_height) {
-        this.ref_body_height = this.S.cached('body').height() || 605;
+      if (update_ref_body_height || !this.refBodyHeight) {
+        this.refBodyHeight = this.S.cached('body').height() || 605;
       }
-      this.S.cached('input_text').css('height', this.ref_body_height - cell_height_except_text);
+      this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText);
     }
   }
 
-  private hide_msg_pw_ui = () => {
+  private hideMsgPwdUi = () => {
     this.S.cached('password_or_pubkey').css('display', 'none');
     this.S.cached('input_password').val('');
     this.S.cached('add_intro').css('display', 'none');
     this.S.cached('input_intro').text('');
     this.S.cached('intro_container').css('display', 'none');
-    this.set_input_text_height_manually_if_needed();
+    this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private show_hide_pw_or_pubkey_container_and_color_send_btn = () => {
-    this.reset_send_btn();
+  private showHidePwdOrPubkeyContainerAndColorSendBtn = () => {
+    this.resetSendBtn();
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
-    let was_previously_visible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
+    let wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
     if (!$('.recipients span').length) {
-      this.hide_msg_pw_ui();
+      this.hideMsgPwdUi();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     } else if (this.S.cached('icon_sign').is('.active')) {
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     } else if ($('.recipients span.no_pgp').length) {
-      this.show_msg_pw_ui_and_color_button();
+      this.showMsgPwdUiAndColorBtn();
     } else if ($('.recipients span.failed, .recipients span.wrong').length) {
       this.S.now('send_btn_span').text(this.BTN_WRONG_ENTRY);
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.S.cached('send_btn').removeClass('green').addClass('gray');
     } else {
-      this.hide_msg_pw_ui();
+      this.hideMsgPwdUi();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     }
-    if (this.is_reply_box) {
-      if (!was_previously_visible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {
-        this.resize_reply_box((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
+    if (this.isReplyBox) {
+      if (!wasPreviouslyVisible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {
+        this.resizeReplyBox((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
       } else {
-        this.resize_reply_box();
+        this.resizeReplyBox();
       }
     }
-    this.set_input_text_height_manually_if_needed();
+    this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private respond_to_input_hotkeys = (input_to_keydown_event: KeyboardEvent) => {
+  private respondToInputHotkeys = (inputToKeydownEvent: KeyboardEvent) => {
     let value = this.S.cached('input_to').val();
     const keys = Env.keyCodes();
-    if (!value && input_to_keydown_event.which === keys.backspace) {
+    if (!value && inputToKeydownEvent.which === keys.backspace) {
       $('.recipients span').last().remove();
-    } else if (value && (input_to_keydown_event.which === keys.enter || input_to_keydown_event.which === keys.tab)) {
+    } else if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
       this.S.cached('input_to').blur();
       if (this.S.cached('contacts').css('display') === 'block') {
         if (this.S.cached('contacts').find('.select_contact.hover').length) {
@@ -993,247 +994,247 @@ export class Composer {
     }
   }
 
-  resize_reply_box = (add_extra:number=0) => {
-    if (this.is_reply_box) {
+  resizeReplyBox = (addExtra:number=0) => {
+    if (this.isReplyBox) {
       this.S.cached('input_text').css('max-width', (this.S.cached('body').width()! - 20) + 'px'); // body should always be present
-      let min_height = 0;
-      let current_height = 0;
+      let minHeight = 0;
+      let currentHeight = 0;
       if (this.S.cached('compose_table').is(':visible')) {
-        current_height = this.S.cached('compose_table').outerHeight() || 0;
-        min_height = 260;
-      } else if (this.S.cached('reply_message_successful').is(':visible')) {
-        current_height = this.S.cached('reply_message_successful').outerHeight() || 0;
+        currentHeight = this.S.cached('compose_table').outerHeight() || 0;
+        minHeight = 260;
+      } else if (this.S.cached('reply_msg_successful').is(':visible')) {
+        currentHeight = this.S.cached('reply_msg_successful').outerHeight() || 0;
       } else {
-        current_height = this.S.cached('prompt').outerHeight() || 0;
+        currentHeight = this.S.cached('prompt').outerHeight() || 0;
       }
-      if (current_height !== this.last_reply_box_table_height && Math.abs(current_height - this.last_reply_box_table_height) > 2) { // more then two pixel difference compared to last time
-        this.last_reply_box_table_height = current_height;
-        this.app.send_msg_to_main_window('set_css', {selector: `iframe#${this.frame_id}`, css: {height: `${(Math.max(min_height, current_height) + add_extra)}px`}});
+      if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
+        this.lastReplyBoxTableHeight = currentHeight;
+        this.app.sendMsgToMainWin('set_css', {selector: `iframe#${this.frameId}`, css: {height: `${(Math.max(minHeight, currentHeight) + addExtra)}px`}});
       }
     }
   }
 
-  private append_forwarded_msg = (text: string) => {
+  private appendForwardedMsg = (text: string) => {
     Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${text.replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
-    this.resize_reply_box();
+    this.resizeReplyBox();
   }
 
-  private retrieve_decrypt_and_add_forwarded_msg = async (msg_id: string) => {
-    let armored_msg: string;
+  private retrieveDecryptAddForwardedMsg = async (msg_id: string) => {
+    let armoredMsg: string;
     try {
-      armored_msg = await this.app.email_provider_extract_armored_block(msg_id);
+      armoredMsg = await this.app.emailProviderExtractArmoredBlock(msg_id);
     } catch (e) {
       if (e.data) {
         Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.htmlEscape(e.data)}`);
       } else if(Api.err.isNetErr(e)) {
         // todo: retry
       } else if(Api.err.isAuthPopupNeeded(e)) {
-        this.app.send_msg_to_main_window('notification_show_auth_popup_needed', {account_email: this.account_email});
+        this.app.sendMsgToMainWin('notification_show_auth_popup_needed', {acctEmail: this.acctEmail});
       } else {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
       }
       return;
     }
-    let result = await Pgp.msg.decrypt(this.account_email, armored_msg);
+    let result = await Pgp.msg.decrypt(this.acctEmail, armoredMsg);
     if (result.success) {
-      if (!Mime.resembles_msg(result.content.text!)) {
-        this.append_forwarded_msg(result.content.text!.replace(/\n/g, '<br>'));
+      if (!Mime.resemblesMsg(result.content.text!)) {
+        this.appendForwardedMsg(result.content.text!.replace(/\n/g, '<br>'));
       } else {
-        let mime_parse_result = await Mime.decode(result.content.text!);
-        if(typeof mime_parse_result.text !== 'undefined') {
-          this.append_forwarded_msg(mime_parse_result.text.replace(/\n/g, '<br>'));
-        } else if (typeof mime_parse_result.html !== 'undefined') {
-          this.append_forwarded_msg(Xss.htmlSanitizeAndStripAllTags(mime_parse_result.html!, '<br>'));
+        let mimeDecoded = await Mime.decode(result.content.text!);
+        if(typeof mimeDecoded.text !== 'undefined') {
+          this.appendForwardedMsg(mimeDecoded.text.replace(/\n/g, '<br>'));
+        } else if (typeof mimeDecoded.html !== 'undefined') {
+          this.appendForwardedMsg(Xss.htmlSanitizeAndStripAllTags(mimeDecoded.html!, '<br>'));
         } else {
-          this.append_forwarded_msg((result.content.text! || '').replace(/\n/g, '<br>')); // not sure about the replace, time will tell
+          this.appendForwardedMsg((result.content.text! || '').replace(/\n/g, '<br>')); // not sure about the replace, time will tell
         }
       }
     } else {
-      Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${armored_msg.replace(/\n/g, '<br/>\n')}`);
+      Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${armoredMsg.replace(/\n/g, '<br/>\n')}`);
     }
   }
 
-  private render_reply_msg_compose_table = async (method:"forward"|"reply"="reply") => {
+  private renderReplyMsgComposeTable = async (method:"forward"|"reply"="reply") => {
     this.S.cached('prompt').css({display: 'none'});
-    this.S.cached('input_to').val(this.supplied_to + (this.supplied_to ? ',' : '')); // the comma causes the last email to be get evaluated
-    await this.render_compose_table();
-    if (this.can_read_emails) {
-      let determined = await this.app.email_provider_determine_reply_msg_header_variables();
-      if (determined && determined.last_msg_id && determined.headers) {
-        this.additional_msg_headers['In-Reply-To'] = determined.headers['In-Reply-To'];
-        this.additional_msg_headers.References = determined.headers.References;
+    this.S.cached('input_to').val(this.suppliedTo + (this.suppliedTo ? ',' : '')); // the comma causes the last email to be get evaluated
+    await this.renderComposeTable();
+    if (this.canReadEmails) {
+      let determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
+      if (determined && determined.lastMsgId && determined.headers) {
+        this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
+        this.additionalMsgHeaders.References = determined.headers.References;
         if (method === 'forward') {
-          this.supplied_subject = 'Fwd: ' + this.supplied_subject;
-          await this.retrieve_decrypt_and_add_forwarded_msg(determined.last_msg_id);
+          this.suppliedSubject = 'Fwd: ' + this.suppliedSubject;
+          await this.retrieveDecryptAddForwardedMsg(determined.lastMsgId);
         }
       }
     } else {
       Xss.sanitizeRender(this.S.cached('prompt'), 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
       this.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => this.app.send_msg_to_background_script('settings', { account_email: this.account_email, page: '/chrome/settings/modules/auth_denied.htm'}));
-      $('.new_message_button').click(() => this.app.send_msg_to_main_window('open_new_message'));
+      $('.auth_settings').click(() => this.app.sendMsgToBgScript('settings', { acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm'}));
+      $('.new_message_button').click(() => this.app.sendMsgToMainWin('open_new_message'));
     }
-    this.resize_reply_box();
-    Catch.setHandledTimeout(() => this.app.send_msg_to_main_window('scroll_to_bottom_of_conversation'), 300);
+    this.resizeReplyBox();
+    Catch.setHandledTimeout(() => this.app.sendMsgToMainWin('scroll_to_bottom_of_conversation'), 300);
   }
 
-  private parse_and_render_recipients = async () => {
-    const input_to = (this.S.cached('input_to').val() as string).toLowerCase();
-    if (Value.is(',').in(input_to)) {
-      const emails = input_to.split(',');
+  private parseRenderRecipients = async () => {
+    const inputTo = (this.S.cached('input_to').val() as string).toLowerCase();
+    if (Value.is(',').in(inputTo)) {
+      const emails = inputTo.split(',');
       for (let i = 0; i < emails.length - 1; i++) {
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.htmlEscape(emails[i])} ${Ui.spinner('green')}</span>`);
       }
-    } else if (!this.S.cached('input_to').is(':focus') && input_to) {
-      Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.htmlEscape(input_to)} ${Ui.spinner('green')}</span>`);
+    } else if (!this.S.cached('input_to').is(':focus') && inputTo) {
+      Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.htmlEscape(inputTo)} ${Ui.spinner('green')}</span>`);
     } else {
       return;
     }
     this.S.cached('input_to').val('');
-    this.resize_input_to();
-    await this.evaluate_rendered_recipients();
-    this.set_input_text_height_manually_if_needed();
+    this.resizeInputTo();
+    await this.evaluateRenderedRecipients();
+    this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private select_contact = (email: string, from_query: ProviderContactsQuery) => {
-    const possibly_bogus_recipient = $('.recipients span.wrong').last();
-    const possibly_bogus_address = Str.parseEmail(possibly_bogus_recipient.text()).email;
+  private selectContact = (email: string, from_query: ProviderContactsQuery) => {
+    const possiblyBogusRecipient = $('.recipients span.wrong').last();
+    const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
     const q = Str.parseEmail(from_query.substring).email;
-    if (possibly_bogus_address === q || Value.is(q).in(possibly_bogus_address)) {
-      possibly_bogus_recipient.remove();
+    if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
+      possiblyBogusRecipient.remove();
     }
     Catch.setHandledTimeout(async () => {
-      if (!Value.is(email).in(this.get_recipients_from_dom())) {
+      if (!Value.is(email).in(this.getRecipientsFromDom())) {
         this.S.cached('input_to').val(Str.parseEmail(email).email);
-        await this.parse_and_render_recipients();
+        await this.parseRenderRecipients();
         this.S.cached('input_to').focus();
       }
-    }, Value.int.random(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
-    this.hide_contacts();
+    }, Value.int.lousyRandom(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
+    this.hideContacts();
   }
 
-  private resize_input_to = () => { // below both present in template
+  private resizeInputTo = () => { // below both present in template
     this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
   }
 
-  private remove_receiver = (element: HTMLElement) => {
-    this.recipients_missing_my_key = Value.arr.without_value(this.recipients_missing_my_key, $(element).parent().text());
+  private removeReceiver = (element: HTMLElement) => {
+    this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
     $(element).parent().remove();
-    this.resize_input_to();
-    this.show_hide_pw_or_pubkey_container_and_color_send_btn();
-    this.update_pubkey_icon();
+    this.resizeInputTo();
+    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
+    this.updatePubkeyIcon();
   }
 
-  private auth_contacts = async (account_email: string) => {
-    let last_recipient = $('.recipients span').last();
-    this.S.cached('input_to').val(last_recipient.text());
-    last_recipient.last().remove();
-    let auth_result = await Api.google.authPopup(account_email, this.tab_id, false, Api.gmail.scope(['read']));
-    if (auth_result && auth_result.success === true) {
-      this.can_read_emails = true;
-      await this.search_contacts();
-    } else if (auth_result && auth_result.success === false && auth_result.result === 'Denied' && auth_result.error === 'access_denied') {
+  private authContacts = async (acctEmail: string) => {
+    let lastRecipient = $('.recipients span').last();
+    this.S.cached('input_to').val(lastRecipient.text());
+    lastRecipient.last().remove();
+    let authRes = await Api.google.authPopup(acctEmail, this.tabId, false, Api.gmail.scope(['read']));
+    if (authRes && authRes.success === true) {
+      this.canReadEmails = true;
+      await this.searchContacts();
+    } else if (authRes && authRes.success === false && authRes.result === 'Denied' && authRes.error === 'access_denied') {
       alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
     } else {
       alert(Lang.general.somethingWentWrongTryAgain);
     }
   }
 
-  private render_search_results_loading_done = () => {
+  private renderSearchResultsLoadingDone = () => {
     this.S.cached('contacts').find('ul li.loading').remove();
     if (!this.S.cached('contacts').find('ul li').length) {
-      this.hide_contacts();
+      this.hideContacts();
     }
   }
 
-  private render_search_results = (contacts: Contact[], query: ProviderContactsQuery) => {
-    const renderable_contacts = contacts.slice();
-    renderable_contacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
-    renderable_contacts.splice(8);
-    if (renderable_contacts.length > 0 || this.contact_search_in_progress) {
-      let ul_html = '';
-      for (let contact of renderable_contacts) {
-        ul_html += `<li class="select_contact" data-test="action-select-contact" email="${Xss.htmlEscape(contact.email.replace(/<\/?b>/g, ''))}">`;
+  private renderSearchRes = (contacts: Contact[], query: ProviderContactsQuery) => {
+    const renderableContacts = contacts.slice();
+    renderableContacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
+    renderableContacts.splice(8);
+    if (renderableContacts.length > 0 || this.contactSearchInProgress) {
+      let ulHtml = '';
+      for (let contact of renderableContacts) {
+        ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.htmlEscape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.has_pgp) {
-          ul_html += '<img src="/img/svgs/locked-icon-green.svg" />';
+          ulHtml += '<img src="/img/svgs/locked-icon-green.svg" />';
         } else {
-          ul_html += '<img src="/img/svgs/locked-icon-gray.svg" />';
+          ulHtml += '<img src="/img/svgs/locked-icon-gray.svg" />';
         }
-        let display_email;
+        let displayEmail;
         if (contact.email.length < 40) {
-          display_email = contact.email;
+          displayEmail = contact.email;
         } else {
           const parts = contact.email.split('@');
-          display_email = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
+          displayEmail = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
         }
         if (contact.name) {
-          ul_html += (Xss.htmlEscape(contact.name) + ' &lt;' + Xss.htmlEscape(display_email) + '&gt;');
+          ulHtml += (Xss.htmlEscape(contact.name) + ' &lt;' + Xss.htmlEscape(displayEmail) + '&gt;');
         } else {
-          ul_html += Xss.htmlEscape(display_email);
+          ulHtml += Xss.htmlEscape(displayEmail);
         }
-        ul_html += '</li>';
+        ulHtml += '</li>';
       }
-      if (this.contact_search_in_progress) {
-        ul_html += '<li class="loading">loading...</li>';
+      if (this.contactSearchInProgress) {
+        ulHtml += '<li class="loading">loading...</li>';
       }
-      Xss.sanitizeRender(this.S.cached('contacts').find('ul'), ul_html);
+      Xss.sanitizeRender(this.S.cached('contacts').find('ul'), ulHtml);
       this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', (target: HTMLElement) => {
         let email = $(target).attr('email');
         if (email) {
-          this.select_contact(Str.parseEmail(email).email, query);
+          this.selectContact(Str.parseEmail(email).email, query);
         }
-      }, this.handle_errors(`select contact`)));
+      }, this.handleErrs(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function() { $(this).addClass('hover'); }, function() { $(this).removeClass('hover'); });
-      this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.auth_contacts(this.account_email), this.handle_errors(`authorize contact search`)));
+      this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.acctEmail), this.handleErrs(`authorize contact search`)));
       this.S.cached('contacts').css({
         display: 'block',
         top: `${$('#compose > tbody > tr:first').height()! + this.S.cached('input_addresses_container_inner').height()! + 10}px`, // both are in the template
       });
     } else {
-      this.hide_contacts();
+      this.hideContacts();
     }
   }
 
-  private search_contacts = async (db_only=false) => {
+  private searchContacts = async (db_only=false) => {
     const query = {substring: Str.parseEmail(this.S.cached('input_to').val() as string).email};
     if (query.substring !== '') {
-      let contacts = await this.app.storage_contact_search(query);
-      if (db_only || !this.can_read_emails) {
-        this.render_search_results(contacts, query);
+      let contacts = await this.app.storageContactSearch(query);
+      if (db_only || !this.canReadEmails) {
+        this.renderSearchRes(contacts, query);
       } else {
-        this.contact_search_in_progress = true;
-        this.render_search_results(contacts, query);
-        this.app.email_provider_search_contacts(query.substring, contacts, async search_contacts_results => {
-          if (search_contacts_results.new.length) {
-            for (let contact of search_contacts_results.new) {
-              let [in_db] = await this.app.storage_contact_get([contact.email]);
-              if (!in_db) {
-                await this.app.storage_contact_save(this.app.storage_contact_object(contact.email, contact.name, null, null, null, true, contact.date ? new Date(contact.date).getTime() : null));
-              } else if (!in_db.name && contact.name) {
-                const to_update = {name: contact.name};
-                await this.app.storage_contact_update(contact.email, to_update);
+        this.contactSearchInProgress = true;
+        this.renderSearchRes(contacts, query);
+        this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
+          if (searchContactsRes.new.length) {
+            for (let contact of searchContactsRes.new) {
+              let [inDb] = await this.app.storageContactGet([contact.email]);
+              if (!inDb) {
+                await this.app.storageContactSave(this.app.storageContactObj(contact.email, contact.name, null, null, null, true, contact.date ? new Date(contact.date).getTime() : null));
+              } else if (!inDb.name && contact.name) {
+                const toUpdate = {name: contact.name};
+                await this.app.storageContactUpdate(contact.email, toUpdate);
               }
             }
-            await this.search_contacts(true);
+            await this.searchContacts(true);
           } else {
-            this.render_search_results_loading_done();
-            this.contact_search_in_progress = false;
+            this.renderSearchResultsLoadingDone();
+            this.contactSearchInProgress = false;
           }
         });
       }
     } else {
-      this.hide_contacts(); // todo - show suggestions of most contacted ppl etc
+      this.hideContacts(); // todo - show suggestions of most contacted ppl etc
     }
   }
 
-  private hide_contacts = () => {
+  private hideContacts = () => {
     this.S.cached('contacts').css('display', 'none');
   }
 
-  private update_pubkey_icon = (include:boolean|null=null) => {
+  private updatePubkeyIcon = (include:boolean|null=null) => {
     if (include === null) { // decide if pubkey should be included
-      if (!this.include_pubkey_toggled_manually) { // leave it as is if toggled manually before
-        this.update_pubkey_icon(Boolean(this.recipients_missing_my_key.length) && !Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks));
+      if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
+        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.suppliedFrom || this.getSenderFromDom()).in(this.myAddrsOnPks));
       }
     } else { // set icon to specific state
       if (include) {
@@ -1244,9 +1245,9 @@ export class Composer {
     }
   }
 
-  update_footer_icon = (include:boolean|null=null) => {
+  updateFooterIcon = (include:boolean|null=null) => {
     if (include === null) { // decide if pubkey should be included
-      this.update_footer_icon(!!this.app.storage_get_email_footer());
+      this.updateFooterIcon(!!this.app.storageEmailFooterGet());
     } else { // set icon to specific state
       if (include) {
         this.S.cached('icon_footer').addClass('active');
@@ -1256,7 +1257,7 @@ export class Composer {
     }
   }
 
-  private toggle_sign_icon = () => {
+  private toggleSignIcon = () => {
     if (!this.S.cached('icon_sign').is('.active')) {
       this.S.cached('icon_sign').addClass('active');
       this.S.cached('compose_table').addClass('sign');
@@ -1268,12 +1269,12 @@ export class Composer {
       this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
     }
     if (Value.is(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
-      this.reset_send_btn();
+      this.resetSendBtn();
     }
-    this.show_hide_pw_or_pubkey_container_and_color_send_btn();
+    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  private recipient_key_id_text = (contact: Contact) => {
+  private recipientKeyIdText = (contact: Contact) => {
     if (contact.client === 'cryptup' && contact.keywords) {
       return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
     } else if (contact.fingerprint) {
@@ -1283,56 +1284,56 @@ export class Composer {
     }
   }
 
-  private render_pubkey_result = async (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
+  private renderPubkeyResult = async (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        let sending_address_on_pks = Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_pks);
-        let sending_address_on_keyserver = Value.is(this.supplied_from || this.get_sender_from_dom()).in(this.my_addresses_on_keyserver);
-        if ((contact.client === 'cryptup' && !sending_address_on_keyserver) || (contact.client !== 'cryptup' && !sending_address_on_pks)) {
+        let sendingAddrOnPks = Value.is(this.suppliedFrom || this.getSenderFromDom()).in(this.myAddrsOnPks);
+        let sendingAddrOnKeyserver = Value.is(this.suppliedFrom || this.getSenderFromDom()).in(this.myAddrsOnKeyserver);
+        if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup' && !sendingAddrOnPks)) {
           // new message, and my key is not uploaded where the recipient would look for it
-          if (await this.app.does_recipient_have_my_pubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
-            this.recipients_missing_my_key.push(email);
+          if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
+            this.recipientsMissingMyKey.push(email);
           }
-          this.update_pubkey_icon();
+          this.updatePubkeyIcon();
         } else {
-          this.update_pubkey_icon();
+          this.updatePubkeyIcon();
         }
       } else {
-        this.update_pubkey_icon();
+        this.updatePubkeyIcon();
       }
     }
     $(email_element).children('img, i').remove();
-    let content_html = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-    Xss.sanitizeAppend(email_element, content_html).find('img.close-icon').click(Ui.event.handle(target => this.remove_receiver(target), this.handle_errors('remove recipient')));
+    let contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
+    Xss.sanitizeAppend(email_element, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
       $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(email_element).addClass("failed");
       Xss.sanitizeReplace($(email_element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
-      $(email_element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.remove_receiver(target), this.handle_errors('remove recipient')));
+      $(email_element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
       $(email_element).addClass("wrong");
-    } else if (contact.pubkey && await Pgp.key.usable_but_expired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
+    } else if (contact.pubkey && await Pgp.key.usableButExpired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
       $(email_element).addClass("expired");
       Xss.sanitizePrepend(email_element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
-      $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipient_key_id_text(contact));
+      $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey && contact.attested) {
       $(email_element).addClass("attested");
       Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
-      $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + this.recipient_key_id_text(contact));
+      $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
       $(email_element).addClass("has_pgp");
       Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
-      $(email_element).attr('title', 'Does use encryption' + this.recipient_key_id_text(contact));
+      $(email_element).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {
       $(email_element).addClass("no_pgp");
       Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
       $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
-    this.show_hide_pw_or_pubkey_container_and_color_send_btn();
+    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  private get_recipients_from_dom = (filter:"no_pgp"|null=null): string[] => {
+  private getRecipientsFromDom = (filter:"no_pgp"|null=null): string[] => {
     let selector;
     if (filter === 'no_pgp') {
       selector = '.recipients span.no_pgp';
@@ -1346,114 +1347,114 @@ export class Composer {
     return recipients;
   }
 
-  private get_sender_from_dom = (): string => {
+  private getSenderFromDom = (): string => {
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
     } else {
-      return this.account_email;
+      return this.acctEmail;
     }
   }
 
-  private render_reply_success = (msg: SendableMsg, plaintext: string, msg_id: string) => {
-    let is_signed = this.S.cached('icon_sign').is('.active');
-    this.app.render_reinsert_reply_box(msg_id, msg.headers.To.split(',').map(a => Str.parseEmail(a).email));
-    if (is_signed) {
+  private renderReplySuccess = (msg: SendableMsg, plaintext: string, msg_id: string) => {
+    let isSigned = this.S.cached('icon_sign').is('.active');
+    this.app.renderReinsertReplyBox(msg_id, msg.headers.To.split(',').map(a => Str.parseEmail(a).email));
+    if (isSigned) {
       this.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
     this.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.S.cached('compose_table').css('display', 'none');
-    this.S.cached('reply_message_successful').find('div.replied_from').text(this.supplied_from);
-    this.S.cached('reply_message_successful').find('div.replied_to span').text(this.supplied_to);
-    Xss.sanitizeRender(this.S.cached('reply_message_successful').find('div.replied_body'), Xss.htmlEscape(plaintext).replace(/\n/g, '<br>'));
-    const email_footer = this.app.storage_get_email_footer();
-    if (email_footer) {
-      const renderable_escaped_email_footer = Xss.htmlEscape(email_footer).replace(/\n/g, '<br>');
-      if (is_signed) {
-        Xss.sanitizeAppend(this.S.cached('replied_body'), `<br><br>${renderable_escaped_email_footer}`);
+    this.S.cached('reply_msg_successful').find('div.replied_from').text(this.suppliedFrom);
+    this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.suppliedTo);
+    Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.htmlEscape(plaintext).replace(/\n/g, '<br>'));
+    const emailFooter = this.app.storageEmailFooterGet();
+    if (emailFooter) {
+      const renderableEscapedEmailFooter = Xss.htmlEscape(emailFooter).replace(/\n/g, '<br>');
+      if (isSigned) {
+        Xss.sanitizeAppend(this.S.cached('replied_body'), `<br><br>${renderableEscapedEmailFooter}`);
       } else {
-        Xss.sanitizeRender(this.S.cached('reply_message_successful').find('.email_footer'), `<br> ${renderable_escaped_email_footer}`);
+        Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('.email_footer'), `<br> ${renderableEscapedEmailFooter}`);
       }
     }
     let t = new Date();
     let time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
-    this.S.cached('reply_message_successful').find('div.replied_time').text(time);
-    this.S.cached('reply_message_successful').css('display', 'block');
+    this.S.cached('reply_msg_successful').find('div.replied_time').text(time);
+    this.S.cached('reply_msg_successful').css('display', 'block');
     if (msg.atts.length) {
       this.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
         a.msgId = msg_id;
-        return this.app.factory_attachment(a);
+        return this.app.factoryAtt(a);
       }).join('')).css('display', 'block');
     }
-    this.resize_reply_box();
+    this.resizeReplyBox();
   }
 
-  private simulate_ctrl_v = (to_paste: string) => {
+  private simulateCtrlV = (to_paste: string) => {
     const r = window.getSelection().getRangeAt(0);
     r.insertNode(r.createContextualFragment(to_paste));
   }
 
-  private render_compose_table = async () => {
+  private renderComposeTable = async () => {
     this.S.cached('compose_table').css('display', 'table');
     if (Env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({'padding-top': 0, 'padding-bottom': 0});
     }
-    this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extract_process_send_msg()));
-    this.S.cached('send_btn').keypress(Ui.enter(() => this.extract_process_send_msg()));
-    this.S.cached('input_to').keydown((ke: any) => this.respond_to_input_hotkeys(ke));
-    this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.search_contacts()));
-    this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parse_and_render_recipients().catch(Catch.rejection)));
+    this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
+    this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
+    this.S.cached('input_to').keydown((ke: any) => this.respondToInputHotkeys(ke));
+    this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
+    this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parseRenderRecipients().catch(Catch.rejection)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
-    this.S.cached('compose_table').click(Ui.event.handle(() => this.hide_contacts(), this.handle_errors(`hide contact box`)));
+    this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.handleErrs(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
         this.S.cached('input_to').focus();
       }
-    }, this.handle_errors(`focus on recipient field`))).children().click(() => false);
-    this.resize_input_to();
-    this.attach.initialize_attach_dialog('fineuploader', 'fineuploader_button');
+    }, this.handleErrs(`focus on recipient field`))).children().click(() => false);
+    this.resizeInputTo();
+    this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.S.cached('input_to').focus();
-    if (this.is_reply_box) {
-      if (this.supplied_to) {
+    if (this.isReplyBox) {
+      if (this.suppliedTo) {
         this.S.cached('input_text').focus();
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.parse_and_render_recipients(); // this will force firefox to render them on load
+        await this.parseRenderRecipients(); // this will force firefox to render them on load
       }
       Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
-        $(window).resize(Ui.event.prevent('veryslowspree', () => this.resize_reply_box()));
-        this.S.cached('input_text').keyup(() => this.resize_reply_box());
+        $(window).resize(Ui.event.prevent('veryslowspree', () => this.resizeReplyBox()));
+        this.S.cached('input_text').keyup(() => this.resizeReplyBox());
       }, 1000);
     } else {
-      $('.close_new_message').click(Ui.event.handle(() => this.app.close_msg(), this.handle_errors(`close message`)));
-      let addresses = this.app.storage_get_addresses() as string[];
+      $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.handleErrs(`close message`)));
+      let addresses = this.app.storageGetAddresses() as string[];
       if (addresses.length > 1) {
-        let input_addr_container = $('#input_addresses_container');
-        input_addr_container.addClass('show_send_from');
-        Xss.sanitizeAppend(input_addr_container, '<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
-        input_addr_container.find('#input_from_settings').click(Ui.event.handle(() => this.app.render_sending_address_dialog(), this.handle_errors(`open sending address dialog`)));
-        Xss.sanitizeAppend(input_addr_container.find('#input_from'), addresses.map(a => `<option value="${Xss.htmlEscape(a)}">${Xss.htmlEscape(a)}</option>`).join('')).change(() => this.update_pubkey_icon());
+        let inputAddrContainer = $('#input_addresses_container');
+        inputAddrContainer.addClass('show_send_from');
+        Xss.sanitizeAppend(inputAddrContainer, '<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
+        inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.handleErrs(`open sending address dialog`)));
+        Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(a => `<option value="${Xss.htmlEscape(a)}">${Xss.htmlEscape(a)}</option>`).join('')).change(() => this.updatePubkeyIcon());
         if (Env.browser().name === 'firefox') {
-          input_addr_container.find('#input_from_settings').css('margin-top', '20px');
+          inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
         }
       }
-      this.set_input_text_height_manually_if_needed();
+      this.setInputTextHeightManuallyIfNeeded();
     }
   }
 
-  private should_save_draft = (msg_body: string) => {
-    if (msg_body && msg_body !== this.last_draft) {
-      this.last_draft = msg_body;
+  private shouldSaveDraft = (msg_body: string) => {
+    if (msg_body && msg_body !== this.lastDraft) {
+      this.lastDraft = msg_body;
       return true;
     } else {
       return false;
     }
   }
 
-  private format_password_protected_email = (short_id: string, orig_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
+  private formatPasswordProtectedEmail = (short_id: string, orig_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
     const msgUrl = `${this.FC_WEB_URL}/${short_id}`;
     const a = `<a href="${Xss.htmlEscape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.openMsg[lang]}</a>`;
-    const intro = this.S.cached('input_intro').length ? this.extract_as_text('input_intro') : '';
+    const intro = this.S.cached('input_intro').length ? this.extractAsText('input_intro') : '';
     const text = [];
     const html = [];
     if (intro) {
@@ -1465,62 +1466,62 @@ export class Composer {
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.msgEncryptedHtml[lang] + a + '<br><br>');
     html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.htmlEscape(msgUrl) + '<br><br><br>');
-    const html_fc_web_url_link = '<a href="' + Xss.htmlEscape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.htmlEscape(this.FC_WEB_URL) + '</a>';
+    const htmlFcWebUrlLink = '<a href="' + Xss.htmlEscape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.htmlEscape(this.FC_WEB_URL) + '</a>';
     if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      const html_pgp_msg = orig_body['text/html'] ? orig_body['text/html'] : (orig_body['text/plain'] || '').replace(this.FC_WEB_URL, html_fc_web_url_link).replace(/\n/g, '<br>\n');
-      html.push('<div style="color: #999;">' + html_pgp_msg + '</div>');
+      const htmlPgpMsg = orig_body['text/html'] ? orig_body['text/html'] : (orig_body['text/plain'] || '').replace(this.FC_WEB_URL, htmlFcWebUrlLink).replace(/\n/g, '<br>\n');
+      html.push('<div style="color: #999;">' + htmlPgpMsg + '</div>');
       text.push(orig_body['text/plain']);
     }
     html.push('</div>');
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
 
-  private format_email_text_footer = (orig_body: SendableMsgBody): SendableMsgBody => {
-    const email_footer = this.app.storage_get_email_footer();
-    const body: SendableMsgBody = {'text/plain': orig_body['text/plain'] + (email_footer ? '\n' + email_footer : '')};
+  private formatEmailTextFooter = (orig_body: SendableMsgBody): SendableMsgBody => {
+    const emailFooter = this.app.storageEmailFooterGet();
+    const body: SendableMsgBody = {'text/plain': orig_body['text/plain'] + (emailFooter ? '\n' + emailFooter : '')};
     if (typeof orig_body['text/html'] !== 'undefined') {
-      body['text/html'] = orig_body['text/html'] + (email_footer ? '<br>\n' + email_footer.replace(/\n/g, '<br>\n') : '');
+      body['text/html'] = orig_body['text/html'] + (emailFooter ? '<br>\n' + emailFooter.replace(/\n/g, '<br>\n') : '');
     }
     return body;
   }
 
   static default_app_functions = (): ComposerAppFunctionsInterface => {
     return {
-      send_msg_to_main_window: (channel: string, data: Dict<Serializable>) => null,
-      can_read_email: () => false,
-      does_recipient_have_my_pubkey: (their_email: string): Promise<boolean|undefined> => Promise.resolve(false),
-      storage_get_addresses: () => [],
-      storage_get_addresses_pks: () => [],
-      storage_get_addresses_keyserver: () => [],
-      storage_get_email_footer: () => null,
-      storage_set_email_footer: () => Promise.resolve(),
-      storage_get_hide_msg_password: () => false,
-      storage_get_subscription: () => Promise.resolve(new Subscription(null)),
-      storage_set_draft_meta: () => Promise.resolve(),
-      storage_get_key: () => { throw new Error('storage_get_key not implemented'); },
-      storage_passphrase_get: () => Promise.resolve(null),
-      storage_add_admin_codes: (short_id: string, msg_admin_code: string, att_admin_codes: string[]) => Promise.resolve(),
-      storage_contact_get: (email: string[]) => Promise.resolve([]),
-      storage_contact_update: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
-      storage_contact_save: (contact: Contact) => Promise.resolve(),
-      storage_contact_search: (query: DbContactFilter) => Promise.resolve([]),
-      storage_contact_object: Store.dbContactObj,
-      email_provider_draft_get: (draft_id: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMsg}),
-      email_provider_draft_create: (mime_msg: string) => Promise.reject(null),
-      email_provider_draft_update: (draft_id: string, mime_msg: string) => Promise.resolve({}),
-      email_provider_draft_delete: (draft_id: string) => Promise.resolve({}),
-      email_provider_msg_send: (msg: SendableMsg, render_upload_progress: ProgressCb) => Promise.reject({message: 'not implemented'}),
-      email_provider_search_contacts: (query: string, known_contacts: Contact[], multi_cb: (r: any) => void) => multi_cb({new: [], all: []}),
-      email_provider_determine_reply_msg_header_variables: () => Promise.resolve(undefined),
-      email_provider_extract_armored_block: (msg_id) => Promise.resolve(''),
-      send_msg_to_background_script: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
-      render_reinsert_reply_box: (last_msg_id: string, recipients: string[]) => Promise.resolve(),
-      render_footer_dialog: () => null,
-      render_add_pubkey_dialog: (emails: string[]) => null,
-      render_help_dialog: () => null,
-      render_sending_address_dialog: () => null,
-      close_msg: () => null,
-      factory_attachment: (att: Att) => `<div>${att.name}</div>`,
+      sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => null,
+      canReadEmails: () => false,
+      doesRecipientHaveMyPubkey: (theirEmail: string): Promise<boolean|undefined> => Promise.resolve(false),
+      storageGetAddresses: () => [],
+      storageGetAddressesPks: () => [],
+      storageGetAddressesKeyserver: () => [],
+      storageEmailFooterGet: () => null,
+      storageEmailFooterSet: () => Promise.resolve(),
+      storageGetHideMsgPassword: () => false,
+      storageGetSubscription: () => Promise.resolve(new Subscription(null)),
+      storageSetDraftMeta: () => Promise.resolve(),
+      storageGetKey: () => { throw new Error('storage_get_key not implemented'); },
+      storagePassphraseGet: () => Promise.resolve(null),
+      storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise.resolve(),
+      storageContactGet: (email: string[]) => Promise.resolve([]),
+      storageContactUpdate: (email: string[]|string, update: ContactUpdate) => Promise.resolve(),
+      storageContactSave: (contact: Contact) => Promise.resolve(),
+      storageContactSearch: (query: DbContactFilter) => Promise.resolve([]),
+      storageContactObj: Store.dbContactObj,
+      emailProviderDraftGet: (draftId: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMsg}),
+      emailProviderDraftCreate: (mime_msg: string) => Promise.reject(null),
+      emailProviderDraftUpdate: (draftId: string, mime_msg: string) => Promise.resolve({}),
+      emailProviderDraftDelete: (draftId: string) => Promise.resolve({}),
+      emailProviderMsgSend: (msg: SendableMsg, render_upload_progress: ProgressCb) => Promise.reject({message: 'not implemented'}),
+      emailEroviderSearchContacts: (query: string, known_contacts: Contact[], multi_cb: (r: any) => void) => multi_cb({new: [], all: []}),
+      emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
+      emailProviderExtractArmoredBlock: (msgId) => Promise.resolve(''),
+      sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
+      renderReinsertReplyBox: (last_msgId: string, recipients: string[]) => Promise.resolve(),
+      renderFooterDialog: () => null,
+      renderAddPubkeyDialog: (emails: string[]) => null,
+      renderHelpDialog: () => null,
+      renderSendingAddrDialog: () => null,
+      closeMsg: () => null,
+      factoryAtt: (att: Att) => `<div>${att.name}</div>`,
     };
   }
 

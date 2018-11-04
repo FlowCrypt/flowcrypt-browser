@@ -9,14 +9,14 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'email_provider']);
-  let account_email = urlParams.account_email as string|undefined;
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
-  if (!urlParams.email_provider) {
-    urlParams.email_provider = 'gmail';
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
+  let acctEmail = urlParams.acctEmail as string|undefined;
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  if (!urlParams.emailProvider) {
+    urlParams.emailProvider = 'gmail';
   }
 
-  let render_setup_done = (setup_done: boolean) => {
+  let renderSetupDone = (setup_done: boolean) => {
     if (setup_done) {
       $('.show_if_setup_done').css('display', 'block');
     } else {
@@ -24,16 +24,16 @@ Catch.try(async () => {
     }
   };
 
-  if (!urlParams.account_email) {
-    render_setup_done(false);
+  if (!urlParams.acctEmail) {
+    renderSetupDone(false);
   } else {
-    let {setup_done} = await Store.getAccount(account_email!, ['setup_done']);
-    render_setup_done(setup_done || false);
+    let {setup_done} = await Store.getAcct(acctEmail!, ['setup_done']);
+    renderSetupDone(setup_done || false);
   }
 
-  $('.hidable').not('.' + urlParams.email_provider).css('display', 'none');
+  $('.hidable').not('.' + urlParams.emailProvider).css('display', 'none');
 
-  if (urlParams.email_provider === 'outlook') {
+  if (urlParams.emailProvider === 'outlook') {
     $('.permission_send').text('Manage drafts and send emails');
     $('.permission_read').text('Read messages');
   } else { // gmail
@@ -41,10 +41,10 @@ Catch.try(async () => {
     $('.permission_read').text('Read messages');
   }
 
-  $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'open_google_auth_dialog', {account_email})));
+  $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', {acctEmail})));
 
-  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'open_google_auth_dialog', {omit_read_scope: true, account_email})));
+  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', {omitReadScope: true, acctEmail})));
 
-  $('.close_page').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_page')));
+  $('.close_page').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_page')));
 
 })();

@@ -9,29 +9,29 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'which']);
-  const account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  const parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'which']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   const which = Env.urlParamRequire.oneof(urlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
 
-  const render_call_result = (api: string, variables: Dict<any>, result: any, error: any=null) => {
+  const renderCallRes = (api: string, variables: Dict<any>, result: any, error: any=null) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${JSON.stringify(error)})</pre>`;
     Xss.sanitizeAppend('#content', r);
   };
 
   if(which === 'google_account') {
-    const variables = {account_email};
+    const variables = {acctEmail};
     try {
-      const r = await Api.gmail.usersMeProfile(account_email);
-      render_call_result('gmail.users_me_profile', variables, r);
+      const r = await Api.gmail.usersMeProfile(acctEmail);
+      renderCallRes('gmail.users_me_profile', variables, r);
     } catch (e) {
-      render_call_result('gmail.users_me_profile', variables, null, e);
+      renderCallRes('gmail.users_me_profile', variables, null, e);
     }
     try {
-      const r = await Api.google.plus.peopleMe(account_email);
-      render_call_result('google.plus.people_me', variables, r);
+      const r = await Api.google.plus.peopleMe(acctEmail);
+      renderCallRes('google.plus.people_me', variables, r);
     } catch (e) {
-      render_call_result('google.plus.people_me', variables, null, e);
+      renderCallRes('google.plus.people_me', variables, null, e);
     }
   } else if(which === 'flowcrypt_account') {
     Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.htmlEscape(which)} (not implemented)`);

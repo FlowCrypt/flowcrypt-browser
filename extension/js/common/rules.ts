@@ -27,8 +27,8 @@ export class Rules {
     }
   }
 
-  can_create_keys = () => !Value.is('NO_PRV_CREATE').in(this.rules[this.domain_hash].flags);
+  canCreateKeys = () => !Value.is('NO_PRV_CREATE').in(this.rules[this.domain_hash].flags);
 
-  can_backup_keys = () => !Value.is('NO_PRV_BACKUP').in(this.rules[this.domain_hash].flags);
+  canBackupKeys = () => !Value.is('NO_PRV_BACKUP').in(this.rules[this.domain_hash].flags);
 
 }

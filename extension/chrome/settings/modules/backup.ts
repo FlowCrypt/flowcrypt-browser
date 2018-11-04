@@ -17,27 +17,27 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'action', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id: string|null = null;
+  let urlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId: string|null = null;
   if (urlParams.action !== 'setup') {
-    parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+    parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   }
 
-  let email_provider: EmailProvider;
+  let emailProvider: EmailProvider;
 
   await Ui.passphraseToggle(['password', 'password2']);
 
-  let storage = await Store.getAccount(account_email, ['setup_simple', 'email_provider']);
-  email_provider = storage.email_provider || 'gmail';
+  let storage = await Store.getAcct(acctEmail, ['setup_simple', 'email_provider']);
+  emailProvider = storage.email_provider || 'gmail';
 
-  let rules = new Rules(account_email);
-  if (!rules.can_backup_keys()) {
+  let rules = new Rules(acctEmail);
+  if (!rules.canBackupKeys()) {
     Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
     return;
   }
 
-  let display_block = (name: string) => {
+  let displayBlock = (name: string) => {
     let blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
     for (let block of blocks) {
       $('#' + block).css('display', 'none');
@@ -45,35 +45,35 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.render_password_strength('#step_1_password', '#password', '.action_password')));
+  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#step_1_password', '#password', '.action_password')));
 
-  let show_status = async () => {
+  let showStatus = async () => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
-    display_block('loading');
-    let storage = await Store.getAccount(account_email, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
-    if (email_provider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes || [], 'read')) {
+    displayBlock('loading');
+    let storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
+    if (emailProvider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
-        keys = await Api.gmail.fetchKeyBackups(account_email);
+        keys = await Api.gmail.fetchKeyBackups(acctEmail);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
         } else if(Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
           Xss.sanitizeRender('#content', `Could not check for backups: unknown error. ${Ui.retryLink()}`);
         }
         return;
       }
-      display_block('step_0_status');
+      displayBlock('step_0_status');
       if (keys && keys.length) {
         $('.status_summary').text('Backups found: ' + keys.length + '. Your account is backed up correctly in your email inbox.');
         Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE MORE BACKUP OPTIONS</div>');
         $('.action_go_manual').click(Ui.event.handle(() => {
-          display_block('step_3_manual');
+          displayBlock('step_3_manual');
           $('h1').text('Back up your private key');
         }));
       } else if (storage.key_backup_method) {
@@ -81,21 +81,21 @@ Catch.try(async () => {
           $('.status_summary').text('You have previously backed up your key into a file.');
           Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
-            display_block('step_3_manual');
+            displayBlock('step_3_manual');
             $('h1').text('Back up your private key');
           }));
         } else if (storage.key_backup_method === 'print') {
           $('.status_summary').text('You have previously backed up your key by printing it.');
           Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE OTHER BACKUP OPTIONS</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
-            display_block('step_3_manual');
+            displayBlock('step_3_manual');
             $('h1').text('Back up your private key');
           }));
         } else { // inbox or other methods
           $('.status_summary').text('There are no backups on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
           Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">SEE BACKUP OPTIONS</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
-            display_block('step_3_manual');
+            displayBlock('step_3_manual');
             $('h1').text('Back up your private key');
           }));
         }
@@ -104,38 +104,38 @@ Catch.try(async () => {
           $('.status_summary').text('No backups found on this account. You can store a backup of your key in email inbox. Your key will be protected by a pass phrase of your choice.');
           Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
           $('.action_go_backup').click(Ui.event.handle(() => {
-            display_block('step_1_password');
+            displayBlock('step_1_password');
             $('h1').text('Set Backup Pass Phrase');
           }));
           $('.action_go_manual').click(Ui.event.handle(() => {
-            display_block('step_3_manual');
+            displayBlock('step_3_manual');
             $('h1').text('Back up your private key');
           }));
         } else {
           $('.status_summary').text('No backups found on this account. If you lose your device, or it stops working, you will not be able to read your encrypted email.');
           Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_manual">BACK UP MY KEY</div>');
           $('.action_go_manual').click(Ui.event.handle(() => {
-            display_block('step_3_manual');
+            displayBlock('step_3_manual');
             $('h1').text('Back up your private key');
           }));
         }
       }
     } else { // gmail read permission not granted - cannot check for backups
-      display_block('step_0_status');
+      displayBlock('step_0_status');
       $('.status_summary').text('FlowCrypt cannot check your backups.');
-      let pemissions_button_if_gmail = email_provider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
-      Xss.sanitizeRender('#step_0_status .container', `${pemissions_button_if_gmail}<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>`);
+      let pemissionsBtnIfGmail = emailProvider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
+      Xss.sanitizeRender('#step_0_status .container', `${pemissionsBtnIfGmail}<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>`);
       $('.action_go_manual').click(Ui.event.handle(() => {
-        display_block('step_3_manual');
+        displayBlock('step_3_manual');
         $('h1').text('Back up your private key');
       }));
-      $('.action_go_auth_denied').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {account_email, page: '/chrome/settings/modules/auth_denied.htm'})));
+      $('.action_go_auth_denied').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {acctEmail, page: '/chrome/settings/modules/auth_denied.htm'})));
     }
   };
 
   $('.action_password').click(Ui.event.handle(target => {
     if ($(target).hasClass('green')) {
-      display_block('step_2_confirm');
+      displayBlock('step_2_confirm');
     } else {
       alert('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
@@ -144,46 +144,46 @@ Catch.try(async () => {
   $('.action_reset_password').click(Ui.event.handle(() => {
     $('#password').val('');
     $('#password2').val('');
-    display_block('step_1_password');
-    Settings.render_password_strength('#step_1_password', '#password', '.action_password');
+    displayBlock('step_1_password');
+    Settings.renderPasswordStrength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   }));
 
   $('.action_backup').click(Ui.event.prevent('double', async (target) => {
-    let new_passphrase = $('#password').val() as string; // text input
-    if (new_passphrase !== $('#password2').val()) {
+    let newPassphrase = $('#password').val() as string; // text input
+    if (newPassphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');
       $('#password2').val('');
       $('#password2').focus();
     } else {
-      let btn_text = $(target).text();
+      let btnText = $(target).text();
       Xss.sanitizeRender(target, Ui.spinner('white'));
-      let [primary_ki] = await Store.keysGet(account_email, ['primary']);
-      Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
-      let prv = openpgp.key.readArmored(primary_ki.private).keys[0];
-      await Settings.openpgp_key_encrypt(prv, new_passphrase);
-      await Store.passphrase_save('local', account_email, primary_ki.longid, new_passphrase);
-      await Store.keys_add(account_email, prv.armor());
+      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      let prv = openpgp.key.readArmored(primaryKi.private).keys[0];
+      await Settings.openpgpKeyEncrypt(prv, newPassphrase);
+      await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
+      await Store.keysAdd(acctEmail, prv.armor());
       try {
-        await do_backup_on_email_provider(account_email, prv.armor());
+        await doBackupOnEmailProvider(acctEmail, prv.armor());
       } catch (e) {
         if(Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parent_tab_id && Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+        } else if(parentTabId && Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
           alert('Account needs to be re-connected first. Please try later.');
         } else {
-          Catch.handle_exception(e);
+          Catch.handleException(e);
           alert(`Error happened, please try again (${e.message})`);
         }
-        $(target).text(btn_text);
+        $(target).text(btnText);
         return;
       }
-      await write_backup_done_and_render(false, 'inbox');
+      await writeBackupDoneAndRender(false, 'inbox');
     }
   }));
 
-  let is_master_private_key_encrypted = async (ki: KeyInfo) => {
+  let isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
     let k = openpgp.key.readArmored(ki.private).keys[0];
     if (k.primaryKey.isDecrypted()) {
       return false;
@@ -199,95 +199,95 @@ Catch.try(async () => {
     return true;
   };
 
-  let as_backup_file = (account_email: string, armored_key: string) => {
-    return new Att({name: `cryptup-backup-${account_email.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armored_key});
+  let asBackupFile = (acctEmail: string, armored_key: string) => {
+    return new Att({name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armored_key});
   };
 
-  let do_backup_on_email_provider = async (account_email: string, armored_key: string) => {
-    let email_msg = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
-    let email_atts = [as_backup_file(account_email, armored_key)];
-    let msg = await Api.common.msg(account_email, account_email, account_email, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': email_msg}, email_atts);
-    if (email_provider === 'gmail') {
-      return await Api.gmail.msgSend(account_email, msg);
+  let doBackupOnEmailProvider = async (acctEmail: string, armored_key: string) => {
+    let emailMsg = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
+    let emailAtts = [asBackupFile(acctEmail, armored_key)];
+    let msg = await Api.common.msg(acctEmail, acctEmail, acctEmail, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': emailMsg}, emailAtts);
+    if (emailProvider === 'gmail') {
+      return await Api.gmail.msgSend(acctEmail, msg);
     } else {
-      throw Error(`Backup method not implemented for ${email_provider}`);
+      throw Error(`Backup method not implemented for ${emailProvider}`);
     }
   };
 
-  let backup_on_email_provider_and_update_ui = async (primary_ki: KeyInfo) => {
-    let pp = await Store.passphrase_get(account_email, primary_ki.longid);
-    if (!pp || !await is_pass_phrase_strong_enough(primary_ki, pp)) {
+  let backupOnEmailProviderAndUpdateUi = async (primary_ki: KeyInfo) => {
+    let pp = await Store.passphraseGet(acctEmail, primary_ki.longid);
+    if (!pp || !await isPassPhraseStrongEnough(primary_ki, pp)) {
       alert('Your key is not protected with a strong pass phrase, skipping');
       return;
     }
     let btn = $('.action_manual_backup');
-    let orig_btn_text = btn.text();
+    let origBtnText = btn.text();
     Xss.sanitizeRender(btn, Ui.spinner('white'));
     try {
-      await do_backup_on_email_provider(account_email, primary_ki.private);
+      await doBackupOnEmailProvider(acctEmail, primary_ki.private);
     } catch (e) {
       if(Api.err.isNetErr(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
-      } else if(parent_tab_id && Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parent_tab_id, 'notification_show_auth_popup_needed', {account_email});
+      } else if(parentTabId && Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
         return alert(`Error happened: ${e.message}`);
       }
     } finally {
-      btn.text(orig_btn_text);
+      btn.text(origBtnText);
     }
-    await write_backup_done_and_render(false, 'inbox');
+    await writeBackupDoneAndRender(false, 'inbox');
   };
 
-  let backup_as_file = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
-    let attachment = as_backup_file(account_email, primary_ki.private);
+  let backupAsFile = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
+    let attachment = asBackupFile(acctEmail, primary_ki.private);
     if (Env.browser().name !== 'firefox') {
       Att.methods.saveToDownloads(attachment);
-      await write_backup_done_and_render(false, 'file');
+      await writeBackupDoneAndRender(false, 'file');
     } else {
       Att.methods.saveToDownloads(attachment, $('.backup_action_buttons_container'));
     }
   };
 
-  let backup_by_print = async (primary_ki: KeyInfo) => { // todo - implement + add a non-encrypted print option
+  let backupByBrint = async (primary_ki: KeyInfo) => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
   };
 
-  let backup_refused = async (ki: KeyInfo) => {
-    await write_backup_done_and_render(Value.int.get_future_timestamp_in_months(3), 'none');
+  let backupRefused = async (ki: KeyInfo) => {
+    await writeBackupDoneAndRender(Value.int.getFutureTimestampInMonths(3), 'none');
   };
 
-  let write_backup_done_and_render = async (prompt: number|false, method: KeyBackupMethod) => {
-    await Store.set(account_email, { key_backup_prompt: prompt, key_backup_method: method });
+  let writeBackupDoneAndRender = async (prompt: number|false, method: KeyBackupMethod) => {
+    await Store.set(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
     if (urlParams.action === 'setup') {
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: urlParams.account_email, action: 'finalize' });
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail, action: 'finalize' });
     } else {
-      await show_status();
+      await showStatus();
     }
   };
 
   $('.action_manual_backup').click(Ui.event.prevent('double', async (target) => {
     let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
-    Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
-    if (!await is_master_private_key_encrypted(primary_ki)) {
+    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    if (!await isMasterPrivateKeyEncrypted(primaryKi)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
     }
     if (selected === 'inbox') {
-      await backup_on_email_provider_and_update_ui(primary_ki);
+      await backupOnEmailProviderAndUpdateUi(primaryKi);
     } else if (selected === 'file') {
-      await backup_as_file(primary_ki);
+      await backupAsFile(primaryKi);
     } else if (selected === 'print') {
-      await backup_by_print(primary_ki);
+      await backupByBrint(primaryKi);
     } else {
-      await backup_refused(primary_ki);
+      await backupRefused(primaryKi);
     }
   }));
 
-  let is_pass_phrase_strong_enough = async (ki: KeyInfo, pass_phrase: string) => {
+  let isPassPhraseStrongEnough = async (ki: KeyInfo, pass_phrase: string) => {
     let k = Pgp.key.read(ki.private);
     if(k.isDecrypted()) {
       return false;
@@ -303,30 +303,30 @@ Catch.try(async () => {
       }
       pass_phrase = pp;
     }
-    if (Settings.evaluate_password_strength(pass_phrase).word.pass === true) {
+    if (Settings.evalPasswordStrength(pass_phrase).word.pass === true) {
       return true;
     }
     alert('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
     return false;
   };
 
-  let setup_create_simple_automatic_inbox_backup = async () => {
-    let [primary_ki] = await Store.keysGet(account_email, ['primary']);
-    if(Pgp.key.read(primary_ki.private).isDecrypted()) {
+  let setupCreateSimpleAutomaticInboxBackup = async () => {
+    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    if(Pgp.key.read(primaryKi.private).isDecrypted()) {
       alert('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
-    Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
-    await do_backup_on_email_provider(account_email, primary_ki.private);
-    await write_backup_done_and_render(false, 'inbox');
+    Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    await doBackupOnEmailProvider(acctEmail, primaryKi.private);
+    await writeBackupDoneAndRender(false, 'inbox');
   };
 
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
     if (urlParams.action === 'setup') {
-      await Store.set(account_email, { key_backup_prompt: false });
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { account_email: urlParams.account_email });
+      await Store.set(acctEmail, { key_backup_prompt: false });
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail });
     } else {
-      BrowserMsg.send(parent_tab_id, 'close_page');
+      BrowserMsg.send(parentTabId, 'close_page');
     }
   }));
 
@@ -351,35 +351,35 @@ Catch.try(async () => {
     $('.action_skip_backup').parent().css('display', 'none');
     if (storage.setup_simple) {
       try {
-        await setup_create_simple_automatic_inbox_backup();
+        await setupCreateSimpleAutomaticInboxBackup();
       } catch (e) {
-        return await Settings.prompt_to_retry('REQUIRED', e, 'Failed to back up your key, probably due to internet connection.', setup_create_simple_automatic_inbox_backup);
+        return await Settings.promptToRetry('REQUIRED', e, 'Failed to back up your key, probably due to internet connection.', setupCreateSimpleAutomaticInboxBackup);
       }
     } else {
-      display_block('step_3_manual');
+      displayBlock('step_3_manual');
       $('h1').text('Back up your private key');
     }
   } else if (urlParams.action === 'passphrase_change_gmail_backup') {
     if (storage.setup_simple) {
-      display_block('loading');
-      let [primary_ki] = await Store.keysGet(account_email, ['primary']);
-      Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
+      displayBlock('loading');
+      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
-        await do_backup_on_email_provider(account_email, primary_ki.private);
+        await doBackupOnEmailProvider(acctEmail, primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');
       } catch (e) {
         Xss.sanitizeRender('#content', 'Connection failed, please <a href="#" class="reload">try again</a>.');
         $('.reload').click(() => window.location.reload());
       }
     } else { // should never happen on this action. Just in case.
-      display_block('step_3_manual');
+      displayBlock('step_3_manual');
       $('h1').text('Back up your private key');
     }
   } else if (urlParams.action === 'options') {
-    display_block('step_3_manual');
+    displayBlock('step_3_manual');
     $('h1').text('Back up your private key');
   } else {
-    await show_status();
+    await showStatus();
   }
 
 })();

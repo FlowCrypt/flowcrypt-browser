@@ -17,7 +17,7 @@ export type PaymentMethod = 'stripe'|'group'|'trial';
 export type ProductLevel = 'pro'|null;
 export type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
 
-export class FlowCryptAccount {
+export class FcAcct {
 
   PRODUCTS: Dict<Product> = {
     null: {id: null, method: null, name: null, level: null},
@@ -151,7 +151,7 @@ export class FlowCryptAccount {
         this.eventHandlers.renderStatusText('A little while more..');
       }
       let authInfo = await Store.authInfo();
-      let tokens = await this.eventHandlers.findMatchingTokensFromEmail(authInfo.account_email!, authInfo.uuid!);
+      let tokens = await this.eventHandlers.findMatchingTokensFromEmail(authInfo.acctEmail!, authInfo.uuid!);
       if (tokens) {
         return tokens;
       } else {

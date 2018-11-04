@@ -11,40 +11,41 @@ import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
 
 declare const openpgp: typeof OpenPGP;
+declare const ClipboardJS: any;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'longid', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   $('.action_view_user_ids').attr('href', Env.urlCreate('my_key_user_ids.htm', urlParams));
   $('.action_view_update').attr('href', Env.urlCreate('my_key_update.htm', urlParams));
 
-  let [primary_ki] = await Store.keysGet(account_email, [urlParams.longid as string || 'primary']);
-  Settings.abort_and_render_error_if_keyinfo_empty(primary_ki);
+  let [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
+  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  let key = openpgp.key.readArmored(primary_ki.private).keys[0];
+  let key = openpgp.key.readArmored(primaryKi.private).keys[0];
 
   try {
-    let {results: [result]} = await Api.attester.lookupEmail([account_email]);
-    let url = Api.fc.url('pubkey', account_email);
-    if (result.pubkey && Pgp.key.longid(result.pubkey) === primary_ki.longid) {
+    let {results: [result]} = await Api.attester.lookupEmail([acctEmail]);
+    let url = Api.fc.url('pubkey', acctEmail);
+    if (result.pubkey && Pgp.key.longid(result.pubkey) === primaryKi.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
   } catch (e) {
-    Catch.handle_exception(e);
+    Catch.handleException(e);
     $('.pubkey_link_container').remove();
   }
 
-  $('.email').text(account_email);
+  $('.email').text(acctEmail);
   $('.key_fingerprint').text(Pgp.key.fingerprint(key, 'spaced')!);
-  $('.key_words').text(primary_ki.keywords);
+  $('.key_words').text(primaryKi.keywords);
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');
 
   $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    Att.methods.saveToDownloads(Att.methods.keyinfoAsPubkeyAtt(primary_ki), Env.browser().name === 'firefox' ? $('body') : undefined);
+    Att.methods.saveToDownloads(Att.methods.keyinfoAsPubkeyAtt(primaryKi), Env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_show_other_type').click(Ui.event.handle(() => {
@@ -63,8 +64,7 @@ Catch.try(async () => {
     }
   }));
 
-  let clipboard_options = {text: () => key.toPublic().armor()};
-  // @ts-ignore
-  let cbjs = new window.ClipboardJS('.action_copy_pubkey', clipboard_options);
+  let clipboardOpts = {text: () => key.toPublic().armor()};
+  let cbjs = new ClipboardJS('.action_copy_pubkey', clipboardOpts);
 
 })();

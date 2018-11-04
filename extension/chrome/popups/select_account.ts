@@ -19,22 +19,22 @@ Catch.try(async () => {
     $('#title').text('Select an account to open settings');
   }
 
-  let account_storages = await Store.get_accounts(await Store.accountEmailsGet(), ['setup_done', 'picture']);
-  let ul_emails = '';
-  for (let email of Object.keys(account_storages)) {
-    if (account_storages[email].setup_done === true) {
-      let picture_escaped = Xss.htmlEscape(account_storages[email].picture || '/img/svgs/profile-icon.svg');
-      let email_escaped = Xss.htmlEscape(email);
-      ul_emails += `<li><a class="button gray2 long" href="#" email="${email_escaped}"><img class="picture" src="${picture_escaped}">${email_escaped}</a></li>`;
-      Settings.update_profile_picture_if_missing(email).catch(Catch.handle_exception); // will show next time page is rendered
+  let acctStorages = await Store.getAccounts(await Store.acctEmailsGet(), ['setup_done', 'picture']);
+  let emailsUlHtml = '';
+  for (let email of Object.keys(acctStorages)) {
+    if (acctStorages[email].setup_done === true) {
+      let picEscaped = Xss.htmlEscape(acctStorages[email].picture || '/img/svgs/profile-icon.svg');
+      let emailEscaped = Xss.htmlEscape(email);
+      emailsUlHtml += `<li><a class="button gray2 long" href="#" email="${emailEscaped}"><img class="picture" src="${picEscaped}">${emailEscaped}</a></li>`;
+      Settings.updateProfilePicIfMissing(email).catch(Catch.handleException); // will show next time page is rendered
     }
   }
-  Xss.sanitizeRender('ul.emails', ul_emails).find('a').click(Ui.event.handle(async target => {
+  Xss.sanitizeRender('ul.emails', emailsUlHtml).find('a').click(Ui.event.handle(async target => {
     if (urlParams.action === 'inbox') {
-      await BrowserMsg.sendAwait(null, 'inbox', { account_email: $(target).attr('email') });
+      await BrowserMsg.sendAwait(null, 'inbox', { acctEmail: $(target).attr('email') });
       window.close();
     } else {
-      await BrowserMsg.sendAwait(null, 'settings', { account_email: $(target).attr('email') });
+      await BrowserMsg.sendAwait(null, 'settings', { acctEmail: $(target).attr('email') });
       window.close();
     }
   }));
@@ -44,7 +44,7 @@ Catch.try(async () => {
   }));
 
   $('.action_add_account').click(Ui.event.handle(async self => {
-    await BrowserMsg.sendAwait(null, 'settings', { add_new_account: true });
+    await BrowserMsg.sendAwait(null, 'settings', { addNewAcct: true });
     window.close();
   }));
 

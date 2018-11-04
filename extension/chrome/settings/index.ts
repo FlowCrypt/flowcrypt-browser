@@ -15,32 +15,30 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'page', 'page_url_params', 'advanced', 'add_new_account']);
-  let account_email = urlParams.account_email as string|undefined;
-  let page_url_params = (typeof urlParams.page_url_params === 'string') ? JSON.parse(urlParams.page_url_params) : null;
-  let account_emails = await Store.accountEmailsGet();
-  let add_new_account = urlParams.add_new_account === true;
-
-  // let microsoft_auth_attempt = {};
+  let urlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
+  let acctEmail = urlParams.acctEmail as string|undefined;
+  let pageUrlParams = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) : null;
+  let acctEmails = await Store.acctEmailsGet();
+  let addNewAcct = urlParams.addNewAcct === true;
 
   $('#status-row #status_v').text(`v:${String(Catch.version())}`);
 
-  let rules = new Rules(account_email);
-  if (!rules.can_backup_keys()) {
+  let rules = new Rules(acctEmail);
+  if (!rules.canBackupKeys()) {
     $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
     $('.settings-icons-rows').css({position: 'relative', left: '64px'}); // lost a button - center it again
   }
 
-  for (let webmail_name of await Env.webmails()) {
-    $('.signin_button.' + webmail_name).css('display', 'inline-block');
+  for (let webmailLName of await Env.webmails()) {
+    $('.signin_button.' + webmailLName).css('display', 'inline-block');
   }
 
-  let tab_id = await BrowserMsg.required_tab_id();
-  let notifications = new Notifications(tab_id);
+  let tabId = await BrowserMsg.requiredTabId();
+  let notifications = new Notifications(tabId);
 
   BrowserMsg.listen({
-    open_page: (data: {page: string, add_url_text: string}, sender, respond) => {
-      Settings.renderSubPage(account_email || null, tab_id, data.page, data.add_url_text);
+    open_page: (data: {page: string, addUrlText: string}, sender, respond) => {
+      Settings.renderSubPage(acctEmail || null, tabId, data.page, data.addUrlText);
     },
     redirect: (data: {location: string}) => {
       window.location.href = data.location;
@@ -54,13 +52,13 @@ Catch.try(async () => {
     },
     add_pubkey_dialog: (data: {emails: string[]}, sender, respond) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      let factory = new XssSafeFactory(account_email!, tab_id);
-      window.open(factory.src_add_pubkey_dialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
+      let factory = new XssSafeFactory(acctEmail!, tabId);
+      window.open(factory.srcAddPubkeyDialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: (data) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      let factory = new XssSafeFactory(account_email!, tab_id);
-      window.open(factory.src_subscribe_dialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
+      let factory = new XssSafeFactory(acctEmail!, tabId);
+      window.open(factory.srcSubscribeDialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: (data: {notification: string}) => {
       notifications.show(data.notification);
@@ -76,23 +74,23 @@ Catch.try(async () => {
     },
     open_google_auth_dialog: (data) => {
       $('.featherlight-close').click();
-      Settings.new_google_account_authentication_prompt(tab_id, (data || {}).account_email, (data || {}).omit_read_scope).catch(Catch.handle_exception);
+      Settings.newGoogleAcctAuthPrompt(tabId, (data || {}).acctEmail, (data || {}).omitReadScope).catch(Catch.handleException);
     },
     passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
       if (!$('#cryptup_dialog').length) {
-        let factory = new XssSafeFactory(account_email!, tab_id);
-        $('body').append(factory.dialog_passphrase(data.longids, data.type)); // xss-safe-factory
+        let factory = new XssSafeFactory(acctEmail!, tabId);
+        $('body').append(factory.dialogPassphrase(data.longids, data.type)); // xss-safe-factory
       }
     },
-    notification_show_auth_popup_needed: (data: {account_email: string}) => {
-      notifications.show_auth_popup_needed(data.account_email);
+    notification_show_auth_popup_needed: (data: {acctEmail: string}) => {
+      notifications.showAuthPopupNeeded(data.acctEmail);
     },
     close_dialog: (data) => {
       $('#cryptup_dialog').remove();
     },
-  }, tab_id);
+  }, tabId);
 
-  let display_orig = (selector: string) => {
+  let displayOrig = (selector: string) => {
     let filterable = $(selector);
     filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
     filterable.filter('table').css('display', 'table');
@@ -102,17 +100,17 @@ Catch.try(async () => {
   };
 
   let initialize = async () => {
-    if(add_new_account) {
+    if(addNewAcct) {
       $('.show_if_setup_not_done').css('display', 'initial');
       $('.hide_if_setup_not_done').css('display', 'none');
-      await Settings.new_google_account_authentication_prompt(tab_id);
-    } else if (account_email) {
-      $('.email-address').text(account_email);
-      $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { account_email, parent_tab_id: tab_id, embedded: true }));
-      let storage = await Store.getAccount(account_email, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
+      await Settings.newGoogleAcctAuthPrompt(tabId);
+    } else if (acctEmail) {
+      $('.email-address').text(acctEmail);
+      $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
+      let storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
       if (storage.setup_done) {
-        check_google_account().catch(Catch.handle_exception);
-        check_flowcrypt_account_and_subscription_and_contact_page().catch(Catch.handle_exception);
+        checkGoogleAcct().catch(Catch.handleException);
+        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.handleException);
         if(storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
@@ -121,24 +119,24 @@ Catch.try(async () => {
         if (!Api.gmail.hasScope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
-        display_orig('.hide_if_setup_not_done');
+        displayOrig('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
         if (urlParams.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        let private_keys = await Store.keysGet(account_email);
-        if (private_keys.length > 4) {
+        let privateKeys = await Store.keysGet(acctEmail);
+        if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
-        add_key_rows_html(private_keys);
+        addKeyRowsHtml(privateKeys);
       } else {
-        display_orig('.show_if_setup_not_done');
+        displayOrig('.show_if_setup_not_done');
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     } else {
-      let account_emails = await Store.accountEmailsGet();
-      if (account_emails && account_emails[0]) {
-        window.location.href = Env.urlCreate('index.htm', { account_email: account_emails[0] });
+      let acctEmails = await Store.acctEmailsGet();
+      if (acctEmails && acctEmails[0]) {
+        window.location.href = Env.urlCreate('index.htm', { acctEmail: acctEmails[0] });
       } else {
         $('.show_if_setup_not_done').css('display', 'initial');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -146,94 +144,94 @@ Catch.try(async () => {
     }
   };
 
-  let check_flowcrypt_account_and_subscription_and_contact_page = async () => {
-    let status_container = $('.public_profile_indicator_container');
+  let checkFcAcctAndSubscriptionAndContactPage = async () => {
+    let statusContainer = $('.public_profile_indicator_container');
     try {
-      await render_subscription_status_header();
+      await renderSubscriptionStatusHeader();
     } catch(e) {
-      Catch.handle_exception(e);
+      Catch.handleException(e);
     }
-    let auth_info = await Store.authInfo();
-    if (auth_info.account_email) { // have auth email set
+    let authInfo = await Store.authInfo();
+    if (authInfo.acctEmail) { // have auth email set
       try {
         let response = await Api.fc.accountUpdate();
-        $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:ok`);
+        $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:ok`);
         if (response && response.result && response.result.alias) {
-          status_container.find('.status-indicator-text').css('display', 'none');
-          status_container.find('.status-indicator').addClass('active');
+          statusContainer.find('.status-indicator-text').css('display', 'none');
+          statusContainer.find('.status-indicator').addClass('active');
         } else {
-          status_container.find('.status-indicator').addClass('inactive');
+          statusContainer.find('.status-indicator').addClass('inactive');
         }
       } catch (e) {
         if (Api.err.isAuthErr(e)) {
-          let action_reauth = Ui.event.handle(() => Settings.renderSubPage(account_email!, tab_id, '/chrome/elements/subscribe.htm', '&source=auth_error'));
-          Xss.sanitizeRender(status_container, '<a class="bad" href="#">Auth Needed</a>').find('a').click(action_reauth);
-          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:auth`).addClass('bad').addClass('link').click(action_reauth);
+          let actionReauth = Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/elements/subscribe.htm', '&source=authErr'));
+          Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>').find('a').click(actionReauth);
+          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:auth`).addClass('bad').addClass('link').click(actionReauth);
         } else if (Api.err.isNetErr(e)) {
-          Xss.sanitizeRender(status_container, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(check_flowcrypt_account_and_subscription_and_contact_page));
-          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:offline`);
+          Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(checkFcAcctAndSubscriptionAndContactPage));
+          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:offline`);
         } else {
-          status_container.text('ecp error');
-          $('#status-row #status_flowcrypt').text(`fc:${auth_info.account_email}:error`).attr('title', `FlowCrypt Account Error: ${Xss.htmlEscape(String(e))}`);
-          Catch.handle_exception(e);
+          statusContainer.text('ecp error');
+          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:error`).attr('title', `FlowCrypt Account Error: ${Xss.htmlEscape(String(e))}`);
+          Catch.handleException(e);
         }
       }
     } else { // never set up
-      status_container.find('.status-indicator').addClass('inactive');
+      statusContainer.find('.status-indicator').addClass('inactive');
       $('#status-row #status_flowcrypt').text(`fc:none`);
     }
-    status_container.css('visibility', 'visible');
+    statusContainer.css('visibility', 'visible');
   };
 
-  let resolve_changed_google_account = async (new_account_email: string) => {
+  let resolveChangedGoogleAcct = async (newAcctEmail: string) => {
     try {
-      await Settings.refresh_account_aliases(account_email!);
-      await Settings.account_storage_change_email(account_email!, new_account_email);
-      alert(`Email address changed to ${new_account_email}. You should now check that your public key is properly submitted.`);
-      window.location.href = Env.urlCreate('index.htm', { account_email: new_account_email, page: '/chrome/settings/modules/keyserver.htm' });
+      await Settings.refreshAcctAliases(acctEmail!);
+      await Settings.acctStorageChangeEmail(acctEmail!, newAcctEmail);
+      alert(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
+      window.location.href = Env.urlCreate('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
     } catch(e) {
-      Catch.handle_exception(e);
+      Catch.handleException(e);
       alert('There was an error changing google account, please write human@flowcrypt.com');
     }
   };
 
-  let check_google_account = async () => {
+  let checkGoogleAcct = async () => {
     try {
-      let me = await Api.gmail.usersMeProfile(account_email!);
-      Settings.update_profile_picture_if_missing(account_email!).catch(Catch.handle_exception);
+      let me = await Api.gmail.usersMeProfile(acctEmail!);
+      Settings.updateProfilePicIfMissing(acctEmail!).catch(Catch.handleException);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
-      if(me.emailAddress !== account_email) {
+      if(me.emailAddress !== acctEmail) {
         $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
-        if(me.emailAddress && account_email) {
-          if(confirm(`Your Google Account address seems to have changed from ${account_email} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
-            await resolve_changed_google_account(me.emailAddress);
+        if(me.emailAddress && acctEmail) {
+          if(confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
+            await resolveChangedGoogleAcct(me.emailAddress);
           }
         }
       }
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
-          .off().click(Ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
+          .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPrompt(tabId, acctEmail)));
       } else if (Api.err.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
-          .off().click(Ui.event.handle(() => Settings.new_google_account_authentication_prompt(tab_id, account_email)));
+          .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPrompt(tabId, acctEmail)));
       } else if (Api.err.isNetErr(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.htmlEscape(String(e))}`);
-        Catch.handle_exception(e);
+        Catch.handleException(e);
       }
     }
   };
 
-  let render_subscription_status_header = async () => {
+  let renderSubscriptionStatusHeader = async () => {
     let liveness = '';
     try {
       await Api.fc.accountCheckSync();
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
         liveness = 'err';
       } else {
         liveness = 'offline';
@@ -242,7 +240,7 @@ Catch.try(async () => {
     let subscription = await Store.subscription();
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(() => Settings.renderSubPage(account_email || null, tab_id, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -264,57 +262,49 @@ Catch.try(async () => {
     }
   };
 
-  let add_key_rows_html = (private_keys: KeyInfo[]) => {
+  let addKeyRowsHtml = (private_keys: KeyInfo[]) => {
     let html = '';
     for (let i = 0; i < private_keys.length; i++) {
       let ki = private_keys[i];
       let prv = openpgp.key.readArmored(ki.private).keys[0];
       let date = Str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      let escaped_primary_or_remove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.htmlEscape(ki.longid) + '">remove</a>)';
-      let escaped_email = Xss.htmlEscape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
-      let escaped_link = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${Xss.htmlEscape(ki.longid)}">${escaped_email}</a>`;
+      let escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.htmlEscape(ki.longid) + '">remove</a>)';
+      let escapedEmail = Xss.htmlEscape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
+      let escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${Xss.htmlEscape(ki.longid)}">${escapedEmail}</a>`;
       html += `<div class="row key-content-row key_${Xss.htmlEscape(ki.longid)}">`;
-      html += `  <div class="col-sm-12">${escaped_link} from ${Xss.htmlEscape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escaped_primary_or_remove}</div>`;
+      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.htmlEscape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escapedPrimaryOrRemove}</div>`;
       html += `  <div class="col-sm-12">KeyWords: <span class="good">${Xss.htmlEscape(ki.keywords)}</span></div>`;
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);
     $('.action_show_key').click(Ui.event.handle(target => {
       // the UI below only gets rendered when account_email is available
-      Settings.renderSubPage(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+      Settings.renderSubPage(acctEmail!, tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
     }));
     $('.action_remove_key').click(Ui.event.handle(async target => {
       // the UI below only gets rendered when account_email is available
-      await Store.keys_remove(account_email!, $(target).attr('longid')!);
-      await Store.passphrase_save('local', account_email!, $(target).attr('longid')!, undefined);
-      await Store.passphrase_save('session', account_email!, $(target).attr('longid')!, undefined);
+      await Store.keysRemove(acctEmail!, $(target).attr('longid')!);
+      await Store.passphraseSave('local', acctEmail!, $(target).attr('longid')!, undefined);
+      await Store.passphraseSave('session', acctEmail!, $(target).attr('longid')!, undefined);
       reload(true);
     }));
   };
 
-  // function new_microsoft_account_authentication_prompt(account_email) {
-  //   let window_id = 'popup_' + Str.random(20);
-  //   let close_auth_window = Api.auth.window(Api.outlook.oauth_url(account_email, window_id, tab_id_global, false), function() {
-  //     render_settings_sub_page(account_email, tab_id, '/chrome/settings/modules/auth_denied.htm', account_email ? '&email_provider=outlook' : '');
-  //   });
-  //   microsoft_auth_attempt = {window_id: window_id, close_auth_window: close_auth_window};
-  // }
-
   $.get(chrome.extension.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
 
   $('.show_settings_page').click(Ui.event.handle(target => {
-    Settings.renderSubPage(account_email!, tab_id, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
+    Settings.renderSubPage(acctEmail!, tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr
   }));
 
   $('.action_show_encrypted_inbox').click(Ui.event.handle(target => {
-    window.location.href = Env.urlCreate('/chrome/settings/inbox/inbox.htm', {account_email});
+    window.location.href = Env.urlCreate('/chrome/settings/inbox/inbox.htm', {acctEmail});
   }));
 
-  $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.renderSubPage(account_email!, tab_id, '/chrome/settings/modules/auth_denied.htm')));
+  $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/auth_denied.htm')));
 
-  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.new_google_account_authentication_prompt(tab_id)));
+  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPrompt(tabId)));
 
-  $('.action_google_auth').click(Ui.event.prevent('double', async () => await Settings.new_google_account_authentication_prompt(tab_id, account_email)));
+  $('.action_google_auth').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPrompt(tabId, acctEmail)));
 
   // $('.action_microsoft_auth').click(Ui.event.prevent('double', function() {
   //   new_microsoft_account_authentication_prompt(account_email);
@@ -337,19 +327,19 @@ Catch.try(async () => {
     $(".add-account").toggleClass("hidden");
   }));
 
-  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
-  // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
-  // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tab_id, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
+  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
+  // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
+  // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
 
   let reload = (advanced=false) => {
     if (advanced) {
-      window.location.href = Env.urlCreate('/chrome/settings/index.htm', { account_email, advanced: true });
+      window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail, advanced: true });
     } else {
       window.location.reload();
     }
   };
 
-  let menu_account_html = (email: string, picture='/img/svgs/profile-icon.svg') => {
+  let menuAcctHtml = (email: string, picture='/img/svgs/profile-icon.svg') => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
@@ -361,24 +351,24 @@ Catch.try(async () => {
   };
 
   await initialize();
-  await Ui.abortAndRenderErrOnUnprotectedKey(account_email, tab_id);
+  await Ui.abortAndRenderErrOnUnprotectedKey(acctEmail, tabId);
   if (urlParams.page && typeof urlParams.page !== 'undefined' && urlParams.page !== 'undefined') {
     if (urlParams.page === '/chrome/settings/modules/auth_denied.htm') {
-      Settings.renderSubPage(account_email || null, tab_id, urlParams.page);
+      Settings.renderSubPage(acctEmail || null, tabId, urlParams.page);
     } else {
-      Settings.renderSubPage(account_email || null, tab_id, urlParams.page as string, page_url_params);
+      Settings.renderSubPage(acctEmail || null, tabId, urlParams.page as string, pageUrlParams);
     }
   }
 
-  let account_storages = await Store.get_accounts(account_emails, ['picture']);
-  for (let email of account_emails) {
-    Xss.sanitizePrepend('#alt-accounts', menu_account_html(email, account_storages[email].picture));
+  let acctStorages = await Store.getAccounts(acctEmails, ['picture']);
+  for (let email of acctEmails) {
+    Xss.sanitizePrepend('#alt-accounts', menuAcctHtml(email, acctStorages[email].picture));
   }
   $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
     $(self).off().attr('src', '/img/svgs/profile-icon.svg');
   }));
   $('.action_select_account').click(Ui.event.handle(target => {
-    window.location.href = Env.urlCreate('index.htm', { account_email: $(target).find('.contains_email').text() });
+    window.location.href = Env.urlCreate('index.htm', { acctEmail: $(target).find('.contains_email').text() });
   }));
 
 })();

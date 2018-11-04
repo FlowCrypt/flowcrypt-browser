@@ -9,51 +9,51 @@ import { Api } from '../../../js/common/api.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'bug_report']);
-  let acctEmail = urlParams.account_email as string|undefined;
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
-  let bug_report = urlParams.bug_report as string|undefined;
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'bugReport']);
+  let acctEmail = urlParams.acctEmail as string|undefined;
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  let bugReport = urlParams.bugReport as string|undefined;
 
   if(acctEmail) {
     $('#input_email').val(acctEmail).attr('disabled', 'disabled');
   }
 
-  if(bug_report) {
+  if(bugReport) {
     $('h2').text('Submit Bug Report to FlowCrypt');
     $('.line.info').text('Please describe in detail what were you doing. Does this happen repeatedly?');
-    $('#input_text').val(`\n\n\n--------- BUG REPORT ----------\n${bug_report}`);
+    $('#input_text').val(`\n\n\n--------- BUG REPORT ----------\n${bugReport}`);
   }
 
   $('.action_send_feedback').click(Ui.event.handle(async target => {
-    let my_email = acctEmail;
-    if(!my_email) {
+    let myEmail = acctEmail;
+    if(!myEmail) {
       if(Str.isEmailValid($('#input_email').val() as string)) {
-        my_email = $('#input_email').val() as string;
+        myEmail = $('#input_email').val() as string;
       } else {
         alert('Please enter valid email - so that we can get back to you.');
         return;
       }
     }
-    let orig_btn_text = $(target).text();
+    let origBtnText = $(target).text();
     let button = this;
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
     let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name +  ' ' +  Catch.version();
     try {
-      let r = await Api.fc.helpFeedback(my_email, msg);
+      let r = await Api.fc.helpFeedback(myEmail, msg);
       if (r.sent) {
         $(button).text('sent!');
-        alert(`Message sent! You will find your response in ${my_email}, check your email later. Thanks!`);
-        BrowserMsg.send(parent_tab_id, 'close_page');
+        alert(`Message sent! You will find your response in ${myEmail}, check your email later. Thanks!`);
+        BrowserMsg.send(parentTabId, 'close_page');
       } else {
-        $(button).text(orig_btn_text);
+        $(button).text(origBtnText);
         alert('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
       if(!Api.err.isNetErr(e)) {
-        Catch.handle_exception(e);
+        Catch.handleException(e);
       }
-      $(button).text(orig_btn_text);
+      $(button).text(origBtnText);
       alert('There was an error sending message. Our direct email is human@flowcrypt.com');
     }
   }));

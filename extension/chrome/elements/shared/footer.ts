@@ -12,27 +12,27 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id']); // placement: compose||settings
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']); // placement: compose||settings
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let save_footer_if_has_subscription_and_requested = async (requested: boolean, footer: string) => {
+  let saveFooterIfHasSubscriptionAndRequested = async (requested: boolean, footer: string) => {
     let subscription = await Store.subscription();
     if (requested && subscription.active) {
-      await Store.set(account_email, { email_footer: footer });
+      await Store.set(acctEmail, { email_footer: footer });
     }
   };
 
   let subscription = await Store.subscription();
   if (subscription.active) {
-    let storage = await Store.getAccount(account_email, ['email_footer']);
+    let storage = await Store.getAcct(acctEmail, ['email_footer']);
     $('.input_email_footer').val(storage.email_footer as string);
     $('.user_subscribed').css('display', 'block');
   } else {
     $('.user_free').css('display', 'block');
     $('.action_upgrade').click(Ui.event.prevent('double', async target => {
-      let newly_active = await BrowserMsg.sendAwait(parent_tab_id, 'subscribe', {});
-      if (newly_active) {
+      let newlyActive = await BrowserMsg.sendAwait(parentTabId, 'subscribe', {});
+      if (newlyActive) {
         $('.user_subscribed').css('display', 'block');
         $('.user_free').css('display', 'none');
       }
@@ -40,10 +40,10 @@ Catch.try(async () => {
   }
 
   $('.action_add_footer').click(Ui.event.prevent('double', async self => {
-    await save_footer_if_has_subscription_and_requested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string); // is textarea
-    BrowserMsg.send(parent_tab_id, 'set_footer', {footer: $('.input_email_footer').val()});
+    await saveFooterIfHasSubscriptionAndRequested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string); // is textarea
+    BrowserMsg.send(parentTabId, 'set_footer', {footer: $('.input_email_footer').val()});
   }));
 
-  $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send(parent_tab_id, 'close_dialog')));
+  $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_dialog')));
 
 })();

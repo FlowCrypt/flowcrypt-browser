@@ -8,26 +8,23 @@ import { Pgp, DecryptErrTypes } from '../../../js/common/pgp.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 
 declare const openpgp: typeof OpenPGP;
+openpgp.config.ignore_mdc_error = true; // will only affect OpenPGP in local frame
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  openpgp.config.ignore_mdc_error = true; // will only affect OpenPGP in local frame
-
-  let tab_id = await BrowserMsg.required_tab_id();
-
-  let orig_content: string;
-
-  let factory = new XssSafeFactory(account_email, tab_id);
+  let tabId = await BrowserMsg.requiredTabId();
+  let origContent: string;
+  let factory = new XssSafeFactory(acctEmail, tabId);
 
   BrowserMsg.listen({
     close_dialog: () => {
       $('.passphrase_dialog').text('');
     },
-  }, tab_id);
+  }, tabId);
 
   $('.action_decrypt').click(Ui.event.prevent('double', async self => {
     let encrypted = $('.input_message').val() as string;
@@ -35,19 +32,19 @@ Catch.try(async () => {
       alert('Please paste an encrypted message');
       return;
     }
-    orig_content = $(self).html();
+    origContent = $(self).html();
     Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
-    let result = await Pgp.msg.decrypt(account_email, encrypted);
+    let result = await Pgp.msg.decrypt(acctEmail, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
-    } else if (result.error.type === DecryptErrTypes.need_passphrase) {
-      $('.passphrase_dialog').html(factory.embedded_passphrase(result.longids.need_passphrase)); // xss-safe-factory
+    } else if (result.error.type === DecryptErrTypes.needPassphrase) {
+      $('.passphrase_dialog').html(factory.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
     } else {
       delete result.message;
       console.info(result);
       alert('These was a problem decrypting this file, details are in the console.');
     }
-    Xss.sanitizeRender(self, orig_content);
+    Xss.sanitizeRender(self, origContent);
   }));
 
 })();

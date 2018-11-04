@@ -15,9 +15,9 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['account_email', 'parent_tab_id', 'longids', 'type']);
-  let account_email = Env.urlParamRequire.string(urlParams, 'account_email');
-  let parent_tab_id = Env.urlParamRequire.string(urlParams, 'parent_tab_id');
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
+  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   let longids = Env.urlParamRequire.string(urlParams, 'longids').split(',');
   let type = Env.urlParamRequire.oneof(urlParams, 'type', ['embedded', 'sign', 'attest', 'message', 'draft', 'attachment']);
 
@@ -38,31 +38,31 @@ Catch.try(async () => {
   await Ui.passphraseToggle(['passphrase']);
   $('#passphrase').focus();
 
-  let all_private_keys = await Store.keysGet(account_email);
-  let selected_private_keys = all_private_keys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
+  let allPrivateKeys = await Store.keysGet(acctEmail);
+  let selectedPrivateKeys = allPrivateKeys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
 
-  if (all_private_keys.length > 1) {
+  if (allPrivateKeys.length > 1) {
     let html: string;
-    if (selected_private_keys.length === 1) {
-      html = `For key: <span class="good">${Xss.htmlEscape(mnemonic(selected_private_keys[0].longid) || '')}</span> (KeyWords)`;
+    if (selectedPrivateKeys.length === 1) {
+      html = `For key: <span class="good">${Xss.htmlEscape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
     } else {
       html = 'Pass phrase needed for any of the following keys:';
-      for (let i of selected_private_keys.keys()) {
-        html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.htmlEscape(mnemonic(selected_private_keys[i].longid) || '')}</div>`;
+      for (let i of selectedPrivateKeys.keys()) {
+        html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.htmlEscape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
       }
     }
     Xss.sanitizeRender('.which_key', html);
     $('.which_key').css('display', 'block');
   }
 
-  let render_error = () => {
+  let renderErr = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
   };
 
-  let render_normal = () => {
+  let renderNormal = () => {
     $('#passphrase').css('border-color', '');
     $('#passphrase').css('color', 'black');
     $('#passphrase').focus();
@@ -70,19 +70,19 @@ Catch.try(async () => {
 
   $('.action_close').click(Ui.event.handle(() => {
     BrowserMsg.send('broadcast', 'passphrase_entry', {entered: false});
-    BrowserMsg.send(parent_tab_id, 'close_dialog');
+    BrowserMsg.send(parentTabId, 'close_dialog');
   }));
 
   $('.action_ok').click(Ui.event.handle(async () => {
     let pass = $('#passphrase').val() as string; // it's a text input
-    let storage_type: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
-    let at_least_one_matched = false;
-    for (let keyinfo of selected_private_keys) { // if passphrase matches more keys, it will save them all
+    let storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
+    let atLeastOneMatched = false;
+    for (let keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save them all
       let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
       try {
         if (await Pgp.key.decrypt(prv, [pass]) === true) {
-          await Store.passphrase_save(storage_type, account_email, keyinfo.longid, pass);
-          at_least_one_matched = true;
+          await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);
+          atLeastOneMatched = true;
         }
       } catch(e) {
         if(e.message === 'Unknown s2k type.') {
@@ -92,15 +92,15 @@ Catch.try(async () => {
         }
       }
     }
-    if (at_least_one_matched) {
+    if (atLeastOneMatched) {
       BrowserMsg.send('broadcast', 'passphrase_entry', {entered: true});
-      BrowserMsg.send(parent_tab_id, 'close_dialog');
+      BrowserMsg.send(parentTabId, 'close_dialog');
     } else {
-      render_error();
-      Catch.setHandledTimeout(render_normal, 1500);
+      renderErr();
+      Catch.setHandledTimeout(renderNormal, 1500);
     }
   }));
 
-  $('#passphrase').keyup(render_normal);
+  $('#passphrase').keyup(renderNormal);
 
 })();
