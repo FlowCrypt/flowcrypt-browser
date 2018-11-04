@@ -117,7 +117,7 @@ Catch.try(async () => {
   };
 
   let renderSetupDialog = async (): Promise<void> => {
-    let keyserverRes, fetched_keys;
+    let keyserverRes, fetchedKeys;
 
     try {
       let r = await Api.attester.lookupEmail([acctEmail]);
@@ -135,12 +135,12 @@ Catch.try(async () => {
         displayBlock('step_2b_manual_enter');
       } else if (storage.email_provider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
         try {
-          fetched_keys = await Api.gmail.fetchKeyBackups(acctEmail);
+          fetchedKeys = await Api.gmail.fetchKeyBackups(acctEmail);
         } catch (e) {
           return await Settings.promptToRetry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => renderSetupDialog());
         }
-        if (fetched_keys.length) {
-          recoveredKeys = fetched_keys;
+        if (fetchedKeys.length) {
+          recoveredKeys = fetchedKeys;
           recoveredKeysLongidCount = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
           displayBlock('step_2_recovery');
         } else {
@@ -440,11 +440,11 @@ Catch.try(async () => {
     }
   }));
 
-  let renderCompatibilityFixBlockAndFinalizeSetup = async (original_prv: OpenPGP.key.Key, options: SetupOptions) => {
+  let renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: OpenPGP.key.Key, options: SetupOptions) => {
     displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {
-      fixedPrv = await Settings.renderPrvCompatibilityFixUiAndWaitUntilSubmittedByUser(acctEmail, '#step_3_compatibility_fix', original_prv, options.passphrase, window.location.href.replace(/#$/, ''));
+      fixedPrv = await Settings.renderPrvCompatibilityFixUiAndWaitUntilSubmittedByUser(acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
       Catch.handleException(e);
       alert(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);

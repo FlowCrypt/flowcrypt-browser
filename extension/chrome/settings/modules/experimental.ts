@@ -67,7 +67,7 @@ Catch.try(async () => {
       if (confirm('This will remove all your FlowCrypt settings for ' + acctEmail + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
         await collectInfoAndDownloadBackupFile(acctEmail);
         if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
-          await Settings.account_storage_reset(acctEmail);
+          await Settings.acctStorageReset(acctEmail);
           window.parent.location.reload();
         }
       }

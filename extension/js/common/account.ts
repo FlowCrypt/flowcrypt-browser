@@ -7,10 +7,10 @@ import { Env, Str, Catch, Dict } from './common.js';
 import { Api } from './api.js';
 
 type AccountEventHandlersOptional = {
-  renderStatusText?: (text: string, show_spinner?: boolean) => void;
+  renderStatusText?: (text: string, showSpinner?: boolean) => void;
   findMatchingTokensFromEmail?: (acctEmail: string, uuid: string) => Promise<string[]|null>; };
 type AccountEventHandlers = {
-  renderStatusText: (text: string, show_spinner?: boolean) => void;
+  renderStatusText: (text: string, showSpinner?: boolean) => void;
   findMatchingTokensFromEmail: (acctEmail: string, uuid: string) => Promise<string[]|null>; };
 
 export type PaymentMethod = 'stripe'|'group'|'trial';
@@ -31,7 +31,7 @@ export class FcAcct {
 
   constructor(handlers: AccountEventHandlersOptional, canReadEmail: boolean) {
     this.eventHandlers = {
-      renderStatusText: handlers.renderStatusText || ((text: string, show_spinner?:boolean) => undefined),
+      renderStatusText: handlers.renderStatusText || ((text: string, showSpinner?:boolean) => undefined),
       findMatchingTokensFromEmail: handlers.findMatchingTokensFromEmail || this.fetchTokenEmailsOnGmailAndFindMatchingToken,
     };
     this.canReadEmail = canReadEmail;

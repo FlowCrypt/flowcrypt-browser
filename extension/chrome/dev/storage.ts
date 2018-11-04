@@ -34,7 +34,7 @@ Catch.try(async () => {
   const render = (obj: RenderableStorage) => {
     for (let filteredKey of Object.keys(obj)) {
       let del = controls ? ' <span class="bad delete" key="' + obj[filteredKey].key + '" style="cursor: pointer;">[X]</span>' : '';
-      Xss.sanitizeAppend('.pre', `<div><b>${filteredKey + del}</b> ${Str.pretty_print(obj[filteredKey].value)}</div>`);
+      Xss.sanitizeAppend('.pre', `<div><b>${filteredKey + del}</b> ${Str.prettyPrint(obj[filteredKey].value)}</div>`);
     }
     $('.delete').click(Ui.event.handle(self => {
       chrome.storage.local.remove($(self).attr('key')!, () => window.location.reload()); // we set the attr key above

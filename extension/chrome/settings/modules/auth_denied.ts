@@ -16,8 +16,8 @@ Catch.try(async () => {
     urlParams.emailProvider = 'gmail';
   }
 
-  let renderSetupDone = (setup_done: boolean) => {
-    if (setup_done) {
+  let renderSetupDone = (setupDone: boolean) => {
+    if (setupDone) {
       $('.show_if_setup_done').css('display', 'block');
     } else {
       $('.show_if_setup_not_done').css('display', 'block');

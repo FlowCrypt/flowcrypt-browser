@@ -261,8 +261,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!skipGoogleDrive && notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
       let googleDriveAtts: Att[] = [];
-      notProcessedAttsLoaders.each((i, loader_element) => {
-        let downloadUrl = $(loader_element).parent().attr('download_url');
+      notProcessedAttsLoaders.each((i, loaderEl) => {
+        let downloadUrl = $(loaderEl).parent().attr('download_url');
         if (downloadUrl) {
           let meta = downloadUrl.split(':');
           googleDriveAtts.push(new Att({msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted'}));
@@ -340,7 +340,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    * XSS WARNING
    *
    * new_html_content must be XSS safe
-   */
+   */ // tslint:disable-next-line:variable-name
   private updateMsgBodyEl_DANGEROUSLY = (el: HTMLElement|JQueryEl, method:'set'|'append', newHtmlContent_MUST_BE_XSS_SAFE: string) => {  // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
@@ -369,8 +369,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private getSenderEmail = (msg_el: HTMLElement|JQueryEl) => {
-    return ($(msg_el).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
+  private getSenderEmail = (msgEl: HTMLElement|JQueryEl) => {
+    return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
   private domGetMsgSender = (convoRootEl: JQueryEl) => {

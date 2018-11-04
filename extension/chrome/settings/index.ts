@@ -262,12 +262,12 @@ Catch.try(async () => {
     }
   };
 
-  let addKeyRowsHtml = (private_keys: KeyInfo[]) => {
+  let addKeyRowsHtml = (privateKeys: KeyInfo[]) => {
     let html = '';
-    for (let i = 0; i < private_keys.length; i++) {
-      let ki = private_keys[i];
+    for (let i = 0; i < privateKeys.length; i++) {
+      let ki = privateKeys[i];
       let prv = openpgp.key.readArmored(ki.private).keys[0];
-      let date = Str.month_name(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
+      let date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
       let escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.htmlEscape(ki.longid) + '">remove</a>)';
       let escapedEmail = Xss.htmlEscape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
       let escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${Xss.htmlEscape(ki.longid)}">${escapedEmail}</a>`;

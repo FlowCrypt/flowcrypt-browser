@@ -121,7 +121,7 @@ export class Composer {
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
   private ksLookupsByEmail: {[key: string]: PubkeySearchResult|Contact} = {};
-  private subscribeResListener: ((subscription_active: boolean) => void)|undefined;
+  private subscribeResListener: ((subscriptionActive: boolean) => void)|undefined;
   private additionalMsgHeaders: {[key: string]: string} = {};
   private btnUpdateTimeout: number|null = null;
   private isReplyBox: boolean;
@@ -663,7 +663,6 @@ export class Composer {
           this.resetSendBtn();
         }
       } else {
-        let MimeCodec = (window as BrowserWidnow)['emailjs-mime-codec'];
         // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
         // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
         // resulting in.. wait for it.. signatures that don't match
@@ -672,7 +671,7 @@ export class Composer {
         //  - don't require text to be sent as an attachment
         //  - don't require all other clients to support PGP/MIME
         // then please let me know. Eagerly waiting! In the meanwhile..
-        plaintext = MimeCodec.foldLines(plaintext, 76, true);
+        plaintext = (window as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true);
 
         // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
         // Removing them here will prevent Gmail from screwing up the signature
@@ -795,7 +794,7 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFormatSend = async (armoredPubkeys: string[], challenge: Challenge|null, plaintext: string, atts: Att[], recipients: string[], subject: string, subscription: Subscription, att_admin_codes:string[]=[]) => {
+  private doEncryptFormatSend = async (armoredPubkeys: string[], challenge: Challenge|null, plaintext: string, atts: Att[], recipients: string[], subject: string, subscription: Subscription, attAdminCodes:string[]=[]) => {
     let encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(armoredPubkeys);
     let encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, plaintext, null, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
     let body: SendableMsgBody = {'text/plain': encrypted.data};
@@ -808,7 +807,7 @@ export class Composer {
       let storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
       body = this.formatPasswordProtectedEmail(short, body, armoredPubkeys, storage.outgoing_language || 'EN');
       body = this.formatEmailTextFooter(body);
-      await this.app.storageAddAdminCodes(short, admin_code, att_admin_codes);
+      await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
       await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
     } else {
       body = this.formatEmailTextFooter(body);
@@ -920,16 +919,16 @@ export class Composer {
    * (else ff will keep expanding body element beyond frame view)
    * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
    *
-   * @param update_ref_body_height - set to true to take a new snapshot of intended html body height
+   * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
-  private setInputTextHeightManuallyIfNeeded = (update_ref_body_height:boolean=false) => {
+  private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight:boolean=false) => {
     if (!this.isReplyBox && Env.browser().name === 'firefox') {
       let cellHeightExceptText = 0;
       this.S.cached('all_cells_except_text').each(function() {
         let cell = $(this);
         cellHeightExceptText += cell.is(':visible') ? (cell.parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
       });
-      if (update_ref_body_height || !this.refBodyHeight) {
+      if (updateRefBodyHeight || !this.refBodyHeight) {
         this.refBodyHeight = this.S.cached('body').height() || 605;
       }
       this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText);
@@ -1019,10 +1018,10 @@ export class Composer {
     this.resizeReplyBox();
   }
 
-  private retrieveDecryptAddForwardedMsg = async (msg_id: string) => {
+  private retrieveDecryptAddForwardedMsg = async (msgId: string) => {
     let armoredMsg: string;
     try {
-      armoredMsg = await this.app.emailProviderExtractArmoredBlock(msg_id);
+      armoredMsg = await this.app.emailProviderExtractArmoredBlock(msgId);
     } catch (e) {
       if (e.data) {
         Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.htmlEscape(e.data)}`);
@@ -1096,10 +1095,10 @@ export class Composer {
     this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private selectContact = (email: string, from_query: ProviderContactsQuery) => {
+  private selectContact = (email: string, fromQuery: ProviderContactsQuery) => {
     const possiblyBogusRecipient = $('.recipients span.wrong').last();
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
-    const q = Str.parseEmail(from_query.substring).email;
+    const q = Str.parseEmail(fromQuery.substring).email;
     if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
       possiblyBogusRecipient.remove();
     }
@@ -1195,11 +1194,11 @@ export class Composer {
     }
   }
 
-  private searchContacts = async (db_only=false) => {
+  private searchContacts = async (dbOnly=false) => {
     const query = {substring: Str.parseEmail(this.S.cached('input_to').val() as string).email};
     if (query.substring !== '') {
       let contacts = await this.app.storageContactSearch(query);
-      if (db_only || !this.canReadEmails) {
+      if (dbOnly || !this.canReadEmails) {
         this.renderSearchRes(contacts, query);
       } else {
         this.contactSearchInProgress = true;
@@ -1284,7 +1283,7 @@ export class Composer {
     }
   }
 
-  private renderPubkeyResult = async (email_element: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
+  private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact|"fail"|"wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         let sendingAddrOnPks = Value.is(this.suppliedFrom || this.getSenderFromDom()).in(this.myAddrsOnPks);
@@ -1302,33 +1301,33 @@ export class Composer {
         this.updatePubkeyIcon();
       }
     }
-    $(email_element).children('img, i').remove();
+    $(emailEl).children('img, i').remove();
     let contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-    Xss.sanitizeAppend(email_element, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
+    Xss.sanitizeAppend(emailEl, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
-      $(email_element).attr('title', 'Loading contact information failed, please try to add their email again.');
-      $(email_element).addClass("failed");
-      Xss.sanitizeReplace($(email_element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
-      $(email_element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
+      $(emailEl).attr('title', 'Loading contact information failed, please try to add their email again.');
+      $(emailEl).addClass("failed");
+      Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
+      $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
-      $(email_element).attr('title', 'This email address looks misspelled. Please try again.');
-      $(email_element).addClass("wrong");
+      $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
+      $(emailEl).addClass("wrong");
     } else if (contact.pubkey && await Pgp.key.usableButExpired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
-      $(email_element).addClass("expired");
-      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
-      $(email_element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
+      $(emailEl).addClass("expired");
+      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
+      $(emailEl).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey && contact.attested) {
-      $(email_element).addClass("attested");
-      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
-      $(email_element).attr('title', 'Does use encryption, attested by CRYPTUP' + this.recipientKeyIdText(contact));
+      $(emailEl).addClass("attested");
+      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
+      $(emailEl).attr('title', 'Does use encryption, attested by CRYPTUP' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
-      $(email_element).addClass("has_pgp");
-      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
-      $(email_element).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
+      $(emailEl).addClass("has_pgp");
+      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
+      $(emailEl).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {
-      $(email_element).addClass("no_pgp");
-      Xss.sanitizePrepend(email_element, '<img src="/img/svgs/locked-icon.svg" />');
-      $(email_element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
+      $(emailEl).addClass("no_pgp");
+      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
+      $(emailEl).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
@@ -1355,9 +1354,9 @@ export class Composer {
     }
   }
 
-  private renderReplySuccess = (msg: SendableMsg, plaintext: string, msg_id: string) => {
+  private renderReplySuccess = (msg: SendableMsg, plaintext: string, msgId: string) => {
     let isSigned = this.S.cached('icon_sign').is('.active');
-    this.app.renderReinsertReplyBox(msg_id, msg.headers.To.split(',').map(a => Str.parseEmail(a).email));
+    this.app.renderReinsertReplyBox(msgId, msg.headers.To.split(',').map(a => Str.parseEmail(a).email));
     if (isSigned) {
       this.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
@@ -1381,16 +1380,16 @@ export class Composer {
     this.S.cached('reply_msg_successful').css('display', 'block');
     if (msg.atts.length) {
       this.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
-        a.msgId = msg_id;
+        a.msgId = msgId;
         return this.app.factoryAtt(a);
       }).join('')).css('display', 'block');
     }
     this.resizeReplyBox();
   }
 
-  private simulateCtrlV = (to_paste: string) => {
+  private simulateCtrlV = (toPaste: string) => {
     const r = window.getSelection().getRangeAt(0);
-    r.insertNode(r.createContextualFragment(to_paste));
+    r.insertNode(r.createContextualFragment(toPaste));
   }
 
   private renderComposeTable = async () => {
@@ -1442,17 +1441,17 @@ export class Composer {
     }
   }
 
-  private shouldSaveDraft = (msg_body: string) => {
-    if (msg_body && msg_body !== this.lastDraft) {
-      this.lastDraft = msg_body;
+  private shouldSaveDraft = (msgBody: string) => {
+    if (msgBody && msgBody !== this.lastDraft) {
+      this.lastDraft = msgBody;
       return true;
     } else {
       return false;
     }
   }
 
-  private formatPasswordProtectedEmail = (short_id: string, orig_body: SendableMsgBody, armored_pubkeys: string[], lang: 'DE' | 'EN') => {
-    const msgUrl = `${this.FC_WEB_URL}/${short_id}`;
+  private formatPasswordProtectedEmail = (shortId: string, origBody: SendableMsgBody, armoredPubkeys: string[], lang: 'DE' | 'EN') => {
+    const msgUrl = `${this.FC_WEB_URL}/${shortId}`;
     const a = `<a href="${Xss.htmlEscape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extractAsText('input_intro') : '';
     const text = [];
@@ -1467,25 +1466,25 @@ export class Composer {
     html.push(Lang.compose.msgEncryptedHtml[lang] + a + '<br><br>');
     html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.htmlEscape(msgUrl) + '<br><br><br>');
     const htmlFcWebUrlLink = '<a href="' + Xss.htmlEscape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.htmlEscape(this.FC_WEB_URL) + '</a>';
-    if (armored_pubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      const htmlPgpMsg = orig_body['text/html'] ? orig_body['text/html'] : (orig_body['text/plain'] || '').replace(this.FC_WEB_URL, htmlFcWebUrlLink).replace(/\n/g, '<br>\n');
+    if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
+      const htmlPgpMsg = origBody['text/html'] ? origBody['text/html'] : (origBody['text/plain'] || '').replace(this.FC_WEB_URL, htmlFcWebUrlLink).replace(/\n/g, '<br>\n');
       html.push('<div style="color: #999;">' + htmlPgpMsg + '</div>');
-      text.push(orig_body['text/plain']);
+      text.push(origBody['text/plain']);
     }
     html.push('</div>');
     return {'text/plain': text.join('\n'), 'text/html': html.join('\n')};
   }
 
-  private formatEmailTextFooter = (orig_body: SendableMsgBody): SendableMsgBody => {
+  private formatEmailTextFooter = (origBody: SendableMsgBody): SendableMsgBody => {
     const emailFooter = this.app.storageEmailFooterGet();
-    const body: SendableMsgBody = {'text/plain': orig_body['text/plain'] + (emailFooter ? '\n' + emailFooter : '')};
-    if (typeof orig_body['text/html'] !== 'undefined') {
-      body['text/html'] = orig_body['text/html'] + (emailFooter ? '<br>\n' + emailFooter.replace(/\n/g, '<br>\n') : '');
+    const body: SendableMsgBody = {'text/plain': origBody['text/plain'] + (emailFooter ? '\n' + emailFooter : '')};
+    if (typeof origBody['text/html'] !== 'undefined') {
+      body['text/html'] = origBody['text/html'] + (emailFooter ? '<br>\n' + emailFooter.replace(/\n/g, '<br>\n') : '');
     }
     return body;
   }
 
-  static default_app_functions = (): ComposerAppFunctionsInterface => {
+  static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
     return {
       sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => null,
       canReadEmails: () => false,
@@ -1507,15 +1506,15 @@ export class Composer {
       storageContactSearch: (query: DbContactFilter) => Promise.resolve([]),
       storageContactObj: Store.dbContactObj,
       emailProviderDraftGet: (draftId: string) => Promise.resolve({id: null as any as string, message: null as any as R.GmailMsg}),
-      emailProviderDraftCreate: (mime_msg: string) => Promise.reject(null),
-      emailProviderDraftUpdate: (draftId: string, mime_msg: string) => Promise.resolve({}),
+      emailProviderDraftCreate: (mimeMsg: string) => Promise.reject(null),
+      emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise.resolve({}),
       emailProviderDraftDelete: (draftId: string) => Promise.resolve({}),
-      emailProviderMsgSend: (msg: SendableMsg, render_upload_progress: ProgressCb) => Promise.reject({message: 'not implemented'}),
-      emailEroviderSearchContacts: (query: string, known_contacts: Contact[], multi_cb: (r: any) => void) => multi_cb({new: [], all: []}),
+      emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise.reject({message: 'not implemented'}),
+      emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: (r: any) => void) => multiCb({new: [], all: []}),
       emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
       emailProviderExtractArmoredBlock: (msgId) => Promise.resolve(''),
       sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
-      renderReinsertReplyBox: (last_msgId: string, recipients: string[]) => Promise.resolve(),
+      renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => Promise.resolve(),
       renderFooterDialog: () => null,
       renderAddPubkeyDialog: (emails: string[]) => null,
       renderHelpDialog: () => null,

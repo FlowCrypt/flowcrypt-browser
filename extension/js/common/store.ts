@@ -101,12 +101,12 @@ export class Subscription implements SubscriptionInfo {
   level: ProductLevel|null = null;
   expire: string|null = null;
 
-  constructor(stored_subscription: {active: boolean|null, method: PaymentMethod|null, level: ProductLevel, expire?: string|null}|null) {
-    if (stored_subscription) {
-      this.active = stored_subscription.active;
-      this.method = stored_subscription.method;
-      this.level = stored_subscription.level;
-      this.expire = stored_subscription.expire || null;
+  constructor(storedSubscription: {active: boolean|null, method: PaymentMethod|null, level: ProductLevel, expire?: string|null}|null) {
+    if (storedSubscription) {
+      this.active = storedSubscription.active;
+      this.method = storedSubscription.method;
+      this.level = storedSubscription.level;
+      this.expire = storedSubscription.expire || null;
     }
   }
 

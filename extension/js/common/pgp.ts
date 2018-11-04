@@ -59,66 +59,66 @@ export class Pgp {
   ];
 
   public static armor = {
-    strip: (pgp_block_text: string) => {
-      if (!pgp_block_text) {
-        return pgp_block_text;
+    strip: (pgpBlockText: string) => {
+      if (!pgpBlockText) {
+        return pgpBlockText;
       }
       let debug = false;
       if (debug) {
         console.info('pgp_block_1');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
       let newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
       let spaces = [/&nbsp;/g];
       let removes = [/<wbr ?\/?>/g, /<\/?div>/g];
       for (let newline of newlines) {
-        pgp_block_text = pgp_block_text.replace(newline, '\n');
+        pgpBlockText = pgpBlockText.replace(newline, '\n');
       }
       if (debug) {
         console.info('pgp_block_2');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
       for (let remove of removes) {
-        pgp_block_text = pgp_block_text.replace(remove, '');
+        pgpBlockText = pgpBlockText.replace(remove, '');
       }
       if (debug) {
         console.info('pgp_block_3');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
       for (let space of spaces) {
-        pgp_block_text = pgp_block_text.replace(space, ' ');
+        pgpBlockText = pgpBlockText.replace(space, ' ');
       }
       if (debug) {
         console.info('pgp_block_4');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
-      pgp_block_text = pgp_block_text.replace(/\r\n/g, '\n');
+      pgpBlockText = pgpBlockText.replace(/\r\n/g, '\n');
       if (debug) {
         console.info('pgp_block_5');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
-      pgp_block_text = $('<div>' + pgp_block_text + '</div>').text();
+      pgpBlockText = $('<div>' + pgpBlockText + '</div>').text();
       if (debug) {
         console.info('pgp_block_6');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
-      let doubleNl = pgp_block_text.match(/\n\n/g);
+      let doubleNl = pgpBlockText.match(/\n\n/g);
       if (doubleNl !== null && doubleNl.length > 2) { // a lot of newlines are doubled
-        pgp_block_text = pgp_block_text.replace(/\n\n/g, '\n');
+        pgpBlockText = pgpBlockText.replace(/\n\n/g, '\n');
         if (debug) {
           console.info('pgp_block_removed_doubles');
         }
       }
       if (debug) {
         console.info('pgp_block_7');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
-      pgp_block_text = pgp_block_text.replace(/^ +/gm, '');
+      pgpBlockText = pgpBlockText.replace(/^ +/gm, '');
       if (debug) {
         console.info('pgp_block_final');
-        console.info(pgp_block_text);
+        console.info(pgpBlockText);
       }
-      return pgp_block_text;
+      return pgpBlockText;
     },
     clip: (text: string) => {
       if (text && Value.is(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && Value.is(Pgp.ARMOR_HEADER_DICT.null.end as string).in(text)) {
@@ -135,9 +135,9 @@ export class Pgp {
         replace: h.replace,
       };
     },
-    detectBlocks: (orig_text: string) => {
+    detectBlocks: (origText: string) => {
       let blocks: MsgBlock[] = [];
-      let normalized = Str.normalize(orig_text);
+      let normalized = Str.normalize(origText);
       let startAt = 0;
       while(true) {
         let r = Pgp.internal.cryptoArmorDetectBlockNext(normalized, startAt);
@@ -162,14 +162,14 @@ export class Pgp {
      *
      * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
      */
-    replace_blocks: (factory: XssSafeFactory, orig_text: string, msg_id:string|null=null, sender_email:string|null=null, is_outgoing: boolean|null=null) => {
-      let {blocks} = Pgp.armor.detectBlocks(orig_text);
+    replace_blocks: (factory: XssSafeFactory, origText: string, msgId:string|null=null, senderEmail:string|null=null, isOutgoing: boolean|null=null) => {
+      let {blocks} = Pgp.armor.detectBlocks(origText);
       if (blocks.length === 1 && blocks[0].type === 'text') {
         return;
       }
       let r = '';
       for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, msg_id, sender_email, is_outgoing);
+        r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
       }
       return r;
     },
@@ -177,13 +177,13 @@ export class Pgp {
       armored = Str.normalize(armored);
       if (Value.is(type).in(['message', 'publicKey', 'privateKey', 'key'])) {
         armored = armored.replace(/\r?\n/g, '\n').trim();
-        let nl_2 = armored.match(/\n\n/g);
-        let nl_3 = armored.match(/\n\n\n/g);
-        let nl_4 = armored.match(/\n\n\n\n/g);
-        let nl_6 = armored.match(/\n\n\n\n\n\n/g);
-        if (nl_3 && nl_6 && nl_3.length > 1 && nl_6.length === 1) {
+        let nl2 = armored.match(/\n\n/g);
+        let nl3 = armored.match(/\n\n\n/g);
+        let nl4 = armored.match(/\n\n\n\n/g);
+        let nl6 = armored.match(/\n\n\n\n\n\n/g);
+        if (nl3 && nl6 && nl3.length > 1 && nl6.length === 1) {
           return armored.replace(/\n\n\n/g, '\n'); // newlines tripled: fix
-        } else if (nl_2 && nl_4 && nl_2.length > 1 && nl_4.length === 1) {
+        } else if (nl2 && nl4 && nl2.length > 1 && nl4.length === 1) {
           return armored.replace(/\n\n/g, '\n'); // newlines doubled.GPA on windows does this, and sometimes message can get extracted this way from html
         }
         return armored;
@@ -205,7 +205,7 @@ export class Pgp {
       let k = await openpgp.generateKey({numBits, userIds, passphrase});
       return {public: k.publicKeyArmored, private: k.privateKeyArmored};
     },
-    read: (armored_key: string) => openpgp.key.readArmored(armored_key).keys[0],
+    read: (armoredKey: string) => openpgp.key.readArmored(armoredKey).keys[0],
     decrypt: async (key: OpenPGP.key.Key, passphrases: string[]): Promise<boolean> => {
       try {
         return await key.decrypt(passphrases);
@@ -263,17 +263,17 @@ export class Pgp {
         }
       }
     },
-    longid: (key_or_fingerprint_or_bytes: string|OpenPGP.key.Key|null|undefined): string|null => {
-      if (key_or_fingerprint_or_bytes === null || typeof key_or_fingerprint_or_bytes === 'undefined') {
+    longid: (keyOrFingerprintOrBytes: string|OpenPGP.key.Key|null|undefined): string|null => {
+      if (keyOrFingerprintOrBytes === null || typeof keyOrFingerprintOrBytes === 'undefined') {
         return null;
-      } else if (typeof key_or_fingerprint_or_bytes === 'string' && key_or_fingerprint_or_bytes.length === 8) {
-        return Str.toHex(key_or_fingerprint_or_bytes).toUpperCase();
-      } else if (typeof key_or_fingerprint_or_bytes === 'string' && key_or_fingerprint_or_bytes.length === 40) {
-        return key_or_fingerprint_or_bytes.substr(-16);
-      } else if (typeof key_or_fingerprint_or_bytes === 'string' && key_or_fingerprint_or_bytes.length === 49) {
-        return key_or_fingerprint_or_bytes.replace(/ /g, '').substr(-16);
+      } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 8) {
+        return Str.toHex(keyOrFingerprintOrBytes).toUpperCase();
+      } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 40) {
+        return keyOrFingerprintOrBytes.substr(-16);
+      } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 49) {
+        return keyOrFingerprintOrBytes.replace(/ /g, '').substr(-16);
       } else {
-        return Pgp.key.longid(Pgp.key.fingerprint(key_or_fingerprint_or_bytes));
+        return Pgp.key.longid(Pgp.key.fingerprint(keyOrFingerprintOrBytes));
       }
     },
     usable: async (armored: string) => { // is pubkey usable for encrytion?
@@ -342,26 +342,26 @@ export class Pgp {
       }
       return null;
     },
-    sign: async (signing_prv: OpenPGP.key.Key, data: string): Promise<string> => {
-      let signRes = await openpgp.sign({data, armor: true, privateKeys: [signing_prv]});
+    sign: async (signingPrv: OpenPGP.key.Key, data: string): Promise<string> => {
+      let signRes = await openpgp.sign({data, armor: true, privateKeys: [signingPrv]});
       return (signRes as OpenPGP.SignArmorResult).data;
     },
-    verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keys_for_verification: OpenPGP.key.Key[], optional_contact: Contact|null=null) => {
-      let signature: MsgVerifyResult = { signer: null, contact: optional_contact, match: null, error: null };
+    verify: async (message: OpenPGP.message.Message|OpenPGP.cleartext.CleartextMessage, keysForVerification: OpenPGP.key.Key[], optionalContact: Contact|null=null) => {
+      let signature: MsgVerifyResult = { signer: null, contact: optionalContact, match: null, error: null };
       try {
-        for (let verifyRes of await message.verify(keys_for_verification)) {
+        for (let verifyRes of await message.verify(keysForVerification)) {
           signature.match = Value.is(signature.match).in([true, null]) && verifyRes.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
           if (!signature.signer) {
             signature.signer = Pgp.key.longid(verifyRes.keyid.bytes);
           }
         }
-      } catch (verify_error) {
+      } catch (verifyErr) {
         signature.match = null;
-        if (verify_error.message === 'Can only verify message with one literal data packet.') {
+        if (verifyErr.message === 'Can only verify message with one literal data packet.') {
           signature.error = 'FlowCrypt is not equipped to verify this message (err 101)';
         } else {
-          signature.error = `FlowCrypt had trouble verifying this message (${verify_error.message})`;
-          Catch.handleException(verify_error);
+          signature.error = `FlowCrypt had trouble verifying this message (${verifyErr.message})`;
+          Catch.handleException(verifyErr);
         }
       }
       return signature;
@@ -498,8 +498,8 @@ export class Pgp {
       let begin = origText.indexOf(Pgp.armor.headers('null').begin, startAt);
       if (begin !== -1) { // found
         let potentialBeginHeader = origText.substr(begin, Pgp.ARMOR_HEADER_MAX_LENGTH);
-        for (let _type of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
-          let type = _type as ReplaceableMsgBlockType;
+        for (let xType of Object.keys(Pgp.ARMOR_HEADER_DICT)) {
+          let type = xType as ReplaceableMsgBlockType;
           let blockHeaderDef = Pgp.ARMOR_HEADER_DICT[type];
           if (blockHeaderDef.replace) {
             let indexOfConfirmedBegin = potentialBeginHeader.indexOf(blockHeaderDef.begin);
@@ -560,9 +560,9 @@ export class Pgp {
     },
     cryptoKeyIds: (armoredPubkey: string) => openpgp.key.readArmored(armoredPubkey).keys[0].getKeyIds(),
     cryptoMsgPrepareForDecrypt: (data: string|Uint8Array): {isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message}|{isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage} => {
-      let first_100_bytes = Str.fromUint8(data.slice(0, 100));
-      let isArmoredEncrypted = Value.is(Pgp.armor.headers('message').begin).in(first_100_bytes);
-      let isArmoredSignedOnly = Value.is(Pgp.armor.headers('signedMsg').begin).in(first_100_bytes);
+      let first100bytes = Str.fromUint8(data.slice(0, 100));
+      let isArmoredEncrypted = Value.is(Pgp.armor.headers('message').begin).in(first100bytes);
+      let isArmoredSignedOnly = Value.is(Pgp.armor.headers('signedMsg').begin).in(first100bytes);
       let isArmored = isArmoredEncrypted || isArmoredSignedOnly;
       if (isArmoredEncrypted) {
         return {isArmored, isCleartext: false, message: openpgp.message.readArmored(Str.fromUint8(data))};

@@ -11,7 +11,7 @@ rules:
     no-console: false
     prefer-const: false
     quotemark: false
-    variable-name: false
+    variable-name: true
     member-access: false
     member-ordering: false
     one-variable-per-declaration: false

@@ -11,10 +11,10 @@ import { BrowserMsgHandler } from '../common/extension.js';
 
 declare let openpgp: typeof OpenPGP;
 
-export let migrateAcct: BrowserMsgHandler = async (data: {acctEmail: string}, sender, respond_done) => {
+export let migrateAcct: BrowserMsgHandler = async (data: {acctEmail: string}, sender, doneCb) => {
   if(data.acctEmail) {
     await Store.set(data.acctEmail, { version: Catch.version('int') });
-    respond_done();
+    doneCb();
     await accountUpdateStatusKeyserver(data.acctEmail);
     await accountUpdateStatusPks(data.acctEmail);
   } else {
@@ -130,9 +130,9 @@ let reportUsefulErrs = (e: any) => {
   }
 };
 
-export let scheduleFcSubscriptionLevelCheck = (background_process_start_reason: 'update' | 'chrome_update' | 'browser_start' | string) => {
+export let scheduleFcSubscriptionLevelCheck = (bgProcessStartReason: 'update' | 'chrome_update' | 'browser_start' | string) => {
   Catch.setHandledTimeout(() => {
-    if (background_process_start_reason === 'update' || background_process_start_reason === 'chrome_update') {
+    if (bgProcessStartReason === 'update' || bgProcessStartReason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
       Catch.setHandledTimeout(() => Api.fc.accountCheckSync().catch(reportUsefulErrs), Value.int.hoursAsMiliseconds(Math.random() * 3)); // random 0-3 hours
     } else {

@@ -85,22 +85,22 @@ Catch.try(async () => {
     }
   };
 
-  let getUrlFileSize = (original_url: string): Promise<number|null> => new Promise((resolve, reject) => {
+  let getUrlFileSize = (origUrl: string): Promise<number|null> => new Promise((resolve, reject) => {
     console.info('trying to figure out file size');
     let url;
     if (Value.is('docs.googleusercontent.com/docs/securesc').in(urlParams.url as string)) {
       try {
-        let googleDriveFileId = original_url.split('/').pop()!.split('?').shift(); // we catch any errors below
+        let googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // we catch any errors below
         if (googleDriveFileId) {
           url = 'https://drive.google.com/uc?export=download&id=' + googleDriveFileId; // this one can actually give us headers properly
         } else {
-          url =  original_url;
+          url =  origUrl;
         }
       } catch (e) {
-        url =  original_url;
+        url =  origUrl;
       }
     } else {
-      url = original_url;
+      url = origUrl;
     }
     let xhr = new XMLHttpRequest();
     xhr.open("HEAD", url, true);
@@ -118,15 +118,15 @@ Catch.try(async () => {
     xhr.send();
   });
 
-  let decryptAndSaveAttToDownloads = async (enc_a: Att) => {
-    let result = await Pgp.msg.decrypt(acctEmail, enc_a.data(), null, true);
+  let decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
+    let result = await Pgp.msg.decrypt(acctEmail, encryptedAtt.data(), null, true);
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
       let name = result.content.filename;
       if (!name || Value.is(name).in(['msg.txt', 'null'])) {
-        name = enc_a.name;
+        name = encryptedAtt.name;
       }
-      Att.methods.saveToDownloads(new Att({name, type: enc_a.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
+      Att.methods.saveToDownloads(new Att({name, type: encryptedAtt.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send(parentTabId, 'passphrase_dialog', {type: 'attachment', longids: result.longids.needPassphrase});
       clearInterval(passphraseInterval);
@@ -135,7 +135,7 @@ Catch.try(async () => {
       delete result.message;
       console.info(result);
       $('body.attachment').text('Error opening file. Downloading original..');
-      Att.methods.saveToDownloads(new Att({name: urlParams.name as string, type: urlParams.type as string, data: enc_a.data()}));
+      Att.methods.saveToDownloads(new Att({name: urlParams.name as string, type: urlParams.type as string, data: encryptedAtt.data()}));
     }
   };
 

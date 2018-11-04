@@ -19,8 +19,8 @@ export class Injector {
     'settings': '#does_not_have',
   };
 
-  constructor(webmail_name: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {
-    this.webmailName = webmail_name;
+  constructor(webmailName: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {
+    this.webmailName = webmailName;
     this.webmailVariant = webmailVariant;
     this.factory = factory;
     this.S = Ui.buildJquerySels({

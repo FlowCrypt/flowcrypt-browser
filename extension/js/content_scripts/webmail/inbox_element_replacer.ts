@@ -47,25 +47,25 @@ export class InboxElementReplacer implements WebmailElementReplacer {
 
   private replaceArmoredBlocks = () => {
     let self = this;
-    $(this.msgTextElSel).not('.evaluated').addClass('evaluated').filter(":contains('" + Pgp.armor.headers('null').begin + "')").each((i, msg_el) => { // for each email that contains PGP block
-      let msgId = self.domExtractMsgId(msg_el);
-      let senderEmail = self.domExtractSenderEmail(msg_el);
+    $(this.msgTextElSel).not('.evaluated').addClass('evaluated').filter(":contains('" + Pgp.armor.headers('null').begin + "')").each((i, msgEl) => { // for each email that contains PGP block
+      let msgId = self.domExtractMsgId(msgEl);
+      let senderEmail = self.domExtractSenderEmail(msgEl);
       let isOutgoing = Value.is(senderEmail).in(this.addresses);
-      let replacementXssSafe = Pgp.armor.replace_blocks(self.factory, msg_el.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
+      let replacementXssSafe = Pgp.armor.replace_blocks(self.factory, msgEl.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
       if (typeof replacementXssSafe !== 'undefined') {
-        $(msg_el).parents('.ap').addClass('pgp_message_container');
-        $(msg_el).html(replacementXssSafe.replace(/^…|…$/g, '').trim()); // xss-safe-factory
+        $(msgEl).parents('.ap').addClass('pgp_message_container');
+        $(msgEl).html(replacementXssSafe.replace(/^…|…$/g, '').trim()); // xss-safe-factory
       }
     });
   }
 
   private replaceStandardReplyBox = (editable=false, forceReplaceEvenIfPgpBlockIsNotPresent=false) => {
     let self = this;
-    $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, reply_box) => {
-      let rootEl = self.domGetConversationRootEl(reply_box);
+    $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, replyBox) => {
+      let rootEl = self.domGetConversationRootEl(replyBox);
       if (rootEl.find('iframe.pgp_block').filter(':visible').length || (rootEl.is(':visible') && forceReplaceEvenIfPgpBlockIsNotPresent)) {
         let iframeXssSafe = self.factory.embeddedReply(self.getConvoParams(rootEl), editable);
-        $(reply_box).addClass('reply_message_iframe_container').html(iframeXssSafe).children(':not(iframe)').css('display', 'none'); // xss-safe-factory
+        $(replyBox).addClass('reply_message_iframe_container').html(iframeXssSafe).children(':not(iframe)').css('display', 'none'); // xss-safe-factory
       }
     });
   }
@@ -106,7 +106,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
       let treatAs = a.treatAs();
       if (treatAs !== 'standard') {
         let attSel = (attsContainer as JQuery<HTMLElement>).find(this.getAttSel(a.name)).first();
-        this.hide_att(attSel, attsContainer);
+        this.hideAtt(attSel, attsContainer);
         if (treatAs === 'encrypted') { // actual encrypted attachment - show it
           (attsContainer as JQuery<HTMLElement>).prepend(this.factory.embeddedAtta(a)); // xss-safe-factory
         } else if (treatAs === 'message') {
@@ -155,7 +155,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private hide_att = (attEl: JQuery<HTMLElement>|HTMLElement, attsContainerSel: JQuery<HTMLElement>|HTMLElement) => {
+  private hideAtt = (attEl: JQuery<HTMLElement>|HTMLElement, attsContainerSel: JQuery<HTMLElement>|HTMLElement) => {
     $(attEl).css('display', 'none');
     if (!$(attEl).length) {
       $(attsContainerSel).children('.attachment_loader').text('Missing file info');
@@ -182,8 +182,8 @@ export class InboxElementReplacer implements WebmailElementReplacer {
       m = $(baseEl).parents('.ap');
     }
     let recipients: string[] = [];
-    m.find('.fX').siblings('span[email]').each((i, recipient_element) => {
-      let email = $(recipient_element).attr('email');
+    m.find('.fX').siblings('span[email]').each((i, recipientEl) => {
+      let email = $(recipientEl).attr('email');
       if (email) {
         recipients.push(email);
       }

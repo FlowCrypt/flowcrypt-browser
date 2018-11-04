@@ -81,24 +81,24 @@ Catch.try(async () => {
 
   let composer = new Composer({
     canReadEmails: () => canReadEmail,
-    doesRecipientHaveMyPubkey: async (their_email: string): Promise<boolean|undefined> => {
-      their_email = Str.parseEmail(their_email).email;
-      if(!their_email) {
+    doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean|undefined> => {
+      theirEmail = Str.parseEmail(theirEmail).email;
+      if(!theirEmail) {
         return false;
       }
       let storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);
-      if (Value.is(their_email).in(storage.pubkey_sent_to || [])) {
+      if (Value.is(theirEmail).in(storage.pubkey_sent_to || [])) {
         return true;
       }
       if (!canReadEmail) {
         return undefined;
       }
-      const qSentPubkey = `is:sent to:${their_email} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
-      const qReceivedMsg = `from:${their_email} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
+      const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
+      const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
       try {
         let response = await Api.gmail.msgList(acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
         if (response.messages) {
-          await Store.set(acctEmail, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(their_email)});
+          await Store.set(acctEmail, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail)});
           return true;
         } else {
           return false;
@@ -122,7 +122,7 @@ Catch.try(async () => {
     },
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
-    storageGetKey: async (sender_email: string): Promise<KeyInfo> => {
+    storageGetKey: async (senderEmail: string): Promise<KeyInfo> => {
       let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       if (primaryKi) {
         return primaryKi;

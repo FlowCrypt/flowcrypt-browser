@@ -199,13 +199,13 @@ Catch.try(async () => {
     return true;
   };
 
-  let asBackupFile = (acctEmail: string, armored_key: string) => {
-    return new Att({name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armored_key});
+  let asBackupFile = (acctEmail: string, armoredKey: string) => {
+    return new Att({name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armoredKey});
   };
 
-  let doBackupOnEmailProvider = async (acctEmail: string, armored_key: string) => {
+  let doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
     let emailMsg = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
-    let emailAtts = [asBackupFile(acctEmail, armored_key)];
+    let emailAtts = [asBackupFile(acctEmail, armoredKey)];
     let msg = await Api.common.msg(acctEmail, acctEmail, acctEmail, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': emailMsg}, emailAtts);
     if (emailProvider === 'gmail') {
       return await Api.gmail.msgSend(acctEmail, msg);
@@ -214,9 +214,9 @@ Catch.try(async () => {
     }
   };
 
-  let backupOnEmailProviderAndUpdateUi = async (primary_ki: KeyInfo) => {
-    let pp = await Store.passphraseGet(acctEmail, primary_ki.longid);
-    if (!pp || !await isPassPhraseStrongEnough(primary_ki, pp)) {
+  let backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
+    let pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
+    if (!pp || !await isPassPhraseStrongEnough(primaryKi, pp)) {
       alert('Your key is not protected with a strong pass phrase, skipping');
       return;
     }
@@ -224,7 +224,7 @@ Catch.try(async () => {
     let origBtnText = btn.text();
     Xss.sanitizeRender(btn, Ui.spinner('white'));
     try {
-      await doBackupOnEmailProvider(acctEmail, primary_ki.private);
+      await doBackupOnEmailProvider(acctEmail, primaryKi.private);
     } catch (e) {
       if(Api.err.isNetErr(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
@@ -241,8 +241,8 @@ Catch.try(async () => {
     await writeBackupDoneAndRender(false, 'inbox');
   };
 
-  let backupAsFile = async (primary_ki: KeyInfo) => { // todo - add a non-encrypted download option
-    let attachment = asBackupFile(acctEmail, primary_ki.private);
+  let backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
+    let attachment = asBackupFile(acctEmail, primaryKi.private);
     if (Env.browser().name !== 'firefox') {
       Att.methods.saveToDownloads(attachment);
       await writeBackupDoneAndRender(false, 'file');
@@ -251,7 +251,7 @@ Catch.try(async () => {
     }
   };
 
-  let backupByBrint = async (primary_ki: KeyInfo) => { // todo - implement + add a non-encrypted print option
+  let backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
   };
 
@@ -287,12 +287,12 @@ Catch.try(async () => {
     }
   }));
 
-  let isPassPhraseStrongEnough = async (ki: KeyInfo, pass_phrase: string) => {
+  let isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
     let k = Pgp.key.read(ki.private);
     if(k.isDecrypted()) {
       return false;
     }
-    if (!pass_phrase) {
+    if (!passphrase) {
       let pp = prompt('Please enter your pass phrase:');
       if (!pp) {
         return false;
@@ -301,9 +301,9 @@ Catch.try(async () => {
         alert('Pass phrase did not match, please try again.');
         return false;
       }
-      pass_phrase = pp;
+      passphrase = pp;
     }
-    if (Settings.evalPasswordStrength(pass_phrase).word.pass === true) {
+    if (Settings.evalPasswordStrength(passphrase).word.pass === true) {
       return true;
     }
     alert('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');

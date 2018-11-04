@@ -37,9 +37,9 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let openSettingsPage = async (path:string='index.htm', acctEmail:string|null=null, page:string='', _page_url_params:Dict<FlatTypes>|null=null, addNewAcct=false) => {
+  let openSettingsPage = async (path:string='index.htm', acctEmail:string|null=null, page:string='', rawPageUrlParams:Dict<FlatTypes>|null=null, addNewAcct=false) => {
     let basePath = chrome.extension.getURL(`chrome/settings/${path}`);
-    let pageUrlParams = _page_url_params ? JSON.stringify(_page_url_params) : null;
+    let pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : null;
     if (acctEmail) {
       await openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams}));
     } else if(addNewAcct) {

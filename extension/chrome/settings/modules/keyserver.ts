@@ -19,7 +19,7 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  let renderDiagnosis = (diagnosis: any, attests_requested: string[]) => {
+  let renderDiagnosis = (diagnosis: any, attestsRequested: string[]) => {
     for (let email of Object.keys(diagnosis.results)) {
       let result = diagnosis.results[email];
       let note, action, remove, color;
@@ -30,8 +30,8 @@ Catch.try(async () => {
         color = 'orange';
       } else if (result.match) {
         if (email === acctEmail && !result.attested) {
-          if (attests_requested && attests_requested.length) {
-            note = `Submitted. Attestation was requested from ${Xss.htmlEscape(attests_requested.join(', '))} and should process shortly.`;
+          if (attestsRequested && attestsRequested.length) {
+            note = `Submitted. Attestation was requested from ${Xss.htmlEscape(attestsRequested.join(', '))} and should process shortly.`;
             action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.htmlEscape(email)}">Refresh</div>`;
             remove = '';
             color = 'orange';
@@ -58,7 +58,7 @@ Catch.try(async () => {
           action = `<div class="button gray2 small action_request_attestation" email="${Xss.htmlEscape(email)}">Request Attestation</div>`;
           remove = '';
           color = 'red';
-        } else if (email === acctEmail && result.attested && attests_requested && attests_requested.length) {
+        } else if (email === acctEmail && result.attested && attestsRequested && attestsRequested.length) {
           note = 'Re-Attestation requested. This should process shortly.';
           action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.htmlEscape(email)}">Refresh</div>`;
           remove = '';

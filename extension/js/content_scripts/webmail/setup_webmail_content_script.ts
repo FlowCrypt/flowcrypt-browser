@@ -21,7 +21,7 @@ type WebmailSpecificInfo = {
 export interface WebmailElementReplacer {
   everything: () => void;
   setReplyBoxEditable: () => void;
-  reinsertReplyBox: (subject: string, my_email: string, reply_to: string[], threadId: string) => void;
+  reinsertReplyBox: (subject: string, myEmail: string, replyTo: string[], threadId: string) => void;
   scrollToBottomOfConvo: () => void;
 }
 
@@ -220,8 +220,8 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
           clearTimeout(id);
         }
         $('.' + (window as ContentScriptWindow).destroyable_class).remove();
-        $('.' + (window as ContentScriptWindow).reloadable_class).each((i, reloadable_element) => {
-          $(reloadable_element).replaceWith($(reloadable_element)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
+        $('.' + (window as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
+          $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
         });
         wasDestroyed = true;
       })();

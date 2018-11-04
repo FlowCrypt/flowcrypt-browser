@@ -17,7 +17,7 @@ declare const openpgp: typeof OpenPGP;
 declare const qq: any;
 
 type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
-type AttachLimits = {count?: number, size?: number, size_mb?: number, oversize?: (new_file_size: number) => void};
+type AttLimits = {count?: number, size?: number, size_mb?: number, oversize?: (newFileSize: number) => void};
 type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type KeyImportUiCheckResult = { normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
@@ -41,10 +41,10 @@ export class Ui {
 
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
-  public static spinner = (color: string, placeholder_class:"small_spinner"|"large_spinner"='small_spinner') => {
+  public static spinner = (color: string, placeholderCls:"small_spinner"|"large_spinner"='small_spinner') => {
     let path = `/img/svgs/spinner-${color}-small.svg`;
     let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
-    return `<i class="${placeholder_class}" data-test="spinner"><img src="${url}" /></i>`;
+    return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
   public static renderOverlayPromptAwaitUserChoice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
@@ -206,16 +206,16 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, err_handler?: BrowserEventErrorHandler) => {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, errHandler?: BrowserEventErrorHandler) => {
       return function(event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
           r = cb(this, event);
           if(typeof r === 'object' && typeof r.catch === 'function') {
-            r.catch(e => Ui.event._dispatchErr(e, err_handler));
+            r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
         } catch(e) {
-          Ui.event._dispatchErr(e, err_handler);
+          Ui.event._dispatchErr(e, errHandler);
         }
       };
     },
@@ -324,7 +324,7 @@ export class Ui {
         }
       }, 50);
     }),
-    sleep: (ms: number, set_timeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => set_timeout(resolve, ms)),
+    sleep: (ms: number, setCustomTimeout: (code: () => void, t: number) => void = Catch.setHandledTimeout) => new Promise(resolve => setCustomTimeout(resolve, ms)),
   };
 
   public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
@@ -337,13 +337,13 @@ export class Xss {
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
   private static HREF_REGEX_CACHE = null as null|RegExp;
 
-  public static sanitizeRender = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).html(Xss.htmlSanitize(dirty_html)); // xss-sanitized
+  public static sanitizeRender = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static sanitizeAppend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).append(Xss.htmlSanitize(dirty_html)); // xss-sanitized
+  public static sanitizeAppend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static sanitizePrepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).prepend(Xss.htmlSanitize(dirty_html)); // xss-sanitized
+  public static sanitizePrepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static sanitizeReplace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirty_html: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirty_html)); // xss-sanitized
+  public static sanitizeReplace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
   public static htmlSanitize = (dirtyHtml: string): string => { // originaly text_or_html
     return DOMPurify.sanitize(dirtyHtml, {
@@ -386,8 +386,8 @@ export class Xss {
     return cleanHtml;
   }
 
-  public static htmlSanitizeAndStripAllTags = (dirty_html: string, output_newline: string): string => {
-    let html = Xss.htmlSanitizeKeepBasicTags(dirty_html);
+  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml);
     let random = Str.random(5);
     let br = `CU_BR_${random}`;
     let blockStart = `CU_BS_${random}`;
@@ -403,8 +403,8 @@ export class Xss {
     // not all tags were removed above. Remove all remaining tags
     text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: []});
     text = text.trim();
-    if(output_newline !== '\n') {
-      text = text.replace(/\n/g, output_newline);
+    if(outputNl !== '\n') {
+      text = text.replace(/\n/g, outputNl);
     }
     return text;
   }
@@ -419,7 +419,7 @@ export class Xss {
   private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
     if(Xss.HREF_REGEX_CACHE === null) {
       if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regex_escape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
+        Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
       } else {
         Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
       }
@@ -650,6 +650,7 @@ export class XssSafeFactory {
     return Ui.e('iframe', attrs);
   }
 
+  // tslint:disable-next-line:variable-name
   private divDialog_DANGEROUS = (content_MUST_BE_XSS_SAFE: string, dataTest: string) => { // xss-dangerous-function
     return Ui.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': dataTest });
   }
@@ -664,14 +665,14 @@ export class UserAlert extends Error {}
 
 export class KeyImportUi {
 
-  private expected_longid: string|null;
+  private expectedLongid: string|null;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
   private checkSigning: boolean;
   public onBadPassphrase: VoidCallback = () => undefined;
 
   constructor(o: {expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean}) {
-    this.expected_longid = o.expectLongid || null;
+    this.expectedLongid = o.expectLongid || null;
     this.rejectKnown = o.rejectKnown === true;
     this.checkEncryption = o.checkEncryption === true;
     this.checkSigning = o.checkSigning === true;
@@ -798,30 +799,30 @@ export class KeyImportUi {
   }
 
   private rejectIfDifferentFromSelectedLongid = (longid: string) => {
-    if(this.expected_longid && longid !== this.expected_longid) {
-      throw new UserAlert(`Key does not match. Looking for key with KeyWords ${mnemonic(this.expected_longid)} (${this.expected_longid})`);
+    if(this.expectedLongid && longid !== this.expectedLongid) {
+      throw new UserAlert(`Key does not match. Looking for key with KeyWords ${mnemonic(this.expectedLongid)} (${this.expectedLongid})`);
     }
   }
 
-  private decryptAndEncryptAsNeeded = async (to_decrypt: OpenPGP.key.Key, to_encrypt: OpenPGP.key.Key, passphrase: string): Promise<void> => {
+  private decryptAndEncryptAsNeeded = async (toDecrypt: OpenPGP.key.Key, toEncrypt: OpenPGP.key.Key, passphrase: string): Promise<void> => {
     if(!passphrase) {
       throw new UserAlert('Please enter a pass phrase to use with this key');
     }
     let decryptResult;
     try {
-      if(to_encrypt.isDecrypted()) {
-        await to_encrypt.encrypt(passphrase);
+      if(toEncrypt.isDecrypted()) {
+        await toEncrypt.encrypt(passphrase);
       }
-      if(to_decrypt.isDecrypted()) {
+      if(toDecrypt.isDecrypted()) {
         return;
       }
-      decryptResult = await Pgp.key.decrypt(to_decrypt, [passphrase]);
+      decryptResult = await Pgp.key.decrypt(toDecrypt, [passphrase]);
     } catch (e) {
       throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
     }
     if (!decryptResult) {
       this.onBadPassphrase();
-      if(this.expected_longid) {
+      if(this.expectedLongid) {
         throw new UserAlert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
       } else {
         throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
@@ -856,29 +857,29 @@ export class KeyImportUi {
 
 export class AttUI {
 
-  private template_path = '/chrome/elements/shared/attach.template.htm';
-  private get_limits: () => AttachLimits;
-  private attached_files: Dict<File> = {};
+  private templatePath = '/chrome/elements/shared/attach.template.htm';
+  private getLimits: () => AttLimits;
+  private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
-  private att_added_callback: (r: any) => void;
+  private attAddedCb: (r: any) => void;
 
-  constructor(get_limits: () => AttachLimits) {
-    this.get_limits = get_limits;
+  constructor(getLimits: () => AttLimits) {
+    this.getLimits = getLimits;
   }
 
-  initAttDialog = (element_id: string, button_id: string) => {
-    $('#qq-template').load(this.template_path, () => {
+  initAttDialog = (elId: string, btnId: string) => {
+    $('#qq-template').load(this.templatePath, () => {
       let config = {
         autoUpload: false,
         // debug: true,
-        element: $('#' + element_id).get(0),
-        button: $('#' + button_id).get(0),
+        element: $('#' + elId).get(0),
+        button: $('#' + btnId).get(0),
         dragAndDrop: {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (id: string, name: string) => Catch.try(() => this.process_new_att(id, name))(),
-          onCancel: (id: string) => Catch.try(() => this.cancel_att(id))(),
+          onSubmitted: (id: string, name: string) => Catch.try(() => this.processNewAtt(id, name))(),
+          onCancel: (id: string) => Catch.try(() => this.cancelAtt(id))(),
         },
       };
       this.uploader = new qq.FineUploader(config);
@@ -886,83 +887,83 @@ export class AttUI {
   }
 
   setAttAddedCb = (cb: (r: any) => void) => {
-    this.att_added_callback = cb;
+    this.attAddedCb = cb;
   }
 
   hasAtt = () => {
-    return Object.keys(this.attached_files).length > 0;
+    return Object.keys(this.attachedFiles).length > 0;
   }
 
   getAttIds = () => {
-    return Object.keys(this.attached_files);
+    return Object.keys(this.attachedFiles);
   }
 
-  collect_att = async (id: string) => {
-    let fileData = await this.read_att_data_as_uint8(id);
-    return new Att({name: this.attached_files[id].name, type: this.attached_files[id].type, data: fileData});
+  collectAtt = async (id: string) => {
+    let fileData = await this.readAttDataAsUint8(id);
+    return new Att({name: this.attachedFiles[id].name, type: this.attachedFiles[id].type, data: fileData});
   }
 
   collectAtts = async () => {
     let atts: Att[] = [];
-    for (let id of Object.keys(this.attached_files)) {
-      atts.push(await this.collect_att(id));
+    for (let id of Object.keys(this.attachedFiles)) {
+      atts.push(await this.collectAtt(id));
     }
     return atts;
   }
 
-  collectEncryptAtts = async (armored_pubkeys: string[], challenge: Challenge|null): Promise<Att[]> => {
+  collectEncryptAtts = async (armoredPubkeys: string[], challenge: Challenge|null): Promise<Att[]> => {
     let atts: Att[] = [];
-    for (let id of Object.keys(this.attached_files)) {
-      let file = this.attached_files[id];
-      let fileData = await this.read_att_data_as_uint8(id);
-      let encrypted = await Pgp.msg.encrypt(armored_pubkeys, null, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
+    for (let id of Object.keys(this.attachedFiles)) {
+      let file = this.attachedFiles[id];
+      let fileData = await this.readAttDataAsUint8(id);
+      let encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write()}));
     }
     return atts;
   }
 
-  private cancel_att = (id: string) => {
-    delete this.attached_files[id];
+  private cancelAtt = (id: string) => {
+    delete this.attachedFiles[id];
   }
 
-  private process_new_att = (id: string, name: string) => {
-    let limits = this.get_limits();
-    if (limits.count && Object.keys(this.attached_files).length >= limits.count) {
+  private processNewAtt = (id: string, name: string) => {
+    let limits = this.getLimits();
+    if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       alert('Amount of attached files is limited to ' + limits.count);
       this.uploader.cancel(id);
     } else {
       let newFile = this.uploader.getFile(id);
-      if (limits.size && this.get_file_size_sum() + newFile.size > limits.size) {
+      if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
         this.uploader.cancel(id);
         if (typeof limits.oversize === 'function') {
-          limits.oversize(this.get_file_size_sum() + newFile.size);
+          limits.oversize(this.getFileSizeSum() + newFile.size);
         } else {
           alert('Combined file size is limited to ' + limits.size_mb + 'MB');
         }
         return;
       }
-      this.attached_files[id] = newFile;
-      if (typeof this.att_added_callback === 'function') {
-        this.collect_att(id).then((a) => this.att_added_callback(a)).catch(Catch.rejection);
+      this.attachedFiles[id] = newFile;
+      if (typeof this.attAddedCb === 'function') {
+        this.collectAtt(id).then((a) => this.attAddedCb(a)).catch(Catch.rejection);
       }
     }
   }
 
-  private get_file_size_sum = () => {
+  private getFileSizeSum = () => {
     let sum = 0;
-    for (let file of Object.values(this.attached_files)) {
+    for (let file of Object.values(this.attachedFiles)) {
       sum += file.size;
     }
     return sum;
   }
 
-  private read_att_data_as_uint8 = (id: string): Promise<Uint8Array> => {
+  private readAttDataAsUint8 = (id: string): Promise<Uint8Array> => {
     return new Promise(resolve => {
       let reader = new FileReader();
       reader.onload = () => {
         resolve(new Uint8Array(reader.result as ArrayBuffer)); // that's what we're getting
       };
-      reader.readAsArrayBuffer(this.attached_files[id]);
+      reader.readAsArrayBuffer(this.attachedFiles[id]);
     });
   }
 

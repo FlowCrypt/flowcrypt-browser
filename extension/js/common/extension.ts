@@ -62,7 +62,7 @@ export class Extension { // todo - move extension-specific common.js code here
   public static prepareBugReport = (name: string, details?: Dict<FlatTypes>, error?: Error|any): string => {
     let bugReport: Dict<string> = {
       name,
-      stack: Catch.stack_trace(),
+      stack: Catch.stackTrace(),
     };
     try {
       bugReport.error = JSON.stringify(error, null, 2);
@@ -106,7 +106,7 @@ export class BrowserMsg {
   }
 
   public static sendAwait = (destString: string|null, name: string, data: Dict<any>|null=null): Promise<BrowserMsgRes> => new Promise(resolve => {
-    let msg = { name, data, to: destString || null, uid: Str.random(10), stack: Catch.stack_trace() };
+    let msg = { name, data, to: destString || null, uid: Str.random(10), stack: Catch.stackTrace() };
     let tryResolveNoUndefined = (r?: BrowserMsgRes) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     let isBackgroundPage = Env.isBackgroundPage();
     if (typeof  destString === 'undefined') { // don't know where to send the message
@@ -291,9 +291,9 @@ export class BgExec {
     return BgExec.requestToProcessInBg('Pgp.msg.verifyDetached', [acctEmail, message, signature]) as Promise<MsgVerifyResult>;
   }
 
-  private static executeAndFormatResult = async (path: string, resolved_args: any[]): Promise<PossibleBgExecResults> => {
+  private static executeAndFormatResult = async (path: string, resolvedArgs: any[]): Promise<PossibleBgExecResults> => {
     let f = BgExec.resolvePathToCallableFunction(path);
-    let returned: Promise<PossibleBgExecResults>|PossibleBgExecResults = f.apply(null, resolved_args);
+    let returned: Promise<PossibleBgExecResults>|PossibleBgExecResults = f.apply(null, resolvedArgs);
     if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       let resolved = await returned;
       if (path === 'Pgp.msg.decrypt') {
@@ -304,14 +304,14 @@ export class BgExec {
     return returned as PossibleBgExecResults; // direct result
   }
 
-  private static cryptoMsgDecryptResCreateBlobs = (decrypt_res: DecryptResult) => {
-    if (decrypt_res && decrypt_res.success && decrypt_res.content) {
-      if(decrypt_res.content.text && decrypt_res.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
-        decrypt_res.content.blob = {blob_type: 'text', blob_url: Att.methods.objUrlCreate(decrypt_res.content.text)};
-        decrypt_res.content.text = undefined; // replaced with a blob
-      } else if(decrypt_res.content.uint8 && decrypt_res.content.uint8 instanceof Uint8Array) {
-        decrypt_res.content.blob = {blob_type: 'uint8', blob_url: Att.methods.objUrlCreate(decrypt_res.content.uint8)};
-        decrypt_res.content.uint8 = undefined; // replaced with a blob
+  private static cryptoMsgDecryptResCreateBlobs = (decryptRes: DecryptResult) => {
+    if (decryptRes && decryptRes.success && decryptRes.content) {
+      if(decryptRes.content.text && decryptRes.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
+        decryptRes.content.blob = {blob_type: 'text', blob_url: Att.methods.objUrlCreate(decryptRes.content.text)};
+        decryptRes.content.text = undefined; // replaced with a blob
+      } else if(decryptRes.content.uint8 && decryptRes.content.uint8 instanceof Uint8Array) {
+        decryptRes.content.blob = {blob_type: 'uint8', blob_url: Att.methods.objUrlCreate(decryptRes.content.uint8)};
+        decryptRes.content.uint8 = undefined; // replaced with a blob
       }
     }
   }

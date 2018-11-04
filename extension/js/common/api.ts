@@ -150,12 +150,12 @@ export class Api {
       }
       return false;
     },
-    isStandardErr: (e: Thrown, internal_type: string) => {
+    isStandardErr: (e: Thrown, internalType: string) => {
       if(e && typeof e === 'object') {
-        if(e.internal === internal_type) {
+        if(e.internal === internalType) {
           return true;
         }
-        if(e.error && typeof e.error === 'object' && e.error.internal === internal_type) {
+        if(e.error && typeof e.error === 'object' && e.error.internal === internalType) {
           return true;
         }
       }
@@ -320,19 +320,19 @@ export class Api {
       let request = Api.internal.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({threadId: message.thread}), 'message/rfc822': mimeMsg });
       return Api.internal.apiGmailCall(acctEmail, 'POST', 'messages/send', request.body, {upload: progressCb || Value.noop}, request.contentType);
     },
-    msgList: (acctEmail: string, q: string, include_deleted:boolean=false): Promise<R.GmailMsgList> => Api.internal.apiGmailCall(acctEmail, 'GET', 'messages', {
+    msgList: (acctEmail: string, q: string, includeDeleted:boolean=false): Promise<R.GmailMsgList> => Api.internal.apiGmailCall(acctEmail, 'GET', 'messages', {
       q,
-      includeSpamTrash: include_deleted,
+      includeSpamTrash: includeDeleted,
     }),
     msgGet: (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}`, {
       format: format || 'full',
     }),
-    msgsGet: (acctEmail: string, message_ids: string[], format: GmailResponseFormat): Promise<R.GmailMsg[]> => {
-      return Promise.all(message_ids.map(id => Api.gmail.msgGet(acctEmail, id, format)));
+    msgsGet: (acctEmail: string, msgIds: string[], format: GmailResponseFormat): Promise<R.GmailMsg[]> => {
+      return Promise.all(msgIds.map(id => Api.gmail.msgGet(acctEmail, id, format)));
     },
     labelsGet: (acctEmail: string): Promise<R.GmailLabels> => Api.internal.apiGmailCall(acctEmail, 'GET', `labels`, {}),
-    attGet: async (acctEmail: string, msgId: string, att_id: string, progress_callback:ProgressCb|null=null): Promise<R.GmailAtt> => {
-      let r: R.GmailAtt = await Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${att_id}`, {}, {download: progress_callback});
+    attGet: async (acctEmail: string, msgId: string, attId: string, progressCb:ProgressCb|null=null): Promise<R.GmailAtt> => {
+      let r: R.GmailAtt = await Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, {download: progressCb});
       r.data = Str.base64urlDecode(r.data);
       return r;
     },
@@ -837,9 +837,9 @@ export class Api {
       let authInfo = await Store.authInfo();
       return await Api.internal.apiFcCall('message/token', {account: authInfo.acctEmail, uuid: authInfo.uuid});
     },
-    messageExpiration: async (admin_codes: string[], add_days:null|number=null): Promise<R.ApirFcMsgExpiration> => {
+    messageExpiration: async (adminCodes: string[], addDays:null|number=null): Promise<R.ApirFcMsgExpiration> => {
       let authInfo = await Store.authInfo();
-      return await Api.internal.apiFcCall('message/expiration', {account: authInfo.acctEmail, uuid: authInfo.uuid, admin_codes, add_days});
+      return await Api.internal.apiFcCall('message/expiration', {account: authInfo.acctEmail, uuid: authInfo.uuid, admin_codes: adminCodes, add_days: addDays});
     },
     messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.apiFcCall('message/reply', {
       short,
@@ -899,7 +899,7 @@ export class Api {
       }
       return progressPeportingXhr;
     },
-    apiCall: async (baseUrl: string, path: string, fields: Dict<any>, format: RequestFormat, progress: ProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, response_format:ResponseFormat='json', method:RequestMethod='POST') => {
+    apiCall: async (baseUrl: string, path: string, fields: Dict<any>, format: RequestFormat, progress: ProgressCallbacks|null, headers:FlatHeaders|undefined=undefined, responseFormat:ResponseFormat='json', method:RequestMethod='POST') => {
       progress = progress || {} as ProgressCallbacks;
       let formattedData: FormData|string;
       let contentType: string|false;
@@ -925,7 +925,7 @@ export class Api {
         url: baseUrl + path,
         method,
         data: formattedData,
-        dataType: response_format,
+        dataType: responseFormat,
         crossDomain: true,
         headers,
         processData: false,
@@ -956,14 +956,14 @@ export class Api {
       scope: (authReq.scopes || []).join(' '),
       login_hint: authReq.acctEmail,
     }),
-    googleAuthSaveTokens: async (acctEmail: string, tokens_object: GoogleAuthTokensResponse, scopes: string[]) => {
+    googleAuthSaveTokens: async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
       let toSave: AccountStore = {
-        google_token_access: tokens_object.access_token,
-        google_token_expires: new Date().getTime() + (tokens_object.expires_in as number) * 1000,
+        google_token_access: tokensObj.access_token,
+        google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
         google_token_scopes: scopes,
       };
-      if (typeof tokens_object.refresh_token !== 'undefined') {
-        toSave.google_token_refresh = tokens_object.refresh_token;
+      if (typeof tokensObj.refresh_token !== 'undefined') {
+        toSave.google_token_refresh = tokensObj.refresh_token;
       }
       await Store.set(acctEmail, toSave);
     },
@@ -979,8 +979,8 @@ export class Api {
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokensResponse>,
-    googleAuthCheckAccessToken: (access_token: string) => $.ajax({
-      url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token }),
+    googleAuthCheckAccessToken: (accessToken: string) => $.ajax({
+      url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token: accessToken }),
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokenInfo>,
@@ -1044,14 +1044,14 @@ export class Api {
       return await Api.internal.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
     },
     googleApiIsAuthTokenValid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)), // oauth token will be valid for another 2 min
-    googleApiAuthHeader: async (acctEmail: string, force_refresh=false): Promise<string> => {
+    googleApiAuthHeader: async (acctEmail: string, forceRefresh=false): Promise<string> => {
       if (!acctEmail) {
         throw new Error('missing account_email in api_gmail_call');
       }
       let storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
       if (!storage.google_token_access || !storage.google_token_refresh) {
         throw new Error('Account not connected to FlowCrypt Browser Extension');
-      } else if (Api.internal.googleApiIsAuthTokenValid(storage) && !force_refresh) {
+      } else if (Api.internal.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
         return `Bearer ${storage.google_token_access}`;
       } else { // refresh token
         let refreshTokenRes = await Api.internal.googleAuthRefreshToken(storage.google_token_refresh);

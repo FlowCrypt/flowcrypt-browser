@@ -5,7 +5,7 @@
 //                 FlowCrypt Limited <https://flowcrypt.com>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
-/* tslint:disable:only-arrow-functions */
+/* tslint:disable:only-arrow-functions variable-name */
 
 declare namespace OpenPGP {
 

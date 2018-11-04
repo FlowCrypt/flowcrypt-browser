@@ -147,16 +147,16 @@ Catch.try(async () => {
     }});
   };
 
-  let formatDate = (date_from_api: string | number | undefined): string => {
-    let date = new Date(Number(date_from_api));
+  let formatDate = (dateFromApi: string | number | undefined): string => {
+    let date = new Date(Number(dateFromApi));
     if(date.toLocaleDateString() === new Date().toLocaleDateString()) {
       return date.toLocaleTimeString();
     }
     return date.toLocaleDateString();
   };
 
-  let renderableLabel = (label_id: string, placement: 'messages' | 'menu' | 'labels') => {
-    let label = allLabels.find(l => l.id === label_id);
+  let renderableLabel = (labelId: string, placement: 'messages' | 'menu' | 'labels') => {
+    let label = allLabels.find(l => l.id === labelId);
     if(!label) {
       return '';
     }
@@ -166,7 +166,7 @@ Catch.try(async () => {
     if(placement === 'labels' && (label.labelListVisibility !== 'labelShow' || label.id === LABEL.INBOX)) {
       return '';
     }
-    let id = Xss.htmlEscape(label_id);
+    let id = Xss.htmlEscape(labelId);
     let name = Xss.htmlEscape(label.name);
     if(placement === 'menu') {
       let unread = Number(label.messagesUnread);
@@ -178,8 +178,8 @@ Catch.try(async () => {
     }
   };
 
-  let renderableLabels = (label_ids: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
-    return label_ids.map(id => renderableLabel(id, placement)).join('');
+  let renderableLabels = (labelIds: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+    return labelIds.map(id => renderableLabel(id, placement)).join('');
   };
 
   let renderInboxItem = async (threadId: string) => {
@@ -231,8 +231,8 @@ Catch.try(async () => {
     $('body').append(`<style>${style}</style>`); // xss-escaped
   };
 
-  let renderFolder = (label_element: HTMLSpanElement) => {
-    for(let cls of label_element.classList) {
+  let renderFolder = (labelEl: HTMLSpanElement) => {
+    for(let cls of labelEl.classList) {
       let labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
       if(labelId) {
         loadUrl({acctEmail, labelId});
@@ -242,11 +242,11 @@ Catch.try(async () => {
     loadUrl({acctEmail});
   };
 
-  let getLabelName = (label_id: string) => {
-    if(label_id === 'ALL') {
+  let getLabelName = (labelId: string) => {
+    if(labelId === 'ALL') {
       return 'all folders';
     }
-    let label = allLabels.find(l => l.id === label_id);
+    let label = allLabels.find(l => l.id === labelId);
     if(label) {
       return label.name;
     }
@@ -285,15 +285,15 @@ Catch.try(async () => {
     }
   };
 
-  let renderInbox = async (label_id: string) => {
+  let renderInbox = async (labelId: string) => {
     $('.action_open_secure_compose_window').click(Ui.event.handle(() => injector.openComposeWin()));
-    displayBlock('inbox', `Messages in ${getLabelName(label_id)}`);
+    displayBlock('inbox', `Messages in ${getLabelName(labelId)}`);
     try {
-      let {threads} = await Api.gmail.threadList(acctEmail, label_id);
+      let {threads} = await Api.gmail.threadList(acctEmail, labelId);
       if((threads || []).length) {
         await Promise.all(threads.map(t => renderInboxItem(t.id)));
       } else {
-        Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${label_id} yet. ${Ui.retryLink()}</p>`);
+        Xss.sanitizeRender('.threads', `<p>No encrypted messages in ${labelId} yet. ${Ui.retryLink()}</p>`);
       }
     } catch(e) {
       if(Api.err.isNetErr(e)) {
@@ -365,13 +365,13 @@ Catch.try(async () => {
     }
   };
 
-  let renderReplyBox = (threadId: string, threadMsgId: string, last_message?: R.GmailMsg) => {
+  let renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: R.GmailMsg) => {
     let params: UrlParams;
-    if(last_message) {
-      let to = Api.gmail.findHeader(last_message, 'to');
+    if(lastMsg) {
+      let to = Api.gmail.findHeader(lastMsg, 'to');
       let toArr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
-      let headers = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Api.gmail.findHeader(last_message, 'from'), toArr);
-      let subject = Api.gmail.findHeader(last_message, 'subject');
+      let headers = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Api.gmail.findHeader(lastMsg, 'from'), toArr);
+      let subject = Api.gmail.findHeader(lastMsg, 'subject');
       params = {subject, reply_to: headers.to, addresses: storage.addresses || [], my_email: headers.from, threadId, threadMsgId};
     } else {
       params = {threadId, threadMsgId};

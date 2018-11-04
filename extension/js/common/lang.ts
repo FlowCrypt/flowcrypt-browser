@@ -2,7 +2,7 @@
 
 'use strict';
 
-export const Lang = {
+export const Lang = { // tslint:disable-line:variable-name
   setup: {
     creatingKeysNotAllowedPleaseImport: 'Creating keys is not allowed on your domain. Please import your keys.',
     keyBackupsNotAllowed: 'Key backups are not allowed on this domain.',

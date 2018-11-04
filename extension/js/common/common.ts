@@ -130,15 +130,15 @@ export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIG_ONERROR = window.onerror;
 
-  public static handle_error = (error_msg: string|undefined, url: string, line: number, col: number, err: string|Error|Dict<Serializable>, is_manually_called: boolean) => {
+  public static onErr = (errMsg: string|undefined, url: string, line: number, col: number, err: string|Error|Dict<Serializable>, isManuallyCalled: boolean) => {
     if (typeof err === 'string') {
-      error_msg = err;
-      err = { name: 'thrown_string', message: error_msg, stack: error_msg };
+      errMsg = err;
+      err = { name: 'thrown_string', message: errMsg, stack: errMsg };
     }
-    if (error_msg && url && typeof line !== 'undefined' && !col && !err && !is_manually_called) { // safari has limited support
-      err = { name: 'safari_error', message: error_msg, stack: error_msg };
+    if (errMsg && url && typeof line !== 'undefined' && !col && !err && !isManuallyCalled) { // safari has limited support
+      err = { name: 'safari_error', message: errMsg, stack: errMsg };
     }
-    if (typeof error_msg === 'undefined' && line === 0 && col === 0 && is_manually_called && typeof err === 'object' && !(err instanceof Error)) {
+    if (typeof errMsg === 'undefined' && line === 0 && col === 0 && isManuallyCalled && typeof err === 'object' && !(err instanceof Error)) {
       let stringified;
       try { // this sometimes happen with unhandled Promise.then(_, reject)
         stringified = JSON.stringify(err);
@@ -146,7 +146,7 @@ export class Catch {
         stringified = 'typeof: ' + (typeof err) + '\n' + String(err);
       }
       err = { name: 'thrown_object', message: err.message || '(unknown)', stack: stringified};
-      error_msg = 'thrown_object';
+      errMsg = 'thrown_object';
     }
     let userLogMsg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
     let ignoredErrs = [
@@ -161,12 +161,12 @@ export class Catch {
       return true;
     }
     if (err instanceof Error && err.stack) {
-      console.log('%c[' + error_msg + ']\n' + err.stack, 'color: #F00; font-weight: bold;');
+      console.log('%c[' + errMsg + ']\n' + err.stack, 'color: #F00; font-weight: bold;');
     } else {
       console.error(err);
-      console.log('%c' + error_msg, 'color: #F00; font-weight: bold;');
+      console.log('%c' + errMsg, 'color: #F00; font-weight: bold;');
     }
-    if (is_manually_called !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.handle_error as ErrorEventHandler)) {
+    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErr as ErrorEventHandler)) {
       Catch.ORIG_ONERROR.apply(null, arguments); // Call any previously assigned handler
     }
     if (err instanceof Error && (err.stack || '').indexOf('PRIVATE') !== -1) {
@@ -181,7 +181,7 @@ export class Catch {
         method: 'POST',
         data: JSON.stringify({
           name: ((err as Error).name || '').substring(0, 50), // todo - remove cast & debug
-          message: (error_msg || '').substring(0, 200),
+          message: (errMsg || '').substring(0, 200),
           url: (url || '').substring(0, 100),
           line: line || 0,
           col: col || 0,
@@ -200,12 +200,12 @@ export class Catch {
             console.log('%cFlowCrypt EXCEPTION:' + userLogMsg, 'font-weight: bold;');
           }
         },
-        error: (XMLHttpRequest, status, error) => {
+        error: (req, status, error) => {
           console.log('%cFlowCrypt FAILED:' + userLogMsg, 'font-weight: bold;');
         },
       });
-    } catch (ajax_err) {
-      console.log(ajax_err.message);
+    } catch (ajaxErr) {
+      console.log(ajaxErr.message);
       console.log('%cFlowCrypt ISSUE:' + userLogMsg, 'font-weight: bold;');
     }
     try {
@@ -215,15 +215,15 @@ export class Catch {
             s.errors = [];
           }
           if(err instanceof Error) {
-            s.errors.unshift(err.stack || error_msg || String(err));
+            s.errors.unshift(err.stack || errMsg || String(err));
           } else {
-            s.errors.unshift(error_msg || String(err));
+            s.errors.unshift(errMsg || String(err));
           }
           Store.set(null, s).catch(console.error);
         }).catch(console.error);
       }
-    } catch (storage_err) {
-      console.log('failed to locally log error "' + String(error_msg) + '" because: ' + storage_err.message);
+    } catch (storageErr) {
+      console.log('failed to locally log error "' + String(errMsg) + '" because: ' + storageErr.message);
     }
     return true;
   }
@@ -235,11 +235,11 @@ export class Catch {
       let matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
       line = Number(matched![1]); // will be catched below
       col = Number(matched![2]); // will be catched below
-    } catch (line_err) {
+    } catch (lineErr) {
       line = 0;
       col = 0;
     }
-    Catch.handle_error(exception.message, window.location.href, line, col, exception, true);
+    Catch.onErr(exception.message, window.location.href, line, col, exception, true);
   }
 
   public static report = (name: string, details:Error|Serializable|StandardError|PromiseRejectionEvent=undefined) => {
@@ -250,8 +250,8 @@ export class Catch {
       if (typeof details !== 'string') {
         try {
           details = JSON.stringify(details);
-        } catch (stringify_error) {
-          details = '(could not stringify details "' + String(details) + '" in Catch.report because: ' + stringify_error.message + ')';
+        } catch (stringifyErr) {
+          details = '(could not stringify details "' + String(details) + '" in Catch.report because: ' + stringifyErr.message + ')';
         }
       }
       e.stack = e.stack + '\n\n\ndetails: ' + details;
@@ -265,13 +265,13 @@ export class Catch {
     try {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
-    } catch (e_local) {
-      let e = e_local as Error;
+    } catch (localErr) {
+      let e = localErr as Error;
       if (typeof details !== 'string') {
         try {
           details = JSON.stringify(details);
-        } catch (stringify_error) {
-          details = '(could not stringify details "' + String(details) + '" in Catch.log because: ' + stringify_error.message + ')';
+        } catch (stringifyError) {
+          details = '(could not stringify details "' + String(details) + '" in Catch.log because: ' + stringifyError.message + ')';
         }
       }
       e.stack = e.stack + '\n\n\ndetails: ' + details;
@@ -283,8 +283,8 @@ export class Catch {
           s.errors.unshift(e.stack || name);
           Store.set(null, s).catch(console.error);
         }).catch(console.error);
-      } catch (storage_err) {
-        console.log('failed to locally log info "' + String(name) + '" because: ' + storage_err.message);
+      } catch (storageErr) {
+        console.log('failed to locally log info "' + String(name) + '" because: ' + storageErr.message);
       }
     }
   }
@@ -303,8 +303,8 @@ export class Catch {
       if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
         r.catch(Catch.rejection);
       }
-    } catch (code_err) {
-      Catch.handleException(code_err);
+    } catch (codeErr) {
+      Catch.handleException(codeErr);
     }
   }
 
@@ -338,12 +338,12 @@ export class Catch {
     this_will_fail();
   }
 
-  public static promise_error_alert = (note: string) => (error: Error) => { // returns a function
+  public static promiseErrAlert = (note: string) => (error: Error) => { // returns a function
     console.log(error);
     alert(note);
   }
 
-  public static stack_trace = (): string => {
+  public static stackTrace = (): string => {
     try {
       Catch.test();
     } catch (e) {
@@ -379,35 +379,35 @@ export class Catch {
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-(window as FcWindow).onerror = (Catch.handle_error as ErrorEventHandler);
+(window as FcWindow).onerror = (Catch.onErr as ErrorEventHandler);
 (window as FcWindow).onunhandledrejection = Catch.rejection;
 
 export class Str {
 
-  public static parseEmail = (email_string: string) => {
-    if (Value.is('<').in(email_string) && Value.is('>').in(email_string)) {
+  public static parseEmail = (emailStr: string) => {
+    if (Value.is('<').in(emailStr) && Value.is('>').in(emailStr)) {
       return {
-        email: email_string.substr(email_string.indexOf('<') + 1, email_string.indexOf('>') - email_string.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
-        name: email_string.substr(0, email_string.indexOf('<')).replace(/["']/g, '').trim(),
-        full: email_string,
+        email: emailStr.substr(emailStr.indexOf('<') + 1, emailStr.indexOf('>') - emailStr.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
+        name: emailStr.substr(0, emailStr.indexOf('<')).replace(/["']/g, '').trim(),
+        full: emailStr,
       };
     }
     return {
-      email: email_string.replace(/["']/g, '').trim().toLowerCase(),
+      email: emailStr.replace(/["']/g, '').trim().toLowerCase(),
       name: null,
-      full: email_string,
+      full: emailStr,
     };
   }
 
-  public static pretty_print = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
+  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
 
   public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
 
-  public static normalize_dashes = (str: string) => str.replace(/^—–|—–$/gm, '-----');
+  public static normalizeDashes = (str: string) => str.replace(/^—–|—–$/gm, '-----');
 
-  public static normalize = (str: string) => Str.normalizeSpaces(Str.normalize_dashes(str));
+  public static normalize = (str: string) => Str.normalizeSpaces(Str.normalizeDashes(str));
 
-  public static number_format = (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
+  public static numberFormat = (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
     let nStr: string = number + '';
     let x = nStr.split('.');
     let x1 = x[0];
@@ -421,7 +421,7 @@ export class Str {
 
   public static isEmailValid = (email: string) => /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
 
-  public static month_name = (month_index: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][month_index];
+  public static monthName = (monthIndex: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
 
   public static random = (length:number=5) => {
     let id = '';
@@ -432,11 +432,11 @@ export class Str {
     return id;
   }
 
-  public static regex_escape = (to_be_used_in_regex: string) => to_be_used_in_regex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  public static regexEscape = (toBeUsedInRegex: string) => toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
 
-  public static html_attr_decode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64urlUtfDecode(encoded));
+  public static htmlAttrDecode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64urlUtfDecode(encoded));
 
   public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
@@ -467,28 +467,28 @@ export class Str {
   }
 
   public static fromEqualSignNotationAsUtf = (str: string): string => {
-    return str.replace(/(=[A-F0-9]{2})+/g, equal_sign_utf_part => {
-      return Str.uint8AsUtf(equal_sign_utf_part.replace(/^=/, '').split('=').map((two_hex_digits) => parseInt(two_hex_digits, 16)));
+    return str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
+      return Str.uint8AsUtf(equalSignUtfPart.replace(/^=/, '').split('=').map((twoHexDigits) => parseInt(twoHexDigits, 16)));
     });
   }
 
   public static uint8AsUtf = (a: Uint8Array|number[]) => { // tom
     let length = a.length;
     let bytesLeftInChar = 0;
-    let utf8_string = '';
+    let utf8string = '';
     let binaryChar = '';
     for (let i = 0; i < length; i++) {
       if (a[i] < 128) {
         if (bytesLeftInChar) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
-          utf8_string += String.fromCharCode(a[i-1]);
+          utf8string += String.fromCharCode(a[i-1]);
         }
         bytesLeftInChar = 0;
         binaryChar = '';
-        utf8_string += String.fromCharCode(a[i]);
+        utf8string += String.fromCharCode(a[i]);
       } else {
         if (!bytesLeftInChar) { // beginning of new multi-byte character
           if (a[i] >= 128 && a[i] < 192) { // 10xx xxxx
-            utf8_string += String.fromCharCode(a[i]); // extended 8-bit ASCII compatibility, european ASCII characters
+            utf8string += String.fromCharCode(a[i]); // extended 8-bit ASCII compatibility, european ASCII characters
           } else if (a[i] >= 192 && a[i] < 224) { // 110x xxxx
             bytesLeftInChar = 1;
             binaryChar = a[i].toString(2).substr(3);
@@ -512,12 +512,12 @@ export class Str {
           bytesLeftInChar--;
         }
         if (binaryChar && !bytesLeftInChar) {
-          utf8_string += String.fromCharCode(parseInt(binaryChar, 2));
+          utf8string += String.fromCharCode(parseInt(binaryChar, 2));
           binaryChar = '';
         }
       }
     }
-    return utf8_string;
+    return utf8string;
   }
 
   public static toHex = (s: string): string => { // http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
@@ -541,48 +541,48 @@ export class Str {
     return str;
   }
 
-  public static extractFcAtts = (decrypted_content: string, fc_attachments: Att[]) => {
-    if (Value.is('cryptup_file').in(decrypted_content)) {
-      decrypted_content = decrypted_content.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, found_link => {
-        let element = $(found_link);
+  public static extractFcAtts = (decryptedContent: string, fcAtts: Att[]) => {
+    if (Value.is('cryptup_file').in(decryptedContent)) {
+      decryptedContent = decryptedContent.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, foundLink => {
+        let element = $(foundLink);
         let fcData = element.attr('cryptup-data');
         if (fcData) {
-          let a: FlowCryptAttLinkData = Str.html_attr_decode(fcData);
+          let a: FlowCryptAttLinkData = Str.htmlAttrDecode(fcData);
           if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
-            fc_attachments.push(new Att({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
+            fcAtts.push(new Att({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
           }
         }
         return '';
       });
     }
-    return decrypted_content;
+    return decryptedContent;
   }
 
-  public static extractFcReplyToken = (decrypted_content: string) => { // todo - used exclusively on the web - move to a web package
-    let fcTokenElement = $(Ui.e('div', {html: decrypted_content})).find('.cryptup_reply');
+  public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
+    let fcTokenElement = $(Ui.e('div', {html: decryptedContent})).find('.cryptup_reply');
     if (fcTokenElement.length) {
       let fcData = fcTokenElement.attr('cryptup-data');
       if (fcData) {
-        return Str.html_attr_decode(fcData);
+        return Str.htmlAttrDecode(fcData);
       }
     }
   }
 
-  public static stripFcTeplyToken = (decrypted_content: string) => decrypted_content.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
+  public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
 
-  public static stripPublicKeys = (decrypted_content: string, found_public_keys: string[]) => {
-    let {blocks, normalized} = Pgp.armor.detectBlocks(decrypted_content);
+  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
+    let {blocks, normalized} = Pgp.armor.detectBlocks(decryptedContent);
     for (let block of blocks) {
       if (block.type === 'publicKey') {
-        found_public_keys.push(block.content);
+        foundPublicKeys.push(block.content);
         normalized = normalized.replace(block.content, '');
       }
     }
     return normalized;
   }
 
-  public static intToHex = (int_as_string: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
-    let dec = int_as_string.toString().split(''), sum = [], hex = [], i, s;
+  public static intToHex = (intAsStr: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
+    let dec = intAsStr.toString().split(''), sum = [], hex = [], i, s;
     while(dec.length) {
       s = Number(dec.shift());
       for(i = 0; s || i < sum.length; i++) {
@@ -599,7 +599,7 @@ export class Str {
 
   public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 
-  public static toUtcTimestamp = (datetime_string: string, as_string:boolean=false) => as_string ? String(Date.parse(datetime_string)) : Date.parse(datetime_string);
+  public static toUtcTimestamp = (datetimeStr: string, asStr:boolean=false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
 
   public static datetimeToDate = (date: string) => Xss.htmlEscape(date.substr(0, 10));
 

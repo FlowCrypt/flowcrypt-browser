@@ -31,30 +31,30 @@ export class Settings {
     }
   }
 
-  static evalPasswordStrength = (pass_phrase: string) => {
-    return Pgp.password.estimateStrength(zxcvbn(pass_phrase, Pgp.password.weakWords()).guesses);
+  static evalPasswordStrength = (passphrase: string) => {
+    return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses);
   }
 
-  static renderPasswordStrength = (parent_selector: string, input_selector: string, button_selector: string) => {
-    parent_selector += ' ';
-    let password = $(parent_selector + input_selector).val();
+  static renderPasswordStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
+    parentSel += ' ';
+    let password = $(parentSel + inputSel).val();
     if (typeof password !== 'string') {
       Catch.report('render_password_strength: Selected password is not a string', typeof password);
       return;
     }
     let result = Settings.evalPasswordStrength(password);
-    $(parent_selector + '.password_feedback').css('display', 'block');
-    $(parent_selector + '.password_bar > div').css('width', result.word.bar + '%');
-    $(parent_selector + '.password_bar > div').css('background-color', result.word.color);
-    $(parent_selector + '.password_result, .password_time').css('color', result.word.color);
-    $(parent_selector + '.password_result').text(result.word.word);
-    $(parent_selector + '.password_time').text(result.time);
+    $(parentSel + '.password_feedback').css('display', 'block');
+    $(parentSel + '.password_bar > div').css('width', result.word.bar + '%');
+    $(parentSel + '.password_bar > div').css('background-color', result.word.color);
+    $(parentSel + '.password_result, .password_time').css('color', result.word.color);
+    $(parentSel + '.password_result').text(result.word.word);
+    $(parentSel + '.password_time').text(result.time);
     if (result.word.pass) {
-      $(parent_selector + button_selector).removeClass('gray');
-      $(parent_selector + button_selector).addClass('green');
+      $(parentSel + buttonSel).removeClass('gray');
+      $(parentSel + buttonSel).addClass('green');
     } else {
-      $(parent_selector + button_selector).removeClass('green');
-      $(parent_selector + button_selector).addClass('gray');
+      $(parentSel + buttonSel).removeClass('green');
+      $(parentSel + buttonSel).addClass('gray');
     }
   }
 
@@ -156,7 +156,7 @@ export class Settings {
     return all;
   }
 
-  static account_storage_reset = (acctEmail: string) => new Promise(async (resolve, reject) => {
+  static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }
@@ -204,7 +204,7 @@ export class Settings {
     }
     let storageIndexesToChange: string[] = [];
     let oldAcctEmailIndexPrefix = Store.index(oldAcctEmail, '') as string;
-    let newAcctEmail_index_prefix = Store.index(newAcctEmail, '') as string;
+    let newAcctEmailIndexPrefix = Store.index(newAcctEmail, '') as string;
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
     let destAccountPrivateKeys = await Store.keysGet(newAcctEmail);
     let destAcctPassPhrases: Dict<string> = {};
@@ -230,14 +230,14 @@ export class Settings {
         for (let localStorageIndex of Object.keys(localStorage)) {
           if (localStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
             let v = localStorage.getItem(localStorageIndex);
-            localStorage.setItem(localStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmail_index_prefix), v!);
+            localStorage.setItem(localStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
             localStorage.removeItem(localStorageIndex);
           }
         }
         for (let sessionStorageIndex of Object.keys(sessionStorage)) {
           if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
             let v = sessionStorage.getItem(sessionStorageIndex);
-            sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmail_index_prefix), v!);
+            sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
             sessionStorage.removeItem(sessionStorageIndex);
           }
         }
@@ -247,7 +247,7 @@ export class Settings {
         for(let longid of Object.keys(destAcctPassPhrases)) {
           await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
         }
-        await Settings.account_storage_reset(oldAcctEmail);
+        await Settings.acctStorageReset(oldAcctEmail);
         await Store.acctEmailsRemove(oldAcctEmail);
         resolve();
       } catch(e) {

@@ -33,7 +33,7 @@ Catch.try(async () => {
     if (ids.length === 1) {
       origContent = $(self).html();
       Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
-      let collected = await attUi.collect_att(ids[0]);
+      let collected = await attUi.collectAtt(ids[0]);
       await decryptAndDownload(collected);
     } else {
       alert('Please add a file to decrypt');

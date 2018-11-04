@@ -24,7 +24,7 @@ Catch.try(async () => {
   const att = Att.methods.keyinfoAsPubkeyAtt(primaryKi);
   let additionalMsgHeaders: FlatHeaders;
 
-  let appFunctions = Composer.default_app_functions();
+  let appFunctions = Composer.defaultAppFunctions();
   appFunctions.sendMsgToMainWin = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data);
   let composer = new Composer(appFunctions, {isReplyBox: true, frameId: urlParams.frameId, disable_draft_saving: true}, new Subscription(null));
 

@@ -56,11 +56,11 @@ Catch.try(async () => {
     }
   }));
 
-  let storeUpdatedKeyAndPassphrase = async (updated_prv: OpenPGP.key.Key, updated_prv_passphrase: string) => {
+  let storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
     let storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
-    await Store.keysAdd(acctEmail, updated_prv.armor());
-    await Store.passphraseSave('local', acctEmail, primaryKi.longid, storedPassphrase !== null ? updated_prv_passphrase : undefined);
-    await Store.passphraseSave('session', acctEmail, primaryKi.longid, storedPassphrase !== null ? undefined : updated_prv_passphrase);
+    await Store.keysAdd(acctEmail, updatedPrv.armor());
+    await Store.passphraseSave('local', acctEmail, primaryKi.longid, storedPassphrase !== null ? updatedPrvPassphrase : undefined);
+    await Store.passphraseSave('session', acctEmail, primaryKi.longid, storedPassphrase !== null ? undefined : updatedPrvPassphrase);
     alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
     window.location.href = urlMyKeyPage;
   };

@@ -97,8 +97,7 @@ export class Mime {
     return new Promise(async resolve => {
       let mimeContent = {atts: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
       try {
-        let MimeParser = (window as BrowserWidnow)['emailjs-mime-parser'];
-        let parser = new MimeParser();
+        let parser = new (window as BrowserWidnow)['emailjs-mime-parser']();
         let parsed: {[key: string]: MimeParserNode} = {};
         parser.onheader = (node: MimeParserNode) => {
           if (!String(node.path.join('.'))) { // root node headers
@@ -144,7 +143,7 @@ export class Mime {
   }
 
   public static encode = async (body:string|SendableMsgBody, headers: RichHeaders, atts:Att[]=[]): Promise<string> => {
-    let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder'];
+    let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder']; // tslint:disable-line:variable-name
     let rootNode = new MimeBuilder('multipart/mixed');
     for (let key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]);
@@ -170,7 +169,7 @@ export class Mime {
     return rootNode.build();
   }
 
-  public static signed = (mime_msg: string) => {
+  public static signed = (mimeMsg: string) => {
     /*
       Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
       Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
@@ -190,31 +189,31 @@ export class Mime {
 
       --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1--
       */
-    let signedHeaderIndex = mime_msg.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
+    let signedHeaderIndex = mimeMsg.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
     if (signedHeaderIndex !== -1) {
-      mime_msg = mime_msg.substr(signedHeaderIndex);
-      let firstBoundaryIndex = mime_msg.substr(0, 1000).toLowerCase().indexOf('boundary=');
+      mimeMsg = mimeMsg.substr(signedHeaderIndex);
+      let firstBoundaryIndex = mimeMsg.substr(0, 1000).toLowerCase().indexOf('boundary=');
       if (firstBoundaryIndex) {
-        let boundary = mime_msg.substr(firstBoundaryIndex, 100);
+        let boundary = mimeMsg.substr(firstBoundaryIndex, 100);
         boundary = (boundary.match(/boundary="[^"]{1,70}"/gi) || boundary.match(/boundary=[a-z0-9][a-z0-9 ]{0,68}[a-z0-9]/gi) || [])[0];
         if (boundary) {
           boundary = boundary.replace(/^boundary="?|"$/gi, '');
           let boundaryBegin = '\r\n--' + boundary + '\r\n';
           let boundaryEnd = '--' + boundary + '--';
-          let endIndex = mime_msg.indexOf(boundaryEnd);
+          let endIndex = mimeMsg.indexOf(boundaryEnd);
           if (endIndex !== -1) {
-            mime_msg = mime_msg.substr(0, endIndex + boundaryEnd.length);
-            if (mime_msg) {
-              let res = { full: mime_msg, signed: null as string|null, signature: null as string|null };
-              let firstPartStartIndex = mime_msg.indexOf(boundaryBegin);
+            mimeMsg = mimeMsg.substr(0, endIndex + boundaryEnd.length);
+            if (mimeMsg) {
+              let res = { full: mimeMsg, signed: null as string|null, signature: null as string|null };
+              let firstPartStartIndex = mimeMsg.indexOf(boundaryBegin);
               if (firstPartStartIndex !== -1) {
                 firstPartStartIndex += boundaryBegin.length;
-                let firstPartEndIndex = mime_msg.indexOf(boundaryBegin, firstPartStartIndex);
+                let firstPartEndIndex = mimeMsg.indexOf(boundaryBegin, firstPartStartIndex);
                 let secondPartStartIndex = firstPartEndIndex + boundaryBegin.length;
-                let secondPartEndIndex = mime_msg.indexOf(boundaryEnd, secondPartStartIndex);
+                let secondPartEndIndex = mimeMsg.indexOf(boundaryEnd, secondPartStartIndex);
                 if (secondPartEndIndex !== -1) {
-                  let firstPart = mime_msg.substr(firstPartStartIndex, firstPartEndIndex - firstPartStartIndex);
-                  let secondPart = mime_msg.substr(secondPartStartIndex, secondPartEndIndex - secondPartStartIndex);
+                  let firstPart = mimeMsg.substr(firstPartStartIndex, firstPartEndIndex - firstPartStartIndex);
+                  let secondPart = mimeMsg.substr(secondPartStartIndex, secondPartEndIndex - secondPartStartIndex);
                   if (firstPart.match(/^content-type: application\/pgp-signature/gi) !== null && Value.is('-----BEGIN PGP SIGNATURE-----').in(firstPart) && Value.is('-----END PGP SIGNATURE-----').in(firstPart)) {
                     res.signature = Pgp.armor.clip(firstPart);
                     res.signed = secondPart;
@@ -270,6 +269,7 @@ export class Mime {
     return node.rawContent;
   }
 
+  // tslint:disable-next-line:variable-name
   private static newContentNode = (MimeBuilder: AnyThirdPartyLibrary, type: string, content: string): MimeParserNode => {
     let node = new MimeBuilder(type).setContent(content);
     if (type === 'text/plain') {

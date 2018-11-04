@@ -4,10 +4,10 @@
 
 export let injectFcIntoWebmailIfNeeded = () => {
   for (let group of chrome.runtime.getManifest().content_scripts!) {  // we know it's in the manifest
-    getContentCcriptTabIds(group.matches || [], (tab_ids) => {
-      for (let tabId of tab_ids) {
-        isContentScriptInjectionNeeded(tabId, (already_injected) => {
-          if (!already_injected) {
+    getContentCcriptTabIds(group.matches || [], (tabIds) => {
+      for (let tabId of tabIds) {
+        isContentScriptInjectionNeeded(tabId, (alreadyInjected) => {
+          if (!alreadyInjected) {
             console.info("Injecting FlowCrypt into tab " + tabId);
             injectContentScripts(tabId, group.js || []);
           }
@@ -17,7 +17,7 @@ export let injectFcIntoWebmailIfNeeded = () => {
   }
 };
 
-let getContentCcriptTabIds = (matches: string[], callback: (tab_ids: number[]) => void) => {
+let getContentCcriptTabIds = (matches: string[], callback: (tabIds: number[]) => void) => {
   chrome.tabs.query({ 'url': matches }, result => {
     callback(result.filter(tab => typeof tab.id !== 'undefined').map((tab)  => tab.id) as number[]);
   });
