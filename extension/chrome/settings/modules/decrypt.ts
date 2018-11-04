@@ -18,7 +18,7 @@ Catch.try(async () => {
 
   let origContent: string;
 
-  let attUi = new AttUI(() => ({count: 1, size: 100 * 1024 * 1024, size_mb: 100}));
+  let attUi = new AttUI(() => ({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
   attUi.initAttDialog('fineuploader', 'fineuploader_button');
   let factory = new XssSafeFactory(acctEmail, tabId);
 
@@ -43,7 +43,7 @@ Catch.try(async () => {
   let decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
     let result = await Pgp.msg.decrypt(acctEmail, encrypted.asBytes(), null, true);
     if (result.success) {
-      let attachment = new Att({name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8!}); // uint8!: requested uint8 above
+      let attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8! }); // uint8!: requested uint8 above
       Att.methods.saveToDownloads(attachment);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       $('.passphrase_dialog').html(factory.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory

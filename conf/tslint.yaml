@@ -20,6 +20,7 @@ rules:
     trailing-comma: false
     array-type: false
     typedef-whitespace: false
+    space-before-function-paren: false
     whitespace: false
     interface-over-type-literal: false
     max-classes-per-file: false

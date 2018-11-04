@@ -9,7 +9,7 @@ import { Api } from './api.js';
 import { BrowserMsg } from './extension.js';
 import { Xss, Ui } from './browser.js';
 
-export type NotificationWithHandlers = {notification: string, callbacks: Dict<() => void>};
+export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
 
 export class Notifications {
 
@@ -48,7 +48,7 @@ export class Notifications {
     $('.webmail_notifications').text('');
   }
 
-  show = (text: string, callbacks:Dict<() => void>={}) => {
+  show = (text: string, callbacks: Dict<() => void> = {}) => {
     Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
       let origCloseCb = callbacks.close;

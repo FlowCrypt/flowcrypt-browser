@@ -37,7 +37,10 @@
             <div class="public-profile-container hide_if_setup_not_done public_profile_indicator_container" style="visibility: hidden;">
               <div id="public-profile-indicator">
                 <a href="#" class="show_settings_page" page="modules/contact_page.htm">
-                  <i class="status-indicator"><div class="status-indicator-text">Complete setup of your Encrypted Contact Page to receive encrypted emails from the web.</div></i>
+                  <i class="status-indicator">
+                    <div class="status-indicator-text">Complete setup of your Encrypted Contact Page to receive
+                      encrypted emails from the web.</div>
+                  </i>
                 </a>
               </div>
             </div>
@@ -45,7 +48,8 @@
             <span id="toggle-accounts-profile-img" class="action-toggle-accounts-menu">
               <img src="/img/svgs/profile-icon.svg" class="profile-img main-profile-img" alt="Profile Image">
             </span>
-            <a href="#" class="add-account action_add_account hide_if_setup_not_done" data-test="action-add-account">+ Add account</a>
+            <a href="#" class="add-account action_add_account hide_if_setup_not_done" data-test="action-add-account">+
+              Add account</a>
           </div>
           <div id="alt-accounts" class="accounts-row">
             <div class="row alt-accounts accounts-options-row text-center">
@@ -71,10 +75,17 @@
 
       <div class="show_if_setup_not_done">
         <div class="line">Your browser needs access to Gmail to help you send your first encrypted message.</div>
-        <div class="line"><div data-test="action-connect-to-gmail" class="signin_button gmail action_google_auth display_none">Continue with Gmail</div></div>
-        <div class="line"><div class="signin_button outlook action_microsoft_auth display_none">Continue with Outlook</div></div>
-        <div class="line">Learn more about <a href="#" data-featherlight="/chrome/texts/email_provider_auth_security.htm">webmail access security</a> and <a href="https://flowcrypt.com/privacy" target="_blank">privacy policy</a>.</div>
-        <div class="line">Using other email provider? <br><a href="#" class="show_settings_page" page="modules/help.htm">Let me know.</a></div>
+        <div class="line">
+          <div data-test="action-connect-to-gmail" class="signin_button gmail action_google_auth display_none">Continue
+            with Gmail</div>
+        </div>
+        <div class="line">
+          <div class="signin_button outlook action_microsoft_auth display_none">Continue with Outlook</div>
+        </div>
+        <div class="line">Learn more about <a href="#" data-featherlight="/chrome/texts/email_provider_auth_security.htm">webmail
+            access security</a> and <a href="https://flowcrypt.com/privacy" target="_blank">privacy policy</a>.</div>
+        <div class="line">Using other email provider? <br><a href="#" class="show_settings_page" page="modules/help.htm">Let
+            me know.</a></div>
       </div>
 
       <div class="row settings-icons-rows hide_if_setup_not_done">
@@ -87,7 +98,7 @@
             <p class="text-center">Inbox</p>
           </a>
         </div>
-  
+
         <div class="col-sm-2 col-xs-6">
           <a href="#" class="show_settings_page" page="modules/security.htm" data-test="action-open-security-page">
             <span class="box">
@@ -122,15 +133,17 @@
         </div>
       </div>
       <div class="line auth_denied_warning" style="display: none;">
-        <br/>
-        <br/>
-        <br/><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted attachments, encrypted replies, alternative "From" email addresses and more.
-        <br/>
-        <br/>
+        <br />
+        <br />
+        <br /><b class="red">Following features are disabled for <span class="email-address"></span>:</b> encrypted
+        attachments, encrypted replies, alternative "From" email addresses and more.
+        <br />
+        <br />
         <div class="button long green action_go_auth_denied">revise permissions</div>
       </div>
       <div class="hide_if_setup_not_done mt-40">
-        <div class="line"><a href="https://flowcrypt.com/blog/article/2017-10-13-cryptup-is-now-called-flowcrypt">CryptUp is now called FlowCrypt</a> (2017-10-13)</div>
+        <div class="line"><a href="https://flowcrypt.com/blog/article/2017-10-13-cryptup-is-now-called-flowcrypt">CryptUp
+            is now called FlowCrypt</a> (2017-10-13)</div>
       </div>
     </div>
 
@@ -195,7 +208,7 @@
         </div>
       </div>
       <!--<div class="line">-->
-        <!--<br/><b>Coming soon:</b> ..-->
+      <!--<br/><b>Coming soon:</b> ..-->
       <!--</div>-->
       <div class="row my-keys-row">
         <div class="col-xs-6 settings-border">
@@ -217,7 +230,8 @@
               <img src="/img/svgs/shield-icon.svg" class="shield-icon" alt="shield icon">
               <span class="security-copy">Security</span>
               <span class="text-right change-passphrase">
-                <a href="#" class="show_settings_page" page="/chrome/settings/modules/change_passphrase.htm">Change pass phrase</a>
+                <a href="#" class="show_settings_page" page="/chrome/settings/modules/change_passphrase.htm">Change
+                  pass phrase</a>
               </span>
             </div>
           </div>
@@ -231,19 +245,22 @@
     <div class="container">
       <div class="row">
         <div class="col-md-2 col-sm-2 col-xs-12 text-left">
-          <a href="#" class="show_settings_page" page="modules/help.htm" data-test="action-open-modules-help">Need Help?</a>
+          <a href="#" class="show_settings_page" page="modules/help.htm" data-test="action-open-modules-help">Need
+            Help?</a>
         </div>
         <div class="col-md-8 col-sm-8 col-xs-12">
           <a href="https://flowcrypt.com/terms" target="_blank" class="gray_link">Terms</a>
           <a href="https://flowcrypt.com/privacy" target="_blank" class="gray_link">Privacy</a>
-          <a href="#" class="show_settings_page gray_link" page="/chrome/elements/compose.htm" data-test="action-show-compose-page">New Email</a>
+          <a href="#" class="show_settings_page gray_link" page="/chrome/elements/compose.htm" data-test="action-show-compose-page">New
+            Email</a>
           <a href="https://github.com/FlowCrypt/flowcrypt-browser" target="_blank" class="gray_link advanced">Source</a>
           <span class="hide_if_setup_not_done">
             <a href="#" class="show_settings_page gray_link advanced" page="modules/experimental.htm">Experimental</a>
           </span>
         </div>
         <div class="col-md-2 col-sm-2 col-xs-12 text-right hide_if_setup_not_done">
-          <a class="toggle-settings advanced" href="#" data-test="action-toggle-screen-basic">Basic Settings</a><a class="toggle-settings basic" href="#" data-test="action-toggle-screen-additional">Additional Settings</a>
+          <a class="toggle-settings advanced" href="#" data-test="action-toggle-screen-basic">Basic Settings</a><a
+            class="toggle-settings basic" href="#" data-test="action-toggle-screen-additional">Additional Settings</a>
         </div>
       </div>
     </div>

@@ -8,34 +8,36 @@ import { Xss } from './browser.js';
 import { KeyInfo } from './store.js';
 
 type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
-type AttMeta = { data?: string|Uint8Array|null; type?:string|null; name?: string|null; length?: number|null; url?: string|null;
-  inline?: boolean|null; id?: string|null; msgId?: string|null; treatAs?: Att$treatAs; cid?: string|null; };
+type AttMeta = {
+  data?: string | Uint8Array | null; type?: string | null; name?: string | null; length?: number | null; url?: string | null;
+  inline?: boolean | null; id?: string | null; msgId?: string | null; treatAs?: Att$treatAs; cid?: string | null;
+};
 
-export type FlowCryptAttLinkData = {name: string, type: string, size: number};
+export type FlowCryptAttLinkData = { name: string, type: string, size: number };
 
 export class Att {
 
-  private text: string|null = null;
-  private bytes: Uint8Array|null = null;
-  private treatAsValue: Att$treatAs|null = null;
+  private text: string | null = null;
+  private bytes: Uint8Array | null = null;
+  private treatAsValue: Att$treatAs | null = null;
 
   public length: number;
   public type: string;
   public name: string;
-  public url: string|null;
-  public id: string|null;
-  public msgId: string|null;
+  public url: string | null;
+  public id: string | null;
+  public msgId: string | null;
   public inline: boolean;
-  public cid: string|null;
+  public cid: string | null;
 
-  constructor({data, type, name, length, url, inline, id, msgId, treatAs, cid}: AttMeta) {
-    if(typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
+  constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid }: AttMeta) {
+    if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Att: one of data|url|id has to be set');
     }
-    if(id && !msgId) {
+    if (id && !msgId) {
       throw new Error('Att: if id is set, msgId must be set too');
     }
-    if(data !== null && typeof data !== 'undefined') {
+    if (data !== null && typeof data !== 'undefined') {
       this.setData(data);
     }
     this.name = name || '';
@@ -49,27 +51,27 @@ export class Att {
     this.cid = cid || null;
   }
 
-  public setData = (data: string|Uint8Array) => {
-    if(this.hasData()) {
+  public setData = (data: string | Uint8Array) => {
+    if (this.hasData()) {
       throw new Error('Att: data already set');
     }
-    if(data instanceof Uint8Array) {
+    if (data instanceof Uint8Array) {
       this.bytes = data;
-    } else if(typeof data === 'string') {
+    } else if (typeof data === 'string') {
       this.text = data;
     }
     this.length = data.length;
   }
 
   public hasData = () => {
-    if(this.bytes === null && this.text === null) {
+    if (this.bytes === null && this.text === null) {
       return false;
     }
     return true;
   }
 
-  public data = (): string|Uint8Array => {
-    if(this.bytes !== null) {
+  public data = (): string | Uint8Array => {
+    if (this.bytes !== null) {
       return this.bytes;
     }
     if (this.text !== null) {
@@ -79,17 +81,17 @@ export class Att {
   }
 
   public asText = (): string => {
-    if(this.text === null && this.bytes !== null) {
+    if (this.text === null && this.bytes !== null) {
       this.text = Str.fromUint8(this.bytes);
     }
-    if(this.text !== null) {
+    if (this.text !== null) {
       return this.text;
     }
     throw new Error('Att has no data set');
   }
 
   public asBytes = (): Uint8Array => {
-    if(this.bytes === null && this.text !== null) {
+    if (this.bytes === null && this.text !== null) {
       this.bytes = Str.toUint8(this.text);
     }
     if (this.bytes !== null) {
@@ -102,12 +104,12 @@ export class Att {
     // todo - should return a probability in the range of certain-likely-maybe
     // could also return possible types as an array - which makes basic usage more difficult - to think through
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
-    if(this.treatAsValue) { // pre-set
+    if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
     } else if (Value.is(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
-      return  'signature';
+      return 'signature';
     } else if (!this.name && !Value.is('image/').in(this.type)) { // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'message';
     } else if (Value.is(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
@@ -126,13 +128,13 @@ export class Att {
   }
 
   public static methods = {
-    objUrlCreate: (content: Uint8Array|string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
+    objUrlCreate: (content: Uint8Array | string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
     objUrlConsume: async (url: string) => {
       let uint8 = await Att.methods.downloadAsUint8(url, null);
       window.URL.revokeObjectURL(url);
       return uint8;
     },
-    downloadAsUint8: (url: string, progress:ProgressCb|null=null): Promise<Uint8Array> => new Promise((resolve, reject) => {
+    downloadAsUint8: (url: string, progress: ProgressCb | null = null): Promise<Uint8Array> => new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
       request.open('GET', url, true);
       request.responseType = 'arraybuffer';
@@ -143,8 +145,8 @@ export class Att {
       request.onload = e => resolve(new Uint8Array(request.response));
       request.send();
     }),
-    saveToDownloads: (att: Att, renderIn:JQuery<HTMLElement>|null=null) => {
-      let blob = new Blob([att.data()], {type: att.type});
+    saveToDownloads: (att: Att, renderIn: JQuery<HTMLElement> | null = null) => {
+      let blob = new Blob([att.data()], { type: att.type });
       if (window.navigator && window.navigator.msSaveOrOpenBlob) {
         window.navigator.msSaveBlob(blob, att.name);
       } else {
@@ -186,7 +188,7 @@ export class Att {
       }
     },
     pgpNamePatterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfoAsPubkeyAtt: (ki: KeyInfo) => new Att({data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc`}),
+    keyinfoAsPubkeyAtt: (ki: KeyInfo) => new Att({ data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc` }),
   };
 
 }

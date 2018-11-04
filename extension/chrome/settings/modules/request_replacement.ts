@@ -28,9 +28,9 @@ Catch.try(async () => {
 
   let reqReplacement = async () => {
     try {
-      let keyImportUi = new KeyImportUi({expectLongid, rejectKnown: true, checkSigning: true});
+      let keyImportUi = new KeyImportUi({ expectLongid, rejectKnown: true, checkSigning: true });
       let checkedOldKey = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
-      if(checkedOldKey) {
+      if (checkedOldKey) {
         let reqDict: Dict<string> = {
           'ATT': 'CRYPTUP', // todo - should be the original attester
           'ACT': 'REQUEST_REPLACEMENT',
@@ -55,7 +55,7 @@ Catch.try(async () => {
         Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/keyserver.htm');
       }
     } catch (e) {
-      if(e instanceof UserAlert) {
+      if (e instanceof UserAlert) {
         return alert(e.message);
       } else {
         Catch.handleException(e);

@@ -15,16 +15,16 @@ import { Ui } from '../../common/browser.js';
     return JSON.parse(statusString.replace(googleOauth2.state_header, ''));
   };
 
-  while(true) {
+  while (true) {
     if (document.title && Value.is(googleOauth2.state_header).in(document.title)) { // this is FlowCrypt's google oauth - based on a &state= passed on in auth request
       let parts = document.title.split(' ', 2);
       let result = parts[0];
       let params = Env.urlParams(['code', 'state', 'error'], parts[1]);
       let state = apiGoogleAuthStateUnpack(params.state as string);
-      await BrowserMsg.sendAwait(state.tabId, 'google_auth_window_result', {result, params, state});
+      await BrowserMsg.sendAwait(state.tabId, 'google_auth_window_result', { result, params, state });
       let title = 'Close this window';
       $('title').text(title);
-      BrowserMsg.send(null, 'close_popup', {title});
+      BrowserMsg.send(null, 'close_popup', { title });
       break;
     }
     await Ui.time.sleep(50);

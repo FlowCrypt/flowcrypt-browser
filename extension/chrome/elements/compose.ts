@@ -27,13 +27,13 @@ Catch.try(async () => {
     if (!urlParams.isReplyBox || (urlParams.threadId && urlParams.threadId !== urlParams.threadMsgId && urlParams.to && urlParams.from && urlParams.subject)) {
       return; // either not a reply box, or reply box & has all needed params
     }
-    Xss.sanitizePrepend('#new_message', Ui.e('div', {id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green')}));
+    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
     let gmailMsg;
     try {
       gmailMsg = await Api.gmail.msgGet(acctEmail, urlParams.threadMsgId as string, 'metadata');
-    } catch(e) {
-      if(Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
       }
       if (!urlParams.from) {
         urlParams.from = acctEmail;
@@ -71,7 +71,7 @@ Catch.try(async () => {
   let closeMsg = () => {
     $('body').attr('data-test-state', 'closed');  // used by automated tests
     if (urlParams.isReplyBox) {
-      BrowserMsg.send(parentTabId, 'close_reply_message', {frameId: urlParams.frameId, threadId: urlParams.threadId});
+      BrowserMsg.send(parentTabId, 'close_reply_message', { frameId: urlParams.frameId, threadId: urlParams.threadId });
     } else if (urlParams.placement === 'settings') {
       BrowserMsg.send(parentTabId, 'close_page');
     } else {
@@ -81,9 +81,9 @@ Catch.try(async () => {
 
   let composer = new Composer({
     canReadEmails: () => canReadEmail,
-    doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean|undefined> => {
+    doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean | undefined> => {
       theirEmail = Str.parseEmail(theirEmail).email;
-      if(!theirEmail) {
+      if (!theirEmail) {
         return false;
       }
       let storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);
@@ -98,15 +98,15 @@ Catch.try(async () => {
       try {
         let response = await Api.gmail.msgList(acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
         if (response.messages) {
-          await Store.set(acctEmail, {pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail)});
+          await Store.set(acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
           return true;
         } else {
           return false;
         }
-      } catch(e) {
-        if(Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
-        } else if(!Api.err.isNetErr(e)) {
+      } catch (e) {
+        if (Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+        } else if (!Api.err.isNetErr(e)) {
           Catch.handleException(e);
         }
         return undefined;
@@ -116,9 +116,9 @@ Catch.try(async () => {
     storageGetAddressesPks: () => storage.addresses_pks || [],
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageEmailFooterGet: () => storage.email_footer || null,
-    storageEmailFooterSet: async (footer: string|null) => {
+    storageEmailFooterSet: async (footer: string | null) => {
       storage.email_footer = footer;
-      await Store.set(acctEmail, {email_footer: footer});
+      await Store.set(acctEmail, { email_footer: footer });
     },
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
@@ -139,16 +139,16 @@ Catch.try(async () => {
         } else {
           delete drafts[threadId];
         }
-        await Store.set(acctEmail, {drafts_reply: drafts});
+        await Store.set(acctEmail, { drafts_reply: drafts });
       } else { // it's a new message
         let drafts = draftStorage.drafts_compose || {};
         drafts = draftStorage.drafts_compose || {};
         if (storeIfTrue) {
-          drafts[draftId] = {recipients, subject, date: new Date().getTime()};
+          drafts[draftId] = { recipients, subject, date: new Date().getTime() };
         } else {
           delete drafts[draftId];
         }
-        await Store.set(acctEmail, {drafts_compose: drafts});
+        await Store.set(acctEmail, { drafts_compose: drafts });
       }
     },
     storagePassphraseGet: async () => {
@@ -168,7 +168,7 @@ Catch.try(async () => {
       await Store.set(null, adminCodeStorage);
     },
     storageContactGet: (email: string[]) => Store.dbContactGet(null, email),
-    storageContactUpdate: (email: string[]|string, update: ContactUpdate) => Store.dbContactUpdate(null, email, update),
+    storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Store.dbContactUpdate(null, email, update),
     storageContactSave: (contact: Contact) => Store.dbContactSave(null, contact),
     storageContactSearch: (query: DbContactFilter) => Store.dbContactSearch(null, query),
     storageContactObj: Store.dbContactObj,
@@ -179,8 +179,8 @@ Catch.try(async () => {
     emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Api.gmail.msgSend(acctEmail, message, renderUploadProgress),
     emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: any) => { // todo remove the any
       Api.gmail.searchContacts(acctEmail, query, knownContacts, multiCb).catch(e => {
-        if(Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+        if (Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
         } else if (Api.err.isNetErr(e)) {
           // todo: render network error
         } else {
@@ -195,13 +195,13 @@ Catch.try(async () => {
         if (thread.messages && thread.messages.length > 0) {
           let threadMsgIdLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
           let threadMsgRefsLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
-          return {lastMsgId: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast }};
+          return { lastMsgId: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast } };
         } else {
           return;
         }
       } catch (e) {
-        if(Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+        if (Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
         } else if (Api.err.isNetErr(e)) {
           // todo: render retry
         } else {
@@ -223,38 +223,40 @@ Catch.try(async () => {
         threadMsgId: lastMsgId,
       });
     },
-    renderFooterDialog: () => ($ as JQS).featherlight({iframe: factory.srcAddFooterDialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
-      $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
-    }}),
+    renderFooterDialog: () => ($ as JQS).featherlight({
+      iframe: factory.srcAddFooterDialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
+        $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
+      }
+    }),
     renderAddPubkeyDialog: (emails: string[]) => {
       if (urlParams.placement !== 'settings') {
-        BrowserMsg.send(parentTabId, 'add_pubkey_dialog', {emails});
+        BrowserMsg.send(parentTabId, 'add_pubkey_dialog', { emails });
       } else {
-        ($ as JQS).featherlight({iframe: factory.srcAddPubkeyDialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50}); // body element is present
+        ($ as JQS).featherlight({ iframe: factory.srcAddPubkeyDialog(emails, 'settings'), iframeWidth: 515, iframeHeight: $('body').height()! - 50 }); // body element is present
       }
     },
     renderHelpDialog: () => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/help.htm' }),
-    renderSendingAddrDialog: () => ($ as JQS).featherlight({iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500}),
+    renderSendingAddrDialog: () => ($ as JQS).featherlight({ iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500 }),
     closeMsg,
     factoryAtt: (att: Att) => factory.embeddedAtta(att),
   }, {
-    acctEmail,
-    draftId: urlParams.draftId,
-    threadId: urlParams.threadId,
-    subject: urlParams.subject,
-    from: urlParams.from,
-    to: urlParams.to,
-    frameId: urlParams.frameId,
-    tabId,
-    isReplyBox: urlParams.isReplyBox,
-    skipClickPrompt: urlParams.skipClickPrompt,
-  }, subscriptionWhenPageWasOpened);
+      acctEmail,
+      draftId: urlParams.draftId,
+      threadId: urlParams.threadId,
+      subject: urlParams.subject,
+      from: urlParams.from,
+      to: urlParams.to,
+      frameId: urlParams.frameId,
+      tabId,
+      isReplyBox: urlParams.isReplyBox,
+      skipClickPrompt: urlParams.skipClickPrompt,
+    }, subscriptionWhenPageWasOpened);
 
   BrowserMsg.listen({
     close_dialog: (data, sender, respond) => {
       $('.featherlight.featherlight-iframe').remove();
     },
-    set_footer: (data: {footer: string|null}, sender, respond) => {
+    set_footer: (data: { footer: string | null }, sender, respond) => {
       storage.email_footer = data.footer;
       composer.updateFooterIcon();
       $('.featherlight.featherlight-iframe').remove();
@@ -271,7 +273,7 @@ Catch.try(async () => {
     },
   }, tabId || undefined);
 
-  if(!urlParams.isReplyBox) { // don't want to deal with resizing the frame
+  if (!urlParams.isReplyBox) { // don't want to deal with resizing the frame
     await Ui.abortAndRenderErrOnUnprotectedKey(acctEmail);
   }
 

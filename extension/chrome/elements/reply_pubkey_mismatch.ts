@@ -26,12 +26,12 @@ Catch.try(async () => {
 
   let appFunctions = Composer.defaultAppFunctions();
   appFunctions.sendMsgToMainWin = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data);
-  let composer = new Composer(appFunctions, {isReplyBox: true, frameId: urlParams.frameId, disable_draft_saving: true}, new Subscription(null));
+  let composer = new Composer(appFunctions, { isReplyBox: true, frameId: urlParams.frameId, disable_draft_saving: true }, new Subscription(null));
 
   const sendBtnText = 'Send Response';
 
   for (let to of (urlParams.to as string).split(',')) {
-    Xss.sanitizeAppend('.recipients', Ui.e('span', {text: to}));
+    Xss.sanitizeAppend('.recipients', Ui.e('span', { text: to }));
   }
 
   // render
@@ -49,8 +49,8 @@ Catch.try(async () => {
       additionalMsgHeaders = { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast };
     }
   } catch (e) {
-    if(Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+    if (Api.err.isAuthPopupNeeded(e)) {
+      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
     } else if (Api.err.isNetErr(e)) {
       // todo - render retry button
     } else {
@@ -62,7 +62,7 @@ Catch.try(async () => {
   // send
   $('#send_btn').click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
-    let message = await Api.common.msg(acctEmail, urlParams.from as string, urlParams.to as string, urlParams.subject as string, {'text/plain': $('#input_text').get(0).innerText}, [att], urlParams.threadId as string);
+    let message = await Api.common.msg(acctEmail, urlParams.from as string, urlParams.to as string, urlParams.subject as string, { 'text/plain': $('#input_text').get(0).innerText }, [att], urlParams.threadId as string);
     for (let k of Object.keys(additionalMsgHeaders)) {
       message.headers[k] = additionalMsgHeaders[k];
     }
@@ -71,11 +71,11 @@ Catch.try(async () => {
       BrowserMsg.send(parentTabId, 'notification_show', { notification: 'Message sent.' });
       Xss.sanitizeReplace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
-      if(Api.err.isAuthPopupNeeded(e)) {
+      if (Api.err.isAuthPopupNeeded(e)) {
         $(target).text(sendBtnText);
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
         alert('Google account permission needed, please re-connect account and try again.');
-      } else if(Api.err.isNetErr(e)) {
+      } else if (Api.err.isNetErr(e)) {
         $(target).text(sendBtnText);
         alert('No internet connection, please try again.');
       } else {

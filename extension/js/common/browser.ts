@@ -16,18 +16,20 @@ import { Settings } from './settings.js';
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
 
-type Placement = 'settings'|'settings_compose'|'default'|'dialog'|'gmail'|'embedded'|'compose';
-type AttLimits = {count?: number, size?: number, size_mb?: number, oversize?: (newFileSize: number) => void};
-type PreventableEventName = 'double'|'parallel'|'spree'|'slowspree'|'veryslowspree';
+type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
+type AttLimits = { count?: number, size?: number, size_mb?: number, oversize?: (newFileSize: number) => void };
+type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 type NamedSels = Dict<JQuery<HTMLElement>>;
-type KeyImportUiCheckResult = { normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
-  encrypted: OpenPGP.key.Key; };
+type KeyImportUiCheckResult = {
+  normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
+  encrypted: OpenPGP.key.Key;
+};
 
-export type WebMailName = 'gmail'|'outlook'|'inbox'|'settings';
+export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
 export type Challenge = { question?: string; answer: string; };
-export type WebmailVariantString = null|'html'|'standard'|'new';
-export type PassphraseDialogType = 'embedded'|'sign'|'attest';
-export type BrowserEventErrorHandler = {auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void};
+export type WebmailVariantString = null | 'html' | 'standard' | 'new';
+export type PassphraseDialogType = 'embedded' | 'sign' | 'attest';
+export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 
 export class Ui {
@@ -37,17 +39,17 @@ export class Ui {
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
-  public static retryLink = (caption:string='retry') => `<a href="${Xss.htmlEscape(window.location.href)}">${Xss.htmlEscape(caption)}</a>`;
+  public static retryLink = (caption: string = 'retry') => `<a href="${Xss.htmlEscape(window.location.href)}">${Xss.htmlEscape(caption)}</a>`;
 
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
-  public static spinner = (color: string, placeholderCls:"small_spinner"|"large_spinner"='small_spinner') => {
+  public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
     let path = `/img/svgs/spinner-${color}-small.svg`;
     let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static renderOverlayPromptAwaitUserChoice = (buttons: Dict<{title?: string, color?: string}>, prompt: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice = (buttons: Dict<{ title?: string, color?: string }>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
       let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.htmlEscape(buttons[id].color || 'green')} overlay_action_${Xss.htmlEscape(id)}">${Xss.htmlEscape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
       Xss.sanitizeAppend('body', `
@@ -61,7 +63,7 @@ export class Ui {
         </div>
       `);
       let overlay = $('.prompt_overlay');
-      for(let id of Object.keys(buttons)) {
+      for (let id of Object.keys(buttons)) {
         overlay.find(`.overlay_action_${id}`).one('click', () => {
           overlay.remove();
           resolve(id);
@@ -71,18 +73,18 @@ export class Ui {
   }
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
-    if(acctEmail) {
+    if (acctEmail) {
       let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      let {setup_done, setup_simple} = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
-      if(setup_done && setup_simple && primaryKi && openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) {
-        if(window.location.pathname === '/chrome/settings/index.htm') {
+      let { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
+      if (setup_done && setup_simple && primaryKi && openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) {
+        if (window.location.pathname === '/chrome/settings/index.htm') {
           // @ts-ignore - this lets it compile in content script that is missing Settings
           Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
           let msg = `Protect your key with a pass phrase to finish setup.`;
-          let r = await Ui.renderOverlayPromptAwaitUserChoice({finishSetup: {}, later: {color: 'gray'}}, msg);
-          if(r === 'finish_setup') {
-            BrowserMsg.send(null, 'settings', {acctEmail});
+          let r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);
+          if (r === 'finish_setup') {
+            BrowserMsg.send(null, 'settings', { acctEmail });
           }
         }
       }
@@ -93,7 +95,7 @@ export class Ui {
     let actualType = typeof values[name];
     if (actualType !== expectedType) {
       let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be of type ${Xss.htmlEscape(expectedType)} but got ${Xss.htmlEscape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Xss.sanitizeRender('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }
     return values[name];
@@ -102,16 +104,16 @@ export class Ui {
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
     if (expectedVals.indexOf(values[name]) === -1) {
       let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be one of ${Xss.htmlEscape(expectedVals.map(String).join(','))} but got ${Xss.htmlEscape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Xss.sanitizeRender('body', msg).addClass('bad').css({padding: '20px', 'font-size': '16px'});
+      Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }
     return values[name];
   }
 
-  public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide:"show"|"hide"|null=null) => {
+  public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide: "show" | "hide" | null = null) => {
     let buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
     let buttonShow = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-    let {hidePassphrases} = await Store.getGlobal(['hide_pass_phrases']);
+    let { hidePassphrases } = await Store.getGlobal(['hide_pass_phrases']);
     let show: boolean;
     if (forceInitialShowOrHide === 'hide') {
       show = false;
@@ -177,7 +179,7 @@ export class Ui {
     };
   }
 
-  public static scroll = (sel: string|JQuery<HTMLElement>, repeat:number[]=[]) => {
+  public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
     let el = $(sel as string).first()[0]; // as string due to JQuery TS quirk
     if (el) {
       el.scrollIntoView();
@@ -188,7 +190,7 @@ export class Ui {
   }
 
   public static event = {
-    clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function() { resolve(this); })),
+    clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function () { resolve(this); })),
     stop: () => (e: JQuery.Event) => { // returns a function
       e.preventDefault();
       e.stopPropagation();
@@ -206,21 +208,21 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void|Promise<void>, errHandler?: BrowserEventErrorHandler) => {
-      return function(event: JQuery.Event<HTMLElement, null>) {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
+      return function (event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
           r = cb(this, event);
-          if(typeof r === 'object' && typeof r.catch === 'function') {
+          if (typeof r === 'object' && typeof r.catch === 'function') {
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
-        } catch(e) {
+        } catch (e) {
           Ui.event._dispatchErr(e, errHandler);
         }
       };
     },
     _dispatchErr: (e: any, errHandler?: BrowserEventErrorHandler) => {
-      if(Api.err.isNetErr(e) && errHandler && errHandler.network) {
+      if (Api.err.isNetErr(e) && errHandler && errHandler.network) {
         errHandler.network();
       } else if (Api.err.isAuthErr(e) && errHandler && errHandler.auth) {
         errHandler.auth();
@@ -232,9 +234,9 @@ export class Ui {
         Catch.handleException(e);
       }
     },
-    prevent: (preventableEvent: PreventableEventName, cb: (e: HTMLElement, resetTimer: () => void) => void|Promise<void>, errHandler?: BrowserEventErrorHandler) => {
-      let eventTimer: number|undefined;
-      let eventFiredOn: number|undefined;
+    prevent: (preventableEvent: PreventableEventName, cb: (e: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
+      let eventTimer: number | undefined;
+      let eventFiredOn: number | undefined;
       let cbResetTimer = () => {
         eventTimer = undefined;
         eventFiredOn = undefined;
@@ -243,14 +245,14 @@ export class Ui {
         let r;
         try {
           r = cb(e, cbResetTimer);
-          if(typeof r === 'object' && typeof r.catch === 'function') {
+          if (typeof r === 'object' && typeof r.catch === 'function') {
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
-        } catch(e) {
+        } catch (e) {
           Ui.event._dispatchErr(e, errHandler);
         }
       };
-      return function() {
+      return function () {
         if (preventableEvent === 'spree') {
           clearTimeout(eventTimer);
           eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_SPREE_MS);
@@ -286,7 +288,7 @@ export class Ui {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId:string|null=null, senderEmail:string|null=null, isOutgoing: boolean|null=null) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string | null = null, senderEmail: string | null = null, isOutgoing: boolean | null = null) => {
     if (block.type === 'text' || block.type === 'privateKey') {
       return Xss.htmlEscape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
@@ -308,7 +310,7 @@ export class Ui {
   }
 
   public static time = {
-    wait: (untilThisFunctionEvalsTrue: () => boolean|undefined) => new Promise((success, error) => {
+    wait: (untilThisFunctionEvalsTrue: () => boolean | undefined) => new Promise((success, error) => {
       let interval = Catch.setHandledInterval(() => {
         let result = untilThisFunctionEvalsTrue();
         if (result === true) {
@@ -335,15 +337,15 @@ export class Xss {
 
   private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
-  private static HREF_REGEX_CACHE = null as null|RegExp;
+  private static HREF_REGEX_CACHE = null as null | RegExp;
 
-  public static sanitizeRender = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static sanitizeAppend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static sanitizePrepend = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static sanitizeReplace = (selector: string|HTMLElement|JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
+  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
   public static htmlSanitize = (dirtyHtml: string): string => { // originaly text_or_html
     return DOMPurify.sanitize(dirtyHtml, {
@@ -401,9 +403,9 @@ export class Xss {
     let text = html.split(br).join('\n').split(blockStart).filter(v => !!v).join('\n').split(blockEnd).filter(v => !!v).join('\n');
     text = text.replace(/\n{2,}/g, '\n\n');
     // not all tags were removed above. Remove all remaining tags
-    text = DOMPurify.sanitize(text, {SAFE_FOR_JQUERY: true, ALLOWED_TAGS: []});
+    text = DOMPurify.sanitize(text, { SAFE_FOR_JQUERY: true, ALLOWED_TAGS: [] });
     text = text.trim();
-    if(outputNl !== '\n') {
+    if (outputNl !== '\n') {
       text = text.replace(/\n/g, outputNl);
     }
     return text;
@@ -417,7 +419,7 @@ export class Xss {
   }
 
   private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
-    if(Xss.HREF_REGEX_CACHE === null) {
+    if (Xss.HREF_REGEX_CACHE === null) {
       if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
         Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
       } else {
@@ -446,7 +448,7 @@ export class XssSafeFactory {
   private destroyableCls: string;
   private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
-  constructor(acctEmail: string, parentTabId: string, reloadableCls:string='', destroyableCls:string='', setParams:UrlParams={}) {
+  constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
     this.reloadableCls = Xss.htmlEscape(reloadableCls);
     this.destroyableCls = Xss.htmlEscape(destroyableCls);
     this.setParams = setParams;
@@ -456,7 +458,7 @@ export class XssSafeFactory {
 
   srcImg = (relPath: string) => this.extUrl(`img/${relPath}`);
 
-  private frameSrc = (path: string, params:UrlParams={}) => {
+  private frameSrc = (path: string, params: UrlParams = {}) => {
     for (let k of Object.keys(this.setParams)) {
       params[k] = this.setParams[k];
     }
@@ -467,11 +469,11 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { isReplyBox: false, draftId, placement: 'gmail' });
   }
 
-  srcPassphraseDialog = (longids:string[]=[], type: PassphraseDialogType) => {
+  srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType) => {
     return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  srcSubscribeDialog = (verificationEmailText: string|null, placement: Placement, source: string|null, subscribeResultTabId:string|null=null) => {
+  srcSubscribeDialog = (verificationEmailText: string | null, placement: Placement, source: string | null, subscribeResultTabId: string | null = null) => {
     return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, source, subscribeResultTabId });
   }
 
@@ -496,17 +498,17 @@ export class XssSafeFactory {
   }
 
   srcPgpAttIframe = (a: Att) => {
-    if(!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
+    if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Att.methods.objUrlCreate(a.asBytes());
     }
-    return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), {frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url });
+    return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), { frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url });
   }
 
-  srcPgpBlockIframe = (message: string, msgId: string|null, isOutgoing: boolean|null, senderEmail: string|null, hasPassword: boolean, signature: string|null|boolean, short: string|null) => {
+  srcPgpBlockIframe = (message: string, msgId: string | null, isOutgoing: boolean | null, senderEmail: string | null, hasPassword: boolean, signature: string | null | boolean, short: string | null) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), { frameId: this.newId(), message, hasPassword, msgId, senderEmail, isOutgoing, signature, short });
   }
 
-  srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoind: boolean|null) => {
+  srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoind: boolean | null) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
   }
 
@@ -542,59 +544,59 @@ export class XssSafeFactory {
   }
 
   dialogPassphrase = (longids: string[], type: PassphraseDialogType) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], {scrolling: 'no'}), 'dialog-passphrase'); // xss-safe-factory
+    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
   }
 
-  dialogSubscribe = (verifEmailText: string|null, source: string|null, subscribeResultTabId: string|null) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcSubscribeDialog(verifEmailText, 'dialog', source, subscribeResultTabId), ['mediumtall'], {scrolling: 'no'}), 'dialog-subscribe'); // xss-safe-factory
+  dialogSubscribe = (verifEmailText: string | null, source: string | null, subscribeResultTabId: string | null) => {
+    return this.divDialog_DANGEROUS(this.iframe(this.srcSubscribeDialog(verifEmailText, 'dialog', source, subscribeResultTabId), ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
   }
 
   dialogAddPubkey = (emails: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), ['tall'], {scrolling: 'no'}), 'dialog-add-pubkey'); // xss-safe-factory
+    return this.divDialog_DANGEROUS(this.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), ['tall'], { scrolling: 'no' }), 'dialog-add-pubkey'); // xss-safe-factory
   }
 
   embeddedCompose = (draftId?: string) => {
-    return Ui.e('div', {id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], {scrolling: 'no'})});
+    return Ui.e('div', { id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], { scrolling: 'no' }) });
   }
 
   embeddedSubscribe = (verifEmailText: string, source: string) => {
-    return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', source), ['short', 'embedded'], {scrolling: 'no'});
+    return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', source), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedVerification = (verifEmailText: string) => {
-    return this.iframe(this.srcVerificationDialog(verifEmailText), ['short', 'embedded'], {scrolling: 'no'});
+    return this.iframe(this.srcVerificationDialog(verifEmailText), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedAtta = (meta: Att) => {
-    return Ui.e('span', {class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta))});
+    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta)) });
   }
 
-  embeddedMsg = (armored: string, msgId: string|null, isOutgoing: boolean|null, sender: string|null, hasPassword: boolean, signature:string|null|boolean=null, short:string|null=null) => {
+  embeddedMsg = (armored: string, msgId: string | null, isOutgoing: boolean | null, sender: string | null, hasPassword: boolean, signature: string | null | boolean = null, short: string | null = null) => {
     return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, hasPassword, signature, short), ['pgp_block']) + this.hideGmailNewMsgInThreadNotification;
   }
 
-  embeddedPubkey = (armoredPubkey: string, isOutgoing: boolean|null) => {
+  embeddedPubkey = (armoredPubkey: string, isOutgoing: boolean | null) => {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
   }
 
-  embeddedReply = (convoParams: UrlParams, skipClickPrompt: boolean, ignoreDraft:boolean=false) => {
+  embeddedReply = (convoParams: UrlParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {
     return this.iframe(this.srcReplyMsgIframe(convoParams, skipClickPrompt, ignoreDraft), ['reply_message']);
   }
 
   embeddedPassphrase = (longids: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, 'embedded'), ['medium'], {scrolling: 'no'}), 'embedded-passphrase'); // xss-safe-factory
+    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, 'embedded'), ['medium'], { scrolling: 'no' }), 'embedded-passphrase'); // xss-safe-factory
   }
 
   embeddedAttaStatus = (content: string) => {
-    return Ui.e('div', {class: 'attachment_loader', html: Xss.htmlSanitize(content)});
+    return Ui.e('div', { class: 'attachment_loader', html: Xss.htmlSanitize(content) });
   }
 
   embeddedAttest = (attestPacket: string) => {
-    return this.iframe(this.srcAttest(attestPacket), ['short', 'embedded'], {scrolling: 'no'});
+    return this.iframe(this.srcAttest(attestPacket), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedStripeCheckout = () => {
-    return this.iframe(this.srcStripeCheckout(), [], {sandbox: 'allow-forms allow-scripts allow-same-origin'});
+    return this.iframe(this.srcStripeCheckout(), [], { sandbox: 'allow-forms allow-scripts allow-same-origin' });
   }
 
   btnCompose = (webmailName: WebMailName) => {
@@ -640,10 +642,10 @@ export class XssSafeFactory {
     return { to: theirEmails, from: myEmail };
   }
 
-  private iframe = (src: string, classes:string[]=[], elAttributes:UrlParams={}) => {
+  private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
     let id = Env.urlParams(['frameId'], src).frameId as string;
     let classAttribute = (classes || []).concat(this.reloadableCls).join(' ');
-    let attrs: Dict<string> = {id, class: classAttribute, src};
+    let attrs: Dict<string> = { id, class: classAttribute, src };
     for (let name of Object.keys(elAttributes)) {
       attrs[name] = String(elAttributes[name]);
     }
@@ -661,25 +663,25 @@ export class KeyCanBeFixed extends Error {
   encrypted: OpenPGP.key.Key;
 }
 
-export class UserAlert extends Error {}
+export class UserAlert extends Error { }
 
 export class KeyImportUi {
 
-  private expectedLongid: string|null;
+  private expectedLongid: string | null;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
   private checkSigning: boolean;
   public onBadPassphrase: VoidCallback = () => undefined;
 
-  constructor(o: {expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean}) {
+  constructor(o: { expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
     this.expectedLongid = o.expectLongid || null;
     this.rejectKnown = o.rejectKnown === true;
     this.checkEncryption = o.checkEncryption === true;
     this.checkSigning = o.checkSigning === true;
   }
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string|null) => {
-    $('input[type=radio][name=source]').off().change(function() {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | null) => {
+    $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
         $('.source_paste_container').css('display', 'none');
@@ -690,7 +692,7 @@ export class KeyImportUi {
         $('.source_paste_container').css('display', 'block');
         $('.source_paste_container .pass_phrase_needed').hide();
       } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', {acctEmail, parentTabId, action: 'add_key'});
+        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
     });
     $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(Ui.event.handle(target => {
@@ -701,13 +703,13 @@ export class KeyImportUi {
     $('.input_private_key').change(Ui.event.handle(target => {
       let k = openpgp.key.readArmored($(target).val() as string).keys[0];
       $('.input_passphrase').val('');
-      if(k && k.isPrivate() && k.isDecrypted()) {
+      if (k && k.isPrivate() && k.isDecrypted()) {
         $('.line.pass_phrase_needed').show();
       } else {
         $('.line.pass_phrase_needed').hide();
       }
     }));
-    let attach = new AttUI(() => ({count: 100, size: 1024 * 1024, size_mb: 1}));
+    let attach = new AttUI(() => ({ count: 100, size: 1024 * 1024, size_mb: 1 }));
     attach.initAttDialog('fineuploader', 'fineuploader_button');
     attach.setAttAddedCb(file => {
       let k;
@@ -741,7 +743,7 @@ export class KeyImportUi {
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
     await this.checkSigningIfSelected(decrypted);
-    return {normalized, longid, passphrase, fingerprint: Pgp.key.fingerprint(decrypted)!, decrypted, encrypted}; // will have fp if had longid
+    return { normalized, longid, passphrase, fingerprint: Pgp.key.fingerprint(decrypted)!, decrypted, encrypted }; // will have fp if had longid
   }
 
   checkPub = async (armored: string): Promise<string> => {
@@ -789,7 +791,7 @@ export class KeyImportUi {
   }
 
   private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
-    if(this.rejectKnown) {
+    if (this.rejectKnown) {
       let keyinfos = await Store.keysGet(acctEmail);
       let privateKeysLongids = keyinfos.map(ki => ki.longid);
       if (Value.is(Pgp.key.longid(k)!).in(privateKeysLongids)) {
@@ -799,21 +801,21 @@ export class KeyImportUi {
   }
 
   private rejectIfDifferentFromSelectedLongid = (longid: string) => {
-    if(this.expectedLongid && longid !== this.expectedLongid) {
+    if (this.expectedLongid && longid !== this.expectedLongid) {
       throw new UserAlert(`Key does not match. Looking for key with KeyWords ${mnemonic(this.expectedLongid)} (${this.expectedLongid})`);
     }
   }
 
   private decryptAndEncryptAsNeeded = async (toDecrypt: OpenPGP.key.Key, toEncrypt: OpenPGP.key.Key, passphrase: string): Promise<void> => {
-    if(!passphrase) {
+    if (!passphrase) {
       throw new UserAlert('Please enter a pass phrase to use with this key');
     }
     let decryptResult;
     try {
-      if(toEncrypt.isDecrypted()) {
+      if (toEncrypt.isDecrypted()) {
         await toEncrypt.encrypt(passphrase);
       }
-      if(toDecrypt.isDecrypted()) {
+      if (toDecrypt.isDecrypted()) {
         return;
       }
       decryptResult = await Pgp.key.decrypt(toDecrypt, [passphrase]);
@@ -822,7 +824,7 @@ export class KeyImportUi {
     }
     if (!decryptResult) {
       this.onBadPassphrase();
-      if(this.expectedLongid) {
+      if (this.expectedLongid) {
         throw new UserAlert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
       } else {
         throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
@@ -831,7 +833,7 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
-    if(this.checkEncryption && await k.getEncryptionKey() === null) {
+    if (this.checkEncryption && await k.getEncryptionKey() === null) {
       if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await Pgp.key.usableButExpired(k)) { // known issues - key can be fixed
         let e = new KeyCanBeFixed('');
         e.encrypted = encrypted;
@@ -843,13 +845,13 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPubIfSelected = async (normalized: string) => {
-    if(this.checkEncryption && !await Pgp.key.usable(normalized)) {
+    if (this.checkEncryption && !await Pgp.key.usable(normalized)) {
       throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
     }
   }
 
   private checkSigningIfSelected = async (k: OpenPGP.key.Key) => {
-    if(this.checkSigning && await k.getSigningKey() === null) {
+    if (this.checkSigning && await k.getSigningKey() === null) {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }
   }
@@ -900,7 +902,7 @@ export class AttUI {
 
   collectAtt = async (id: string) => {
     let fileData = await this.readAttDataAsUint8(id);
-    return new Att({name: this.attachedFiles[id].name, type: this.attachedFiles[id].type, data: fileData});
+    return new Att({ name: this.attachedFiles[id].name, type: this.attachedFiles[id].type, data: fileData });
   }
 
   collectAtts = async () => {
@@ -911,13 +913,13 @@ export class AttUI {
     return atts;
   }
 
-  collectEncryptAtts = async (armoredPubkeys: string[], challenge: Challenge|null): Promise<Att[]> => {
+  collectEncryptAtts = async (armoredPubkeys: string[], challenge: Challenge | null): Promise<Att[]> => {
     let atts: Att[] = [];
     for (let id of Object.keys(this.attachedFiles)) {
       let file = this.attachedFiles[id];
       let fileData = await this.readAttDataAsUint8(id);
       let encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
-      atts.push(new Att({name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write()}));
+      atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;
   }

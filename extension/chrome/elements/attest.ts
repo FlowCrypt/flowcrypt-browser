@@ -23,15 +23,15 @@ Catch.try(async () => {
 
   let passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
 
-  let processAttest = async (passphrase: string|null) => {
+  let processAttest = async (passphrase: string | null) => {
     if (passphrase !== null) {
       Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
-      let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', {acctEmail, packet: urlParams.attestPacket, passphrase});
+      let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', { acctEmail, packet: urlParams.attestPacket, passphrase });
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };
 
-  if(openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) { // unencrypted private key
+  if (openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) { // unencrypted private key
     $('.status').text('Not allowed to attest keys that do not have a pass phrase. Please go to FlowCrypt Settings -> Security -> Change pass phrase');
     return;
   }
@@ -42,10 +42,10 @@ Catch.try(async () => {
   }
 
   Xss.sanitizeRender('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
-  $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'passphrase_dialog', {type: 'attest', longids: 'primary'})));
+  $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'passphrase_dialog', { type: 'attest', longids: 'primary' })));
   let tabId = await BrowserMsg.requiredTabId();
   BrowserMsg.listen({
-    passphrase_entry: async (msg: {entered: boolean}, sender, respond) => {
+    passphrase_entry: async (msg: { entered: boolean }, sender, respond) => {
       if (msg.entered) {
         let pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
         await processAttest(pp);

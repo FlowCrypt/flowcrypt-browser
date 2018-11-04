@@ -20,22 +20,22 @@ Catch.try(async () => {
   urlParams.size = urlParams.size ? parseInt(urlParams.size as string) : undefined;
   let origNameBasedOnFilename = urlParams.name ? (urlParams.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
 
-  let decryptedAtt: Att|null = null;
-  let encryptedAtt: Att|null = null;
+  let decryptedAtt: Att | null = null;
+  let encryptedAtt: Att | null = null;
   try {
-    if(urlParams.decrypted) {
-      decryptedAtt = new Att({name: origNameBasedOnFilename, type: urlParams.type as string|undefined, data: urlParams.decrypted as string});
+    if (urlParams.decrypted) {
+      decryptedAtt = new Att({ name: origNameBasedOnFilename, type: urlParams.type as string | undefined, data: urlParams.decrypted as string });
     } else {
       encryptedAtt = new Att({
         name: origNameBasedOnFilename,
-        type: urlParams.type as string|undefined,
-        data: urlParams.content as string|undefined,
-        msgId: urlParams.msgId as string|undefined,
-        id: urlParams.attId as string|undefined,
-        url: urlParams.url as string|undefined,
+        type: urlParams.type as string | undefined,
+        data: urlParams.content as string | undefined,
+        msgId: urlParams.msgId as string | undefined,
+        id: urlParams.attId as string | undefined,
+        url: urlParams.url as string | undefined,
       });
     }
-  } catch(e) {
+  } catch (e) {
     Catch.handleException(e);
     return $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
   }
@@ -44,7 +44,7 @@ Catch.try(async () => {
   let button = $('#download');
   let progressEl: JQuery<HTMLElement>;
 
-  let passphraseInterval: number|undefined;
+  let passphraseInterval: number | undefined;
   let missingPasspraseLongids: string[] = [];
 
   $('#type').text(urlParams.type as string);
@@ -85,7 +85,7 @@ Catch.try(async () => {
     }
   };
 
-  let getUrlFileSize = (origUrl: string): Promise<number|null> => new Promise((resolve, reject) => {
+  let getUrlFileSize = (origUrl: string): Promise<number | null> => new Promise((resolve, reject) => {
     console.info('trying to figure out file size');
     let url;
     if (Value.is('docs.googleusercontent.com/docs/securesc').in(urlParams.url as string)) {
@@ -94,17 +94,17 @@ Catch.try(async () => {
         if (googleDriveFileId) {
           url = 'https://drive.google.com/uc?export=download&id=' + googleDriveFileId; // this one can actually give us headers properly
         } else {
-          url =  origUrl;
+          url = origUrl;
         }
       } catch (e) {
-        url =  origUrl;
+        url = origUrl;
       }
     } else {
       url = origUrl;
     }
     let xhr = new XMLHttpRequest();
     xhr.open("HEAD", url, true);
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
       if (this.readyState === this.DONE) {
         let size = xhr.getResponseHeader("Content-Length");
         if (size !== null) {
@@ -126,22 +126,22 @@ Catch.try(async () => {
       if (!name || Value.is(name).in(['msg.txt', 'null'])) {
         name = encryptedAtt.name;
       }
-      Att.methods.saveToDownloads(new Att({name, type: encryptedAtt.type, data: result.content.uint8!}), $('body')); // uint8!: requested uint8 above
+      Att.methods.saveToDownloads(new Att({ name, type: encryptedAtt.type, data: result.content.uint8! }), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
-      BrowserMsg.send(parentTabId, 'passphrase_dialog', {type: 'attachment', longids: result.longids.needPassphrase});
+      BrowserMsg.send(parentTabId, 'passphrase_dialog', { type: 'attachment', longids: result.longids.needPassphrase });
       clearInterval(passphraseInterval);
       passphraseInterval = Catch.setHandledInterval(checkPassphraseEntered, 1000);
     } else {
       delete result.message;
       console.info(result);
       $('body.attachment').text('Error opening file. Downloading original..');
-      Att.methods.saveToDownloads(new Att({name: urlParams.name as string, type: urlParams.type as string, data: encryptedAtt.data()}));
+      Att.methods.saveToDownloads(new Att({ name: urlParams.name as string, type: urlParams.type as string, data: encryptedAtt.data() }));
     }
   };
 
   if (!urlParams.size && urlParams.url) { // download url of an unknown size
     getUrlFileSize(urlParams.url as string).then(size => {
-      if(size !== null) {
+      if (size !== null) {
         urlParams.size = size;
       }
     }).catch(Catch.rejection);
@@ -177,11 +177,11 @@ Catch.try(async () => {
       } else {
         throw Error('Missing both id and url');
       }
-    } catch(e) {
-      if(Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
         Xss.sanitizeRender('body.attachment', `Error downloading file: google auth needed. ${Ui.retryLink()}`);
-      } else if(Api.err.isNetErr(e)) {
+      } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('body.attachment', `Error downloading file: no internet. ${Ui.retryLink()}`);
       } else {
         Catch.handleException(e);
@@ -218,12 +218,12 @@ Catch.try(async () => {
       let result = await Pgp.msg.decrypt(acctEmail, att.data);
       if (result.success && result.content.text) {
         let openpgpType = Pgp.msg.type(result.content.text);
-        if(openpgpType && openpgpType.type === 'publicKey') {
-          if(openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
+        if (openpgpType && openpgpType.type === 'publicKey') {
+          if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
-            BrowserMsg.send(parentTabId, 'render_public_keys', {afterFrameId: urlParams.frameId, traverseUp: 2, publicKeys: [result.content.text]});
+            BrowserMsg.send(parentTabId, 'render_public_keys', { afterFrameId: urlParams.frameId, traverseUp: 2, publicKeys: [result.content.text] });
             // hide attachment
-            BrowserMsg.send(parentTabId, 'set_css', {selector: `#${urlParams.frameId}`, traverseUp: 1, css: {display: 'none'}});
+            BrowserMsg.send(parentTabId, 'set_css', { selector: `#${urlParams.frameId}`, traverseUp: 1, css: { display: 'none' } });
             $('body').text('');
             return true;
           }
@@ -234,15 +234,15 @@ Catch.try(async () => {
   };
 
   try {
-    if(!await processAsPublicKeyAndHideAttIfAppropriate()) {
+    if (!await processAsPublicKeyAndHideAttIfAppropriate()) {
       // normal attachment, let user download it by clicking
       $('#download').click(Ui.event.prevent('double', saveToDownloads));
     }
   } catch (e) {
-    if(Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+    if (Api.err.isAuthPopupNeeded(e)) {
+      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
       Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
-    } else if(Api.err.isNetErr(e)) {
+    } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
     } else {
       Catch.handleException(e);

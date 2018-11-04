@@ -19,7 +19,7 @@ export let injectFcIntoWebmailIfNeeded = () => {
 
 let getContentCcriptTabIds = (matches: string[], callback: (tabIds: number[]) => void) => {
   chrome.tabs.query({ 'url': matches }, result => {
-    callback(result.filter(tab => typeof tab.id !== 'undefined').map((tab)  => tab.id) as number[]);
+    callback(result.filter(tab => typeof tab.id !== 'undefined').map((tab) => tab.id) as number[]);
   });
 };
 
@@ -29,7 +29,7 @@ let isContentScriptInjectionNeeded = (tabId: number, callback: (injected: boolea
   });
 };
 
-let injectContentScripts = (tabId: number, files: string[], callback: (() => void)|null = null) => {
+let injectContentScripts = (tabId: number, files: string[], callback: (() => void) | null = null) => {
   let filesCopy = files.slice();
   chrome.tabs.executeScript(tabId, { file: filesCopy.shift() }, results => {
     if (filesCopy.length) {

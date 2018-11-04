@@ -2071,6 +2071,6 @@ export let mnemonic = (hex: string) => { // 4E1F799AA4FF2279
   }
   let binary = hex.split('').map(h => leadingZeroes(parseInt(h, 16).toString(2), 4)).join(''); // 0100111000011111011110011001101010100100111111110010001001111001
   let binaryChunks = stringChunks(binary, 11); // ["01001110000", "11111011110", "01100110101", "01001001111", "11110010001", "001111001"]
-  let integers = binaryChunks!.map(b =>  parseInt(b, 2)); // [624, 2014, 821, 591, 1937, 121]
+  let integers = binaryChunks!.map(b => parseInt(b, 2)); // [624, 2014, 821, 591, 1937, 121]
   return integers.map(i => words[i].toUpperCase()).join(' '); // "EVOKE WINK GRIT ENEMY VENDOR AUGUST"
 };

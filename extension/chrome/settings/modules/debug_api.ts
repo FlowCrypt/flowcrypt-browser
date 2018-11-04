@@ -14,13 +14,13 @@ Catch.try(async () => {
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   const which = Env.urlParamRequire.oneof(urlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
 
-  const renderCallRes = (api: string, variables: Dict<any>, result: any, error: any=null) => {
+  const renderCallRes = (api: string, variables: Dict<any>, result: any, error: any = null) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${JSON.stringify(error)})</pre>`;
     Xss.sanitizeAppend('#content', r);
   };
 
-  if(which === 'google_account') {
-    const variables = {acctEmail};
+  if (which === 'google_account') {
+    const variables = { acctEmail };
     try {
       const r = await Api.gmail.usersMeProfile(acctEmail);
       renderCallRes('gmail.users_me_profile', variables, r);
@@ -33,7 +33,7 @@ Catch.try(async () => {
     } catch (e) {
       renderCallRes('google.plus.people_me', variables, null, e);
     }
-  } else if(which === 'flowcrypt_account') {
+  } else if (which === 'flowcrypt_account') {
     Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.htmlEscape(which)} (not implemented)`);
   } else if (which === 'flowcrypt_subscription') {
     Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.htmlEscape(which)} (not implemented)`);

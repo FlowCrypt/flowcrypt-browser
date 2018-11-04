@@ -8,13 +8,15 @@ import { Pgp } from './pgp.js';
 import { Att } from './att.js';
 import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension.js';
 
-type MimeContent = { headers: FlatHeaders; atts: Att[]; signature: string|undefined; html: string|undefined; text: string|undefined; };
-type MimeParserNode = { path: string[]; headers: { [key: string]: {value: string}[]; }; rawContent: string; content: Uint8Array;
-  appendChild: (child: MimeParserNode) => void; contentTransferEncoding: {value: string}; charset?: string; };
+type MimeContent = { headers: FlatHeaders; atts: Att[]; signature: string | undefined; html: string | undefined; text: string | undefined; };
+type MimeParserNode = {
+  path: string[]; headers: { [key: string]: { value: string }[]; }; rawContent: string; content: Uint8Array;
+  appendChild: (child: MimeParserNode) => void; contentTransferEncoding: { value: string }; charset?: string;
+};
 
-export type KeyBlockType = 'publicKey'|'privateKey';
-export type ReplaceableMsgBlockType = KeyBlockType|'attestPacket'|'cryptupVerification'|'signedMsg'|'message'|'passwordMsg';
-export type MsgBlockType = 'text'|ReplaceableMsgBlockType;
+export type KeyBlockType = 'publicKey' | 'privateKey';
+export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'message' | 'passwordMsg';
+export type MsgBlockType = 'text' | ReplaceableMsgBlockType;
 export type MsgBlock = { type: MsgBlockType; content: string; complete: boolean; signature?: string; };
 export type FromToHeaders = { from: string; to: string[]; };
 
@@ -47,7 +49,7 @@ export class Mime {
         }
       }
     }
-    return {headers: decoded.headers, blocks};
+    return { headers: decoded.headers, blocks };
   }
 
   public static headersToFrom = (parsedMimeMsg: MimeContent): FromToHeaders => {
@@ -76,7 +78,7 @@ export class Mime {
     return { 'in-reply-to': msgId, 'references': refs + ' ' + msgId };
   }
 
-  public static resemblesMsg = (msg: string|Uint8Array) => {
+  public static resemblesMsg = (msg: string | Uint8Array) => {
     let m = msg.slice(0, 1000);
     // noinspection SuspiciousInstanceOfGuard
     if (m instanceof Uint8Array) {
@@ -95,10 +97,10 @@ export class Mime {
 
   public static decode = (mimeMsg: string): Promise<MimeContent> => {
     return new Promise(async resolve => {
-      let mimeContent = {atts: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined} as MimeContent;
+      let mimeContent = { atts: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined } as MimeContent;
       try {
         let parser = new (window as BrowserWidnow)['emailjs-mime-parser']();
-        let parsed: {[key: string]: MimeParserNode} = {};
+        let parsed: { [key: string]: MimeParserNode } = {};
         parser.onheader = (node: MimeParserNode) => {
           if (!String(node.path.join('.'))) { // root node headers
             for (let name of Object.keys(node.headers)) {
@@ -142,18 +144,18 @@ export class Mime {
     });
   }
 
-  public static encode = async (body:string|SendableMsgBody, headers: RichHeaders, atts:Att[]=[]): Promise<string> => {
+  public static encode = async (body: string | SendableMsgBody, headers: RichHeaders, atts: Att[] = []): Promise<string> => {
     let MimeBuilder = (window as BrowserWidnow)['emailjs-mime-builder']; // tslint:disable-line:variable-name
     let rootNode = new MimeBuilder('multipart/mixed');
     for (let key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]);
     }
     if (typeof body === 'string') {
-      body = {'text/plain': body};
+      body = { 'text/plain': body };
     }
     let contentNode: MimeParserNode;
     if (Object.keys(body).length === 1) {
-      contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain"|"text/html"] || '');
+      contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain" | "text/html"] || '');
     } else {
       contentNode = new MimeBuilder('multipart/alternative');
       for (let type of Object.keys(body)) {
@@ -163,7 +165,7 @@ export class Mime {
     rootNode.appendChild(contentNode);
     for (let att of atts) {
       let type = `${att.type}; name="${att.name}"`;
-      let header = {'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64'};
+      let header = { 'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64' };
       rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.data()));
     }
     return rootNode.build();
@@ -204,7 +206,7 @@ export class Mime {
           if (endIndex !== -1) {
             mimeMsg = mimeMsg.substr(0, endIndex + boundaryEnd.length);
             if (mimeMsg) {
-              let res = { full: mimeMsg, signed: null as string|null, signature: null as string|null };
+              let res = { full: mimeMsg, signed: null as string | null, signature: null as string | null };
               let firstPartStartIndex = mimeMsg.indexOf(boundaryBegin);
               if (firstPartStartIndex !== -1) {
                 firstPartStartIndex += boundaryBegin.length;
@@ -257,13 +259,13 @@ export class Mime {
   }
 
   private static getNodeContentAsText = (node: MimeParserNode): string => {
-    if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
+    if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
       return Str.uint8AsUtf(node.content);
     }
-    if(node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
+    if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
       return Str.fromEqualSignNotationAsUtf(node.rawContent);
     }
-    if(node.charset === 'iso-8859-2') {
+    if (node.charset === 'iso-8859-2') {
       return (window as FcWindow).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
     }
     return node.rawContent;

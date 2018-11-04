@@ -8,19 +8,21 @@ import { Api } from './api.js';
 
 type AccountEventHandlersOptional = {
   renderStatusText?: (text: string, showSpinner?: boolean) => void;
-  findMatchingTokensFromEmail?: (acctEmail: string, uuid: string) => Promise<string[]|null>; };
+  findMatchingTokensFromEmail?: (acctEmail: string, uuid: string) => Promise<string[] | null>;
+};
 type AccountEventHandlers = {
   renderStatusText: (text: string, showSpinner?: boolean) => void;
-  findMatchingTokensFromEmail: (acctEmail: string, uuid: string) => Promise<string[]|null>; };
+  findMatchingTokensFromEmail: (acctEmail: string, uuid: string) => Promise<string[] | null>;
+};
 
-export type PaymentMethod = 'stripe'|'group'|'trial';
-export type ProductLevel = 'pro'|null;
-export type Product = {id: null|string, method: null|PaymentMethod, name: null|string, level: ProductLevel};
+export type PaymentMethod = 'stripe' | 'group' | 'trial';
+export type ProductLevel = 'pro' | null;
+export type Product = { id: null | string, method: null | PaymentMethod, name: null | string, level: ProductLevel };
 
 export class FcAcct {
 
   PRODUCTS: Dict<Product> = {
-    null: {id: null, method: null, name: null, level: null},
+    null: { id: null, method: null, name: null, level: null },
     trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
     advancedMonthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
   };
@@ -31,13 +33,13 @@ export class FcAcct {
 
   constructor(handlers: AccountEventHandlersOptional, canReadEmail: boolean) {
     this.eventHandlers = {
-      renderStatusText: handlers.renderStatusText || ((text: string, showSpinner?:boolean) => undefined),
+      renderStatusText: handlers.renderStatusText || ((text: string, showSpinner?: boolean) => undefined),
       findMatchingTokensFromEmail: handlers.findMatchingTokensFromEmail || this.fetchTokenEmailsOnGmailAndFindMatchingToken,
     };
     this.canReadEmail = canReadEmail;
   }
 
-  subscribe = async (acctEmail: string, chosenProduct: Product, source: string|null) => {
+  subscribe = async (acctEmail: string, chosenProduct: Product, source: string | null) => {
     this.eventHandlers.renderStatusText(chosenProduct.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
     await Api.fc.accountCheckSync();
     try {
@@ -64,10 +66,10 @@ export class FcAcct {
       if (tokens && tokens.length) {
         return await this.verify(acctEmail, tokens);
       } else {
-        throw {code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email`};
+        throw { code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email` };
       }
     } else {
-      throw {code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email`};
+      throw { code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email` };
     }
   }
 
@@ -94,12 +96,12 @@ export class FcAcct {
     return await this.register(acctEmail);
   }
 
-  saveSubscriptionAttempt = async (product: Product, source: string|null) => {
+  saveSubscriptionAttempt = async (product: Product, source: string | null) => {
     (product as any as SubscriptionAttempt).source = source;
     await Store.set(null, { 'cryptup_subscription_attempt': product as any as SubscriptionAttempt });
   }
 
-  parseTokenEmailText = (verifEmailText: string, storedUuidToCrossCheck?: string): string|undefined => {
+  parseTokenEmailText = (verifEmailText: string, storedUuidToCrossCheck?: string): string | undefined => {
     let tokenLinkMatch = verifEmailText.match(/account\/login?([^\s"<]+)/g);
     if (tokenLinkMatch !== null) {
       let tokenLinkParams = Env.urlParams(['account', 'uuid', 'token'], tokenLinkMatch[0].split('?')[1]);
@@ -109,17 +111,17 @@ export class FcAcct {
     }
   }
 
-  private doSubscribe = async (chosenProduct: Product, source:string|null=null) => {
+  private doSubscribe = async (chosenProduct: Product, source: string | null = null) => {
     await Store.remove(null, ['cryptup_subscription_attempt']);
     // todo - deal with auth error? would need to know account_email for new registration
     let response = await Api.fc.accountSubscribe(chosenProduct.id!, chosenProduct.method!, source);
     if (response.subscription.level === chosenProduct.level && response.subscription.method === chosenProduct.method) {
       return response.subscription;
     }
-    throw {code: null, message: 'Something went wrong when upgrading, please email human@flowcrypt.com to get this resolved.', internal: 'mismatch'};
+    throw { code: null, message: 'Something went wrong when upgrading, please email human@flowcrypt.com to get this resolved.', internal: 'mismatch' };
   }
 
-  private fetchTokenEmailsOnGmailAndFindMatchingToken = async (acctEmail: string, uuid: string): Promise<string[]|null> => {
+  private fetchTokenEmailsOnGmailAndFindMatchingToken = async (acctEmail: string, uuid: string): Promise<string[] | null> => {
     let tokens: string[] = [];
     let response = await Api.gmail.msgList(acctEmail, 'from:' + this.cryptupVerificationEmailSender + ' to:' + acctEmail + ' in:anywhere', true);
     if (!response.messages) {

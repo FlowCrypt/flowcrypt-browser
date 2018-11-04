@@ -11,8 +11,8 @@ import { BrowserMsgHandler } from '../common/extension.js';
 
 declare let openpgp: typeof OpenPGP;
 
-export let migrateAcct: BrowserMsgHandler = async (data: {acctEmail: string}, sender, doneCb) => {
-  if(data.acctEmail) {
+export let migrateAcct: BrowserMsgHandler = async (data: { acctEmail: string }, sender, doneCb) => {
+  if (data.acctEmail) {
     await Store.set(data.acctEmail, { version: Catch.version('int') });
     doneCb();
     await accountUpdateStatusKeyserver(data.acctEmail);
@@ -42,7 +42,7 @@ let migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {
         try {
           let primaryLongid = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
           values[legacyStorageKey.replace('master_passphrase', 'passphrase_' + primaryLongid)] = value;
-        } catch (e) {} // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
+        } catch (e) { } // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
       } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
         values[legacyStorageKey] = value;
       }
@@ -78,12 +78,12 @@ let accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks whic
   let storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
     let unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
-    if(unique.length < storage.addresses.length) {
+    if (unique.length < storage.addresses.length) {
       storage.addresses = unique;
       await Store.set(acctEmail, storage); // fix duplicate email addresses
     }
     try {
-      let {results} = await Api.attester.lookupEmail(storage.addresses);
+      let { results } = await Api.attester.lookupEmail(storage.addresses);
       let addressesKeyserver = [];
       for (let result of results) {
         if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(myLongids)) {
@@ -91,8 +91,8 @@ let accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks whic
         }
       }
       await Store.set(acctEmail, { addressesKeyserver });
-    } catch(e) {
-      if(!Api.err.isNetErr(e)) {
+    } catch (e) {
+      if (!Api.err.isNetErr(e)) {
         Catch.handleException(e);
       }
     }
@@ -125,7 +125,7 @@ let accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new
 };
 
 let reportUsefulErrs = (e: any) => {
-  if(!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
+  if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
     Catch.handleException(e);
   }
 };

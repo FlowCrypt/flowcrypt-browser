@@ -31,7 +31,7 @@ Catch.try(async () => {
     let chosenSendingAddr = $(target).val() as string;
     if (chosenSendingAddr !== addresses[0]) {
       let orderedAddrs = Value.arr.unique([chosenSendingAddr].concat(storage.addresses || []));
-      await Store.set(acctEmail, {addresses: orderedAddrs});
+      await Store.set(acctEmail, { addresses: orderedAddrs });
       window.location.reload();
     }
   }));

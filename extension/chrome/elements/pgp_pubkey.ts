@@ -29,7 +29,7 @@ Catch.try(async () => {
 
   let sendResizeMsg = () => {
     let desiredHeight = $('#pgp_block').height()! + (urlParams.compact ? 10 : 30); // #pgp_block is defined in template
-    BrowserMsg.send(parentTabId, 'set_css', {selector: `iframe#${frameId}`, css: {height: `${desiredHeight}px`}});
+    BrowserMsg.send(parentTabId, 'set_css', { selector: `iframe#${frameId}`, css: { height: `${desiredHeight}px` } });
   };
 
   let setBtnText = async () => {
@@ -45,7 +45,7 @@ Catch.try(async () => {
     $('.pubkey').text(urlParams.armoredPubkey as string);
     if (urlParams.compact) {
       $('.hide_if_compact').remove();
-      $('body').css({border: 'none', padding: 0});
+      $('body').css({ border: 'none', padding: 0 });
       $('.line').removeClass('line');
     }
     $('.line.fingerprints, .line.add_contact').css('display', urlParams.minimized ? 'none' : 'block');
@@ -53,7 +53,7 @@ Catch.try(async () => {
       $('.line.fingerprints .fingerprint').text(Pgp.key.fingerprint(pubkeys[0], 'spaced') as string);
       $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) || '') || '');
     } else {
-      $('.line.fingerprints').css({display: 'none'});
+      $('.line.fingerprints').css({ display: 'none' });
     }
     if (typeof pubkeys[0] !== 'undefined') {
       if ((await pubkeys[0].getEncryptionKey() === null) && (await pubkeys[0].getSigningKey() === null)) {
@@ -68,14 +68,14 @@ Catch.try(async () => {
           }
         } else {
           $('.email').text('more than one person');
-          $('.input_email').css({display: 'none'});
+          $('.input_email').css({ display: 'none' });
           Xss.sanitizeAppend('.add_contact', Xss.htmlEscape(' for ' + pubkeys.map(pubkey => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.isEmailValid(e)).join(', ')));
         }
         setBtnText().catch(Catch.rejection);
       }
     } else {
       let fixed = urlParams.armoredPubkey as string;
-      while(/\n> |\n>\n/.test(fixed)) {
+      while (/\n> |\n>\n/.test(fixed)) {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
       if (fixed !== urlParams.armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)

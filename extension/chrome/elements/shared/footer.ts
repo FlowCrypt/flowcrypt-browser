@@ -41,7 +41,7 @@ Catch.try(async () => {
 
   $('.action_add_footer').click(Ui.event.prevent('double', async self => {
     await saveFooterIfHasSubscriptionAndRequested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string); // is textarea
-    BrowserMsg.send(parentTabId, 'set_footer', {footer: $('.input_email_footer').val()});
+    BrowserMsg.send(parentTabId, 'set_footer', { footer: $('.input_email_footer').val() });
   }));
 
   $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_dialog')));

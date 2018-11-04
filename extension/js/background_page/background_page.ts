@@ -13,7 +13,7 @@ declare let openpgp: typeof OpenPGP;
 
 console.info('background_process.js starting');
 
-openpgp.initWorker({path: '/lib/openpgp.worker.js'});
+openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 let backgroundProcessStartReason = 'browser_start';
 chrome.runtime.onInstalled.addListener(event => {
@@ -30,37 +30,37 @@ chrome.runtime.onInstalled.addListener(event => {
 
   let openExtensionTab = async (url: string) => {
     let openedTab = await getFcSettingsTabIdIfOpen();
-    if(openedTab === null) {
-      chrome.tabs.create({url});
+    if (openedTab === null) {
+      chrome.tabs.create({ url });
     } else {
-      chrome.tabs.update(openedTab, {url, active: true});
+      chrome.tabs.update(openedTab, { url, active: true });
     }
   };
 
-  let openSettingsPage = async (path:string='index.htm', acctEmail:string|null=null, page:string='', rawPageUrlParams:Dict<FlatTypes>|null=null, addNewAcct=false) => {
+  let openSettingsPage = async (path: string = 'index.htm', acctEmail: string | null = null, page: string = '', rawPageUrlParams: Dict<FlatTypes> | null = null, addNewAcct = false) => {
     let basePath = chrome.extension.getURL(`chrome/settings/${path}`);
     let pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : null;
     if (acctEmail) {
-      await openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams}));
-    } else if(addNewAcct) {
+      await openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams }));
+    } else if (addNewAcct) {
       await openExtensionTab(Env.urlCreate(basePath, { addNewAcct }));
     } else {
       let acctEmails = await Store.acctEmailsGet();
-      await openExtensionTab(Env.urlCreate(basePath, { acctEmail: acctEmails[0], page, pageUrlParams}));
+      await openExtensionTab(Env.urlCreate(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
   };
 
-  let openSettingsPageHandler: BrowserMsgHandler = async (message: {path: string, acctEmail: string, page: string, page_url_params: Dict<FlatTypes>, addNewAcct?: boolean}, sender, respond) => {
+  let openSettingsPageHandler: BrowserMsgHandler = async (message: { path: string, acctEmail: string, page: string, page_url_params: Dict<FlatTypes>, addNewAcct?: boolean }, sender, respond) => {
     await openSettingsPage(message.path, message.acctEmail, message.page, message.page_url_params, message.addNewAcct === true);
     respond();
   };
 
-  let openInboxPageHandler: BrowserMsgHandler = async (message: {acctEmail: string, threadId?: string, folder?: string}, sender, respond) => {
+  let openInboxPageHandler: BrowserMsgHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }, sender, respond) => {
     await openExtensionTab(Env.urlCreate(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
     respond();
   };
 
-  let getActiveTabInfo: BrowserMsgHandler = (message: Dict<any>|null, sender, respond) => {
+  let getActiveTabInfo: BrowserMsgHandler = (message: Dict<any> | null, sender, respond) => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (tabs) => {
       if (tabs.length) {
         if (tabs[0].id !== undefined) {
@@ -76,7 +76,7 @@ chrome.runtime.onInstalled.addListener(event => {
     });
   };
 
-  let getFcSettingsTabIdIfOpen = (): Promise<number|null> => new Promise(resolve => {
+  let getFcSettingsTabIdIfOpen = (): Promise<number | null> => new Promise(resolve => {
     chrome.tabs.query({ currentWindow: true }, tabs => {
       let extension = chrome.extension.getURL('/');
       for (let tab of tabs) {
@@ -89,16 +89,16 @@ chrome.runtime.onInstalled.addListener(event => {
     });
   });
 
-  let updateUninstallUrl: BrowserMsgHandler = async (request: Dict<any>|null, sender, respond) => {
+  let updateUninstallUrl: BrowserMsgHandler = async (request: Dict<any> | null, sender, respond) => {
     respond();
     let acctEmails = await Store.acctEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       let email = (acctEmails && acctEmails.length) ? acctEmails[0] : null;
-      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({email, metrics: null})}`);
+      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`);
     }
   };
 
-  let dbOperationHandler = (request: BrowserMsgReqtDb, sender: chrome.runtime.MessageSender|'background', respond: Function, db: IDBDatabase) => { // tslint:disable-line:ban-types
+  let dbOperationHandler = (request: BrowserMsgReqtDb, sender: chrome.runtime.MessageSender | 'background', respond: Function, db: IDBDatabase) => { // tslint:disable-line:ban-types
     Catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
@@ -111,7 +111,7 @@ chrome.runtime.onInstalled.addListener(event => {
 
   if (!storage.settings_seen) {
     await openSettingsPage('initial.htm'); // called after the very first installation of the plugin
-    await Store.set(null, {settings_seen: true});
+    await Store.set(null, { settings_seen: true });
   }
 
   try {
@@ -144,18 +144,18 @@ chrome.runtime.onInstalled.addListener(event => {
     ping: (r, sender, respond) => respond(true),
     _tab_: (r, sender, respond) => {
       if (sender === 'background') {
-        respond({tabId: null}); // background script - direct
+        respond({ tabId: null }); // background script - direct
       } else if (sender === null || sender === undefined) {
-        respond({tabId: undefined}); // not sure when or why this happens - maybe orphaned frames during update
+        respond({ tabId: undefined }); // not sure when or why this happens - maybe orphaned frames during update
       } else if (sender.tab) {
         // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
         // fixed in FF55, but currently we still support v52: https://flowcrypt.com/api/update/firefox
-        respond({tabId: `${sender.tab.id}:${(typeof sender.frameId !== 'undefined' ? sender.frameId : '')}`});
+        respond({ tabId: `${sender.tab.id}:${(typeof sender.frameId !== 'undefined' ? sender.frameId : '')}` });
       } else {
         // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
         // https://developers.chrome.com/extensions/runtime#type-MessageSender
         // MDN says the same - thus this is most likely a background script, through browser message passing
-        respond({tabId: null});
+        respond({ tabId: null });
       }
     },
   });

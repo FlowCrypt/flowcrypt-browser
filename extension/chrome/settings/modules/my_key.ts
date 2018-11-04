@@ -28,7 +28,7 @@ Catch.try(async () => {
   let key = openpgp.key.readArmored(primaryKi.private).keys[0];
 
   try {
-    let {results: [result]} = await Api.attester.lookupEmail([acctEmail]);
+    let { results: [result] } = await Api.attester.lookupEmail([acctEmail]);
     let url = Api.fc.url('pubkey', acctEmail);
     if (result.pubkey && Pgp.key.longid(result.pubkey) === primaryKi.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
@@ -64,7 +64,7 @@ Catch.try(async () => {
     }
   }));
 
-  let clipboardOpts = {text: () => key.toPublic().armor()};
+  let clipboardOpts = { text: () => key.toPublic().armor() };
   let cbjs = new ClipboardJS('.action_copy_pubkey', clipboardOpts);
 
 })();

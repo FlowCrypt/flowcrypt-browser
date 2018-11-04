@@ -51,7 +51,7 @@ Catch.try(async () => {
 
   $('.action_enter').click(Ui.event.handle(async () => {
     let key = openpgp.key.readArmored(primaryKi.private).keys[0];
-    if(await Pgp.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
+    if (await Pgp.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
       origPassphrase = $('#original_password').val() as string; // text input
       displayBlock('step_1_password');
     } else {
@@ -86,7 +86,7 @@ Catch.try(async () => {
       $('#password2').focus();
     } else {
       let prv = openpgp.key.readArmored(primaryKi.private).keys[0];
-      if(!prv.isDecrypted()) {
+      if (!prv.isDecrypted()) {
         await Pgp.key.decrypt(prv, [origPassphrase!]); // !null because we checked for this above, and user entry cannot be null
       }
       await Settings.openpgpKeyEncrypt(prv, newPassphrase);
@@ -94,7 +94,7 @@ Catch.try(async () => {
       await Store.keysAdd(acctEmail, prv.armor());
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, storedPassphrase !== null ? newPassphrase : undefined);
       await Store.passphraseSave('session', acctEmail, primaryKi.longid, storedPassphrase !== null ? undefined : newPassphrase);
-      let {setup_simple} = await Store.getAcct(acctEmail, ['setup_simple']);
+      let { setup_simple } = await Store.getAcct(acctEmail, ['setup_simple']);
       if (setup_simple) {
         Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
       } else {

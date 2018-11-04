@@ -11,7 +11,7 @@ import { Api } from '../../../js/common/api.js';
 
 declare const openpgp: typeof OpenPGP;
 
-Catch.try( async () => {
+Catch.try(async () => {
 
   let urlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
   let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
@@ -35,12 +35,12 @@ Catch.try( async () => {
   let onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Api.fc.accountUpdate({default_message_expire: Number($('.default_message_expire').val())});
+    await Api.fc.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 
   let onMsgLanguageUserChange = async () => {
-    await Store.set(acctEmail, {outgoing_language: $('.password_message_language').val()});
+    await Store.set(acctEmail, { outgoing_language: $('.password_message_language').val() });
     window.location.reload();
   };
 
@@ -80,12 +80,12 @@ Catch.try( async () => {
     }
   }));
 
-  $('.cancel_passphrase_requirement_change').click(() =>  window.location.reload());
+  $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
 
   $('#hide_message_password').prop('checked', storage.hide_message_password === true);
   $('.password_message_language').val(storage.outgoing_language || 'EN');
   $('#hide_message_password').change(Ui.event.handle(async target => {
-    await Store.set(acctEmail, {hide_message_password: $(target).is(':checked')});
+    await Store.set(acctEmail, { hide_message_password: $(target).is(':checked') });
     window.location.reload();
   }));
 

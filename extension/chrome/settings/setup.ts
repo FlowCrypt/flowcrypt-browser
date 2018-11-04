@@ -21,7 +21,7 @@ interface SetupOptions {
   submit_main: boolean;
   submit_all: boolean;
   setup_simple: boolean;
-  key_backup_prompt: number|boolean;
+  key_backup_prompt: number | boolean;
   recovered?: boolean;
   is_newly_created_key: boolean;
 }
@@ -30,8 +30,8 @@ Catch.try(async () => {
 
   let uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
   let acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  let parentTabId: string|null = null;
-  let action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key'|'finalize'|undefined;
+  let parentTabId: string | null = null;
+  let action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
   if (action === 'add_key') {
     parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
@@ -54,7 +54,7 @@ Catch.try(async () => {
   ]);
 
   storage.email_provider = storage.email_provider || 'gmail';
-  let acctEmailAttestedFingerprint: string|null = null;
+  let acctEmailAttestedFingerprint: string | null = null;
   let recoveredKeys: OpenPGP.key.Key[] = [];
   let recoveredKeysMatchingPassphrases: string[] = [];
   let nRecoveredKeysLongid = 0;
@@ -68,7 +68,7 @@ Catch.try(async () => {
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
 
-  let keyImportUi = new KeyImportUi({checkEncryption: true});
+  let keyImportUi = new KeyImportUi({ checkEncryption: true });
   keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId); // for step_2b_manual_enter, if user chooses so
   keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
 
@@ -77,7 +77,7 @@ Catch.try(async () => {
     close_page: () => {
       $('.featherlight-close').click();
     },
-    notification_show: (data: {notification: string}) => {
+    notification_show: (data: { notification: string }) => {
       alert(data.notification);
     },
   }, tabId);
@@ -85,7 +85,7 @@ Catch.try(async () => {
   let showSubmitAllAddrsOption = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
       $('.addresses').text(Value.arr.withoutVal(addrs, acctEmail).join(', '));
-      $('.manual .input_submit_all').prop({checked: true, disabled: false}).closest('div.line').css('display', 'block');
+      $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
     }
   };
 
@@ -170,13 +170,13 @@ Catch.try(async () => {
 
   let renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     let fetchedKeys;
-    $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({display: 'none', visibility: 'hidden', opacity: 0});
+    $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({ display: 'none', visibility: 'hidden', opacity: 0 });
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
       fetchedKeys = await Api.gmail.fetchKeyBackups(acctEmail);
     } catch (e) {
-      window.location.href = Env.urlCreate('modules/add_key.htm', {acctEmail, parentTabId});
+      window.location.href = Env.urlCreate('modules/add_key.htm', { acctEmail, parentTabId });
       return;
     }
     if (fetchedKeys.length) {
@@ -187,11 +187,11 @@ Catch.try(async () => {
       await renderSetupDone();
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
-      window.location.href = Env.urlCreate('modules/add_key.htm', {acctEmail, parentTabId});
+      window.location.href = Env.urlCreate('modules/add_key.htm', { acctEmail, parentTabId });
     }
   };
 
-  let submitPublicKeyIfNeeded = async (armoredPubkey: string, options: {submit_main: boolean, submit_all: boolean}) => {
+  let submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
     let storage = await Store.getAcct(acctEmail, ['addresses']);
     if (!options.submit_main) {
       return;
@@ -234,13 +234,13 @@ Catch.try(async () => {
     });
   };
 
-  let finalizeSetup = async ({submit_main, submit_all}: {submit_main: boolean, submit_all: boolean}): Promise<void> => {
+  let finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
     let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
-      await submitPublicKeyIfNeeded(primaryKi.public, {submit_main, submit_all});
+      await submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, 'Failed to submit to Attester.\nThis may be due to internet connection issue.', () => finalizeSetup({submit_main, submit_all}));
+      return await Settings.promptToRetry('REQUIRED', e, 'Failed to submit to Attester.\nThis may be due to internet connection issue.', () => finalizeSetup({ submit_main, submit_all }));
     }
     await Store.set(acctEmail, {
       setup_date: Date.now(),
@@ -280,20 +280,20 @@ Catch.try(async () => {
     }
   };
 
-  let getAndSaveGoogleUserInfo = async (): Promise<{full_name: string, locale?: string, picture?: string}> => {
+  let getAndSaveGoogleUserInfo = async (): Promise<{ full_name: string, locale?: string, picture?: string }> => {
     if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and let the user choose
       let me: R.GooglePlusPeopleMe;
       try {
         me = await Api.google.plus.peopleMe(acctEmail);
       } catch (e) {
         Catch.handleException(e);
-        return {full_name: ''};
+        return { full_name: '' };
       }
-      let result = {full_name: me.displayName || '', locale: me.language, picture: me.image.url};
+      let result = { full_name: me.displayName || '', locale: me.language, picture: me.image.url };
       await Store.set(acctEmail, result);
       return result;
     } else {
-      return {full_name: ''};
+      return { full_name: '' };
     }
   };
 
@@ -362,7 +362,7 @@ Catch.try(async () => {
     let txtTeft = (nBups - nGot > 1) ? 'are ' + (nBups - nGot) + ' backups' : 'is one backup';
     if (action !== 'add_key') {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`);
-      Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', {class: 'line', html: Ui.e('a', {href: '#', class: 'skip_recover_remaining', html: 'Skip this step'})}));
+      Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
       $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
         window.location.href = Env.urlCreate('index.htm', { acctEmail });
       }));
@@ -428,10 +428,10 @@ Catch.try(async () => {
       await preFinalizeSetup(options);
       await finalizeSetup(options);
       await renderSetupDone();
-    } catch(e) {
-      if(e instanceof UserAlert) {
+    } catch (e) {
+      if (e instanceof UserAlert) {
         return alert(e.message);
-      } else if(e instanceof KeyCanBeFixed) {
+      } else if (e instanceof KeyCanBeFixed) {
         return await renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
       } else {
         Catch.handleException(e);
@@ -483,7 +483,7 @@ Catch.try(async () => {
 
   $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent('double', async () => {
     Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
-    if(!isActionCreatePrivateFormInputCorrect()) {
+    if (!isActionCreatePrivateFormInputCorrect()) {
       return;
     }
     try {
@@ -515,7 +515,7 @@ Catch.try(async () => {
   $('#step_2a_manual_create .action_show_advanced_create_settings').click(Ui.event.handle(target => {
     let advancedCreateSettings = $('#step_2a_manual_create .advanced_create_settings');
     let container = $('#step_2a_manual_create .advanced_create_settings_container');
-    if(advancedCreateSettings.is(':visible')) {
+    if (advancedCreateSettings.is(':visible')) {
       advancedCreateSettings.hide('fast');
       $(target).find('span').text('Show Advanced Settings');
       container.css('width', '360px');
@@ -527,7 +527,7 @@ Catch.try(async () => {
   }));
 
   $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parentTabId was used
-    BrowserMsg.send(parentTabId, 'redirect', {location: Env.urlCreate('index.htm', {acctEmail, advanced: true})});
+    BrowserMsg.send(parentTabId, 'redirect', { location: Env.urlCreate('index.htm', { acctEmail, advanced: true }) });
   }));
 
   // show alternative account addresses in setup form + save them for later
@@ -552,17 +552,17 @@ Catch.try(async () => {
     } else {
       await renderAddKeyFromBackup();
     }
-  } else if(action === 'finalize') {
-    let {tmp_submit_all, tmp_submit_main, key_backup_method} = await Store.getAcct(acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
-    if(typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
+  } else if (action === 'finalize') {
+    let { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
+    if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
       return $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
     }
-    if(typeof key_backup_method !== 'string') {
+    if (typeof key_backup_method !== 'string') {
       alert('Backup has not successfully finished, will retry');
       window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
       return;
     }
-    await finalizeSetup({submit_all: tmp_submit_all, submit_main: tmp_submit_main});
+    await finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
     await renderSetupDone();
   } else {
     await renderSetupDialog();

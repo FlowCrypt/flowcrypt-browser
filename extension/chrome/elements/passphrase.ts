@@ -69,7 +69,7 @@ Catch.try(async () => {
   };
 
   $('.action_close').click(Ui.event.handle(() => {
-    BrowserMsg.send('broadcast', 'passphrase_entry', {entered: false});
+    BrowserMsg.send('broadcast', 'passphrase_entry', { entered: false });
     BrowserMsg.send(parentTabId, 'close_dialog');
   }));
 
@@ -84,8 +84,8 @@ Catch.try(async () => {
           await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);
           atLeastOneMatched = true;
         }
-      } catch(e) {
-        if(e.message === 'Unknown s2k type.') {
+      } catch (e) {
+        if (e.message === 'Unknown s2k type.') {
           alert(`One of your keys ${keyinfo.longid} is not well supported yet (${e.message}).\n\nPlease write human@flowcrypt.com with details about how was this key created so that we can add support soon.`);
         } else {
           throw e;
@@ -93,7 +93,7 @@ Catch.try(async () => {
       }
     }
     if (atLeastOneMatched) {
-      BrowserMsg.send('broadcast', 'passphrase_entry', {entered: true});
+      BrowserMsg.send('broadcast', 'passphrase_entry', { entered: true });
       BrowserMsg.send(parentTabId, 'close_dialog');
     } else {
       renderErr();

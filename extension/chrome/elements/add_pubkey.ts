@@ -22,7 +22,7 @@ Catch.try(async () => {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.htmlEscape(email)}">${Xss.htmlEscape(email)}</option>`);
   }
 
-  let contacts = await Store.dbContactSearch(null, {has_pgp: true});
+  let contacts = await Store.dbContactSearch(null, { has_pgp: true });
 
   Xss.sanitizeAppend('select.copy_from_email', '<option value=""></option>');
   for (let contact of contacts) {
@@ -44,12 +44,12 @@ Catch.try(async () => {
 
   $('.action_ok').click(Ui.event.handle(async () => {
     try {
-      let keyImportUi = new KeyImportUi({checkEncryption: true});
+      let keyImportUi = new KeyImportUi({ checkEncryption: true });
       let normalized = await keyImportUi.checkPub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
       await Store.dbContactSave(null, Store.dbContactObj($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
       closeDialog();
     } catch (e) {
-      if(e instanceof UserAlert) {
+      if (e instanceof UserAlert) {
         return alert(e.message);
       } else {
         Catch.handleException(e);

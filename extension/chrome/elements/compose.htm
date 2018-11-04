@@ -18,8 +18,9 @@
 
   <div id="initial_prompt" class="display_none">
     <p id="reply_links">
-      Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#" id="a_forward">Forward</a> encrypted
-    <div id="reply_click_area"></div>
+      Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#"
+        id="a_forward">Forward</a> encrypted
+      <div id="reply_click_area"></div>
     </p>
   </div>
 
@@ -32,7 +33,8 @@
       <th>
         <!-- header -->
         <span class="close_new_message"><img src="/img/svgs/close-icon.svg" tabindex="-1"></span>
-        <span class="action_feedback" title="Feedback or Help"><img src="/img/svgs/question-icon-white.svg" class="" alt="Help"></span>
+        <span class="action_feedback" title="Feedback or Help"><img src="/img/svgs/question-icon-white.svg" class=""
+            alt="Help"></span>
         <h1>New Secure Message</h1>
       </th>
     </tr>
@@ -41,7 +43,7 @@
         <!-- to -->
         <div>
           <span class="recipients"></span>
-          <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Add Recipient"  data-test="input-to" />
+          <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Add Recipient" data-test="input-to" />
         </div>
       </td>
     </tr>
@@ -59,7 +61,8 @@
     </tr>
     <tr>
       <td class="text">
-        <div class="action_add_intro good" title="Add a custom message that your recipient will see before they open encrypted content">+ add intro</div>
+        <div class="action_add_intro good" title="Add a custom message that your recipient will see before they open encrypted content">+
+          add intro</div>
         <!-- body -->
         <div contenteditable id="input_text" tabindex="4" data-test="input-body"></div>
         <div id="fineuploader"></div>
@@ -67,17 +70,24 @@
     </tr>
     <tr id="password_or_pubkey_container">
       <td>
-        Emails <span class="grey">in grey</span> don't seem to use encryption. Add a <span class="label_password" style="display: block;">password protection</span><span class="start">"</span><input id="input_password" placeholder="" tabindex="5" data-test="input-password"><span class="end">"</span>
-        <div class="question_copy">If they do use encryption, <a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">add their public key</a> instead. Else ask them to get FlowCrypt!</div>
+        Emails <span class="grey">in grey</span> don't seem to use encryption. Add a <span class="label_password" style="display: block;">password
+          protection</span><span class="start">"</span><input id="input_password" placeholder="" tabindex="5" data-test="input-password"><span
+          class="end">"</span>
+        <div class="question_copy">If they do use encryption, <a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">add
+            their public key</a> instead. Else ask them to get FlowCrypt!</div>
       </td>
     </tr>
     <tr class="bottom">
       <td class="bottom">
-        <div id="send_btn" class="button green" data-test="action-send" tabindex="6"><i class=""></i><span>Encrypt and Send</span></div>
-        <div class="icon action_sign" data-test="action-switch-to-sign" tabindex="-1" title="Sign this message instead of encrypting it"><i alt="sign"></i></div>
-        <div class="icon attach" id="fineuploader_button" tabindex="-1" title="Attach a file"><img src="/img/svgs/paperclip-icon.svg" class="attach-file" alt="Attach File"></div>
+        <div id="send_btn" class="button green" data-test="action-send" tabindex="6"><i class=""></i><span>Encrypt and
+            Send</span></div>
+        <div class="icon action_sign" data-test="action-switch-to-sign" tabindex="-1" title="Sign this message instead of encrypting it"><i
+            alt="sign"></i></div>
+        <div class="icon attach" id="fineuploader_button" tabindex="-1" title="Attach a file"><img src="/img/svgs/paperclip-icon.svg"
+            class="attach-file" alt="Attach File"></div>
         <div id="send_btn_note"></div>
-        <div class="icon right delete_draft" tabindex="-1" title="Delete draft"><img src="/img/svgs/trash-can-icon.svg" class="delete-draft" alt="Delete Email"></div>
+        <div class="icon right delete_draft" tabindex="-1" title="Delete draft"><img src="/img/svgs/trash-can-icon.svg"
+            class="delete-draft" alt="Delete Email"></div>
         <span class="icon right action_include_pubkey" title="Include your Public Key"><i alt="pubkey"></i></span>
         <div class="icon right action_include_footer" tabindex="-1" title="Include email footer (not encrypted)"><i alt="footer"></i></div>
       </td>

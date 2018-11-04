@@ -13,7 +13,7 @@ import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
 import { MsgVerifyResult, DecryptErrTypes, Pgp } from '../../js/common/pgp.js';
 import { Mime } from '../../js/common/mime.js';
 
-declare const anchorme: (input: string, opts: {emails?: boolean, attributes?: {name: string, value: string}[]}) => string;
+declare const anchorme: (input: string, opts: { emails?: boolean, attributes?: { name: string, value: string }[] }) => string;
 
 Catch.try(async () => {
 
@@ -33,13 +33,13 @@ Catch.try(async () => {
 
   let includedAtts: Att[] = [];
   let heightHistory: number[] = [];
-  let msgFetchedFromApi: false|GmailResponseFormat = false;
-  let passphraseInterval: number|undefined;
-  let missingOrWrongPassprases: Dict<string|null> = {};
-  let canReadEmails: undefined|boolean;
+  let msgFetchedFromApi: false | GmailResponseFormat = false;
+  let passphraseInterval: number | undefined;
+  let missingOrWrongPassprases: Dict<string | null> = {};
+  let canReadEmails: undefined | boolean;
   let passwordMsgLinkRes: R.FcLinkMsg;
   let adminCodes: string[];
-  let userEnteredMsgPassword: string|undefined;
+  let userEnteredMsgPassword: string | undefined;
 
   let doAnchor = (text: string) => {
     return anchorme(text.replace(/\n/g, '<br>'), { emails: false, attributes: [{ name: 'target', value: '_blank' }] });
@@ -65,7 +65,7 @@ Catch.try(async () => {
     };
 
     if (!isInfiniteResizeLoop()) {
-      BrowserMsg.send(parentTabId, 'set_css', {selector: `iframe#${frameId}`, css: {height}});
+      BrowserMsg.send(parentTabId, 'set_css', { selector: `iframe#${frameId}`, css: { height } });
     }
   };
 
@@ -79,16 +79,16 @@ Catch.try(async () => {
     img.style.background = 'none';
     img.style.border = 'none';
     img.addEventListener('load', () => sendResizeMsg());
-    if(a.href.indexOf('cid:') === 0) { // image included in the email
+    if (a.href.indexOf('cid:') === 0) { // image included in the email
       let contentId = a.href.replace(/^cid:/g, '');
       let content = includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
-      if(content) {
+      if (content) {
         img.src = `data:${a.type};base64,${btoa(content.asText())}`;
         a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
       } else {
         a.outerHTML = Xss.htmlEscape(`[broken link: ${a.href}]`); // xss-escaped
       }
-    } else if(a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
+    } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
       img.src = a.href;
       a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
     } else {
@@ -103,7 +103,7 @@ Catch.try(async () => {
     if (!isErr && !isOutgoing) { // successfully opened incoming message
       await Store.set(acctEmail, { successfully_received_at_leat_one_message: true });
     }
-    if(!isErr) { // rendering message content
+    if (!isErr) { // rendering message content
       let pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent)); // xss-sanitized
       pgpBlock.find('a.image_src_link').one('click', Ui.event.handle(displayImageSrcLinkAsImg));
     } else { // rendering our own ui
@@ -130,7 +130,7 @@ Catch.try(async () => {
     return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
   };
 
-  let armoredMsgAsHtml = (rawMsgSubstitute:string|null=null) => {
+  let armoredMsgAsHtml = (rawMsgSubstitute: string | null = null) => {
     let m = rawMsgSubstitute || msg;
     if (m && typeof m === 'string') {
       return `<div class="raw_pgp_block" style="display: none;">${Xss.htmlEscape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
@@ -138,7 +138,7 @@ Catch.try(async () => {
     return '';
   };
 
-  let setFrameColor = (color: 'red'|'green'|'gray') => {
+  let setFrameColor = (color: 'red' | 'green' | 'gray') => {
     if (color === 'red') {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
     } else if (color === 'green') {
@@ -148,12 +148,12 @@ Catch.try(async () => {
     }
   };
 
-  let renderErr = async (errBoxContent: string, rawMsgSubstitute:string|null=null) => {
+  let renderErr = async (errBoxContent: string, rawMsgSubstitute: string | null = null) => {
     setFrameColor('red');
     await renderContent('<div class="error">' + errBoxContent.replace(/\n/g, '<br>') + '</div>' + armoredMsgAsHtml(rawMsgSubstitute), true);
-    $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {acctEmail, page: '/chrome/settings/modules/keyserver.htm'})));
-    $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {acctEmail})));
-    $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {acctEmail, page: '/chrome/settings/modules/add_key.htm'})));
+    $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
+    $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail })));
+    $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
     $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => {
       BrowserMsg.send(parentTabId, 'reply_pubkey_mismatch');
     }));
@@ -171,9 +171,9 @@ Catch.try(async () => {
     }
   };
 
-  let decryptPwd = async (suppliedPwd?: string|null): Promise<string|null> => {
+  let decryptPwd = async (suppliedPwd?: string | null): Promise<string | null> => {
     let pwd = suppliedPwd || userEnteredMsgPassword || null;
-    if(pwd && hasChallengePassword) {
+    if (pwd && hasChallengePassword) {
       return await BgExec.cryptoHashChallengeAnswer(pwd);
     }
     return pwd;
@@ -182,7 +182,7 @@ Catch.try(async () => {
   let decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
     let decrypted = await BgExec.cryptoMsgDecrypt(acctEmail, encrypted.data(), await decryptPwd(), true);
     if (decrypted.success) {
-      let att = new Att({name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8!});
+      let att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8! });
       Att.methods.saveToDownloads(att, renderIn);
       sendResizeMsg();
     } else {
@@ -194,7 +194,7 @@ Catch.try(async () => {
     }
   };
 
-  let renderProgress = (element: JQuery<HTMLElement>, percent: number|null, received: number|null, size: number) => {
+  let renderProgress = (element: JQuery<HTMLElement>, percent: number | null, received: number | null, size: number) => {
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {
@@ -226,7 +226,7 @@ Catch.try(async () => {
     }));
   };
 
-  let renderPgpSignatureCheckResult = (signature: MsgVerifyResult|null) => {
+  let renderPgpSignatureCheckResult = (signature: MsgVerifyResult | null) => {
     if (signature) {
       let signerEmail = signature.contact ? signature.contact.name || senderEmail : senderEmail;
       $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
@@ -253,8 +253,8 @@ Catch.try(async () => {
     if (isOutgoing) {
       btns += ' <a href="#" class="expire_settings">settings</a>';
     }
-    Xss.sanitizeAppend('#pgp_block', Ui.e('div', {class: 'future_expiration', html: `This message will expire on ${Str.datetimeToDate(date)}. ${btns}`}));
-    $('.expire_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {acctEmail, page: '/chrome/settings/modules/security.htm'})));
+    Xss.sanitizeAppend('#pgp_block', Ui.e('div', { class: 'future_expiration', html: `This message will expire on ${Str.datetimeToDate(date)}. ${btns}` }));
+    $('.expire_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/security.htm' })));
     $('.extend_expiration').click(Ui.event.handle(target => renderMsgExpirationRenewOptions(target)));
   };
 
@@ -305,7 +305,7 @@ Catch.try(async () => {
     }
   };
 
-  let decideDecryptedContentFormattingAndRender = async (decryptedContent: Uint8Array|string, isEncrypted: boolean, sigResult: MsgVerifyResult|null) => {
+  let decideDecryptedContentFormattingAndRender = async (decryptedContent: Uint8Array | string, isEncrypted: boolean, sigResult: MsgVerifyResult | null) => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     let publicKeys: string[] = [];
@@ -318,7 +318,7 @@ Catch.try(async () => {
       decryptedContent = Str.stripFcTeplyToken(decryptedContent);
       decryptedContent = Str.stripPublicKeys(decryptedContent, publicKeys);
       if (publicKeys.length) {
-        BrowserMsg.send(parentTabId, 'render_public_keys', {afterFrameId: frameId, publicKeys});
+        BrowserMsg.send(parentTabId, 'render_public_keys', { afterFrameId: frameId, publicKeys });
       }
       decryptedContent = Xss.htmlEscape(decryptedContent);
       await renderContent(doAnchor(decryptedContent.replace(/\n/g, '<br>')), false);
@@ -333,7 +333,7 @@ Catch.try(async () => {
       let decoded = await Mime.decode(decryptedContent);
       if (typeof decoded.html !== 'undefined') {
         await renderContent(decoded.html, false);
-      } else if(typeof decoded.text !== 'undefined') {
+      } else if (typeof decoded.text !== 'undefined') {
         await renderContent(doAnchor(decoded.text.replace(/\n/g, '<br>')), false);
       } else {
         await renderContent((decryptedContent || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
@@ -350,15 +350,15 @@ Catch.try(async () => {
         renderInnerAtts(decoded.atts);
       }
       if (publicKeys.length) {
-        BrowserMsg.send(parentTabId, 'render_public_keys', {afterFrameId: frameId, publicKeys});
+        BrowserMsg.send(parentTabId, 'render_public_keys', { afterFrameId: frameId, publicKeys });
       }
     }
     setTestState('ready');
   };
 
-  let decryptAndRender = async (optionalPwd:string|null=null) => {
+  let decryptAndRender = async (optionalPwd: string | null = null) => {
     if (typeof signature !== 'string') {
-      let result = await BgExec.cryptoMsgDecrypt(acctEmail, msg as string|Uint8Array, await decryptPwd(optionalPwd));
+      let result = await BgExec.cryptoMsgDecrypt(acctEmail, msg as string | Uint8Array, await decryptPwd(optionalPwd));
       if (typeof result === 'undefined') {
         await renderErr(Lang.general.restartBrowserAndTryAgain);
       } else if (result.success) {
@@ -404,7 +404,7 @@ Catch.try(async () => {
         }
       }
     } else {
-      let signatureResult = await BgExec.cryptoMsgVerifyDetached(acctEmail, msg as string|Uint8Array, signature);
+      let signatureResult = await BgExec.cryptoMsgVerifyDetached(acctEmail, msg as string | Uint8Array, signature);
       await decideDecryptedContentFormattingAndRender(msg as string, false, signatureResult);
     }
   };
@@ -464,7 +464,7 @@ Catch.try(async () => {
       expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
       await renderErr(expirationMsg, null);
       setFrameColor('gray');
-      $('.action_security').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {page: '/chrome/settings/modules/security.htm'})));
+      $('.action_security').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { page: '/chrome/settings/modules/security.htm' })));
       $('.extend_expiration').click(Ui.event.handle(renderMsgExpirationRenewOptions));
     } else if (!linkRes.url) {
       await renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink);
@@ -473,7 +473,7 @@ Catch.try(async () => {
     }
   };
 
-  let initialize = async (forcePullMsgFromApi=false) => {
+  let initialize = async (forcePullMsgFromApi = false) => {
     try {
       if (canReadEmails && msg && signature === true) {
         renderText('Loading signature...');
@@ -529,8 +529,8 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         await renderErr(`Could not load message due to network error. ${Ui.retryLink()}`);
-      } else if(Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+      } else if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
         await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`);
       } else if (Value.is(Pgp.armor.headers('publicKey').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: e.data, minimized: Boolean(isOutgoing), acctEmail, parentTabId, frameId });

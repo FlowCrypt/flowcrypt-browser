@@ -16,7 +16,7 @@ declare const openpgp: typeof OpenPGP;
 Catch.try(async () => {
 
   let urlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
-  let acctEmail = urlParams.acctEmail as string|undefined;
+  let acctEmail = urlParams.acctEmail as string | undefined;
   let pageUrlParams = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) : null;
   let acctEmails = await Store.acctEmailsGet();
   let addNewAcct = urlParams.addNewAcct === true;
@@ -26,7 +26,7 @@ Catch.try(async () => {
   let rules = new Rules(acctEmail);
   if (!rules.canBackupKeys()) {
     $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
-    $('.settings-icons-rows').css({position: 'relative', left: '64px'}); // lost a button - center it again
+    $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again
   }
 
   for (let webmailLName of await Env.webmails()) {
@@ -37,10 +37,10 @@ Catch.try(async () => {
   let notifications = new Notifications(tabId);
 
   BrowserMsg.listen({
-    open_page: (data: {page: string, addUrlText: string}, sender, respond) => {
+    open_page: (data: { page: string, addUrlText: string }, sender, respond) => {
       Settings.renderSubPage(acctEmail || null, tabId, data.page, data.addUrlText);
     },
-    redirect: (data: {location: string}) => {
+    redirect: (data: { location: string }) => {
       window.location.href = data.location;
     },
     close_page: () => {
@@ -50,7 +50,7 @@ Catch.try(async () => {
       $('.featherlight-close').click();
       reload(data && data.advanced);
     },
-    add_pubkey_dialog: (data: {emails: string[]}, sender, respond) => {
+    add_pubkey_dialog: (data: { emails: string[] }, sender, respond) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
       let factory = new XssSafeFactory(acctEmail!, tabId);
       window.open(factory.srcAddPubkeyDialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
@@ -60,11 +60,11 @@ Catch.try(async () => {
       let factory = new XssSafeFactory(acctEmail!, tabId);
       window.open(factory.srcSubscribeDialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
-    notification_show: (data: {notification: string}) => {
+    notification_show: (data: { notification: string }) => {
       notifications.show(data.notification);
       let cleared = false;
       let clear = () => {
-        if(!cleared) {
+        if (!cleared) {
           notifications.clear();
           cleared = true;
         }
@@ -76,13 +76,13 @@ Catch.try(async () => {
       $('.featherlight-close').click();
       Settings.newGoogleAcctAuthPrompt(tabId, (data || {}).acctEmail, (data || {}).omitReadScope).catch(Catch.handleException);
     },
-    passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
+    passphrase_dialog: (data: { longids: string[], type: PassphraseDialogType }) => {
       if (!$('#cryptup_dialog').length) {
         let factory = new XssSafeFactory(acctEmail!, tabId);
         $('body').append(factory.dialogPassphrase(data.longids, data.type)); // xss-safe-factory
       }
     },
-    notification_show_auth_popup_needed: (data: {acctEmail: string}) => {
+    notification_show_auth_popup_needed: (data: { acctEmail: string }) => {
       notifications.showAuthPopupNeeded(data.acctEmail);
     },
     close_dialog: (data) => {
@@ -100,7 +100,7 @@ Catch.try(async () => {
   };
 
   let initialize = async () => {
-    if(addNewAcct) {
+    if (addNewAcct) {
       $('.show_if_setup_not_done').css('display', 'initial');
       $('.hide_if_setup_not_done').css('display', 'none');
       await Settings.newGoogleAcctAuthPrompt(tabId);
@@ -111,7 +111,7 @@ Catch.try(async () => {
       if (storage.setup_done) {
         checkGoogleAcct().catch(Catch.handleException);
         checkFcAcctAndSubscriptionAndContactPage().catch(Catch.handleException);
-        if(storage.picture) {
+        if (storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
@@ -148,7 +148,7 @@ Catch.try(async () => {
     let statusContainer = $('.public_profile_indicator_container');
     try {
       await renderSubscriptionStatusHeader();
-    } catch(e) {
+    } catch (e) {
       Catch.handleException(e);
     }
     let authInfo = await Store.authInfo();
@@ -189,7 +189,7 @@ Catch.try(async () => {
       await Settings.acctStorageChangeEmail(acctEmail!, newAcctEmail);
       alert(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
       window.location.href = Env.urlCreate('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
-    } catch(e) {
+    } catch (e) {
       Catch.handleException(e);
       alert('There was an error changing google account, please write human@flowcrypt.com');
     }
@@ -200,10 +200,10 @@ Catch.try(async () => {
       let me = await Api.gmail.usersMeProfile(acctEmail!);
       Settings.updateProfilePicIfMissing(acctEmail!).catch(Catch.handleException);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
-      if(me.emailAddress !== acctEmail) {
+      if (me.emailAddress !== acctEmail) {
         $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
-        if(me.emailAddress && acctEmail) {
-          if(confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
+        if (me.emailAddress && acctEmail) {
+          if (confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
             await resolveChangedGoogleAcct(me.emailAddress);
           }
         }
@@ -297,7 +297,7 @@ Catch.try(async () => {
   }));
 
   $('.action_show_encrypted_inbox').click(Ui.event.handle(target => {
-    window.location.href = Env.urlCreate('/chrome/settings/inbox/inbox.htm', {acctEmail});
+    window.location.href = Env.urlCreate('/chrome/settings/inbox/inbox.htm', { acctEmail });
   }));
 
   $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/auth_denied.htm')));
@@ -327,11 +327,11 @@ Catch.try(async () => {
     $(".add-account").toggleClass("hidden");
   }));
 
-  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'google_account'})));
+  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/debug_api.htm', { which: 'google_account' })));
   // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
   // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
 
-  let reload = (advanced=false) => {
+  let reload = (advanced = false) => {
     if (advanced) {
       window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail, advanced: true });
     } else {
@@ -339,7 +339,7 @@ Catch.try(async () => {
     }
   };
 
-  let menuAcctHtml = (email: string, picture='/img/svgs/profile-icon.svg') => {
+  let menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg') => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',

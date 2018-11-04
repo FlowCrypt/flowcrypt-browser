@@ -7,14 +7,14 @@ import { Xss } from '../../js/common/browser.js';
 
 (() => {
 
-    let urlParams = Env.urlParams(['reason']);
+  let urlParams = Env.urlParams(['reason']);
 
-    let title = $('.title');
-    let details = $('.details');
+  let title = $('.title');
+  let details = $('.details');
 
-    if (urlParams.reason === 'db_corrupted') {
-        title.text('FlowCrypt cannot function because your Browser Profile is corrupted.');
-        Xss.sanitizeRender(details, `
+  if (urlParams.reason === 'db_corrupted') {
+    title.text('FlowCrypt cannot function because your Browser Profile is corrupted.');
+    Xss.sanitizeRender(details, `
         <p>To fix it:</p>
           <ol>
             <li>Close your browser completely (all tabs and all windows) and open it again. This often helps.</li>
@@ -24,14 +24,14 @@ import { Xss } from '../../js/common/browser.js';
           </ol>
           <p>Email human@flowcrypt.com if you need any help.</p>
         `);
-    } else if (urlParams.reason === 'db_denied') {
-        title.text('FlowCrypt cannot function because browser IndexedDB is disabled');
-        Xss.sanitizeRender(details, `<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.</p>`);
-    } else if (urlParams.reason === 'db_failed') {
-        title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
-        Xss.sanitizeRender(details, `<p>If you are on Firefox, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new Firefox profile (Firefox allows you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please let us know at human@flowcrypt.com and we will include it below to help other users.</p>.`);
-    } else {
-        details.text('Unknown reason. Write human@flowcrypt.com if you need help.');
-    }
+  } else if (urlParams.reason === 'db_denied') {
+    title.text('FlowCrypt cannot function because browser IndexedDB is disabled');
+    Xss.sanitizeRender(details, `<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.</p>`);
+  } else if (urlParams.reason === 'db_failed') {
+    title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
+    Xss.sanitizeRender(details, `<p>If you are on Firefox, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new Firefox profile (Firefox allows you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please let us know at human@flowcrypt.com and we will include it below to help other users.</p>.`);
+  } else {
+    details.text('Unknown reason. Write human@flowcrypt.com if you need help.');
+  }
 
 })();

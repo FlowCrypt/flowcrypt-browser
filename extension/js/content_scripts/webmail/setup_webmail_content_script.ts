@@ -9,12 +9,12 @@ import { Notifications, NotificationWithHandlers } from '../../common/notificati
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError } from '../../common/extension.js';
 import { Ui, XssSafeFactory, PassphraseDialogType, WebMailName, WebmailVariantString } from '../../common/browser.js';
 
-export type WebmailVariantObject = {newDataLayer: null|boolean, newUi: null|boolean, email: null|string, gmailVariant: WebmailVariantString};
+export type WebmailVariantObject = { newDataLayer: null | boolean, newUi: null | boolean, email: null | string, gmailVariant: WebmailVariantString };
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
-  getUserAccountEmail: () => string|undefined;
-  getUserFullName: () => string|undefined;
+  getUserAccountEmail: () => string | undefined;
+  getUserFullName: () => string | undefined;
   getReplacer: () => WebmailElementReplacer;
   start: (acctEmail: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => Promise<void>;
 };
@@ -29,12 +29,12 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
 
   let setUpNotification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
   let wasDestroyed = false;
-  class DestroyTrigger extends Error {}
+  class DestroyTrigger extends Error { }
 
   let waitForAcctEmail = async (): Promise<string> => {
     let acctEmailInterval = 1000;
     let webmails = await Env.webmails();
-    while(true) {
+    while (true) {
       let acctEmail = webmailSpecific.getUserAccountEmail();
       if (typeof acctEmail !== 'undefined' && Catch.version()) {
         (window as ContentScriptWindow).account_email_global = acctEmail;
@@ -51,7 +51,7 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
       }
       await Ui.time.sleep(acctEmailInterval, (window as ContentScriptWindow).TrySetDestroyableTimeout);
       acctEmailInterval += 1000;
-      if(wasDestroyed) {
+      if (wasDestroyed) {
         throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
       }
     }
@@ -65,12 +65,12 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
     inject.meta();
     await Store.acctEmailsAdd(acctEmail);
     saveAcctEmailFullNameIfNeeded(acctEmail).catch(Catch.rejection); // may take a long time, thus async
-    return {tabId, notifications, factory, inject};
+    return { tabId, notifications, factory, inject };
   };
 
   let showNotificationsAndWaitTilAcctSetUp = async (acctEmail: string, notifications: Notifications) => {
     let showSetupNeededNotificationIfSetupNotDone = true;
-    while(true) {
+    while (true) {
       let storage = await Store.getAcct(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
       if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
         notifications.clear();
@@ -78,12 +78,12 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
           notification_setup_needed_dismiss: () => Store.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
-          action_open_settings: () => BrowserMsg.sendAwait(null, 'settings', {acctEmail}),
+          action_open_settings: () => BrowserMsg.sendAwait(null, 'settings', { acctEmail }),
           close: () => { showSetupNeededNotificationIfSetupNotDone = false; },
         });
       }
       await Ui.time.sleep(3000, (window as ContentScriptWindow).TrySetDestroyableTimeout);
-      if(wasDestroyed) {
+      if (wasDestroyed) {
         throw new DestroyTrigger(); // maybe not necessary, but don't want to take chances
       }
     }
@@ -97,11 +97,11 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
       close_new_message: () => {
         $('div.new_message').remove();
       },
-      close_reply_message: (data: {frameId: string}) => {
+      close_reply_message: (data: { frameId: string }) => {
         $('iframe#' + data.frameId).remove();
       },
-      reinsert_reply_box: (data: {subject: string, myEmail: string, theirEmail: string[], threadId:string}) => webmailSpecific.getReplacer().reinsertReplyBox(data.subject, data.myEmail, data.theirEmail, data.threadId),
-      render_public_keys: (data: {publicKeys: string[], afterFrameId: string, traverseUp?: number}) => {
+      reinsert_reply_box: (data: { subject: string, myEmail: string, theirEmail: string[], threadId: string }) => webmailSpecific.getReplacer().reinsertReplyBox(data.subject, data.myEmail, data.theirEmail, data.threadId),
+      render_public_keys: (data: { publicKeys: string[], afterFrameId: string, traverseUp?: number }) => {
         let traverseUpLevels = data.traverseUp as number || 0;
         let appendAfter = $('iframe#' + data.afterFrameId);
         for (let i = 0; i < traverseUpLevels; i++) {
@@ -115,17 +115,17 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
         $('#cryptup_dialog').remove();
       },
       scroll_to_bottom_of_conversation: () => webmailSpecific.getReplacer().scrollToBottomOfConvo(),
-      passphrase_dialog: (data: {longids: string[], type: PassphraseDialogType}) => {
+      passphrase_dialog: (data: { longids: string[], type: PassphraseDialogType }) => {
         if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialogPassphrase(data.longids, data.type)); // xss-safe-factory
         }
       },
-      subscribe_dialog: (data: {source: string, subscribeResultTabId: string}) => {
+      subscribe_dialog: (data: { source: string, subscribeResultTabId: string }) => {
         if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialogSubscribe(null, data ? data.source : null, data ? data.subscribeResultTabId : null)); // xss-safe-factory
         }
       },
-      add_pubkey_dialog: (data: {emails: string[]}) => {
+      add_pubkey_dialog: (data: { emails: string[] }) => {
         if (!$('#cryptup_dialog').length) {
           $('body').append(factory.dialogAddPubkey(data.emails)); // xss-safe-factory
         }
@@ -134,12 +134,12 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
         notifications.show(data.notification, data.callbacks);
         $('body').one('click', Catch.try(notifications.clear));
       },
-      notification_show_auth_popup_needed: (data: {acctEmail: string}) => {
+      notification_show_auth_popup_needed: (data: { acctEmail: string }) => {
         notifications.showAuthPopupNeeded(data.acctEmail);
       },
       reply_pubkey_mismatch: () => {
-        let replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement|undefined;
-        if(replyIframe) {
+        let replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
+        if (replyIframe) {
           replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
         }
       },
@@ -150,15 +150,15 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
     let storage = await Store.getAcct(acctEmail, ['full_name']);
     let timeout = 1000;
     if (typeof storage.full_name === 'undefined') {
-      while(true) {
+      while (true) {
         let fullName = webmailSpecific.getUserFullName();
-        if(fullName) {
-          await Store.set(acctEmail, {fullName});
+        if (fullName) {
+          await Store.set(acctEmail, { fullName });
           return;
         }
         await Ui.time.sleep(timeout, (window as ContentScriptWindow).TrySetDestroyableTimeout);
         timeout += 1000;
-        if(wasDestroyed) {
+        if (wasDestroyed) {
           return;
         }
       }
@@ -172,19 +172,19 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
   let entrypoint = async () => {
     try {
       let acctEmail = await waitForAcctEmail();
-      let {tabId, notifications, factory, inject} = await initInternalVars(acctEmail);
+      let { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       browserMsgListen(acctEmail, tabId, inject, factory, notifications);
-      await BrowserMsg.sendAwait(null, 'migrate_account', {acctEmail});
+      await BrowserMsg.sendAwait(null, 'migrate_account', { acctEmail });
       await webmailSpecific.start(acctEmail, inject, notifications, factory, notifyMurdered);
-    } catch(e) {
-      if(e instanceof TabIdRequiredError) {
+    } catch (e) {
+      if (e instanceof TabIdRequiredError) {
         e.message = `FlowCrypt cannot start: ${e.message}`;
         Catch.handleException(e);
-      } else if(e && e.message === 'Extension context invalidated.') {
+      } else if (e && e.message === 'Extension context invalidated.') {
         console.info(`FlowCrypt cannot start: extension context invalidated. Destroying.`);
         (window as ContentScriptWindow).destroy();
-      } else if(!(e instanceof DestroyTrigger)) {
+      } else if (!(e instanceof DestroyTrigger)) {
         Catch.handleException(e);
       }
     }

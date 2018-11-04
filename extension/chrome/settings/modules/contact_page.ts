@@ -54,7 +54,7 @@ Catch.try(async () => {
       attachJs.initAttDialog('fineuploader', 'select_photo');
       attachJs.setAttAddedCb((file: Att) => {
         newPhotoFile = file;
-        Xss.sanitizeReplace('#select_photo', Ui.e('span', {text: file.name}));
+        Xss.sanitizeReplace('#select_photo', Ui.e('span', { text: file.name }));
       });
     } else {
       S.cached('management_account').text(result.email).parent().removeClass('display_none');
@@ -69,7 +69,7 @@ Catch.try(async () => {
     let storage = await Store.getAcct(authInfo.acctEmail!, ['full_name']);
     try {
       let alias = await findAvailableAlias(authInfo.acctEmail!);
-      let initial = {alias, name: storage.full_name || Str.capitalize(authInfo.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.'};
+      let initial = { alias, name: storage.full_name || Str.capitalize(authInfo.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
       let response = await Api.fc.accountUpdate(initial);
       if (!response.updated) {
         alert('Failed to enable your Contact Page. Please try again');
@@ -90,7 +90,7 @@ Catch.try(async () => {
     } else {
       S.cached('show_if_active').css('display', 'none');
       Xss.sanitizeRender(S.cached('status'), 'Updating ' + Ui.spinner('green'));
-      let update: Dict<Serializable> = {name: S.cached('input_name').val(), intro: S.cached('input_intro').val()};
+      let update: Dict<Serializable> = { name: S.cached('input_name').val(), intro: S.cached('input_intro').val() };
       if (newPhotoFile) {
         update.photo_content = btoa(newPhotoFile.asText());
       }
@@ -103,11 +103,11 @@ Catch.try(async () => {
 
   let findAvailableAlias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
-    while(alias.length < 3) {
+    while (alias.length < 3) {
       alias += Str.random(1).toLowerCase();
     }
     let i = 0;
-    while(true) {
+    while (true) {
       alias += (i || '');
       let response = await Api.fc.linkMe(alias);
       if (!response.profile) {

@@ -16,34 +16,34 @@ import { StandardError } from './api.js';
 declare const openpgp: typeof OpenPGP;
 
 export type Dict<T> = { [key: string]: T; };
-export type UrlParam = string|number|null|undefined|boolean|string[];
+export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 export type EmailProvider = 'gmail';
 export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
 
-export class UnreportableError extends Error {}
+export class UnreportableError extends Error { }
 
 export class Env {
 
-  private static URL_PARAM_DICT: Dict<boolean|null> = {'___cu_true___': true, '___cu_false___': false, '___cu_null___': null};
+  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null };
 
   public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return {name: 'firefox', v: Number(RegExp.$1)};
+      return { name: 'firefox', v: Number(RegExp.$1) };
     } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
-      return {name: 'ie', v: Number(RegExp.$1)};
+      return { name: 'ie', v: Number(RegExp.$1) };
     } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return {name: 'chrome', v: Number(RegExp.$1)};
+      return { name: 'chrome', v: Number(RegExp.$1) };
     } else if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return {name: 'opera', v: Number(RegExp.$1)};
+      return { name: 'opera', v: Number(RegExp.$1) };
     } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return {name: 'safari', v: Number(RegExp.$1)};
+      return { name: 'safari', v: Number(RegExp.$1) };
     } else {
-      return {name: 'unknown', v: null};
+      return { name: 'unknown', v: null };
     }
   }
 
-  public static runtimeId = (orig=false) => {
+  public static runtimeId = (orig = false) => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
       if (orig === true) {
         return chrome.runtime.id;
@@ -68,14 +68,14 @@ export class Env {
   private static camelCaseToSnakeCase = (s: string) => s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
 
   private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
-    if(typeof rawParamNameDict[expectedParamName] === 'undefined') {
+    if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
       return undefined; // param name not found in param name dict
     }
     let rawValue = rawParms[rawParamNameDict[expectedParamName]];
-    if(typeof rawValue === 'undefined') {
+    if (typeof rawValue === 'undefined') {
       return undefined; // original param name not found in raw params
     }
-    if(typeof Env.URL_PARAM_DICT[rawValue] !== 'undefined') {
+    if (typeof Env.URL_PARAM_DICT[rawValue] !== 'undefined') {
       return Env.URL_PARAM_DICT[rawValue]; // raw value was converted using a value dict to get proper: true, false, undefined, null
     }
     return decodeURIComponent(rawValue);
@@ -84,7 +84,7 @@ export class Env {
   /**
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
    */
-  public static urlParams = (expectedKeys: string[], string:string|null=null) => {
+  public static urlParams = (expectedKeys: string[], string: string | null = null) => {
     let url = (string || window.location.search.replace('?', ''));
     let valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
     let rawParms: Dict<string> = {};
@@ -130,7 +130,7 @@ export class Catch {
   public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIG_ONERROR = window.onerror;
 
-  public static onErr = (errMsg: string|undefined, url: string, line: number, col: number, err: string|Error|Dict<Serializable>, isManuallyCalled: boolean) => {
+  public static onErr = (errMsg: string | undefined, url: string, line: number, col: number, err: string | Error | Dict<Serializable>, isManuallyCalled: boolean) => {
     if (typeof err === 'string') {
       errMsg = err;
       err = { name: 'thrown_string', message: errMsg, stack: errMsg };
@@ -145,7 +145,7 @@ export class Catch {
       } catch (cannot) {
         stringified = 'typeof: ' + (typeof err) + '\n' + String(err);
       }
-      err = { name: 'thrown_object', message: err.message || '(unknown)', stack: stringified};
+      err = { name: 'thrown_object', message: err.message || '(unknown)', stack: stringified };
       errMsg = 'thrown_object';
     }
     let userLogMsg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
@@ -214,7 +214,7 @@ export class Catch {
           if (typeof s.errors === 'undefined') {
             s.errors = [];
           }
-          if(err instanceof Error) {
+          if (err instanceof Error) {
             s.errors.unshift(err.stack || errMsg || String(err));
           } else {
             s.errors.unshift(errMsg || String(err));
@@ -242,7 +242,7 @@ export class Catch {
     Catch.onErr(exception.message, window.location.href, line, col, exception, true);
   }
 
-  public static report = (name: string, details:Error|Serializable|StandardError|PromiseRejectionEvent=undefined) => {
+  public static report = (name: string, details: Error | Serializable | StandardError | PromiseRejectionEvent = undefined) => {
     try {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
@@ -259,7 +259,7 @@ export class Catch {
     }
   }
 
-  public static log = (name: string, details:Serializable|Error|Dict<Serializable>=undefined) => {
+  public static log = (name: string, details: Serializable | Error | Dict<Serializable> = undefined) => {
     name = 'Catch.log: ' + name;
     console.log(name);
     try {
@@ -289,7 +289,7 @@ export class Catch {
     }
   }
 
-  public static version = (format='original') => {
+  public static version = (format = 'original') => {
     if (format === 'int') {
       return Number(Catch.RUNTIME_VERSION.replace(/\./g, ''));
     } else {
@@ -308,7 +308,7 @@ export class Catch {
     }
   }
 
-  public static environment = (url=window.location.href): string => {
+  public static environment = (url = window.location.href): string => {
     let browserName = Env.browser().name;
     let env = 'unknown';
     if (url.indexOf('bnjglocicd') !== -1) {
@@ -352,8 +352,8 @@ export class Catch {
     return ''; // make ts happy - this will never happen
   }
 
-  public static rejection = (e: PromiseRejectionEvent|StandardError|Error) => {
-    if(!(e instanceof UnreportableError)) {
+  public static rejection = (e: PromiseRejectionEvent | StandardError | Error) => {
+    if (!(e instanceof UnreportableError)) {
       if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
         Catch.handleException((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
@@ -413,7 +413,7 @@ export class Str {
     let x1 = x[0];
     let x2 = x.length > 1 ? '.' + x[1] : '';
     let rgx = /(\d+)(\d{3})/;
-    while(rgx.test(x1)) {
+    while (rgx.test(x1)) {
       x1 = x1.replace(rgx, '$1' + ',' + '$2');
     }
     return x1 + x2;
@@ -423,7 +423,7 @@ export class Str {
 
   public static monthName = (monthIndex: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
 
-  public static random = (length:number=5) => {
+  public static random = (length: number = 5) => {
     let id = '';
     let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (let i = 0; i < length; i++) {
@@ -436,14 +436,14 @@ export class Str {
 
   public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
 
-  public static htmlAttrDecode = (encoded: string): FlowCryptAttLinkData|any => JSON.parse(Str.base64urlUtfDecode(encoded));
+  public static htmlAttrDecode = (encoded: string): FlowCryptAttLinkData | any => JSON.parse(Str.base64urlUtfDecode(encoded));
 
   public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
   public static base64urlDecode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
 
-  public static fromUint8 = (u8a: Uint8Array|string): string => {
-    if(typeof u8a === 'string') {
+  public static fromUint8 = (u8a: Uint8Array | string): string => {
+    if (typeof u8a === 'string') {
       return u8a;
     }
     let CHUNK_SZ = 0x8000;
@@ -454,8 +454,8 @@ export class Str {
     return c.join('');
   }
 
-  public static toUint8 = (raw: string|Uint8Array): Uint8Array => {
-    if(raw instanceof Uint8Array) {
+  public static toUint8 = (raw: string | Uint8Array): Uint8Array => {
+    if (raw instanceof Uint8Array) {
       return raw;
     }
     let rawLength = raw.length;
@@ -472,7 +472,7 @@ export class Str {
     });
   }
 
-  public static uint8AsUtf = (a: Uint8Array|number[]) => { // tom
+  public static uint8AsUtf = (a: Uint8Array | number[]) => { // tom
     let length = a.length;
     let bytesLeftInChar = 0;
     let utf8string = '';
@@ -480,7 +480,7 @@ export class Str {
     for (let i = 0; i < length; i++) {
       if (a[i] < 128) {
         if (bytesLeftInChar) { // utf-8 continuation byte missing, assuming the last character was an 8-bit ASCII character
-          utf8string += String.fromCharCode(a[i-1]);
+          utf8string += String.fromCharCode(a[i - 1]);
         }
         bytesLeftInChar = 0;
         binaryChar = '';
@@ -548,8 +548,8 @@ export class Str {
         let fcData = element.attr('cryptup-data');
         if (fcData) {
           let a: FlowCryptAttLinkData = Str.htmlAttrDecode(fcData);
-          if(a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
-            fcAtts.push(new Att({type: a.type, name: a.name, length: a.size, url: element.attr('href')}));
+          if (a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
+            fcAtts.push(new Att({ type: a.type, name: a.name, length: a.size, url: element.attr('href') }));
           }
         }
         return '';
@@ -559,7 +559,7 @@ export class Str {
   }
 
   public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
-    let fcTokenElement = $(Ui.e('div', {html: decryptedContent})).find('.cryptup_reply');
+    let fcTokenElement = $(Ui.e('div', { html: decryptedContent })).find('.cryptup_reply');
     if (fcTokenElement.length) {
       let fcData = fcTokenElement.attr('cryptup-data');
       if (fcData) {
@@ -571,7 +571,7 @@ export class Str {
   public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
 
   public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
-    let {blocks, normalized} = Pgp.armor.detectBlocks(decryptedContent);
+    let { blocks, normalized } = Pgp.armor.detectBlocks(decryptedContent);
     for (let block of blocks) {
       if (block.type === 'publicKey') {
         foundPublicKeys.push(block.content);
@@ -581,17 +581,17 @@ export class Str {
     return normalized;
   }
 
-  public static intToHex = (intAsStr: string|number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
+  public static intToHex = (intAsStr: string | number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
     let dec = intAsStr.toString().split(''), sum = [], hex = [], i, s;
-    while(dec.length) {
+    while (dec.length) {
       s = Number(dec.shift());
-      for(i = 0; s || i < sum.length; i++) {
+      for (i = 0; s || i < sum.length; i++) {
         s += (sum[i] || 0) * 10;
         sum[i] = s % 16;
         s = (s - sum[i]) / 16;
       }
     }
-    while(sum.length) {
+    while (sum.length) {
       hex.push(sum.pop()!.toString(16));
     }
     return hex.join('');
@@ -599,7 +599,7 @@ export class Str {
 
   public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 
-  public static toUtcTimestamp = (datetimeStr: string, asStr:boolean=false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
+  public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
 
   public static datetimeToDate = (date: string) => Xss.htmlEscape(date.substr(0, 10));
 
@@ -625,7 +625,7 @@ export class Value {
       }
       return unique;
     },
-    fromDomNodeList: (obj: NodeList|JQuery<HTMLElement>): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+    fromDomNodeList: (obj: NodeList | JQuery<HTMLElement>): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
       let array = [];
       for (let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
         array[i] = obj[i];
@@ -642,7 +642,7 @@ export class Value {
       }
       return result;
     },
-    contains: <T>(arr: T[]|string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
+    contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
     zeroes: (length: number): number[] => new Array(length).map(() => 0),
@@ -661,16 +661,16 @@ export class Value {
   public static int = {
     lousyRandom: (minVal: number, maxVal: number) => minVal + Math.round(Math.random() * (maxVal - minVal)),
     getFutureTimestampInMonths: (monthsToAdd: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * monthsToAdd,
-    hoursAsMiliseconds: (h: number) =>  h * 1000 * 60 * 60,
+    hoursAsMiliseconds: (h: number) => h * 1000 * 60 * 60,
   };
 
   public static noop = (): void => undefined;
 
-  public static is = (v: FlatTypes) => ({in: (arrayOrStr: FlatTypes[]|string): boolean => Value.arr.contains(arrayOrStr, v)});  // Value.this(v).in(array_or_string)
+  public static is = (v: FlatTypes) => ({ in: (arrayOrStr: FlatTypes[] | string): boolean => Value.arr.contains(arrayOrStr, v) });  // Value.this(v).in(array_or_string)
 
 }
 
-(( /* EXTENSIONS AND CONFIG */ ) => {
+(( /* EXTENSIONS AND CONFIG */) => {
 
   if (typeof openpgp === 'object' && openpgp && typeof openpgp.config === 'object') {
     openpgp.config.versionstring = `FlowCrypt ${Catch.version() || ''} Gmail Encryption`;
@@ -678,7 +678,7 @@ export class Value {
     // openpgp.config.require_uid_self_cert = false;
   }
 
-  String.prototype.repeat = String.prototype.repeat || function(count) {
+  String.prototype.repeat = String.prototype.repeat || function (count) {
     if (this == null) {
       throw new TypeError('can\'t convert ' + this + ' to object');
     }
@@ -704,7 +704,7 @@ export class Value {
       throw new RangeError('repeat count must not overflow maximum string size');
     }
     let rpt = '';
-    for (;;) {
+    for (; ;) {
       if ((count & 1) === 1) {
         rpt += str;
       }

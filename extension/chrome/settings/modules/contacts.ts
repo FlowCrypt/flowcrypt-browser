@@ -17,7 +17,7 @@ Catch.try(async () => {
 
   let tabId = await BrowserMsg.requiredTabId();
 
-  let factory = new XssSafeFactory(acctEmail, tabId, undefined, undefined, {compact: true});
+  let factory = new XssSafeFactory(acctEmail, tabId, undefined, undefined, { compact: true });
   let backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   let space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
@@ -28,7 +28,7 @@ Catch.try(async () => {
 
     Xss.sanitizeRender('.line.actions', '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;').find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       let allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
-      let exportFile = new Att({name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys});
+      let exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys });
       Att.methods.saveToDownloads(exportFile, Env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 

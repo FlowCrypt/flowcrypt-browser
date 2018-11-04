@@ -32,11 +32,11 @@ Catch.try(async () => {
       let debug = e ? `<pre>${Xss.htmlEscape(JSON.stringify(e, null, 2))}</pre>` : '';
       Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
     };
-    if(Api.err.isNetErr(e)) {
+    if (Api.err.isNetErr(e)) {
       renderErr('network error');
     } else if (Api.err.isAuthErr(e)) {
       renderErr('auth error', e);
-    } else if(Api.err.isStandardErr(e, 'email')) {
+    } else if (Api.err.isStandardErr(e, 'email')) {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
       renderStatusText(e.message || e.error.message);
@@ -47,12 +47,12 @@ Catch.try(async () => {
     }
   };
 
-  let stripeCcEnteredHandler: BrowserMsgHandler = async (data: {token: string}, sender, respond) => {
+  let stripeCcEnteredHandler: BrowserMsgHandler = async (data: { token: string }, sender, respond) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
       await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advanced_monthly, data.token);
       handleSuccessfulUpgrade();
-    } catch(e) {
+    } catch (e) {
       handleErrRes(e);
     }
   };
@@ -74,7 +74,7 @@ Catch.try(async () => {
   let handleSuccessfulUpgrade = () => {
     BrowserMsg.send(parentTabId, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
     if (urlParams.subscribeResultTabId) {
-      BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', {active: true});
+      BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', { active: true });
     }
     closeDialog();
   };
@@ -104,9 +104,9 @@ Catch.try(async () => {
   }
 
   let subscription = await Store.subscription();
-  let {google_token_scopes} = await Store.getAcct(acctEmail, ['google_token_scopes']);
-  let canReadEmail = Api.gmail.hasScope(google_token_scopes || [] , 'read');
-  let fcAccount = new FcAcct({renderStatusText}, canReadEmail);
+  let { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
+  let canReadEmail = Api.gmail.hasScope(google_token_scopes || [], 'read');
+  let fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
 
   if (urlParams.placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -127,7 +127,7 @@ Catch.try(async () => {
     $('.stripe_checkout').css('display', 'block');
   }));
 
-  $('.action_contact_page').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {page:'/chrome/settings/modules/contact_page.htm', acctEmail: urlParams.acctEmail})));
+  $('.action_contact_page').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { page: '/chrome/settings/modules/contact_page.htm', acctEmail: urlParams.acctEmail })));
 
   $('.action_close').click(Ui.event.handle(closeDialog));
 
@@ -136,7 +136,7 @@ Catch.try(async () => {
     try {
       await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.trial, null);
       handleSuccessfulUpgrade();
-    } catch(e) {
+    } catch (e) {
       handleErrRes(e);
     }
     done();
@@ -147,7 +147,7 @@ Catch.try(async () => {
     try {
       await fcAccount.registerNewDevice(acctEmail);
       closeDialog();
-    } catch(e) {
+    } catch (e) {
       handleErrRes(e);
     }
     done();
@@ -182,7 +182,7 @@ Catch.try(async () => {
         Xss.sanitizeRender('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
         $('.action_close').click(Ui.event.handle(() => {
           if (urlParams.subscribeResultTabId) {
-            BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', {active: true});
+            BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', { active: true });
           }
           closeDialog();
         }));
@@ -198,8 +198,8 @@ Catch.try(async () => {
         $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${acctEmail}).`);
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');
-      } catch(e) {
-        if(!Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
+      } catch (e) {
+        if (!Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
           Catch.handleException(e);
         }
       }

@@ -8,7 +8,7 @@ import { Xss, Ui } from '../../js/common/browser.js';
 
 Catch.try(async () => {
 
-  type RenderableStorage = Dict<{key: string, value: Storable}>;
+  type RenderableStorage = Dict<{ key: string, value: Storable }>;
 
   let urlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
 
@@ -22,11 +22,11 @@ Catch.try(async () => {
   if (controls) {
     let acctEmails = await Store.acctEmailsGet();
     let emailsSel = $('.emails');
-    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {controls: urlParams.controls || ''}))}">all</a>`);
-    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', {filter: 'global', controls: urlParams.controls || ''}))}">global</a>`);
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { controls: urlParams.controls || '' }))}">all</a>`);
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: 'global', controls: urlParams.controls || '' }))}">global</a>`);
     Xss.sanitizeAppend('.namespace', '<option value="global">global</option>');
     for (let acctEmail of acctEmails) {
-      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: acctEmail, controls: urlParams.controls || ''}))}">${Xss.htmlEscape(acctEmail)}</a>`);
+      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: acctEmail, controls: urlParams.controls || '' }))}">${Xss.htmlEscape(acctEmail)}</a>`);
       Xss.sanitizeAppend('.namespace', `<option value="${Xss.htmlEscape(acctEmail)}">${Xss.htmlEscape(acctEmail)}</option>`);
     }
   }
@@ -51,11 +51,11 @@ Catch.try(async () => {
     let filtered: RenderableStorage = {};
     for (let key of Object.keys(storage)) {
       if (Value.is(realFilter).in(key)) {
-        filtered[key.replace(realFilter, '')] = {key, value: storage[key]};
+        filtered[key.replace(realFilter, '')] = { key, value: storage[key] };
       }
     }
     if (!Object.keys(filtered).length) {
-      filtered = {result: {key: 'result', value: 'nothing found'}};
+      filtered = { result: { key: 'result', value: 'nothing found' } };
     }
     render(filtered);
   });

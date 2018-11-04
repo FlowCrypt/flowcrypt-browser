@@ -69,7 +69,7 @@ export class Settings {
       storage.attests_processed = [];
     }
     await Store.set(acctEmail, storage);
-    return await BrowserMsg.sendAwait(null, 'attest_requested', {acctEmail});
+    return await BrowserMsg.sendAwait(null, 'attest_requested', { acctEmail });
   }
 
   static markAsAttested = async (acctEmail: string, attester: string) => {
@@ -107,8 +107,8 @@ export class Settings {
     await key.encrypt(passphrase);
   }
 
-  private static prepareNewSettingsLocationUrl = (acctEmail: string|null, parentTabId: string, page: string, addUrlTextOrParams: string|UrlParams|null=null): string => {
-    let pageParams: UrlParams = {placement: 'settings', parentTabId};
+  private static prepareNewSettingsLocationUrl = (acctEmail: string | null, parentTabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null): string => {
+    let pageParams: UrlParams = { placement: 'settings', parentTabId };
     if (acctEmail) {
       pageParams.acctEmail = acctEmail;
     }
@@ -121,7 +121,7 @@ export class Settings {
     return Env.urlCreate(page, pageParams) + (addUrlTextOrParams || '');
   }
 
-  static renderSubPage = (acctEmail: string|null, tabId: string, page: string, addUrlTextOrParams:string|UrlParams|null=null) => {
+  static renderSubPage = (acctEmail: string | null, tabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     if (page !== '/chrome/elements/compose.htm') {
@@ -140,7 +140,7 @@ export class Settings {
 
   }
 
-  static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams:string|UrlParams|null=null) => {
+  static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
     if (Boolean(Env.urlParams(['embedded']).embedded)) { // embedded on the main page
       BrowserMsg.send(parentTabId, 'open_page', { page, addUrlText: addUrlTextOrParams });
@@ -188,7 +188,7 @@ export class Settings {
           }
         }
         resolve();
-      } catch(e) {
+      } catch (e) {
         reject(e);
       }
     });
@@ -208,9 +208,9 @@ export class Settings {
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
     let destAccountPrivateKeys = await Store.keysGet(newAcctEmail);
     let destAcctPassPhrases: Dict<string> = {};
-    for(let ki of destAccountPrivateKeys) {
+    for (let ki of destAccountPrivateKeys) {
       let pp = await Store.passphraseGet(newAcctEmail, ki.longid, true);
-      if(pp) {
+      if (pp) {
         destAcctPassPhrases[ki.longid] = pp;
       }
     }
@@ -241,22 +241,22 @@ export class Settings {
             sessionStorage.removeItem(sessionStorageIndex);
           }
         }
-        for(let ki of destAccountPrivateKeys) {
+        for (let ki of destAccountPrivateKeys) {
           await Store.keysAdd(newAcctEmail, ki.private);
         }
-        for(let longid of Object.keys(destAcctPassPhrases)) {
+        for (let longid of Object.keys(destAcctPassPhrases)) {
           await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
         }
         await Settings.acctStorageReset(oldAcctEmail);
         await Store.acctEmailsRemove(oldAcctEmail);
         resolve();
-      } catch(e) {
+      } catch (e) {
         reject(e);
       }
     });
   })
 
-  static renderPrvCompatibilityFixUiAndWaitUntilSubmittedByUser = (acctEmail: string, container: string|JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string): Promise<OpenPGP.key.Key> => {
+  static renderPrvCompatibilityFixUiAndWaitUntilSubmittedByUser = (acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
       let uids = origPrv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid) as string[];
       if (!uids.length) {
@@ -299,28 +299,28 @@ export class Settings {
           let expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
           await Pgp.key.decrypt(origPrv, [passphrase]);
           let reformatted;
-          let userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({email: u.email, name: u.name || ''}));
+          let userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {
-            reformatted = await openpgp.reformatKey({privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds}) as {key: OpenPGP.key.Key};
+            reformatted = await openpgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds }) as { key: OpenPGP.key.Key };
           } catch (e) {
             reject(e);
             return;
           }
-          if(reformatted.key.isDecrypted()) {
+          if (reformatted.key.isDecrypted()) {
             await reformatted.key.encrypt(passphrase); // this is a security precaution, in case OpenPGP.js library changes in the future
           }
           if (await reformatted.key.getEncryptionKey()) {
             resolve(reformatted.key);
           } else {
             alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
-            Xss.sanitizeReplace(target, Ui.e('a', {href: backUrl, text: 'Go back and try something else'}));
+            Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
           }
         }
       }));
     });
   }
 
-  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo|undefined, doThrow:boolean=true) => {
+  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
     if (!ki) {
       let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
       Xss.sanitizeRender('#content', `${msg} ${Ui.retryLink()}`);
@@ -333,14 +333,14 @@ export class Settings {
   static promptToRetry = async (type: 'REQUIRED', e: Error, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
-    if(!Api.err.isNetErr(e)) {
+    if (!Api.err.isNetErr(e)) {
       Catch.handleException(e);
     }
-    while(await Ui.renderOverlayPromptAwaitUserChoice({retry: {}}, userMsg) === 'retry') {
+    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userMsg) === 'retry') {
       try {
         return await retryCb();
       } catch (e2) {
-        if(!Api.err.isNetErr(e2)) {
+        if (!Api.err.isNetErr(e2)) {
           Catch.handleException(e2);
         }
       }
@@ -351,7 +351,7 @@ export class Settings {
     return await retryCb();
   }
 
-  static forbidAndRefreshPageIfCannot = (action: 'CREATE_KEYS'|'BACKUP_KEYS', rules: Rules) => {
+  static forbidAndRefreshPageIfCannot = (action: 'CREATE_KEYS' | 'BACKUP_KEYS', rules: Rules) => {
     if (action === 'CREATE_KEYS' && !rules.canCreateKeys()) {
       alert(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
@@ -363,7 +363,7 @@ export class Settings {
     }
   }
 
-  static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope=false) => {
+  static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
     let response = await Api.google.authPopup(acctEmail || null, tabId, omitReadScope);
     if (response && response.success === true && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
@@ -372,7 +372,7 @@ export class Settings {
         alert('You\'re all set.');
         window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
       } else {
-        await Store.set(response.acctEmail, {email_provider: 'gmail'});
+        await Store.set(response.acctEmail, { email_provider: 'gmail' });
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
       }
     } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
@@ -386,12 +386,12 @@ export class Settings {
 
   static updateProfilePicIfMissing = async (acctEmail: string) => {
     let storage = await Store.getAcct(acctEmail, ['setup_done', 'picture']);
-    if(storage.setup_done && !storage.picture) {
+    if (storage.setup_done && !storage.picture) {
       try {
-        let {image} = await Api.google.plus.peopleMe(acctEmail);
-        await Store.set(acctEmail, {picture: image.url});
-      } catch(e) {
-        if(!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
+        let { image } = await Api.google.plus.peopleMe(acctEmail);
+        await Store.set(acctEmail, { picture: image.url });
+      } catch (e) {
+        if (!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
           Catch.handleException(e);
         }
       }

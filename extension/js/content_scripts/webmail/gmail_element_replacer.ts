@@ -76,9 +76,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   scrollToBottomOfConvo = () => {
     let scrollableEl = $(this.sel.convoRootScrollable).get(0);
-    if(scrollableEl) {
+    if (scrollableEl) {
       scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
-    } else if(window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
+    } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
     }
   }
@@ -102,7 +102,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     Xss.sanitizeAppend(containerSel, iconHtml).children(iconSel).off().click(Ui.event.prevent('double', Catch.try(onClick)));
   }
 
-  private replaceConvoBtns = (force:boolean=false) => {
+  private replaceConvoBtns = (force: boolean = false) => {
     let convoUpperIcons = $('div.ade:visible');
     let useEncryptionInThisConvo = $('iframe.pgp_block').filter(':visible').length || force;
     // reply buttons
@@ -198,7 +198,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl|HTMLElement, skipGoogleDrive:boolean, newPgpAttsNames:string[]=[]) => {
+  private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
     let msgEl = this.getMsgBodyEl(msgId);
     let senderEmail = this.getSenderEmail(msgEl);
     let isOutgoing = Value.is(senderEmail).in(this.addresses);
@@ -238,9 +238,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           let signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
           let embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
           let replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
-          msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set': 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
+          msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
         }
-      } else if(treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
+      } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
         let fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
         let openpgpType = Pgp.msg.type(fileChunk);
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
@@ -265,7 +265,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         let downloadUrl = $(loaderEl).parent().attr('download_url');
         if (downloadUrl) {
           let meta = downloadUrl.split(':');
-          googleDriveAtts.push(new Att({msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted'}));
+          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted' }));
         } else {
           console.info('Missing Google Drive attachments download_url');
         }
@@ -293,8 +293,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private filterAtts = (potentialMatches: JQueryEl|HTMLElement, patterns: string[]) => {
-    return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function() {
+  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, patterns: string[]) => {
+    return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
       let name = this.innerText.trim();
       for (let pattern of patterns) {
         if (pattern.indexOf('*.') === 0) { // wildcard
@@ -311,7 +311,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }).closest('span.aZo, span.a5r');
   }
 
-  private hideAtt = (attEl: JQueryEl|HTMLElement, attsContainerSel: JQueryEl|HTMLElement) => {
+  private hideAtt = (attEl: JQueryEl | HTMLElement, attsContainerSel: JQueryEl | HTMLElement) => {
     attEl = $(attEl);
     attsContainerSel = $(attsContainerSel);
     attEl.hide();
@@ -320,11 +320,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private determineMsgId = (innerMsgEl: HTMLElement|JQueryEl) => { // todo - test and use data-message-id with Gmail API once available
+  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => { // todo - test and use data-message-id with Gmail API once available
     return $(innerMsgEl).parents(this.sel.msgOuter).attr('data-legacy-message-id') || '';
   }
 
-  private determineThreadId = (convoRootEl: HTMLElement|JQueryEl) => { // todo - test and use data-thread-id with Gmail API once available
+  private determineThreadId = (convoRootEl: HTMLElement | JQueryEl) => { // todo - test and use data-thread-id with Gmail API once available
     return $(convoRootEl).find(this.sel.subject).attr('data-legacy-thread-id') || '';
   }
 
@@ -341,7 +341,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
    *
    * new_html_content must be XSS safe
    */ // tslint:disable-next-line:variable-name
-  private updateMsgBodyEl_DANGEROUSLY = (el: HTMLElement|JQueryEl, method:'set'|'append', newHtmlContent_MUST_BE_XSS_SAFE: string) => {  // xss-dangerous-function
+  private updateMsgBodyEl_DANGEROUSLY = (el: HTMLElement | JQueryEl, method: 'set' | 'append', newHtmlContent_MUST_BE_XSS_SAFE: string) => {  // xss-dangerous-function
     // Messages in Gmail UI have to be replaced in a very particular way
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
@@ -369,7 +369,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private getSenderEmail = (msgEl: HTMLElement|JQueryEl) => {
+  private getSenderEmail = (msgEl: HTMLElement | JQueryEl) => {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
@@ -401,7 +401,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   }
 
-  private replaceStandardReplyBox = (editable:boolean=false, force:boolean=false) => {
+  private replaceStandardReplyBox = (editable: boolean = false, force: boolean = false) => {
     let newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
@@ -455,7 +455,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  let {results: [result]} = await Api.attester.lookupEmail([email]);
+                  let { results: [result] } = await Api.attester.lookupEmail([email]);
                   this.recipientHasPgpCache[email] = Boolean(result.pubkey); // true or false
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;

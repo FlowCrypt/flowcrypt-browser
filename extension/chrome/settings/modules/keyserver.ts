@@ -83,8 +83,8 @@ Catch.try(async () => {
       await actionSubmitOrReqAttestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
-      let {addresses} = await Store.getAcct(acctEmail, ['addresses']);
-      await Store.set(acctEmail, {'addresses': Value.arr.withoutVal(addresses || [], $(self).attr('email')!)});
+      let { addresses } = await Store.getAcct(acctEmail, ['addresses']);
+      await Store.set(acctEmail, { 'addresses': Value.arr.withoutVal(addresses || [], $(self).attr('email')!) });
       window.location.reload();
     }));
     $('.request_replacement').click(Ui.event.prevent('double', self => {
@@ -93,7 +93,7 @@ Catch.try(async () => {
     }));
     $('.refresh_after_attest_request').click(Ui.event.prevent('double', async self => {
       Xss.sanitizeRender(self, 'Updating..' + Ui.spinner('white'));
-      BrowserMsg.send(null, 'attest_requested', {acctEmail});
+      BrowserMsg.send(null, 'attest_requested', { acctEmail });
       await Ui.time.sleep(30000);
       window.location.reload();
     }));
@@ -102,11 +102,11 @@ Catch.try(async () => {
       try {
         let addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
         await Store.set(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
-      } catch(e) {
-        if(Api.err.isNetErr(e)) {
+      } catch (e) {
+        if (Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parentTabId && Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+        } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
           alert('Account needs to be re-connected first. Please try later.');
         } else {
           Catch.handleException(e);

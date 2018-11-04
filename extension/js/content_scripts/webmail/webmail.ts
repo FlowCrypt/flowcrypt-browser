@@ -25,7 +25,7 @@ Catch.try(async () => {
     let replacer: GmailElementReplacer;
     let hostPageInfo: WebmailVariantObject;
 
-    let getUserAccountEmail = (): undefined|string => {
+    let getUserAccountEmail = (): undefined | string => {
       if (window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
         if (hostPageInfo.email) {
           return hostPageInfo.email;
@@ -42,13 +42,13 @@ Catch.try(async () => {
     };
 
     let getInsightsFromHostVariables = () => {
-      let insights: WebmailVariantObject = {newDataLayer: null, newUi: null, email: null, gmailVariant: null};
+      let insights: WebmailVariantObject = { newDataLayer: null, newUi: null, email: null, gmailVariant: null };
       $('body').append(['<script>', '(function() {', // xss-direct - not sanitized because adding a <script> in intentional here
         'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
         'let e = document.getElementById("FC_VAR_PASS");',
         'if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
         'e.innerText=payload;',
-      '})();', '</script>'].join('')); // executed synchronously - we can read the vars below
+        '})();', '</script>'].join('')); // executed synchronously - we can read the vars below
       try {
         let extracted = JSON.parse($('body > div#FC_VAR_PASS').text()).map(String);
         if (extracted[0] === 'true') {
@@ -71,7 +71,7 @@ Catch.try(async () => {
         } else if (insights.newUi === true) {
           insights.gmailVariant = 'new';
         }
-      } catch (e) {} // tslint:disable-line:no-empty
+      } catch (e) { } // tslint:disable-line:no-empty
       return insights;
     };
 
@@ -146,9 +146,9 @@ Catch.try(async () => {
       variant: 'standard',
       getUserAccountEmail: () => {
         let creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
-        if (creds.length === 2 &&  creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
+        if (creds.length === 2 && creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
           let acctEmail = creds[1].innerText.toLowerCase();
-          fullName =  creds[0].innerText;
+          fullName = creds[0].innerText;
           console.info('Loading for ' + acctEmail + ' (' + fullName + ')');
           return acctEmail;
         }

@@ -59,7 +59,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     });
   }
 
-  private replaceStandardReplyBox = (editable=false, forceReplaceEvenIfPgpBlockIsNotPresent=false) => {
+  private replaceStandardReplyBox = (editable = false, forceReplaceEvenIfPgpBlockIsNotPresent = false) => {
     let self = this;
     $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, replyBox) => {
       let rootEl = self.domGetConversationRootEl(replyBox);
@@ -71,7 +71,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceAtts = () => {
-    for(let attsContainerEl of $('div.OW').get()) {
+    for (let attsContainerEl of $('div.OW').get()) {
       let attsContainer = $(attsContainerEl);
       let newPgpMsgs = attsContainer.children(Att.methods.pgpNamePatterns().map(this.getAttSel).join(',')).not('.evaluated').addClass('evaluated');
       if (newPgpMsgs.length) {
@@ -98,7 +98,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   // todo - mostly the same as gmail/replace.ts
-  private processAtts = (msgId: string, msgEl: JQuery<HTMLElement>, attMetas: Att[], attsContainer: JQuery<HTMLElement>|HTMLElement, skipGoogleDrive=false) => {
+  private processAtts = (msgId: string, msgEl: JQuery<HTMLElement>, attMetas: Att[], attsContainer: JQuery<HTMLElement> | HTMLElement, skipGoogleDrive = false) => {
     let senderEmail = this.domExtractSenderEmail(msgEl);
     let isOutgoing = Value.is(senderEmail).in(this.addresses);
     attsContainer = $(attsContainer);
@@ -138,7 +138,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
       notProcessedAttsLoaders.each((i, loaderEl) => {
         try {
           let meta = $(loaderEl).parent().attr('download_url')!.split(':');
-          googleDriveAtts.push(new Att({msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted'}));
+          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted' }));
         } catch (e) {
           Catch.report(e);
         }
@@ -155,7 +155,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private hideAtt = (attEl: JQuery<HTMLElement>|HTMLElement, attsContainerSel: JQuery<HTMLElement>|HTMLElement) => {
+  private hideAtt = (attEl: JQuery<HTMLElement> | HTMLElement, attsContainerSel: JQuery<HTMLElement> | HTMLElement) => {
     $(attEl).css('display', 'none');
     if (!$(attEl).length) {
       $(attsContainerSel).children('.attachment_loader').text('Missing file info');
@@ -166,7 +166,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     return $(baseEl).parents('.top-level-item').first();
   }
 
-  private domExtractSenderEmail = (baseEl: HTMLElement|JQuery<HTMLElement>) => {
+  private domExtractSenderEmail = (baseEl: HTMLElement | JQuery<HTMLElement>) => {
     if ($(baseEl).is('.top-level-item')) {
       return $(baseEl).find('.ap').last().find('.fX').attr('email');
     } else {
@@ -174,7 +174,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private domExtractRecipients = (baseEl: HTMLElement|JQuery<HTMLElement>) => {
+  private domExtractRecipients = (baseEl: HTMLElement | JQuery<HTMLElement>) => {
     let m;
     if ($(baseEl).is('.top-level-item')) {
       m = $(baseEl).find('.ap').last();
@@ -191,25 +191,25 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     return recipients;
   }
 
-  private domExtractMsgId = (baseEl: HTMLElement|JQuery<HTMLElement>) => {
+  private domExtractMsgId = (baseEl: HTMLElement | JQuery<HTMLElement>) => {
     let inboxMsgIdMatch = ($(baseEl).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
     if (inboxMsgIdMatch) {
       return Str.intToHex(inboxMsgIdMatch[0]);
     }
   }
 
-  private domExtractSubject = (convoRootEl: HTMLElement|JQuery<HTMLElement>) => {
+  private domExtractSubject = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
     return $(convoRootEl).find('.eo').first().text();
   }
 
-  private domExtractThreadId = (convoRootEl: HTMLElement|JQuery<HTMLElement>) => {
+  private domExtractThreadId = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
     let inboxThreadIdMatch = ($(convoRootEl).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
     if (inboxThreadIdMatch) {
       return Str.intToHex(inboxThreadIdMatch[0]);
     }
   }
 
-  private getConvoParams = (convoRootEl: HTMLElement|JQuery<HTMLElement>) => {
+  private getConvoParams = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
     let threadId = this.domExtractThreadId(convoRootEl);
     let headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domExtractSenderEmail(convoRootEl) || '', this.domExtractRecipients(convoRootEl));
     return {

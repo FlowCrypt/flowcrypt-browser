@@ -21,9 +21,9 @@ import { StandardError } from '../../js/common/api.js';
     }
   };
 
-  let finish = (error: string|StandardError|Error|null, result?: any) => {
+  let finish = (error: string | StandardError | Error | null, result?: any) => {
     error = (error === null) ? null : String(error);
-    $('#result').text(JSON.stringify({error, result}));
+    $('#result').text(JSON.stringify({ error, result }));
     $('#result').attr('data-test-state', 'ready');
   };
 

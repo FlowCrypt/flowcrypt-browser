@@ -10,7 +10,7 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 Catch.try(async () => {
 
   let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
-  let acctEmail = urlParams.acctEmail as string|undefined;
+  let acctEmail = urlParams.acctEmail as string | undefined;
   let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   if (!urlParams.emailProvider) {
     urlParams.emailProvider = 'gmail';
@@ -27,7 +27,7 @@ Catch.try(async () => {
   if (!urlParams.acctEmail) {
     renderSetupDone(false);
   } else {
-    let {setup_done} = await Store.getAcct(acctEmail!, ['setup_done']);
+    let { setup_done } = await Store.getAcct(acctEmail!, ['setup_done']);
     renderSetupDone(setup_done || false);
   }
 
@@ -41,9 +41,9 @@ Catch.try(async () => {
     $('.permission_read').text('Read messages');
   }
 
-  $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', {acctEmail})));
+  $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', { acctEmail })));
 
-  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', {omitReadScope: true, acctEmail})));
+  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', { omitReadScope: true, acctEmail })));
 
   $('.close_page').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_page')));
 

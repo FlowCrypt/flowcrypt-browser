@@ -19,7 +19,7 @@ Catch.try(async () => {
 
   let urlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
   let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId: string|null = null;
+  let parentTabId: string | null = null;
   if (urlParams.action !== 'setup') {
     parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   }
@@ -59,8 +59,8 @@ Catch.try(async () => {
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
-        } else if(Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+        } else if (Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
           Catch.handleException(e);
@@ -123,13 +123,13 @@ Catch.try(async () => {
     } else { // gmail read permission not granted - cannot check for backups
       displayBlock('step_0_status');
       $('.status_summary').text('FlowCrypt cannot check your backups.');
-      let pemissionsBtnIfGmail = emailProvider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;': '';
+      let pemissionsBtnIfGmail = emailProvider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
       Xss.sanitizeRender('#step_0_status .container', `${pemissionsBtnIfGmail}<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>`);
       $('.action_go_manual').click(Ui.event.handle(() => {
         displayBlock('step_3_manual');
         $('h1').text('Back up your private key');
       }));
-      $('.action_go_auth_denied').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {acctEmail, page: '/chrome/settings/modules/auth_denied.htm'})));
+      $('.action_go_auth_denied').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
     }
   };
 
@@ -167,10 +167,10 @@ Catch.try(async () => {
       try {
         await doBackupOnEmailProvider(acctEmail, prv.armor());
       } catch (e) {
-        if(Api.err.isNetErr(e)) {
+        if (Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
-        } else if(parentTabId && Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+        } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
           alert('Account needs to be re-connected first. Please try later.');
         } else {
           Catch.handleException(e);
@@ -188,7 +188,7 @@ Catch.try(async () => {
     if (k.primaryKey.isDecrypted()) {
       return false;
     }
-    for(let packet of k.getKeys()) {
+    for (let packet of k.getKeys()) {
       if (packet.isDecrypted() === true) {
         return false;
       }
@@ -200,13 +200,13 @@ Catch.try(async () => {
   };
 
   let asBackupFile = (acctEmail: string, armoredKey: string) => {
-    return new Att({name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armoredKey});
+    return new Att({ name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armoredKey });
   };
 
   let doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
-    let emailMsg = await $.get({url:'/chrome/emails/email_intro.template.htm', dataType: 'html'});
+    let emailMsg = await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' });
     let emailAtts = [asBackupFile(acctEmail, armoredKey)];
-    let msg = await Api.common.msg(acctEmail, acctEmail, acctEmail, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], {'text/html': emailMsg}, emailAtts);
+    let msg = await Api.common.msg(acctEmail, acctEmail, acctEmail, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
       return await Api.gmail.msgSend(acctEmail, msg);
     } else {
@@ -226,10 +226,10 @@ Catch.try(async () => {
     try {
       await doBackupOnEmailProvider(acctEmail, primaryKi.private);
     } catch (e) {
-      if(Api.err.isNetErr(e)) {
+      if (Api.err.isNetErr(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
-      } else if(parentTabId && Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', {acctEmail});
+      } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
         Catch.handleException(e);
@@ -259,7 +259,7 @@ Catch.try(async () => {
     await writeBackupDoneAndRender(Value.int.getFutureTimestampInMonths(3), 'none');
   };
 
-  let writeBackupDoneAndRender = async (prompt: number|false, method: KeyBackupMethod) => {
+  let writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
     await Store.set(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
     if (urlParams.action === 'setup') {
       window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail, action: 'finalize' });
@@ -289,7 +289,7 @@ Catch.try(async () => {
 
   let isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
     let k = Pgp.key.read(ki.private);
-    if(k.isDecrypted()) {
+    if (k.isDecrypted()) {
       return false;
     }
     if (!passphrase) {
@@ -312,7 +312,7 @@ Catch.try(async () => {
 
   let setupCreateSimpleAutomaticInboxBackup = async () => {
     let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if(Pgp.key.read(primaryKi.private).isDecrypted()) {
+    if (Pgp.key.read(primaryKi.private).isDecrypted()) {
       alert('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
