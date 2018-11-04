@@ -204,17 +204,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     let isOutgoing = Value.is(senderEmail).in(this.addresses);
     attsContainerInner = $(attsContainerInner);
     attsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
-    let renderedAttsCount = attMetas.length;
+    let nRenderedAtts = attMetas.length;
     for (let a of attMetas) {
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       let treatAs = a.treatAs();
       let attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
       if (treatAs !== 'standard') {
         this.hideAtt(attSel, attsContainerInner);
-        renderedAttsCount--;
+        nRenderedAtts--;
         if (treatAs === 'encrypted') { // actual encrypted attachment - show it
           attsContainerInner.prepend(this.factory.embeddedAtta(a)); // xss-safe-factory
-          renderedAttsCount++;
+          nRenderedAtts++;
         } else if (treatAs === 'message') {
           let isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
           let isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
@@ -222,18 +222,18 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             let fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
             let openpgpType = Pgp.msg.type(fileChunk);
             if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
-              renderedAttsCount = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, renderedAttsCount);
+              nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
             } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
               msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
             } else {
               attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
-              renderedAttsCount++;
+              nRenderedAtts++;
             }
           } else {
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
           }
         } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
-          renderedAttsCount = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, renderedAttsCount);
+          nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
         } else if (treatAs === 'signature') {
           let signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
           let embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
@@ -244,9 +244,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         let fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
         let openpgpType = Pgp.msg.type(fileChunk);
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
-          renderedAttsCount = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, renderedAttsCount);
+          nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           this.hideAtt(attSel, attsContainerInner);
-          renderedAttsCount--;
+          nRenderedAtts--;
         } else {
           attSel.addClass('attachment_processed').children('.attachment_loader').remove();
         }
@@ -254,7 +254,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         attSel.addClass('attachment_processed').children('.attachment_loader').remove();
       }
     }
-    if (renderedAttsCount === 0) {
+    if (nRenderedAtts === 0) {
       attsContainerInner.parents(this.sel.attsContainerOuter).first().hide();
     }
     let notProcessedAttsLoaders = attsContainerInner.find('.attachment_loader');

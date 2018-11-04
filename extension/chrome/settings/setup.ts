@@ -57,7 +57,7 @@ Catch.try(async () => {
   let acctEmailAttestedFingerprint: string|null = null;
   let recoveredKeys: OpenPGP.key.Key[] = [];
   let recoveredKeysMatchingPassphrases: string[] = [];
-  let recoveredKeysLongidCount = 0;
+  let nRecoveredKeysLongid = 0;
   let recoveredKeysSuccessfulLongids: string[] = [];
   let allAddrs: string[] = [acctEmail];
 
@@ -141,7 +141,7 @@ Catch.try(async () => {
         }
         if (fetchedKeys.length) {
           recoveredKeys = fetchedKeys;
-          recoveredKeysLongidCount = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
+          nRecoveredKeysLongid = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
           displayBlock('step_2_recovery');
         } else {
           displayBlock('step_0_found_key');
@@ -181,7 +181,7 @@ Catch.try(async () => {
     }
     if (fetchedKeys.length) {
       recoveredKeys = fetchedKeys;
-      recoveredKeysLongidCount = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
+      nRecoveredKeysLongid = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
       let storedKeys = await Store.keysGet(acctEmail);
       recoveredKeysSuccessfulLongids = storedKeys.map(ki => ki.longid);
       await renderSetupDone();
@@ -211,7 +211,7 @@ Catch.try(async () => {
 
   let renderSetupDone = async () => {
     let storedKeys = await Store.keysGet(acctEmail);
-    if (recoveredKeysLongidCount > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
+    if (nRecoveredKeysLongid > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
       displayBlock('step_4_more_to_recover');
       $('h1').text('More keys to recover');
       $('.email').text(acctEmail);
@@ -376,7 +376,7 @@ Catch.try(async () => {
     if (confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
       recoveredKeys = [];
       recoveredKeysMatchingPassphrases = [];
-      recoveredKeysLongidCount = 0;
+      nRecoveredKeysLongid = 0;
       recoveredKeysSuccessfulLongids = [];
       displayBlock('step_1_easy_or_manual');
     }
