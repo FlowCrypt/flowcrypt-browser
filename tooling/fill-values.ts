@@ -1,11 +1,23 @@
 
 import { readFileSync, writeFileSync } from 'fs';
 
-const {compilerOptions: {outDir: targetDir}} = JSON.parse(readFileSync('../tsconfig.json').toString());
+const {compilerOptions: {outDir: targetDirExtension}} = JSON.parse(readFileSync('../tsconfig.json').toString());
+const {compilerOptions: {outDir: targetDirContentScripts}} = JSON.parse(readFileSync('tsconfig.content_scripts.json').toString());
+const packageJson = JSON.parse(readFileSync(`../package.json`).toString());
 
-const commonPath = `../${targetDir}/js/common/common.js`;
-const package_json = JSON.parse(readFileSync(`../package.json`).toString());
+const replaceables = [
+  {needle: /\[BUILD_REPLACEABLE_VERSION\]/g, val: packageJson.version},
+];
 
-let source = readFileSync(commonPath).toString();
-source = source.replace(/\[BUILD_REPLACEABLE_VERSION\]/, package_json.version);
-writeFileSync(commonPath, source);
+const paths = [
+  `../${targetDirExtension}/js/common/common.js`,
+  `${targetDirContentScripts}/common/common.js`,
+];
+
+for (let path of paths) {
+  let source = readFileSync(path).toString();
+  for(let replaceable of replaceables) {
+    source = source.replace(replaceable.needle, replaceable.val);
+  }
+  writeFileSync(path, source);
+}
