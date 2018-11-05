@@ -941,7 +941,7 @@ export class Composer {
    * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
   private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
-    if (!this.isReplyBox && Env.browser().name === 'firefox') {
+    if (!this.isReplyBox && Catch.browser().name === 'firefox') {
       let cellHeightExceptText = 0;
       this.S.cached('all_cells_except_text').each(function () {
         let cell = $(this);
@@ -1426,7 +1426,7 @@ export class Composer {
 
   private renderComposeTable = async () => {
     this.S.cached('compose_table').css('display', 'table');
-    if (Env.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
+    if (Catch.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({ 'padding-top': 0, 'padding-bottom': 0 });
     }
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
@@ -1467,7 +1467,7 @@ export class Composer {
         inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.handleErrs(`open sending address dialog`)));
         let fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}">${Xss.escape(addr)}</option>`;
         Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
-        if (Env.browser().name === 'firefox') {
+        if (Catch.browser().name === 'firefox') {
           inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
         }
       }

@@ -165,7 +165,7 @@ Catch.try(async () => {
       await recoverMissingAttIdIfNeeded();
       progressEl = $('.download_progress');
       if (decryptedAtt) { // when content was downloaded and decrypted
-        Browser.saveToDownloads(decryptedAtt, Env.browser().name === 'firefox' ? $('body') : null);
+        Browser.saveToDownloads(decryptedAtt, Catch.browser().name === 'firefox' ? $('body') : null);
       } else if (encryptedAtt && encryptedAtt.hasData()) { // when encrypted content was already downloaded
         await decryptAndSaveAttToDownloads(encryptedAtt);
       } else if (encryptedAtt && encryptedAtt.id && encryptedAtt.msgId) { // gmail attId

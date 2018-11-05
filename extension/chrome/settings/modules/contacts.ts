@@ -30,7 +30,7 @@ Catch.try(async () => {
     Xss.sanitizeRender('.line.actions', exportAllHtml).find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       let allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       let exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys });
-      Browser.saveToDownloads(exportFile, Env.browser().name === 'firefox' ? $('.line.actions') : null);
+      Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
     let importPublicKeysHtml = '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';

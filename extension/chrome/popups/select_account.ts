@@ -48,6 +48,6 @@ Catch.try(async () => {
     window.close();
   }));
 
-  $('html, body').css('height', $('.content').height()! + (Env.browser().name === 'firefox' ? 40 : 0)); // .content is in template
+  $('html, body').css('height', $('.content').height()! + (Catch.browser().name === 'firefox' ? 40 : 0)); // .content is in template
 
 })();

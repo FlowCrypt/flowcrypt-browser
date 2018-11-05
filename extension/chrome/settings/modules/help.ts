@@ -39,7 +39,7 @@ Catch.try(async () => {
     let button = this;
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
-    let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Env.browser().name + ' ' + Catch.version();
+    let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Catch.browser().name + ' ' + Catch.version();
     try {
       let r = await Api.fc.helpFeedback(myEmail, msg);
       if (r.sent) {

@@ -256,7 +256,7 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
 
     if ((window as ContentScriptWindow).vacant()) {
       await entrypoint();
-    } else if (Env.browser().name === 'firefox') {
+    } else if (Catch.browser().name === 'firefox') {
       notifyMurdered();
     }
 

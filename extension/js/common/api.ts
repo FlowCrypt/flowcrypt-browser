@@ -203,7 +203,7 @@ export class Api {
         let authCodeWin = window.open(Api.internal.apiGoogleAuthCodeUrl(authRequest), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
         // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
         // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-        if (Env.browser().name !== 'firefox') {
+        if (Catch.browser().name !== 'firefox') {
           let winClosedTimer = Catch.setHandledInterval(() => {
             if (authCodeWin === null || typeof authCodeWin === 'undefined') {
               clearInterval(winClosedTimer);  // on firefox it seems to be sometimes returning a null, due to popup blocking

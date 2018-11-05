@@ -247,7 +247,7 @@ Catch.try(async () => {
 
   let backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     let attachment = asBackupFile(acctEmail, primaryKi.private);
-    if (Env.browser().name !== 'firefox') {
+    if (Catch.browser().name !== 'firefox') {
       Browser.saveToDownloads(attachment);
       await writeBackupDoneAndRender(false, 'file');
     } else {

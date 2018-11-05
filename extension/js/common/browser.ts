@@ -80,7 +80,7 @@ export class Browser {
           e.initMouseEvent('click', true, true, window);
           a.dispatchEvent(e);
         }
-        if (Env.browser().name === 'firefox') {
+        if (Catch.browser().name === 'firefox') {
           try {
             document.body.removeChild(a);
           } catch (err) {
@@ -99,22 +99,6 @@ export class Browser {
 export class Env {
 
   private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null };
-
-  public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
-    if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'firefox', v: Number(RegExp.$1) };
-    } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
-      return { name: 'ie', v: Number(RegExp.$1) };
-    } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'chrome', v: Number(RegExp.$1) };
-    } else if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'opera', v: Number(RegExp.$1) };
-    } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
-      return { name: 'safari', v: Number(RegExp.$1) };
-    } else {
-      return { name: 'unknown', v: null };
-    }
-  }
 
   public static runtimeId = (orig = false) => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
