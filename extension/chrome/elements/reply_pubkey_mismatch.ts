@@ -17,22 +17,22 @@ Catch.try(async () => {
   Ui.event.protect();
 
   const urlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  let to = urlParams.to ? String(urlParams.to).split(',') : [];
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const to = urlParams.to ? String(urlParams.to).split(',') : [];
 
-  let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   let additionalMsgHeaders: FlatHeaders;
 
-  let appFunctions = Composer.defaultAppFunctions();
+  const appFunctions = Composer.defaultAppFunctions();
   appFunctions.sendMsgToMainWin = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data);
-  let composer = new Composer(appFunctions, { isReplyBox: true, frameId: urlParams.frameId, disable_draft_saving: true }, new Subscription(null));
+  const composer = new Composer(appFunctions, { isReplyBox: true, frameId: urlParams.frameId, disable_draft_saving: true }, new Subscription(null));
 
   const sendBtnText = 'Send Response';
 
-  for (let recipient of to) {
+  for (const recipient of to) {
     Xss.sanitizeAppend('.recipients', Ui.e('span', { text: recipient }));
   }
 
@@ -44,10 +44,10 @@ Catch.try(async () => {
 
   // determine reply headers
   try {
-    let thread = await Api.gmail.threadGet(acctEmail, urlParams.threadId as string, 'full');
+    const thread = await Api.gmail.threadGet(acctEmail, urlParams.threadId as string, 'full');
     if (thread.messages && thread.messages.length > 0) {
-      let threadMsgIdLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-      let threadMsgRefsLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+      const threadMsgIdLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      const threadMsgRefsLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
       additionalMsgHeaders = { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast };
     }
   } catch (e) {
@@ -64,9 +64,9 @@ Catch.try(async () => {
   // send
   $('#send_btn').click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
-    let body = { 'text/plain': $('#input_text').get(0).innerText };
-    let message = await Api.common.msg(acctEmail, urlParams.from as string, to, urlParams.subject as string, body, [att], urlParams.threadId as string);
-    for (let k of Object.keys(additionalMsgHeaders)) {
+    const body = { 'text/plain': $('#input_text').get(0).innerText };
+    const message = await Api.common.msg(acctEmail, urlParams.from as string, to, urlParams.subject as string, body, [att], urlParams.threadId as string);
+    for (const k of Object.keys(additionalMsgHeaders)) {
       message.headers[k] = additionalMsgHeaders[k];
     }
     try {

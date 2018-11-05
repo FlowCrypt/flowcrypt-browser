@@ -10,17 +10,17 @@ import { Pgp } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 
-declare let openpgp: typeof OpenPGP;
+declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  let longids = Env.urlParamRequire.string(urlParams, 'longids').split(',');
-  let type = Env.urlParamRequire.oneof(urlParams, 'type', ['embedded', 'sign', 'attest', 'message', 'draft', 'attachment']);
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const longids = Env.urlParamRequire.string(urlParams, 'longids').split(',');
+  const type = Env.urlParamRequire.oneof(urlParams, 'type', ['embedded', 'sign', 'attest', 'message', 'draft', 'attachment']);
 
   if (type === 'embedded') {
     $('h1').parent().css('display', 'none');
@@ -39,8 +39,8 @@ Catch.try(async () => {
   await Ui.passphraseToggle(['passphrase']);
   $('#passphrase').focus();
 
-  let allPrivateKeys = await Store.keysGet(acctEmail);
-  let selectedPrivateKeys = allPrivateKeys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
+  const allPrivateKeys = await Store.keysGet(acctEmail);
+  const selectedPrivateKeys = allPrivateKeys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
 
   if (allPrivateKeys.length > 1) {
     let html: string;
@@ -48,7 +48,7 @@ Catch.try(async () => {
       html = `For key: <span class="good">${Xss.escape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
     } else {
       html = 'Pass phrase needed for any of the following keys:';
-      for (let i of selectedPrivateKeys.keys()) {
+      for (const i of selectedPrivateKeys.keys()) {
         html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
       }
     }
@@ -56,14 +56,14 @@ Catch.try(async () => {
     $('.which_key').css('display', 'block');
   }
 
-  let renderErr = () => {
+  const renderErr = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
   };
 
-  let renderNormal = () => {
+  const renderNormal = () => {
     $('#passphrase').css('border-color', '');
     $('#passphrase').css('color', 'black');
     $('#passphrase').focus();
@@ -75,11 +75,11 @@ Catch.try(async () => {
   }));
 
   $('.action_ok').click(Ui.event.handle(async () => {
-    let pass = $('#passphrase').val() as string; // it's a text input
-    let storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
+    const pass = $('#passphrase').val() as string; // it's a text input
+    const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
-    for (let keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save them all
-      let prv = openpgp.key.readArmored(keyinfo.private).keys[0];
+    for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save them all
+      const prv = openpgp.key.readArmored(keyinfo.private).keys[0];
       try {
         if (await Pgp.key.decrypt(prv, [pass]) === true) {
           await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);

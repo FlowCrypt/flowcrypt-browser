@@ -12,17 +12,17 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   $('.email-address').text(acctEmail);
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  let renderDiagnosis = (diagnosis: any, attestsRequested: string[]) => {
-    for (let email of Object.keys(diagnosis.results)) {
-      let result = diagnosis.results[email];
+  const renderDiagnosis = (diagnosis: any, attestsRequested: string[]) => {
+    for (const email of Object.keys(diagnosis.results)) {
+      const result = diagnosis.results[email];
       let note, action, remove, color;
       if (result.pubkey === null) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
@@ -84,7 +84,7 @@ Catch.try(async () => {
       await actionSubmitOrReqAttestation($(self).attr('email')!);
     }));
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
-      let { addresses } = await Store.getAcct(acctEmail, ['addresses']);
+      const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
       await Store.set(acctEmail, { 'addresses': Value.arr.withoutVal(addresses || [], $(self).attr('email')!) });
       window.location.reload();
     }));
@@ -98,11 +98,11 @@ Catch.try(async () => {
       await Ui.time.sleep(30000);
       window.location.reload();
     }));
-    let contentEl = Xss.sanitizeAppend('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>');
+    const contentEl = Xss.sanitizeAppend('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>');
     contentEl.find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('green'));
       try {
-        let addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+        const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
         await Store.set(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
       } catch (e) {
         if (Api.err.isNetErr(e)) {
@@ -120,8 +120,8 @@ Catch.try(async () => {
     }));
   };
 
-  let actionSubmitOrReqAttestation = async (email: string) => {
-    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const actionSubmitOrReqAttestation = async (email: string) => {
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       if (email === acctEmail) { // request attestation
@@ -137,9 +137,9 @@ Catch.try(async () => {
     }
   };
 
-  let storage = await Store.getAcct(acctEmail, ['attests_requested', 'addresses']);
+  const storage = await Store.getAcct(acctEmail, ['attests_requested', 'addresses']);
   try {
-    let diagnosis = await Api.attester.diagnoseKeyserverPubkeys(acctEmail);
+    const diagnosis = await Api.attester.diagnoseKeyserverPubkeys(acctEmail);
     $('.summary').text('');
     renderDiagnosis(diagnosis, storage.attests_requested || []);
   } catch (e) {

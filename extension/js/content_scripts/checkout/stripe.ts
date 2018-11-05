@@ -8,7 +8,7 @@ import { Env } from '../../common/browser.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['parentTabId']);
+  const urlParams = Env.urlParams(['parentTabId']);
 
   document.addEventListener('cryptup_stripe_result', Catch.try(() => {
     BrowserMsg.send(urlParams.parentTabId as string, 'stripe_result', { token: $('#stripe_result').text() });

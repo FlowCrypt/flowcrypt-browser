@@ -16,26 +16,26 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
-  let acctEmail = urlParams.acctEmail as string | undefined;
-  let pageUrlParams = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) : null;
-  let acctEmails = await Store.acctEmailsGet();
-  let addNewAcct = urlParams.addNewAcct === true;
+  const urlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
+  const acctEmail = urlParams.acctEmail as string | undefined;
+  const pageUrlParams = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) : null;
+  const acctEmails = await Store.acctEmailsGet();
+  const addNewAcct = urlParams.addNewAcct === true;
 
   $('#status-row #status_v').text(`v:${String(Catch.version())}`);
 
-  let rules = new Rules(acctEmail);
+  const rules = new Rules(acctEmail);
   if (!rules.canBackupKeys()) {
     $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
     $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again
   }
 
-  for (let webmailLName of await Env.webmails()) {
+  for (const webmailLName of await Env.webmails()) {
     $('.signin_button.' + webmailLName).css('display', 'inline-block');
   }
 
-  let tabId = await BrowserMsg.requiredTabId();
-  let notifications = new Notifications(tabId);
+  const tabId = await BrowserMsg.requiredTabId();
+  const notifications = new Notifications(tabId);
 
   BrowserMsg.listen({
     open_page: (data: { page: string, addUrlText: string }, sender, respond) => {
@@ -53,19 +53,19 @@ Catch.try(async () => {
     },
     add_pubkey_dialog: (data: { emails: string[] }, sender, respond) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      let factory = new XssSafeFactory(acctEmail!, tabId);
+      const factory = new XssSafeFactory(acctEmail!, tabId);
       window.open(factory.srcAddPubkeyDialog(data.emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
     },
     subscribe_dialog: (data) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
-      let factory = new XssSafeFactory(acctEmail!, tabId);
-      let subscribeDialogSrc = factory.srcSubscribeDialog(undefined, 'settings_compose', undefined);
+      const factory = new XssSafeFactory(acctEmail!, tabId);
+      const subscribeDialogSrc = factory.srcSubscribeDialog(undefined, 'settings_compose', undefined);
       window.open(subscribeDialogSrc, '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: (data: { notification: string }) => {
       notifications.show(data.notification);
       let cleared = false;
-      let clear = () => {
+      const clear = () => {
         if (!cleared) {
           notifications.clear();
           cleared = true;
@@ -80,7 +80,7 @@ Catch.try(async () => {
     },
     passphrase_dialog: (data: { longids: string[], type: PassphraseDialogType }) => {
       if (!$('#cryptup_dialog').length) {
-        let factory = new XssSafeFactory(acctEmail!, tabId);
+        const factory = new XssSafeFactory(acctEmail!, tabId);
         $('body').append(factory.dialogPassphrase(data.longids, data.type)); // xss-safe-factory
       }
     },
@@ -92,8 +92,8 @@ Catch.try(async () => {
     },
   }, tabId);
 
-  let displayOrig = (selector: string) => {
-    let filterable = $(selector);
+  const displayOrig = (selector: string) => {
+    const filterable = $(selector);
     filterable.filter('a, b, i, img, span, input, label, select').css('display', 'inline-block');
     filterable.filter('table').css('display', 'table');
     filterable.filter('tr').css('display', 'table-row');
@@ -101,7 +101,7 @@ Catch.try(async () => {
     filterable.not('a, b, i, img, span, input, label, select, table, tr, td').css('display', 'block');
   };
 
-  let initialize = async () => {
+  const initialize = async () => {
     if (addNewAcct) {
       $('.show_if_setup_not_done').css('display', 'initial');
       $('.hide_if_setup_not_done').css('display', 'none');
@@ -109,7 +109,7 @@ Catch.try(async () => {
     } else if (acctEmail) {
       $('.email-address').text(acctEmail);
       $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
-      let storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
+      const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
       if (storage.setup_done) {
         checkGoogleAcct().catch(Catch.handleException);
         checkFcAcctAndSubscriptionAndContactPage().catch(Catch.handleException);
@@ -126,7 +126,7 @@ Catch.try(async () => {
         if (urlParams.advanced) {
           $("#settings").toggleClass("advanced");
         }
-        let privateKeys = await Store.keysGet(acctEmail);
+        const privateKeys = await Store.keysGet(acctEmail);
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
@@ -136,7 +136,7 @@ Catch.try(async () => {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     } else {
-      let acctEmails = await Store.acctEmailsGet();
+      const acctEmails = await Store.acctEmailsGet();
       if (acctEmails && acctEmails[0]) {
         window.location.href = Env.urlCreate('index.htm', { acctEmail: acctEmails[0] });
       } else {
@@ -146,17 +146,17 @@ Catch.try(async () => {
     }
   };
 
-  let checkFcAcctAndSubscriptionAndContactPage = async () => {
-    let statusContainer = $('.public_profile_indicator_container');
+  const checkFcAcctAndSubscriptionAndContactPage = async () => {
+    const statusContainer = $('.public_profile_indicator_container');
     try {
       await renderSubscriptionStatusHeader();
     } catch (e) {
       Catch.handleException(e);
     }
-    let authInfo = await Store.authInfo();
+    const authInfo = await Store.authInfo();
     if (authInfo.acctEmail) { // have auth email set
       try {
-        let response = await Api.fc.accountUpdate();
+        const response = await Api.fc.accountUpdate();
         $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:ok`);
         if (response && response.result && response.result.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
@@ -166,7 +166,7 @@ Catch.try(async () => {
         }
       } catch (e) {
         if (Api.err.isAuthErr(e)) {
-          let actionReauth = Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/elements/subscribe.htm', '&source=authErr'));
+          const actionReauth = Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/elements/subscribe.htm', '&source=authErr'));
           Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>').find('a').click(actionReauth);
           $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:auth`).addClass('bad').addClass('link').click(actionReauth);
         } else if (Api.err.isNetErr(e)) {
@@ -185,7 +185,7 @@ Catch.try(async () => {
     statusContainer.css('visibility', 'visible');
   };
 
-  let resolveChangedGoogleAcct = async (newAcctEmail: string) => {
+  const resolveChangedGoogleAcct = async (newAcctEmail: string) => {
     try {
       await Settings.refreshAcctAliases(acctEmail!);
       await Settings.acctStorageChangeEmail(acctEmail!, newAcctEmail);
@@ -197,9 +197,9 @@ Catch.try(async () => {
     }
   };
 
-  let checkGoogleAcct = async () => {
+  const checkGoogleAcct = async () => {
     try {
-      let me = await Api.gmail.usersMeProfile(acctEmail!);
+      const me = await Api.gmail.usersMeProfile(acctEmail!);
       Settings.updateProfilePicIfMissing(acctEmail!).catch(Catch.handleException);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
       if (me.emailAddress !== acctEmail) {
@@ -226,7 +226,7 @@ Catch.try(async () => {
     }
   };
 
-  let renderSubscriptionStatusHeader = async () => {
+  const renderSubscriptionStatusHeader = async () => {
     let liveness = '';
     try {
       await Api.fc.accountCheckSync();
@@ -239,10 +239,10 @@ Catch.try(async () => {
         liveness = 'offline';
       }
     }
-    let subscription = await Store.subscription();
+    const subscription = await Store.subscription();
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      let showAcct = () => Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/account.htm');
+      const showAcct = () => Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/account.htm');
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(showAcct)).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
@@ -265,16 +265,16 @@ Catch.try(async () => {
     }
   };
 
-  let addKeyRowsHtml = (privateKeys: KeyInfo[]) => {
+  const addKeyRowsHtml = (privateKeys: KeyInfo[]) => {
     let html = '';
     for (let i = 0; i < privateKeys.length; i++) {
-      let ki = privateKeys[i];
-      let prv = openpgp.key.readArmored(ki.private).keys[0];
-      let date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      let escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.escape(ki.longid) + '">remove</a>)';
-      let escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
-      let escapedLongid = Xss.escape(ki.longid);
-      let escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${escapedLongid}">${escapedEmail}</a>`;
+      const ki = privateKeys[i];
+      const prv = openpgp.key.readArmored(ki.private).keys[0];
+      const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
+      const escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.escape(ki.longid) + '">remove</a>)';
+      const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
+      const escapedLongid = Xss.escape(ki.longid);
+      const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${escapedLongid}">${escapedEmail}</a>`;
       html += `<div class="row key-content-row key_${Xss.escape(ki.longid)}">`;
       html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escapedPrimaryOrRemove}</div>`;
       html += `  <div class="col-sm-12">KeyWords: <span class="good">${Xss.escape(ki.keywords)}</span></div>`;
@@ -341,7 +341,7 @@ Catch.try(async () => {
   //   which: 'flowcrypt_subscription'
   // })));
 
-  let reload = (advanced = false) => {
+  const reload = (advanced = false) => {
     if (advanced) {
       window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail, advanced: true });
     } else {
@@ -349,7 +349,7 @@ Catch.try(async () => {
     }
   };
 
-  let menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg') => {
+  const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg') => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
@@ -370,8 +370,8 @@ Catch.try(async () => {
     }
   }
 
-  let acctStorages = await Store.getAccounts(acctEmails, ['picture']);
-  for (let email of acctEmails) {
+  const acctStorages = await Store.getAccounts(acctEmails, ['picture']);
+  for (const email of acctEmails) {
     Xss.sanitizePrepend('#alt-accounts', menuAcctHtml(email, acctStorages[email].picture));
   }
   $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {

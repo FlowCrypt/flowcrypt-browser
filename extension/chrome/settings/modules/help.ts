@@ -10,10 +10,10 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'bugReport']);
-  let acctEmail = urlParams.acctEmail as string | undefined;
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  let bugReport = urlParams.bugReport as string | undefined;
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'bugReport']);
+  const acctEmail = urlParams.acctEmail as string | undefined;
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const bugReport = urlParams.bugReport as string | undefined;
 
   if (acctEmail) {
     $('#input_email').val(acctEmail).attr('disabled', 'disabled');
@@ -35,13 +35,13 @@ Catch.try(async () => {
         return;
       }
     }
-    let origBtnText = $(target).text();
-    let button = this;
+    const origBtnText = $(target).text();
+    const button = this;
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
-    let msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Catch.browser().name + ' ' + Catch.version();
+    const msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Catch.browser().name + ' ' + Catch.version();
     try {
-      let r = await Api.fc.helpFeedback(myEmail, msg);
+      const r = await Api.fc.helpFeedback(myEmail, msg);
       if (r.sent) {
         $(button).text('sent!');
         alert(`Message sent! You will find your response in ${myEmail}, check your email later. Thanks!`);

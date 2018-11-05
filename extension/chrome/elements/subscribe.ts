@@ -15,21 +15,21 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'placement', 'source', 'parentTabId', 'subscribeResultTabId']);
+  const urlParams = Env.urlParams(['acctEmail', 'placement', 'source', 'parentTabId', 'subscribeResultTabId']);
   let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let authInfo = await Store.authInfo();
+  const authInfo = await Store.authInfo();
   if (authInfo.acctEmail) {
     acctEmail = authInfo.acctEmail; // todo - allow user to select and confirm email address
   }
   let origBtnContent: string;
   let origBtnSel: JQuery<HTMLElement>;
 
-  let handleErrRes = (e: any) => {
-    let renderErr = (msg: string, e?: any) => {
+  const handleErrRes = (e: any) => {
+    const renderErr = (msg: string, e?: any) => {
       msg = Xss.escape(msg);
-      let debug = e ? `<pre>${Xss.escape(JSON.stringify(e, null, 2))}</pre>` : '';
+      const debug = e ? `<pre>${Xss.escape(JSON.stringify(e, null, 2))}</pre>` : '';
       Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
     };
     if (Api.err.isNetErr(e)) {
@@ -47,7 +47,7 @@ Catch.try(async () => {
     }
   };
 
-  let stripeCcEnteredHandler: BrowserMsgHandler = async (data: { token: string }, sender, respond) => {
+  const stripeCcEnteredHandler: BrowserMsgHandler = async (data: { token: string }, sender, respond) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
       await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advanced_monthly, data.token);
@@ -57,21 +57,21 @@ Catch.try(async () => {
     }
   };
 
-  let renderStatusText = (content: string) => {
+  const renderStatusText = (content: string) => {
     $('.status').text(content);
   };
 
-  let btnSpin = (element: HTMLElement) => {
+  const btnSpin = (element: HTMLElement) => {
     origBtnContent = $(element).html();
     origBtnSel = $(element);
     Xss.sanitizeRender(element, Ui.spinner('white'));
   };
 
-  let btnRestore = () => {
+  const btnRestore = () => {
     Xss.sanitizeRender(origBtnSel, origBtnContent);
   };
 
-  let handleSuccessfulUpgrade = () => {
+  const handleSuccessfulUpgrade = () => {
     BrowserMsg.send(parentTabId, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
     if (urlParams.subscribeResultTabId) {
       BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', { active: true });
@@ -79,7 +79,7 @@ Catch.try(async () => {
     closeDialog();
   };
 
-  let closeDialog = () => {
+  const closeDialog = () => {
     if (urlParams.placement === 'settings_compose') {
       window.close();
     } else if (urlParams.placement === 'settings') {
@@ -103,10 +103,10 @@ Catch.try(async () => {
     }
   }
 
-  let subscription = await Store.subscription();
-  let { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
-  let canReadEmail = Api.gmail.hasScope(google_token_scopes || [], 'read');
-  let fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
+  const subscription = await Store.subscription();
+  const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
+  const canReadEmail = Api.gmail.hasScope(google_token_scopes || [], 'read');
+  const fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
 
   if (urlParams.placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -206,7 +206,7 @@ Catch.try(async () => {
     }
   }
 
-  let tabId = await BrowserMsg.requiredTabId();
+  const tabId = await BrowserMsg.requiredTabId();
   BrowserMsg.listen({
     stripe_result: stripeCcEnteredHandler,
   }, tabId || undefined);

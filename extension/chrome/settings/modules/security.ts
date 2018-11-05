@@ -13,38 +13,38 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   await Ui.passphraseToggle(['passphrase_entry']);
 
-  let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
   if (!primaryKi) {
     return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   }
 
-  let storage = await Store.getAcct(acctEmail, ['hide_message_password', 'outgoing_language']);
+  const storage = await Store.getAcct(acctEmail, ['hide_message_password', 'outgoing_language']);
 
   if (urlParams.embedded) {
     $('.change_passhrase_container, .title_container').css('display', 'none');
     $('.line').css('padding', '7px 0');
   }
 
-  let onDefaultExpireUserChange = async () => {
+  const onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
     await Api.fc.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 
-  let onMsgLanguageUserChange = async () => {
+  const onMsgLanguageUserChange = async () => {
     await Store.set(acctEmail, { outgoing_language: $('.password_message_language').val() });
     window.location.reload();
   };
 
-  let storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
+  const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
   if (storedPassphrase === null) {
     $('#passphrase_to_open_email').prop('checked', true);
   }
@@ -59,7 +59,7 @@ Catch.try(async () => {
 
   $('.confirm_passphrase_requirement_change').click(Ui.event.handle(async () => {
     if ($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
-      let storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
+      const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
       if ($('input#passphrase_entry').val() === storedPassphrase) {
         await Store.passphraseSave('local', acctEmail, primaryKi.longid, undefined);
         await Store.passphraseSave('session', acctEmail, primaryKi.longid, undefined);
@@ -69,7 +69,7 @@ Catch.try(async () => {
         $('input#passphrase_entry').val('').focus();
       }
     } else { // save pass phrase
-      let key = openpgp.key.readArmored(primaryKi.private).keys[0];
+      const key = openpgp.key.readArmored(primaryKi.private).keys[0];
       if (await Pgp.key.decrypt(key, [$('input#passphrase_entry').val() as string]) === true) { // text input
         await Store.passphraseSave('local', acctEmail, primaryKi.longid, $('input#passphrase_entry').val() as string);
         window.location.reload();
@@ -91,17 +91,17 @@ Catch.try(async () => {
 
   $('.password_message_language').change(Ui.event.handle(onMsgLanguageUserChange));
 
-  let subscription = await Store.subscription();
+  const subscription = await Store.subscription();
   if (subscription.active) {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      let response = await Api.fc.accountUpdate();
+      const response = await Api.fc.accountUpdate();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
-        let showAuthErr = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', '&source=authErr');
+        const showAuthErr = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', '&source=authErr');
         Xss.sanitizeRender('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(showAuthErr));
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
@@ -112,7 +112,7 @@ Catch.try(async () => {
     }
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
-    let showSubscribe = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm');
+    const showSubscribe = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm');
     Xss.sanitizeAppend($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(Ui.event.handle(showSubscribe));
   }
 

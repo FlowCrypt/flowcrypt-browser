@@ -9,7 +9,7 @@ import { Pgp } from '../common/pgp.js';
 import { BrowserMsgHandler, BrowserMsgSender } from '../common/extension.js';
 import { Catch } from '../common/catch.js';
 
-declare let openpgp: typeof OpenPGP;
+declare const openpgp: typeof OpenPGP;
 
 type AttestResult = { message: string, acctEmail: string, attestPacketText: string | null };
 type AttestPacketRecvdHandler$req = { acctEmail: string, packet: string, passphrase: string };
@@ -39,7 +39,7 @@ export class BgAttests {
   private static packetHeaders = Pgp.armor.headers('attestPacket');
 
   static watchForAttestEmailIfAppropriate = async () => {
-    for (let pending of await BgAttests.getPendingAttestRequests()) {
+    for (const pending of await BgAttests.getPendingAttestRequests()) {
       if (pending.email && pending.attests_requested && pending.attests_requested.length && BgAttests.attestTsCanReadEmails[pending.email]) {
         BgAttests.watchForAttestEmail(pending.email);
       }
@@ -54,7 +54,7 @@ export class BgAttests {
 
   static attestPacketReceivedHandler: AttestPacketRecvdHandler = async (request, sender, respond) => {
     try { // todo - could be refactored to pass AttestResult directly
-      let r = await BgAttests.processAttestAndLogResult(request.acctEmail, request.packet, request.passphrase);
+      const r = await BgAttests.processAttestAndLogResult(request.acctEmail, request.packet, request.passphrase);
       respond({ success: true, result: r.message });
     } catch (e) {
       respond({ success: false, result: e.message });
@@ -73,10 +73,10 @@ export class BgAttests {
   }
 
   private static checkEmailForAttestsAndRespond = async (acctEmail: string) => {
-    let storage = await Store.getAcct(acctEmail, ['attests_requested']);
-    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    const storage = await Store.getAcct(acctEmail, ['attests_requested']);
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     if (primaryKi) {
-      let passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
+      const passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
       if (passphrase !== null) {
         if (storage.attests_requested && storage.attests_requested.length && BgAttests.attestTsCanReadEmails[acctEmail]) {
           let msgs: R.GmailMsg[];
@@ -96,7 +96,7 @@ export class BgAttests {
               throw e;
             }
           }
-          for (let msg of msgs) {
+          for (const msg of msgs) {
             if (msg.payload.mimeType === 'text/plain' && msg.payload.body && msg.payload.body.size > 0 && msg.payload.body.data) {
               await BgAttests.processAttestAndLogResult(acctEmail, Str.base64urlDecode(msg.payload.body.data), passphrase);
             }
@@ -114,21 +114,21 @@ export class BgAttests {
   }
 
   private static processAttestPacketText = async (acctEmail: string, attestPacketText: string, passphrase: string | null): Promise<AttestResult> => {
-    let attest = Api.attester.packet.parse(attestPacketText);
-    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    const attest = Api.attester.packet.parse(attestPacketText);
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     if (!primaryKi) {
       BgAttests.stopWatching(acctEmail);
       return { attestPacketText, message: `No primary_ki for ${acctEmail}`, acctEmail };
     }
-    let key = openpgp.key.readArmored(primaryKi.private).keys[0];
-    let { attests_processed } = await Store.getAcct(acctEmail, ['attests_processed']);
+    const key = openpgp.key.readArmored(primaryKi.private).keys[0];
+    const { attests_processed } = await Store.getAcct(acctEmail, ['attests_processed']);
     if (!Value.is(attest.content.attester).in(attests_processed || [])) {
-      let storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
+      const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
       if (await Pgp.key.decrypt(key, [passphrase || storedPassphrase || '']) === true) {
-        let expectedFingerprint = key.primaryKey.getFingerprint().toUpperCase();
-        let expectedEmailHash = Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
+        const expectedFingerprint = key.primaryKey.getFingerprint().toUpperCase();
+        const expectedEmailHash = Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
         if (attest && attest.success && attest.text) {
-          let isKnownAttester = attest.content.attester && attest.content.attester in BgAttests.ATTESTERS;
+          const isKnownAttester = attest.content.attester && attest.content.attester in BgAttests.ATTESTERS;
           if (isKnownAttester && attest.content.fingerprint === expectedFingerprint && attest.content.email_hash === expectedEmailHash) {
             let signed;
             try {
@@ -180,22 +180,22 @@ export class BgAttests {
   }
 
   private static fetchAttestEmails = async (acctEmail: string): Promise<R.GmailMsg[]> => {
-    let q = [
+    const q = [
       '(from:"' + BgAttests.getAttesterEmails().join('" OR from: "') + '")',
       'to:' + acctEmail, // for now limited to account email only. Alternative addresses won't work.
       'in:anywhere',
       '"' + BgAttests.packetHeaders.begin + '"',
       '"' + BgAttests.packetHeaders.end + '"',
     ];
-    let listRes = await Api.gmail.msgList(acctEmail, q.join(' '), true);
+    const listRes = await Api.gmail.msgList(acctEmail, q.join(' '), true);
     return Api.gmail.msgsGet(acctEmail, (listRes.messages || []).map(m => m.id), 'full');
   }
 
   private static getPendingAttestRequests = async () => {
-    let acctEmails = await Store.acctEmailsGet();
-    let storages = await Store.getAccounts(acctEmails, ['attests_requested', 'google_token_scopes']);
-    let pending = [];
-    for (let email of Object.keys(storages)) {
+    const acctEmails = await Store.acctEmailsGet();
+    const storages = await Store.getAccounts(acctEmails, ['attests_requested', 'google_token_scopes']);
+    const pending = [];
+    for (const email of Object.keys(storages)) {
       BgAttests.attestTsCanReadEmails[email] = Api.gmail.hasScope(storages[email].google_token_scopes || [], 'read');
       pending.push({ email, attests_requested: storages[email].attests_requested || [] });
     }
@@ -203,8 +203,8 @@ export class BgAttests {
   }
 
   private static getAttesterEmails = () => {
-    let emails: string[] = [];
-    for (let attester of Object.values(BgAttests.ATTESTERS)) {
+    const emails: string[] = [];
+    for (const attester of Object.values(BgAttests.ATTESTERS)) {
       emails.push(attester.email);
     }
     return emails;
@@ -212,7 +212,7 @@ export class BgAttests {
 
   private static acctStorageMarkAsAttested = async (acctEmail: string, attester: string) => {
     BgAttests.stopWatching(acctEmail);
-    let storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
+    const storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
     if (storage.attests_requested && Value.is(attester).in(storage.attests_requested)) {
       storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); // remove attester from requested
       if (typeof storage.attests_processed === 'undefined') {
@@ -227,7 +227,7 @@ export class BgAttests {
 
   private static addAttestLog = async (success: boolean, ar: AttestResult) => {
     console.log('attest result ' + success + ': ' + ar.message);
-    let storage = await Store.getAcct(ar.acctEmail, ['attest_log']);
+    const storage = await Store.getAcct(ar.acctEmail, ['attest_log']);
     if (!storage.attest_log) {
       storage.attest_log = [];
     } else if (storage.attest_log.length > 100) { // todo - should do a rolling delete to always keep last X

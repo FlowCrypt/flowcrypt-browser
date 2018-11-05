@@ -14,9 +14,9 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   // this is for debugging
   if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
@@ -25,7 +25,7 @@ Catch.try(async () => {
 
   if (acctEmail) {
 
-    let { dev_outlook_allow } = await Store.getGlobal(['dev_outlook_allow']);
+    const { dev_outlook_allow } = await Store.getGlobal(['dev_outlook_allow']);
     if (dev_outlook_allow === true) {
       $('.action_allow_outlook').prop('checked', true);
     }
@@ -46,7 +46,7 @@ Catch.try(async () => {
     $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
       try {
-        let all = await Settings.refreshAcctAliases(acctEmail);
+        const all = await Settings.refreshAcctAliases(acctEmail);
         alert('Updated to: ' + all.join(', '));
       } catch (e) {
         if (Api.err.isNetErr(e)) {
@@ -104,8 +104,8 @@ Catch.try(async () => {
 
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
       if (confirm(Lang.setup.confirmManualAcctEmailChange(acctEmail))) {
-        let tabId = await BrowserMsg.requiredTabId();
-        let response = await Api.google.authPopup(acctEmail, tabId);
+        const tabId = await BrowserMsg.requiredTabId();
+        const response = await Api.google.authPopup(acctEmail, tabId);
         if (response && response.success === true && response.acctEmail) {
           if (response.acctEmail === acctEmail) {
             alert(`Account email address seems to be the same, nothing to update: ${acctEmail}`);
@@ -133,15 +133,15 @@ Catch.try(async () => {
       }
     }));
 
-    let collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
-      let name = 'FlowCrypt_BACKUP_FILE_' + acctEmail.replace('[^a-z0-9]+', '') + '.txt';
-      let backupText = await collectInfoForAccountBackup(acctEmail);
+    const collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
+      const name = 'FlowCrypt_BACKUP_FILE_' + acctEmail.replace('[^a-z0-9]+', '') + '.txt';
+      const backupText = await collectInfoForAccountBackup(acctEmail);
       Browser.saveToDownloads(new Att({ name, type: 'text/plain', data: backupText }));
       await Ui.delay(1000);
     };
 
-    let collectInfoForAccountBackup = async (acctEmail: string) => {
-      let text = [
+    const collectInfoForAccountBackup = async (acctEmail: string) => {
+      const text = [
         'This file contains sensitive information, please put it in a safe place.',
         '',
         'DO NOT DISPOSE OF THIS FILE UNLESS YOU KNOW WHAT YOU ARE DOING',
@@ -153,13 +153,13 @@ Catch.try(async () => {
         '',
         'acctEmail: ' + acctEmail,
       ];
-      let globalStorage = await Store.getGlobal(['version']);
-      let acctStorage = await Store.getAcct(acctEmail, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
+      const globalStorage = await Store.getGlobal(['version']);
+      const acctStorage = await Store.getAcct(acctEmail, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
       text.push('global_storage: ' + JSON.stringify(globalStorage));
       text.push('account_storage: ' + JSON.stringify(acctStorage));
       text.push('');
-      let keyinfos = await Store.keysGet(acctEmail);
-      for (let keyinfo of keyinfos) {
+      const keyinfos = await Store.keysGet(acctEmail);
+      for (const keyinfo of keyinfos) {
         text.push('');
         text.push('key_longid: ' + keyinfo.longid);
         text.push('key_primary: ' + keyinfo.primary);

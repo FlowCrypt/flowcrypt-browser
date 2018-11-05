@@ -13,25 +13,25 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   Xss.sanitizeRender('#status', 'Loading from keyserver<br/><br/><br/>' + Ui.spinner('green'));
 
-  let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  let primaryPubkeyArmored = primaryKi.public;
+  const primaryPubkeyArmored = primaryKi.public;
   let keyserverRes: PubkeySearchResult;
   let expectLongid: string;
 
-  let reqReplacement = async () => {
+  const reqReplacement = async () => {
     try {
-      let keyImportUi = new KeyImportUi({ expectLongid, rejectKnown: true, checkSigning: true });
-      let checkedOldKey = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
+      const keyImportUi = new KeyImportUi({ expectLongid, rejectKnown: true, checkSigning: true });
+      const checkedOldKey = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if (checkedOldKey) {
-        let reqDict: Dict<string> = {
+        const reqDict: Dict<string> = {
           'ATT': 'CRYPTUP', // todo - should be the original attester
           'ACT': 'REQUEST_REPLACEMENT',
           'ADD': Pgp.hash.doubleSha1Upper(acctEmail),
@@ -65,7 +65,7 @@ Catch.try(async () => {
   };
 
   try {
-    let r = await Api.attester.lookupEmail([acctEmail]);
+    const r = await Api.attester.lookupEmail([acctEmail]);
     keyserverRes = r.results[0];
   } catch (e) {
     Xss.sanitizeRender('#status', `Internet connection dropped. ${Ui.retryLink()}`);

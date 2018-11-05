@@ -8,25 +8,25 @@ import { Settings } from '../../js/common/settings.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 
-declare let openpgp: typeof OpenPGP;
+declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'attestPacket', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'attestPacket', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  let passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
+  const passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
 
-  let processAttest = async (passphrase: string | null) => {
+  const processAttest = async (passphrase: string | null) => {
     if (passphrase !== null) {
       Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
-      let attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', { acctEmail, packet: urlParams.attestPacket, passphrase });
+      const attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', { acctEmail, packet: urlParams.attestPacket, passphrase });
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };
@@ -43,11 +43,11 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
   $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'passphrase_dialog', { type: 'attest', longids: 'primary' })));
-  let tabId = await BrowserMsg.requiredTabId();
+  const tabId = await BrowserMsg.requiredTabId();
   BrowserMsg.listen({
     passphrase_entry: async (msg: { entered: boolean }, sender, respond) => {
       if (msg.entered) {
-        let pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
+        const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
         await processAttest(pp);
       }
     },

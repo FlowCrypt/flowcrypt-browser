@@ -11,29 +11,29 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let tabId = await BrowserMsg.requiredTabId();
+  const tabId = await BrowserMsg.requiredTabId();
 
-  let factory = new XssSafeFactory(acctEmail, tabId, undefined, undefined, { compact: true });
-  let backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
-  let space = '&nbsp;&nbsp;&nbsp;&nbsp;';
+  const factory = new XssSafeFactory(acctEmail, tabId, undefined, undefined, { compact: true });
+  const backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
+  const space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
   BrowserMsg.listen({}, tabId); // set_css
 
-  let renderContactList = async () => {
-    let contacts = await Store.dbContactSearch(null, { has_pgp: true });
+  const renderContactList = async () => {
+    const contacts = await Store.dbContactSearch(null, { has_pgp: true });
 
-    let exportAllHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;';
+    const exportAllHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;';
     Xss.sanitizeRender('.line.actions', exportAllHtml).find('.action_export_all').click(Ui.event.prevent('double', (self) => {
-      let allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
-      let exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys });
+      const allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
+      const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys });
       Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
-    let importPublicKeysHtml = '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
+    const importPublicKeysHtml = '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
     Xss.sanitizeAppend('.line.actions', importPublicKeysHtml).find('.action_view_bulk_import').off().click(Ui.event.prevent('double', (self) => {
       $('.hide_when_rendering_subpage').css('display', 'none');
       Xss.sanitizeRender('h1', `${backBtn}${space}Bulk Public Key Import${space}`);
@@ -51,17 +51,17 @@ Catch.try(async () => {
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
 
     let tableContents = '';
-    for (let c of contacts) {
-      let e = Xss.escape(c.email);
-      let show = `<a href="#" class="action_show" data-test="action-show-pubkey"></a>`;
-      let change = `<a href="#" class="action_change" data-test="action-change-pubkey"></a>`;
-      let remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey"></a>`;
+    for (const c of contacts) {
+      const e = Xss.escape(c.email);
+      const show = `<a href="#" class="action_show" data-test="action-show-pubkey"></a>`;
+      const change = `<a href="#" class="action_change" data-test="action-change-pubkey"></a>`;
+      const remove = `<a href="#" class="action_remove" data-test="action-remove-pubkey"></a>`;
       tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
 
     $('a.action_show').off().click(Ui.event.prevent('double', async (self) => {
-      let [contact] = await Store.dbContactGet(null, [$(self).closest('tr').attr('email')!]); // defined above
+      const [contact] = await Store.dbContactGet(null, [$(self).closest('tr').attr('email')!]); // defined above
       $('.hide_when_rendering_subpage').css('display', 'none');
       Xss.sanitizeRender('h1', `'${backBtn}${space}${contact!.email}`); // should exist - from list of contacts
       if (contact!.client === 'cryptup') {
@@ -78,7 +78,7 @@ Catch.try(async () => {
 
     $('a.action_change').off().click(Ui.event.prevent('double', self => {
       $('.hide_when_rendering_subpage').css('display', 'none');
-      let email = $(self).closest('tr').attr('email')!;
+      const email = $(self).closest('tr').attr('email')!;
       Xss.sanitizeRender('h1', `${backBtn}${space}${Xss.escape(email)}${space}(edit)`);
       $('#edit_contact').css('display', 'block');
       $('#edit_contact .input_pubkey').val('').attr('email', email);
@@ -86,8 +86,8 @@ Catch.try(async () => {
     }));
 
     $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent('double', async (self) => {
-      let armoredPubkey = $('#edit_contact .input_pubkey').val() as string; // textarea
-      let email = $('#edit_contact .input_pubkey').attr('email');
+      const armoredPubkey = $('#edit_contact .input_pubkey').val() as string; // textarea
+      const email = $('#edit_contact .input_pubkey').attr('email');
       if (!armoredPubkey || !email) {
         alert('No public key entered');
       } else if (Pgp.key.fingerprint(armoredPubkey) !== null) {
@@ -110,7 +110,7 @@ Catch.try(async () => {
     }));
 
     $('#bulk_import .action_process').off().click(Ui.event.prevent('double', self => {
-      let replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
+      const replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
       if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
       } else {

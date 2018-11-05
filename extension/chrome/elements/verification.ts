@@ -11,14 +11,14 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'verificationEmailText', 'parentTabId', 'subscribeResultTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'verificationEmailText', 'parentTabId', 'subscribeResultTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let fcAcct = new FcAcct({}, true);
-  let token = fcAcct.parseTokenEmailText(urlParams.verificationEmailText as string);
+  const fcAcct = new FcAcct({}, true);
+  const token = fcAcct.parseTokenEmailText(urlParams.verificationEmailText as string);
 
-  let renderStatus = (content: string, spinner = false) => {
+  const renderStatus = (content: string, spinner = false) => {
     Xss.sanitizeRender('body .status', Xss.htmlSanitize(content + (spinner ? ' ' + Ui.spinner('white') : '')));
   };
 
@@ -26,10 +26,10 @@ Catch.try(async () => {
     renderStatus('This verification email seems to have wrong format. Email human@flowcrypt.com to get this resolved.');
   } else {
     try {
-      let { cryptup_subscription_attempt } = await Store.getGlobal(['cryptup_subscription_attempt']);
-      let response = await fcAcct.verify(acctEmail, [token]);
+      const { cryptup_subscription_attempt } = await Store.getGlobal(['cryptup_subscription_attempt']);
+      const response = await fcAcct.verify(acctEmail, [token]);
       if (cryptup_subscription_attempt) {
-        let subscription = await fcAcct.subscribe(acctEmail, cryptup_subscription_attempt, cryptup_subscription_attempt.source);
+        const subscription = await fcAcct.subscribe(acctEmail, cryptup_subscription_attempt, cryptup_subscription_attempt.source);
         if (subscription && subscription.level === 'pro') {
           renderStatus('Welcome to FlowCrypt Advanced.');
         } else {

@@ -14,17 +14,17 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   await Ui.passphraseToggle(['password']);
 
-  let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   $('.action_verify').click(Ui.event.handle(async () => {
-    let key = openpgp.key.readArmored(primaryKi.private).keys[0];
+    const key = openpgp.key.readArmored(primaryKi.private).keys[0];
     if (await Pgp.key.decrypt(key, [$('#password').val() as string]) === true) { // text input
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>

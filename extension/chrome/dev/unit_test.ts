@@ -8,11 +8,11 @@ import { StandardError } from '../../js/common/common.js';
 
 (() => {
 
-  let urlParams = Env.urlParams(['f', 'args']);
-  let f = String(urlParams.f);
-  let args = JSON.parse(String(urlParams.args));
+  const urlParams = Env.urlParams(['f', 'args']);
+  const f = String(urlParams.f);
+  const args = JSON.parse(String(urlParams.args));
 
-  let test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
+  const test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
     try {
       return finish(null, method.apply(null, arg));
     } catch (e) {
@@ -20,7 +20,7 @@ import { StandardError } from '../../js/common/common.js';
     }
   };
 
-  let finish = (error: string | StandardError | Error | null, result?: any) => {
+  const finish = (error: string | StandardError | Error | null, result?: any) => {
     error = (error === null) ? null : String(error);
     $('#result').text(JSON.stringify({ error, result }));
     $('#result').attr('data-test-state', 'ready');

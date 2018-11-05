@@ -15,21 +15,21 @@ declare const ClipboardJS: any;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   $('.action_view_user_ids').attr('href', Env.urlCreate('my_key_user_ids.htm', urlParams));
   $('.action_view_update').attr('href', Env.urlCreate('my_key_update.htm', urlParams));
 
-  let [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  let key = openpgp.key.readArmored(primaryKi.private).keys[0];
+  const key = openpgp.key.readArmored(primaryKi.private).keys[0];
 
   try {
-    let { results: [result] } = await Api.attester.lookupEmail([acctEmail]);
-    let url = Api.fc.url('pubkey', acctEmail);
+    const { results: [result] } = await Api.attester.lookupEmail([acctEmail]);
+    const url = Api.fc.url('pubkey', acctEmail);
     if (result.pubkey && Pgp.key.longid(result.pubkey) === primaryKi.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
@@ -64,7 +64,7 @@ Catch.try(async () => {
     }
   }));
 
-  let clipboardOpts = { text: () => key.toPublic().armor() };
-  let cbjs = new ClipboardJS('.action_copy_pubkey', clipboardOpts);
+  const clipboardOpts = { text: () => key.toPublic().armor() };
+  const cbjs = new ClipboardJS('.action_copy_pubkey', clipboardOpts);
 
 })();

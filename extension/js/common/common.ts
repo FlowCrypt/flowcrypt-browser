@@ -37,12 +37,12 @@ export class Str {
 
   public static normalize = (str: string) => Str.normalizeSpaces(Str.normalizeDashes(str));
 
-  public static numberFormat = (number: number) => { // http://stackoverflow.com/questions/3753483/javascript-thousand-separator-string-format
-    let nStr: string = number + '';
-    let x = nStr.split('.');
+  public static numberFormat = (number: number) => {
+    const nStr: string = number + '';
+    const x = nStr.split('.');
     let x1 = x[0];
-    let x2 = x.length > 1 ? '.' + x[1] : '';
-    let rgx = /(\d+)(\d{3})/;
+    const x2 = x.length > 1 ? '.' + x[1] : '';
+    const rgx = /(\d+)(\d{3})/;
     while (rgx.test(x1)) {
       x1 = x1.replace(rgx, '$1' + ',' + '$2');
     }
@@ -56,7 +56,7 @@ export class Str {
 
   public static random = (length: number = 5) => {
     let id = '';
-    let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (let i = 0; i < length; i++) {
       id += possible.charAt(Math.floor(Math.random() * possible.length));
     }
@@ -83,10 +83,10 @@ export class Str {
     if (typeof u8a === 'string') {
       return u8a;
     }
-    let CHUNK_SZ = 0x8000;
-    let c = [];
-    for (let i = 0; i < u8a.length; i += CHUNK_SZ) {
-      c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + CHUNK_SZ)));
+    const chunkSize = 0x8000;
+    const c = [];
+    for (let i = 0; i < u8a.length; i += chunkSize) {
+      c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + chunkSize)));
     }
     return c.join('');
   }
@@ -95,8 +95,8 @@ export class Str {
     if (raw instanceof Uint8Array) {
       return raw;
     }
-    let rawLength = raw.length;
-    let uint8 = new Uint8Array(new ArrayBuffer(rawLength));
+    const rawLength = raw.length;
+    const uint8 = new Uint8Array(new ArrayBuffer(rawLength));
     for (let i = 0; i < rawLength; i++) {
       uint8[i] = raw.charCodeAt(i);
     }
@@ -110,7 +110,7 @@ export class Str {
   }
 
   public static uint8AsUtf = (a: Uint8Array | number[]) => { // tom
-    let length = a.length;
+    const length = a.length;
     let bytesLeftInChar = 0;
     let utf8string = '';
     let binaryChar = '';
@@ -157,20 +157,19 @@ export class Str {
     return utf8string;
   }
 
-  public static toHex = (s: string): string => { // http://phpjs.org/functions/bin2hex/, Kevin van Zonneveld (http://kevin.vanzonneveld.net), Onno Marsman, Linuxworld, ntoniazzi
-    let o = '';
-    s += '';
-    for (let i = 0; i < s.length; i++) {
-      let n = s.charCodeAt(i).toString(16);
-      o += n.length < 2 ? '0' + n : n;
+  public static toHex = (str: string): string => {
+    let r = '';
+    for (let i = 0; i < str.length; i++) {
+      const n = str.charCodeAt(i).toString(16);
+      r += n.length < 2 ? `0${n}` : n;
     }
-    return o;
+    return r;
   }
 
   public static fromHex = (hex: string): string => {
     let str = '';
     for (let i = 0; i < hex.length; i += 2) {
-      let v = parseInt(hex.substr(i, 2), 16);
+      const v = parseInt(hex.substr(i, 2), 16);
       if (v) {
         str += String.fromCharCode(v);
       }
@@ -181,10 +180,10 @@ export class Str {
   public static extractFcAtts = (decryptedContent: string, fcAtts: Att[]) => {
     if (Value.is('cryptup_file').in(decryptedContent)) {
       decryptedContent = decryptedContent.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, foundLink => {
-        let el = $(foundLink);
-        let fcData = el.attr('cryptup-data');
+        const el = $(foundLink);
+        const fcData = el.attr('cryptup-data');
         if (fcData) {
-          let a: FlowCryptAttLinkData = Str.htmlAttrDecode(fcData);
+          const a: FlowCryptAttLinkData = Str.htmlAttrDecode(fcData);
           if (a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
             fcAtts.push(new Att({ type: a.type, name: a.name, length: a.size, url: el.attr('href') }));
           }
@@ -196,9 +195,9 @@ export class Str {
   }
 
   public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
-    let fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
+    const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
     if (fcTokenElement.length) {
-      let fcData = fcTokenElement.attr('cryptup-data');
+      const fcData = fcTokenElement.attr('cryptup-data');
       if (fcData) {
         return Str.htmlAttrDecode(fcData);
       }
@@ -208,8 +207,8 @@ export class Str {
   public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
 
   public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
-    let { blocks, normalized } = Pgp.armor.detectBlocks(decryptedContent);
-    for (let block of blocks) {
+    let { blocks, normalized } = Pgp.armor.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
+    for (const block of blocks) {
       if (block.type === 'publicKey') {
         foundPublicKeys.push(block.content);
         normalized = normalized.replace(block.content, '');
@@ -219,7 +218,7 @@ export class Str {
   }
 
   public static intToHex = (intAsStr: string | number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
-    let dec = intAsStr.toString().split(''), sum = [], hex = [], i, s;
+    let dec = intAsStr.toString().split(''), sum = [], hex = [], i, s; // tslint:disable-line:prefer-const
     while (dec.length) {
       s = Number(dec.shift());
       for (i = 0; s || i < sum.length; i++) {
@@ -262,8 +261,8 @@ export class Value {
 
   public static arr = {
     unique: <T extends FlatTypes>(array: T[]): T[] => {
-      let unique: T[] = [];
-      for (let v of array) {
+      const unique: T[] = [];
+      for (const v of array) {
         if (!Value.is(v).in(unique)) {
           unique.push(v);
         }
@@ -271,7 +270,7 @@ export class Value {
       return unique;
     },
     fromDomNodeList: (obj: NodeList | JQuery<HTMLElement>): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
-      let array = [];
+      const array = [];
       for (let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
         array[i] = obj[i];
       }
@@ -279,8 +278,8 @@ export class Value {
     },
     withoutKey: <T>(array: T[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
     withoutVal: <T>(array: T[], withoutVal: T) => {
-      let result: T[] = [];
-      for (let value of array) {
+      const result: T[] = [];
+      for (const value of array) {
         if (value !== withoutVal) {
           result.push(value);
         }
@@ -295,7 +294,7 @@ export class Value {
 
   public static obj = {
     keyByValue: <T>(obj: Dict<T>, v: T) => {
-      for (let k of Object.keys(obj)) {
+      for (const k of Object.keys(obj)) {
         if (obj[k] === v) {
           return k;
         }

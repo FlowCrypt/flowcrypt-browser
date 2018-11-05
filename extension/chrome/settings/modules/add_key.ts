@@ -12,25 +12,25 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   await Ui.passphraseToggle(['input_passphrase']);
-  let keyImportUi = new KeyImportUi({ rejectKnown: true });
+  const keyImportUi = new KeyImportUi({ rejectKnown: true });
   keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId);
 
   Xss.sanitizeRender('#spinner_container', Ui.spinner('green') + ' loading..');
 
-  let keyinfos = await Store.keysGet(acctEmail);
-  let privateKeysLongIds = keyinfos.map(ki => ki.longid);
+  const keyinfos = await Store.keysGet(acctEmail);
+  const privateKeysLongIds = keyinfos.map(ki => ki.longid);
   let keyBackups;
 
   try {
     keyBackups = await Api.gmail.fetchKeyBackups(acctEmail);
     if (keyBackups.length) {
-      let notImportedBackupLongids: string[] = [];
-      for (let longid of Value.arr.unique(keyBackups.map(Pgp.key.longid))) {
+      const notImportedBackupLongids: string[] = [];
+      for (const longid of Value.arr.unique(keyBackups.map(Pgp.key.longid))) {
         if (longid && !Value.is(longid).in(privateKeysLongIds)) {
           notImportedBackupLongids.push(longid);
         }
@@ -58,7 +58,7 @@ Catch.try(async () => {
 
   $('.action_add_private_key').click(Ui.event.prevent('double', async () => {
     try {
-      let checked = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
+      const checked = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if (checked) {
         await Store.keysAdd(acctEmail, checked.normalized); // resulting new_key checked above
         await Store.passphraseSave($('.input_passphrase_save').prop('checked') ? 'local' : 'session', acctEmail, checked.longid, checked.passphrase);

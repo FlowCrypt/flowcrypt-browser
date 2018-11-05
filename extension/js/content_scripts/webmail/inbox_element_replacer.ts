@@ -38,7 +38,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    let params = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMessageId: threadId };
+    const params = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMessageId: threadId };
     $('.reply_message_iframe_container').append(this.factory.embeddedReply(params, false, true)); // xss-safe-factory
   }
 
@@ -47,12 +47,12 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceArmoredBlocks = () => {
-    let self = this;
+    const self = this;
     $(this.msgTextElSel).not('.evaluated').addClass('evaluated').filter(":contains('" + Pgp.armor.headers('null').begin + "')").each((i, msgEl) => { // for each email that contains PGP block
-      let msgId = self.domExtractMsgId(msgEl);
-      let senderEmail = self.domExtractSenderEmail(msgEl);
-      let isOutgoing = Value.is(senderEmail).in(this.addresses);
-      let replacementXssSafe = Ui.replaceRenderableMsgBlocks(self.factory, msgEl.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
+      const msgId = self.domExtractMsgId(msgEl);
+      const senderEmail = self.domExtractSenderEmail(msgEl);
+      const isOutgoing = Value.is(senderEmail).in(this.addresses);
+      const replacementXssSafe = Ui.replaceRenderableMsgBlocks(self.factory, msgEl.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
       if (typeof replacementXssSafe !== 'undefined') {
         $(msgEl).parents('.ap').addClass('pgp_message_container');
         $(msgEl).html(replacementXssSafe.replace(/^…|…$/g, '').trim()); // xss-safe-factory
@@ -61,24 +61,24 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceStandardReplyBox = (editable = false, forceReplaceEvenIfPgpBlockIsNotPresent = false) => {
-    let self = this;
+    const self = this;
     $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, replyBox) => {
-      let rootEl = self.domGetConversationRootEl(replyBox);
+      const rootEl = self.domGetConversationRootEl(replyBox);
       if (rootEl.find('iframe.pgp_block').filter(':visible').length || (rootEl.is(':visible') && forceReplaceEvenIfPgpBlockIsNotPresent)) {
-        let iframeXssSafe = self.factory.embeddedReply(self.getConvoParams(rootEl), editable);
+        const iframeXssSafe = self.factory.embeddedReply(self.getConvoParams(rootEl), editable);
         $(replyBox).addClass('reply_message_iframe_container').html(iframeXssSafe).children(':not(iframe)').css('display', 'none'); // xss-safe-factory
       }
     });
   }
 
   private replaceAtts = () => {
-    for (let attsContainerEl of $('div.OW').get()) {
-      let attsContainer = $(attsContainerEl);
-      let newPgpMsgs = attsContainer.children(Att.pgpNamePatterns().map(this.getAttSel).join(',')).not('.evaluated').addClass('evaluated');
+    for (const attsContainerEl of $('div.OW').get()) {
+      const attsContainer = $(attsContainerEl);
+      const newPgpMsgs = attsContainer.children(Att.pgpNamePatterns().map(this.getAttSel).join(',')).not('.evaluated').addClass('evaluated');
       if (newPgpMsgs.length) {
-        let msgRootContainer = attsContainer.parents('.ap');
-        let msgEl = msgRootContainer.find(this.msgTextElSel);
-        let msgId = this.domExtractMsgId(msgEl);
+        const msgRootContainer = attsContainer.parents('.ap');
+        const msgEl = msgRootContainer.find(this.msgTextElSel);
+        const msgId = this.domExtractMsgId(msgEl);
         if (msgId) {
           if (this.canReadEmails) {
             Xss.sanitizePrepend(newPgpMsgs, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
@@ -86,7 +86,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
               this.processAtts(msgId!, msgEl, Api.gmail.findAtts(msg), attsContainer); // msgId checked right above
             }, () => $(newPgpMsgs).find('.attachment_loader').text('Failed to load'));
           } else {
-            let statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
+            const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
             $(newPgpMsgs).prepend(this.factory.embeddedAttaStatus(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
               BrowserMsg.send(null, 'settings', { acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
@@ -100,13 +100,13 @@ export class InboxElementReplacer implements WebmailElementReplacer {
 
   // todo - mostly the same as gmail/replace.ts
   private processAtts = (msgId: string, msgEl: JQuery<HTMLElement>, attMetas: Att[], attsContainer: JQuery<HTMLElement> | HTMLElement, skipGoogleDrive = false) => {
-    let senderEmail = this.domExtractSenderEmail(msgEl);
-    let isOutgoing = Value.is(senderEmail).in(this.addresses);
+    const senderEmail = this.domExtractSenderEmail(msgEl);
+    const isOutgoing = Value.is(senderEmail).in(this.addresses);
     attsContainer = $(attsContainer);
-    for (let a of attMetas) {
-      let treatAs = a.treatAs();
+    for (const a of attMetas) {
+      const treatAs = a.treatAs();
       if (treatAs !== 'standard') {
-        let attSel = (attsContainer as JQuery<HTMLElement>).find(this.getAttSel(a.name)).first();
+        const attSel = (attsContainer as JQuery<HTMLElement>).find(this.getAttSel(a.name)).first();
         this.hideAtt(attSel, attsContainer);
         if (treatAs === 'encrypted') { // actual encrypted attachment - show it
           (attsContainer as JQuery<HTMLElement>).prepend(this.factory.embeddedAtta(a)); // xss-safe-factory
@@ -122,7 +122,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
             }
           }).catch(e => (attsContainer as JQuery<HTMLElement>).find('.attachment_loader').text('Please reload page'));
         } else if (treatAs === 'signature') {
-          let embeddedSignedMsgXssSafe = this.factory.embeddedMsg(Str.normalizeSpaces(msgEl[0].innerText).trim(), msgId, false, senderEmail || '', false, true);
+          const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(Str.normalizeSpaces(msgEl[0].innerText).trim(), msgId, false, senderEmail || '', false, true);
           if (!msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text())) {
             msgEl.addClass('evaluated');
             msgEl.html(embeddedSignedMsgXssSafe).css('display', 'block'); // xss-safe-factory
@@ -132,13 +132,13 @@ export class InboxElementReplacer implements WebmailElementReplacer {
         }
       }
     }
-    let notProcessedAttsLoaders = attsContainer.find('.attachment_loader');
+    const notProcessedAttsLoaders = attsContainer.find('.attachment_loader');
     if (!skipGoogleDrive && notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
-      let googleDriveAtts: Att[] = [];
+      const googleDriveAtts: Att[] = [];
       notProcessedAttsLoaders.each((i, loaderEl) => {
         try {
-          let meta = $(loaderEl).parent().attr('download_url')!.split(':');
+          const meta = $(loaderEl).parent().attr('download_url')!.split(':');
           googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted' }));
         } catch (e) {
           Catch.report(e);
@@ -182,9 +182,9 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     } else {
       m = $(baseEl).parents('.ap');
     }
-    let recipients: string[] = [];
+    const recipients: string[] = [];
     m.find('.fX').siblings('span[email]').each((i, recipientEl) => {
-      let email = $(recipientEl).attr('email');
+      const email = $(recipientEl).attr('email');
       if (email) {
         recipients.push(email);
       }
@@ -193,7 +193,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private domExtractMsgId = (baseEl: HTMLElement | JQuery<HTMLElement>) => {
-    let inboxMsgIdMatch = ($(baseEl).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
+    const inboxMsgIdMatch = ($(baseEl).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
     if (inboxMsgIdMatch) {
       return Str.intToHex(inboxMsgIdMatch[0]);
     }
@@ -204,15 +204,15 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private domExtractThreadId = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
-    let inboxThreadIdMatch = ($(convoRootEl).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
+    const inboxThreadIdMatch = ($(convoRootEl).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
     if (inboxThreadIdMatch) {
       return Str.intToHex(inboxThreadIdMatch[0]);
     }
   }
 
   private getConvoParams = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
-    let threadId = this.domExtractThreadId(convoRootEl);
-    let headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domExtractSenderEmail(convoRootEl) || '', this.domExtractRecipients(convoRootEl));
+    const threadId = this.domExtractThreadId(convoRootEl);
+    const headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domExtractSenderEmail(convoRootEl) || '', this.domExtractRecipients(convoRootEl));
     return {
       subject: this.domExtractSubject(convoRootEl),
       reply_to: headers.to,

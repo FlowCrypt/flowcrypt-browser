@@ -11,31 +11,31 @@ Catch.try(async () => {
 
   type RenderableStorage = Dict<{ key: string, value: Storable }>;
 
-  let urlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
+  const urlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
 
   // this is for debugging
-  let debugEmails = ['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com'];
-  let controls = urlParams.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(debugEmails));
+  const debugEmails = ['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com'];
+  const controls = urlParams.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(debugEmails));
 
   if (urlParams.title) {
     Xss.sanitizePrepend('#content', `<h1>${Xss.escape(String(urlParams.title))}</h1>`);
   }
 
   if (controls) {
-    let acctEmails = await Store.acctEmailsGet();
-    let emailsSel = $('.emails');
+    const acctEmails = await Store.acctEmailsGet();
+    const emailsSel = $('.emails');
     Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Env.urlCreate('storage.htm', { controls: urlParams.controls || '' }))}">all</a>`);
     Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Env.urlCreate('storage.htm', { filter: 'global', controls: urlParams.controls || '' }))}">global</a>`);
     Xss.sanitizeAppend('.namespace', '<option value="global">global</option>');
-    for (let acctEmail of acctEmails) {
+    for (const acctEmail of acctEmails) {
       Xss.sanitizeAppend('.emails', `<a href="${Xss.escape(Env.urlCreate('storage.htm', { filter: acctEmail, controls: urlParams.controls || '' }))}">${Xss.escape(acctEmail)}</a>`);
       Xss.sanitizeAppend('.namespace', `<option value="${Xss.escape(acctEmail)}">${Xss.escape(acctEmail)}</option>`);
     }
   }
 
   const render = (obj: RenderableStorage) => {
-    for (let filteredKey of Object.keys(obj)) {
-      let del = controls ? ' <span class="bad delete" key="' + obj[filteredKey].key + '" style="cursor: pointer;">[X]</span>' : '';
+    for (const filteredKey of Object.keys(obj)) {
+      const del = controls ? ' <span class="bad delete" key="' + obj[filteredKey].key + '" style="cursor: pointer;">[X]</span>' : '';
       Xss.sanitizeAppend('.pre', `<div><b>${filteredKey + del}</b> ${Str.prettyPrint(obj[filteredKey].value)}</div>`);
     }
     $('.delete').click(Ui.event.handle(self => {
@@ -51,7 +51,7 @@ Catch.try(async () => {
       realFilter = '';
     }
     let filtered: RenderableStorage = {};
-    for (let key of Object.keys(storage)) {
+    for (const key of Object.keys(storage)) {
       if (Value.is(realFilter).in(key)) {
         filtered[key.replace(realFilter, '')] = { key, value: storage[key] };
       }
@@ -66,14 +66,14 @@ Catch.try(async () => {
     $('#controls, #filters').css('display', 'block');
     $('.save').click(Ui.event.handle(async () => {
       try {
-        let namespaceSel = $('.namespace');
-        let keySel = $('.key');
+        const namespaceSel = $('.namespace');
+        const keySel = $('.key');
         if (namespaceSel.val() === '-- namespace --' || $('.type').val() === '-- type --' || !keySel.val()) {
           alert('Namespace, key and type need to be filled');
         } else {
-          let storageUpdate: BaseStore = {};
+          const storageUpdate: BaseStore = {};
           storageUpdate[keySel.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
-          let acctEmail = namespaceSel.val() === 'global' ? null : decodeURIComponent(namespaceSel.val() as string); // it's a text input
+          const acctEmail = namespaceSel.val() === 'global' ? null : decodeURIComponent(namespaceSel.val() as string); // it's a text input
           await Store.set(acctEmail, storageUpdate);
           window.location.reload();
         }

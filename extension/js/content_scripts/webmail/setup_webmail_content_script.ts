@@ -26,9 +26,9 @@ export interface WebmailElementReplacer {
   scrollToBottomOfConvo: () => void;
 }
 
-export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificInfo) => {
+export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificInfo) => {
 
-  let setUpNotification = `
+  const setUpNotification = `
     <a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account.
     <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a>
     <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>
@@ -36,11 +36,11 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
   let wasDestroyed = false;
   class DestroyTrigger extends Error { }
 
-  let waitForAcctEmail = async (): Promise<string> => {
+  const waitForAcctEmail = async (): Promise<string> => {
     let acctEmailInterval = 1000;
-    let webmails = await Env.webmails();
+    const webmails = await Env.webmails();
     while (true) {
-      let acctEmail = webmailSpecific.getUserAccountEmail();
+      const acctEmail = webmailSpecific.getUserAccountEmail();
       if (typeof acctEmail !== 'undefined' && Catch.version()) {
         (window as ContentScriptWindow).account_email_global = acctEmail;
         if (Value.is(webmailSpecific.name).in(webmails)) {
@@ -62,21 +62,21 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
     }
   };
 
-  let initInternalVars = async (acctEmail: string) => {
-    let tabId = await BrowserMsg.requiredTabId();
-    let notifications = new Notifications(tabId);
-    let factory = new XssSafeFactory(acctEmail, tabId, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
-    let inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
+  const initInternalVars = async (acctEmail: string) => {
+    const tabId = await BrowserMsg.requiredTabId();
+    const notifications = new Notifications(tabId);
+    const factory = new XssSafeFactory(acctEmail, tabId, (window as ContentScriptWindow).reloadable_class, (window as ContentScriptWindow).destroyable_class);
+    const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
     inject.meta();
     await Store.acctEmailsAdd(acctEmail);
     saveAcctEmailFullNameIfNeeded(acctEmail).catch(Catch.rejection); // may take a long time, thus async
     return { tabId, notifications, factory, inject };
   };
 
-  let showNotificationsAndWaitTilAcctSetUp = async (acctEmail: string, notifications: Notifications) => {
+  const showNotificationsAndWaitTilAcctSetUp = async (acctEmail: string, notifications: Notifications) => {
     let showSetupNeededNotificationIfSetupNotDone = true;
     while (true) {
-      let storage = await Store.getAcct(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
+      const storage = await Store.getAcct(acctEmail, ['setup_done', 'cryptup_enabled', 'notification_setup_needed_dismissed']);
       if (storage.setup_done === true && storage.cryptup_enabled !== false) { // "not false" is due to cryptup_enabled unfedined in previous versions, which means "true"
         notifications.clear();
         return;
@@ -84,7 +84,9 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
         notifications.show(setUpNotification, {
           notification_setup_needed_dismiss: () => Store.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
           action_open_settings: () => BrowserMsg.sendAwait(null, 'settings', { acctEmail }),
-          close: () => { showSetupNeededNotificationIfSetupNotDone = false; },
+          close: () => {
+            showSetupNeededNotificationIfSetupNotDone = false;
+          },
         });
       }
       await Ui.time.sleep(3000, (window as ContentScriptWindow).TrySetDestroyableTimeout);
@@ -94,7 +96,7 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
     }
   };
 
-  let browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
+  const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
     BrowserMsg.listen({
       open_new_message: () => {
         inject.openComposeWin();
@@ -109,12 +111,12 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
         webmailSpecific.getReplacer().reinsertReplyBox(data.subject, data.myEmail, data.theirEmail, data.threadId);
       },
       render_public_keys: (data: { publicKeys: string[], afterFrameId: string, traverseUp?: number }) => {
-        let traverseUpLevels = data.traverseUp as number || 0;
+        const traverseUpLevels = data.traverseUp as number || 0;
         let appendAfter = $('iframe#' + data.afterFrameId);
         for (let i = 0; i < traverseUpLevels; i++) {
           appendAfter = appendAfter.parent();
         }
-        for (let armoredPubkey of data.publicKeys) {
+        for (const armoredPubkey of data.publicKeys) {
           appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
         }
       },
@@ -145,7 +147,7 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
         notifications.showAuthPopupNeeded(data.acctEmail);
       },
       reply_pubkey_mismatch: () => {
-        let replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
+        const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
         if (replyIframe) {
           replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
         }
@@ -153,12 +155,12 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
     }, tabId);
   };
 
-  let saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
-    let storage = await Store.getAcct(acctEmail, ['full_name']);
+  const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
+    const storage = await Store.getAcct(acctEmail, ['full_name']);
     let timeout = 1000;
     if (typeof storage.full_name === 'undefined') {
       while (true) {
-        let fullName = webmailSpecific.getUserFullName();
+        const fullName = webmailSpecific.getUserFullName();
         if (fullName) {
           await Store.set(acctEmail, { fullName });
           return;
@@ -172,15 +174,15 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
     }
   };
 
-  let notifyMurdered = () => {
-    let notifEl = document.getElementsByClassName('webmail_notifications')[0];
+  const notifyMurdered = () => {
+    const notifEl = document.getElementsByClassName('webmail_notifications')[0];
     notifEl.innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>'; // xss-direct
   };
 
-  let entrypoint = async () => {
+  const entrypoint = async () => {
     try {
-      let acctEmail = await waitForAcctEmail();
-      let { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
+      const acctEmail = await waitForAcctEmail();
+      const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       browserMsgListen(acctEmail, tabId, inject, factory, notifications);
       await BrowserMsg.sendAwait(null, 'migrate_account', { acctEmail });
@@ -221,10 +223,10 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
       Catch.try(() => {
         console.info('Updating FlowCrypt');
         document.removeEventListener((window as ContentScriptWindow).destruction_event, (window as ContentScriptWindow).destroy);
-        for (let id of (window as ContentScriptWindow).destroyable_intervals) {
+        for (const id of (window as ContentScriptWindow).destroyable_intervals) {
           clearInterval(id);
         }
-        for (let id of (window as ContentScriptWindow).destroyable_timeouts) {
+        for (const id of (window as ContentScriptWindow).destroyable_timeouts) {
           clearTimeout(id);
         }
         $('.' + (window as ContentScriptWindow).destroyable_class).remove();
@@ -240,13 +242,13 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
     };
 
     (window as ContentScriptWindow).TrySetDestroyableInterval = (code, ms) => {
-      let id = Catch.setHandledInterval(code, ms);
+      const id = Catch.setHandledInterval(code, ms);
       (window as ContentScriptWindow).destroyable_intervals.push(id);
       return id;
     };
 
     (window as ContentScriptWindow).TrySetDestroyableTimeout = (code, ms) => {
-      let id = Catch.setHandledTimeout(code, ms);
+      const id = Catch.setHandledTimeout(code, ms);
       (window as ContentScriptWindow).destroyable_timeouts.push(id);
       return id;
     };

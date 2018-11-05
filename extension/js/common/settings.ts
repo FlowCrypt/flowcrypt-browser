@@ -21,9 +21,9 @@ export class Settings {
 
   static fetchAcctAliasesFromGmail = async (acctEmail: string) => {
     let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
-    let results = [];
+    const results = [];
     while (true) {
-      let headers = await Api.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['from']);
+      const headers = await Api.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['from']);
       if (!headers.from) {
         return results.filter(email => !Value.is(email).in(Settings.ignoreEmailAliases));
       }
@@ -38,12 +38,12 @@ export class Settings {
 
   static renderPasswordStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
     parentSel += ' ';
-    let password = $(parentSel + inputSel).val();
+    const password = $(parentSel + inputSel).val();
     if (typeof password !== 'string') {
       Catch.report('render_password_strength: Selected password is not a string', typeof password);
       return;
     }
-    let result = Settings.evalPasswordStrength(password);
+    const result = Settings.evalPasswordStrength(password);
     $(parentSel + '.password_feedback').css('display', 'block');
     $(parentSel + '.password_bar > div').css('width', result.word.bar + '%');
     $(parentSel + '.password_bar > div').css('background-color', result.word.color);
@@ -60,7 +60,7 @@ export class Settings {
   }
 
   static saveAttestReq = async (acctEmail: string, attester: string) => {
-    let storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
+    const storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
     if (typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [attester];
     } else if (!Value.is(attester).in(storage.attests_requested)) {
@@ -74,7 +74,7 @@ export class Settings {
   }
 
   static markAsAttested = async (acctEmail: string, attester: string) => {
-    let storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
+    const storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
     if (typeof storage.attests_requested === 'undefined') {
       storage.attests_requested = [];
     } else if (Value.is(attester).in(storage.attests_requested)) {
@@ -89,13 +89,13 @@ export class Settings {
   }
 
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
-    let attestResp = await Api.attester.initialLegacySubmit(acctEmail, pubkey, true);
+    const attestResp = await Api.attester.initialLegacySubmit(acctEmail, pubkey, true);
     if (!attestResp.attested) {
       await Settings.saveAttestReq(acctEmail, 'CRYPTUP');
     } else { // Attester claims it was previously successfully attested
       await Settings.markAsAttested(acctEmail, 'CRYPTUP');
     }
-    let aliases = addresses.filter(a => a !== acctEmail);
+    const aliases = addresses.filter(a => a !== acctEmail);
     if (aliases.length) {
       await Promise.all(aliases.map(a => Api.attester.initialLegacySubmit(a, pubkey, false)));
     }
@@ -109,12 +109,12 @@ export class Settings {
   }
 
   private static prepareNewSettingsLocationUrl = (acctEmail: string | null, parentTabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null): string => {
-    let pageParams: UrlParams = { placement: 'settings', parentTabId };
+    const pageParams: UrlParams = { placement: 'settings', parentTabId };
     if (acctEmail) {
       pageParams.acctEmail = acctEmail;
     }
     if (typeof addUrlTextOrParams === 'object' && addUrlTextOrParams) { // it's a list of params - add them. It could also be a text - then it will be added the end of url below
-      for (let k of Object.keys(addUrlTextOrParams)) {
+      for (const k of Object.keys(addUrlTextOrParams)) {
         pageParams[k] = addUrlTextOrParams[k];
       }
       addUrlTextOrParams = null;
@@ -123,7 +123,7 @@ export class Settings {
   }
 
   static renderSubPage = (acctEmail: string | null, tabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null) => {
-    let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
+    const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     if (page !== '/chrome/elements/compose.htm') {
       iframeWidth = Math.min(800, $('body').width()! - 200);
@@ -142,7 +142,7 @@ export class Settings {
   }
 
   static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null) => {
-    let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
+    const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
     if (Boolean(Env.urlParams(['embedded']).embedded)) { // embedded on the main page
       BrowserMsg.send(parentTabId, 'open_page', { page, addUrlText: addUrlTextOrParams });
     } else { // on a sub page/module page, inside a lightbox. Just change location.
@@ -151,8 +151,8 @@ export class Settings {
   }
 
   static refreshAcctAliases = async (acctEmail: string) => {
-    let addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-    let all = Value.arr.unique(addresses.concat(acctEmail));
+    const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+    const all = Value.arr.unique(addresses.concat(acctEmail));
     await Store.set(acctEmail, { addresses: all });
     return all;
   }
@@ -161,29 +161,29 @@ export class Settings {
     if (!acctEmail) {
       throw new Error('Missing account_email to reset');
     }
-    let acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await Store.acctEmailsGet();
     if (!Value.is(acctEmail).in(acctEmails)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
-    let storageIndexesToRemove: string[] = [];
-    let filter = Store.index(acctEmail, '') as string;
+    const storageIndexesToRemove: string[] = [];
+    const filter = Store.index(acctEmail, '') as string;
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
     chrome.storage.local.get(async storage => {
       try {
-        for (let storageIndex of Object.keys(storage)) {
+        for (const storageIndex of Object.keys(storage)) {
           if (storageIndex.indexOf(filter) === 0) {
             storageIndexesToRemove.push(storageIndex.replace(filter, ''));
           }
         }
         await Store.remove(acctEmail, storageIndexesToRemove);
-        for (let localStorageIndex of Object.keys(localStorage)) {
+        for (const localStorageIndex of Object.keys(localStorage)) {
           if (localStorageIndex.indexOf(filter) === 0) {
             localStorage.removeItem(localStorageIndex);
           }
         }
-        for (let sessionStorageIndex of Object.keys(sessionStorage)) {
+        for (const sessionStorageIndex of Object.keys(sessionStorage)) {
           if (sessionStorageIndex.indexOf(filter) === 0) {
             sessionStorage.removeItem(sessionStorageIndex);
           }
@@ -199,18 +199,18 @@ export class Settings {
     if (!oldAcctEmail || !newAcctEmail || !Str.isEmailValid(newAcctEmail)) {
       throw new Error('Missing or wrong account_email to reset');
     }
-    let acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await Store.acctEmailsGet();
     if (!Value.is(oldAcctEmail).in(acctEmails)) {
       throw new Error(`"${oldAcctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
-    let storageIndexesToChange: string[] = [];
-    let oldAcctEmailIndexPrefix = Store.index(oldAcctEmail, '') as string;
-    let newAcctEmailIndexPrefix = Store.index(newAcctEmail, '') as string;
+    const storageIndexesToChange: string[] = [];
+    const oldAcctEmailIndexPrefix = Store.index(oldAcctEmail, '') as string;
+    const newAcctEmailIndexPrefix = Store.index(newAcctEmail, '') as string;
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
-    let destAccountPrivateKeys = await Store.keysGet(newAcctEmail);
-    let destAcctPassPhrases: Dict<string> = {};
-    for (let ki of destAccountPrivateKeys) {
-      let pp = await Store.passphraseGet(newAcctEmail, ki.longid, true);
+    const destAccountPrivateKeys = await Store.keysGet(newAcctEmail);
+    const destAcctPassPhrases: Dict<string> = {};
+    for (const ki of destAccountPrivateKeys) {
+      const pp = await Store.passphraseGet(newAcctEmail, ki.longid, true);
       if (pp) {
         destAcctPassPhrases[ki.longid] = pp;
       }
@@ -221,31 +221,31 @@ export class Settings {
     await Store.acctEmailsAdd(newAcctEmail);
     chrome.storage.local.get(async storage => {
       try {
-        for (let key of Object.keys(storage)) {
+        for (const key of Object.keys(storage)) {
           if (key.indexOf(oldAcctEmailIndexPrefix) === 0) {
             storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
           }
         }
-        let oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange);
+        const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange);
         await Store.set(newAcctEmail, oldAcctStorage);
-        for (let localStorageIndex of Object.keys(localStorage)) {
+        for (const localStorageIndex of Object.keys(localStorage)) {
           if (localStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
-            let v = localStorage.getItem(localStorageIndex);
+            const v = localStorage.getItem(localStorageIndex);
             localStorage.setItem(localStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
             localStorage.removeItem(localStorageIndex);
           }
         }
-        for (let sessionStorageIndex of Object.keys(sessionStorage)) {
+        for (const sessionStorageIndex of Object.keys(sessionStorage)) {
           if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
-            let v = sessionStorage.getItem(sessionStorageIndex);
+            const v = sessionStorage.getItem(sessionStorageIndex);
             sessionStorage.setItem(sessionStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
             sessionStorage.removeItem(sessionStorageIndex);
           }
         }
-        for (let ki of destAccountPrivateKeys) {
+        for (const ki of destAccountPrivateKeys) {
           await Store.keysAdd(newAcctEmail, ki.private);
         }
-        for (let longid of Object.keys(destAcctPassPhrases)) {
+        for (const longid of Object.keys(destAcctPassPhrases)) {
           await Store.passphraseSave('local', newAcctEmail, longid, destAcctPassPhrases[longid]);
         }
         await Settings.acctStorageReset(oldAcctEmail);
@@ -261,7 +261,7 @@ export class Settings {
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
   ): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      let uids = origPrv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid) as string[];
+      const uids = origPrv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid) as string[];
       if (!uids.length) {
         uids.push(acctEmail);
       }
@@ -293,16 +293,16 @@ export class Settings {
         }
       }));
       container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
-        let expireYears = $(target).parents(container as string).find('select.input_fix_expire_years').val() as string; // JQuery quirk
+        const expireYears = $(target).parents(container as string).find('select.input_fix_expire_years').val() as string; // JQuery quirk
         if (!expireYears) {
           alert('Please select key expiration');
         } else {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
-          let expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
+          const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
           await Pgp.key.decrypt(origPrv, [passphrase]);
           let reformatted;
-          let userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
+          const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {
             reformatted = await openpgp.reformatKey({ privateKey: origPrv, passphrase, userIds, keyExpirationTime: expireSeconds }) as { key: OpenPGP.key.Key };
           } catch (e) {
@@ -325,7 +325,7 @@ export class Settings {
 
   static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
     if (!ki) {
-      let msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
+      const msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
       Xss.sanitizeRender('#content', `${msg} ${Ui.retryLink()}`);
       if (doThrow) {
         throw new UnreportableError(msg);
@@ -367,10 +367,10 @@ export class Settings {
   }
 
   static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
-    let response = await Api.google.authPopup(acctEmail || null, tabId, omitReadScope);
+    const response = await Api.google.authPopup(acctEmail || null, tabId, omitReadScope);
     if (response && response.success === true && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
-      let storage = await Store.getAcct(response.acctEmail, ['setup_done']);
+      const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
       if (storage.setup_done) { // this was just an additional permission
         alert('You\'re all set.');
         window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
@@ -388,10 +388,10 @@ export class Settings {
   }
 
   static updateProfilePicIfMissing = async (acctEmail: string) => {
-    let storage = await Store.getAcct(acctEmail, ['setup_done', 'picture']);
+    const storage = await Store.getAcct(acctEmail, ['setup_done', 'picture']);
     if (storage.setup_done && !storage.picture) {
       try {
-        let { image } = await Api.google.plus.peopleMe(acctEmail);
+        const { image } = await Api.google.plus.peopleMe(acctEmail);
         await Store.set(acctEmail, { picture: image.url });
       } catch (e) {
         if (!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {

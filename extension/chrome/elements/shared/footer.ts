@@ -12,26 +12,26 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']); // placement: compose||settings
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']); // placement: compose||settings
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let saveFooterIfHasSubscriptionAndRequested = async (requested: boolean, footer: string) => {
-    let subscription = await Store.subscription();
+  const saveFooterIfHasSubscriptionAndRequested = async (requested: boolean, footer: string) => {
+    const subscription = await Store.subscription();
     if (requested && subscription.active) {
       await Store.set(acctEmail, { email_footer: footer });
     }
   };
 
-  let subscription = await Store.subscription();
+  const subscription = await Store.subscription();
   if (subscription.active) {
-    let storage = await Store.getAcct(acctEmail, ['email_footer']);
+    const storage = await Store.getAcct(acctEmail, ['email_footer']);
     $('.input_email_footer').val(storage.email_footer as string);
     $('.user_subscribed').css('display', 'block');
   } else {
     $('.user_free').css('display', 'block');
     $('.action_upgrade').click(Ui.event.prevent('double', async target => {
-      let newlyActive = await BrowserMsg.sendAwait(parentTabId, 'subscribe', {});
+      const newlyActive = await BrowserMsg.sendAwait(parentTabId, 'subscribe', {});
       if (newlyActive) {
         $('.user_subscribed').css('display', 'block');
         $('.user_free').css('display', 'none');

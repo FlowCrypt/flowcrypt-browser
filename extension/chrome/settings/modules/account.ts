@@ -10,15 +10,15 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
 
   await Api.fc.accountCheckSync();
-  let authInfo = await Store.authInfo();
-  let subscription = await Store.subscription();
+  const authInfo = await Store.authInfo();
+  const subscription = await Store.subscription();
 
   $('.email').text(authInfo.acctEmail || 'UNKNOWN!');
   $('.level').text('advanced');

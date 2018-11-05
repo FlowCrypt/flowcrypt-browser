@@ -14,11 +14,11 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let attachJs = new AttUI(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  const attachJs = new AttUI(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let newPhotoFile: Att;
 
   const S = Ui.buildJquerySels({
@@ -37,11 +37,11 @@ Catch.try(async () => {
     'photo': '.profile_photo img',
   });
 
-  let renderFields = (result: R.FcAccountUpdate$result) => {
+  const renderFields = (result: R.FcAccountUpdate$result) => {
     if (result.alias) {
-      let me = Api.fc.url('me', result.alias);
-      let meEscaped = Xss.escape(me);
-      let meEscapedDisplay = Xss.escape(me.replace('https://', ''));
+      const me = Api.fc.url('me', result.alias);
+      const meEscaped = Xss.escape(me);
+      const meEscapedDisplay = Xss.escape(me.replace('https://', ''));
       Xss.sanitizeRender(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${meEscaped}" target="_blank">${meEscapedDisplay}</a></span>`);
       S.cached('hide_if_active').css('display', 'none');
       S.cached('show_if_active').css('display', 'inline-block');
@@ -64,14 +64,14 @@ Catch.try(async () => {
     }
   };
 
-  let enableContactPage = async () => {
+  const enableContactPage = async () => {
     Xss.sanitizeRender(S.cached('status'), 'Enabling..' + Ui.spinner('green'));
-    let authInfo = await Store.authInfo();
-    let storage = await Store.getAcct(authInfo.acctEmail!, ['full_name']);
+    const authInfo = await Store.authInfo();
+    const storage = await Store.getAcct(authInfo.acctEmail!, ['full_name']);
     try {
-      let alias = await findAvailableAlias(authInfo.acctEmail!);
-      let initial = { alias, name: storage.full_name || Str.capitalize(authInfo.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
-      let response = await Api.fc.accountUpdate(initial);
+      const alias = await findAvailableAlias(authInfo.acctEmail!);
+      const initial = { alias, name: storage.full_name || Str.capitalize(authInfo.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
+      const response = await Api.fc.accountUpdate(initial);
       if (!response.updated) {
         alert('Failed to enable your Contact Page. Please try again');
       }
@@ -91,7 +91,7 @@ Catch.try(async () => {
     } else {
       S.cached('show_if_active').css('display', 'none');
       Xss.sanitizeRender(S.cached('status'), 'Updating ' + Ui.spinner('green'));
-      let update: Dict<Serializable> = { name: S.cached('input_name').val(), intro: S.cached('input_intro').val() };
+      const update: Dict<Serializable> = { name: S.cached('input_name').val(), intro: S.cached('input_intro').val() };
       if (newPhotoFile) {
         update.photo_content = btoa(newPhotoFile.asText());
       }
@@ -102,7 +102,7 @@ Catch.try(async () => {
 
   S.cached('action_close').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_page')));
 
-  let findAvailableAlias = async (email: string): Promise<string> => {
+  const findAvailableAlias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
     while (alias.length < 3) {
       alias += Str.random(1).toLowerCase();
@@ -110,7 +110,7 @@ Catch.try(async () => {
     let i = 0;
     while (true) {
       alias += (i || '');
-      let response = await Api.fc.linkMe(alias);
+      const response = await Api.fc.linkMe(alias);
       if (!response.profile) {
         return alias;
       }
@@ -120,7 +120,7 @@ Catch.try(async () => {
 
   Xss.sanitizeRender(S.cached('status'), 'Loading..' + Ui.spinner('green'));
   try {
-    let response = await Api.fc.accountUpdate();
+    const response = await Api.fc.accountUpdate();
     renderFields(response.result);
   } catch (e) {
     if (Api.err.isAuthErr(e)) {

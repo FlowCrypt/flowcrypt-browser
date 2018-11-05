@@ -8,9 +8,9 @@ import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let storage = await Store.getGlobal(['errors']);
+  const storage = await Store.getGlobal(['errors']);
   if (storage.errors && storage.errors.length > 0) {
-    let errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
+    const errors = ('<p>' + storage.errors.join('</p><br/><p>') + '</p>').replace(/\n/g, '<br>');
     Xss.sanitizeRender('.pre', errors);
   }
 

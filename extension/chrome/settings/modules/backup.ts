@@ -18,8 +18,8 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const urlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   let parentTabId: string | null = null;
   if (urlParams.action !== 'setup') {
     parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
@@ -29,18 +29,18 @@ Catch.try(async () => {
 
   await Ui.passphraseToggle(['password', 'password2']);
 
-  let storage = await Store.getAcct(acctEmail, ['setup_simple', 'email_provider']);
+  const storage = await Store.getAcct(acctEmail, ['setup_simple', 'email_provider']);
   emailProvider = storage.email_provider || 'gmail';
 
-  let rules = new Rules(acctEmail);
+  const rules = new Rules(acctEmail);
   if (!rules.canBackupKeys()) {
     Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
     return;
   }
 
-  let displayBlock = (name: string) => {
-    let blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
-    for (let block of blocks) {
+  const displayBlock = (name: string) => {
+    const blocks = ['loading', 'step_0_status', 'step_1_password', 'step_2_confirm', 'step_3_automatic_backup_retry', 'step_3_manual'];
+    for (const block of blocks) {
       $('#' + block).css('display', 'none');
     }
     $('#' + name).css('display', 'block');
@@ -48,11 +48,11 @@ Catch.try(async () => {
 
   $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#step_1_password', '#password', '.action_password')));
 
-  let showStatus = async () => {
+  const showStatus = async () => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     displayBlock('loading');
-    let storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
+    const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
     if (emailProvider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
@@ -127,7 +127,7 @@ Catch.try(async () => {
     } else { // gmail read permission not granted - cannot check for backups
       displayBlock('step_0_status');
       $('.status_summary').text('FlowCrypt cannot check your backups.');
-      let pemissionsBtnIfGmail = emailProvider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
+      const pemissionsBtnIfGmail = emailProvider === 'gmail' ? '<div class="button long green action_go_auth_denied">SEE PERMISSIONS</div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' : '';
       Xss.sanitizeRender('#step_0_status .container', `${pemissionsBtnIfGmail}<div class="button long gray action_go_manual">SEE BACKUP OPTIONS</div>`);
       $('.action_go_manual').click(Ui.event.handle(() => {
         displayBlock('step_3_manual');
@@ -154,17 +154,17 @@ Catch.try(async () => {
   }));
 
   $('.action_backup').click(Ui.event.prevent('double', async (target) => {
-    let newPassphrase = $('#password').val() as string; // text input
+    const newPassphrase = $('#password').val() as string; // text input
     if (newPassphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');
       $('#password2').val('');
       $('#password2').focus();
     } else {
-      let btnText = $(target).text();
+      const btnText = $(target).text();
       Xss.sanitizeRender(target, Ui.spinner('white'));
-      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-      let prv = openpgp.key.readArmored(primaryKi.private).keys[0];
+      const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
       await Settings.openpgpKeyEncrypt(prv, newPassphrase);
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
       await Store.keysAdd(acctEmail, prv.armor());
@@ -187,12 +187,12 @@ Catch.try(async () => {
     }
   }));
 
-  let isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
-    let k = openpgp.key.readArmored(ki.private).keys[0];
+  const isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
+    const k = openpgp.key.readArmored(ki.private).keys[0];
     if (k.primaryKey.isDecrypted()) {
       return false;
     }
-    for (let packet of k.getKeys()) {
+    for (const packet of k.getKeys()) {
       if (packet.isDecrypted() === true) {
         return false;
       }
@@ -203,14 +203,14 @@ Catch.try(async () => {
     return true;
   };
 
-  let asBackupFile = (acctEmail: string, armoredKey: string) => {
+  const asBackupFile = (acctEmail: string, armoredKey: string) => {
     return new Att({ name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armoredKey });
   };
 
-  let doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
-    let emailMsg = await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' });
-    let emailAtts = [asBackupFile(acctEmail, armoredKey)];
-    let msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+  const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
+    const emailMsg = await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' });
+    const emailAtts = [asBackupFile(acctEmail, armoredKey)];
+    const msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
       return await Api.gmail.msgSend(acctEmail, msg);
     } else {
@@ -218,14 +218,14 @@ Catch.try(async () => {
     }
   };
 
-  let backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
-    let pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
+  const backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
+    const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
     if (!pp || !await isPassPhraseStrongEnough(primaryKi, pp)) {
       alert('Your key is not protected with a strong pass phrase, skipping');
       return;
     }
-    let btn = $('.action_manual_backup');
-    let origBtnText = btn.text();
+    const btn = $('.action_manual_backup');
+    const origBtnText = btn.text();
     Xss.sanitizeRender(btn, Ui.spinner('white'));
     try {
       await doBackupOnEmailProvider(acctEmail, primaryKi.private);
@@ -245,8 +245,8 @@ Catch.try(async () => {
     await writeBackupDoneAndRender(false, 'inbox');
   };
 
-  let backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
-    let attachment = asBackupFile(acctEmail, primaryKi.private);
+  const backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
+    const attachment = asBackupFile(acctEmail, primaryKi.private);
     if (Catch.browser().name !== 'firefox') {
       Browser.saveToDownloads(attachment);
       await writeBackupDoneAndRender(false, 'file');
@@ -255,15 +255,15 @@ Catch.try(async () => {
     }
   };
 
-  let backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
+  const backupByBrint = async (primaryKi: KeyInfo) => { // todo - implement + add a non-encrypted print option
     throw new Error('not implemented');
   };
 
-  let backupRefused = async (ki: KeyInfo) => {
+  const backupRefused = async (ki: KeyInfo) => {
     await writeBackupDoneAndRender(Value.int.getFutureTimestampInMonths(3), 'none');
   };
 
-  let writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
+  const writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
     await Store.set(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
     if (urlParams.action === 'setup') {
       window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail, action: 'finalize' });
@@ -273,8 +273,8 @@ Catch.try(async () => {
   };
 
   $('.action_manual_backup').click(Ui.event.prevent('double', async (target) => {
-    let selected = $('input[type=radio][name=input_backup_choice]:checked').val();
-    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     if (!await isMasterPrivateKeyEncrypted(primaryKi)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
@@ -291,13 +291,13 @@ Catch.try(async () => {
     }
   }));
 
-  let isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
-    let k = Pgp.key.read(ki.private);
+  const isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
+    const k = Pgp.key.read(ki.private);
     if (k.isDecrypted()) {
       return false;
     }
     if (!passphrase) {
-      let pp = prompt('Please enter your pass phrase:');
+      const pp = prompt('Please enter your pass phrase:');
       if (!pp) {
         return false;
       }
@@ -314,8 +314,8 @@ Catch.try(async () => {
     return false;
   };
 
-  let setupCreateSimpleAutomaticInboxBackup = async () => {
-    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const setupCreateSimpleAutomaticInboxBackup = async () => {
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     if (Pgp.key.read(primaryKi.private).isDecrypted()) {
       alert('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
@@ -366,7 +366,7 @@ Catch.try(async () => {
   } else if (urlParams.action === 'passphrase_change_gmail_backup') {
     if (storage.setup_simple) {
       displayBlock('loading');
-      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
         await doBackupOnEmailProvider(acctEmail, primaryKi.private);

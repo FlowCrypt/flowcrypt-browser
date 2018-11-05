@@ -9,14 +9,14 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
-  let acctEmail = urlParams.acctEmail as string | undefined;
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
+  const acctEmail = urlParams.acctEmail as string | undefined;
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   if (!urlParams.emailProvider) {
     urlParams.emailProvider = 'gmail';
   }
 
-  let renderSetupDone = (setupDone: boolean) => {
+  const renderSetupDone = (setupDone: boolean) => {
     if (setupDone) {
       $('.show_if_setup_done').css('display', 'block');
     } else {
@@ -27,7 +27,7 @@ Catch.try(async () => {
   if (!urlParams.acctEmail) {
     renderSetupDone(false);
   } else {
-    let { setup_done } = await Store.getAcct(acctEmail!, ['setup_done']);
+    const { setup_done } = await Store.getAcct(acctEmail!, ['setup_done']);
     renderSetupDone(setup_done || false);
   }
 

@@ -15,11 +15,11 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   urlParams.size = urlParams.size ? parseInt(urlParams.size as string) : undefined;
-  let origNameBasedOnFilename = urlParams.name ? (urlParams.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
+  const origNameBasedOnFilename = urlParams.name ? (urlParams.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
 
   let decryptedAtt: Att | null = null;
   let encryptedAtt: Att | null = null;
@@ -42,7 +42,7 @@ Catch.try(async () => {
   }
 
   let origHtmlContent: string;
-  let button = $('#download');
+  const button = $('#download');
   let progressEl: JQuery<HTMLElement>;
 
   let passphraseInterval: number | undefined;
@@ -52,9 +52,9 @@ Catch.try(async () => {
   $('#name').text(urlParams.name as string);
 
   $('img#file-format').attr('src', (() => {
-    let icon = (name: string) => `/img/fileformat/${name}.png`;
-    let nameSplit = origNameBasedOnFilename.split('.');
-    let extension = nameSplit[nameSplit.length - 1].toLowerCase();
+    const icon = (name: string) => `/img/fileformat/${name}.png`;
+    const nameSplit = origNameBasedOnFilename.split('.');
+    const extension = nameSplit[nameSplit.length - 1].toLowerCase();
     switch (extension) {
       case 'jpg':
       case 'jpeg':
@@ -72,9 +72,9 @@ Catch.try(async () => {
     }
   })());
 
-  let checkPassphraseEntered = async () => { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
+  const checkPassphraseEntered = async () => { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
     if (missingPasspraseLongids) {
-      let passphrases = await Promise.all(missingPasspraseLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
+      const passphrases = await Promise.all(missingPasspraseLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
       // todo - copy/pasted - unify
       // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
       // see pgp_block.js for proper common implmenetation
@@ -86,12 +86,12 @@ Catch.try(async () => {
     }
   };
 
-  let getUrlFileSize = (origUrl: string): Promise<number | null> => new Promise((resolve, reject) => {
+  const getUrlFileSize = (origUrl: string): Promise<number | null> => new Promise((resolve, reject) => {
     console.info('trying to figure out file size');
     let url;
     if (Value.is('docs.googleusercontent.com/docs/securesc').in(urlParams.url as string)) {
       try {
-        let googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // we catch any errors below
+        const googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // we catch any errors below
         if (googleDriveFileId) {
           url = 'https://drive.google.com/uc?export=download&id=' + googleDriveFileId; // this one can actually give us headers properly
         } else {
@@ -103,11 +103,11 @@ Catch.try(async () => {
     } else {
       url = origUrl;
     }
-    let xhr = new XMLHttpRequest();
+    const xhr = new XMLHttpRequest();
     xhr.open("HEAD", url, true);
     xhr.onreadystatechange = function () {
       if (this.readyState === this.DONE) {
-        let size = xhr.getResponseHeader("Content-Length");
+        const size = xhr.getResponseHeader("Content-Length");
         if (size !== null) {
           resolve(parseInt(size));
         } else {
@@ -119,8 +119,8 @@ Catch.try(async () => {
     xhr.send();
   });
 
-  let decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    let result = await Pgp.msg.decrypt(acctEmail, encryptedAtt.data(), null, true);
+  const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
+    const result = await Pgp.msg.decrypt(acctEmail, encryptedAtt.data(), null, true);
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
       let name = result.content.filename;
@@ -148,7 +148,7 @@ Catch.try(async () => {
     }).catch(Catch.rejection);
   }
 
-  let renderProgress = (percent: number, received: number, size: number) => {
+  const renderProgress = (percent: number, received: number, size: number) => {
     size = size || urlParams.size as number;
     if (percent) {
       progressEl.text(percent + '%');
@@ -157,7 +157,7 @@ Catch.try(async () => {
     }
   };
 
-  let saveToDownloads = async () => {
+  const saveToDownloads = async () => {
     try {
       origHtmlContent = button.html();
       button.addClass('visible');
@@ -169,7 +169,7 @@ Catch.try(async () => {
       } else if (encryptedAtt && encryptedAtt.hasData()) { // when encrypted content was already downloaded
         await decryptAndSaveAttToDownloads(encryptedAtt);
       } else if (encryptedAtt && encryptedAtt.id && encryptedAtt.msgId) { // gmail attId
-        let att = await Api.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id, renderProgress);
+        const att = await Api.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id, renderProgress);
         encryptedAtt.setData(att.data);
         await decryptAndSaveAttToDownloads(encryptedAtt!);
       } else if (encryptedAtt && encryptedAtt.url) { // gneneral url to download attachment
@@ -191,12 +191,12 @@ Catch.try(async () => {
     }
   };
 
-  let recoverMissingAttIdIfNeeded = async () => {
+  const recoverMissingAttIdIfNeeded = async () => {
     if (!urlParams.url && !urlParams.attId && urlParams.msgId) {
       try {
-        let result = await Api.gmail.msgGet(acctEmail, urlParams.msgId as string, 'full');
+        const result = await Api.gmail.msgGet(acctEmail, urlParams.msgId as string, 'full');
         if (result && result.payload && result.payload.parts) {
-          for (let attMeta of result.payload.parts) {
+          for (const attMeta of result.payload.parts) {
             if (attMeta.filename === urlParams.name && attMeta.body && attMeta.body.size === urlParams.size && attMeta.body.attachmentId) {
               urlParams.attId = attMeta.body.attachmentId;
               break;
@@ -212,13 +212,13 @@ Catch.try(async () => {
     }
   };
 
-  let processAsPublicKeyAndHideAttIfAppropriate = async () => {
+  const processAsPublicKeyAndHideAttIfAppropriate = async () => {
     if (encryptedAtt && encryptedAtt.msgId && encryptedAtt.id && encryptedAtt.treatAs() === 'publicKey') {
       // this is encrypted public key - download && decrypt & parse & render
-      let att = await Api.gmail.attGet(acctEmail, urlParams.msgId as string, urlParams.attId as string);
-      let result = await Pgp.msg.decrypt(acctEmail, att.data);
+      const att = await Api.gmail.attGet(acctEmail, urlParams.msgId as string, urlParams.attId as string);
+      const result = await Pgp.msg.decrypt(acctEmail, att.data);
       if (result.success && result.content.text) {
-        let openpgpType = Pgp.msg.type(result.content.text);
+        const openpgpType = Pgp.msg.type(result.content.text);
         if (openpgpType && openpgpType.type === 'publicKey') {
           if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
@@ -236,7 +236,7 @@ Catch.try(async () => {
 
   try {
     if (!await processAsPublicKeyAndHideAttIfAppropriate()) {
-      // normal attachment, let user download it by clicking
+      // normal attachment, const user download it by clicking
       $('#download').click(Ui.event.prevent('double', saveToDownloads));
     }
   } catch (e) {

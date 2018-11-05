@@ -140,12 +140,12 @@ export class Store {
   static index(acctkeyOrList: string | string[], key: string | string[]) {
     if (Array.isArray(acctkeyOrList)) {
       let allResults: string[] = [];
-      for (let acctKey of acctkeyOrList) {
+      for (const acctKey of acctkeyOrList) {
         allResults = allResults.concat(Store.index(acctKey, key));
       }
       return allResults;
     } else {
-      let prefix = 'cryptup_' + acctkeyOrList.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
+      const prefix = 'cryptup_' + acctkeyOrList.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
       if (Array.isArray(key)) {
         return key.map(k => prefix + k);
       } else {
@@ -156,17 +156,17 @@ export class Store {
 
   private static acctStorageObjKeysToOrig(acctOrAccts: string | string[], storageObj: RawStore): BaseStore | Dict<BaseStore> {
     if (typeof acctOrAccts === 'string') {
-      let fixedKeysObj: BaseStore = {};
-      for (let k of Object.keys(storageObj)) {
-        let fixedKey = k.replace(Store.index(acctOrAccts as string, '') as string, ''); // checked it's a string above
+      const fixedKeysObj: BaseStore = {};
+      for (const k of Object.keys(storageObj)) {
+        const fixedKey = k.replace(Store.index(acctOrAccts as string, '') as string, ''); // checked it's a string above
         if (fixedKey !== k) {
           fixedKeysObj[fixedKey] = storageObj[k];
         }
       }
       return fixedKeysObj;
     } else {
-      let resultsByAcct: Dict<BaseStore> = {};
-      for (let account of acctOrAccts) {
+      const resultsByAcct: Dict<BaseStore> = {};
+      for (const account of acctOrAccts) {
         resultsByAcct[account] = Store.acctStorageObjKeysToOrig(account, storageObj) as BaseStore;
       }
       return resultsByAcct;
@@ -194,14 +194,14 @@ export class Store {
   }
 
   static async passphraseSave(storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) {
-    let storageKey = 'passphrase_' + longid;
+    const storageKey = 'passphrase_' + longid;
     if (storageType === 'session') {
       await Store.sessionSet(acctEmail, storageKey, passphrase);
     } else {
       if (typeof passphrase === 'undefined') {
         await Store.remove(acctEmail, [storageKey]);
       } else {
-        let toSave: Dict<string> = {};
+        const toSave: Dict<string> = {};
         toSave[storageKey] = passphrase;
         await Store.set(acctEmail, toSave);
       }
@@ -209,19 +209,19 @@ export class Store {
   }
 
   static async passphraseGet(acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | null> {
-    let storageKey = 'passphrase_' + longid;
-    let storage = await Store.getAcct(acctEmail, [storageKey]);
+    const storageKey = 'passphrase_' + longid;
+    const storage = await Store.getAcct(acctEmail, [storageKey]);
     if (typeof storage[storageKey] === 'string') {
       return storage[storageKey] as string; // checked above
     } else {
-      let fromSession = await Store.sessionGet(acctEmail, storageKey);
+      const fromSession = await Store.sessionGet(acctEmail, storageKey);
       return fromSession && !ignoreSession ? fromSession : null;
     }
   }
 
   static async keysGet(acctEmail: string, longids: string[] | null = null) {
-    let stored = await Store.getAcct(acctEmail, ['keys']);
-    let keys: KeyInfo[] = stored.keys || [];
+    const stored = await Store.getAcct(acctEmail, ['keys']);
+    const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
       return keys;
     }
@@ -229,7 +229,7 @@ export class Store {
   }
 
   private static keysObj(armoredPrv: string, primary = false): KeyInfo {
-    let longid = Pgp.key.longid(armoredPrv)!;
+    const longid = Pgp.key.longid(armoredPrv)!;
     if (!longid) {
       throw new Error('Store.keysObj: unexpectedly no longid');
     }
@@ -244,11 +244,11 @@ export class Store {
   }
 
   static async keysAdd(acctEmail: string, newKeyArmored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
-    let keyinfos = await Store.keysGet(acctEmail);
+    const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
-    let newKeyLongid = Pgp.key.longid(newKeyArmored);
+    const newKeyLongid = Pgp.key.longid(newKeyArmored);
     if (newKeyLongid) {
-      for (let i in keyinfos) {
+      for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key
           keyinfos[i] = Store.keysObj(newKeyArmored, keyinfos[i].primary);
           updated = true;
@@ -262,8 +262,8 @@ export class Store {
   }
 
   static async keysRemove(acctEmail: string, removeLongid: string): Promise<void> {
-    let privateKeys = await Store.keysGet(acctEmail);
-    let filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
+    const privateKeys = await Store.keysGet(acctEmail);
+    const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
     await Store.set(acctEmail, { keys: filteredPrivateKeys });
   }
 
@@ -272,8 +272,8 @@ export class Store {
   }
 
   static set(acctEmail: string | null, values: BaseStore): Promise<void> {
-    let storageUpdate: Dict<any> = {};
-    for (let key of Object.keys(values)) {
+    const storageUpdate: Dict<any> = {};
+    for (const key of Object.keys(values)) {
       storageUpdate[Store.index(Store.globalStorageIndexIfNull(acctEmail), key) as string] = values[key];
     }
     return new Promise(resolve => chrome.storage.local.set(storageUpdate, () => resolve()));
@@ -322,10 +322,10 @@ export class Store {
   }
 
   static async acctEmailsGet(): Promise<string[]> {
-    let storage = await Store.getGlobal(['account_emails']);
-    let acctEmails: string[] = [];
+    const storage = await Store.getGlobal(['account_emails']);
+    const acctEmails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
-      for (let acctEmail of JSON.parse(storage.account_emails)) {
+      for (const acctEmail of JSON.parse(storage.account_emails)) {
         if (!Value.is(acctEmail.toLowerCase()).in(acctEmails)) {
           acctEmails.push(acctEmail.toLowerCase());
         }
@@ -338,7 +338,7 @@ export class Store {
     if (!acctEmail) {
       Catch.report('attempting to save empty acctEmail: ' + acctEmail);
     }
-    let acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await Store.acctEmailsGet();
     if (!Value.is(acctEmail).in(acctEmails) && acctEmail) {
       acctEmails.push(acctEmail);
       await Store.set(null, { account_emails: JSON.stringify(acctEmails) });
@@ -347,18 +347,18 @@ export class Store {
   }
 
   static async acctEmailsRemove(acctEmail: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
-    let acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await Store.acctEmailsGet();
     await Store.set(null, { account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
     await BrowserMsg.sendAwait(null, 'update_uninstall_url');
   }
 
   static async authInfo(): Promise<StoredAuthInfo> {
-    let storage = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid']);
+    const storage = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid']);
     return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null };
   }
 
   static async subscription(): Promise<Subscription> {
-    let s = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_subscription']);
+    const s = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_subscription']);
     if (s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       return new Subscription(s.cryptup_account_subscription);
     } else {
@@ -404,7 +404,7 @@ export class Store {
         }
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result);
-      let stackFill = String((new Error()).stack);
+      const stackFill = String((new Error()).stack);
       openDbReq.onblocked = () => reject(Store.dbErrCategorize(openDbReq.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
       openDbReq.onerror = () => reject(Store.dbErrCategorize(openDbReq.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
     });
@@ -423,13 +423,13 @@ export class Store {
     let parts = [email, name];
     parts = parts.concat(email.split(/[^a-z0-9]/));
     parts = parts.concat(name.split(/[^a-z0-9]/));
-    let index: string[] = [];
-    for (let part of parts) {
+    const index: string[] = [];
+    for (const part of parts) {
       if (part) {
         let substring = '';
-        for (let letter of part.split('')) {
+        for (const letter of part.split('')) {
           substring += letter;
-          let normalized = Store.normalizeString(substring);
+          const normalized = Store.normalizeString(substring);
           if (!Value.is(normalized).in(index)) {
             index.push(Store.dbIndex(hasPgp, normalized));
           }
@@ -440,7 +440,7 @@ export class Store {
   }
 
   static dbContactObj(email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Contact {
-    let fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : null;
+    const fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : null;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
@@ -468,16 +468,16 @@ export class Store {
       BrowserMsg.sendAwait(null, 'db', { f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.rejection);
     } else {
       if (Array.isArray(contact)) {
-        for (let singleContact of contact) {
+        for (const singleContact of contact) {
           await Store.dbContactSave(db, singleContact);
         }
         resolve();
       } else {
-        let tx = db.transaction('contacts', 'readwrite');
-        let contactsTable = tx.objectStore('contacts');
+        const tx = db.transaction('contacts', 'readwrite');
+        const contactsTable = tx.objectStore('contacts');
         contactsTable.put(contact);
         tx.oncomplete = () => resolve();
-        let stackFill = String((new Error()).stack);
+        const stackFill = String((new Error()).stack);
         tx.onabort = () => reject(Store.dbErrCategorize(tx.error, stackFill));
       }
     }
@@ -490,7 +490,7 @@ export class Store {
         BrowserMsg.sendAwait(null, 'db', { f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.rejection);
       } else {
         if (Array.isArray(email)) {
-          for (let singleEmail of email) {
+          for (const singleEmail of email) {
             await Store.dbContactUpdate(db, singleEmail, update);
           }
           resolve();
@@ -504,12 +504,12 @@ export class Store {
               return;
             }
           }
-          for (let k of Object.keys(update)) {
+          for (const k of Object.keys(update)) {
             // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
             contact[k] = update[k];
           }
-          let tx = db.transaction('contacts', 'readwrite');
-          let contactsTable = tx.objectStore('contacts');
+          const tx = db.transaction('contacts', 'readwrite');
+          const contactsTable = tx.objectStore('contacts');
           contactsTable.put(Store.dbContactObj(
             email,
             contact.name || undefined,
@@ -520,7 +520,7 @@ export class Store {
             contact.last_use || undefined
           ));
           tx.oncomplete = Catch.try(resolve);
-          let stackFill = String((new Error()).stack);
+          const stackFill = String((new Error()).stack);
           tx.onabort = () => reject(Store.dbErrCategorize(tx.error, stackFill));
         }
       }
@@ -541,12 +541,12 @@ export class Store {
             tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid[0]);
           }
           tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : null]));
-          let stackFill = String((new Error()).stack);
+          const stackFill = String((new Error()).stack);
           tx.onerror = () => reject(Store.dbErrCategorize(tx.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
         } else {
-          let results: (Contact | null)[] = [];
-          for (let singleEmailOrLongid of emailOrLongid) {
-            let [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
+          const results: (Contact | null)[] = [];
+          for (const singleEmailOrLongid of emailOrLongid) {
+            const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
             results.push(contact);
           }
           resolve(results);
@@ -561,21 +561,21 @@ export class Store {
         // todo - currently will silently swallow errors
         BrowserMsg.sendAwait(null, 'db', { f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.rejection);
       } else {
-        for (let key of Object.keys(query)) {
+        for (const key of Object.keys(query)) {
           if (!Value.is(key).in(Store.dbQueryKeys)) {
             throw new Error('dbContactSearch: unknown key: ' + key);
           }
         }
-        let contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
+        const contacts = db.transaction('contacts', 'readonly').objectStore('contacts');
         let search: IDBRequest | undefined;
         if (typeof query.has_pgp === 'undefined') { // any query.has_pgp value
           query.substring = Store.normalizeString(query.substring || '');
           if (query.substring) {
-            let resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
+            const resultsWithPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit, has_pgp: true });
             if (query.limit && resultsWithPgp.length === query.limit) {
               resolve(resultsWithPgp);
             } else {
-              let resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit ? query.limit - resultsWithPgp.length : undefined, has_pgp: false });
+              const resultsWithoutPgp = await Store.dbContactSearch(db, { substring: query.substring, limit: query.limit ? query.limit - resultsWithPgp.length : undefined, has_pgp: false });
               resolve(resultsWithPgp.concat(resultsWithoutPgp));
             }
           } else {
@@ -589,9 +589,9 @@ export class Store {
           }
         }
         if (typeof search !== 'undefined') {
-          let found: Contact[] = [];
+          const found: Contact[] = [];
           search.onsuccess = Catch.try(() => {
-            let cursor = search!.result; // checked it above
+            const cursor = search!.result; // checked it above
             if (!cursor || found.length === query.limit) {
               resolve(found);
             } else {
@@ -599,7 +599,7 @@ export class Store {
               cursor.continue();
             }
           });
-          let stackFill = String((new Error()).stack);
+          const stackFill = String((new Error()).stack);
           search.onerror = () => reject(Store.dbErrCategorize(search!.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
         }
       }

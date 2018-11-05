@@ -29,10 +29,10 @@ interface SetupOptions {
 
 Catch.try(async () => {
 
-  let uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   let parentTabId: string | null = null;
-  let action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
+  const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
   if (action === 'add_key') {
     parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
@@ -50,7 +50,7 @@ Catch.try(async () => {
   await Ui.passphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
   await Ui.passphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
-  let storage = await Store.getAcct(acctEmail, [
+  const storage = await Store.getAcct(acctEmail, [
     'setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
   ]);
 
@@ -62,18 +62,18 @@ Catch.try(async () => {
   let recoveredKeysSuccessfulLongids: string[] = [];
   let allAddrs: string[] = [acctEmail];
 
-  let rules = new Rules(acctEmail);
+  const rules = new Rules(acctEmail);
   if (!rules.canCreateKeys()) {
-    let forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
+    const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
     Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
 
-  let keyImportUi = new KeyImportUi({ checkEncryption: true });
+  const keyImportUi = new KeyImportUi({ checkEncryption: true });
   keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId); // for step_2b_manual_enter, if user chooses so
   keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
 
-  let tabId = await BrowserMsg.requiredTabId();
+  const tabId = await BrowserMsg.requiredTabId();
   BrowserMsg.listen({
     close_page: () => {
       $('.featherlight-close').click();
@@ -83,21 +83,21 @@ Catch.try(async () => {
     },
   }, tabId);
 
-  let showSubmitAllAddrsOption = (addrs: string[]) => {
+  const showSubmitAllAddrsOption = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
       $('.addresses').text(Value.arr.withoutVal(addrs, acctEmail).join(', '));
       $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
     }
   };
 
-  let saveAndFillSubmitOption = async (addresses: string[]) => {
+  const saveAndFillSubmitOption = async (addresses: string[]) => {
     allAddrs = Value.arr.unique(addresses.concat(acctEmail));
     await Store.set(acctEmail, { addresses: allAddrs });
     showSubmitAllAddrsOption(allAddrs);
   };
 
-  let displayBlock = (name: string) => {
-    let blocks = [
+  const displayBlock = (name: string) => {
+    const blocks = [
       'loading',
       'step_0_found_key',
       'step_1_easy_or_manual',
@@ -117,11 +117,11 @@ Catch.try(async () => {
     }
   };
 
-  let renderSetupDialog = async (): Promise<void> => {
+  const renderSetupDialog = async (): Promise<void> => {
     let keyserverRes, fetchedKeys;
 
     try {
-      let r = await Api.attester.lookupEmail([acctEmail]);
+      const r = await Api.attester.lookupEmail([acctEmail]);
       keyserverRes = r.results[0];
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.missingConnectionToCheckEncryption, () => renderSetupDialog());
@@ -153,7 +153,7 @@ Catch.try(async () => {
           displayBlock('step_2b_manual_enter');
           Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
         } else if (rules.canCreateKeys()) {
-          // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
+          // has a key registered, key creating allowed on the domain. This may be old key from PKS, const them choose
           displayBlock('step_1_easy_or_manual');
         } else {
           // has a key registered, no key creating allowed on the domain
@@ -169,7 +169,7 @@ Catch.try(async () => {
     }
   };
 
-  let renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
+  const renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
     let fetchedKeys;
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({ display: 'none', visibility: 'hidden', opacity: 0 });
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
@@ -183,7 +183,7 @@ Catch.try(async () => {
     if (fetchedKeys.length) {
       recoveredKeys = fetchedKeys;
       nRecoveredKeysLongid = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
-      let storedKeys = await Store.keysGet(acctEmail);
+      const storedKeys = await Store.keysGet(acctEmail);
       recoveredKeysSuccessfulLongids = storedKeys.map(ki => ki.longid);
       await renderSetupDone();
       $('#step_4_more_to_recover .action_recover_remaining').click();
@@ -192,8 +192,8 @@ Catch.try(async () => {
     }
   };
 
-  let submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
-    let storage = await Store.getAcct(acctEmail, ['addresses']);
+  const submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
+    const storage = await Store.getAcct(acctEmail, ['addresses']);
     if (!options.submit_main) {
       return;
     }
@@ -210,8 +210,8 @@ Catch.try(async () => {
     await Settings.submitPubkeys(acctEmail, addresses, armoredPubkey);
   };
 
-  let renderSetupDone = async () => {
-    let storedKeys = await Store.keysGet(acctEmail);
+  const renderSetupDone = async () => {
+    const storedKeys = await Store.keysGet(acctEmail);
     if (nRecoveredKeysLongid > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
       displayBlock('step_4_more_to_recover');
       $('h1').text('More keys to recover');
@@ -225,7 +225,7 @@ Catch.try(async () => {
     }
   };
 
-  let preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
+  const preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
     await Store.set(acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
@@ -235,8 +235,8 @@ Catch.try(async () => {
     });
   };
 
-  let finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
-    let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
@@ -251,9 +251,9 @@ Catch.try(async () => {
     await Store.remove(acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   };
 
-  let saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
-    for (let prv of prvs) {
-      let longid = Pgp.key.longid(prv);
+  const saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
+    for (const prv of prvs) {
+      const longid = Pgp.key.longid(prv);
       if (!longid) {
         alert('Cannot save keys to storage because at least one of them is not valid.');
         return;
@@ -261,19 +261,19 @@ Catch.try(async () => {
       await Store.keysAdd(acctEmail, prv.armor());
       await Store.passphraseSave(options.passphrase_save ? 'local' : 'session', acctEmail, longid, options.passphrase);
     }
-    let myOwnEmailAddrsAsContacts = allAddrs.map(a => {
-      let attested = Boolean(a === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== Pgp.key.fingerprint(prvs[0].toPublic().armor()));
+    const myOwnEmailAddrsAsContacts = allAddrs.map(a => {
+      const attested = Boolean(a === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== Pgp.key.fingerprint(prvs[0].toPublic().armor()));
       return Store.dbContactObj(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
     });
     await Store.dbContactSave(null, myOwnEmailAddrsAsContacts);
   };
 
-  let createSaveKeyPair = async (options: SetupOptions) => {
+  const createSaveKeyPair = async (options: SetupOptions) => {
     Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
     try {
-      let key = await Pgp.key.create([{ name: options.full_name, email: acctEmail }], 4096, options.passphrase); // todo - add all addresses?
+      const key = await Pgp.key.create([{ name: options.full_name, email: acctEmail }], 4096, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
-      let prv = openpgp.key.readArmored(key.private).keys[0];
+      const prv = openpgp.key.readArmored(key.private).keys[0];
       await saveKeys([prv], options);
     } catch (e) {
       Catch.handleException(e);
@@ -281,8 +281,8 @@ Catch.try(async () => {
     }
   };
 
-  let getAndSaveGoogleUserInfo = async (): Promise<{ full_name: string, locale?: string, picture?: string }> => {
-    if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and let the user choose
+  const getAndSaveGoogleUserInfo = async (): Promise<{ full_name: string, locale?: string, picture?: string }> => {
+    if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and const the user choose
       let me: R.GooglePlusPeopleMe;
       try {
         me = await Api.google.plus.peopleMe(acctEmail);
@@ -290,7 +290,7 @@ Catch.try(async () => {
         Catch.handleException(e);
         return { full_name: '' };
       }
-      let result = { full_name: me.displayName || '', locale: me.language, picture: me.image.url };
+      const result = { full_name: me.displayName || '', locale: me.language, picture: me.image.url };
       await Store.set(acctEmail, result);
       return result;
     } else {
@@ -306,21 +306,21 @@ Catch.try(async () => {
   }));
 
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
-    let passphrase = $('#recovery_pasword').val() as string; // text input
-    let matchingKeys: OpenPGP.key.Key[] = [];
+    const passphrase = $('#recovery_pasword').val() as string; // text input
+    const matchingKeys: OpenPGP.key.Key[] = [];
     if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
       alert(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
     } else if (passphrase) {
-      for (let revoveredKey of recoveredKeys) {
-        let longid = Pgp.key.longid(revoveredKey);
-        let armored = revoveredKey.armor();
+      for (const revoveredKey of recoveredKeys) {
+        const longid = Pgp.key.longid(revoveredKey);
+        const armored = revoveredKey.armor();
         if (longid && !Value.is(longid).in(recoveredKeysSuccessfulLongids) && await Pgp.key.decrypt(revoveredKey, [passphrase]) === true) {
           recoveredKeysSuccessfulLongids.push(longid);
           matchingKeys.push(openpgp.key.readArmored(armored).keys[0]);
         }
       }
       if (matchingKeys.length) {
-        let options: SetupOptions = {
+        const options: SetupOptions = {
           full_name: '',
           submit_main: false, // todo - reevaluate submitting when recovering
           submit_all: false,
@@ -333,7 +333,7 @@ Catch.try(async () => {
         };
         recoveredKeysMatchingPassphrases.push(passphrase);
         await saveKeys(matchingKeys, options);
-        let storage = await Store.getAcct(acctEmail, ['setup_done']);
+        const storage = await Store.getAcct(acctEmail, ['setup_done']);
         if (!storage.setup_done) { // normal situation - fresh setup
           await preFinalizeSetup(options);
           await finalizeSetup(options);
@@ -357,10 +357,10 @@ Catch.try(async () => {
   $('#step_4_more_to_recover .action_recover_remaining').click(Ui.event.handle(async () => {
     displayBlock('step_2_recovery');
     $('#recovery_pasword').val('');
-    let storedKeys = await Store.keysGet(acctEmail);
-    let nGot = storedKeys.length;
-    let nBups = recoveredKeys.length;
-    let txtTeft = (nBups - nGot > 1) ? 'are ' + (nBups - nGot) + ' backups' : 'is one backup';
+    const storedKeys = await Store.keysGet(acctEmail);
+    const nGot = storedKeys.length;
+    const nBups = recoveredKeys.length;
+    const txtTeft = (nBups - nGot > 1) ? 'are ' + (nBups - nGot) + ' backups' : 'is one backup';
     if (action !== 'add_key') {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nGot, nBups, txtTeft));
       Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
@@ -396,7 +396,7 @@ Catch.try(async () => {
   }));
 
   $('.input_submit_key').click(Ui.event.handle(target => {
-    let inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
+    const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
       if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
         inputSubmitAll.prop({ checked: true, disabled: false });
@@ -411,7 +411,7 @@ Catch.try(async () => {
   $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => displayBlock('step_2b_manual_enter')));
 
   $('#step_2b_manual_enter .action_save_private').click(Ui.event.handle(async () => {
-    let options = {
+    const options = {
       full_name: '',
       passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
       key_backup_prompt: false,
@@ -423,7 +423,7 @@ Catch.try(async () => {
       setup_simple: false,
     };
     try {
-      let checked = await keyImportUi.checkPrv(acctEmail, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
+      const checked = await keyImportUi.checkPrv(acctEmail, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
       Xss.sanitizeRender('#step_2b_manual_enter .action_save_private', Ui.spinner('white'));
       await saveKeys([checked.encrypted], options);
       await preFinalizeSetup(options);
@@ -441,7 +441,7 @@ Catch.try(async () => {
     }
   }));
 
-  let renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: OpenPGP.key.Key, options: SetupOptions) => {
+  const renderCompatibilityFixBlockAndFinalizeSetup = async (origPrv: OpenPGP.key.Key, options: SetupOptions) => {
     displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {
@@ -462,7 +462,7 @@ Catch.try(async () => {
     Settings.renderPasswordStrength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
 
-  let isActionCreatePrivateFormInputCorrect = () => {
+  const isActionCreatePrivateFormInputCorrect = () => {
     if (!$('#step_2a_manual_create .input_password').val()) {
       alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
       $('#step_2a_manual_create .input_password').focus();
@@ -490,8 +490,8 @@ Catch.try(async () => {
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitizeRender('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
-      let userinfo = await getAndSaveGoogleUserInfo();
-      let options: SetupOptions = {
+      const userinfo = await getAndSaveGoogleUserInfo();
+      const options: SetupOptions = {
         full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val() as string,
         passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
@@ -514,8 +514,8 @@ Catch.try(async () => {
   }));
 
   $('#step_2a_manual_create .action_show_advanced_create_settings').click(Ui.event.handle(target => {
-    let advancedCreateSettings = $('#step_2a_manual_create .advanced_create_settings');
-    let container = $('#step_2a_manual_create .advanced_create_settings_container');
+    const advancedCreateSettings = $('#step_2a_manual_create .advanced_create_settings');
+    const container = $('#step_2a_manual_create .advanced_create_settings_container');
     if (advancedCreateSettings.is(':visible')) {
       advancedCreateSettings.hide('fast');
       $(target).find('span').text('Show Advanced Settings');
@@ -554,7 +554,7 @@ Catch.try(async () => {
       await renderAddKeyFromBackup();
     }
   } else if (action === 'finalize') {
-    let { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
+    const { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
     if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
       return $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
     }

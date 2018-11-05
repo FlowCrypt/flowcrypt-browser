@@ -9,12 +9,12 @@ import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let redirectToInitSetup = async (acctEmail: string | null = null) => {
+  const redirectToInitSetup = async (acctEmail: string | null = null) => {
     await BrowserMsg.sendAwait(null, 'settings', { acctEmail });
     window.close();
   };
 
-  let chooseEmailOrSettingsPopup = (activeAcctEmail: string | null = null) => {
+  const chooseEmailOrSettingsPopup = (activeAcctEmail: string | null = null) => {
     $('#email_or_settings').css('display', 'block');
     $('.action_open_settings').click(Ui.event.handle(async () => {
       if (activeAcctEmail) {
@@ -33,15 +33,15 @@ Catch.try(async () => {
     }));
   };
 
-  let setupAcctPromptPopup = (activeAcctEmail: string) => {
+  const setupAcctPromptPopup = (activeAcctEmail: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(activeAcctEmail);
     $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.rejection)));
   };
 
-  let activeTab = await BrowserMsg.sendAwait(null, 'get_active_tab_info', {});
+  const activeTab = await BrowserMsg.sendAwait(null, 'get_active_tab_info', {});
   if (activeTab && activeTab.acctEmail !== null) {
-    let { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
+    const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
     if (setup_done) {
       chooseEmailOrSettingsPopup(activeTab.acctEmail);
     } else {
@@ -50,11 +50,11 @@ Catch.try(async () => {
   } else if (activeTab && activeTab.provider !== null && activeTab.sameWorld === true) {
     setupAcctPromptPopup(activeTab.acctEmail);
   } else {
-    let acctEmails = await Store.acctEmailsGet();
+    const acctEmails = await Store.acctEmailsGet();
     if (acctEmails && acctEmails.length) {
-      let acctStorages = await Store.getAccounts(acctEmails, ['setup_done']);
+      const acctStorages = await Store.getAccounts(acctEmails, ['setup_done']);
       let functioningAccts = 0;
-      for (let email of Object.keys(acctStorages)) {
+      for (const email of Object.keys(acctStorages)) {
         functioningAccts += Number(acctStorages[email].setup_done === true);
       }
       if (!functioningAccts) {

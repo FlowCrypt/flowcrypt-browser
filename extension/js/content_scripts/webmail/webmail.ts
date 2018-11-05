@@ -20,38 +20,38 @@ import { Catch } from '../../common/catch.js';
 
 Catch.try(async () => {
 
-  let gmailWebmailStartup = async () => {
+  const gmailWebmailStartup = async () => {
     const replacePgElsIntervalMs = 1000;
     let replacePgpElsInterval: number;
     let replacer: GmailElementReplacer;
     let hostPageInfo: WebmailVariantObject;
 
-    let getUserAccountEmail = (): undefined | string => {
+    const getUserAccountEmail = (): undefined | string => {
       if (window.location.search.indexOf('&view=btop&') === -1) {  // when view=btop present, FlowCrypt should not be activated
         if (hostPageInfo.email) {
           return hostPageInfo.email;
         }
-        let acctEmailLoadingMatch = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
+        const acctEmailLoadingMatch = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
         if (acctEmailLoadingMatch !== null) { // try parse from loading div
           return acctEmailLoadingMatch[0].trim().toLowerCase();
         }
-        let emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
+        const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
         if (Str.isEmailValid(emailFromAccountDropdown)) {
           return emailFromAccountDropdown;
         }
       }
     };
 
-    let getInsightsFromHostVariables = () => {
-      let insights: WebmailVariantObject = { newDataLayer: null, newUi: null, email: null, gmailVariant: null };
+    const getInsightsFromHostVariables = () => {
+      const insights: WebmailVariantObject = { newDataLayer: null, newUi: null, email: null, gmailVariant: null };
       $('body').append(['<script>', '(function() {', // xss-direct - not sanitized because adding a <script> in intentional here
-        'let payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
-        'let e = document.getElementById("FC_VAR_PASS");',
+        'const payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
+        'const e = document.getElementById("FC_VAR_PASS");',
         'if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
         'e.innerText=payload;',
         '})();', '</script>'].join('')); // executed synchronously - we can read the vars below
       try {
-        let extracted = JSON.parse($('body > div#FC_VAR_PASS').text()).map(String);
+        const extracted = JSON.parse($('body > div#FC_VAR_PASS').text()).map(String);
         if (extracted[0] === 'true') {
           insights.newDataLayer = true;
         } else if (extracted[0] === 'false') {
@@ -76,10 +76,10 @@ Catch.try(async () => {
       return insights;
     };
 
-    let start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
+    const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
-      let storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      let canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
+      const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
+      const canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
       injector.btns();
       replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
@@ -94,12 +94,12 @@ Catch.try(async () => {
       }, replacePgElsIntervalMs);
     };
 
-    let hijackGmailHotkeys = () => {
-      let keys = Env.keyCodes();
-      let unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
+    const hijackGmailHotkeys = () => {
+      const keys = Env.keyCodes();
+      const unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
       $(document).keypress(e => {
         Catch.try(() => {
-          let causesUnsecureReply = Value.is(e.which).in(unsecureReplyKeyShortcuts);
+          const causesUnsecureReply = Value.is(e.which).in(unsecureReplyKeyShortcuts);
           if (causesUnsecureReply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
             e.stopImmediatePropagation();
             replacer.setReplyBoxEditable();
@@ -119,15 +119,15 @@ Catch.try(async () => {
     });
   };
 
-  let inboxWebmailStartup = async () => {
+  const inboxWebmailStartup = async () => {
     const replacePgpElementsIntervalMs = 1000;
     let replacePgpElsInterval: number;
     let replacer: InboxElementReplacer;
     let fullName = '';
 
-    let start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
-      let storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      let canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
+    const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
+      const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
+      const canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
       injector.btns();
       replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, null);
       await notifications.showInitial(acctEmail);
@@ -146,9 +146,9 @@ Catch.try(async () => {
       name: 'inbox',
       variant: 'standard',
       getUserAccountEmail: () => {
-        let creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
+        const creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
         if (creds.length === 2 && creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
-          let acctEmail = creds[1].innerText.toLowerCase();
+          const acctEmail = creds[1].innerText.toLowerCase();
           fullName = creds[0].innerText;
           console.info('Loading for ' + acctEmail + ' (' + fullName + ')');
           return acctEmail;

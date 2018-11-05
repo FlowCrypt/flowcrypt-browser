@@ -5,10 +5,10 @@
 import { Xss, Env } from '../../js/common/browser.js';
 import { Lang } from '../../js/common/lang.js';
 
-let urlParams = Env.urlParams(['reason']);
-let title = $('.title');
-let details = $('.details');
-let dbCorruptedHtml = `
+const urlParams = Env.urlParams(['reason']);
+const title = $('.title');
+const details = $('.details');
+const dbCorruptedHtml = `
   <p>To fix it:</p>
   <ol>
     <li>Close your browser completely (all tabs and all windows) and open it again. This often helps.</li>

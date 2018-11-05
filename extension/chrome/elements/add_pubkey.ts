@@ -12,26 +12,26 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let closeDialog = () => BrowserMsg.send(parentTabId, 'close_dialog');
+  const closeDialog = () => BrowserMsg.send(parentTabId, 'close_dialog');
 
-  for (let email of (urlParams.emails as string).split(',')) {
+  for (const email of (urlParams.emails as string).split(',')) {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
   }
 
-  let contacts = await Store.dbContactSearch(null, { has_pgp: true });
+  const contacts = await Store.dbContactSearch(null, { has_pgp: true });
 
   Xss.sanitizeAppend('select.copy_from_email', '<option value=""></option>');
-  for (let contact of contacts) {
+  for (const contact of contacts) {
     Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
   }
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {
-      let [contact] = await Store.dbContactGet(null, [$(target).val() as string]);
+      const [contact] = await Store.dbContactGet(null, [$(target).val() as string]);
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
@@ -44,8 +44,8 @@ Catch.try(async () => {
 
   $('.action_ok').click(Ui.event.handle(async () => {
     try {
-      let keyImportUi = new KeyImportUi({ checkEncryption: true });
-      let normalized = await keyImportUi.checkPub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
+      const keyImportUi = new KeyImportUi({ checkEncryption: true });
+      const normalized = await keyImportUi.checkPub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
       await Store.dbContactSave(null, Store.dbContactObj($('select.email').val() as string, undefined, 'pgp', normalized, undefined, false, Date.now()));
       closeDialog();
     } catch (e) {

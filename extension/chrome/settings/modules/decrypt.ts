@@ -10,17 +10,17 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let tabId = await BrowserMsg.requiredTabId();
+  const tabId = await BrowserMsg.requiredTabId();
 
   let origContent: string;
 
-  let attUi = new AttUI(() => ({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
+  const attUi = new AttUI(() => ({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
   attUi.initAttDialog('fineuploader', 'fineuploader_button');
-  let factory = new XssSafeFactory(acctEmail, tabId);
+  const factory = new XssSafeFactory(acctEmail, tabId);
 
   BrowserMsg.listen({
     close_dialog: () => {
@@ -29,21 +29,21 @@ Catch.try(async () => {
   }, tabId);
 
   $('.action_decrypt_and_download').click(Ui.event.prevent('double', async (self) => {
-    let ids = attUi.getAttIds();
+    const ids = attUi.getAttIds();
     if (ids.length === 1) {
       origContent = $(self).html();
       Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
-      let collected = await attUi.collectAtt(ids[0]);
+      const collected = await attUi.collectAtt(ids[0]);
       await decryptAndDownload(collected);
     } else {
       alert('Please add a file to decrypt');
     }
   }));
 
-  let decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    let result = await Pgp.msg.decrypt(acctEmail, encrypted.asBytes(), null, true);
+  const decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
+    const result = await Pgp.msg.decrypt(acctEmail, encrypted.asBytes(), null, true);
     if (result.success) {
-      let attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8! }); // uint8!: requested uint8 above
+      const attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8! }); // uint8!: requested uint8 above
       Browser.saveToDownloads(attachment);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       $('.passphrase_dialog').html(factory.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory

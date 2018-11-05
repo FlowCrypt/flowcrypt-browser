@@ -113,8 +113,8 @@ export class Api {
 
   public static auth = {
     window: (authUrl: string, winClosedByUser: () => void) => {
-      let authCodeWin = window.open(authUrl, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-      let winClosedTimer = Catch.setHandledInterval(() => {
+      const authCodeWin = window.open(authUrl, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
+      const winClosedTimer = Catch.setHandledInterval(() => {
         if (authCodeWin !== null && authCodeWin.closed) {
           clearInterval(winClosedTimer);
           winClosedByUser();
@@ -190,7 +190,7 @@ export class Api {
       }
       let responseHandled = false;
       Api.internal.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
-        let authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.random(20), scopes };
+        const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.random(20), scopes };
         BrowserMsg.listen({
           google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, closeAuthWin: () => void) => {
             if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
@@ -200,11 +200,11 @@ export class Api {
             }
           },
         }, authRequest.tabId);
-        let authCodeWin = window.open(Api.internal.apiGoogleAuthCodeUrl(authRequest), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
+        const authCodeWin = window.open(Api.internal.apiGoogleAuthCodeUrl(authRequest), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
         // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
         // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
         if (Catch.browser().name !== 'firefox') {
-          let winClosedTimer = Catch.setHandledInterval(() => {
+          const winClosedTimer = Catch.setHandledInterval(() => {
             if (authCodeWin === null || typeof authCodeWin === 'undefined') {
               clearInterval(winClosedTimer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
             } else if (authCodeWin.closed) {
@@ -222,7 +222,7 @@ export class Api {
 
   public static common = {
     msg: async (acctEmail: string, from: string = '', to: string[] = [], subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string): Promise<SendableMsg> => {
-      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       return {
         headers: primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {},
         from,
@@ -234,13 +234,13 @@ export class Api {
       };
     },
     replyCorrespondents: (acctEmail: string, addresses: string[], lastMsgSender: string | null, lastMsgRecipients: string[]) => {
-      let replyToEstimate = lastMsgRecipients;
+      const replyToEstimate = lastMsgRecipients;
       if (lastMsgSender) {
         replyToEstimate.unshift(lastMsgSender);
       }
       let replyTo: string[] = [];
       let myEmail = acctEmail;
-      for (let email of replyToEstimate) {
+      for (const email of replyToEstimate) {
         if (email) {
           if (Value.is(Str.parseEmail(email).email).in(addresses)) { // my email
             myEmail = email;
@@ -277,11 +277,11 @@ export class Api {
     scope: (scope: string[]): string[] => scope.map(s => Api.GMAIL_SCOPE_DICT[s] as string),
     hasScope: (scopes: string[], scope: string) => scopes && Value.is(Api.GMAIL_SCOPE_DICT[scope]).in(scopes),
     usersMeProfile: async (acctEmail: string | null, accessToken?: string): Promise<R.GmailUsersMeProfile> => {
-      let url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
+      const url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       if (acctEmail && !accessToken) {
         return await Api.internal.apiGoogleCall(acctEmail, 'GET', url, {});
       } else if (!acctEmail && accessToken) {
-        let contentType = 'application/json; charset=UTF-8';
+        const contentType = 'application/json; charset=UTF-8';
         return await $.ajax({ url, method: 'GET', headers: { 'Authorization': `Bearer ${accessToken}` }, crossDomain: true, contentType, async: true });
       } else {
         throw new Error('Api.gmail.users_me_profile: need either account_email or access_token');
@@ -323,8 +323,8 @@ export class Api {
       message.headers.From = message.from;
       message.headers.To = message.to.join(',');
       message.headers.Subject = message.subject;
-      let mimeMsg = await Mime.encode(message.body, message.headers, message.atts);
-      let request = Api.internal.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });
+      const mimeMsg = await Mime.encode(message.body, message.headers, message.atts);
+      const request = Api.internal.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });
       return Api.internal.apiGmailCall(acctEmail, 'POST', 'messages/send', request.body, { upload: progressCb || Value.noop }, request.contentType);
     },
     msgList: (acctEmail: string, q: string, includeDeleted: boolean = false): Promise<R.GmailMsgList> => Api.internal.apiGmailCall(acctEmail, 'GET', 'messages', {
@@ -339,14 +339,14 @@ export class Api {
     },
     labelsGet: (acctEmail: string): Promise<R.GmailLabels> => Api.internal.apiGmailCall(acctEmail, 'GET', `labels`, {}),
     attGet: async (acctEmail: string, msgId: string, attId: string, progressCb: ProgressCb | null = null): Promise<R.GmailAtt> => {
-      let r: R.GmailAtt = await Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
+      const r: R.GmailAtt = await Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
       r.data = Str.base64urlDecode(r.data);
       return r;
     },
     attGetChunk: (acctEmail: string, messageId: string, attId: string): Promise<string> => new Promise(async (resolve, reject) => {
-      let minBytes = 1000;
+      const minBytes = 1000;
       let processed = 0;
-      let processChunkAndResolve = (chunk: string) => {
+      const processChunkAndResolve = (chunk: string) => {
         if (!processed++) {
           // make json end guessing easier
           chunk = chunk.replace(/[\n\s\r]/g, '');
@@ -382,12 +382,12 @@ export class Api {
         }
       };
       Api.internal.googleApiAuthHeader(acctEmail).then(authToken => {
-        let r = new XMLHttpRequest();
+        const r = new XMLHttpRequest();
         r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attId}`, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
         let status: number;
-        let responsePollInterval = Catch.setHandledInterval(() => {
+        const responsePollInterval = Catch.setHandledInterval(() => {
           if (status >= 200 && status <= 299 && r.responseText.length >= minBytes) {
             window.clearInterval(responsePollInterval);
             processChunkAndResolve(r.responseText);
@@ -419,9 +419,9 @@ export class Api {
       }).catch(reject);
     }),
     findHeader: (apiGmailMsgObj: R.GmailMsg | R.GmailMsg$payload, headerName: string) => {
-      let node: R.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as R.GmailMsg).payload : apiGmailMsgObj as R.GmailMsg$payload;
+      const node: R.GmailMsg$payload = apiGmailMsgObj.hasOwnProperty('payload') ? (apiGmailMsgObj as R.GmailMsg).payload : apiGmailMsgObj as R.GmailMsg$payload;
       if (typeof node.headers !== 'undefined') {
-        for (let header of node.headers) {
+        for (const header of node.headers) {
           if (header.name.toLowerCase() === headerName.toLowerCase()) {
             return header.value;
           }
@@ -435,7 +435,7 @@ export class Api {
         Api.gmail.findAtts((msgOrPayloadOrPart as R.GmailMsg).payload, internalResults, internalMsgId);
       }
       if (msgOrPayloadOrPart.hasOwnProperty('parts')) {
-        for (let part of (msgOrPayloadOrPart as R.GmailMsg$payload).parts!) {
+        for (const part of (msgOrPayloadOrPart as R.GmailMsg$payload).parts!) {
           Api.gmail.findAtts(part, internalResults, internalMsgId);
         }
       }
@@ -458,7 +458,7 @@ export class Api {
         Api.gmail.findBodies(gmailMsg.payload, internalResults);
       }
       if (typeof gmailMsg.parts !== 'undefined') {
-        for (let part of gmailMsg.parts) {
+        for (const part of gmailMsg.parts) {
           Api.gmail.findBodies(part, internalResults);
         }
       }
@@ -468,23 +468,23 @@ export class Api {
       return internalResults as SendableMsgBody;
     },
     fetchAtts: async (acctEmail: string, atts: Att[]) => {
-      let responses = await Promise.all(atts.map(a => Api.gmail.attGet(acctEmail, a.msgId!, a.id!)));
-      for (let i of responses.keys()) {
+      const responses = await Promise.all(atts.map(a => Api.gmail.attGet(acctEmail, a.msgId!, a.id!)));
+      for (const i of responses.keys()) {
         atts[i].setData(responses[i].data);
       }
     },
     searchContacts: async (acctEmail: string, userQuery: string, knownContacts: Contact[], chunkedCb: (r: ProviderContactsResults) => void) => {
       // This will keep triggering callback with new emails as they are being discovered
-      let gmailQuery = ['is:sent', Api.GMAIL_USELESS_CONTACTS_FILTER];
+      const gmailQuery = ['is:sent', Api.GMAIL_USELESS_CONTACTS_FILTER];
       if (userQuery) {
-        let variationsOfTo = userQuery.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
+        const variationsOfTo = userQuery.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
         if (!Value.is(userQuery).in(variationsOfTo)) {
           variationsOfTo.push(userQuery);
         }
         gmailQuery.push(`(to:${variationsOfTo.join(' OR to:')})`);
       }
-      let filteredContacts = knownContacts.filter(c => Str.isEmailValid(c.email));
-      for (let contact of filteredContacts) {
+      const filteredContacts = knownContacts.filter(c => Str.isEmailValid(c.email));
+      for (const contact of filteredContacts) {
         gmailQuery.push(`-to:${contact.email}`);
       }
       await Api.internal.apiGmailLoopThroughEmailsToCompileContacts(acctEmail, gmailQuery.join(' '), chunkedCb);
@@ -497,18 +497,18 @@ export class Api {
     *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
     */
     extractArmoredBlock: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<string> => {
-      let gmailMsg = await Api.gmail.msgGet(acctEmail, msgId, format);
+      const gmailMsg = await Api.gmail.msgGet(acctEmail, msgId, format);
       if (format === 'full') {
-        let bodies = Api.gmail.findBodies(gmailMsg);
-        let atts = Api.gmail.findAtts(gmailMsg);
-        let armoredMsgFromBodies = Pgp.armor.clip(Str.base64urlDecode(bodies['text/plain'] || '')) || Pgp.armor.clip(Pgp.armor.strip(Str.base64urlDecode(bodies['text/html'] || '')));
+        const bodies = Api.gmail.findBodies(gmailMsg);
+        const atts = Api.gmail.findAtts(gmailMsg);
+        const armoredMsgFromBodies = Pgp.armor.clip(Str.base64urlDecode(bodies['text/plain'] || '')) || Pgp.armor.clip(Pgp.armor.strip(Str.base64urlDecode(bodies['text/html'] || '')));
         if (armoredMsgFromBodies) {
           return armoredMsgFromBodies;
         } else if (atts.length) {
-          for (let att of atts) {
+          for (const att of atts) {
             if (att.treatAs() === 'message') {
               await Api.gmail.fetchAtts(acctEmail, [att]);
-              let armoredMsg = Pgp.armor.clip(att.asText());
+              const armoredMsg = Pgp.armor.clip(att.asText());
               if (armoredMsg) {
                 return armoredMsg;
               } else {
@@ -521,9 +521,9 @@ export class Api {
           throw { code: null, internal: 'format', message: 'No attachments', data: JSON.stringify(gmailMsg.payload, undefined, 2) };
         }
       } else { // format === raw
-        let mimeMsg = await Mime.decode(Str.base64urlDecode(gmailMsg.raw!));
+        const mimeMsg = await Mime.decode(Str.base64urlDecode(gmailMsg.raw!));
         if (mimeMsg.text !== undefined) {
-          let armoredMsg = Pgp.armor.clip(mimeMsg.text); // todo - the message might be in attachments
+          const armoredMsg = Pgp.armor.clip(mimeMsg.text); // todo - the message might be in attachments
           if (armoredMsg) {
             return armoredMsg;
           } else {
@@ -535,25 +535,25 @@ export class Api {
       }
     },
     fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader: async (acctEmail: string, q: string, headerNames: string[]) => {
-      let { messages } = await Api.gmail.msgList(acctEmail, q, false);
+      const { messages } = await Api.gmail.msgList(acctEmail, q, false);
       return await Api.internal.apiGmailFetchMsgsSequentiallyFromListAndExtractFirstAvailableHeader(acctEmail, messages || [], headerNames);
     },
     fetchKeyBackups: async (acctEmail: string) => {
-      let res = await Api.gmail.msgList(acctEmail, Api.gmail.query.backups(acctEmail), true);
+      const res = await Api.gmail.msgList(acctEmail, Api.gmail.query.backups(acctEmail), true);
       if (!res.messages) {
         return [];
       }
-      let msgIds = res.messages.map(m => m.id);
-      let msgs = await Api.gmail.msgsGet(acctEmail, msgIds, 'full');
+      const msgIds = res.messages.map(m => m.id);
+      const msgs = await Api.gmail.msgsGet(acctEmail, msgIds, 'full');
       let atts: Att[] = [];
-      for (let msg of msgs) {
+      for (const msg of msgs) {
         atts = atts.concat(Api.gmail.findAtts(msg));
       }
       await Api.gmail.fetchAtts(acctEmail, atts);
-      let keys: OpenPGP.key.Key[] = [];
-      for (let att of atts) {
+      const keys: OpenPGP.key.Key[] = [];
+      for (const att of atts) {
         try {
-          let key = openpgp.key.readArmored(att.asText()).keys[0];
+          const key = openpgp.key.readArmored(att.asText()).keys[0];
           if (key.isPrivate()) {
             keys.push(key);
           }
@@ -588,12 +588,12 @@ export class Api {
       pubkey,
     }),
     diagnoseKeyserverPubkeys: async (acctEmail: string) => {
-      let diagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} as Dict<{ attested: boolean, pubkey: string | null, match: boolean }> };
-      let { addresses } = await Store.getAcct(acctEmail, ['addresses']);
-      let storedKeys = await Store.keysGet(acctEmail);
-      let storedKeysLongids = storedKeys.map(ki => ki.longid);
-      let { results } = await Api.attester.lookupEmail(Value.arr.unique([acctEmail].concat(addresses || [])));
-      for (let pubkeySearchResult of results) {
+      const diagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} as Dict<{ attested: boolean, pubkey: string | null, match: boolean }> };
+      const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
+      const storedKeys = await Store.keysGet(acctEmail);
+      const storedKeysLongids = storedKeys.map(ki => ki.longid);
+      const { results } = await Api.attester.lookupEmail(Value.arr.unique([acctEmail].concat(addresses || [])));
+      for (const pubkeySearchResult of results) {
         if (!pubkeySearchResult.pubkey) {
           diagnosis.hasPubkeyMissing = true;
           diagnosis.results[pubkeySearchResult.email] = { attested: false, pubkey: null, match: false };
@@ -610,12 +610,12 @@ export class Api {
     },
     packet: {
       createSign: async (values: Dict<string>, decryptedPrv: OpenPGP.key.Key) => {
-        let lines: string[] = [];
-        for (let key of Object.keys(values)) {
+        const lines: string[] = [];
+        for (const key of Object.keys(values)) {
           lines.push(key + ':' + values[key]);
         }
-        let contentText = lines.join('\n');
-        let packet = Api.attester.packet.parse(Api.internal.apiAttesterPacketArmor(contentText));
+        const contentText = lines.join('\n');
+        const packet = Api.attester.packet.parse(Api.internal.apiAttesterPacketArmor(contentText));
         if (packet.success !== true) {
           throw { code: null, message: packet.error, internal: 'parse' };
         }
@@ -623,7 +623,7 @@ export class Api {
       },
       isValidHashFormat: (v: string) => /^[A-F0-9]{40}$/.test(v),
       parse: (text: string): ParsedAttest => {
-        let acceptedValues = {
+        const acceptedValues = {
           'ACT': 'action',
           'ATT': 'attester',
           'ADD': 'email_hash',
@@ -631,19 +631,19 @@ export class Api {
           'OLD': 'fingerprint_old',
           'RAN': 'random',
         } as Dict<string>;
-        let result: ParsedAttest = {
+        const result: ParsedAttest = {
           success: false,
           content: {},
           error: null as string | null,
           text: null as string | null,
         };
-        let packetHeaders = Pgp.armor.headers('attestPacket', 're');
-        let matches = text.match(RegExp(packetHeaders.begin + '([^]+)' + packetHeaders.end, 'm'));
+        const packetHeaders = Pgp.armor.headers('attestPacket', 're');
+        const matches = text.match(RegExp(packetHeaders.begin + '([^]+)' + packetHeaders.end, 'm'));
         if (matches && matches[1]) {
           result.text = matches[1].replace(/^\s+|\s+$/g, '');
-          let lines = result.text.split('\n');
-          for (let line of lines) {
-            let lineParts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
+          const lines = result.text.split('\n');
+          for (const line of lines) {
+            const lineParts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
             if (lineParts.length !== 2) {
               result.error = 'Wrong content line format';
               result.content = {};
@@ -722,10 +722,10 @@ export class Api {
       metrics: null,
     }),
     accountLogin: async (acctEmail: string, token: string | null = null): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
-      let authInfo = await Store.authInfo();
-      let uuid = authInfo.uuid || Pgp.hash.sha1(Str.random(40));
-      let account = authInfo.acctEmail || acctEmail;
-      let response: R.FcAccountLogin = await Api.internal.apiFcCall('account/login', {
+      const authInfo = await Store.authInfo();
+      const uuid = authInfo.uuid || Pgp.hash.sha1(Str.random(40));
+      const account = authInfo.acctEmail || acctEmail;
+      const response: R.FcAccountLogin = await Api.internal.apiFcCall('account/login', {
         account,
         uuid,
         token,
@@ -740,12 +740,12 @@ export class Api {
       emails,
     }) as Promise<R.FcAccountCheck>,
     accountCheckSync: async () => { // callbacks true on updated, false not updated, null for could not fetch
-      let emails = await Store.acctEmailsGet();
+      const emails = await Store.acctEmailsGet();
       if (emails.length) {
-        let response = await Api.fc.accountCheck(emails);
-        let authInfo = await Store.authInfo();
-        let subscription = await Store.subscription();
-        let localStorageUpdate: GlobalStore = {};
+        const response = await Api.fc.accountCheck(emails);
+        const authInfo = await Store.authInfo();
+        const subscription = await Store.subscription();
+        const localStorageUpdate: GlobalStore = {};
         if (response.email) {
           if (response.email !== authInfo.acctEmail) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
@@ -759,7 +759,7 @@ export class Api {
           }
         }
         if (response.subscription) {
-          let rs = response.subscription;
+          const rs = response.subscription;
           if (rs.level !== subscription.level || rs.method !== subscription.method || rs.expire !== subscription.expire || subscription.active !== !rs.expired) {
             localStorageUpdate.cryptup_account_subscription = { active: !rs.expired, method: rs.method, level: rs.level, expire: rs.expire };
           }
@@ -778,18 +778,18 @@ export class Api {
       }
     },
     accountUpdate: async (updateValues?: Dict<Serializable>): Promise<R.FcAccountUpdate> => {
-      let authInfo = await Store.authInfo();
-      let request = { account: authInfo.acctEmail, uuid: authInfo.uuid } as Dict<Serializable>;
+      const authInfo = await Store.authInfo();
+      const request = { account: authInfo.acctEmail, uuid: authInfo.uuid } as Dict<Serializable>;
       if (updateValues) {
-        for (let k of Object.keys(updateValues)) {
+        for (const k of Object.keys(updateValues)) {
           request[k] = updateValues[k];
         }
       }
       return await Api.internal.apiFcCall('account/update', request);
     },
     accountSubscribe: async (product: string, method: string, paymentSourceToken: string | null = null): Promise<R.FcAccountSubscribe> => {
-      let authInfo = await Store.authInfo();
-      let response: R.FcAccountSubscribe = await Api.internal.apiFcCall('account/subscribe', {
+      const authInfo = await Store.authInfo();
+      const response: R.FcAccountSubscribe = await Api.internal.apiFcCall('account/subscribe', {
         account: authInfo.acctEmail,
         uuid: authInfo.uuid,
         method,
@@ -801,13 +801,13 @@ export class Api {
     },
     messagePresignFiles: async (atts: Att[], authMethod: FcAuthMethods): Promise<R.FcMsgPresignFiles> => {
       let response: R.FcMsgPresignFiles;
-      let lengths = atts.map(a => a.length);
+      const lengths = atts.map(a => a.length);
       if (!authMethod) {
         response = await Api.internal.apiFcCall('message/presign_files', {
           lengths,
         });
       } else if (authMethod === 'uuid') {
-        let authInfo = await Store.authInfo();
+        const authInfo = await Store.authInfo();
         response = await Api.internal.apiFcCall('message/presign_files', {
           account: authInfo.acctEmail,
           uuid: authInfo.uuid,
@@ -832,20 +832,20 @@ export class Api {
       if (encryptedDataArmored.length > 100000) {
         throw { code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.' };
       }
-      let content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataArmored });
+      const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataArmored });
       if (!authMethod) {
         return await Api.internal.apiFcCall('message/upload', { content }, 'FORM');
       } else {
-        let authInfo = await Store.authInfo();
+        const authInfo = await Store.authInfo();
         return await Api.internal.apiFcCall('message/upload', { account: authInfo.acctEmail, uuid: authInfo.uuid, content }, 'FORM');
       }
     },
     messageToken: async (): Promise<R.FcMsgToken> => {
-      let authInfo = await Store.authInfo();
+      const authInfo = await Store.authInfo();
       return await Api.internal.apiFcCall('message/token', { account: authInfo.acctEmail, uuid: authInfo.uuid });
     },
     messageExpiration: async (adminCodes: string[], addDays: null | number = null): Promise<R.ApirFcMsgExpiration> => {
-      let authInfo = await Store.authInfo();
+      const authInfo = await Store.authInfo();
       return await Api.internal.apiFcCall('message/expiration', { account: authInfo.acctEmail, uuid: authInfo.uuid, admin_codes: adminCodes, add_days: addDays });
     },
     messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.apiFcCall('message/reply', {
@@ -872,13 +872,13 @@ export class Api {
 
   public static aws = {
     s3Upload: (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
-      let progress = Value.arr.zeroes(items.length);
-      let promises: Promise<void>[] = [];
+      const progress = Value.arr.zeroes(items.length);
+      const promises: Promise<void>[] = [];
       if (!items.length) {
         return Promise.resolve(promises);
       }
-      for (let i of items.keys()) {
-        let fields = items[i].fields;
+      for (const i of items.keys()) {
+        const fields = items[i].fields;
         fields.file = new Att({ name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].att.data() });
         promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
@@ -894,7 +894,7 @@ export class Api {
   };
 
   public static download = (url: string, progress: ProgressCb | null = null): Promise<Uint8Array> => new Promise((resolve, reject) => {
-    let request = new XMLHttpRequest();
+    const request = new XMLHttpRequest();
     request.open('GET', url, true);
     request.responseType = 'arraybuffer';
     if (typeof progress === 'function') {
@@ -907,7 +907,7 @@ export class Api {
 
   private static internal = {
     getAjaxProgressXhr: (progressCbs?: ProgressCbs) => {
-      let progressPeportingXhr = new (window as FcWindow).XMLHttpRequest();
+      const progressPeportingXhr = new (window as FcWindow).XMLHttpRequest();
       if (progressCbs && typeof progressCbs.upload === 'function') {
         progressPeportingXhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
           progressCbs.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
@@ -929,8 +929,8 @@ export class Api {
         contentType = 'application/json; charset=UTF-8';
       } else if (fmt === 'FORM') {
         formattedData = new FormData();
-        for (let formFieldName of Object.keys(fields)) {
-          let a: Att | string = fields[formFieldName];
+        for (const formFieldName of Object.keys(fields)) {
+          const a: Att | string = fields[formFieldName];
           if (a instanceof Att) {
             formattedData.append(formFieldName, new Blob([a.data()], { type: a.type }), a.name); // xss-none
           } else {
@@ -941,7 +941,7 @@ export class Api {
       } else {
         throw Error('unknown format:' + String(fmt));
       }
-      let request: JQueryAjaxSettings = {
+      const request: JQueryAjaxSettings = {
         xhr: () => Api.internal.getAjaxProgressXhr(progress),
         url: url + path,
         method,
@@ -955,7 +955,7 @@ export class Api {
         timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
       };
       try {
-        let response = await $.ajax(request);
+        const response = await $.ajax(request);
         if (response && typeof response === 'object' && typeof response.error === 'object') {
           throw response as StandardError;
         }
@@ -978,7 +978,7 @@ export class Api {
       login_hint: authReq.acctEmail,
     }),
     googleAuthSaveTokens: async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
-      let toSave: AccountStore = {
+      const toSave: AccountStore = {
         google_token_access: tokensObj.access_token,
         google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
         google_token_scopes: scopes,
@@ -1007,9 +1007,9 @@ export class Api {
     }) as any as Promise<GoogleAuthTokenInfo>,
     googleAuthWinResHandler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
       if (result.result === 'Success') {
-        let tokensObj = await Api.internal.googleAuthGetTokens(result.params.code);
-        let _ = await Api.internal.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        let { emailAddress: acctEmail } = await Api.gmail.usersMeProfile(null, tokensObj.access_token);
+        const tokensObj = await Api.internal.googleAuthGetTokens(result.params.code);
+        const _ = await Api.internal.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        const { emailAddress: acctEmail } = await Api.gmail.usersMeProfile(null, tokensObj.access_token);
         if (result.state.acctEmail !== acctEmail) {
           Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress');
         }
@@ -1038,15 +1038,14 @@ export class Api {
       }
     },
     apiGoogleCall: async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {
-      let data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
-      let headers = { Authorization: await Api.internal.googleApiAuthHeader(acctEmail) };
-      let request = { url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true };
+      const data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
+      const headers = { Authorization: await Api.internal.googleApiAuthHeader(acctEmail) };
+      const request = { url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true };
       return await Api.internal.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
     },
     apiGmailCall: async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | null, progress?: ProgressCbs, contentType?: string) => {
       progress = progress || {};
-      let data;
-      let url;
+      let data, url;
       if (typeof progress!.upload === 'function') { // substituted with {} above
         url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + path + '?uploadType=multipart';
         data = params || undefined;
@@ -1059,9 +1058,9 @@ export class Api {
         }
       }
       contentType = contentType || 'application/json; charset=UTF-8';
-      let headers = { 'Authorization': await Api.internal.googleApiAuthHeader(acctEmail) };
-      let xhr = () => Api.internal.getAjaxProgressXhr(progress);
-      let request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
+      const headers = { 'Authorization': await Api.internal.googleApiAuthHeader(acctEmail) };
+      const xhr = () => Api.internal.getAjaxProgressXhr(progress);
+      const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
       return await Api.internal.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
     },
     /**
@@ -1072,16 +1071,16 @@ export class Api {
       if (!acctEmail) {
         throw new Error('missing account_email in api_gmail_call');
       }
-      let storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
+      const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
       if (!storage.google_token_access || !storage.google_token_refresh) {
         throw new Error('Account not connected to FlowCrypt Browser Extension');
       } else if (Api.internal.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
         return `Bearer ${storage.google_token_access}`;
       } else { // refresh token
-        let refreshTokenRes = await Api.internal.googleAuthRefreshToken(storage.google_token_refresh);
-        let _ = await Api.internal.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        const refreshTokenRes = await Api.internal.googleAuthRefreshToken(storage.google_token_refresh);
+        const _ = await Api.internal.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
         await Api.internal.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
-        let auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
+        const auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
         if (Api.internal.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
           return `Bearer ${auth.google_token_access}`;
         } else {
@@ -1092,18 +1091,18 @@ export class Api {
     apiGoogleAuthPopupPrepareAuthReqScopes: async (acctEmail: string | null, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {
       let currentTokensScopes: string[] = [];
       if (acctEmail) {
-        let storage = await Store.getAcct(acctEmail, ['google_token_scopes']);
+        const storage = await Store.getAcct(acctEmail, ['google_token_scopes']);
         currentTokensScopes = storage.google_token_scopes || [];
       }
-      let authReqScopes = requestedScopes || [];
-      for (let scope of Api.GOOGLE_OAUTH2!.scopes) {
+      const authReqScopes = requestedScopes || [];
+      for (const scope of Api.GOOGLE_OAUTH2!.scopes) {
         if (!Value.is(scope).in(requestedScopes)) {
           if (scope !== Api.gmail.scope(['read'])[0] || !omitReadScope) { // leave out read messages permission if user chose so
             authReqScopes.push(scope);
           }
         }
       }
-      for (let scope of currentTokensScopes) {
+      for (const scope of currentTokensScopes) {
         if (!Value.is(scope).in(requestedScopes)) {
           authReqScopes.push(scope);
         }
@@ -1111,9 +1110,9 @@ export class Api {
       return authReqScopes;
     },
     encodeAsMultipartRelated: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
-      let boundary = 'this_sucks_' + Str.random(10);
+      const boundary = 'this_sucks_' + Str.random(10);
       let body = '';
-      for (let type of Object.keys(parts)) {
+      for (const type of Object.keys(parts)) {
         body += '--' + boundary + '\n';
         body += 'Content-Type: ' + type + '\n';
         if (Value.is('json').in(type as string)) {
@@ -1129,11 +1128,11 @@ export class Api {
     apiGmailLoopThroughEmailsToCompileContacts: async (acctEmail: string, query: string, chunkedCb: (r: ProviderContactsResults) => void) => {
       let allResults: Contact[] = [];
       while (true) {
-        let headers = await Api.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['to', 'date']);
+        const headers = await Api.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['to', 'date']);
         if (headers.to) {
-          let rawParsedResults = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
-          let newValidResultPairs = rawParsedResults.filter(r => Str.isEmailValid(r.address));
-          let newValidResults = newValidResultPairs.map(r => Store.dbContactObj(r.address, r.name, undefined, undefined, undefined, false, undefined));
+          const rawParsedResults = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
+          const newValidResultPairs = rawParsedResults.filter(r => Str.isEmailValid(r.address));
+          const newValidResults = newValidResultPairs.map(r => Store.dbContactObj(r.address, r.name, undefined, undefined, undefined, false, undefined));
           query += rawParsedResults.map(raw => ` -to:"${raw.address}"`).join('');
           allResults = allResults.concat(newValidResults);
           chunkedCb({ new: newValidResults, all: allResults });
@@ -1148,11 +1147,11 @@ export class Api {
       }
     },
     apiGmailFetchMsgsSequentiallyFromListAndExtractFirstAvailableHeader: async (acctEmail: string, messages: R.GmailMsgList$message[], headerNames: string[]): Promise<FlatHeaders> => {
-      for (let message of messages) {
-        let headerVals: FlatHeaders = {};
-        let msgGetRes = await Api.gmail.msgGet(acctEmail, message.id, 'metadata');
-        for (let headerName of headerNames) {
-          let value = Api.gmail.findHeader(msgGetRes, headerName);
+      for (const message of messages) {
+        const headerVals: FlatHeaders = {};
+        const msgGetRes = await Api.gmail.msgGet(acctEmail, message.id, 'metadata');
+        for (const headerName of headerNames) {
+          const value = Api.gmail.findHeader(msgGetRes, headerName);
           if (value !== null) {
             headerVals[headerName] = value;
           } else {

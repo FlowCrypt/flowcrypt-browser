@@ -62,7 +62,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   setReplyBoxEditable = () => {
-    let replyContainerIframe = $('.reply_message_iframe_container > iframe').first();
+    const replyContainerIframe = $('.reply_message_iframe_container > iframe').first();
     if (replyContainerIframe.length) {
       $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getConvoParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
@@ -72,12 +72,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    let params = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMessageId: threadId };
+    const params = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMessageId: threadId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
   scrollToBottomOfConvo = () => {
-    let scrollableEl = $(this.sel.convoRootScrollable).get(0);
+    const scrollableEl = $(this.sel.convoRootScrollable).get(0);
     if (scrollableEl) {
       scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
@@ -86,15 +86,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceArmoredBlocks = () => {
-    let emailsEontainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
-    for (let emailContainer of emailsEontainingPgpBlock.get()) {
+    const emailsEontainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
+    for (const emailContainer of emailsEontainingPgpBlock.get()) {
       $(emailContainer).addClass('evaluated');
-      let senderEmail = this.getSenderEmail(emailContainer);
-      let isOutgoing = Value.is(senderEmail).in(this.addresses);
-      let replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
+      const senderEmail = this.getSenderEmail(emailContainer);
+      const isOutgoing = Value.is(senderEmail).in(this.addresses);
+      const replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
-        let newSel = this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+        const newSel = this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       }
     }
   }
@@ -105,14 +105,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceConvoBtns = (force: boolean = false) => {
-    let convoUpperIcons = $('div.ade:visible');
-    let useEncryptionInThisConvo = $('iframe.pgp_block').filter(':visible').length || force;
+    const convoUpperIcons = $('div.ade:visible');
+    const useEncryptionInThisConvo = $('iframe.pgp_block').filter(':visible').length || force;
     // reply buttons
     if (useEncryptionInThisConvo) {
-      let visibleReplyBtns = $('td.acX:visible');
+      const visibleReplyBtns = $('td.acX:visible');
       if (visibleReplyBtns.not('.replaced').length) { // last reply button in convo gets replaced
-        let convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced');
-        let hasVisibleReplacements = visibleReplyBtns.filter('.replaced').length > 0;
+        const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced');
+        const hasVisibleReplacements = visibleReplyBtns.filter('.replaced').length > 0;
         convoReplyBtnsToReplace.addClass('replaced').each((i, replyBtn) => {
           if (i + 1 < convoReplyBtnsToReplace.length || hasVisibleReplacements) {
             $(replyBtn).addClass('replaced').text(''); // hide all except last
@@ -145,13 +145,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceFcTags = () => {
-    let allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
-    for (let contenteditableEl of allContenteditableEls.get()) {
-      let contenteditable = $(contenteditableEl);
-      let foundFcLink = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
+    const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
+    for (const contenteditableEl of allContenteditableEls.get()) {
+      const contenteditable = $(contenteditableEl);
+      const foundFcLink = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
       if (foundFcLink !== null) {
         let button;
-        let [fullLink, name, buttonHrefId] = foundFcLink;
+        const [fullLink, name, buttonHrefId] = foundFcLink;
         if (name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         } else if (name === 'draft_reply') {
@@ -169,17 +169,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceAtts = async () => {
-    for (let attsContainerEl of $(this.sel.attsContainerInner).get()) {
-      let attsContainer = $(attsContainerEl);
-      let newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
-      let newPgpAttsNames = Value.arr.fromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
+    for (const attsContainerEl of $(this.sel.attsContainerInner).get()) {
+      const attsContainer = $(attsContainerEl);
+      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
+      const newPgpAttsNames = Value.arr.fromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
       if (newPgpAtts.length) {
-        let msgId = this.determineMsgId(attsContainer);
+        const msgId = this.determineMsgId(attsContainer);
         if (msgId) {
           if (this.canReadEmails) {
             Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
             try {
-              let msg = await Api.gmail.msgGet(this.acctEmail, msgId, 'full');
+              const msg = await Api.gmail.msgGet(this.acctEmail, msgId, 'full');
               await this.processAtts(msgId, Api.gmail.findAtts(msg), attsContainer, false, newPgpAttsNames);
             } catch (e) {
               if (Api.err.isAuthPopupNeeded(e)) {
@@ -188,7 +188,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               $(newPgpAtts).find('.attachment_loader').text('Failed to load');
             }
           } else {
-            let statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
+            const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
             $(newPgpAtts).prepend(this.factory.embeddedAttaStatus(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
               BrowserMsg.send(null, 'settings', { acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
@@ -202,15 +202,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
     let msgEl = this.getMsgBodyEl(msgId);
-    let senderEmail = this.getSenderEmail(msgEl);
-    let isOutgoing = Value.is(senderEmail).in(this.addresses);
+    const senderEmail = this.getSenderEmail(msgEl);
+    const isOutgoing = Value.is(senderEmail).in(this.addresses);
     attsContainerInner = $(attsContainerInner);
     attsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let nRenderedAtts = attMetas.length;
-    for (let a of attMetas) {
+    for (const a of attMetas) {
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      let treatAs = a.treatAs();
-      let attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
+      const treatAs = a.treatAs();
+      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
       if (treatAs !== 'standard') {
         this.hideAtt(attSel, attsContainerInner);
         nRenderedAtts--;
@@ -218,11 +218,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           attsContainerInner.prepend(this.factory.embeddedAtta(a)); // xss-safe-factory
           nRenderedAtts++;
         } else if (treatAs === 'message') {
-          let isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
-          let isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
+          const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
+          const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
           if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
-            let fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-            let openpgpType = Pgp.msg.type(fileChunk);
+            const fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+            const openpgpType = Pgp.msg.type(fileChunk);
             if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
               nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
             } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
@@ -237,14 +237,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
           nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
         } else if (treatAs === 'signature') {
-          let signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
-          let embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
-          let replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
+          const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
+          const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
+          const replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
           msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
         }
       } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
-        let fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-        let openpgpType = Pgp.msg.type(fileChunk);
+        const fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+        const openpgpType = Pgp.msg.type(fileChunk);
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
           nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           this.hideAtt(attSel, attsContainerInner);
@@ -259,14 +259,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (nRenderedAtts === 0) {
       attsContainerInner.parents(this.sel.attsContainerOuter).first().hide();
     }
-    let notProcessedAttsLoaders = attsContainerInner.find('.attachment_loader');
+    const notProcessedAttsLoaders = attsContainerInner.find('.attachment_loader');
     if (!skipGoogleDrive && notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
-      let googleDriveAtts: Att[] = [];
+      const googleDriveAtts: Att[] = [];
       notProcessedAttsLoaders.each((i, loaderEl) => {
-        let downloadUrl = $(loaderEl).parent().attr('download_url');
+        const downloadUrl = $(loaderEl).parent().attr('download_url');
         if (downloadUrl) {
-          let meta = downloadUrl.split(':');
+          const meta = downloadUrl.split(':');
           googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted' }));
         } else {
           console.info('Missing Google Drive attachments download_url');
@@ -285,7 +285,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAtts++;
       return nRenderedAtts;
     }
-    let openpgpType = Pgp.msg.type(downloadedAtt.data);
+    const openpgpType = Pgp.msg.type(downloadedAtt.data);
     if (openpgpType && openpgpType.type === 'publicKey') {
       msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data, isOutgoing)); // xss-safe-factory
     } else {
@@ -297,8 +297,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private filterAtts = (potentialMatches: JQueryEl | HTMLElement, patterns: string[]) => {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
-      let name = this.innerText.trim();
-      for (let pattern of patterns) {
+      const name = this.innerText.trim();
+      for (const pattern of patterns) {
         if (pattern.indexOf('*.') === 0) { // wildcard
           if (name.endsWith(pattern.substr(1))) {
             return true;
@@ -348,11 +348,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     // The first time we update element, it should be completely replaced so that Gmail JS will lose reference to the original element and stop re-rendering it
     // Gmail message re-rendering causes the PGP message to flash back and forth, confusing the user and wasting cpu time
     // Subsequent times, it can be updated naturally
-    let msgBody = $(el);
-    let replace = !msgBody.is('.message_inner_body'); // not a previously replaced element, needs replacing
+    const msgBody = $(el);
+    const replace = !msgBody.is('.message_inner_body'); // not a previously replaced element, needs replacing
     if (method === 'set') {
       if (replace) {
-        let parent = msgBody.parent();
+        const parent = msgBody.parent();
         msgBody.replaceWith(this.wrapMsgBodyEl(newHtmlContent_MUST_BE_XSS_SAFE)); // xss-safe-value
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
@@ -360,7 +360,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
     } else if (method === 'append') {
       if (replace) {
-        let parent = msgBody.parent();
+        const parent = msgBody.parent();
         msgBody.replaceWith(this.wrapMsgBodyEl(msgBody.html() + newHtmlContent_MUST_BE_XSS_SAFE)); // xss-reinsert // xss-safe-value
         return parent.find('.message_inner_body'); // need to return new selector - old element was replaced
       } else {
@@ -388,7 +388,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private getConvoParams = (convoRootEl: JQueryEl) => {
-    let headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domGetMsgSender(convoRootEl), this.domGetMsgRecipients(convoRootEl));
+    const headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domGetMsgSender(convoRootEl), this.domGetMsgRecipients(convoRootEl));
     return {
       subject: this.domGetMsgSubject(convoRootEl),
       replyTo: headers.to,
@@ -404,24 +404,24 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceStandardReplyBox = (editable: boolean = false, force: boolean = false) => {
-    let newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
+    const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
-      let convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
-      let doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length || (convoRootEl.is(':visible') && force));
-      let alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
+      const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
+      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length || (convoRootEl.is(':visible') && force));
+      const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
-        for (let replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
-          let replyBox = $(replyBoxEl);
+        for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
+          const replyBox = $(replyBoxEl);
           if (midConvoDraft || alreadyHasEncryptedReplyBox) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             replyBox.attr('class', 'reply_message_evaluated');
             Xss.sanitizeAppend(replyBox, '<font>&nbsp;&nbsp;Draft skipped</font>');
             replyBox.children(':not(font)').hide();
           } else {
-            let secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(this.getConvoParams(convoRootEl!), editable)}</div>`;
+            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(this.getConvoParams(convoRootEl!), editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
-              let origChildren = replyBox.children();
+              const origChildren = replyBox.children();
               replyBox.addClass('reply_message_evaluated').append(secureReplyBoxXssSafe); // xss-safe-factory
               if (this.gmailVariant === 'new') { // even hiding causes issues in new gmail (encrypted -> see original -> reply -> archive)
                 origChildren.attr('style', this.cssHidden);
@@ -441,23 +441,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private evaluateStandardComposeReceivers = async () => {
     if (!this.currentlyEvaluatingStandardComposeBoxRecipients) {
       this.currentlyEvaluatingStandardComposeBoxRecipients = true;
-      for (let standardComposeWinEl of $(this.sel.standardComposeWin).get()) {
-        let standardComposeWin = $(standardComposeWinEl);
-        let recipients = standardComposeWin.find('div.az9 span[email]').get().map(e => $(e).attr('email')!).filter(e => !!e);
+      for (const standardComposeWinEl of $(this.sel.standardComposeWin).get()) {
+        const standardComposeWin = $(standardComposeWinEl);
+        const recipients = standardComposeWin.find('div.az9 span[email]').get().map(e => $(e).attr('email')!).filter(e => !!e);
         if (!recipients.length) {
           standardComposeWin.find('.recipients_use_encryption').remove();
         } else {
           let everyoneUsesEncryption = true;
-          for (let email of recipients) {
+          for (const email of recipients) {
             if (email) {
-              let cache = this.recipientHasPgpCache[email];
+              const cache = this.recipientHasPgpCache[email];
               if (!Str.isEmailValid(email)) {
                 everyoneUsesEncryption = false;
                 break;
               }
               if (typeof cache === 'undefined') {
                 try {
-                  let { results: [result] } = await Api.attester.lookupEmail([email]);
+                  const { results: [result] } = await Api.attester.lookupEmail([email]);
                   this.recipientHasPgpCache[email] = Boolean(result.pubkey); // true or false
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;
@@ -481,7 +481,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           }
           if (everyoneUsesEncryption) {
             if (!standardComposeWin.find('.recipients_use_encryption').length) {
-              let prependable = standardComposeWin.find('div.az9 span[email]').first().parents('form').first();
+              const prependable = standardComposeWin.find('div.az9 span[email]').first().parents('form').first();
               prependable.prepend(this.factory.btnRecipientsUseEncryption('gmail')); // xss-safe-factory
               prependable.find('a').click(Ui.event.handle(() => this.injector.openComposeWin()));
             }

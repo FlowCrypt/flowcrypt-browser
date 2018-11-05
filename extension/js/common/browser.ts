@@ -43,17 +43,17 @@ export class Browser {
   }
 
   public static objUrlConsume = async (url: string) => {
-    let uint8 = await Api.download(url, null);
+    const uint8 = await Api.download(url, null);
     window.URL.revokeObjectURL(url);
     return uint8;
   }
 
   public static saveToDownloads = (att: Att, renderIn: JQuery<HTMLElement> | null = null) => {
-    let blob = new Blob([att.data()], { type: att.type });
+    const blob = new Blob([att.data()], { type: att.type });
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, att.name);
     } else {
-      let a = window.document.createElement('a');
+      const a = window.document.createElement('a');
       a.href = window.URL.createObjectURL(blob);
       a.download = Xss.escape(att.name);
       if (renderIn) {
@@ -75,7 +75,7 @@ export class Browser {
         if (typeof a.click === 'function') {
           a.click();
         } else { // safari
-          let e = document.createEvent('MouseEvents');
+          const e = document.createEvent('MouseEvents');
           // @ts-ignore - safari only. expected 15 arguments, but works well with 4
           e.initMouseEvent('click', true, true, window);
           a.dispatchEvent(e);
@@ -128,7 +128,7 @@ export class Env {
     if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
       return undefined; // param name not found in param name dict
     }
-    let rawValue = rawParms[rawParamNameDict[expectedParamName]];
+    const rawValue = rawParms[rawParamNameDict[expectedParamName]];
     if (typeof rawValue === 'undefined') {
       return undefined; // original param name not found in raw params
     }
@@ -142,7 +142,7 @@ export class Env {
     rawParamNameDict[urlParamName] = urlParamName;
     rawParamNameDict[Env.snakeCaseToCamelCase(urlParamName)] = urlParamName;
     rawParamNameDict[Env.camelCaseToSnakeCase(urlParamName)] = urlParamName;
-    let shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
+    const shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
     rawParamNameDict[Env.snakeCaseToCamelCase(shortened)] = urlParamName;
     rawParamNameDict[Env.camelCaseToSnakeCase(shortened)] = urlParamName;
   }
@@ -151,27 +151,27 @@ export class Env {
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
    */
   public static urlParams = (expectedKeys: string[], string: string | null = null) => {
-    let url = (string || window.location.search.replace('?', ''));
-    let valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    let rawParms: Dict<string> = {};
-    let rawParamNameDict: Dict<string> = {};
-    for (let valuePair of valuePairs) {
-      let pair = valuePair.split('=');
+    const url = (string || window.location.search.replace('?', ''));
+    const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
+    const rawParms: Dict<string> = {};
+    const rawParamNameDict: Dict<string> = {};
+    for (const valuePair of valuePairs) {
+      const pair = valuePair.split('=');
       rawParms[pair[0]] = pair[1];
       Env.fillPossibleUrlParamNameVariations(pair[0], rawParamNameDict);
     }
-    let processedParams: UrlParams = {};
-    for (let expectedKey of expectedKeys) {
+    const processedParams: UrlParams = {};
+    for (const expectedKey of expectedKeys) {
       processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParms);
     }
     return processedParams;
   }
 
   public static urlCreate = (link: string, params: UrlParams) => {
-    for (let key of Object.keys(params)) {
-      let value = params[key];
+    for (const key of Object.keys(params)) {
+      const value = params[key];
       if (typeof value !== 'undefined') {
-        let transformed = Value.obj.keyByValue(Env.URL_PARAM_DICT, value);
+        const transformed = Value.obj.keyByValue(Env.URL_PARAM_DICT, value);
         link += (!Value.is('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
       }
     }
@@ -200,17 +200,17 @@ export class Ui {
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
   public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
-    let path = `/img/svgs/spinner-${color}-small.svg`;
-    let url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
+    const path = `/img/svgs/spinner-${color}-small.svg`;
+    const url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
   public static renderOverlayPromptAwaitUserChoice = (btns: Dict<{ title?: string, color?: string }>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
-      let getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
-      let getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
-      let formatBtn = (id: string) => `<div class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}">${getEscapedTitle(id)}</div>`;
-      let formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;'.repeat(5));
+      const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
+      const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
+      const formatBtn = (id: string) => `<div class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}">${getEscapedTitle(id)}</div>`;
+      const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;'.repeat(5));
       Xss.sanitizeAppend('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
@@ -221,8 +221,8 @@ export class Ui {
           </div>
         </div>
       `);
-      let overlay = $('.prompt_overlay');
-      for (let id of Object.keys(btns)) {
+      const overlay = $('.prompt_overlay');
+      for (const id of Object.keys(btns)) {
         overlay.find(`.overlay_action_${id}`).one('click', () => {
           overlay.remove();
           resolve(id);
@@ -233,15 +233,15 @@ export class Ui {
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
     if (acctEmail) {
-      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      let { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
       if (setup_done && setup_simple && primaryKi && openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
           // @ts-ignore - this lets it compile in content script that is missing Settings
           Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
-          let msg = `Protect your key with a pass phrase to finish setup.`;
-          let r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);
+          const msg = `Protect your key with a pass phrase to finish setup.`;
+          const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);
           if (r === 'finish_setup') {
             BrowserMsg.send(null, 'settings', { acctEmail });
           }
@@ -251,10 +251,10 @@ export class Ui {
   }
 
   public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
-    let actualType = typeof values[name];
+    const actualType = typeof values[name];
     if (actualType !== expectedType) {
       // tslint:disable-next-line:max-line-length
-      let msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }
@@ -264,7 +264,7 @@ export class Ui {
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
     if (expectedVals.indexOf(values[name]) === -1) {
       // tslint:disable-next-line:max-line-length
-      let msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))} but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))} but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }
@@ -272,9 +272,9 @@ export class Ui {
   }
 
   public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide: "show" | "hide" | null = null) => {
-    let buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
-    let buttonShow = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-    let { hidePassphrases } = await Store.getGlobal(['hide_pass_phrases']);
+    const buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
+    const buttonShow = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
+    const { hidePassphrases } = await Store.getGlobal(['hide_pass_phrases']);
     let show: boolean;
     if (forceInitialShowOrHide === 'hide') {
       show = false;
@@ -283,8 +283,8 @@ export class Ui {
     } else {
       show = !hidePassphrases;
     }
-    for (let id of passphraseInputIds) {
-      let passphraseInput = $('#' + id);
+    for (const id of passphraseInputIds) {
+      const passphraseInput = $('#' + id);
       passphraseInput.addClass('toggled_passphrase');
       if (show) {
         passphraseInput.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + buttonHide + '</label>');
@@ -314,7 +314,7 @@ export class Ui {
   }
 
   public static buildJquerySels = (sels: Dict<string>): SelCache => {
-    let cache: NamedSels = {};
+    const cache: NamedSels = {};
     return {
       cached: (name: string) => {
         if (!cache[name]) {
@@ -341,10 +341,10 @@ export class Ui {
   }
 
   public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
-    let el = $(sel as string).first()[0]; // as string due to JQuery TS quirk
+    const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk
     if (el) {
       el.scrollIntoView();
-      for (let delay of repeat) { // useful if mobile keyboard is about to show up
+      for (const delay of repeat) { // useful if mobile keyboard is about to show up
         Catch.setHandledTimeout(() => el.scrollIntoView(), delay);
       }
     }
@@ -365,7 +365,7 @@ export class Ui {
         // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
         // so this indeed seems like the only defense
         // happened on only one machine, but could potentially happen to other users as well
-        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
+        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, const me know
         e.stopPropagation();
       });
     },
@@ -398,11 +398,11 @@ export class Ui {
     prevent: (preventableEvent: PreventableEventName, cb: (e: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
       let eventTimer: number | undefined;
       let eventFiredOn: number | undefined;
-      let cbResetTimer = () => {
+      const cbResetTimer = () => {
         eventTimer = undefined;
         eventFiredOn = undefined;
       };
-      let cbWithErrsHandled = (e: HTMLElement) => {
+      const cbWithErrsHandled = (e: HTMLElement) => {
         let r;
         try {
           r = cb(e, cbResetTimer);
@@ -478,12 +478,12 @@ export class Ui {
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
   public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    let { blocks } = Pgp.armor.detectBlocks(origText);
+    const { blocks } = Pgp.armor.detectBlocks(origText);
     if (blocks.length === 1 && blocks[0].type === 'text') {
       return;
     }
     let r = '';
-    for (let block of blocks) {
+    for (const block of blocks) {
       r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
     }
     return r;
@@ -491,8 +491,8 @@ export class Ui {
 
   public static time = {
     wait: (untilThisFunctionEvalsTrue: () => boolean | undefined) => new Promise((success, error) => {
-      let interval = Catch.setHandledInterval(() => {
-        let result = untilThisFunctionEvalsTrue();
+      const interval = Catch.setHandledInterval(() => {
+        const result = untilThisFunctionEvalsTrue();
         if (result === true) {
           clearInterval(interval);
           if (success) {
@@ -542,16 +542,16 @@ export class Xss {
     DOMPurify.addHook('afterSanitizeAttributes', node => {
       if ('src' in node) {
         // replace images with a link that points to that image
-        let img: Element = node;
-        let src = img.getAttribute('src')!;
-        let title = img.getAttribute('title');
+        const img: Element = node;
+        const src = img.getAttribute('src')!;
+        const title = img.getAttribute('title');
         img.removeAttribute('src');
-        let a = document.createElement('a');
+        const a = document.createElement('a');
         a.href = src;
         a.className = 'image_src_link';
         a.target = '_blank';
         a.innerText = title || 'show image';
-        let heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
+        const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
         a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
         img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
       }
@@ -559,7 +559,7 @@ export class Xss {
         (node as Element).setAttribute('target', '_blank');
       }
     });
-    let cleanHtml = DOMPurify.sanitize(dirtyHtml, {
+    const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
       ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
@@ -571,10 +571,10 @@ export class Xss {
 
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml);
-    let random = Str.random(5);
-    let br = `CU_BR_${random}`;
-    let blockStart = `CU_BS_${random}`;
-    let blockEnd = `CU_BE_${random}`;
+    const random = Str.random(5);
+    const br = `CU_BR_${random}`;
+    const blockStart = `CU_BS_${random}`;
+    const blockEnd = `CU_BE_${random}`;
     html = html.replace(/<br[^>]*>/gi, br);
     html = html.replace(/\n/g, '');
     html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockEnd);
@@ -640,7 +640,7 @@ export class XssSafeFactory {
   srcImg = (relPath: string) => this.extUrl(`img/${relPath}`);
 
   private frameSrc = (path: string, params: UrlParams = {}) => {
-    for (let k of Object.keys(this.setParams)) {
+    for (const k of Object.keys(this.setParams)) {
       params[k] = this.setParams[k];
     }
     return Env.urlCreate(path, params);
@@ -694,7 +694,7 @@ export class XssSafeFactory {
   }
 
   srcReplyMsgIframe = (convoParams: UrlParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
-    let params: UrlParams = {
+    const params: UrlParams = {
       isReplyBox: true,
       frameId: 'frame_' + Str.random(10),
       placement: 'gmail',
@@ -704,7 +704,7 @@ export class XssSafeFactory {
       threadMsgId: convoParams.threadMsgId,
     };
     if (convoParams.replyTo) { // for gmail and inbox. Outlook gets this from API
-      let headers = this.resolveFromTo(convoParams.addresses as string[], convoParams.myEmail as string, convoParams.replyTo as string[]);
+      const headers = this.resolveFromTo(convoParams.addresses as string[], convoParams.myEmail as string, convoParams.replyTo as string[]);
       params.to = headers.to;
       params.from = headers.from;
       params.subject = 'Re: ' + convoParams.subject;
@@ -729,7 +729,7 @@ export class XssSafeFactory {
   }
 
   dialogSubscribe = (verifEmailText?: string, source?: string, subscribeResultTabId?: string) => {
-    let src = this.srcSubscribeDialog(verifEmailText, 'dialog', source, subscribeResultTabId);
+    const src = this.srcSubscribeDialog(verifEmailText, 'dialog', source, subscribeResultTabId);
     return this.divDialog_DANGEROUS(this.iframe(src, ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
   }
 
@@ -783,13 +783,13 @@ export class XssSafeFactory {
 
   btnCompose = (webmailName: WebMailName) => {
     if (webmailName === 'inbox') {
-      let logo = `<div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.srcImg('logo/logo.svg')}"/></div>`;
+      const logo = `<div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.srcImg('logo/logo.svg')}"/></div>`;
       return `<div class="S ${this.destroyableCls}">${logo}<label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>`;
     } else if (webmailName === 'outlook') {
-      let btn = `<div class="new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
+      const btn = `<div class="new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
       return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      let btn = `<div class="new_message_button T-I J-J5-Ji T-I-KE L3" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
+      const btn = `<div class="new_message_button T-I J-J5-Ji T-I-KE L3" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
       return `<div class="${this.destroyableCls} z0">${btn}</div>`;
     }
   }
@@ -799,7 +799,7 @@ export class XssSafeFactory {
   }
 
   btnWithoutFc = () => {
-    let span = `<span>see original</span>`;
+    const span = `<span>see original</span>`;
     return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
   }
 
@@ -829,10 +829,10 @@ export class XssSafeFactory {
   }
 
   private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
-    let id = Env.urlParams(['frameId'], src).frameId as string;
-    let classAttribute = (classes || []).concat(this.reloadableCls).join(' ');
-    let attrs: Dict<string> = { id, class: classAttribute, src };
-    for (let name of Object.keys(elAttributes)) {
+    const id = Env.urlParams(['frameId'], src).frameId as string;
+    const classAttribute = (classes || []).concat(this.reloadableCls).join(' ');
+    const attrs: Dict<string> = { id, class: classAttribute, src };
+    for (const name of Object.keys(elAttributes)) {
       attrs[name] = String(elAttributes[name]);
     }
     return Ui.e('iframe', attrs);
@@ -887,7 +887,7 @@ export class KeyImportUi {
       $('#e_rememberPassphrase').prop('checked', true);
     }));
     $('.input_private_key').change(Ui.event.handle(target => {
-      let k = openpgp.key.readArmored($(target).val() as string).keys[0];
+      const k = openpgp.key.readArmored($(target).val() as string).keys[0];
       $('.input_passphrase').val('');
       if (k && k.isPrivate() && k.isDecrypted()) {
         $('.line.pass_phrase_needed').show();
@@ -895,12 +895,12 @@ export class KeyImportUi {
         $('.line.pass_phrase_needed').hide();
       }
     }));
-    let attach = new AttUI(() => ({ count: 100, size: 1024 * 1024, size_mb: 1 }));
+    const attach = new AttUI(() => ({ count: 100, size: 1024 * 1024, size_mb: 1 }));
     attach.initAttDialog('fineuploader', 'fineuploader_button');
     attach.setAttAddedCb(file => {
       let k;
       if (Value.is(Pgp.armor.headers('privateKey').begin).in(file.as_text())) {
-        let firstPrv = Pgp.armor.detectBlocks(file.as_text()).blocks.filter(b => b.type === 'privateKey')[0];
+        const firstPrv = Pgp.armor.detectBlocks(file.as_text()).blocks.filter(b => b.type === 'privateKey')[0];
         if (firstPrv) {
           k = openpgp.key.readArmored(firstPrv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
         }
@@ -919,10 +919,10 @@ export class KeyImportUi {
   }
 
   checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
-    let normalized = this.normalize('privateKey', armored);
-    let decrypted = this.read('privateKey', normalized);
-    let encrypted = this.read('privateKey', normalized);
-    let longid = this.longid(decrypted);
+    const normalized = this.normalize('privateKey', armored);
+    const decrypted = this.read('privateKey', normalized);
+    const encrypted = this.read('privateKey', normalized);
+    const longid = this.longid(decrypted);
     this.rejectIfNot('privateKey', decrypted);
     await this.rejectKnownIfSelected(acctEmail, decrypted);
     this.rejectIfDifferentFromSelectedLongid(longid);
@@ -933,16 +933,16 @@ export class KeyImportUi {
   }
 
   checkPub = async (armored: string): Promise<string> => {
-    let normalized = this.normalize('publicKey', armored);
-    let parsed = this.read('publicKey', normalized);
-    let longid = this.longid(parsed);
+    const normalized = this.normalize('publicKey', armored);
+    const parsed = this.read('publicKey', normalized);
+    const longid = this.longid(parsed);
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
   }
 
   private normalize = (type: KeyBlockType, armored: string) => {
-    let headers = Pgp.armor.headers(type);
-    let normalized = Pgp.key.normalize(armored);
+    const headers = Pgp.armor.headers(type);
+    const normalized = Pgp.key.normalize(armored);
     if (!normalized) {
       throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
@@ -950,8 +950,8 @@ export class KeyImportUi {
   }
 
   private read = (type: KeyBlockType, normalized: string) => {
-    let headers = Pgp.armor.headers(type);
-    let k = openpgp.key.readArmored(normalized).keys[0];
+    const headers = Pgp.armor.headers(type);
+    const k = openpgp.key.readArmored(normalized).keys[0];
     if (typeof k === 'undefined') {
       throw new UserAlert('Private key is not correctly formated. Please insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
@@ -959,15 +959,15 @@ export class KeyImportUi {
   }
 
   private longid = (k: OpenPGP.key.Key) => {
-    let longid = Pgp.key.longid(k);
+    const longid = Pgp.key.longid(k);
     if (!longid) {
-      throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and let us know which software created this key.\n\n(error: cannot get long_id)');
+      throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and const us know which software created this key.\n\n(error: cannot get long_id)');
     }
     return longid;
   }
 
   private rejectIfNot = (type: KeyBlockType, k: OpenPGP.key.Key) => {
-    let headers = Pgp.armor.headers(type);
+    const headers = Pgp.armor.headers(type);
     if (type === 'privateKey' && k.isPublic()) {
       throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
     }
@@ -978,8 +978,8 @@ export class KeyImportUi {
 
   private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
     if (this.rejectKnown) {
-      let keyinfos = await Store.keysGet(acctEmail);
-      let privateKeysLongids = keyinfos.map(ki => ki.longid);
+      const keyinfos = await Store.keysGet(acctEmail);
+      const privateKeysLongids = keyinfos.map(ki => ki.longid);
       if (Value.is(Pgp.key.longid(k)!).in(privateKeysLongids)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
@@ -1022,7 +1022,7 @@ export class KeyImportUi {
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if (this.checkEncryption && await k.getEncryptionKey() === null) {
       if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await Pgp.key.usableButExpired(k)) { // known issues - key can be fixed
-        let e = new KeyCanBeFixed('');
+        const e = new KeyCanBeFixed('');
         e.encrypted = encrypted;
         throw e;
       } else {
@@ -1058,7 +1058,7 @@ export class AttUI {
 
   initAttDialog = (elId: string, btnId: string) => {
     $('#qq-template').load(this.templatePath, () => {
-      let config = {
+      const config = {
         autoUpload: false,
         // debug: true,
         element: $('#' + elId).get(0),
@@ -1088,24 +1088,24 @@ export class AttUI {
   }
 
   collectAtt = async (id: string) => {
-    let fileData = await this.readAttDataAsUint8(id);
+    const fileData = await this.readAttDataAsUint8(id);
     return new Att({ name: this.attachedFiles[id].name, type: this.attachedFiles[id].type, data: fileData });
   }
 
   collectAtts = async () => {
-    let atts: Att[] = [];
-    for (let id of Object.keys(this.attachedFiles)) {
+    const atts: Att[] = [];
+    for (const id of Object.keys(this.attachedFiles)) {
       atts.push(await this.collectAtt(id));
     }
     return atts;
   }
 
   collectEncryptAtts = async (armoredPubkeys: string[], challenge: Pwd | null): Promise<Att[]> => {
-    let atts: Att[] = [];
-    for (let id of Object.keys(this.attachedFiles)) {
-      let file = this.attachedFiles[id];
-      let fileData = await this.readAttDataAsUint8(id);
-      let encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
+    const atts: Att[] = [];
+    for (const id of Object.keys(this.attachedFiles)) {
+      const file = this.attachedFiles[id];
+      const fileData = await this.readAttDataAsUint8(id);
+      const encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;
@@ -1116,12 +1116,12 @@ export class AttUI {
   }
 
   private processNewAtt = (id: string, name: string) => {
-    let limits = this.getLimits();
+    const limits = this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       alert('Amount of attached files is limited to ' + limits.count);
       this.uploader.cancel(id);
     } else {
-      let newFile = this.uploader.getFile(id);
+      const newFile = this.uploader.getFile(id);
       if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
         this.uploader.cancel(id);
         if (typeof limits.oversize === 'function') {
@@ -1140,7 +1140,7 @@ export class AttUI {
 
   private getFileSizeSum = () => {
     let sum = 0;
-    for (let file of Object.values(this.attachedFiles)) {
+    for (const file of Object.values(this.attachedFiles)) {
       sum += file.size;
     }
     return sum;
@@ -1148,7 +1148,7 @@ export class AttUI {
 
   private readAttDataAsUint8 = (id: string): Promise<Uint8Array> => {
     return new Promise(resolve => {
-      let reader = new FileReader();
+      const reader = new FileReader();
       reader.onload = () => {
         resolve(new Uint8Array(reader.result as ArrayBuffer)); // that's what we're getting
       };

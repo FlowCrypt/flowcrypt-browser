@@ -21,7 +21,7 @@ export class Notifications {
   }
 
   showInitial = async (acctEmail: string) => {
-    let acctStorage = await Store.getAcct(acctEmail, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
+    const acctStorage = await Store.getAcct(acctEmail, ['notification_setup_done_seen', 'key_backup_prompt', 'setup_simple']);
     if (!acctStorage.notification_setup_done_seen) {
       await Store.set(acctEmail, { notification_setup_done_seen: true });
       this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
@@ -52,7 +52,7 @@ export class Notifications {
   show = (text: string, callbacks: Dict<() => void> = {}) => {
     Xss.sanitizeRender('.webmail_notifications', `<div class="webmail_notification" data-test="webmail-notification">${text}</div>`);
     if (typeof callbacks.close !== 'undefined') {
-      let origCloseCb = callbacks.close;
+      const origCloseCb = callbacks.close;
       callbacks.close = Catch.try(() => {
         origCloseCb();
         this.clear();
@@ -66,7 +66,7 @@ export class Notifications {
     if (typeof callbacks.subscribe === 'undefined') {
       callbacks.subscribe = Catch.try(() => BrowserMsg.send(this.tabId, 'subscribe_dialog'));
     }
-    for (let name of Object.keys(callbacks)) {
+    for (const name of Object.keys(callbacks)) {
       $(`.webmail_notifications a.${name}`).click(Ui.event.prevent('double', callbacks[name]));
     }
   }

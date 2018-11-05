@@ -19,7 +19,7 @@ export class Rules {
 
   constructor(email?: string) {
     if (email && Str.isEmailValid(email)) {
-      let domain = email.split('@')[1];
+      const domain = email.split('@')[1];
       this.domainHash = Pgp.hash.sha1(domain);
       if (!Value.is(this.domainHash).in(Object.keys(this.rules))) { // not a known domain
         this.domainHash = this.other;

@@ -12,13 +12,13 @@ openpgp.config.ignore_mdc_error = true; // will only affect OpenPGP in local fra
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let tabId = await BrowserMsg.requiredTabId();
+  const tabId = await BrowserMsg.requiredTabId();
   let origContent: string;
-  let factory = new XssSafeFactory(acctEmail, tabId);
+  const factory = new XssSafeFactory(acctEmail, tabId);
 
   BrowserMsg.listen({
     close_dialog: () => {
@@ -27,14 +27,14 @@ Catch.try(async () => {
   }, tabId);
 
   $('.action_decrypt').click(Ui.event.prevent('double', async self => {
-    let encrypted = $('.input_message').val() as string;
+    const encrypted = $('.input_message').val() as string;
     if (!encrypted) {
       alert('Please paste an encrypted message');
       return;
     }
     origContent = $(self).html();
     Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
-    let result = await Pgp.msg.decrypt(acctEmail, encrypted);
+    const result = await Pgp.msg.decrypt(acctEmail, encrypted);
     if (result.success) {
       alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {

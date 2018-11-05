@@ -9,9 +9,9 @@ import { Pgp } from '../common/pgp.js';
 import { BrowserMsgHandler } from '../common/extension.js';
 import { Catch } from '../common/catch.js';
 
-declare let openpgp: typeof OpenPGP;
+declare const openpgp: typeof OpenPGP;
 
-export let migrateAcct: BrowserMsgHandler = async (data: { acctEmail: string }, sender, doneCb) => {
+export const migrateAcct: BrowserMsgHandler = async (data: { acctEmail: string }, sender, doneCb) => {
   if (data.acctEmail) {
     await Store.set(data.acctEmail, { version: Catch.version('int') });
     doneCb();
@@ -22,25 +22,25 @@ export let migrateAcct: BrowserMsgHandler = async (data: { acctEmail: string }, 
   }
 };
 
-export let migrateGlobal = async () => {
+export const migrateGlobal = async () => {
   await migrateLocalStorageToExtensionStorage();
 };
 
-let migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {
+const migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {
   // todo - deprecate and show error like dberror
   if (window.localStorage.length === 0) {
     resolve(); // nothing in localStorage
   } else {
-    let values: Dict<FlatTypes> = {};
-    for (let legacyStorageKey of Object.keys(localStorage)) {
-      let value = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey)!);
+    const values: Dict<FlatTypes> = {};
+    for (const legacyStorageKey of Object.keys(localStorage)) {
+      const value = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey)!);
       if (legacyStorageKey === 'settings_seen') {
         values.cryptup_global_settings_seen = true;
       } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_keys$/g)) {
         values[legacyStorageKey] = value;
       } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
         try {
-          let primaryLongid = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
+          const primaryLongid = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
           values[legacyStorageKey.replace('master_passphrase', 'passphrase_' + primaryLongid)] = value;
         } catch (e) {
           // this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
@@ -56,7 +56,7 @@ let migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {
   }
 });
 
-let legacyLocalStorageRead = (value: string) => {
+const legacyLocalStorageRead = (value: string) => {
   if (typeof value === 'undefined') {
     return value;
   } else if (value === 'null#null') {
@@ -74,20 +74,20 @@ let legacyLocalStorageRead = (value: string) => {
   }
 };
 
-let accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks which emails were registered on Attester
-  let keyinfos = await Store.keysGet(acctEmail);
-  let myLongids = keyinfos.map(ki => ki.longid);
-  let storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_keyserver']);
+const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks which emails were registered on Attester
+  const keyinfos = await Store.keysGet(acctEmail);
+  const myLongids = keyinfos.map(ki => ki.longid);
+  const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_keyserver']);
   if (storage.addresses && storage.addresses.length) {
-    let unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
+    const unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
     if (unique.length < storage.addresses.length) {
       storage.addresses = unique;
       await Store.set(acctEmail, storage); // fix duplicate email addresses
     }
     try {
-      let { results } = await Api.attester.lookupEmail(storage.addresses);
-      let addressesKeyserver = [];
-      for (let result of results) {
+      const { results } = await Api.attester.lookupEmail(storage.addresses);
+      const addressesKeyserver = [];
+      for (const result of results) {
         if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(myLongids)) {
           addressesKeyserver.push(result.email);
         }
@@ -101,17 +101,17 @@ let accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks whic
   }
 };
 
-let accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new emails were registered on pks lately
+const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new emails were registered on pks lately
   // todo - deprecate in certain situations
-  let keyinfos = await Store.keysGet(acctEmail);
-  let myLongids = keyinfos.map(ki => ki.longid);
-  let hkp = new openpgp.HKP('https://pgp.key-server.io');
-  let storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
-  let addressesPks = storage.addresses_pks || [];
-  for (let email of storage.addresses || [acctEmail]) {
+  const keyinfos = await Store.keysGet(acctEmail);
+  const myLongids = keyinfos.map(ki => ki.longid);
+  const hkp = new openpgp.HKP('https://pgp.key-server.io');
+  const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
+  const addressesPks = storage.addresses_pks || [];
+  for (const email of storage.addresses || [acctEmail]) {
     if (!Value.is(email).in(addressesPks)) {
       try {
-        let pubkey = await hkp.lookup({ query: email });
+        const pubkey = await hkp.lookup({ query: email });
         if (typeof pubkey !== 'undefined') {
           if (Value.is(Pgp.key.longid(pubkey)).in(myLongids)) {
             addressesPks.push(email);
@@ -126,13 +126,13 @@ let accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new
   await Store.set(acctEmail, { addressesPks });
 };
 
-let reportUsefulErrs = (e: any) => {
+const reportUsefulErrs = (e: any) => {
   if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
     Catch.handleException(e);
   }
 };
 
-export let scheduleFcSubscriptionLevelCheck = (bgProcessStartReason: 'update' | 'chrome_update' | 'browser_start' | string) => {
+export const scheduleFcSubscriptionLevelCheck = (bgProcessStartReason: 'update' | 'chrome_update' | 'browser_start' | string) => {
   Catch.setHandledTimeout(() => {
     if (bgProcessStartReason === 'update' || bgProcessStartReason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload

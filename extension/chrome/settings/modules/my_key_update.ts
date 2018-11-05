@@ -13,16 +13,16 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let urlMyKeyPage = Env.urlCreate('my_key.htm', urlParams);
+  const urlMyKeyPage = Env.urlCreate('my_key.htm', urlParams);
   $('.action_show_public_key').attr('href', urlMyKeyPage);
-  let inputPrivateKey = $('.input_private_key');
-  let prvHeaders = Pgp.armor.headers('privateKey');
+  const inputPrivateKey = $('.input_private_key');
+  const prvHeaders = Pgp.armor.headers('privateKey');
 
-  let [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
 
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
@@ -31,9 +31,9 @@ Catch.try(async () => {
   inputPrivateKey.attr('placeholder', inputPrivateKey.attr('placeholder') + ' (' + primaryKi.longid + ')');
 
   $('.action_update_private_key').click(Ui.event.prevent('double', async () => {
-    let uddatedKey = openpgp.key.readArmored(inputPrivateKey.val() as string).keys[0];
-    let uddatedKeyEncrypted = openpgp.key.readArmored(inputPrivateKey.val() as string).keys[0];
-    let uddatedKeyPassphrase = $('.input_passphrase').val() as string;
+    const uddatedKey = openpgp.key.readArmored(inputPrivateKey.val() as string).keys[0];
+    const uddatedKeyEncrypted = openpgp.key.readArmored(inputPrivateKey.val() as string).keys[0];
+    const uddatedKeyPassphrase = $('.input_passphrase').val() as string;
     if (typeof uddatedKey === 'undefined') {
       alert(Lang.setup.keyFormattedWell(prvHeaders.begin, String(prvHeaders.end)));
     } else if (uddatedKey.isPublic()) {
@@ -47,7 +47,7 @@ Catch.try(async () => {
         await storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
       } else { // cannot get a valid encryption key packet
         if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usableButExpired(uddatedKey)) { // known issues - key can be fixed
-          let fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+          const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
             acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, urlMyKeyPage
           );
           await storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
@@ -59,8 +59,8 @@ Catch.try(async () => {
     }
   }));
 
-  let storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
-    let storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
+  const storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
+    const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
     await Store.keysAdd(acctEmail, updatedPrv.armor());
     await Store.passphraseSave('local', acctEmail, primaryKi.longid, storedPassphrase !== null ? updatedPrvPassphrase : undefined);
     await Store.passphraseSave('session', acctEmail, primaryKi.longid, storedPassphrase !== null ? undefined : updatedPrvPassphrase);

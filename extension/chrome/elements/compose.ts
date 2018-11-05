@@ -15,14 +15,14 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
+  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
     'skipClickPrompt', 'ignoreDraft']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  let subscriptionWhenPageWasOpened = await Store.subscription();
+  const subscriptionWhenPageWasOpened = await Store.subscription();
   const storageKeys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-  let storage = await Store.getAcct(acctEmail, storageKeys);
+  const storage = await Store.getAcct(acctEmail, storageKeys);
 
   await (async () => { // attempt to recover missing params
     if (!urlParams.isReplyBox || (urlParams.threadId && urlParams.threadId !== urlParams.threadMsgId && urlParams.to && urlParams.from && urlParams.subject)) {
@@ -48,7 +48,7 @@ Catch.try(async () => {
       return;
     }
     urlParams.threadId = gmailMsg.threadId;
-    let reply = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Api.gmail.findHeader(gmailMsg, 'from'), (Api.gmail.findHeader(gmailMsg, 'to') || '').split(','));
+    const reply = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Api.gmail.findHeader(gmailMsg, 'from'), (Api.gmail.findHeader(gmailMsg, 'to') || '').split(','));
     if (!urlParams.to) {
       urlParams.to = reply.to.join(',');
     }
@@ -61,7 +61,7 @@ Catch.try(async () => {
     $('#loader').remove();
   })();
 
-  let tabId = await BrowserMsg.requiredTabId();
+  const tabId = await BrowserMsg.requiredTabId();
 
   const canReadEmail = Api.gmail.hasScope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(acctEmail, tabId);
@@ -70,7 +70,7 @@ Catch.try(async () => {
     urlParams.draft_id = storage.drafts_reply[urlParams.threadId as string];
   }
 
-  let closeMsg = () => {
+  const closeMsg = () => {
     $('body').attr('data-test-state', 'closed');  // used by automated tests
     if (urlParams.isReplyBox) {
       BrowserMsg.send(parentTabId, 'close_reply_message', { frameId: urlParams.frameId, threadId: urlParams.threadId });
@@ -81,14 +81,14 @@ Catch.try(async () => {
     }
   };
 
-  let composer = new Composer({
+  const composer = new Composer({
     canReadEmails: () => canReadEmail,
     doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean | undefined> => {
       theirEmail = Str.parseEmail(theirEmail).email;
       if (!theirEmail) {
         return false;
       }
-      let storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);
+      const storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);
       if (Value.is(theirEmail).in(storage.pubkey_sent_to || [])) {
         return true;
       }
@@ -98,7 +98,7 @@ Catch.try(async () => {
       const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
       const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
       try {
-        let response = await Api.gmail.msgList(acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
+        const response = await Api.gmail.msgList(acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
         if (response.messages) {
           await Store.set(acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
           return true;
@@ -125,7 +125,7 @@ Catch.try(async () => {
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
     storageGetKey: async (senderEmail: string): Promise<KeyInfo> => {
-      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       if (primaryKi) {
         return primaryKi;
       } else {
@@ -133,9 +133,9 @@ Catch.try(async () => {
       }
     },
     storageSetDraftMeta: async (storeIfTrue: boolean, draftId: string, threadId: string, recipients: string[], subject: string) => {
-      let draftStorage = await Store.getAcct(acctEmail, ['drafts_reply', 'drafts_compose']);
+      const draftStorage = await Store.getAcct(acctEmail, ['drafts_reply', 'drafts_compose']);
       if (threadId) { // it's a reply
-        let drafts = draftStorage.drafts_reply || {};
+        const drafts = draftStorage.drafts_reply || {};
         if (storeIfTrue) {
           drafts[threadId] = draftId;
         } else {
@@ -143,8 +143,7 @@ Catch.try(async () => {
         }
         await Store.set(acctEmail, { drafts_reply: drafts });
       } else { // it's a new message
-        let drafts = draftStorage.drafts_compose || {};
-        drafts = draftStorage.drafts_compose || {};
+        const drafts = draftStorage.drafts_compose || {};
         if (storeIfTrue) {
           drafts[draftId] = { recipients, subject, date: new Date().getTime() };
         } else {
@@ -154,14 +153,14 @@ Catch.try(async () => {
       }
     },
     storagePassphraseGet: async () => {
-      let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       if (primaryKi === null) {
         return null; // flowcrypt just uninstalled or reset?
       }
       return await Store.passphraseGet(acctEmail, primaryKi.longid);
     },
     storageAddAdminCodes: async (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => {
-      let adminCodeStorage = await Store.getGlobal(['admin_codes']);
+      const adminCodeStorage = await Store.getGlobal(['admin_codes']);
       adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
       adminCodeStorage.admin_codes[shortId] = {
         date: Date.now(),
@@ -193,10 +192,10 @@ Catch.try(async () => {
     },
     emailProviderDetermineReplyMsgHeaderVariables: async () => {
       try {
-        let thread = await Api.gmail.threadGet(acctEmail, urlParams.threadId as string, 'full');
+        const thread = await Api.gmail.threadGet(acctEmail, urlParams.threadId as string, 'full');
         if (thread.messages && thread.messages.length > 0) {
-          let threadMsgIdLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-          let threadMsgRefsLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+          const threadMsgIdLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+          const threadMsgRefsLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
           return { lastMsgId: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast } };
         } else {
           return;

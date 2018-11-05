@@ -35,8 +35,8 @@ export class Catch {
       err = { name: 'thrown_object', message: err.message || '(unknown)', stack: stringified };
       errMsg = 'thrown_object';
     }
-    let userLogMsg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
-    let ignoredErrs = [
+    const userLogMsg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
+    const ignoredErrs = [
       // happens in gmail window when reloaded extension + now reloading gmail
       'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
       // happens in gmail window when reloaded extension + now reloading gmail
@@ -108,8 +108,8 @@ export class Catch {
   public static handleException = (exception: any) => {
     let line, col;
     try {
-      let callerLine = exception.stack!.split('\n')[1]; // will be catched below
-      let matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
+      const callerLine = exception.stack!.split('\n')[1]; // will be catched below
+      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
       line = Number(matched![1]); // will be catched below
       col = Number(matched![2]); // will be catched below
     } catch (lineErr) {
@@ -143,7 +143,7 @@ export class Catch {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
     } catch (localErr) {
-      let e = localErr as Error;
+      const e = localErr as Error;
       if (typeof details !== 'string') {
         try {
           details = JSON.stringify(details);
@@ -170,7 +170,7 @@ export class Catch {
 
   public static try = (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
     try {
-      let r = code();
+      const r = code();
       if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
         r.catch(Catch.rejection);
       }
@@ -196,7 +196,7 @@ export class Catch {
   }
 
   public static environment = (url = window.location.href): string => {
-    let browserName = Catch.browser().name;
+    const browserName = Catch.browser().name;
     let env = 'unknown';
     if (url.indexOf('bnjglocicd') !== -1) {
       env = 'ex:prod';
@@ -241,12 +241,12 @@ export class Catch {
 
   public static rejection = (e: PromiseRejectionEvent | StandardError | Error) => {
     if (!(e instanceof UnreportableError)) {
-      let eHasReason = e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object';
+      const eHasReason = e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object';
       if (eHasReason && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
         Catch.handleException((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
         if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
-          let stack = (e as StandardError).stack;
+          const stack = (e as StandardError).stack;
           delete (e as StandardError).stack;
           Catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
         } else {
