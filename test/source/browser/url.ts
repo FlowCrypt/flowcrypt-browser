@@ -1,14 +1,14 @@
 
 import { Config } from '../util';
 
-export let gmail_seq : string[] = [];
+export let gmailSeq: string[] = [];
 
 export class Url {
 
-  public static extension = (path: string) => `chrome-extension://${Config.extension_id}/${path}`;
+  public static extension = (path: string) => `chrome-extension://${Config.extensionId}/${path}`;
 
-  public static extension_settings = (account_email?: string|undefined) => `chrome/settings/index.htm?account_email=${account_email || ''}`;
+  public static extensionSettings = (acctEmail?: string | undefined) => `chrome/settings/index.htm?account_email=${acctEmail || ''}`;
 
-  public static gmail = (account_login_index=0, url_end='') => `https://mail.google.com/mail/u/${account_login_index}/#inbox${url_end}`;
+  public static gmail = (acctLoginIndex = 0, urlEnd = '') => `https://mail.google.com/mail/u/${acctLoginIndex}/#inbox${urlEnd}`;
 
 }

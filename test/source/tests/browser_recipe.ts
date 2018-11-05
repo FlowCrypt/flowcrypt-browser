@@ -4,68 +4,68 @@ import { Util } from '../util';
 
 export class BrowserRecipe {
 
-  public static open_settings_login_but_close_oauth_window_before_granting_permission = async (browser: BrowserHandle, account_email: string) => {
-    const settings_page = await browser.new_page(Url.extension_settings());
-    let oauth_popup_0 = await browser.new_page_triggered_by(() => settings_page.wait_and_click('@action-connect-to-gmail'));
-    await OauthPageRecipe.google(oauth_popup_0, account_email, 'close');
+  public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (browser: BrowserHandle, acctEmail: string) => {
+    const settingsPage = await browser.newPage(Url.extensionSettings());
+    let oauthPopup0 = await browser.newPageTriggeredBy(() => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    await OauthPageRecipe.google(oauthPopup0, acctEmail, 'close');
     // dialog shows up with permission explanation
-    await SettingsPageRecipe.close_dialog(settings_page);
-    return settings_page;
+    await SettingsPageRecipe.closeDialog(settingsPage);
+    return settingsPage;
   }
 
-  public static open_settings_login_approve = async (browser: BrowserHandle, account_email: string) => {
-    const settings_page = await browser.new_page(Url.extension_settings());
-    let oauth_popup = await browser.new_page_triggered_by(() => settings_page.wait_and_click('@action-connect-to-gmail'));
-    await OauthPageRecipe.google(oauth_popup, account_email, 'approve');
-    return settings_page;
+  public static openSettingsLoginApprove = async (browser: BrowserHandle, acctEmail: string) => {
+    const settingsPage = await browser.newPage(Url.extensionSettings());
+    let oauthPopup = await browser.newPageTriggeredBy(() => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    await OauthPageRecipe.google(oauthPopup, acctEmail, 'approve');
+    return settingsPage;
   }
 
-  public static open_gmail_page = async (browser: BrowserHandle, google_login_index=0) => {
-    let gmail_page = await browser.new_page(Url.gmail(google_login_index));
-    await gmail_page.wait_all('div.z0'); // compose button container visible
+  public static openGmailPage = async (browser: BrowserHandle, googleLoginIndex = 0) => {
+    let gmailPage = await browser.newPage(Url.gmail(googleLoginIndex));
+    await gmailPage.waitAll('div.z0'); // compose button container visible
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
-    return gmail_page;
+    return gmailPage;
   }
 
-  public static open_gmail_page_and_verify_compose_button_present = async (browser: BrowserHandle, google_login_index=0) => {
-    let gmail_page = await BrowserRecipe.open_gmail_page(browser, google_login_index);
-    await gmail_page.wait_all('@action-secure-compose');
-    return gmail_page;
+  public static openGmailPageAndVerifyComposeBtnPresent = async (browser: BrowserHandle, googleLoginIndex = 0) => {
+    let gmailPage = await BrowserRecipe.openGmailPage(browser, googleLoginIndex);
+    await gmailPage.waitAll('@action-secure-compose');
+    return gmailPage;
   }
 
-  public static open_gmail_page_and_verify_compose_button_not_present = async (browser: BrowserHandle, google_login_index=0) => {
-    let gmail_page = await BrowserRecipe.open_gmail_page(browser, google_login_index);
+  public static openGmailPageAndVerifyComposeBtnNotPresent = async (browser: BrowserHandle, googleLoginIndex = 0) => {
+    let gmailPage = await BrowserRecipe.openGmailPage(browser, googleLoginIndex);
     await Util.sleep(3);
-    await gmail_page.not_present('@action-secure-compose');
-    return gmail_page;
+    await gmailPage.notPresent('@action-secure-compose');
+    return gmailPage;
   }
 
-  public static set_up_flowcrypt_compatibility_account = async (browser: BrowserHandle) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.2pp1');
-    await settings_page.close();
+  public static setUpFcCompatAcct = async (browser: BrowserHandle) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
+    await settingsPage.close();
   }
 
-  public static pgp_block_verify_decrypted_content = async (browser: BrowserHandle, url: string, expected_contents: string[], password?: string) => {
-    let pgp_block_page = await browser.new_page(url);
-    await pgp_block_page.wait_all('@pgp-block-content');
-    await pgp_block_page.wait_for_selector_test_state('ready', 100);
+  public static pgpBlockVerifyDecryptedContent = async (browser: BrowserHandle, url: string, expectedContents: string[], password?: string) => {
+    let pgpBlockPage = await browser.newPage(url);
+    await pgpBlockPage.waitAll('@pgp-block-content');
+    await pgpBlockPage.waitForSelTestStaet('ready', 100);
     await Util.sleep(1);
-    if(password) {
-      await pgp_block_page.wait_and_type('@input-message-password', password);
-      await pgp_block_page.wait_and_click('@action-decrypt-with-password');
+    if (password) {
+      await pgpBlockPage.waitAndType('@input-message-password', password);
+      await pgpBlockPage.waitAndClick('@action-decrypt-with-password');
       await Util.sleep(1);
-      await pgp_block_page.wait_for_selector_test_state('ready', 10);
+      await pgpBlockPage.waitForSelTestStaet('ready', 10);
     }
-    let content = await pgp_block_page.read('@pgp-block-content');
-    for(let expected_content of expected_contents) {
-      if(content.indexOf(expected_content) === -1) {
-        await pgp_block_page.close();
-        throw new Error(`pgp_block_verify_decrypted_content:missing expected content:${expected_content}`);
+    let content = await pgpBlockPage.read('@pgp-block-content');
+    for (let expectedContent of expectedContents) {
+      if (content.indexOf(expectedContent) === -1) {
+        await pgpBlockPage.close();
+        throw new Error(`pgp_block_verify_decrypted_content:missing expected content:${expectedContent}`);
       }
     }
-    await pgp_block_page.close();
+    await pgpBlockPage.close();
   }
 
 }

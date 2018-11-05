@@ -8,37 +8,37 @@ import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { expect } from 'chai';
 
-export let define_account_tests = (test_with_new_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
+export let defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
-  ava.test('compose > large file > subscribe > trial > attach again', test_with_semaphored_global_browser('trial', async (browser, t) => {
+  ava.test('compose > large file > subscribe > trial > attach again', testWithSemaphoredGlobalBrowser('trial', async (browser, t) => {
     // set up acct and open compose page
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, Config.secrets.ci_dev_account);
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.test.trial', {has_recover_more: false});
-    await browser.close_all_pages();
-    let gmail_page = await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
-    await GmailPageRecipe.close_initial_setup_notification(gmail_page);
-    let compose_page = await GmailPageRecipe.open_secure_compose(gmail_page, browser);
-    await ComposePageRecipe.fill_message(compose_page, 'human@flowcrypt.com', 'a large file to trigger trial');
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, Config.secrets.ci_dev_account);
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.trial', { hasRecoverMore: false });
+    await browser.closeAllPages();
+    let gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
+    await GmailPageRecipe.closeInitialSetupNotif(gmailPage);
+    let composePage = await GmailPageRecipe.openSecureCompose(gmailPage, browser);
+    await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'a large file to trigger trial');
     // add a large file
-    let file_input = await compose_page.target.$('input[type=file]');
-    let subsccription_needed_alert = await compose_page.trigger_and_await_new_alert(async () => await file_input!.uploadFile('test/samples/large.jpg'));
-    expect(await subsccription_needed_alert.message()).contains('The files are over 5 MB');
-    await subsccription_needed_alert.accept();
+    let fileInput = await composePage.target.$('input[type=file]');
+    let subscriptionNeededAlert = await composePage.triggerAndWaitNewAlert(async () => await fileInput!.uploadFile('test/samples/large.jpg'));
+    expect(await subscriptionNeededAlert.message()).contains('The files are over 5 MB');
+    await subscriptionNeededAlert.accept();
     // get a trial
-    let subscribe_page = await GmailPageRecipe.get_subscribe_dialog(gmail_page, browser);
-    let subscribed_alert = await compose_page.trigger_and_await_new_alert(async () => await subscribe_page.wait_and_click('@action-get-trial', {delay: 1}));
-    expect(await subscribed_alert.message()).contains('now you can add your file again');
-    await subscribed_alert.accept();
-    await subscribe_page.close();
+    let subscribePage = await GmailPageRecipe.getSubscribeDialog(gmailPage, browser);
+    let subscribedAlert = await composePage.triggerAndWaitNewAlert(async () => await subscribePage.waitAndClick('@action-get-trial', { delay: 1 }));
+    expect(await subscribedAlert.message()).contains('now you can add your file again');
+    await subscribedAlert.accept();
+    await subscribePage.close();
     // verify can add large file now
-    await gmail_page.wait_till_gone('@dialog-subscribe');
-    await gmail_page.wait_all('@webmail-notification');
-    expect(await gmail_page.read('@webmail-notification')).contains('Successfully upgraded to FlowCrypt Advanced');
-    await compose_page.click('@input-body'); // focus on this tab before interacting with file upload
-    file_input = await compose_page.target.$('input[type=file]');
-    await file_input!.uploadFile('test/samples/large.jpg');
-    await ComposePageRecipe.send_and_close(compose_page);
-    await gmail_page.wait_till_gone('@container-new-message');
+    await gmailPage.waitTillGone('@dialog-subscribe');
+    await gmailPage.waitAll('@webmail-notification');
+    expect(await gmailPage.read('@webmail-notification')).contains('Successfully upgraded to FlowCrypt Advanced');
+    await composePage.click('@input-body'); // focus on this tab before interacting with file upload
+    fileInput = await composePage.target.$('input[type=file]');
+    await fileInput!.uploadFile('test/samples/large.jpg');
+    await ComposePageRecipe.sendAndClose(composePage);
+    await gmailPage.waitTillGone('@container-new-message');
   }));
 
   ava.test.todo('compose > footer > subscribe > trial');

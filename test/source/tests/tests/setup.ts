@@ -3,7 +3,7 @@ import { PageRecipe, SetupPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 
-export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_semaphored_global_browser: TestWithGlobalBrowser) => {
+export let defineSetupTests = (testWithBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test.todo('setup - no connection when pulling backup - retry prompt shows and works');
 
@@ -13,80 +13,80 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_s
 
   ava.test.todo('setup - no connection when submitting public key - retry prompt shows and works');
 
-  ava.test('settings > login > close oauth window > close popup', test_with_browser(async (browser, t) => {
-    await BrowserRecipe.open_settings_login_but_close_oauth_window_before_granting_permission(browser, 'flowcrypt.test.key.imported@gmail.com');
+  ava.test('settings > login > close oauth window > close popup', testWithBrowser(async (browser, t) => {
+    await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(browser, 'flowcrypt.test.key.imported@gmail.com');
   }));
 
-  ava.test('gmail setup prompt notification shows up + goes away when close clicked + shows up again + setup link opens settings', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_but_close_oauth_window_before_granting_permission(browser, 'flowcrypt.test.key.imported@gmail.com');
-    await settings_page.close();
-    let gmail_page = await BrowserRecipe.open_gmail_page(browser);
-    await gmail_page.wait_all(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-    await gmail_page.wait_and_click('@notification-setup-action-close', {confirm_gone: true});
-    await gmail_page.close();
-    gmail_page = await BrowserRecipe.open_gmail_page(browser);
-    await gmail_page.wait_all(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-    let new_settings_page = await browser.new_page_triggered_by(() => gmail_page.wait_and_click('@notification-setup-action-open-settings'));
-    await new_settings_page.wait_all('@action-connect-to-gmail');
+  ava.test('gmail setup prompt notification shows up + goes away when close clicked + shows up again + setup link opens settings', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(browser, 'flowcrypt.test.key.imported@gmail.com');
+    await settingsPage.close();
+    let gmailPage = await BrowserRecipe.openGmailPage(browser);
+    await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
+    await gmailPage.close();
+    gmailPage = await BrowserRecipe.openGmailPage(browser);
+    await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    let newSettingsPage = await browser.newPageTriggeredBy(() => gmailPage.waitAndClick('@notification-setup-action-open-settings'));
+    await newSettingsPage.waitAll('@action-connect-to-gmail');
   }));
 
-  ava.test('gmail shows success notification after setup + goes away after click + does not re-appear', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
-    await SetupPageRecipe.manual_enter(settings_page, 'flowcrypt.test.key.used.pgp');
-    let gmail_page = await BrowserRecipe.open_gmail_page(browser);
-    await gmail_page.wait_all(['@webmail-notification', '@notification-successfully-setup-action-close']);
-    await gmail_page.wait_and_click('@notification-successfully-setup-action-close', {confirm_gone: true});
-    await gmail_page.close();
-    gmail_page = await BrowserRecipe.open_gmail_page(browser);
-    await gmail_page.not_present(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
+  ava.test('gmail shows success notification after setup + goes away after click + does not re-appear', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.imported@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
+    let gmailPage = await BrowserRecipe.openGmailPage(browser);
+    await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
+    await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
+    await gmailPage.close();
+    gmailPage = await BrowserRecipe.openGmailPage(browser);
+    await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
   }));
 
-  ava.test('gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', test_with_browser(async (browser, t) => {
-    await BrowserRecipe.open_settings_login_but_close_oauth_window_before_granting_permission(browser, 'flowcrypt.test.key.imported@gmail.com');
-    let gmail_page = await BrowserRecipe.open_gmail_page(browser);
-    await gmail_page.wait_all(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-    await gmail_page.wait_and_click('@notification-setup-action-dismiss', {confirm_gone: true});
-    await gmail_page.close();
-    gmail_page = await BrowserRecipe.open_gmail_page(browser);
-    await gmail_page.not_present(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+  ava.test('gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(async (browser, t) => {
+    await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(browser, 'flowcrypt.test.key.imported@gmail.com');
+    let gmailPage = await BrowserRecipe.openGmailPage(browser);
+    await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
+    await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
+    await gmailPage.close();
+    gmailPage = await BrowserRecipe.openGmailPage(browser);
+    await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
   }));
 
-  ava.test('setup - import key - do not submit - did not use before', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
-    await SetupPageRecipe.manual_enter(settings_page, 'flowcrypt.test.key.used.pgp', {submit_pubkey: false, used_pgp_before: false});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - import key - do not submit - did not use before', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.imported@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
-  ava.test('setup - import key - submit - used before', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.used.pgp@gmail.com');
-    await SetupPageRecipe.manual_enter(settings_page, 'flowcrypt.test.key.used.pgp', {submit_pubkey: true, used_pgp_before: true});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - import key - submit - used before', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.used.pgp@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
-  ava.test('setup - import key - naked - choose my own pass phrase', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.import.naked@gmail.com');
-    await SetupPageRecipe.manual_enter(settings_page, 'flowcrypt.test.key.naked', {submit_pubkey: false, used_pgp_before: false, naked: true});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - import key - naked - choose my own pass phrase', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.import.naked@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.naked', { submitPubkey: false, usedPgpBefore: false, naked: true });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
-  ava.test('setup - import key - naked - auto-generate a pass phrase', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.import.naked@gmail.com');
-    await SetupPageRecipe.manual_enter(settings_page, 'flowcrypt.test.key.naked', {submit_pubkey: false, used_pgp_before: false, naked: true, gen_pp: true});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - import key - naked - auto-generate a pass phrase', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.import.naked@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.naked', { submitPubkey: false, usedPgpBefore: false, naked: true, genPp: true });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
   ava.test.todo('setup - import key - naked - do not supply pass phrase gets error');
 
-  ava.test('setup - import key - fix key self signatures', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
-    await SetupPageRecipe.manual_enter(settings_page, 'missing.self.signatures', {submit_pubkey: false, fix_key: true});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - import key - fix key self signatures', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.imported@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures', { submitPubkey: false, fixKey: true });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
-  ava.test('setup - import key - fix key self signatures - skip invalid uid', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.imported@gmail.com');
-    await SetupPageRecipe.manual_enter(settings_page, 'missing.self.signatures.invalid.uid', {submit_pubkey: false, fix_key: true});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - import key - fix key self signatures - skip invalid uid', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.imported@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'missing.self.signatures.invalid.uid', { submitPubkey: false, fixKey: true });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
   ava.test.todo('setup - create key advanced - do not remember pass phrase');
@@ -95,74 +95,74 @@ export let define_setup_tests = (test_with_browser: TestWithBrowser, test_with_s
 
   ava.test.todo('setup - create key simple');
 
-  ava.test('setup - create key advanced - no backup', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.new.manual@gmail.com');
-    await SetupPageRecipe.create_advanced(settings_page, 'flowcrypt.test.key.used.pgp', 'none', {submit_pubkey: false, used_pgp_before: false});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - create key advanced - no backup', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.new.manual@gmail.com');
+    await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: false });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
-  ava.test('setup - recover with a pass phrase - skip remaining', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: false});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - recover with a pass phrase - skip remaining', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: false });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
-  ava.test('setup - recover with a pass phrase - 1pp1 then 2pp1', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.2pp1');
+  ava.test('setup - recover with a pass phrase - 1pp1 then 2pp1', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
   }));
 
-  ava.test('setup - recover with a pass phrase - 1pp2 then 2pp1', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp2', {has_recover_more: true, click_recover_more: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.2pp1');
+  ava.test('setup - recover with a pass phrase - 1pp2 then 2pp1', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', { hasRecoverMore: true, clickRecoverMore: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
   }));
 
-  ava.test('setup - recover with a pass phrase - 2pp1 then 1pp1', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.2pp1', {has_recover_more: true, click_recover_more: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp1');
+  ava.test('setup - recover with a pass phrase - 2pp1 then 1pp1', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', { hasRecoverMore: true, clickRecoverMore: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1');
   }));
 
-  ava.test('setup - recover with a pass phrase - 2pp1 then 1pp2', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.2pp1', {has_recover_more: true, click_recover_more: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp2');
+  ava.test('setup - recover with a pass phrase - 2pp1 then 1pp2', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', { hasRecoverMore: true, clickRecoverMore: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2');
   }));
 
-  ava.test('setup - recover with a pass phrase - 1pp1 then 1pp2 (shows already recovered), then 2pp1', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.1pp2', {already_recovered: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.compatibility.2pp1', {});
+  ava.test('setup - recover with a pass phrase - 1pp1 then 1pp2 (shows already recovered), then 2pp1', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp2', { alreadyRecovered: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1', {});
   }));
 
   ava.test.todo('setup - recover with a pass phrase - 1pp1 then wrong, then skip');
   // ava.test('setup - recover with a pass phrase - 1pp1 then wrong, then skip', test_with_browser(async (browser, t) => {
-  //   let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
-  //   await SetupPageRecipe.setup_recover(settings_page, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
-  //   await SetupPageRecipe.setup_recover(settings_page, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true});
+  //   let settingsPage = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.compatibility@gmail.com');
+  //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.compatibility.1pp1', {has_recover_more: true, click_recover_more: true});
+  //   await SetupPageRecipe.setup_recover(settingsPage, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true});
   //   await Util.sleep(200);
   // }));
 
-  ava.test('setup - recover with a pass phrase - no remaining', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.recovered@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.test.key.recovered', {has_recover_more: false});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - recover with a pass phrase - no remaining', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.recovered@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered', { hasRecoverMore: false });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
-  ava.test('setup - fail to recover with a wrong pass phrase', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.recovered@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.wrong.passphrase', {has_recover_more: false, wrong_passphrase: true});
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_not_present(browser);
+  ava.test('setup - fail to recover with a wrong pass phrase', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.recovered@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', { hasRecoverMore: false, wrongPp: true });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnNotPresent(browser);
   }));
 
-  ava.test('setup - fail to recover with a wrong pass phrase at first, then recover with good pass phrase', test_with_browser(async (browser, t) => {
-    let settings_page = await BrowserRecipe.open_settings_login_approve(browser, 'flowcrypt.test.key.recovered@gmail.com');
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.wrong.passphrase', {wrong_passphrase: true});
-    await SetupPageRecipe.recover(settings_page, 'flowcrypt.test.key.recovered');
-    await BrowserRecipe.open_gmail_page_and_verify_compose_button_present(browser);
+  ava.test('setup - fail to recover with a wrong pass phrase at first, then recover with good pass phrase', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.recovered@gmail.com');
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.wrong.passphrase', { wrongPp: true });
+    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.key.recovered');
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
 };

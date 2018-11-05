@@ -6,88 +6,88 @@ let jQuery: any;
 
 abstract class ControllableBase {
 
-  public target: Page|Frame;
-  private debug_namespace: string|null = null;
+  public target: Page | Frame;
+  private debugNamespace: string | null = null;
 
-  constructor(page_or_frame: Page|Frame) {
-    this.target = page_or_frame;
+  constructor(pageOrFrame: Page | Frame) {
+    this.target = pageOrFrame;
   }
 
   public enable_debugging(namespace: string) {
-    this.debug_namespace = namespace;
+    this.debugNamespace = namespace;
   }
 
   protected log = (msg: string) => {
-    if(this.debug_namespace) {
-      console.log(`[debug][controllable][${this.debug_namespace}] ${msg}`);
+    if (this.debugNamespace) {
+      console.log(`[debug][controllable][${this.debugNamespace}] ${msg}`);
     }
   }
 
-  protected is_xpath = (selector: string): boolean => selector.match(/^\/\//) !== null;
+  protected isXpath = (selector: string): boolean => selector.match(/^\/\//) !== null;
 
-  protected selector = (custom_selector_language_query: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
+  protected selector = (customSelLanguageQuery: string): string => { // supply browser selector, xpath, @test-id or @test-id(contains this text)
     let m;
-    if(this.is_xpath(custom_selector_language_query)) {
-      return custom_selector_language_query;
-    } else if(m = custom_selector_language_query.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
+    if (this.isXpath(customSelLanguageQuery)) {
+      return customSelLanguageQuery;
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
-    } else if(m = custom_selector_language_query.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
+    } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
       return `//*[@data-test='${m[1]}' and contains(text(),'${m[2]}')]`;
     } else {
-      return custom_selector_language_query;
+      return customSelLanguageQuery;
     }
   }
 
-  protected element = async (selector: string): Promise<ElementHandle|null> => {
+  protected element = async (selector: string): Promise<ElementHandle | null> => {
     selector = this.selector(selector);
-    if(this.is_xpath(selector)) {
+    if (this.isXpath(selector)) {
       return (await this.target.$x(selector))[0];
     } else {
       return await this.target.$(selector);
     }
   }
 
-  protected selectors_as_processed_array = (selector: string|string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
+  protected selsAsProcessedArr = (selector: string | string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
 
-  public wait_for_selector_test_state = async (state: string, timeout=10) => {
-    await this.wait_all(`[data-test-state="${state}"]`, {timeout, visible: false});
+  public waitForSelTestStaet = async (state: string, timeout = 10) => {
+    await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
-  public attr = async (element_handle: ElementHandle, name: string): Promise<string> => await (await element_handle.getProperty(name)).jsonValue();
+  public attr = async (elHandle: ElementHandle, name: string): Promise<string> => await (await elHandle.getProperty(name)).jsonValue();
 
-  public wait_all = async (selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}) => {
-    let selectors = this.selectors_as_processed_array(selector);
+  public waitAll = async (selector: string | string[], { timeout = 20, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
+    let selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
-    for(let selector of selectors) {
+    for (let selector of selectors) {
       this.log(`wait_all:2:${selector}`);
-      if (this.is_xpath(selector)) {
+      if (this.isXpath(selector)) {
         this.log(`wait_all:3:${selector}`);
-        await (this.target as any).waitForXPath(selector, {timeout: timeout * 1000, visible});  // @types/puppeteer doesn't know about this.target.waitForXPath
+        await (this.target as any).waitForXPath(selector, { timeout: timeout * 1000, visible });  // @types/puppeteer doesn't know about this.target.waitForXPath
         this.log(`wait_all:4:${selector}`);
       } else {
         this.log(`wait_all:5:${selector}`);
-        await this.target.waitForSelector(selector, {timeout: timeout * 1000, visible});
+        await this.target.waitForSelector(selector, { timeout: timeout * 1000, visible });
         this.log(`wait_all:6:${selector}`);
       }
     }
     this.log(`wait_all:7:${selectors.join(',')}`);
   }
 
-  public wait_any = async (selector: string|string[], {timeout=20, visible=true}: {timeout?: number, visible?: boolean}={}): Promise<ElementHandle> => {
+  public waitAny = async (selector: string | string[], { timeout = 20, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
     timeout = Math.max(timeout, 1);
-    let selectors = this.selectors_as_processed_array(selector);
+    let selectors = this.selsAsProcessedArr(selector);
     while (timeout-- > 0) {
       try {
         for (let selector of selectors) {
-          let elements = await (this.is_xpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
-          for (let element of elements ) {
+          let elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
+          for (let element of elements) {
             if ((await element.boundingBox()) !== null || !visible) { // element is visible
               return element;
             }
           }
         }
       } catch (e) {
-        if(e.message.indexOf('Cannot find context with specified id undefined') === -1) {
+        if (e.message.indexOf('Cannot find context with specified id undefined') === -1) {
           throw e;
         }
       }
@@ -96,15 +96,15 @@ abstract class ControllableBase {
     throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
   }
 
-  public wait_till_gone = async (selector: string|string[], {timeout=5}: {timeout?: number}={timeout:30}) => {
-    let seconds_left = timeout;
+  public waitTillGone = async (selector: string | string[], { timeout = 5 }: { timeout?: number } = { timeout: 30 }) => {
+    let secondsLeft = timeout;
     let selectors = Array.isArray(selector) ? selector : [selector];
-    while(seconds_left-- >= 0) {
+    while (secondsLeft-- >= 0) {
       try {
-        await this.wait_any(selectors, {timeout:0}); // if this fails, that means there are none left: return success
+        await this.waitAny(selectors, { timeout: 0 }); // if this fails, that means there are none left: return success
         await Util.sleep(1);
       } catch (e) {
-        if(e.message.indexOf('waiting failed') === 0) {
+        if (e.message.indexOf('waiting failed') === 0) {
           return;
         }
       }
@@ -112,13 +112,13 @@ abstract class ControllableBase {
     throw Error(`this.wait_till_gone: some of "${selectors.join(',')}" still present after timeout:${timeout}`);
   }
 
-  public not_present = async (selector: string|string[]) => await this.wait_till_gone(selector, {timeout: 0});
+  public notPresent = async (selector: string | string[]) => await this.waitTillGone(selector, { timeout: 0 });
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
     let e = await this.element(selector);
     this.log(`click:2:${selector}`);
-    if(!e) {
+    if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
     this.log(`click:4:${selector}`);
@@ -126,15 +126,18 @@ abstract class ControllableBase {
     this.log(`click:5:${selector}`);
   }
 
-  public type = async (selector: string, text: string, letter_by_letter=false) => {
+  public type = async (selector: string, text: string, letterByLetter = false) => {
     let e = await this.element(selector);
-    if(!e) {
+    if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
-    if(letter_by_letter || text.length < 20) {
+    if (letterByLetter || text.length < 20) {
       await e.type(text);
     } else {
-      await this.target.evaluate((s, t) => {let e = document.querySelector(s); e[e.tagName === 'DIV' ? 'innerText' : 'value']=t;}, this.selector(selector), text.substring(0, text.length - 10));
+      await this.target.evaluate((s, t) => {
+        let e = document.querySelector(s);
+        e[e.tagName === 'DIV' ? 'innerText' : 'value'] = t;
+      }, this.selector(selector), text.substring(0, text.length - 10));
       await e.type(text.substring(text.length - 10, text.length));
     }
   }
@@ -142,7 +145,7 @@ abstract class ControllableBase {
   public value = async (selector: string): Promise<string> => {
     return await this.target.evaluate((s) => {
       let e = document.querySelector(s); // this will get evaluated in the browser
-      if(e.tagName==='SELECT') {
+      if (e.tagName === 'SELECT') {
         return e.options[e.selectedIndex].value;
       } else {
         return e.value;
@@ -150,7 +153,7 @@ abstract class ControllableBase {
     }, this.selector(selector));
   }
 
-  public is_checked = async (selector: string): Promise<boolean> => {
+  public isChecked = async (selector: string): Promise<boolean> => {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
@@ -158,20 +161,20 @@ abstract class ControllableBase {
     return await this.target.evaluate((s) => document.querySelector(s).innerText, this.selector(selector));
   }
 
-  public select_option = async (selector: string, choice: string) => {
+  public selectOption = async (selector: string, choice: string) => {
     await this.target.evaluate((s, v) => jQuery(s).val(v).trigger('change'), this.selector(selector), choice);
   }
 
-  public wait_and_type = async (selector: string, text: string, {delay=0.1}: {delay?: number}={}) => {
-    await this.wait_all(selector);
+  public waitAndType = async (selector: string, text: string, { delay = 0.1 }: { delay?: number } = {}) => {
+    await this.waitAll(selector);
     await Util.sleep(delay);
     await this.type(selector, text);
   }
 
-  public wait_and_click = async (selector: string, {delay=0.1, confirm_gone=false, retry_errors=false}: {delay?: number, confirm_gone?: boolean, retry_errors?: boolean}={}) => {
-    for(let i of [1, 2, 3]) {
+  public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false }: { delay?: number, confirmGone?: boolean, retryErrs?: boolean } = {}) => {
+    for (let i of [1, 2, 3]) {
       this.log(`wait_and_click(i${i}):1:${selector}`);
-      await this.wait_all(selector);
+      await this.waitAll(selector);
       this.log(`wait_and_click(i${i}):2:${selector}`);
       await Util.sleep(delay);
       this.log(`wait_and_click(i${i}):3:${selector}`);
@@ -180,10 +183,10 @@ abstract class ControllableBase {
         await this.click(selector);
         this.log(`wait_and_click(i${i}):5:${selector}`);
         break;
-      } catch(e) {
+      } catch (e) {
         this.log(`wait_and_click(i${i}):6:err(${e.message}):${selector}`);
-        if(e.message === 'Node is either not visible or not an HTMLElement') { // maybe the node just re-rendered?
-          if(!retry_errors || i === 3) {
+        if (e.message === 'Node is either not visible or not an HTMLElement') { // maybe the node just re-rendered?
+          if (!retryErrs || i === 3) {
             throw e;
           }
           this.log(`wait_and_click(i${i}):retrying`);
@@ -193,52 +196,52 @@ abstract class ControllableBase {
         throw e;
       }
     }
-    if(confirm_gone) {
+    if (confirmGone) {
       this.log(`wait_and_click:7:${selector}`);
-      await this.wait_till_gone(selector);
+      await this.waitTillGone(selector);
     }
     this.log(`wait_and_click:8:${selector}`);
   }
 
-  public get_frames_urls = async (url_matchables: string[], {sleep}={sleep: 3}): Promise<string[]> => {
-    if(sleep) {
+  public getFramesUrls = async (urlMatchables: string[], { sleep } = { sleep: 3 }): Promise<string[]> => {
+    if (sleep) {
       await Util.sleep(sleep);
     }
-    let matching_links = [];
-    for(let iframe of await this.target.$$('iframe')) {
-      let src_handle = await iframe.getProperty('src');
-      let src = await src_handle.jsonValue() as string;
-      if(url_matchables.filter(m => src.indexOf(m) !== -1).length === url_matchables.length) {
-        matching_links.push(src);
+    let matchingLinks = [];
+    for (let iframe of await this.target.$$('iframe')) {
+      let srcHandle = await iframe.getProperty('src');
+      let src = await srcHandle.jsonValue() as string;
+      if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length) {
+        matchingLinks.push(src);
       }
     }
-    return matching_links;
+    return matchingLinks;
   }
 
-  public get_frame = async (url_matchables: string[], {sleep=1}={sleep: 1}): Promise<ControllableFrame> => {
-    if(sleep) {
+  public getFrame = async (urlMatchables: string[], { sleep = 1 } = { sleep: 1 }): Promise<ControllableFrame> => {
+    if (sleep) {
       await Util.sleep(sleep);
     }
     let frames: Frame[];
-    if(this.target.constructor.name === 'Page') {
+    if (this.target.constructor.name === 'Page') {
       frames = await (this.target as Page).frames();
-    } else if(this.target.constructor.name === 'Frame') {
+    } else if (this.target.constructor.name === 'Frame') {
       frames = await (this.target as Frame).childFrames();
     } else {
       throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
     }
     let frame = frames.find(frame => {
-      for(let fragment of url_matchables) {
-        if(frame.url().indexOf(fragment) === -1) {
+      for (let fragment of urlMatchables) {
+        if (frame.url().indexOf(fragment) === -1) {
           return false;
         }
       }
       return true;
     });
-    if(frame) {
+    if (frame) {
       return new ControllableFrame(frame);
     }
-    throw Error(`Frame not found: ${url_matchables.join(',')}`);
+    throw Error(`Frame not found: ${urlMatchables.join(',')}`);
   }
 
 }
@@ -252,15 +255,15 @@ export class ControllablePage extends ControllableBase {
     this.page = page;
   }
 
-  public trigger_and_await_new_alert = async (triggering_action: () => void): Promise<Dialog> => {
-    return new Promise(resolve => this.page.on('dialog', resolve) && triggering_action()) as Promise<Dialog>;
+  public triggerAndWaitNewAlert = async (triggeringAction: () => void): Promise<Dialog> => {
+    return new Promise(resolve => this.page.on('dialog', resolve) && triggeringAction()) as Promise<Dialog>;
   }
 
-  public wait_for_navigation_if_any = async (seconds: number = 5) => {
+  public waitForNavigationIfAny = async (seconds: number = 5) => {
     try {
-      await this.page.waitForNavigation({timeout: seconds * 1000});
-    } catch(e) {
-      if(e.message.indexOf('Navigation Timeout Exceeded') === 0) {
+      await this.page.waitForNavigation({ timeout: seconds * 1000 });
+    } catch (e) {
+      if (e.message.indexOf('Navigation Timeout Exceeded') === 0) {
         return;
       }
       throw e;
@@ -284,4 +287,4 @@ export class ControllableFrame extends ControllableBase {
 
 }
 
-export type Controllable = ControllableFrame|ControllablePage;
+export type Controllable = ControllableFrame | ControllablePage;

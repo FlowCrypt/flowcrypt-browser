@@ -1,5 +1,5 @@
 
-import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, gmail_seq } from '../browser';
+import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, gmailSeq } from '../browser';
 import { Util, Config } from '../util';
 import { expect } from 'chai';
 
@@ -9,112 +9,115 @@ export class PageRecipe {
 
 export class SetupPageRecipe extends PageRecipe {
 
-  private static create_begin = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false}: {used_pgp_before?: boolean}={}) => {
-    let k = Config.key(key_title);
-    if(used_pgp_before) {
-      await settings_page.wait_and_click('@action-step0foundkey-choose-manual-create');
+  private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {
+    let k = Config.key(keyTitle);
+    if (usedPgpBefore) {
+      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
     } else {
-      await settings_page.wait_and_click('@action-step1easyormanual-choose-manual-create');
+      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-create');
     }
-    await settings_page.wait_and_type('@input-step2bmanualcreate-passphrase-1', k.passphrase);
-    await settings_page.wait_and_type('@input-step2bmanualcreate-passphrase-2', k.passphrase);
+    await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-1', k.passphrase);
+    await settingsPage.waitAndType('@input-step2bmanualcreate-passphrase-2', k.passphrase);
   }
 
-  // public static setup_create_simple = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false}: {used_pgp_before?: boolean}={}) => {
-  //   await PageRecipe.setup_create_begin(settings_page, key_title, {used_pgp_before});
-  //   await settings_page.wait_and_click('@input-step2bmanualcreate-create-and-save');
-  //   await settings_page.wait_and_click('@action-backup-....');
+  // public static setup_create_simple = async (settingsPage: ControllablePage, key_title: string, {used_pgp_before=false}: {used_pgp_before?: boolean}={}) => {
+  //   await PageRecipe.setup_create_begin(settingsPage, key_title, {used_pgp_before});
+  //   await settingsPage.wait_and_click('@input-step2bmanualcreate-create-and-save');
+  //   await settingsPage.wait_and_click('@action-backup-....');
   //   // todo
-  //   await settings_page.wait_and_click('@action-step4done-account-settings');
+  //   await settingsPage.wait_and_click('@action-step4done-account-settings');
   // }
 
-  public static create_advanced = async (settings_page: ControllablePage, key_title: string, backup: "none"|"email"|"file", {used_pgp_before=false, submit_pubkey=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean}={}) => {
-    await SetupPageRecipe.create_begin(settings_page, key_title, {used_pgp_before});
-    await settings_page.wait_and_click('@action-step2bmanualcreate-show-advanced-create-settings'); // unfold
-    await settings_page.wait_and_click('@input-step2bmanualcreate-backup-inbox'); // uncheck
-    if(!submit_pubkey) {
-      await settings_page.wait_and_click('@input-step2bmanualcreate-submit-pubkey'); // uncheck
+  // tslint:disable-next-line:max-line-length
+  public static createAdvanced = async (settingsPage: ControllablePage, keyTitle: string, backup: "none" | "email" | "file", { usedPgpBefore = false, submitPubkey = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean } = {}) => {
+    await SetupPageRecipe.createBegin(settingsPage, keyTitle, { usedPgpBefore });
+    await settingsPage.waitAndClick('@action-step2bmanualcreate-show-advanced-create-settings'); // unfold
+    await settingsPage.waitAndClick('@input-step2bmanualcreate-backup-inbox'); // uncheck
+    if (!submitPubkey) {
+      await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
-    await settings_page.wait_and_click('@input-step2bmanualcreate-create-and-save');
-    if(backup === 'none') {
-      await settings_page.wait_all('@input-backup-step3manual-no-backup', {timeout: 40});
-      await settings_page.wait_and_click('@input-backup-step3manual-no-backup');
-    } else if(backup === 'email') {
+    await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
+    if (backup === 'none') {
+      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 40 });
+      await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
+    } else if (backup === 'email') {
       throw Error('tests.setup_manual_create options.backup=email not implemented');
-    } else if(backup === 'file') {
+    } else if (backup === 'file') {
       throw Error('tests.setup_manual_create options.backup=file not implemented');
     }
-    await settings_page.wait_and_click('@action-backup-step3manual-continue');
-    await settings_page.wait_and_click('@action-step4done-account-settings');
+    await settingsPage.waitAndClick('@action-backup-step3manual-continue');
+    await settingsPage.waitAndClick('@action-step4done-account-settings');
   }
 
-  public static manual_enter = async (settings_page: ControllablePage, key_title: string, {used_pgp_before=false, submit_pubkey=false, fix_key=false, naked=false, gen_pp=false}: {used_pgp_before?: boolean, submit_pubkey?: boolean, fix_key?: boolean, naked?: boolean, gen_pp?: boolean}={}) => {
-    let k = Config.key(key_title);
-    if(used_pgp_before) {
-      await settings_page.wait_and_click('@action-step0foundkey-choose-manual-enter');
+  // tslint:disable-next-line:max-line-length
+  public static manualEnter = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false, submitPubkey = false, fixKey = false, naked = false, genPp = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey?: boolean, naked?: boolean, genPp?: boolean } = {}) => {
+    let k = Config.key(keyTitle);
+    if (usedPgpBefore) {
+      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter');
     } else {
-      await settings_page.wait_and_click('@action-step1easyormanual-choose-manual-enter');
+      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter');
     }
-    await settings_page.wait_and_click('@input-step2bmanualenter-source-paste');
-    await settings_page.wait_and_type('@input-step2bmanualenter-ascii-key', k.armored || '');
-    await settings_page.wait_and_click('@input-step2bmanualenter-passphrase'); // blur ascii key input
-    if(!naked) {
+    await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste');
+    await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', k.armored || '');
+    await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase'); // blur ascii key input
+    if (!naked) {
       await Util.sleep(1);
-      await settings_page.not_present('@action-step2bmanualenter-new-random-passphrase');
-      await settings_page.wait_and_type('@input-step2bmanualenter-passphrase', k.passphrase);
+      await settingsPage.notPresent('@action-step2bmanualenter-new-random-passphrase');
+      await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
     } else {
-      await settings_page.wait_and_click('@input-step2bmanualenter-passphrase');
-      await settings_page.wait_all('@action-step2bmanualenter-new-random-passphrase', {visible: true});
-      if(gen_pp) {
-        await settings_page.wait_and_click('@action-step2bmanualenter-new-random-passphrase');
+      await settingsPage.waitAndClick('@input-step2bmanualenter-passphrase');
+      await settingsPage.waitAll('@action-step2bmanualenter-new-random-passphrase', { visible: true });
+      if (genPp) {
+        await settingsPage.waitAndClick('@action-step2bmanualenter-new-random-passphrase');
         await Util.sleep(1);
-        let generated_passphrase = await settings_page.value('@input-step2bmanualenter-passphrase');
-        if(!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generated_passphrase)) {
-          throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generated_passphrase}`);
+        let generatedPp = await settingsPage.value('@input-step2bmanualenter-passphrase');
+        if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedPp)) {
+          throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generatedPp}`);
         }
       } else {
-        await settings_page.wait_and_type('@input-step2bmanualenter-passphrase', k.passphrase);
+        await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
       }
     }
-    if(!submit_pubkey) {
-      await settings_page.wait_and_click('@input-step2bmanualenter-submit-pubkey'); // uncheck
+    if (!submitPubkey) {
+      await settingsPage.waitAndClick('@input-step2bmanualenter-submit-pubkey'); // uncheck
     }
-    await settings_page.wait_and_click('@input-step2bmanualenter-save', {delay: 1});
-    if(fix_key) {
-      await settings_page.wait_all('@input-compatibility-fix-expire-years');
-      await settings_page.select_option('@input-compatibility-fix-expire-years', '1');
-      await settings_page.wait_and_click('@action-fix-and-import-key');
+    await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+    if (fixKey) {
+      await settingsPage.waitAll('@input-compatibility-fix-expire-years');
+      await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
+      await settingsPage.waitAndClick('@action-fix-and-import-key');
     }
-    await settings_page.wait_and_click('@action-step4done-account-settings');
+    await settingsPage.waitAndClick('@action-step4done-account-settings');
   }
 
-  public static recover =  async (settings_page: ControllablePage, key_title: string, {wrong_passphrase=false, click_recover_more=false, has_recover_more=false, already_recovered=false}: {wrong_passphrase?: boolean, click_recover_more?: boolean, has_recover_more?: boolean, already_recovered?: boolean}={}) => {
-    let k = Config.key(key_title);
-    await settings_page.wait_and_type('@input-recovery-pass-phrase', k.passphrase);
-    if(wrong_passphrase) {
-      let dialog = await settings_page.trigger_and_await_new_alert(() => settings_page.wait_and_click('@action-recover-account'));
+  // tslint:disable-next-line:max-line-length
+  public static recover = async (settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) => {
+    let k = Config.key(keyTitle);
+    await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);
+    if (wrongPp) {
+      let dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
       // todo - read the contents - wrong pp
       await dialog.accept();
-    } else if(already_recovered) {
-      let dialog = await settings_page.trigger_and_await_new_alert(() => settings_page.wait_and_click('@action-recover-account'));
+    } else if (alreadyRecovered) {
+      let dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
       // todo - read the contents - already recovered
       await dialog.accept();
     } else {
-      await settings_page.wait_and_click('@action-recover-account');
-      await settings_page.wait_any(['@action-step4more-account-settings', '@action-step4done-account-settings'], {timeout: 60});
-      if(has_recover_more) {
-        await settings_page.wait_all(['@action-step4more-account-settings', '@action-step4more-recover-remaining']);
-        if(click_recover_more) {
-          await settings_page.wait_and_click('@action-step4more-recover-remaining');
+      await settingsPage.waitAndClick('@action-recover-account');
+      await settingsPage.waitAny(['@action-step4more-account-settings', '@action-step4done-account-settings'], { timeout: 60 });
+      if (hasRecoverMore) {
+        await settingsPage.waitAll(['@action-step4more-account-settings', '@action-step4more-recover-remaining']);
+        if (clickRecoverMore) {
+          await settingsPage.waitAndClick('@action-step4more-recover-remaining');
         } else {
-          await settings_page.wait_and_click('@action-step4more-account-settings');
+          await settingsPage.waitAndClick('@action-step4more-account-settings');
         }
       } else {
-        await settings_page.wait_all('@action-step4done-account-settings');
-        if(click_recover_more) {
+        await settingsPage.waitAll('@action-step4done-account-settings');
+        if (clickRecoverMore) {
           throw new Error('Invalid options chosen: has_recover_more: false, click_recover_more: true');
         } else {
-          await settings_page.wait_and_click('@action-step4done-account-settings');
+          await settingsPage.waitAndClick('@action-step4done-account-settings');
         }
       }
     }
@@ -124,191 +127,192 @@ export class SetupPageRecipe extends PageRecipe {
 
 export class SettingsPageRecipe extends PageRecipe {
 
-  public static toggle_screen = async (settings_page: ControllablePage, to: "basic"|"additional") => {
+  public static toggleScreen = async (settingsPage: ControllablePage, to: "basic" | "additional") => {
     await Util.sleep(0.5);
-    await settings_page.wait_and_click(to === 'basic' ? '@action-toggle-screen-basic' : '@action-toggle-screen-additional'); // switch
+    await settingsPage.waitAndClick(to === 'basic' ? '@action-toggle-screen-basic' : '@action-toggle-screen-additional'); // switch
     await Util.sleep(0.5);
-    await settings_page.wait_all(to === 'basic' ? '@action-toggle-screen-additional' : '@action-toggle-screen-basic'); // wait for opposite button to show up
+    await settingsPage.waitAll(to === 'basic' ? '@action-toggle-screen-additional' : '@action-toggle-screen-basic'); // wait for opposite button to show up
     await Util.sleep(0.5);
   }
 
-  public static close_dialog = async (settings_page: ControllablePage) => {
-    await settings_page.wait_and_click('@dialog-close');
-    await settings_page.wait_till_gone('@dialog');
+  public static closeDialog = async (settingsPage: ControllablePage) => {
+    await settingsPage.waitAndClick('@dialog-close');
+    await settingsPage.waitTillGone('@dialog');
   }
 
-  public static await_new_page_frame = async (settings_page: ControllablePage, action_button_selector: string, frame_url_filter: string[]): Promise<ControllableFrame> => {
-    await settings_page.wait_and_click(action_button_selector);
-    await settings_page.wait_all('@dialog');
-    return await settings_page.get_frame(frame_url_filter); // placement=settings to differentiate from mini-security frame in settings
+  public static awaitNewPageFrame = async (settingsPage: ControllablePage, actionBtnSel: string, frameUrlFilter: string[]): Promise<ControllableFrame> => {
+    await settingsPage.waitAndClick(actionBtnSel);
+    await settingsPage.waitAll('@dialog');
+    return await settingsPage.getFrame(frameUrlFilter); // placement=settings to differentiate from mini-security frame in settings
   }
 
-  public static switch_account = async (settings_page: ControllablePage, account_email: string) => {
-    await settings_page.wait_and_click('@action-toggle-accounts-menu');
-    await settings_page.wait_and_click(`@action-switch-to-account(${account_email})`);
+  public static swithAcct = async (settingsPage: ControllablePage, acctEmail: string) => {
+    await settingsPage.waitAndClick('@action-toggle-accounts-menu');
+    await settingsPage.waitAndClick(`@action-switch-to-account(${acctEmail})`);
   }
 
-  public static change_pass_phrase_requirement = async (settings_page: ControllablePage, passphrase: string, outcome: "session"|"storage") => {
-    let security_frame = await SettingsPageRecipe.await_new_page_frame(settings_page, '@action-open-security-page', ['security.htm', 'placement=settings']);
-    await security_frame.wait_all('@input-toggle-require-pass-phrase');
+  public static changePassphraseRequirement = async (settingsPage: ControllablePage, passphrase: string, outcome: "session" | "storage") => {
+    let securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+    await securityFrame.waitAll('@input-toggle-require-pass-phrase');
     await Util.sleep(1); // wait for form to init / fill
-    let require_pass_phrase_is_checked = await security_frame.is_checked('@input-toggle-require-pass-phrase');
-    if(require_pass_phrase_is_checked && outcome === 'session') {
+    let requirePassphraseIsChecked = await securityFrame.isChecked('@input-toggle-require-pass-phrase');
+    if (requirePassphraseIsChecked && outcome === 'session') {
       throw Error('change_pass_phrase_requirement: already checked to be in session only');
     }
-    if(!require_pass_phrase_is_checked && outcome === 'storage') {
+    if (!requirePassphraseIsChecked && outcome === 'storage') {
       throw Error('change_pass_phrase_requirement: already checked to be in storage');
     }
-    await security_frame.click('@input-toggle-require-pass-phrase');
-    await security_frame.wait_and_type('@input-confirm-pass-phrase', passphrase);
-    await security_frame.wait_and_click('@action-confirm-pass-phrase-requirement-change');
+    await securityFrame.click('@input-toggle-require-pass-phrase');
+    await securityFrame.waitAndType('@input-confirm-pass-phrase', passphrase);
+    await securityFrame.waitAndClick('@action-confirm-pass-phrase-requirement-change');
     await Util.sleep(1); // frame will now reload
-    await security_frame.wait_all('@input-toggle-require-pass-phrase');
+    await securityFrame.waitAll('@input-toggle-require-pass-phrase');
     await Util.sleep(1); // wait to init
-    require_pass_phrase_is_checked = await security_frame.is_checked('@input-toggle-require-pass-phrase');
-    if(!require_pass_phrase_is_checked && outcome === 'session') {
+    requirePassphraseIsChecked = await securityFrame.isChecked('@input-toggle-require-pass-phrase');
+    if (!requirePassphraseIsChecked && outcome === 'session') {
       throw Error('change_pass_phrase_requirement: did not remember to only save in sesion');
     }
-    if(require_pass_phrase_is_checked && outcome === 'storage') {
+    if (requirePassphraseIsChecked && outcome === 'storage') {
       throw Error('change_pass_phrase_requirement: did not remember to save in storage');
     }
-    await SettingsPageRecipe.close_dialog(settings_page);
+    await SettingsPageRecipe.closeDialog(settingsPage);
   }
 
-  public static verify_my_key_page = async (settings_page: ControllablePage, expected_key_name: string, trigger: "button"|"link", link_index?: number) => {
-    await SettingsPageRecipe.toggle_screen(settings_page, 'additional');
-    let my_key_frame = await SettingsPageRecipe.await_new_page_frame(settings_page, trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${link_index}`, ['my_key.htm', 'placement=settings']);
+  public static verifyMyKeyPage = async (settingsPage: ControllablePage, expectedKeyName: string, trigger: "button" | "link", linkIndex?: number) => {
+    await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
+    let myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage,
+      trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`, ['my_key.htm', 'placement=settings']);
     await Util.sleep(1);
-    let k = Config.key(expected_key_name);
-    await my_key_frame.wait_all(['@content-key-words', '@content-armored-key']);
-    expect(await my_key_frame.read('@content-key-words')).to.equal(k.keywords);
-    await my_key_frame.wait_and_click('@action-toggle-key-type(show private key)');
-    expect(await my_key_frame.read('@content-armored-key')).to.contain('-----BEGIN PGP PRIVATE KEY BLOCK-----');
-    await my_key_frame.wait_and_click('@action-toggle-key-type(show public key)');
-    await SettingsPageRecipe.close_dialog(settings_page);
-    await SettingsPageRecipe.toggle_screen(settings_page, 'basic');
+    let k = Config.key(expectedKeyName);
+    await myKeyFrame.waitAll(['@content-key-words', '@content-armored-key']);
+    expect(await myKeyFrame.read('@content-key-words')).to.equal(k.keywords);
+    await myKeyFrame.waitAndClick('@action-toggle-key-type(show private key)');
+    expect(await myKeyFrame.read('@content-armored-key')).to.contain('-----BEGIN PGP PRIVATE KEY BLOCK-----');
+    await myKeyFrame.waitAndClick('@action-toggle-key-type(show public key)');
+    await SettingsPageRecipe.closeDialog(settingsPage);
+    await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
   }
 
-  public static pass_phrase_test = async (settings_page: ControllablePage, passphrase: string, expect_match: boolean) => {
-    let security_frame = await SettingsPageRecipe.await_new_page_frame(settings_page, '@action-open-security-page', ['security.htm', 'placement=settings']);
-    await security_frame.wait_and_click('@action-test-passphrase-begin');
-    await security_frame.wait_and_type('@input-test-passphrase', passphrase);
-    let click = () => security_frame.wait_and_click('@action-test-passphrase');
-    if(expect_match) {
+  public static passphraseTest = async (settingsPage: ControllablePage, passphrase: string, expectMatch: boolean) => {
+    let securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+    await securityFrame.waitAndClick('@action-test-passphrase-begin');
+    await securityFrame.waitAndType('@input-test-passphrase', passphrase);
+    let click = () => securityFrame.waitAndClick('@action-test-passphrase');
+    if (expectMatch) {
       await click();
-      await security_frame.wait_and_click('@action-test-passphrase-successful-close');
+      await securityFrame.waitAndClick('@action-test-passphrase-successful-close');
     } else {
-      let dialog = await settings_page.trigger_and_await_new_alert(click);
+      let dialog = await settingsPage.triggerAndWaitNewAlert(click);
       await dialog.accept();
-      await SettingsPageRecipe.close_dialog(settings_page);
+      await SettingsPageRecipe.closeDialog(settingsPage);
     }
-    await settings_page.wait_till_gone('@dialog');
+    await settingsPage.waitTillGone('@dialog');
   }
 
 }
 
 export class ComposePageRecipe extends PageRecipe {
 
-  public static open_standalone = async (browser: BrowserHandle): Promise<ControllablePage> => {
-    let compose_page = await browser.new_page('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0');
-    await compose_page.wait_all(['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await compose_page.wait_for_selector_test_state('ready');
-    return compose_page;
+  public static openStandalone = async (browser: BrowserHandle): Promise<ControllablePage> => {
+    let composePage = await browser.newPage('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0');
+    await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await composePage.waitForSelTestStaet('ready');
+    return composePage;
   }
 
-  public static open_in_settings = async (settings_page: ControllablePage): Promise<ControllableFrame> => {
-    await settings_page.wait_and_click('@action-show-compose-page');
-    await settings_page.wait_all('@dialog');
-    let compose_frame = await settings_page.get_frame(['compose.htm']);
-    await compose_frame.wait_all(['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await compose_frame.wait_for_selector_test_state('ready');
-    return compose_frame;
+  public static openInSettings = async (settingsPage: ControllablePage): Promise<ControllableFrame> => {
+    await settingsPage.waitAndClick('@action-show-compose-page');
+    await settingsPage.waitAll('@dialog');
+    let composeFrame = await settingsPage.getFrame(['compose.htm']);
+    await composeFrame.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await composeFrame.waitForSelTestStaet('ready');
+    return composeFrame;
   }
 
-  public static change_default_sending_address = async (compose_page: ControllablePage, new_default: string) => {
-    await compose_page.wait_and_click('@action-open-sending-address-settings');
-    await compose_page.wait_all('@dialog');
-    let sending_address_frame = await compose_page.get_frame(['sending_address.htm']);
-    await sending_address_frame.wait_and_click(`@action-choose-address(${new_default})`);
+  public static changeDefSendingAddr = async (composePage: ControllablePage, newDef: string) => {
+    await composePage.waitAndClick('@action-open-sending-address-settings');
+    await composePage.waitAll('@dialog');
+    let sendingAddrFrame = await composePage.getFrame(['sending_address.htm']);
+    await sendingAddrFrame.waitAndClick(`@action-choose-address(${newDef})`);
     await Util.sleep(0.5); // page reload
-    await sending_address_frame.wait_and_click('@action-close-sending-address-settings');
-    await compose_page.wait_till_gone('@dialog');
+    await sendingAddrFrame.waitAndClick('@action-close-sending-address-settings');
+    await composePage.waitTillGone('@dialog');
   }
 
-  public static fill_message = async (compose_page_or_frame: Controllable, to: string|null, subject: string) => {
-    if(to) {
-      await compose_page_or_frame.type('@input-to', to);
+  public static fillMsg = async (composePageOrFrame: Controllable, to: string | null, subject: string) => {
+    if (to) {
+      await composePageOrFrame.type('@input-to', to);
     }
-    await compose_page_or_frame.click('@input-subject');
-    await compose_page_or_frame.type('@input-subject', `Automated puppeteer test: ${subject}`);
-    await compose_page_or_frame.type('@input-body', `This is an automated puppeteer test: ${subject}`);
+    await composePageOrFrame.click('@input-subject');
+    await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
+    await composePageOrFrame.type('@input-body', `This is an automated puppeteer test: ${subject}`);
   }
 
-  public static send_and_close = async (compose_page: ControllablePage, password?: string|undefined) => {
-    if(password) {
-      await compose_page.wait_and_type('@input-password', 'test-pass');
-      await compose_page.wait_and_click('@action-send', {delay: 0.5}); // in real usage, also have to click two times when using password - why?
+  public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined) => {
+    if (password) {
+      await composePage.waitAndType('@input-password', 'test-pass');
+      await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
-    await compose_page.wait_and_click('@action-send', {delay: 0.5});
-    await compose_page.wait_for_selector_test_state('closed', 60); // wait until page closed
-    await compose_page.close();
+    await composePage.waitAndClick('@action-send', { delay: 0.5 });
+    await composePage.waitForSelTestStaet('closed', 60); // wait until page closed
+    await composePage.close();
   }
 
 }
 
 export class OauthPageRecipe extends PageRecipe {
 
-  private static oauth_password_delay = 2;
+  private static oauthPwdDelay = 2;
 
-  public static google = async (oauth_page: ControllablePage, account_email: string, action: "close"|"deny"|"approve"): Promise<void> => {
+  public static google = async (oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
     let selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
     };
-    let auth = Config.secrets.auth.google.filter(a => a.email === account_email)[0];
-    await oauth_page.wait_all('#Email, #submit_approve_access, #identifierId, .w6VTHd');
-    if (await oauth_page.target.$('#Email') !== null) { // 2016-style login
-      await oauth_page.wait_all('#Email', {timeout: 60});
-      await oauth_page.wait_and_type('#Email', auth.email);
-      await oauth_page.wait_and_click('#next');
-      await oauth_page.wait_for_navigation_if_any();
-      await Util.sleep(OauthPageRecipe.oauth_password_delay);
-      await oauth_page.wait_and_type('#Passwd', auth.password, {delay: OauthPageRecipe.oauth_password_delay});
-      await oauth_page.wait_for_navigation_if_any();
-      await oauth_page.wait_and_click('#signIn', {delay: 1});
-      await oauth_page.wait_for_navigation_if_any();
-    } else if (await oauth_page.target.$('#identifierId') !== null) { // 2017-style login
-      await oauth_page.wait_all('#identifierId', {timeout: 60});
-      await oauth_page.wait_and_type('#identifierId', auth.email, {delay: 2});
-      await oauth_page.wait_and_click('.zZhnYe', {delay: 2});  // confirm email
-      await oauth_page.wait_for_navigation_if_any();
-      await Util.sleep(OauthPageRecipe.oauth_password_delay);
-      await oauth_page.wait_and_type('.zHQkBf', auth.password, {delay: OauthPageRecipe.oauth_password_delay});
-      await oauth_page.wait_and_click('.CwaK9', {delay: 1});  // confirm password
-      await oauth_page.wait_for_navigation_if_any();
-    } else if (await oauth_page.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
-      await oauth_page.wait_and_click('.bLzI3e', {delay: 1}); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
+    let auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
+    await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd');
+    if (await oauthPage.target.$('#Email') !== null) { // 2016-style login
+      await oauthPage.waitAll('#Email', { timeout: 60 });
+      await oauthPage.waitAndType('#Email', auth.email);
+      await oauthPage.waitAndClick('#next');
+      await oauthPage.waitForNavigationIfAny();
+      await Util.sleep(OauthPageRecipe.oauthPwdDelay);
+      await oauthPage.waitAndType('#Passwd', auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
+      await oauthPage.waitForNavigationIfAny();
+      await oauthPage.waitAndClick('#signIn', { delay: 1 });
+      await oauthPage.waitForNavigationIfAny();
+    } else if (await oauthPage.target.$('#identifierId') !== null) { // 2017-style login
+      await oauthPage.waitAll('#identifierId', { timeout: 60 });
+      await oauthPage.waitAndType('#identifierId', auth.email, { delay: 2 });
+      await oauthPage.waitAndClick('.zZhnYe', { delay: 2 });  // confirm email
+      await oauthPage.waitForNavigationIfAny();
+      await Util.sleep(OauthPageRecipe.oauthPwdDelay);
+      await oauthPage.waitAndType('.zHQkBf', auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
+      await oauthPage.waitAndClick('.CwaK9', { delay: 1 });  // confirm password
+      await oauthPage.waitForNavigationIfAny();
+    } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
+      await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
       await Util.sleep(2);
-      return await OauthPageRecipe.google(oauth_page, account_email, action); // start from beginning after clicking "other email acct"
+      return await OauthPageRecipe.google(oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
     }
     await Util.sleep(5);
-    let element = await oauth_page.wait_any([selectors.approve_button, selectors.backup_email_verification_choice]); // , {timeout: 60}
+    let element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice]); // , {timeout: 60}
     await Util.sleep(1);
-    if((await oauth_page.target.$x(selectors.backup_email_verification_choice)).length) { // asks for registered backup email
+    if ((await oauthPage.target.$x(selectors.backup_email_verification_choice)).length) { // asks for registered backup email
       await element.click();
-      await oauth_page.wait_and_type('#knowledge-preregistered-email-response', auth.backup, {delay: 2});
-      await oauth_page.wait_and_click('#next', {delay: 2});
-      await oauth_page.wait_all('#submit_approve_access');
+      await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
+      await oauthPage.waitAndClick('#next', { delay: 2 });
+      await oauthPage.waitAll('#submit_approve_access');
     }
-    if(gmail_seq.indexOf(account_email) === -1) {
-      gmail_seq.push(account_email);
+    if (gmailSeq.indexOf(acctEmail) === -1) {
+      gmailSeq.push(acctEmail);
     }
-    if(action === 'close') {
-      await oauth_page.close();
-    } else if(action === 'deny') {
+    if (action === 'close') {
+      await oauthPage.close();
+    } else if (action === 'deny') {
       throw Error('tests.handle_gmail_oauth options.deny.true not implemented');
     } else {
-      await oauth_page.wait_and_click('#submit_approve_access', {delay: 1});
+      await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
     }
   }
 
@@ -316,23 +320,23 @@ export class OauthPageRecipe extends PageRecipe {
 
 export class GmailPageRecipe extends PageRecipe {
 
-  public static open_secure_compose = async (gmail_page: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
-    await gmail_page.wait_and_click('@action-secure-compose', {delay: 1});
-    await gmail_page.wait_all('@container-new-message');
-    let urls = await gmail_page.get_frames_urls(['/chrome/elements/compose.htm'], {sleep: 1});
+  public static openSecureCompose = async (gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
+    await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
+    await gmailPage.waitAll('@container-new-message');
+    let urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
-    return await browser.new_page(urls[0]);
+    return await browser.newPage(urls[0]);
   }
 
-  public static get_subscribe_dialog = async (gmail_page: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
-    await gmail_page.wait_all('@dialog-subscribe');
-    let urls = await gmail_page.get_frames_urls(['/chrome/elements/subscribe.htm'], {sleep: 1});
+  public static getSubscribeDialog = async (gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
+    await gmailPage.waitAll('@dialog-subscribe');
+    let urls = await gmailPage.getFramesUrls(['/chrome/elements/subscribe.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
-    return await browser.new_page(urls[0]);
+    return await browser.newPage(urls[0]);
   }
 
-  public static close_initial_setup_notification = async (gmail_page: ControllablePage) => {
-    await gmail_page.wait_and_click('@notification-successfully-setup-action-close');
+  public static closeInitialSetupNotif = async (gmailPage: ControllablePage) => {
+    await gmailPage.waitAndClick('@notification-successfully-setup-action-close');
   }
 
 }
