@@ -6,17 +6,11 @@
 
 import { FlatTypes } from './store.js';
 import { Pgp } from './pgp.js';
-import { Xss, Ui } from './browser.js';
 import { Att, FlowCryptAttLinkData } from './att.js';
 
-declare const openpgp: typeof OpenPGP;
-
 export type Dict<T> = { [key: string]: T; };
-export type UrlParam = string | number | null | undefined | boolean | string[];
-export type UrlParams = Dict<UrlParam>;
 export type EmailProvider = 'gmail';
 export type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
-export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
 
 export class Str {
 
@@ -187,12 +181,12 @@ export class Str {
   public static extractFcAtts = (decryptedContent: string, fcAtts: Att[]) => {
     if (Value.is('cryptup_file').in(decryptedContent)) {
       decryptedContent = decryptedContent.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, foundLink => {
-        let element = $(foundLink);
-        let fcData = element.attr('cryptup-data');
+        let el = $(foundLink);
+        let fcData = el.attr('cryptup-data');
         if (fcData) {
           let a: FlowCryptAttLinkData = Str.htmlAttrDecode(fcData);
           if (a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
-            fcAtts.push(new Att({ type: a.type, name: a.name, length: a.size, url: element.attr('href') }));
+            fcAtts.push(new Att({ type: a.type, name: a.name, length: a.size, url: el.attr('href') }));
           }
         }
         return '';
@@ -202,7 +196,7 @@ export class Str {
   }
 
   public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
-    let fcTokenElement = $(Ui.e('div', { html: decryptedContent })).find('.cryptup_reply');
+    let fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
     if (fcTokenElement.length) {
       let fcData = fcTokenElement.attr('cryptup-data');
       if (fcData) {
@@ -244,7 +238,7 @@ export class Str {
 
   public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
 
-  public static datetimeToDate = (date: string) => Xss.escape(date.substr(0, 10));
+  public static datetimeToDate = (date: string) => date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
 
   private static base64urlUtfEncode = (str: string) => {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings

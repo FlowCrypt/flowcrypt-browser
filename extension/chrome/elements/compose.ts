@@ -3,9 +3,9 @@
 'use strict';
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from '../../js/common/store.js';
-import { Value, Str, Dict, JQS } from './../../js/common/common.js';
+import { Value, Str, Dict } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
-import { Xss, Ui, XssSafeFactory, Env } from '../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 import { Api, ProgressCb, SendableMsg } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';

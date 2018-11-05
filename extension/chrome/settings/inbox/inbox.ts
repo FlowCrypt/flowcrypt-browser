@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store } from '../../../js/common/store.js';
-import { Value, Str, UrlParams } from '../../../js/common/common.js';
-import { Xss, Ui, XssSafeFactory, PassphraseDialogType, Env } from '../../../js/common/browser.js';
+import { Value, Str } from '../../../js/common/common.js';
+import { Xss, Ui, XssSafeFactory, PassphraseDialogType, Env, UrlParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications, NotificationWithHandlers } from '../../../js/common/notifications.js';
 import { Api, R } from '../../../js/common/api.js';

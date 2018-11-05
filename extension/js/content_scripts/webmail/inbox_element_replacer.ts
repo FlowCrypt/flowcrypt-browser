@@ -74,7 +74,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   private replaceAtts = () => {
     for (let attsContainerEl of $('div.OW').get()) {
       let attsContainer = $(attsContainerEl);
-      let newPgpMsgs = attsContainer.children(Att.methods.pgpNamePatterns().map(this.getAttSel).join(',')).not('.evaluated').addClass('evaluated');
+      let newPgpMsgs = attsContainer.children(Att.pgpNamePatterns().map(this.getAttSel).join(',')).not('.evaluated').addClass('evaluated');
       if (newPgpMsgs.length) {
         let msgRootContainer = attsContainer.parents('.ap');
         let msgEl = msgRootContainer.find(this.msgTextElSel);

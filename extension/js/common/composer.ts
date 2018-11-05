@@ -4,12 +4,12 @@
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from './store.js';
 import { Lang } from './lang.js';
-import { Value, Str, Dict, UrlParams, StandardError } from './common.js';
+import { Value, Str, Dict, StandardError } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, SendableMsgBody, AwsS3UploadItem } from './api.js';
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd, Env } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd, Env, UrlParams } from './browser.js';
 import { FromToHeaders, Mime } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
 
@@ -830,7 +830,7 @@ export class Composer {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.S.cached('icon_pubkey').is('.active')) {
-      msg.atts.push(Att.methods.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.acctEmail)));
+      msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.acctEmail)));
     }
     let msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
     const isSigned = this.S.cached('icon_sign').is('.active');

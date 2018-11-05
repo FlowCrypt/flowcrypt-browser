@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store, KeyInfo } from '../../js/common/store.js';
-import { Str, JQS } from '../../js/common/common.js';
-import { Xss, Ui, XssSafeFactory, PassphraseDialogType, Env } from '../../js/common/browser.js';
+import { Str } from '../../js/common/common.js';
+import { Xss, Ui, XssSafeFactory, PassphraseDialogType, Env, JQS } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';

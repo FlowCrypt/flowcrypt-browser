@@ -125,9 +125,8 @@ export class Att {
     }
   }
 
-  public static methods = {
-    pgpNamePatterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
-    keyinfoAsPubkeyAtt: (ki: KeyInfo) => new Att({ data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc` }),
-  };
+  public static pgpNamePatterns = () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''];
+
+  public static keyinfoAsPubkeyAtt = (ki: KeyInfo) => new Att({ data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
 
 }

@@ -22,7 +22,7 @@ Catch.try(async () => {
 
   let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 
-  const att = Att.methods.keyinfoAsPubkeyAtt(primaryKi);
+  const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   let additionalMsgHeaders: FlatHeaders;
 
   let appFunctions = Composer.defaultAppFunctions();

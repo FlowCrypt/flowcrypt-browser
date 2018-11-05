@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store, KeyInfo } from './store.js';
-import { Value, Str, UrlParams, JQS, Dict } from './common.js';
-import { Xss, Ui, Env } from './browser.js';
+import { Value, Str, Dict } from './common.js';
+import { Xss, Ui, Env, UrlParams, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';

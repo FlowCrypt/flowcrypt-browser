@@ -3,7 +3,7 @@
 'use strict';
 
 import * as DOMPurify from 'dompurify';
-import { Str, Value, Dict, UrlParams, UrlParam } from './common.js';
+import { Str, Value, Dict } from './common.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './store.js';
 import { Api } from './api.js';
@@ -32,6 +32,10 @@ export type WebmailVariantString = null | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'sign' | 'attest';
 export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
+export type UrlParam = string | number | null | undefined | boolean | string[];
+export type UrlParams = Dict<UrlParam>;
+
+export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
 
 export class Browser {
 

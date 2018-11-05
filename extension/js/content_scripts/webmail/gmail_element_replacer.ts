@@ -171,7 +171,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private replaceAtts = async () => {
     for (let attsContainerEl of $(this.sel.attsContainerInner).get()) {
       let attsContainer = $(attsContainerEl);
-      let newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.methods.pgpNamePatterns()).addClass('evaluated');
+      let newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
       let newPgpAttsNames = Value.arr.fromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
       if (newPgpAtts.length) {
         let msgId = this.determineMsgId(attsContainer);
