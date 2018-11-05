@@ -256,7 +256,9 @@ export class Settings {
     });
   })
 
-  static renderPrvCompatibilityFixUiAndWaitUntilSubmittedByUser = (acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string): Promise<OpenPGP.key.Key> => {
+  static renderPrvCompatFixUiAndWaitTilSubmittedByUser = (
+    acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
+  ): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
       let uids = origPrv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid) as string[];
       if (!uids.length) {
@@ -264,8 +266,8 @@ export class Settings {
       }
       container = $(container as JQuery<HTMLElement>); // due to JQuery TS quirk
       Xss.sanitizeRender(container, [
-        '<div class="line">This key has minor usability issues that can be fixed. This commonly happens when importing keys from Symantec&trade; PGP Desktop or other legacy software. It may be missing User IDs, or it may be missing a self-signature. It is also possible that the key is simply expired.</div>',
-        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.htmlEscape(uid) + '</div>').join('') + '</div>',
+        `<div class="line">${Lang.setup.prvHasFixableCompatIssue}</div>`,
+        '<div class="line compatibility_fix_user_ids">' + uids.map(uid => '<div>' + Xss.escape(uid) + '</div>').join('') + '</div>',
         '<div class="line">',
         '  Choose expiration of updated key',
         '  <select class="input_fix_expire_years" data-test="input-compatibility-fix-expire-years">',

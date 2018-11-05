@@ -4,7 +4,7 @@
 
 import { Store, KeyInfo, Contact } from './store.js';
 import { Catch, Value, Str } from './common.js';
-import { Ui, XssSafeFactory, Challenge } from './browser.js';
+import { Ui, XssSafeFactory, Pwd } from './browser.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -24,6 +24,8 @@ type DecryptError = {
 };
 type CryptoArmorHeaderDefinition = { begin: string, middle?: string, end: string | RegExp, replace: boolean };
 type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType | 'null' | 'signature']: CryptoArmorHeaderDefinition; };
+type PrepareForDecryptRes = { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message }
+  | { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage };
 
 export type MsgVerifyResult = { signer: string | null; contact: Contact | null; match: boolean | null; error: null | string; };
 export type DecryptResult = DecryptSuccess | DecryptError;
@@ -52,7 +54,8 @@ export class Pgp {
     message: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
     passwordMsg: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true },
   };
-  private static PASSWORD_GUESSES_PER_SECOND = 10000 * 2 * 4000; // (10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294
+  // (10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294
+  private static PASSWORD_GUESSES_PER_SECOND = 10000 * 2 * 4000;
   private static PASSWORD_CRACK_TIME_WORDS = [
     { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
     { match: 'centu', word: 'great', bar: 80, color: 'green', pass: true },
@@ -166,7 +169,7 @@ export class Pgp {
      *
      * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
      */
-    replace_blocks: (factory: XssSafeFactory, origText: string, msgId: string | null = null, senderEmail: string | null = null, isOutgoing: boolean | null = null) => {
+    replace_blocks: (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
       let { blocks } = Pgp.armor.detectBlocks(origText);
       if (blocks.length === 1 && blocks[0].type === 'text') {
         return;
@@ -397,7 +400,8 @@ export class Pgp {
       longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
       let isEncrypted = !prepared.isCleartext;
       if (!isEncrypted) {
-        return { success: true, content: { text: prepared.message.getText(), filename: null }, isEncrypted, signature: await Pgp.msg.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]) };
+        let signature = await Pgp.msg.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]);
+        return { success: true, content: { text: prepared.message.getText(), filename: null }, isEncrypted, signature };
       }
       if (!keys.prvForDecryptDecrypted.length && !msgPwd) {
         return { success: false, error: { type: DecryptErrTypes.needPassphrase }, signature: null, message: prepared.message, longids, isEncrypted };
@@ -411,31 +415,33 @@ export class Pgp {
         }
         let msgPasswords = msgPwd ? [msgPwd] : null;
         let decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prvForDecryptDecrypted.map(ki => ki.decrypted!), msgPasswords);
-        // let signatureRes = keys.signed_by.length ? Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
-        let signatureRes = null;
+        // let signature = keys.signed_by.length ? Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
+        let signature = null;
         if (getUint8) {
-          return { success: true, content: { uint8: decrypted.getLiteralData(), filename: decrypted.getFilename() }, isEncrypted, signature: signatureRes };
+          return { success: true, content: { uint8: decrypted.getLiteralData(), filename: decrypted.getFilename() }, isEncrypted, signature };
         } else {
-          return { success: true, content: { text: decrypted.getText(), filename: decrypted.getFilename() }, isEncrypted, signature: signatureRes };
+          return { success: true, content: { text: decrypted.getText(), filename: decrypted.getFilename() }, isEncrypted, signature };
         }
       } catch (e) {
         return { success: false, error: Pgp.internal.cryptoMsgDecryptCategorizeErr(e, msgPwd), signature: null, message: prepared.message, longids, isEncrypted };
       }
     },
-    encrypt: async (armoredPubkeys: string[], signingPrv: OpenPGP.key.Key | null, challenge: Challenge | null, data: string | Uint8Array, filename: string | null, armor: boolean, date: Date | null = null): Promise<OpenPGP.EncryptResult> => {
-      let options: OpenPGP.EncryptOptions = { data, armor, date: date || undefined, filename: filename || undefined };
+    encrypt: async (
+      pubkeys: string[], signingPrv: OpenPGP.key.Key | null, pwd: Pwd | null, data: string | Uint8Array, filename?: string, armor?: boolean, date?: Date
+    ): Promise<OpenPGP.EncryptResult> => {
+      let options: OpenPGP.EncryptOptions = { data, armor, date, filename };
       let usedChallenge = false;
-      if (armoredPubkeys) {
+      if (pubkeys) {
         options.publicKeys = [];
-        for (let armoredPubkey of armoredPubkeys) {
+        for (let armoredPubkey of pubkeys) {
           options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armoredPubkey).keys);
         }
       }
-      if (challenge && challenge.answer) {
-        options.passwords = [Pgp.hash.challengeAnswer(challenge.answer)];
+      if (pwd && pwd.answer) {
+        options.passwords = [Pgp.hash.challengeAnswer(pwd.answer)];
         usedChallenge = true;
       }
-      if (!armoredPubkeys && !usedChallenge) {
+      if (!pubkeys && !usedChallenge) {
         alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at human@flowcrypt.com if this happens repeatedly.');
         throw new Error('no-pubkeys-no-challenge');
       }
@@ -563,7 +569,7 @@ export class Pgp {
       return string;
     },
     cryptoKeyIds: (armoredPubkey: string) => openpgp.key.readArmored(armoredPubkey).keys[0].getKeyIds(),
-    cryptoMsgPrepareForDecrypt: (data: string | Uint8Array): { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message } | { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage } => {
+    cryptoMsgPrepareForDecrypt: (data: string | Uint8Array): PrepareForDecryptRes => {
       let first100bytes = Str.fromUint8(data.slice(0, 100));
       let isArmoredEncrypted = Value.is(Pgp.armor.headers('message').begin).in(first100bytes);
       let isArmoredSignedOnly = Value.is(Pgp.armor.headers('signedMsg').begin).in(first100bytes);
@@ -587,7 +593,8 @@ export class Pgp {
         prvForDecryptDecrypted: [],
         prvForDecryptWithoutPassphrases: [],
       };
-      keys.encryptedFor = (msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : []).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
+      let encryptedFor = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
+      keys.encryptedFor = encryptedFor.map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
       keys.signedBy = (msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid((id as any).bytes)).filter(Boolean) as string[];
       let privateKeysAll = await Store.keysGet(acctEmail);
       keys.prvMatching = privateKeysAll.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
@@ -616,7 +623,9 @@ export class Pgp {
     },
     cryptoMsgDecryptCategorizeErr: (decryptErr: Error, msgPwd: string | null): DecryptError$error => {
       let e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
-      if (Value.is(e).in(['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null', 'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.']) && !msgPwd) {
+      let keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
+        'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];
+      if (Value.is(e).in(keyMismatchErrStrings) && !msgPwd) {
         return { type: DecryptErrTypes.keyMismatch, error: e };
       } else if (msgPwd && Value.is(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
         return { type: DecryptErrTypes.wrongPwd, error: e };

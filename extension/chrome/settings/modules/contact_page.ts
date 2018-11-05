@@ -10,6 +10,7 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 
 import { Settings } from '../../../js/common/settings.js';
 import { Api, R } from '../../../js/common/api.js';
+import { Lang } from '../../../js/common/lang.js';
 
 Catch.try(async () => {
 
@@ -39,8 +40,8 @@ Catch.try(async () => {
   let renderFields = (result: R.FcAccountUpdate$result) => {
     if (result.alias) {
       let me = Api.fc.url('me', result.alias);
-      let meEscaped = Xss.htmlEscape(me);
-      let meEscapedDisplay = Xss.htmlEscape(me.replace('https://', ''));
+      let meEscaped = Xss.escape(me);
+      let meEscapedDisplay = Xss.escape(me.replace('https://', ''));
       Xss.sanitizeRender(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${meEscaped}" target="_blank">${meEscapedDisplay}</a></span>`);
       S.cached('hide_if_active').css('display', 'none');
       S.cached('show_if_active').css('display', 'inline-block');
@@ -123,7 +124,7 @@ Catch.try(async () => {
     renderFields(response.result);
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
-      Xss.sanitizeRender(S.cached('status'), 'Your email needs to be verified to set up a contact page. You can verify it by enabling a free trial. You do NOT need to pay or maintain the trial later. Your Contact Page will stay active even on Forever Free account. <a href="#" class="action_subscribe">Get trial</a>');
+      Xss.sanitizeRender(S.cached('status'), `${Lang.account.verifyToSetUpContactPage} <a href="#" class="action_subscribe">Get trial</a>`);
       S.now('subscribe').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', '&source=authErr')));
     } else {
       S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');

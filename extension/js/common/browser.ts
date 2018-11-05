@@ -26,7 +26,7 @@ type KeyImportUiCheckResult = {
 };
 
 export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
-export type Challenge = { question?: string; answer: string; };
+export type Pwd = { question?: string; answer: string; };
 export type WebmailVariantString = null | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'sign' | 'attest';
 export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
@@ -39,7 +39,7 @@ export class Ui {
   public static EVENT_SLOW_SPREE_MS = 200;
   public static EVENT_VERY_SLOW_SPREE_MS = 500;
 
-  public static retryLink = (caption: string = 'retry') => `<a href="${Xss.htmlEscape(window.location.href)}">${Xss.htmlEscape(caption)}</a>`;
+  public static retryLink = (caption: string = 'retry') => `<a href="${Xss.escape(window.location.href)}">${Xss.escape(caption)}</a>`;
 
   public static delay = (ms: number) => new Promise(resolve => Catch.setHandledTimeout(resolve, ms));
 
@@ -49,21 +49,24 @@ export class Ui {
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
-  public static renderOverlayPromptAwaitUserChoice = (buttons: Dict<{ title?: string, color?: string }>, prompt: string): Promise<string> => {
+  public static renderOverlayPromptAwaitUserChoice = (btns: Dict<{ title?: string, color?: string }>, prompt: string): Promise<string> => {
     return new Promise(resolve => {
-      let btns = Object.keys(buttons).map(id => `<div class="button ${Xss.htmlEscape(buttons[id].color || 'green')} overlay_action_${Xss.htmlEscape(id)}">${Xss.htmlEscape(buttons[id].title || id.replace(/_/g, ' '))}</div>`).join('&nbsp;'.repeat(5));
+      let getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
+      let getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
+      let formatBtn = (id: string) => `<div class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}">${getEscapedTitle(id)}</div>`;
+      let formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;'.repeat(5));
       Xss.sanitizeAppend('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
             <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
-            <div class="line">${btns}</div>
+            <div class="line">${formattedBtns}</div>
             <div class="line">&nbsp;</div>
             <div class="line">Email human@flowcrypt.com if you need assistance.</div>
           </div>
         </div>
       `);
       let overlay = $('.prompt_overlay');
-      for (let id of Object.keys(buttons)) {
+      for (let id of Object.keys(btns)) {
         overlay.find(`.overlay_action_${id}`).one('click', () => {
           overlay.remove();
           resolve(id);
@@ -94,7 +97,8 @@ export class Ui {
   public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
     let actualType = typeof values[name];
     if (actualType !== expectedType) {
-      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be of type ${Xss.htmlEscape(expectedType)} but got ${Xss.htmlEscape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      // tslint:disable-next-line:max-line-length
+      let msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }
@@ -103,7 +107,8 @@ export class Ui {
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
     if (expectedVals.indexOf(values[name]) === -1) {
-      let msg = `Cannot render page (expected ${Xss.htmlEscape(name)} to be one of ${Xss.htmlEscape(expectedVals.map(String).join(','))} but got ${Xss.htmlEscape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+      // tslint:disable-next-line:max-line-length
+      let msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))} but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
       Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
       throw new UnreportableError(msg);
     }
@@ -288,9 +293,9 @@ export class Ui {
    *
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId: string | null = null, senderEmail: string | null = null, isOutgoing: boolean | null = null) => {
+  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
     if (block.type === 'text' || block.type === 'privateKey') {
-      return Xss.htmlEscape(block.content).replace(/\n/g, '<br>') + '<br><br>';
+      return Xss.escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
       return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'signedMsg') {
@@ -298,7 +303,7 @@ export class Ui {
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content, 'publicKey'), isOutgoing);
     } else if (block.type === 'passwordMsg') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, null, block.content); // here block.content is message short id
+      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content); // here block.content is message short id
     } else if (block.type === 'attestPacket') {
       return factory.embeddedAttest(block.content);
     } else if (block.type === 'cryptupVerification') {
@@ -335,7 +340,8 @@ export class Ui {
 
 export class Xss {
 
-  private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
+  private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5',
+    'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
   private static HREF_REGEX_CACHE = null as null | RegExp;
 
@@ -411,7 +417,7 @@ export class Xss {
     return text;
   }
 
-  public static htmlEscape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
+  public static escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
 
   public static htmlUnescape = (str: string) => {
     // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
@@ -449,8 +455,8 @@ export class XssSafeFactory {
   private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
-    this.reloadableCls = Xss.htmlEscape(reloadableCls);
-    this.destroyableCls = Xss.htmlEscape(destroyableCls);
+    this.reloadableCls = Xss.escape(reloadableCls);
+    this.destroyableCls = Xss.escape(destroyableCls);
     this.setParams = setParams;
     this.setParams.acctEmail = acctEmail;
     this.setParams.parentTabId = parentTabId;
@@ -473,7 +479,7 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  srcSubscribeDialog = (verificationEmailText: string | null, placement: Placement, source: string | null, subscribeResultTabId: string | null = null) => {
+  srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, source?: string, subscribeResultTabId?: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, source, subscribeResultTabId });
   }
 
@@ -504,11 +510,11 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), { frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url });
   }
 
-  srcPgpBlockIframe = (message: string, msgId: string | null, isOutgoing: boolean | null, senderEmail: string | null, hasPassword: boolean, signature: string | null | boolean, short: string | null) => {
+  srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), { frameId: this.newId(), message, hasPassword, msgId, senderEmail, isOutgoing, signature, short });
   }
 
-  srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoind: boolean | null) => {
+  srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoind?: boolean) => {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
   }
 
@@ -547,8 +553,9 @@ export class XssSafeFactory {
     return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
   }
 
-  dialogSubscribe = (verifEmailText: string | null, source: string | null, subscribeResultTabId: string | null) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcSubscribeDialog(verifEmailText, 'dialog', source, subscribeResultTabId), ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
+  dialogSubscribe = (verifEmailText?: string, source?: string, subscribeResultTabId?: string) => {
+    let src = this.srcSubscribeDialog(verifEmailText, 'dialog', source, subscribeResultTabId);
+    return this.divDialog_DANGEROUS(this.iframe(src, ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
   }
 
   dialogAddPubkey = (emails: string[]) => {
@@ -571,11 +578,11 @@ export class XssSafeFactory {
     return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta)) });
   }
 
-  embeddedMsg = (armored: string, msgId: string | null, isOutgoing: boolean | null, sender: string | null, hasPassword: boolean, signature: string | null | boolean = null, short: string | null = null) => {
+  embeddedMsg = (armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
     return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, hasPassword, signature, short), ['pgp_block']) + this.hideGmailNewMsgInThreadNotification;
   }
 
-  embeddedPubkey = (armoredPubkey: string, isOutgoing: boolean | null) => {
+  embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
   }
 
@@ -601,11 +608,14 @@ export class XssSafeFactory {
 
   btnCompose = (webmailName: WebMailName) => {
     if (webmailName === 'inbox') {
-      return `<div class="S ${this.destroyableCls}"><div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.srcImg('logo/logo.svg')}"/></div><label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>`;
+      let logo = `<div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.srcImg('logo/logo.svg')}"/></div>`;
+      return `<div class="S ${this.destroyableCls}">${logo}<label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>`;
     } else if (webmailName === 'outlook') {
-      return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation"><div class="new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div></div>`;
+      let btn = `<div class="new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
+      return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {
-      return `<div class="${this.destroyableCls} z0"><div class="new_message_button T-I J-J5-Ji T-I-KE L3" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div></div>`;
+      let btn = `<div class="new_message_button T-I J-J5-Ji T-I-KE L3" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
+      return `<div class="${this.destroyableCls} z0">${btn}</div>`;
     }
   }
 
@@ -614,7 +624,8 @@ export class XssSafeFactory {
   }
 
   btnWithoutFc = () => {
-    return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt"><span>see original</span></span>`;
+    let span = `<span>see original</span>`;
+    return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
   }
 
   btnWithFc = () => {
@@ -775,7 +786,7 @@ export class KeyImportUi {
   private longid = (k: OpenPGP.key.Key) => {
     let longid = Pgp.key.longid(k);
     if (!longid) {
-      throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and let us know which software created this key, so we can get it resolved.\n\n(error: cannot get long_id)');
+      throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and let us know which software created this key.\n\n(error: cannot get long_id)');
     }
     return longid;
   }
@@ -825,6 +836,7 @@ export class KeyImportUi {
     if (!decryptResult) {
       this.onBadPassphrase();
       if (this.expectedLongid) {
+        // tslint:disable-next-line:max-line-length
         throw new UserAlert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
       } else {
         throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
@@ -913,7 +925,7 @@ export class AttUI {
     return atts;
   }
 
-  collectEncryptAtts = async (armoredPubkeys: string[], challenge: Challenge | null): Promise<Att[]> => {
+  collectEncryptAtts = async (armoredPubkeys: string[], challenge: Pwd | null): Promise<Att[]> => {
     let atts: Att[] = [];
     for (let id of Object.keys(this.attachedFiles)) {
       let file = this.attachedFiles[id];

@@ -42,7 +42,9 @@ let migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {
         try {
           let primaryLongid = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
           values[legacyStorageKey.replace('master_passphrase', 'passphrase_' + primaryLongid)] = value;
-        } catch (e) { } // tslint:disable-line:no-empty - this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
+        } catch (e) {
+          // this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
+        }
       } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
         values[legacyStorageKey] = value;
       }

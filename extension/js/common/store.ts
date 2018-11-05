@@ -36,7 +36,8 @@ export type ContactUpdate = {
   pending_lookup?: number; last_use?: number | null;
   date?: number | null; /* todo - should be removed. email provider search seems to return this? */
 };
-export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode> | SubscriptionAttempt | SubscriptionInfo | StoredAttestLog[];
+export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
+  | SubscriptionAttempt | SubscriptionInfo | StoredAttestLog[];
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 interface RawStore {
@@ -422,7 +423,7 @@ export class Store {
     return index;
   }
 
-  static dbContactObj(email: string, name: string | null, client: string | null, pubkey: string | null, attested: boolean | null, pendingLookup: boolean | number, lastUse: number | null): Contact {
+  static dbContactObj(email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Contact {
     let fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : null;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
@@ -431,10 +432,10 @@ export class Store {
     return {
       email,
       name: name || null,
-      pubkey,
+      pubkey: pubkey || null,
       has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
-      searchable: Store.dbCreateSearchIndexList(email, name, Boolean(pubkey)),
-      client: pubkey ? client : null,
+      searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)),
+      client: pubkey ? (client || null) : null,
       attested: pubkey ? Boolean(attested) : null,
       fingerprint,
       longid: fingerprint ? Pgp.key.longid(fingerprint) : null,
@@ -480,7 +481,7 @@ export class Store {
         } else {
           let [contact] = await Store.dbContactGet(db, [email]);
           if (contact === null) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, Store.dbContactObj(email, null, null, null, null, false, null));
+            await Store.dbContactSave(db, Store.dbContactObj(email, undefined, undefined, undefined, undefined, false, undefined));
             [contact] = await Store.dbContactGet(db, [email]);
             if (contact === null) { // todo - temporary. If no such errors show by end of June 2018, remove this.
               reject({ message: 'contact not found right after inserting it', internal: 'missing_contact', code: null });
@@ -493,7 +494,15 @@ export class Store {
           }
           let tx = db.transaction('contacts', 'readwrite');
           let contactsTable = tx.objectStore('contacts');
-          contactsTable.put(Store.dbContactObj(email, contact.name, contact.client, contact.pubkey, contact.attested, contact.pending_lookup, contact.last_use));
+          contactsTable.put(Store.dbContactObj(
+            email,
+            contact.name || undefined,
+            contact.client || undefined,
+            contact.pubkey || undefined,
+            contact.attested || undefined,
+            contact.pending_lookup,
+            contact.last_use || undefined
+          ));
           tx.oncomplete = Catch.try(resolve);
           let stackFill = String((new Error()).stack);
           tx.onabort = () => reject(Store.dbErrCategorize(tx.error, stackFill));

@@ -27,7 +27,11 @@ export interface WebmailElementReplacer {
 
 export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificInfo) => {
 
-  let setUpNotification = '<a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account. <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a> <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>';
+  let setUpNotification = `
+    <a href="#" class="action_open_settings" data-test="notification-setup-action-open-settings">Set up FlowCrypt</a> to send and receive secure email on this account.
+    <a href="#" class="notification_setup_needed_dismiss" data-test="notification-setup-action-dismiss">dismiss</a>
+    <a href="#" class="close" data-test="notification-setup-action-close">remind me later</a>
+  `;
   let wasDestroyed = false;
   class DestroyTrigger extends Error { }
 
@@ -100,7 +104,9 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
       close_reply_message: (data: { frameId: string }) => {
         $('iframe#' + data.frameId).remove();
       },
-      reinsert_reply_box: (data: { subject: string, myEmail: string, theirEmail: string[], threadId: string }) => webmailSpecific.getReplacer().reinsertReplyBox(data.subject, data.myEmail, data.theirEmail, data.threadId),
+      reinsert_reply_box: (data: { subject: string, myEmail: string, theirEmail: string[], threadId: string }) => {
+        webmailSpecific.getReplacer().reinsertReplyBox(data.subject, data.myEmail, data.theirEmail, data.threadId);
+      },
       render_public_keys: (data: { publicKeys: string[], afterFrameId: string, traverseUp?: number }) => {
         let traverseUpLevels = data.traverseUp as number || 0;
         let appendAfter = $('iframe#' + data.afterFrameId);
@@ -122,7 +128,7 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
       },
       subscribe_dialog: (data: { source: string, subscribeResultTabId: string }) => {
         if (!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialogSubscribe(null, data ? data.source : null, data ? data.subscribeResultTabId : null)); // xss-safe-factory
+          $('body').append(factory.dialogSubscribe(undefined, data ? data.source : undefined, data ? data.subscribeResultTabId : undefined)); // xss-safe-factory
         }
       },
       add_pubkey_dialog: (data: { emails: string[] }) => {
@@ -166,7 +172,8 @@ export let contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificI
   };
 
   let notifyMurdered = () => {
-    document.getElementsByClassName('webmail_notifications')[0].innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>'; // xss-direct
+    let notifEl = document.getElementsByClassName('webmail_notifications')[0];
+    notifEl.innerHTML = '<div class="webmail_notification">FlowCrypt has updated, please reload the tab.<a href="#" onclick="parentNode.remove()">close</a></div>'; // xss-direct
   };
 
   let entrypoint = async () => {

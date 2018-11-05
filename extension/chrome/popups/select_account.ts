@@ -23,8 +23,8 @@ Catch.try(async () => {
   let emailsUlHtml = '';
   for (let email of Object.keys(acctStorages)) {
     if (acctStorages[email].setup_done === true) {
-      let picEscaped = Xss.htmlEscape(acctStorages[email].picture || '/img/svgs/profile-icon.svg');
-      let emailEscaped = Xss.htmlEscape(email);
+      let picEscaped = Xss.escape(acctStorages[email].picture || '/img/svgs/profile-icon.svg');
+      let emailEscaped = Xss.escape(email);
       emailsUlHtml += `<li><a class="button gray2 long" href="#" email="${emailEscaped}"><img class="picture" src="${picEscaped}">${emailEscaped}</a></li>`;
       Settings.updateProfilePicIfMissing(email).catch(Catch.handleException); // will show next time page is rendered
     }

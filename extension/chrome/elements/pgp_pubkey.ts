@@ -69,7 +69,8 @@ Catch.try(async () => {
         } else {
           $('.email').text('more than one person');
           $('.input_email').css({ display: 'none' });
-          Xss.sanitizeAppend('.add_contact', Xss.htmlEscape(' for ' + pubkeys.map(pubkey => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email).filter(e => Str.isEmailValid(e)).join(', ')));
+          let pubToEmail = (pubkey: OpenPGP.key.Key) => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
+          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubkeys.map(pubToEmail).filter(e => Str.isEmailValid(e)).join(', ')));
         }
         setBtnText().catch(Catch.rejection);
       }
@@ -79,7 +80,9 @@ Catch.try(async () => {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
       if (fixed !== urlParams.armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail: urlParams.acctEmail, parentTabId: urlParams.parentTabId, frameId: urlParams.frameId });
+        window.location.href = Env.urlCreate('pgp_pubkey.htm', {
+          armoredPubkey: fixed, minimized: true, acctEmail: urlParams.acctEmail, parentTabId: urlParams.parentTabId, frameId: urlParams.frameId
+        });
       } else {
         $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
@@ -93,7 +96,7 @@ Catch.try(async () => {
       for (let pubkey of pubkeys) {
         let emailAddr = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
         if (Str.isEmailValid(emailAddr)) {
-          contacts.push(Store.dbContactObj(emailAddr, null, 'pgp', pubkey.armor(), null, false, Date.now()));
+          contacts.push(Store.dbContactObj(emailAddr, undefined, 'pgp', pubkey.armor(), undefined, false, Date.now()));
         }
       }
       await Store.dbContactSave(null, contacts);
@@ -101,9 +104,9 @@ Catch.try(async () => {
       $('.input_email').remove();
     } else if (pubkeys.length) {
       if (Str.isEmailValid($('.input_email').val() as string)) { // text input
-        let contact = Store.dbContactObj($('.input_email').val() as string, null, 'pgp', pubkeys[0].armor(), null, false, Date.now()); // text input
+        let contact = Store.dbContactObj($('.input_email').val() as string, undefined, 'pgp', pubkeys[0].armor(), undefined, false, Date.now()); // text input
         await Store.dbContactSave(null, contact);
-        Xss.sanitizeReplace(target, `<span class="good">${Xss.htmlEscape(String($('.input_email').val()))} added</span>`);
+        Xss.sanitizeReplace(target, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
       } else {
         alert('This email is invalid, please check for typos. Not added.');

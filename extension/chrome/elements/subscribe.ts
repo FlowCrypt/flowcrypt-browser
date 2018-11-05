@@ -28,8 +28,8 @@ Catch.try(async () => {
 
   let handleErrRes = (e: any) => {
     let renderErr = (msg: string, e?: any) => {
-      msg = Xss.htmlEscape(msg);
-      let debug = e ? `<pre>${Xss.htmlEscape(JSON.stringify(e, null, 2))}</pre>` : '';
+      msg = Xss.escape(msg);
+      let debug = e ? `<pre>${Xss.escape(JSON.stringify(e, null, 2))}</pre>` : '';
       Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
     };
     if (Api.err.isNetErr(e)) {
@@ -179,7 +179,7 @@ Catch.try(async () => {
         $('.action_get_trial').css('display', 'none');
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
-        Xss.sanitizeRender('#content', '<div class="line">You have already upgraded to FlowCrypt Advanced</div><div class="line"><div class="button green long action_close">close</div></div>');
+        Xss.sanitizeRender('#content', `<div class="line">${Lang.account.alreadyUpgraded}</div><div class="line"><div class="button green long action_close">close</div></div>`);
         $('.action_close').click(Ui.event.handle(() => {
           if (urlParams.subscribeResultTabId) {
             BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', { active: true });

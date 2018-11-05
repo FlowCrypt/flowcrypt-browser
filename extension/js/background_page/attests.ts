@@ -6,11 +6,14 @@ import { Store } from '../common/store.js';
 import { Catch, Value, Str, Dict } from '../common/common.js';
 import { Api, R } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
-import { BrowserMsgHandler } from '../common/extension.js';
+import { BrowserMsgHandler, BrowserMsgSender } from '../common/extension.js';
 
 declare let openpgp: typeof OpenPGP;
 
 type AttestResult = { message: string, acctEmail: string, attestPacketText: string | null };
+type AttestPacketRecvdHandler$req = { acctEmail: string, packet: string, passphrase: string };
+type AttestPacketRecvdHandler$resp = (r: { success: boolean, result: string }) => void;
+type AttestPacketRecvdHandler = (m: AttestPacketRecvdHandler$req, sender: BrowserMsgSender, r: AttestPacketRecvdHandler$resp) => void;
 
 class AttestError extends Error implements AttestResult {
   attestPacketText: null | string;
@@ -48,7 +51,7 @@ export class BgAttests {
     BgAttests.watchForAttestEmail(request.acctEmail);
   }
 
-  static attestPacketreceivedHandler = async (request: { acctEmail: string, packet: string, passphrase: string }, sender: chrome.runtime.MessageSender | 'background', respond: (r: { success: boolean, result: string }) => void) => {
+  static attestPacketReceivedHandler: AttestPacketRecvdHandler = async (request, sender, respond) => {
     try { // todo - could be refactored to pass AttestResult directly
       let r = await BgAttests.processAttestAndLogResult(request.acctEmail, request.packet, request.passphrase);
       respond({ success: true, result: r.message });
@@ -124,7 +127,8 @@ export class BgAttests {
         let expectedFingerprint = key.primaryKey.getFingerprint().toUpperCase();
         let expectedEmailHash = Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
         if (attest && attest.success && attest.text) {
-          if (attest.content.attester && attest.content.attester in BgAttests.ATTESTERS && attest.content.fingerprint === expectedFingerprint && attest.content.email_hash === expectedEmailHash) {
+          let isKnownAttester = attest.content.attester && attest.content.attester in BgAttests.ATTESTERS;
+          if (isKnownAttester && attest.content.fingerprint === expectedFingerprint && attest.content.email_hash === expectedEmailHash) {
             let signed;
             try {
               signed = await Pgp.msg.sign(key, attest.text);
@@ -147,7 +151,7 @@ export class BgAttests {
               }
               throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${e.message}`, attestPacketText, acctEmail);
             }
-            await BgAttests.acctStorageMarkAsAttested(acctEmail, attest.content.attester);
+            await BgAttests.acctStorageMarkAsAttested(acctEmail, attest.content.attester!);
             return { attestPacketText, message: `Successfully attested ${acctEmail}`, acctEmail };
           } else {
             throw new AttestError('This attest message is ignored as it does not match your settings.\n\nEmail human@flowcrypt.com to help.', attestPacketText, acctEmail);

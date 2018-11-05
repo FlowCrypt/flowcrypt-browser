@@ -21,7 +21,7 @@ Catch.try(async () => {
   let addresses = storage.addresses || [urlParams.acctEmail];
 
   let emailAddrToHtmlRadio = (a: string) => {
-    a = Xss.htmlEscape(a);
+    a = Xss.escape(a);
     return `<input type="radio" name="a" value="${a}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
   };
 

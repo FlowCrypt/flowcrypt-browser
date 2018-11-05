@@ -44,11 +44,11 @@ Catch.try(async () => {
   if (allPrivateKeys.length > 1) {
     let html: string;
     if (selectedPrivateKeys.length === 1) {
-      html = `For key: <span class="good">${Xss.htmlEscape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
+      html = `For key: <span class="good">${Xss.escape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
     } else {
       html = 'Pass phrase needed for any of the following keys:';
       for (let i of selectedPrivateKeys.keys()) {
-        html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.htmlEscape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
+        html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
       }
     }
     Xss.sanitizeRender('.which_key', html);
@@ -86,7 +86,7 @@ Catch.try(async () => {
         }
       } catch (e) {
         if (e.message === 'Unknown s2k type.') {
-          alert(`One of your keys ${keyinfo.longid} is not well supported yet (${e.message}).\n\nPlease write human@flowcrypt.com with details about how was this key created so that we can add support soon.`);
+          alert(`One of your keys ${keyinfo.longid} is not supported yet (${e.message}).\n\nPlease write human@flowcrypt.com with details about how was this key created.`);
         } else {
           throw e;
         }

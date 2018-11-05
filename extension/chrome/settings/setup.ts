@@ -63,7 +63,7 @@ Catch.try(async () => {
 
   let rules = new Rules(acctEmail);
   if (!rules.canCreateKeys()) {
-    let forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.htmlEscape(window.location.href)}">Back</a>`;
+    let forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
     Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
@@ -123,7 +123,7 @@ Catch.try(async () => {
       let r = await Api.attester.lookupEmail([acctEmail]);
       keyserverRes = r.results[0];
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, 'Failed to check if encryption is already set up on your account.\nThis is probably due to internet connection.', () => renderSetupDialog());
+      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.missingConnectionToCheckEncryption, () => renderSetupDialog());
     }
 
     if (keyserverRes.pubkey) {
@@ -150,7 +150,7 @@ Catch.try(async () => {
         if (keyserverRes.has_cryptup) {
           // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           displayBlock('step_2b_manual_enter');
-          Xss.sanitizePrepend('#step_2b_manual_enter', '<div class="line red">FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.<br/><br/></div>');
+          Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
         } else if (rules.canCreateKeys()) {
           // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           displayBlock('step_1_easy_or_manual');
@@ -276,7 +276,7 @@ Catch.try(async () => {
       await saveKeys([prv], options);
     } catch (e) {
       Catch.handleException(e);
-      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.');
+      Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
     }
   };
 
@@ -308,7 +308,7 @@ Catch.try(async () => {
     let passphrase = $('#recovery_pasword').val() as string; // text input
     let matchingKeys: OpenPGP.key.Key[] = [];
     if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
-      alert('This pass phrase was already successfully used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.');
+      alert(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
     } else if (passphrase) {
       for (let revoveredKey of recoveredKeys) {
         let longid = Pgp.key.longid(revoveredKey);
@@ -361,7 +361,7 @@ Catch.try(async () => {
     let nBups = recoveredKeys.length;
     let txtTeft = (nBups - nGot > 1) ? 'are ' + (nBups - nGot) + ' backups' : 'is one backup';
     if (action !== 'add_key') {
-      Xss.sanitizeRender('#step_2_recovery .recovery_status', `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`);
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nGot, nBups, txtTeft));
       Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
       $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
         window.location.href = Env.urlCreate('index.htm', { acctEmail });
@@ -373,7 +373,7 @@ Catch.try(async () => {
   }));
 
   $('.action_skip_recovery').click(Ui.event.handle(() => {
-    if (confirm('Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?')) {
+    if (confirm(Lang.setup.confirmSkipRecovery)) {
       recoveredKeys = [];
       recoveredKeysMatchingPassphrases = [];
       nRecoveredKeysLongid = 0;
@@ -444,7 +444,7 @@ Catch.try(async () => {
     displayBlock('step_3_compatibility_fix');
     let fixedPrv;
     try {
-      fixedPrv = await Settings.renderPrvCompatibilityFixUiAndWaitUntilSubmittedByUser(acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
+      fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
       Catch.handleException(e);
       alert(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);

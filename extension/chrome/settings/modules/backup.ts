@@ -102,7 +102,10 @@ Catch.try(async () => {
       } else {
         if (storage.setup_simple) {
           $('.status_summary').text('No backups found on this account. You can store a backup of your key in email inbox. Your key will be protected by a pass phrase of your choice.');
-          Xss.sanitizeRender('#step_0_status .container', '<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>');
+          Xss.sanitizeRender(
+            '#step_0_status .container',
+            '<div class="button long green action_go_backup">BACK UP MY KEY</div><br><br><br><a href="#" class="action_go_manual">See more advanced backup options</a>'
+          );
           $('.action_go_backup').click(Ui.event.handle(() => {
             displayBlock('step_1_password');
             $('h1').text('Set Backup Pass Phrase');
@@ -206,7 +209,7 @@ Catch.try(async () => {
   let doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
     let emailMsg = await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' });
     let emailAtts = [asBackupFile(acctEmail, armoredKey)];
-    let msg = await Api.common.msg(acctEmail, acctEmail, acctEmail, Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    let msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
       return await Api.gmail.msgSend(acctEmail, msg);
     } else {

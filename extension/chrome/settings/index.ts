@@ -58,7 +58,8 @@ Catch.try(async () => {
     subscribe_dialog: (data) => {
       // todo: use #cryptup_dialog just like passphrase_dialog does
       let factory = new XssSafeFactory(acctEmail!, tabId);
-      window.open(factory.srcSubscribeDialog(null, 'settings_compose', null), '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
+      let subscribeDialogSrc = factory.srcSubscribeDialog(undefined, 'settings_compose', undefined);
+      window.open(subscribeDialogSrc, '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
     },
     notification_show: (data: { notification: string }) => {
       notifications.show(data.notification);
@@ -172,7 +173,7 @@ Catch.try(async () => {
           $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:offline`);
         } else {
           statusContainer.text('ecp error');
-          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:error`).attr('title', `FlowCrypt Account Error: ${Xss.htmlEscape(String(e))}`);
+          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
           Catch.handleException(e);
         }
       }
@@ -218,7 +219,7 @@ Catch.try(async () => {
       } else if (Api.err.isNetErr(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
-        $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.htmlEscape(String(e))}`);
+        $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.escape(String(e))}`);
         Catch.handleException(e);
       }
     }
@@ -240,7 +241,8 @@ Catch.try(async () => {
     let subscription = await Store.subscription();
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/account.htm'))).css('cursor', 'pointer');
+      let showAcct = () => Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/account.htm');
+      $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(showAcct)).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
         $('.logo-row .subscription .upgrade').css('display', 'inline-block');
@@ -268,12 +270,13 @@ Catch.try(async () => {
       let ki = privateKeys[i];
       let prv = openpgp.key.readArmored(ki.private).keys[0];
       let date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
-      let escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.htmlEscape(ki.longid) + '">remove</a>)';
-      let escapedEmail = Xss.htmlEscape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
-      let escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${Xss.htmlEscape(ki.longid)}">${escapedEmail}</a>`;
-      html += `<div class="row key-content-row key_${Xss.htmlEscape(ki.longid)}">`;
-      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.htmlEscape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escapedPrimaryOrRemove}</div>`;
-      html += `  <div class="col-sm-12">KeyWords: <span class="good">${Xss.htmlEscape(ki.keywords)}</span></div>`;
+      let escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.escape(ki.longid) + '">remove</a>)';
+      let escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
+      let escapedLongid = Xss.escape(ki.longid);
+      let escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${escapedLongid}">${escapedEmail}</a>`;
+      html += `<div class="row key-content-row key_${Xss.escape(ki.longid)}">`;
+      html += `  <div class="col-sm-12">${escapedLink} from ${Xss.escape(date)}&nbsp;&nbsp;&nbsp;&nbsp;${escapedPrimaryOrRemove}</div>`;
+      html += `  <div class="col-sm-12">KeyWords: <span class="good">${Xss.escape(ki.keywords)}</span></div>`;
       html += `</div>`;
     }
     Xss.sanitizeAppend('.key_list', html);
@@ -327,9 +330,15 @@ Catch.try(async () => {
     $(".add-account").toggleClass("hidden");
   }));
 
-  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/debug_api.htm', { which: 'google_account' })));
-  // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_account'})));
-  // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {which: 'flowcrypt_subscription'})));
+  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/debug_api.htm', {
+    which: 'google_account'
+  })));
+  // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {
+  //   which: 'flowcrypt_account'
+  // })));
+  // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {
+  //   which: 'flowcrypt_subscription'
+  // })));
 
   let reload = (advanced = false) => {
     if (advanced) {
@@ -343,9 +352,9 @@ Catch.try(async () => {
     return [
       '<div class="row alt-accounts action_select_account">',
       '  <div class="col-sm-10">',
-      `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.htmlEscape(email)}</div>`,
+      `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
       '  </div>',
-      `  <div><img class="profile-img" src="${Xss.htmlEscape(picture)}" alt=""></div>`,
+      `  <div><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
       '</div>',
     ].join('');
   };

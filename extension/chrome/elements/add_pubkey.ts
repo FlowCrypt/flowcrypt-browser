@@ -19,14 +19,14 @@ Catch.try(async () => {
   let closeDialog = () => BrowserMsg.send(parentTabId, 'close_dialog');
 
   for (let email of (urlParams.emails as string).split(',')) {
-    Xss.sanitizeAppend('select.email', `<option value="${Xss.htmlEscape(email)}">${Xss.htmlEscape(email)}</option>`);
+    Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
   }
 
   let contacts = await Store.dbContactSearch(null, { has_pgp: true });
 
   Xss.sanitizeAppend('select.copy_from_email', '<option value=""></option>');
   for (let contact of contacts) {
-    Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.htmlEscape(contact.email)}">${Xss.htmlEscape(contact.email)}</option>`);
+    Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
   }
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
@@ -46,7 +46,7 @@ Catch.try(async () => {
     try {
       let keyImportUi = new KeyImportUi({ checkEncryption: true });
       let normalized = await keyImportUi.checkPub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
-      await Store.dbContactSave(null, Store.dbContactObj($('select.email').val() as string, null, 'pgp', normalized, null, false, Date.now()));
+      await Store.dbContactSave(null, Store.dbContactObj($('select.email').val() as string, undefined, 'pgp', normalized, undefined, false, Date.now()));
       closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {

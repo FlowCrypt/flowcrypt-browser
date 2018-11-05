@@ -77,7 +77,7 @@ Catch.try(async () => {
     },
     subscribe_dialog: (data) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogSubscribe(null, data ? data.source : null, data ? data.subscribeResultTabId : null)); // xss-safe-factory
+        $('body').append(factory.dialogSubscribe(undefined, data ? data.source : null, data ? data.subscribeResultTabId : null)); // xss-safe-factory
       }
     },
     add_pubkey_dialog: (data: { emails: string[] }) => {
@@ -168,8 +168,8 @@ Catch.try(async () => {
     if (placement === 'labels' && (label.labelListVisibility !== 'labelShow' || label.id === LABEL.INBOX)) {
       return '';
     }
-    let id = Xss.htmlEscape(labelId);
-    let name = Xss.htmlEscape(label.name);
+    let id = Xss.escape(labelId);
+    let name = Xss.escape(label.name);
     if (placement === 'menu') {
       let unread = Number(label.messagesUnread);
       return `<div class="button gray2 label label_${id}" ${unread ? 'style="font-weight: bold;"' : ''}>${name}${unread ? ` (${unread})` : ''}</div><br>`;
@@ -224,9 +224,9 @@ Catch.try(async () => {
     let style = '';
     for (let label of labels) {
       if (label.color) {
-        let id = Xss.htmlEscape(label.id);
-        let bg = Xss.htmlEscape(label.color.backgroundColor);
-        let fg = Xss.htmlEscape(label.color.textColor);
+        let id = Xss.escape(label.id);
+        let bg = Xss.escape(label.color.backgroundColor);
+        let fg = Xss.escape(label.color.textColor);
         style += `.label.label_${id} {color: ${fg}; background-color: ${bg};} `;
       }
     }
@@ -309,7 +309,7 @@ Catch.try(async () => {
     }
   };
 
-  let renderThread = async (threadId: string, thread?: R.GmailThreadGet) => {
+  let renderThread = async (threadId: string, thread?: R.GmailThread) => {
     displayBlock('thread', 'Loading..');
     try {
       thread = thread || await Api.gmail.threadGet(acctEmail, threadId, 'metadata');
@@ -328,7 +328,7 @@ Catch.try(async () => {
         renderAndHandleAuthPopupNotification();
       } else {
         Catch.handleException(e);
-        let printable = Xss.htmlEscape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
+        let printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeRender('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
       }
     }
@@ -352,7 +352,7 @@ Catch.try(async () => {
       if (atts.length) {
         r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(factory.embeddedAtta).join('')}</div>`;
       }
-      r = `<p class="message_header">From: ${Xss.htmlEscape(from)} <span style="float:right;">${headers.date}</p>` + r;
+      r = `<p class="message_header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrapMsg(htmlId, r)); // xss-safe-factory
     } catch (e) {
       if (Api.err.isNetErr(e)) {
@@ -361,7 +361,7 @@ Catch.try(async () => {
         renderAndHandleAuthPopupNotification();
       } else {
         Catch.handleException(e);
-        let printable = Xss.htmlEscape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
+        let printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeAppend('.thread', wrapMsg(htmlId, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }
     }
@@ -390,10 +390,11 @@ Catch.try(async () => {
   };
 
   let inboxThreadItemAdd = (threadId: string) => {
+    let content = `<span class="from_container"><span class="from"></span><span class="msg_count"></span></span><span class="subject"></span><span class="date"></span>`;
     Xss.sanitizeAppend(S.cached('threads'), Ui.e('div', {
       class: 'line',
       id: threadListItemId(threadId),
-      html: '<span class="loading">' + Ui.spinner('green') + 'loading..</span><span class="from_container"><span class="from"></span><span class="msg_count"></span></span><span class="subject"></span><span class="date"></span>',
+      html: `<span class="loading">${Ui.spinner('green')}loading..</span>${content}`,
     }));
   };
 

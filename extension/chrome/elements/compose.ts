@@ -15,7 +15,8 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId', 'skipClickPrompt', 'ignoreDraft']);
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
+    'skipClickPrompt', 'ignoreDraft']);
   let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
@@ -64,7 +65,8 @@ Catch.try(async () => {
 
   const canReadEmail = Api.gmail.hasScope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(acctEmail, tabId);
-  if (urlParams.isReplyBox && urlParams.threadId && !urlParams.ignoreDraft && storage.drafts_reply && storage.drafts_reply[urlParams.threadId as string]) { // there may be a draft we want to load
+  if (urlParams.isReplyBox && urlParams.threadId && !urlParams.ignoreDraft && storage.drafts_reply && storage.drafts_reply[urlParams.threadId as string]) {
+    // there may be a draft we want to load
     urlParams.draft_id = storage.drafts_reply[urlParams.threadId as string];
   }
 

@@ -24,7 +24,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private injector: Injector;
   private notifications: Notifications;
   private gmailVariant: WebmailVariantString;
-  private cssHidden = 'opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important; max-width: 1px !important; position: absolute !important; z-index: -1000 !important';
+  private cssHidden = `opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important;
+  max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
 
   private sel = { // gmail_variant=standard|new
@@ -151,9 +152,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         let button;
         let [fullLink, name, buttonHrefId] = foundFcLink;
         if (name === 'draft_compose') {
-          button = `<a href="#" class="open_draft_${Xss.htmlEscape(buttonHrefId)}">Open draft</a>`;
+          button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         } else if (name === 'draft_reply') {
-          button = `<a href="#inbox/${Xss.htmlEscape(buttonHrefId)}">Open draft</a>`;
+          button = `<a href="#inbox/${Xss.escape(buttonHrefId)}">Open draft</a>`;
         }
         if (button) {
           Xss.sanitizeReplace(contenteditable, button);

@@ -216,7 +216,9 @@ export class Mime {
                 if (secondPartEndIndex !== -1) {
                   let firstPart = mimeMsg.substr(firstPartStartIndex, firstPartEndIndex - firstPartStartIndex);
                   let secondPart = mimeMsg.substr(secondPartStartIndex, secondPartEndIndex - secondPartStartIndex);
-                  if (firstPart.match(/^content-type: application\/pgp-signature/gi) !== null && Value.is('-----BEGIN PGP SIGNATURE-----').in(firstPart) && Value.is('-----END PGP SIGNATURE-----').in(firstPart)) {
+                  let beginSignature = Pgp.armor.headers('signedMsg').middle;
+                  let endSignature = Pgp.armor.headers('signedMsg').end as string;
+                  if (firstPart.match(/^content-type: application\/pgp-signature/gi) !== null && Value.is(beginSignature).in(firstPart) && Value.is(endSignature).in(firstPart)) {
                     res.signature = Pgp.armor.clip(firstPart);
                     res.signed = secondPart;
                   } else {
@@ -247,9 +249,12 @@ export class Mime {
 
   private static getNodeFilename = (node: MimeParserNode) => {
     // @ts-ignore - lazy
-    if (node.headers['content-disposition'] && node.headers['content-disposition'][0] && node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
+    if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) {
       // @ts-ignore - lazy
-      return node.headers['content-disposition'][0].params.filename;
+      if (node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
+        // @ts-ignore - lazy
+        return node.headers['content-disposition'][0].params.filename;
+      }
     }
     // @ts-ignore - lazy
     if (node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {

@@ -25,19 +25,19 @@ Catch.try(async () => {
       let note, action, remove, color;
       if (result.pubkey === null) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
-        action = `<div class="button gray2 small action_request_attestation" email="${Xss.htmlEscape(email)}">Submit public key</div>`;
-        remove = ` &nbsp; <b class="bad action_remove_alias" email="${Xss.htmlEscape(email)}" title="Remove address from list of send-from addresses.">[x]</b> &nbsp; `;
+        action = `<div class="button gray2 small action_request_attestation" email="${Xss.escape(email)}">Submit public key</div>`;
+        remove = ` &nbsp; <b class="bad action_remove_alias" email="${Xss.escape(email)}" title="Remove address from list of send-from addresses.">[x]</b> &nbsp; `;
         color = 'orange';
       } else if (result.match) {
         if (email === acctEmail && !result.attested) {
           if (attestsRequested && attestsRequested.length) {
-            note = `Submitted. Attestation was requested from ${Xss.htmlEscape(attestsRequested.join(', '))} and should process shortly.`;
-            action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.htmlEscape(email)}">Refresh</div>`;
+            note = `Submitted. Attestation was requested from ${Xss.escape(attestsRequested.join(', '))} and should process shortly.`;
+            action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.escape(email)}">Refresh</div>`;
             remove = '';
             color = 'orange';
           } else {
             note = 'Found but not attested.';
-            action = `<div class="button gray2 small action_request_attestation" email="${Xss.htmlEscape(email)}">Request Attestation</div>`;
+            action = `<div class="button gray2 small action_request_attestation" email="${Xss.escape(email)}">Request Attestation</div>`;
             remove = '';
             color = 'orange';
           }
@@ -55,17 +55,17 @@ Catch.try(async () => {
       } else {
         if (email === acctEmail && !result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = `<div class="button gray2 small action_request_attestation" email="${Xss.htmlEscape(email)}">Request Attestation</div>`;
+          action = `<div class="button gray2 small action_request_attestation" email="${Xss.escape(email)}">Request Attestation</div>`;
           remove = '';
           color = 'red';
         } else if (email === acctEmail && result.attested && attestsRequested && attestsRequested.length) {
           note = 'Re-Attestation requested. This should process shortly.';
-          action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.htmlEscape(email)}">Refresh</div>`;
+          action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.escape(email)}">Refresh</div>`;
           remove = '';
           color = 'orange';
         } else if (email === acctEmail && result.attested) {
           note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = `<div class="button gray2 small request_replacement" email="${Xss.htmlEscape(email)}">Request Replacement Attestation</div>`;
+          action = `<div class="button gray2 small request_replacement" email="${Xss.escape(email)}">Request Replacement Attestation</div>`;
           remove = '';
           color = 'red';
         } else {
@@ -75,7 +75,7 @@ Catch.try(async () => {
           color = 'red';
         }
       }
-      Xss.sanitizeAppend('#content', `<div class="line left">${Xss.htmlEscape(email)}: <span class="${color}">${note}</span> ${remove} ${action}</div>`);
+      Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${remove} ${action}</div>`);
     }
 
     $('.action_request_attestation').click(Ui.event.prevent('double', async self => {
@@ -97,7 +97,8 @@ Catch.try(async () => {
       await Ui.time.sleep(30000);
       window.location.reload();
     }));
-    Xss.sanitizeAppend('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>').find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
+    let contentEl = Xss.sanitizeAppend('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>');
+    contentEl.find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('green'));
       try {
         let addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);

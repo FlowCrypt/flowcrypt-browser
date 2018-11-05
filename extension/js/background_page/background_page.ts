@@ -11,6 +11,8 @@ import { migrateAcct, migrateGlobal, scheduleFcSubscriptionLevelCheck } from './
 
 declare let openpgp: typeof OpenPGP;
 
+type OpenSettingsBrowserMsg = { path: string, acctEmail: string, page: string, page_url_params: Dict<FlatTypes>, addNewAcct?: boolean };
+
 console.info('background_process.js starting');
 
 openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
@@ -50,7 +52,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  let openSettingsPageHandler: BrowserMsgHandler = async (message: { path: string, acctEmail: string, page: string, page_url_params: Dict<FlatTypes>, addNewAcct?: boolean }, sender, respond) => {
+  let openSettingsPageHandler: BrowserMsgHandler = async (message: OpenSettingsBrowserMsg, sender, respond) => {
     await openSettingsPage(message.path, message.acctEmail, message.page, message.page_url_params, message.addNewAcct === true);
     respond();
   };
@@ -137,7 +139,7 @@ chrome.runtime.onInstalled.addListener(event => {
     settings: openSettingsPageHandler,
     inbox: openInboxPageHandler,
     attest_requested: BgAttests.attestRequestedHandler,
-    attest_packet_received: BgAttests.attestPacketreceivedHandler,
+    attest_packet_received: BgAttests.attestPacketReceivedHandler,
     update_uninstall_url: updateUninstallUrl,
     get_active_tab_info: getActiveTabInfo,
     runtime: (r, sender, respond) => respond({ environment: Catch.environment(), version: Catch.version() }),

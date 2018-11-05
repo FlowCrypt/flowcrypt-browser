@@ -86,13 +86,13 @@ Catch.try(async () => {
         img.src = `data:${a.type};base64,${btoa(content.asText())}`;
         a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
       } else {
-        a.outerHTML = Xss.htmlEscape(`[broken link: ${a.href}]`); // xss-escaped
+        a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
       }
     } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
       img.src = a.href;
       a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
     } else {
-      a.outerHTML = Xss.htmlEscape(`[broken link: ${a.href}]`); // xss-escaped
+      a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
     }
     event.preventDefault();
     event.stopPropagation();
@@ -133,7 +133,7 @@ Catch.try(async () => {
   let armoredMsgAsHtml = (rawMsgSubstitute: string | null = null) => {
     let m = rawMsgSubstitute || msg;
     if (m && typeof m === 'string') {
-      return `<div class="raw_pgp_block" style="display: none;">${Xss.htmlEscape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
+      return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
     }
     return '';
   };
@@ -167,7 +167,8 @@ Catch.try(async () => {
     } else if (msgDiagnosis.receivers === 1) {
       await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend + btnHtml('account settings', 'gray2 settings_keyserver'));
     } else {
-      await renderErr(Lang.pgpBlock.yourKeyCantOpenImportIfHave + btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;' + btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + btnHtml('settings', 'gray2 settings_keyserver'));
+      await renderErr(Lang.pgpBlock.yourKeyCantOpenImportIfHave + btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
+        + btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + btnHtml('settings', 'gray2 settings_keyserver'));
     }
   };
 
@@ -206,9 +207,10 @@ Catch.try(async () => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
     includedAtts = atts;
     for (let i of atts.keys()) {
-      let name = (atts[i].name ? Xss.htmlEscape(atts[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
+      let name = (atts[i].name ? Xss.escape(atts[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
       let size = Str.numberFormat(Math.ceil(atts[i].length / 1024)) + 'KB';
-      Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}"><b>${Xss.htmlEscape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span></div>`);
+      let htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
+      Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
     }
     sendResizeMsg();
     $('div.attachment').click(Ui.event.prevent('double', async target => {
@@ -269,7 +271,8 @@ Catch.try(async () => {
     let parent = $(target).parent();
     let subscription = await Store.subscription();
     if (subscription.level && subscription.active) {
-      Xss.sanitizeRender(parent, '<div style="font-family: monospace;">Extend message expiration: <a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a></div>');
+      let btns = `<a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a>`;
+      Xss.sanitizeRender(parent, `<div style="font-family: monospace;">Extend message expiration: ${btns}</div>`);
       let element = await Ui.event.clicked('.do_extend');
       await handleExtendMsgExpirationClicked(element);
     } else {
@@ -320,7 +323,7 @@ Catch.try(async () => {
       if (publicKeys.length) {
         BrowserMsg.send(parentTabId, 'render_public_keys', { afterFrameId: frameId, publicKeys });
       }
-      decryptedContent = Xss.htmlEscape(decryptedContent);
+      decryptedContent = Xss.escape(decryptedContent);
       await renderContent(doAnchor(decryptedContent.replace(/\n/g, '<br>')), false);
       if (fcAtts.length) {
         renderInnerAtts(fcAtts);
@@ -395,7 +398,7 @@ Catch.try(async () => {
         } else if (result.error.type === DecryptErrTypes.usePassword) {
           await renderPasswordPrompt('first');
         } else if (result.error.type === DecryptErrTypes.noMdc) {
-          await renderErr('This message may not be safe to open: missing MDC. To open this message, please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
+          await renderErr('This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
         } else if (result.error) {
           await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.error}</em>`);
         } else { // should generally not happen
@@ -427,7 +430,8 @@ Catch.try(async () => {
 
   let renderPasswordPrompt = async (attempt: 'first' | 'retry') => {
     let prompt = `<p>${attempt === 'first' ? '' : Lang.pgpBlock.wrongPassword}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
-    prompt += '<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p><div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div></p>';
+    let btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
+    prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
     prompt += armoredMsgAsHtml();
     await renderContent(prompt, true);
     setTestState('ready');
@@ -469,7 +473,7 @@ Catch.try(async () => {
     } else if (!linkRes.url) {
       await renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink);
     } else {
-      await renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.htmlEscape(JSON.stringify(linkRes)));
+      await renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)));
     }
   };
 
@@ -521,7 +525,9 @@ Catch.try(async () => {
           msgFetchedFromApi = format;
           await decryptAndRender();
         } else { // gmail message read auth not allowed
-          Xss.sanitizeRender('#pgp_block', 'This encrypted message is very large (possibly containing an attachment). Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div>');
+          // tslint:disable-next-line:max-line-length
+          let readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
+          Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
           sendResizeMsg();
           $('.auth_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
         }

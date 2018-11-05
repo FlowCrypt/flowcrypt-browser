@@ -150,8 +150,10 @@ export class Catch {
     }
     let userLogMsg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
     let ignoredErrs = [
-      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)', // happens in gmail window when reloaded extension + now reloading gmail
-      'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)', // happens in gmail window when reloaded extension + now reloading gmail
+      // happens in gmail window when reloaded extension + now reloading gmail
+      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
+      // happens in gmail window when reloaded extension + now reloading gmail
+      'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)',
       'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
     ];
     if (!err) {
@@ -354,7 +356,8 @@ export class Catch {
 
   public static rejection = (e: PromiseRejectionEvent | StandardError | Error) => {
     if (!(e instanceof UnreportableError)) {
-      if (e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object' && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
+      let eHasReason = e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object';
+      if (eHasReason && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
         Catch.handleException((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
       } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
         if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
@@ -419,6 +422,7 @@ export class Str {
     return x1 + x2;
   }
 
+  // tslint:disable-next-line:max-line-length
   public static isEmailValid = (email: string) => /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
 
   public static monthName = (monthIndex: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
@@ -438,9 +442,15 @@ export class Str {
 
   public static htmlAttrDecode = (encoded: string): FlowCryptAttLinkData | any => JSON.parse(Str.base64urlUtfDecode(encoded));
 
-  public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+  /**
+   * used for 3rd party API calls - do not change w/o testing Gmail api attachments
+   */
+  public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-  public static base64urlDecode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/')); // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+  /**
+   * // used for 3rd party API calls - do not change w/o testing Gmail api attachments
+   */
+  public static base64urlDecode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/'));
 
   public static fromUint8 = (u8a: Uint8Array | string): string => {
     if (typeof u8a === 'string') {
@@ -601,14 +611,22 @@ export class Str {
 
   public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
 
-  public static datetimeToDate = (date: string) => Xss.htmlEscape(date.substr(0, 10));
+  public static datetimeToDate = (date: string) => Xss.escape(date.substr(0, 10));
 
-  private static base64urlUtfEncode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-    return (typeof str === 'undefined') ? str : btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  private static base64urlUtfEncode = (str: string) => {
+    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    if (typeof str === 'undefined') {
+      return str;
+    }
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  private static base64urlUtfDecode = (str: string) => { // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
-    return (typeof str === 'undefined') ? str : decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  private static base64urlUtfDecode = (str: string) => {
+    // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
+    if (typeof str === 'undefined') {
+      return str;
+    }
+    return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
   }
 
 }

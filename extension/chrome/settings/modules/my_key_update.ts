@@ -7,6 +7,7 @@ import { Catch, Env } from '../../../js/common/common.js';
 import { Ui } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/pgp.js';
+import { Lang } from '../../../js/common/lang.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -34,7 +35,7 @@ Catch.try(async () => {
     let uddatedKeyEncrypted = openpgp.key.readArmored(inputPrivateKey.val() as string).keys[0];
     let uddatedKeyPassphrase = $('.input_passphrase').val() as string;
     if (typeof uddatedKey === 'undefined') {
-      alert('Private key is not correctly formated. Please insert complete key, including "' + prvHeaders.begin + '" and "' + prvHeaders.end + '"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.');
+      alert(Lang.setup.keyFormattedWell(prvHeaders.begin, String(prvHeaders.end)));
     } else if (uddatedKey.isPublic()) {
       alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prvHeaders.begin + '"');
     } else if (Pgp.key.fingerprint(uddatedKey) !== Pgp.key.fingerprint(primaryKi.public)) {
@@ -46,7 +47,9 @@ Catch.try(async () => {
         await storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
       } else { // cannot get a valid encryption key packet
         if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usableButExpired(uddatedKey)) { // known issues - key can be fixed
-          let fixedEncryptedPrv = await Settings.renderPrvCompatibilityFixUiAndWaitUntilSubmittedByUser(acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, urlMyKeyPage);
+          let fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
+            acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, urlMyKeyPage
+          );
           await storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
         } else {
           alert('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');

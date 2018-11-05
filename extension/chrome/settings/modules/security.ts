@@ -101,7 +101,8 @@ Catch.try(async () => {
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
-        Xss.sanitizeRender('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', '&source=authErr')));
+        let showAuthErr = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', '&source=authErr');
+        Xss.sanitizeRender('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(showAuthErr));
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
@@ -111,7 +112,8 @@ Catch.try(async () => {
     }
   } else {
     $('.default_message_expire').val('3').css('display', 'inline-block');
-    Xss.sanitizeAppend($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm')));
+    let showSubscribe = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm');
+    Xss.sanitizeAppend($('.default_message_expire').parent(), '<a href="#">upgrade</a>').find('a').click(Ui.event.handle(showSubscribe));
   }
 
 })();

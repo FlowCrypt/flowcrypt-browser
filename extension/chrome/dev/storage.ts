@@ -13,21 +13,22 @@ Catch.try(async () => {
   let urlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
 
   // this is for debugging
-  let controls = urlParams.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']));
+  let debugEmails = ['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com'];
+  let controls = urlParams.controls === true && (Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(debugEmails));
 
   if (urlParams.title) {
-    Xss.sanitizePrepend('#content', `<h1>${Xss.htmlEscape(String(urlParams.title))}</h1>`);
+    Xss.sanitizePrepend('#content', `<h1>${Xss.escape(String(urlParams.title))}</h1>`);
   }
 
   if (controls) {
     let acctEmails = await Store.acctEmailsGet();
     let emailsSel = $('.emails');
-    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { controls: urlParams.controls || '' }))}">all</a>`);
-    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: 'global', controls: urlParams.controls || '' }))}">global</a>`);
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Env.urlCreate('storage.htm', { controls: urlParams.controls || '' }))}">all</a>`);
+    Xss.sanitizeAppend(emailsSel, `<a href="${Xss.escape(Env.urlCreate('storage.htm', { filter: 'global', controls: urlParams.controls || '' }))}">global</a>`);
     Xss.sanitizeAppend('.namespace', '<option value="global">global</option>');
     for (let acctEmail of acctEmails) {
-      Xss.sanitizeAppend('.emails', `<a href="${Xss.htmlEscape(Env.urlCreate('storage.htm', { filter: acctEmail, controls: urlParams.controls || '' }))}">${Xss.htmlEscape(acctEmail)}</a>`);
-      Xss.sanitizeAppend('.namespace', `<option value="${Xss.htmlEscape(acctEmail)}">${Xss.htmlEscape(acctEmail)}</option>`);
+      Xss.sanitizeAppend('.emails', `<a href="${Xss.escape(Env.urlCreate('storage.htm', { filter: acctEmail, controls: urlParams.controls || '' }))}">${Xss.escape(acctEmail)}</a>`);
+      Xss.sanitizeAppend('.namespace', `<option value="${Xss.escape(acctEmail)}">${Xss.escape(acctEmail)}</option>`);
     }
   }
 

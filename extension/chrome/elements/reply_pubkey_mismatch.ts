@@ -18,6 +18,7 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft']);
   let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  let to = urlParams.to ? String(urlParams.to).split(',') : [];
 
   let [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 
@@ -30,8 +31,8 @@ Catch.try(async () => {
 
   const sendBtnText = 'Send Response';
 
-  for (let to of (urlParams.to as string).split(',')) {
-    Xss.sanitizeAppend('.recipients', Ui.e('span', { text: to }));
+  for (let recipient of to) {
+    Xss.sanitizeAppend('.recipients', Ui.e('span', { text: recipient }));
   }
 
   // render
@@ -62,7 +63,8 @@ Catch.try(async () => {
   // send
   $('#send_btn').click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
-    let message = await Api.common.msg(acctEmail, urlParams.from as string, urlParams.to as string, urlParams.subject as string, { 'text/plain': $('#input_text').get(0).innerText }, [att], urlParams.threadId as string);
+    let body = { 'text/plain': $('#input_text').get(0).innerText };
+    let message = await Api.common.msg(acctEmail, urlParams.from as string, to, urlParams.subject as string, body, [att], urlParams.threadId as string);
     for (let k of Object.keys(additionalMsgHeaders)) {
       message.headers[k] = additionalMsgHeaders[k];
     }

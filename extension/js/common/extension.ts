@@ -18,7 +18,8 @@ export type AnyThirdPartyLibrary = any;
 export type BrowserMsgReqtDb = { f: string, args: any[] };
 export type BrowserMsgReqSessionSet = { acctEmail: string, key: string, value: string | undefined };
 export type BrowserMsgReqSessionGet = { acctEmail: string, key: string };
-export type BrowserMsgHandler = (request: BrowserMsgReq, sender: chrome.runtime.MessageSender | 'background', respond: (r?: any) => void) => void | Promise<void>;
+export type BrowserMsgSender = chrome.runtime.MessageSender | 'background';
+export type BrowserMsgHandler = (request: BrowserMsgReq, sender: BrowserMsgSender, respond: (r?: any) => void) => void | Promise<void>;
 
 export interface BrowserWidnow extends Window {
   XMLHttpRequest: any;
@@ -166,7 +167,8 @@ export class BrowserMsg {
                 (r as Promise<void>).catch(Catch.rejection);
               }
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              if (BrowserMsg.browserMsgDestParse(msg.to).frame !== null) { // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+              if (BrowserMsg.browserMsgDestParse(msg.to).frame !== null) {
+                // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
                 Catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
               } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
                 console.log('BrowserMsg.listen ignoring missing handler "' + msg.name + '" due to Firefox Bug');

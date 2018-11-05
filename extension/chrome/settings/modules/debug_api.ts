@@ -34,10 +34,10 @@ Catch.try(async () => {
       renderCallRes('google.plus.people_me', variables, null, e);
     }
   } else if (which === 'flowcrypt_account') {
-    Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.htmlEscape(which)} (not implemented)`);
+    Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(which)} (not implemented)`);
   } else if (which === 'flowcrypt_subscription') {
-    Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.htmlEscape(which)} (not implemented)`);
+    Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(which)} (not implemented)`);
   } else {
-    Xss.sanitizeAppend('#content', `Unknown which: ${Xss.htmlEscape(which)}`);
+    Xss.sanitizeAppend('#content', `Unknown which: ${Xss.escape(which)}`);
   }
 })();

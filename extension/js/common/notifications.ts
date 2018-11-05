@@ -8,6 +8,7 @@ import { Catch, Dict } from './common.js';
 import { Api } from './api.js';
 import { BrowserMsg } from './extension.js';
 import { Xss, Ui } from './browser.js';
+import { Lang } from './lang.js';
 
 export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
 
@@ -32,7 +33,7 @@ export class Notifications {
   }
 
   showAuthPopupNeeded = (acctEmail: string) => {
-    this.show(`Please reconnect FlowCrypt to your Gmail Account. This is typically needed after a long time of no use, a password change, or similar account changes. <a href="#" class="auth_popup">Re-connect Account</a>`, {
+    this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: () => {
         Api.google.authPopup(acctEmail, this.tabId).then(authRes => {
           this.show(`${authRes.success ? 'Connected successfully' : 'Failed to connect'}. <a href="#" class="close">Close</a>`);

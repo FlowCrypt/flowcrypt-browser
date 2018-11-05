@@ -152,7 +152,7 @@ export class Att {
       } else {
         let a = window.document.createElement('a');
         a.href = window.URL.createObjectURL(blob);
-        a.download = Xss.htmlEscape(att.name);
+        a.download = Xss.escape(att.name);
         if (renderIn) {
           a.textContent = 'DECRYPTED FILE';
           a.style.cssText = 'font-size: 16px; font-weight: bold;';

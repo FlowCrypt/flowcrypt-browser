@@ -9,8 +9,7 @@ import { Att } from './att.js';
 import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, StandardError, SendableMsgBody } from './api.js';
-
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Challenge } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd } from './browser.js';
 import { FromToHeaders, Mime } from './mime.js';
 
 declare let openpgp: typeof OpenPGP;
@@ -33,7 +32,7 @@ interface ComposerAppFunctionsInterface {
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
-  storageContactObj: (email: string, name: string | null, client: string | null, pubkey: string | null, attested: boolean | null, pendingLookup: boolean | number, lastUse: number | null) => Contact;
+  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean, lastUse?: number) => Contact;
   emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet>;
   emailProviderDraftCreate: (mimeMsg: string) => Promise<R.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
@@ -160,7 +159,7 @@ export class Composer {
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
       this.app.storageEmailFooterSet(null).catch(Catch.handleException);
       this.app.sendMsgToMainWin('notification_show', {
-        notification: 'Your FlowCrypt ' + (subscription.method === 'trial' ? 'trial' : 'subscription') + ' has ended. Custom email signature (email footer) will no longer be used. <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>',
+        notification: `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`,
       });
     }
     if (this.app.storageGetHideMsgPassword()) {
@@ -392,7 +391,8 @@ export class Composer {
   }
 
   private resetSendBtn = (delay: number | null = null) => {
-    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), '<i class=""></i><span tabindex="4">' + (this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND) + '</span>');
+    let btnText = this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND;
+    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span tabindex="4">${btnText}</span>`);
     if (this.btnUpdateTimeout !== null) {
       clearTimeout(this.btnUpdateTimeout);
     }
@@ -415,7 +415,7 @@ export class Composer {
       this.draftSaveInProgress = true;
       this.S.cached('send_btn_note').text('Saving');
       let primaryKi = await this.app.storageGetKey(this.acctEmail);
-      let encrypted = await Pgp.msg.encrypt([primaryKi.public], null, null, this.extractAsText('input_text'), null, true) as OpenPGP.EncryptArmorResult;
+      let encrypted = await Pgp.msg.encrypt([primaryKi.public], null, null, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
       let body;
       if (this.threadId) { // replied message
         body = '[cryptup:link:draft_reply:' + this.threadId + ']\n\n' + encrypted.data;
@@ -557,7 +557,7 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throwIfFormValsInvalid = (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge: Challenge | null) => {
+  private throwIfFormValsInvalid = (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | null) => {
     const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -634,7 +634,7 @@ export class Composer {
     }
   }
 
-  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Challenge | null, subscription: Subscription) => {
+  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients, subject, plaintext, challenge, subscription);
     let atts = await this.attach.collectEncryptAtts(armoredPubkeys, challenge);
@@ -648,7 +648,7 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Challenge | null, subscription: Subscription) => {
+  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
     let [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
     if (primaryKi) {
@@ -737,7 +737,7 @@ export class Composer {
     return plaintext;
   }
 
-  private addReplyTokenToMsgBodyIfNeeded = async (recipients: string[], subject: string, plaintext: string, challenge: Challenge | null, subscription: Subscription): Promise<string> => {
+  private addReplyTokenToMsgBodyIfNeeded = async (recipients: string[], subject: string, plaintext: string, challenge: Pwd | null, subscription: Subscription): Promise<string> => {
     if (!challenge || !subscription.active) {
       return plaintext;
     }
@@ -766,7 +766,7 @@ export class Composer {
     });
   }
 
-  private encryptMsgAsOfDateIfSomeAreExpired = async (armoredPubkeys: string[]): Promise<Date | null> => {
+  private encryptMsgAsOfDateIfSomeAreExpired = async (armoredPubkeys: string[]): Promise<Date | undefined> => {
     // todo - disallow in certain situations
     let usableUntil: number[] = [];
     let usableFrom: number[] = [];
@@ -779,10 +779,10 @@ export class Composer {
       }
     }
     if (!usableUntil.length) { // none of the keys expire
-      return null;
+      return undefined;
     }
     if (Math.max(...usableUntil) > Date.now()) { // all keys either don't expire or expire in the future
-      return null;
+      return undefined;
     }
     let usableTimeFrom = Math.max(...usableFrom);
     let usableTimeUntil = Math.min(...usableUntil);
@@ -790,30 +790,32 @@ export class Composer {
       alert('The public key of one of your recipients has been expired for too long.\n\nPlease ask the recipient to send you an updated Public Key.');
       throw new ComposerResetBtnTrigger();
     }
-    if (!confirm('The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)')) {
+    if (!confirm(Lang.compose.pubkeyExpiredConfirmCompose)) {
       throw new ComposerResetBtnTrigger();
     }
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFormatSend = async (armoredPubkeys: string[], challenge: Challenge | null, plaintext: string, atts: Att[], recipients: string[], subject: string, subscription: Subscription, attAdminCodes: string[] = []) => {
-    let encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(armoredPubkeys);
-    let encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, plaintext, null, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
+  private doEncryptFormatSend = async (
+    pubkeys: string[], pwd: Pwd | null, plaintext: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []
+  ) => {
+    let encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
+    let encrypted = await Pgp.msg.encrypt(pubkeys, null, pwd, plaintext, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
     let body: SendableMsgBody = { 'text/plain': encrypted.data };
-    await this.app.storageContactUpdate(recipients, { last_use: Date.now() });
+    await this.app.storageContactUpdate(to, { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
-    if (challenge) {
+    if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      let { short, admin_code } = await Api.fc.messageUpload(body['text/plain']!, subscription.active ? 'uuid' : null);
+      let { short, admin_code } = await Api.fc.messageUpload(body['text/plain']!, subs.active ? 'uuid' : null);
       let storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
-      body = this.formatPasswordProtectedEmail(short, body, armoredPubkeys, storage.outgoing_language || 'EN');
+      body = this.formatPasswordProtectedEmail(short, body, pubkeys, storage.outgoing_language || 'EN');
       body = this.formatEmailTextFooter(body);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
+      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), to, subj, body, atts, this.threadId), plaintext);
     } else {
       body = this.formatEmailTextFooter(body);
-      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
+      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), to, subj, body, atts, this.threadId), plaintext);
     }
   }
 
@@ -856,7 +858,15 @@ export class Composer {
               lookupResult.pubkey = null;
             }
           }
-          let ksContact = this.app.storageContactObj(lookupResult.email, dbContact && dbContact.name ? dbContact.name : null, lookupResult.has_cryptup ? 'cryptup' : 'pgp', lookupResult.pubkey, lookupResult.attested, false, Date.now());
+          let ksContact = this.app.storageContactObj(
+            lookupResult.email,
+            dbContact && dbContact.name ? dbContact.name : undefined,
+            lookupResult.has_cryptup ? 'cryptup' : 'pgp',
+            lookupResult.pubkey || undefined,
+            lookupResult.attested || undefined,
+            false,
+            Date.now()
+          );
           this.ksLookupsByEmail[lookupResult.email] = ksContact;
           await this.app.storageContactSave(ksContact);
           return ksContact;
@@ -1026,7 +1036,7 @@ export class Composer {
       armoredMsg = await this.app.emailProviderExtractArmoredBlock(msgId);
     } catch (e) {
       if (e.data) {
-        Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.htmlEscape(e.data)}`);
+        Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
       } else if (Api.err.isNetErr(e)) {
         // todo: retry
       } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -1070,7 +1080,11 @@ export class Composer {
         }
       }
     } else {
-      Xss.sanitizeRender(this.S.cached('prompt'), 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.<br/><br/><br/><div class="button green auth_settings">Add missing permission</div><br/><br/>Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>');
+      Xss.sanitizeRender(this.S.cached('prompt'),
+        `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
+        <div class="button green auth_settings">${Lang.compose.addMissingPermission}</div><br/><br/>
+        Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
+      `);
       this.S.cached('prompt').attr('style', 'border:none !important');
       $('.auth_settings').click(() => this.app.sendMsgToBgScript('settings', { acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
       $('.new_message_button').click(() => this.app.sendMsgToMainWin('open_new_message'));
@@ -1084,10 +1098,10 @@ export class Composer {
     if (Value.is(',').in(inputTo)) {
       const emails = inputTo.split(',');
       for (let i = 0; i < emails.length - 1; i++) {
-        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.htmlEscape(emails[i])} ${Ui.spinner('green')}</span>`);
+        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(emails[i])} ${Ui.spinner('green')}</span>`);
       }
     } else if (!this.S.cached('input_to').is(':focus') && inputTo) {
-      Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.htmlEscape(inputTo)} ${Ui.spinner('green')}</span>`);
+      Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(inputTo)} ${Ui.spinner('green')}</span>`);
     } else {
       return;
     }
@@ -1155,7 +1169,7 @@ export class Composer {
     if (renderableContacts.length > 0 || this.contactSearchInProgress) {
       let ulHtml = '';
       for (let contact of renderableContacts) {
-        ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.htmlEscape(contact.email.replace(/<\/?b>/g, ''))}">`;
+        ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.has_pgp) {
           ulHtml += '<img src="/img/svgs/locked-icon-green.svg" />';
         } else {
@@ -1169,9 +1183,9 @@ export class Composer {
           displayEmail = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
         }
         if (contact.name) {
-          ulHtml += (Xss.htmlEscape(contact.name) + ' &lt;' + Xss.htmlEscape(displayEmail) + '&gt;');
+          ulHtml += (Xss.escape(contact.name) + ' &lt;' + Xss.escape(displayEmail) + '&gt;');
         } else {
-          ulHtml += Xss.htmlEscape(displayEmail);
+          ulHtml += Xss.escape(displayEmail);
         }
         ulHtml += '</li>';
       }
@@ -1210,7 +1224,15 @@ export class Composer {
             for (let contact of searchContactsRes.new) {
               let [inDb] = await this.app.storageContactGet([contact.email]);
               if (!inDb) {
-                await this.app.storageContactSave(this.app.storageContactObj(contact.email, contact.name, null, null, null, true, contact.date ? new Date(contact.date).getTime() : null));
+                await this.app.storageContactSave(this.app.storageContactObj(
+                  contact.email,
+                  contact.name || undefined,
+                  undefined,
+                  undefined,
+                  undefined,
+                  true,
+                  contact.date ? new Date(contact.date).getTime() : undefined,
+                ));
               } else if (!inDb.name && contact.name) {
                 const toUpdate = { name: contact.name };
                 await this.app.storageContactUpdate(contact.email, toUpdate);
@@ -1304,6 +1326,7 @@ export class Composer {
       }
     }
     $(emailEl).children('img, i').remove();
+    // tslint:disable-next-line:max-line-length
     let contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
     Xss.sanitizeAppend(emailEl, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
@@ -1366,10 +1389,10 @@ export class Composer {
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_msg_successful').find('div.replied_from').text(this.suppliedFrom);
     this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.suppliedTo);
-    Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.htmlEscape(plaintext).replace(/\n/g, '<br>'));
+    Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
-      const renderableEscapedEmailFooter = Xss.htmlEscape(emailFooter).replace(/\n/g, '<br>');
+      const renderableEscapedEmailFooter = Xss.escape(emailFooter).replace(/\n/g, '<br>');
       if (isSigned) {
         Xss.sanitizeAppend(this.S.cached('replied_body'), `<br><br>${renderableEscapedEmailFooter}`);
       } else {
@@ -1432,9 +1455,11 @@ export class Composer {
       if (addresses.length > 1) {
         let inputAddrContainer = $('#input_addresses_container');
         inputAddrContainer.addClass('show_send_from');
-        Xss.sanitizeAppend(inputAddrContainer, '<select id="input_from" tabindex="-1" data-test="input-from"></select><img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">');
+        let cogIcon = `<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">`;
+        Xss.sanitizeAppend(inputAddrContainer, `<select id="input_from" tabindex="-1" data-test="input-from"></select>${cogIcon}`);
         inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.handleErrs(`open sending address dialog`)));
-        Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(a => `<option value="${Xss.htmlEscape(a)}">${Xss.htmlEscape(a)}</option>`).join('')).change(() => this.updatePubkeyIcon());
+        let fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}">${Xss.escape(addr)}</option>`;
+        Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
         if (Env.browser().name === 'firefox') {
           inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
         }
@@ -1454,7 +1479,7 @@ export class Composer {
 
   private formatPasswordProtectedEmail = (shortId: string, origBody: SendableMsgBody, armoredPubkeys: string[], lang: 'DE' | 'EN') => {
     const msgUrl = `${this.FC_WEB_URL}/${shortId}`;
-    const a = `<a href="${Xss.htmlEscape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.openMsg[lang]}</a>`;
+    const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extractAsText('input_intro') : '';
     const text = [];
     const html = [];
@@ -1466,8 +1491,8 @@ export class Composer {
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.msgEncryptedHtml[lang] + a + '<br><br>');
-    html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.htmlEscape(msgUrl) + '<br><br><br>');
-    const htmlFcWebUrlLink = '<a href="' + Xss.htmlEscape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.htmlEscape(this.FC_WEB_URL) + '</a>';
+    html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl) + '<br><br><br>');
+    const htmlFcWebUrlLink = '<a href="' + Xss.escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.escape(this.FC_WEB_URL) + '</a>';
     if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       const htmlPgpMsg = origBody['text/html'] ? origBody['text/html'] : (origBody['text/plain'] || '').replace(this.FC_WEB_URL, htmlFcWebUrlLink).replace(/\n/g, '<br>\n');
       html.push('<div style="color: #999;">' + htmlPgpMsg + '</div>');

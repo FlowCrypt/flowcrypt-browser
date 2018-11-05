@@ -9,6 +9,7 @@ import { Xss, Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
+import { Lang } from '../../../js/common/lang.js';
 
 Catch.try(async () => {
 
@@ -18,7 +19,7 @@ Catch.try(async () => {
 
   // this is for debugging
   if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
-    Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.htmlEscape(Env.urlCreate('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
+    Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.escape(Env.urlCreate('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
   }
 
   if (acctEmail) {
@@ -64,7 +65,7 @@ Catch.try(async () => {
     $('.action_exception').click(() => Catch.test());
 
     $('.action_reset_account').click(Ui.event.prevent('double', async () => {
-      if (confirm('This will remove all your FlowCrypt settings for ' + acctEmail + ' including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT')) {
+      if (confirm(Lang.setup.confirmResetAcct(acctEmail))) {
         await collectInfoAndDownloadBackupFile(acctEmail);
         if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
           await Settings.acctStorageReset(acctEmail);
@@ -73,7 +74,11 @@ Catch.try(async () => {
       }
     }));
 
-    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/dev/storage.htm', Env.urlCreate('', { filter: acctEmail, keys: 'attest_log', title: `Attest Log - ${acctEmail}` }).replace('?', '&'))));
+    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/dev/storage.htm', Env.urlCreate('', {
+      filter: acctEmail,
+      keys: 'attest_log',
+      title: `Attest Log - ${acctEmail}`,
+    }).replace('?', '&'))));
 
     $('.action_flush_attest_info').click(Ui.event.handle(async () => {
       await Store.remove(acctEmail, ['attests_requested', 'attests_processed', 'attest_log']);
@@ -97,7 +102,7 @@ Catch.try(async () => {
     }));
 
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
-      if (confirm(`Your current account email is ${acctEmail}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`)) {
+      if (confirm(Lang.setup.confirmManualAcctEmailChange(acctEmail))) {
         let tabId = await BrowserMsg.requiredTabId();
         let response = await Api.google.authPopup(acctEmail, tabId);
         if (response && response.success === true && response.acctEmail) {
