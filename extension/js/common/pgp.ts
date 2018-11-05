@@ -9,9 +9,11 @@ import { Catch } from './catch.js';
 
 declare const openpgp: typeof OpenPGP;
 
-openpgp.config.versionstring = `FlowCrypt ${Catch.version() || ''} Gmail Encryption`;
-openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
-// openpgp.config.require_uid_self_cert = false;
+if (typeof openpgp !== 'undefined') {
+  openpgp.config.versionstring = `FlowCrypt ${Catch.version() || ''} Gmail Encryption`;
+  openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+  // openpgp.config.require_uid_self_cert = false;
+}
 
 type InternalSortedKeysForDecrypt = {
   verificationContacts: Contact[]; forVerification: OpenPGP.key.Key[]; encryptedFor: string[]; signedBy: string[];
