@@ -2,8 +2,7 @@
 
 'use strict';
 
-import { Str, Value } from './common.js';
-import { SendableMsgBody, RichHeaders, FlatHeaders } from './api.js';
+import { Str, Value, Dict } from './common.js';
 import { Pgp } from './pgp.js';
 import { Att } from './att.js';
 import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension.js';
@@ -15,6 +14,9 @@ type MimeParserNode = {
   appendChild: (child: MimeParserNode) => void; contentTransferEncoding: { value: string }; charset?: string;
 };
 
+export type FlatHeaders = Dict<string>;
+export type RichHeaders = Dict<string | string[]>;
+export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'message' | 'passwordMsg';
 export type MsgBlockType = 'text' | ReplaceableMsgBlockType;

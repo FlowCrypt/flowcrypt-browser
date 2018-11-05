@@ -8,9 +8,9 @@ import { Value, Str, Dict, StandardError } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
-import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, SendableMsgBody, AwsS3UploadItem } from './api.js';
+import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem } from './api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd, Env, UrlParams } from './browser.js';
-import { FromToHeaders, Mime } from './mime.js';
+import { FromToHeaders, Mime, SendableMsgBody } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
 
 declare let openpgp: typeof OpenPGP;
@@ -426,7 +426,11 @@ export class Composer {
         body = encrypted.data;
       }
       let subject = String(this.S.cached('input_subject').val() || this.suppliedSubject || 'FlowCrypt draft');
-      let mimeMsg = await Mime.encode(body as string, { To: this.getRecipientsFromDom(), From: this.suppliedFrom || this.getSenderFromDom(), Subject: subject } as RichHeaders, []);
+      let mimeMsg = await Mime.encode(body as string, {
+        To: this.getRecipientsFromDom(),
+        From: this.suppliedFrom || this.getSenderFromDom(),
+        Subject: subject
+      }, []);
       try {
         if (!this.draftId) {
           let newDraft = await this.app.emailProviderDraftCreate(mimeMsg);

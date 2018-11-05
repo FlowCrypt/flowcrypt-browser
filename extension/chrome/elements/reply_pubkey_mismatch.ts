@@ -7,9 +7,10 @@ import { Dict } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Composer } from './../../js/common/composer.js';
-import { Api, FlatHeaders } from '../../js/common/api.js';
+import { Api } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
+import { FlatHeaders } from '../../js/common/mime.js';
 
 Catch.try(async () => {
 

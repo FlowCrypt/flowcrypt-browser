@@ -8,7 +8,7 @@ import { Pgp } from './pgp.js';
 import { FlowCryptManifest, BrowserMsg, BrowserWidnow, FcWindow } from './extension.js';
 import { Ui, Env } from './browser.js';
 import { Att } from './att.js';
-import { Mime } from './mime.js';
+import { Mime, SendableMsgBody, FlatHeaders } from './mime.js';
 import { PaymentMethod } from './account.js';
 import { Catch } from './catch.js';
 
@@ -35,14 +35,11 @@ type ResFmt = 'json';
 type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 type ProviderContactsResults = { new: Contact[], all: Contact[] };
 
-export type FlatHeaders = Dict<string>;
-export type RichHeaders = Dict<string | string[]>;
 export type AuthReq = { tabId: string, acctEmail: string | null, scopes: string[], messageId?: string, authResponderId: string, omitReadScope?: boolean };
 export type ProgressCb = (percent: number | null, loaded: number | null, total: number | null) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 export type ProviderContactsQuery = { substring: string };
-export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type SendableMsg = { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread: string | null; };
 export type SubscriptionInfo = { active: boolean | null; method: PaymentMethod | null; level: SubscriptionLevel; expire: string | null; };
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
