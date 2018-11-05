@@ -81,6 +81,15 @@ export class Env {
     return decodeURIComponent(rawValue);
   }
 
+  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Dict<string>) => {
+    rawParamNameDict[urlParamName] = urlParamName;
+    rawParamNameDict[Env.snakeCaseToCamelCase(urlParamName)] = urlParamName;
+    rawParamNameDict[Env.camelCaseToSnakeCase(urlParamName)] = urlParamName;
+    let shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
+    rawParamNameDict[Env.snakeCaseToCamelCase(shortened)] = urlParamName;
+    rawParamNameDict[Env.camelCaseToSnakeCase(shortened)] = urlParamName;
+  }
+
   /**
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
    */
@@ -92,9 +101,7 @@ export class Env {
     for (let valuePair of valuePairs) {
       let pair = valuePair.split('=');
       rawParms[pair[0]] = pair[1];
-      rawParamNameDict[pair[0]] = pair[0];
-      rawParamNameDict[Env.snakeCaseToCamelCase(pair[0])] = pair[0];
-      rawParamNameDict[Env.camelCaseToSnakeCase(pair[0])] = pair[0];
+      Env.fillPossibleUrlParamNameVariations(pair[0], rawParamNameDict);
     }
     let processedParams: UrlParams = {};
     for (let expectedKey of expectedKeys) {
