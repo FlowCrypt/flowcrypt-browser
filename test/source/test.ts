@@ -15,7 +15,7 @@ import { Config } from './util';
 import { FlowCryptApi } from './tests/api';
 
 type GlobalBrowserGroup = 'compatibility' | 'trial';
-export type GlobalBrowser = { browser?: BrowserHandle, semaphore: Semaphore, before_each_test: () => Promise<void> };
+export type GlobalBrowser = { browser?: BrowserHandle, semaphore: Semaphore, beforeEachTest: () => Promise<void> };
 
 let testTimeout = 5 * 60 * 1000;
 let browserPool = new BrowserPool(5);
@@ -23,13 +23,13 @@ let browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
     browser: undefined,
     semaphore: new Semaphore(1),
-    before_each_test: async () => undefined,
+    beforeEachTest: async () => undefined,
   },
   trial: {
     browser: undefined,
     semaphore: new Semaphore(1),
-    before_each_test: async () => {
-      await FlowCryptApi.hook_ci_account_delete(Config.secrets.ci_dev_account);
+    beforeEachTest: async () => {
+      await FlowCryptApi.hookCiAcctDelete(Config.secrets.ci_dev_account);
       if (browserGlobal.trial.browser) { // a new browser for each trial test
         await browserGlobal.trial.browser.close();
       }
