@@ -3,6 +3,8 @@ import { PageRecipe, SetupPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 
+// tslint:disable:prefer-const
+
 export let defineSetupTests = (testWithBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test.todo('setup - no connection when pulling backup - retry prompt shows and works');

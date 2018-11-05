@@ -44,12 +44,16 @@ Catch.try(async () => {
 
     const getInsightsFromHostVariables = () => {
       const insights: WebmailVariantObject = { newDataLayer: null, newUi: null, email: null, gmailVariant: null };
-      $('body').append(['<script>', '(function() {', // xss-direct - not sanitized because adding a <script> in intentional here
-        'const payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
-        'const e = document.getElementById("FC_VAR_PASS");',
-        'if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
-        'e.innerText=payload;',
-        '})();', '</script>'].join('')); // executed synchronously - we can read the vars below
+      $('body').append([ // xss-direct - not sanitized because adding a <script> in intentional here
+        '<script>',
+        '  (function() {',
+        '    const payload = JSON.stringify([String(window.GM_SPT_ENABLED), String(window.GM_RFT_ENABLED), String((window.GLOBALS || [])[10])]);',
+        '    let e = document.getElementById("FC_VAR_PASS");',
+        '    if (!e) {e = document.createElement("div");e.style="display:none";e.id="FC_VAR_PASS";document.body.appendChild(e)}',
+        '    e.innerText=payload;',
+        '  })();',
+        '</script>',
+      ].join('')); // executed synchronously - we can read the vars below
       try {
         const extracted = JSON.parse($('body > div#FC_VAR_PASS').text()).map(String);
         if (extracted[0] === 'true') {
