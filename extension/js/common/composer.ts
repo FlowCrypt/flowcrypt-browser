@@ -7,9 +7,9 @@ import { Lang } from './lang.js';
 import { Value, Str, Dict, StandardError } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
-import { Pgp } from './pgp.js';
+import { Pgp, Pwd } from './pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem } from './api.js';
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd, Env, UrlParams } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env, UrlParams } from './browser.js';
 import { FromToHeaders, Mime, SendableMsgBody } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
 
