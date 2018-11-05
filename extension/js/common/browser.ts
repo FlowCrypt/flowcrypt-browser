@@ -210,7 +210,7 @@ export class Ui {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
       const formatBtn = (id: string) => `<div class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}">${getEscapedTitle(id)}</div>`;
-      const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;'.repeat(5));
+      const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       Xss.sanitizeAppend('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
