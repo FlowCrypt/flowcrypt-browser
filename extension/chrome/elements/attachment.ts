@@ -3,12 +3,13 @@
 'use strict';
 
 import { Store } from '../../js/common/store.js';
-import { Catch, Env, Value } from '../../js/common/common.js';
-import { Xss, Ui } from '../../js/common/browser.js';
+import { Value } from '../../js/common/common.js';
+import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { Api } from '../../js/common/api.js';
 import { Pgp, DecryptErrTypes } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Att } from '../../js/common/att.js';
+import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 
@@ -126,7 +127,7 @@ Catch.try(async () => {
       if (!name || Value.is(name).in(['msg.txt', 'null'])) {
         name = encryptedAtt.name;
       }
-      Att.methods.saveToDownloads(new Att({ name, type: encryptedAtt.type, data: result.content.uint8! }), $('body')); // uint8!: requested uint8 above
+      Browser.saveToDownloads(new Att({ name, type: encryptedAtt.type, data: result.content.uint8! }), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send(parentTabId, 'passphrase_dialog', { type: 'attachment', longids: result.longids.needPassphrase });
       clearInterval(passphraseInterval);
@@ -135,7 +136,7 @@ Catch.try(async () => {
       delete result.message;
       console.info(result);
       $('body.attachment').text('Error opening file. Downloading original..');
-      Att.methods.saveToDownloads(new Att({ name: urlParams.name as string, type: urlParams.type as string, data: encryptedAtt.data() }));
+      Browser.saveToDownloads(new Att({ name: urlParams.name as string, type: urlParams.type as string, data: encryptedAtt.data() }));
     }
   };
 
@@ -164,7 +165,7 @@ Catch.try(async () => {
       await recoverMissingAttIdIfNeeded();
       progressEl = $('.download_progress');
       if (decryptedAtt) { // when content was downloaded and decrypted
-        Att.methods.saveToDownloads(decryptedAtt, Env.browser().name === 'firefox' ? $('body') : null);
+        Browser.saveToDownloads(decryptedAtt, Env.browser().name === 'firefox' ? $('body') : null);
       } else if (encryptedAtt && encryptedAtt.hasData()) { // when encrypted content was already downloaded
         await decryptAndSaveAttToDownloads(encryptedAtt);
       } else if (encryptedAtt && encryptedAtt.id && encryptedAtt.msgId) { // gmail attId
@@ -172,7 +173,7 @@ Catch.try(async () => {
         encryptedAtt.setData(att.data);
         await decryptAndSaveAttToDownloads(encryptedAtt!);
       } else if (encryptedAtt && encryptedAtt.url) { // gneneral url to download attachment
-        encryptedAtt.setData(await Att.methods.downloadAsUint8(encryptedAtt.url, renderProgress));
+        encryptedAtt.setData(await Api.download(encryptedAtt.url, renderProgress));
         await decryptAndSaveAttToDownloads(encryptedAtt);
       } else {
         throw Error('Missing both id and url');

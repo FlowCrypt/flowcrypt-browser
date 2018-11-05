@@ -3,15 +3,16 @@
 'use strict';
 
 import { Store } from '../../js/common/store.js';
-import { Catch, Env, Value, Str, Dict } from './../../js/common/common.js';
+import { Value, Str, Dict } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
-import { Xss, Ui } from '../../js/common/browser.js';
+import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';
 
 import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
 import { MsgVerifyResult, DecryptErrTypes, Pgp } from '../../js/common/pgp.js';
 import { Mime } from '../../js/common/mime.js';
+import { Catch } from '../../js/common/catch.js';
 
 declare const anchorme: (input: string, opts: { emails?: boolean, attributes?: { name: string, value: string }[] }) => string;
 
@@ -184,13 +185,13 @@ Catch.try(async () => {
     let decrypted = await BgExec.cryptoMsgDecrypt(acctEmail, encrypted.data(), await decryptPwd(), true);
     if (decrypted.success) {
       let att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8! });
-      Att.methods.saveToDownloads(att, renderIn);
+      Browser.saveToDownloads(att, renderIn);
       sendResizeMsg();
     } else {
       delete decrypted.message;
       console.info(decrypted);
       alert('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
-      Att.methods.saveToDownloads(encrypted, renderIn);
+      Browser.saveToDownloads(encrypted, renderIn);
       sendResizeMsg();
     }
   };
@@ -216,11 +217,11 @@ Catch.try(async () => {
     $('div.attachment').click(Ui.event.prevent('double', async target => {
       let att = includedAtts[Number($(target).attr('index') as string)];
       if (att.hasData()) {
-        Att.methods.saveToDownloads(att, $(target));
+        Browser.saveToDownloads(att, $(target));
         sendResizeMsg();
       } else {
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
-        att.setData(await Att.methods.downloadAsUint8(att.url!, (perc, load, total) => renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));
+        att.setData(await Api.download(att.url!, (perc, load, total) => renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));
         await Ui.delay(100); // give browser time to render
         $(target).find('.progress').text('');
         await decryptAndSaveAttToDownloads(att, $(target));
@@ -510,7 +511,7 @@ Catch.try(async () => {
         let msgLinkRes = await Api.fc.linkMessage(short as string);
         passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
-          let downloadUintResult = await Att.methods.downloadAsUint8(msgLinkRes.url, null);
+          let downloadUintResult = await Api.download(msgLinkRes.url, null);
           msg = Str.fromUint8(downloadUintResult);
           await decryptAndRender();
         } else {

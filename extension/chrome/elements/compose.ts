@@ -3,13 +3,13 @@
 'use strict';
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from '../../js/common/store.js';
-import { Catch, Env, Value, Str, Dict, JQS } from './../../js/common/common.js';
+import { Value, Str, Dict, JQS } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
-import { Xss, Ui, XssSafeFactory } from '../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, Env } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
-
 import { Api, ProgressCb, SendableMsg } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
+import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 

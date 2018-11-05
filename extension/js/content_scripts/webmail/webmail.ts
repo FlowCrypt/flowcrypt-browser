@@ -6,7 +6,7 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-import { Catch, Str, Value, Env } from '../../common/common.js';
+import { Str, Value } from '../../common/common.js';
 import { Store } from '../../common/store.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
@@ -15,7 +15,8 @@ import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { Api } from '../../common/api.js';
 import { ContentScriptWindow, FcWindow } from '../../common/extension.js';
-import { XssSafeFactory } from '../../common/browser.js';
+import { XssSafeFactory, Env } from '../../common/browser.js';
+import { Catch } from '../../common/catch.js';
 
 Catch.try(async () => {
 

@@ -3,11 +3,12 @@
 'use strict';
 
 import { Store } from '../../common/store.js';
-import { Catch, Env, Value } from '../../common/common.js';
+import { Value } from '../../common/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications, NotificationWithHandlers } from '../../common/notifications.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError } from '../../common/extension.js';
-import { Ui, XssSafeFactory, PassphraseDialogType, WebMailName, WebmailVariantString } from '../../common/browser.js';
+import { Ui, XssSafeFactory, PassphraseDialogType, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
+import { Catch } from '../../common/catch.js';
 
 export type WebmailVariantObject = { newDataLayer: null | boolean, newUi: null | boolean, email: null | string, gmailVariant: WebmailVariantString };
 type WebmailSpecificInfo = {

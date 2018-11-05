@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Att } from '../../../js/common/att.js';
-import { Xss, Ui, XssSafeFactory, AttUI } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, AttUI, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp, DecryptErrTypes } from '../../../js/common/pgp.js';
+import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
@@ -44,7 +44,7 @@ Catch.try(async () => {
     let result = await Pgp.msg.decrypt(acctEmail, encrypted.asBytes(), null, true);
     if (result.success) {
       let attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8! }); // uint8!: requested uint8 above
-      Att.methods.saveToDownloads(attachment);
+      Browser.saveToDownloads(attachment);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       $('.passphrase_dialog').html(factory.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
     } else {

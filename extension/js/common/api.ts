@@ -3,14 +3,14 @@
 'use strict';
 
 import { Store, GlobalStore, Serializable, AccountStore, Contact } from './store.js';
-import { Catch, Value, Str, Env, Dict } from './common.js';
-
+import { Value, Str, Dict, StandardError } from './common.js';
 import { Pgp } from './pgp.js';
 import { FlowCryptManifest, BrowserMsg, BrowserWidnow, FcWindow } from './extension.js';
-import { Ui } from './browser.js';
+import { Ui, Env } from './browser.js';
 import { Att } from './att.js';
 import { Mime } from './mime.js';
 import { PaymentMethod } from './account.js';
+import { Catch } from './catch.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -44,7 +44,6 @@ export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type SendableMsg = { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread: string | null; };
-export type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 export type SubscriptionInfo = { active: boolean | null; method: PaymentMethod | null; level: SubscriptionLevel; expire: string | null; };
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
@@ -896,6 +895,18 @@ export class Api {
       return Promise.all(promises);
     },
   };
+
+  public static download = (url: string, progress: ProgressCb | null = null): Promise<Uint8Array> => new Promise((resolve, reject) => {
+    let request = new XMLHttpRequest();
+    request.open('GET', url, true);
+    request.responseType = 'arraybuffer';
+    if (typeof progress === 'function') {
+      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
+    }
+    request.onerror = reject;
+    request.onload = e => resolve(new Uint8Array(request.response));
+    request.send();
+  })
 
   private static internal = {
     getAjaxProgressXhr: (progressCbs?: ProgressCbs) => {

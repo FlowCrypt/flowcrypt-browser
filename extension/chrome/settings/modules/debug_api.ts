@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Catch, Env, Dict } from '../../../js/common/common.js';
-import { Xss } from '../../../js/common/browser.js';
-
+import { Dict } from '../../../js/common/common.js';
+import { Xss, Env } from '../../../js/common/browser.js';
 import { Api } from '../../../js/common/api.js';
+import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 

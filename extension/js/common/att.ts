@@ -2,9 +2,7 @@
 
 'use strict';
 
-import { Str, Value, Env, Catch } from './common.js';
-import { ProgressCb } from './api.js';
-import { Xss } from './browser.js';
+import { Str, Value } from './common.js';
 import { KeyInfo } from './store.js';
 
 type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
@@ -128,65 +126,6 @@ export class Att {
   }
 
   public static methods = {
-    objUrlCreate: (content: Uint8Array | string) => window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' })),
-    objUrlConsume: async (url: string) => {
-      let uint8 = await Att.methods.downloadAsUint8(url, null);
-      window.URL.revokeObjectURL(url);
-      return uint8;
-    },
-    downloadAsUint8: (url: string, progress: ProgressCb | null = null): Promise<Uint8Array> => new Promise((resolve, reject) => {
-      let request = new XMLHttpRequest();
-      request.open('GET', url, true);
-      request.responseType = 'arraybuffer';
-      if (typeof progress === 'function') {
-        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
-      }
-      request.onerror = reject;
-      request.onload = e => resolve(new Uint8Array(request.response));
-      request.send();
-    }),
-    saveToDownloads: (att: Att, renderIn: JQuery<HTMLElement> | null = null) => {
-      let blob = new Blob([att.data()], { type: att.type });
-      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-        window.navigator.msSaveBlob(blob, att.name);
-      } else {
-        let a = window.document.createElement('a');
-        a.href = window.URL.createObjectURL(blob);
-        a.download = Xss.escape(att.name);
-        if (renderIn) {
-          a.textContent = 'DECRYPTED FILE';
-          a.style.cssText = 'font-size: 16px; font-weight: bold;';
-          Xss.sanitizeRender(renderIn, '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>');
-          renderIn.append(a); // xss-escaped attachment name above
-          renderIn.css('height', 'auto');
-          renderIn.find('a').click(e => {
-            alert('Please use right-click and select Save Link As');
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          });
-        } else {
-          if (typeof a.click === 'function') {
-            a.click();
-          } else { // safari
-            let e = document.createEvent('MouseEvents');
-            // @ts-ignore - safari only. expected 15 arguments, but works well with 4
-            e.initMouseEvent('click', true, true, window);
-            a.dispatchEvent(e);
-          }
-          if (Env.browser().name === 'firefox') {
-            try {
-              document.body.removeChild(a);
-            } catch (err) {
-              if (err.message !== 'Node was not found') {
-                throw err;
-              }
-            }
-          }
-          Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
-        }
-      }
-    },
     pgpNamePatterns: () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''],
     keyinfoAsPubkeyAtt: (ki: KeyInfo) => new Att({ data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc` }),
   };

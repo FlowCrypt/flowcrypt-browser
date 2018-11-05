@@ -2,12 +2,14 @@
 
 'use strict';
 
-import { Catch, Value, Str, Env, Dict, EmailProvider } from './common.js';
+import { Value, Str, Dict, EmailProvider } from './common.js';
 import { mnemonic } from './mnemonic.js';
 import { Pgp } from './pgp.js';
 import { SubscriptionInfo } from './api.js';
 import { BrowserMsg } from './extension.js';
 import { Product, PaymentMethod, ProductLevel } from './account.js';
+import { Env } from './browser.js';
+import { Catch } from './catch.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
@@ -283,6 +285,20 @@ export class Store {
         resolve(Store.acctStorageObjKeysToOrig(Store.globalStorageScope, storageObj) as GlobalStore);
       });
     });
+  }
+
+  static saveError(err: any, errMsg?: string) {
+    Store.getGlobal(['errors']).then(s => {
+      if (typeof s.errors === 'undefined') {
+        s.errors = [];
+      }
+      if (err instanceof Error) {
+        s.errors.unshift(err.stack || errMsg || String(err));
+      } else {
+        s.errors.unshift(errMsg || String(err));
+      }
+      Store.set(null, s).catch(console.error);
+    }).catch(console.error);
   }
 
   static getAcct(acctEmail: string, keys: string[]): Promise<AccountStore> {

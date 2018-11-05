@@ -3,15 +3,16 @@
 'use strict';
 
 import { Store, KeyInfo, KeyBackupMethod } from '../../../js/common/store.js';
-import { Catch, Env, Value, UnreportableError, EmailProvider } from '../../../js/common/common.js';
+import { Value, EmailProvider } from '../../../js/common/common.js';
 import { Att } from '../../../js/common/att.js';
-import { Xss, Ui } from '../../../js/common/browser.js';
+import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
 import { Pgp } from '../../../js/common/pgp.js';
+import { Catch, UnreportableError } from '../../../js/common/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -247,10 +248,10 @@ Catch.try(async () => {
   let backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
     let attachment = asBackupFile(acctEmail, primaryKi.private);
     if (Env.browser().name !== 'firefox') {
-      Att.methods.saveToDownloads(attachment);
+      Browser.saveToDownloads(attachment);
       await writeBackupDoneAndRender(false, 'file');
     } else {
-      Att.methods.saveToDownloads(attachment, $('.backup_action_buttons_container'));
+      Browser.saveToDownloads(attachment, $('.backup_action_buttons_container'));
     }
   };
 

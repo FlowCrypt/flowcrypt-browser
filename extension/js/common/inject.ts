@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Catch } from './common.js';
 import { ContentScriptWindow } from './extension.js';
 import { Ui, XssSafeFactory, SelCache, WebMailName, WebmailVariantString } from './browser.js';
+import { Catch } from './catch.js';
 
 export class Injector {
 

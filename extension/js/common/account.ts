@@ -3,8 +3,10 @@
 'use strict';
 
 import { Store, SubscriptionAttempt } from './store.js';
-import { Env, Str, Catch, Dict } from './common.js';
+import { Str, Dict } from './common.js';
 import { Api } from './api.js';
+import { Catch } from './catch.js';
+import { Env } from './browser.js';
 
 type AccountEventHandlersOptional = {
   renderStatusText?: (text: string, showSpinner?: boolean) => void;

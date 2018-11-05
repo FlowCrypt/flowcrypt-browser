@@ -3,12 +3,12 @@
 'use strict';
 
 import { Store } from '../../../js/common/store.js';
-import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Att } from '../../../js/common/att.js';
-import { Ui } from '../../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
+import { Catch } from '../../../js/common/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
@@ -45,7 +45,7 @@ Catch.try(async () => {
   $('.show_when_showing_private').css('display', 'none');
 
   $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    Att.methods.saveToDownloads(Att.methods.keyinfoAsPubkeyAtt(primaryKi), Env.browser().name === 'firefox' ? $('body') : undefined);
+    Browser.saveToDownloads(Att.methods.keyinfoAsPubkeyAtt(primaryKi), Env.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_show_other_type').click(Ui.event.handle(() => {

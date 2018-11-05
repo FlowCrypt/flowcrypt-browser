@@ -3,13 +3,14 @@
 'use strict';
 
 import { Store } from '../../../js/common/store.js';
-import { Catch, Env, Value } from '../../../js/common/common.js';
+import { Value } from '../../../js/common/common.js';
 import { Att } from '../../../js/common/att.js';
-import { Xss, Ui } from '../../../js/common/browser.js';
+import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
 import { Lang } from '../../../js/common/lang.js';
+import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
@@ -135,7 +136,7 @@ Catch.try(async () => {
     let collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
       let name = 'FlowCrypt_BACKUP_FILE_' + acctEmail.replace('[^a-z0-9]+', '') + '.txt';
       let backupText = await collectInfoForAccountBackup(acctEmail);
-      Att.methods.saveToDownloads(new Att({ name, type: 'text/plain', data: backupText }));
+      Browser.saveToDownloads(new Att({ name, type: 'text/plain', data: backupText }));
       await Ui.delay(1000);
     };
 

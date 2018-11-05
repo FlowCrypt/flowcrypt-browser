@@ -3,12 +3,12 @@
 'use strict';
 
 import { Store, Contact } from '../../js/common/store.js';
-import { Catch, Env, Str } from './../../js/common/common.js';
-import { Xss, Ui } from '../../js/common/browser.js';
+import { Str } from './../../js/common/common.js';
+import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { mnemonic } from './../../js/common/mnemonic.js';
-
 import { Pgp } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
+import { Catch } from '../../js/common/catch.js';
 
 declare let openpgp: typeof OpenPGP;
 

@@ -3,7 +3,7 @@
 'use strict';
 
 import * as DOMPurify from 'dompurify';
-import { Catch, UnreportableError, Env, Str, Value, Dict, UrlParams, UrlParam } from './common.js';
+import { Str, Value, Dict, UrlParams, UrlParam } from './common.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './store.js';
 import { Api } from './api.js';
@@ -12,6 +12,7 @@ import { mnemonic } from './mnemonic.js';
 import { Att } from './att.js';
 import { MsgBlock, KeyBlockType } from './mime.js';
 import { Settings } from './settings.js';
+import { Catch, UnreportableError } from './catch.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
@@ -31,6 +32,174 @@ export type WebmailVariantString = null | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'sign' | 'attest';
 export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
+
+export class Browser {
+
+  public static objUrlCreate = (content: Uint8Array | string) => {
+    return window.URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+  }
+
+  public static objUrlConsume = async (url: string) => {
+    let uint8 = await Api.download(url, null);
+    window.URL.revokeObjectURL(url);
+    return uint8;
+  }
+
+  public static saveToDownloads = (att: Att, renderIn: JQuery<HTMLElement> | null = null) => {
+    let blob = new Blob([att.data()], { type: att.type });
+    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+      window.navigator.msSaveBlob(blob, att.name);
+    } else {
+      let a = window.document.createElement('a');
+      a.href = window.URL.createObjectURL(blob);
+      a.download = Xss.escape(att.name);
+      if (renderIn) {
+        a.textContent = 'DECRYPTED FILE';
+        a.style.cssText = 'font-size: 16px; font-weight: bold;';
+        Xss.sanitizeRender(
+          renderIn,
+          '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>',
+        );
+        renderIn.append(a); // xss-escaped attachment name above
+        renderIn.css('height', 'auto');
+        renderIn.find('a').click(e => {
+          alert('Please use right-click and select Save Link As');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        });
+      } else {
+        if (typeof a.click === 'function') {
+          a.click();
+        } else { // safari
+          let e = document.createEvent('MouseEvents');
+          // @ts-ignore - safari only. expected 15 arguments, but works well with 4
+          e.initMouseEvent('click', true, true, window);
+          a.dispatchEvent(e);
+        }
+        if (Env.browser().name === 'firefox') {
+          try {
+            document.body.removeChild(a);
+          } catch (err) {
+            if (err.message !== 'Node was not found') {
+              throw err;
+            }
+          }
+        }
+        Catch.setHandledTimeout(() => window.URL.revokeObjectURL(a.href), 0);
+      }
+    }
+  }
+
+}
+
+export class Env {
+
+  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null };
+
+  public static browser = () => {  // http://stackoverflow.com/questions/4825498/how-can-i-find-out-which-browser-a-user-is-using
+    if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return { name: 'firefox', v: Number(RegExp.$1) };
+    } else if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)) {
+      return { name: 'ie', v: Number(RegExp.$1) };
+    } else if (/Chrome[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return { name: 'chrome', v: Number(RegExp.$1) };
+    } else if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return { name: 'opera', v: Number(RegExp.$1) };
+    } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
+      return { name: 'safari', v: Number(RegExp.$1) };
+    } else {
+      return { name: 'unknown', v: null };
+    }
+  }
+
+  public static runtimeId = (orig = false) => {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
+      if (orig === true) {
+        return chrome.runtime.id;
+      } else {
+        return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
+      }
+    }
+    return null;
+  }
+
+  public static isBackgroundPage = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
+
+  public static isExtension = () => Env.runtimeId() !== null;
+
+  public static urlParamRequire = {
+    string: (values: UrlParams, name: string): string => Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string') as string,
+    oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed) as string,
+  };
+
+  private static snakeCaseToCamelCase = (s: string) => s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
+
+  private static camelCaseToSnakeCase = (s: string) => s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
+
+  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
+    if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
+      return undefined; // param name not found in param name dict
+    }
+    let rawValue = rawParms[rawParamNameDict[expectedParamName]];
+    if (typeof rawValue === 'undefined') {
+      return undefined; // original param name not found in raw params
+    }
+    if (typeof Env.URL_PARAM_DICT[rawValue] !== 'undefined') {
+      return Env.URL_PARAM_DICT[rawValue]; // raw value was converted using a value dict to get proper: true, false, undefined, null
+    }
+    return decodeURIComponent(rawValue);
+  }
+
+  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Dict<string>) => {
+    rawParamNameDict[urlParamName] = urlParamName;
+    rawParamNameDict[Env.snakeCaseToCamelCase(urlParamName)] = urlParamName;
+    rawParamNameDict[Env.camelCaseToSnakeCase(urlParamName)] = urlParamName;
+    let shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
+    rawParamNameDict[Env.snakeCaseToCamelCase(shortened)] = urlParamName;
+    rawParamNameDict[Env.camelCaseToSnakeCase(shortened)] = urlParamName;
+  }
+
+  /**
+   * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
+   */
+  public static urlParams = (expectedKeys: string[], string: string | null = null) => {
+    let url = (string || window.location.search.replace('?', ''));
+    let valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
+    let rawParms: Dict<string> = {};
+    let rawParamNameDict: Dict<string> = {};
+    for (let valuePair of valuePairs) {
+      let pair = valuePair.split('=');
+      rawParms[pair[0]] = pair[1];
+      Env.fillPossibleUrlParamNameVariations(pair[0], rawParamNameDict);
+    }
+    let processedParams: UrlParams = {};
+    for (let expectedKey of expectedKeys) {
+      processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParms);
+    }
+    return processedParams;
+  }
+
+  public static urlCreate = (link: string, params: UrlParams) => {
+    for (let key of Object.keys(params)) {
+      let value = params[key];
+      if (typeof value !== 'undefined') {
+        let transformed = Value.obj.keyByValue(Env.URL_PARAM_DICT, value);
+        link += (!Value.is('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
+      }
+    }
+    return link;
+  }
+
+  public static keyCodes = () => {
+    return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
+  }
+
+  public static webmails = async (): Promise<WebMailName[]> => {
+    return ['gmail', 'inbox']; // async because storage may be involved in the future
+  }
+
+}
 
 export class Ui {
 
@@ -505,7 +674,7 @@ export class XssSafeFactory {
 
   srcPgpAttIframe = (a: Att) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
-      a.url = Att.methods.objUrlCreate(a.asBytes());
+      a.url = Browser.objUrlCreate(a.asBytes());
     }
     return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), { frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url });
   }

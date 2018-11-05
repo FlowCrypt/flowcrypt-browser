@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Env, Value } from '../../common/common.js';
+import { Value } from '../../common/common.js';
 import { AuthReq } from '../../common/api.js';
 import { FlowCryptManifest, BrowserMsg } from '../../common/extension.js';
-import { Ui } from '../../common/browser.js';
+import { Ui, Env } from '../../common/browser.js';
 
 (async () => {
 

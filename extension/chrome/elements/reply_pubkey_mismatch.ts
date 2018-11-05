@@ -3,13 +3,13 @@
 'use strict';
 
 import { Store, Subscription, Serializable } from '../../js/common/store.js';
-import { Catch, Env, Dict } from './../../js/common/common.js';
+import { Dict } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
-import { Xss, Ui } from '../../js/common/browser.js';
-
+import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Composer } from './../../js/common/composer.js';
 import { Api, FlatHeaders } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
+import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 

@@ -2,10 +2,9 @@
 
 'use strict';
 
-import { Env } from '../../js/common/common.js';
-
 import { Pgp } from '../../js/common/pgp.js';
-import { StandardError } from '../../js/common/api.js';
+import { Env } from '../../js/common/browser.js';
+import { StandardError } from '../../js/common/common.js';
 
 (() => {
 

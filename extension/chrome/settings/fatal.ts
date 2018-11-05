@@ -2,8 +2,7 @@
 
 'use strict';
 
-import { Env } from '../../js/common/common.js';
-import { Xss } from '../../js/common/browser.js';
+import { Xss, Env } from '../../js/common/browser.js';
 import { Lang } from '../../js/common/lang.js';
 
 let urlParams = Env.urlParams(['reason']);

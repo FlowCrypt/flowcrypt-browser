@@ -3,11 +3,13 @@
 'use strict';
 
 import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes } from '../common/store.js';
-import { Env, Catch, Value, Dict } from '../common/common.js';
+import { Value, Dict } from '../common/common.js';
 import { BgExec, BrowserMsgHandler, BrowserMsgReqtDb, BrowserMsgReqSessionSet, BrowserMsgReqSessionGet, BrowserMsg } from '../common/extension.js';
 import { BgAttests } from './attests.js';
 import { injectFcIntoWebmailIfNeeded } from './inject.js';
 import { migrateAcct, migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
+import { Catch } from '../common/catch.js';
+import { Env } from '../common/browser.js';
 
 declare let openpgp: typeof OpenPGP;
 

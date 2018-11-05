@@ -3,9 +3,9 @@
 'use strict';
 
 import { Store } from '../../js/common/store.js';
-import { Catch } from '../../js/common/common.js';
 import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
+import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 

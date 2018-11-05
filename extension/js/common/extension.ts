@@ -1,10 +1,12 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-import { Str, Catch, Env, Value, Dict } from './common.js';
+'use strict';
+
+import { Str, Value, Dict } from './common.js';
 import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from './pgp.js';
-
 import { FlatTypes } from './store.js';
-import { Ui } from './browser.js';
-import { Att } from './att.js';
+import { Ui, Env, Browser } from './browser.js';
+import { Catch } from './catch.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 
@@ -280,9 +282,9 @@ export class BgExec {
     let result = await BgExec.requestToProcessInBg('Pgp.msg.decrypt', [acctEmail, encryptedData, msgPwd, getUint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if (result.content.blob.blob_type === 'text') {
-        result.content.text = Str.fromUint8(await Att.methods.objUrlConsume(result.content.blob.blob_url));
+        result.content.text = Str.fromUint8(await Browser.objUrlConsume(result.content.blob.blob_url));
       } else {
-        result.content.uint8 = await Att.methods.objUrlConsume(result.content.blob.blob_url);
+        result.content.uint8 = await Browser.objUrlConsume(result.content.blob.blob_url);
       }
       result.content.blob = undefined;
     }
@@ -309,10 +311,10 @@ export class BgExec {
   private static cryptoMsgDecryptResCreateBlobs = (decryptRes: DecryptResult) => {
     if (decryptRes && decryptRes.success && decryptRes.content) {
       if (decryptRes.content.text && decryptRes.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
-        decryptRes.content.blob = { blob_type: 'text', blob_url: Att.methods.objUrlCreate(decryptRes.content.text) };
+        decryptRes.content.blob = { blob_type: 'text', blob_url: Browser.objUrlCreate(decryptRes.content.text) };
         decryptRes.content.text = undefined; // replaced with a blob
       } else if (decryptRes.content.uint8 && decryptRes.content.uint8 instanceof Uint8Array) {
-        decryptRes.content.blob = { blob_type: 'uint8', blob_url: Att.methods.objUrlCreate(decryptRes.content.uint8) };
+        decryptRes.content.blob = { blob_type: 'uint8', blob_url: Browser.objUrlCreate(decryptRes.content.uint8) };
         decryptRes.content.uint8 = undefined; // replaced with a blob
       }
     }
@@ -322,9 +324,9 @@ export class BgExec {
 
   private static shouldBeObjUrl = (arg: any) => (typeof arg === 'string' && arg.length > BrowserMsg.MAX_SIZE) || arg instanceof Uint8Array;
 
-  private static argObjUrlsConsume = (args: any[]) => args.map((arg: any) => BgExec.isObjUrl(arg) ? Att.methods.objUrlConsume(arg) : arg);
+  private static argObjUrlsConsume = (args: any[]) => args.map((arg: any) => BgExec.isObjUrl(arg) ? Browser.objUrlConsume(arg) : arg);
 
-  private static argObjUrlsCreate = (args: any[]) => args.map(arg => BgExec.shouldBeObjUrl(arg) ? Att.methods.objUrlCreate(arg) : arg);
+  private static argObjUrlsCreate = (args: any[]) => args.map(arg => BgExec.shouldBeObjUrl(arg) ? Browser.objUrlCreate(arg) : arg);
 
   private static resolvePathToCallableFunction = (path: string): Function => {  // tslint:disable-line:ban-types
     let f: Function | object | null = null; // tslint:disable-line:ban-types

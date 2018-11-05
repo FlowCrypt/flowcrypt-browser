@@ -4,13 +4,14 @@
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from './store.js';
 import { Lang } from './lang.js';
-import { Catch, Value, Str, Env, UnreportableError, Dict, UrlParams } from './common.js';
+import { Value, Str, Dict, UrlParams, StandardError } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
-import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, StandardError, SendableMsgBody, AwsS3UploadItem } from './api.js';
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd } from './browser.js';
+import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, SendableMsgBody, AwsS3UploadItem } from './api.js';
+import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd, Env } from './browser.js';
 import { FromToHeaders, Mime } from './mime.js';
+import { Catch, UnreportableError } from './catch.js';
 
 declare let openpgp: typeof OpenPGP;
 

@@ -3,11 +3,11 @@
 'use strict';
 
 import { Store } from '../../../js/common/store.js';
-import { Catch, Env, Dict } from '../../../js/common/common.js';
 import { Att } from '../../../js/common/att.js';
-import { Xss, Ui, XssSafeFactory } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/pgp.js';
+import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
@@ -30,7 +30,7 @@ Catch.try(async () => {
     Xss.sanitizeRender('.line.actions', exportAllHtml).find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       let allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       let exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys });
-      Att.methods.saveToDownloads(exportFile, Env.browser().name === 'firefox' ? $('.line.actions') : null);
+      Browser.saveToDownloads(exportFile, Env.browser().name === 'firefox' ? $('.line.actions') : null);
     }));
 
     let importPublicKeysHtml = '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';

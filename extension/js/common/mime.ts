@@ -2,11 +2,12 @@
 
 'use strict';
 
-import { Str, Value, Catch } from './common.js';
+import { Str, Value } from './common.js';
 import { SendableMsgBody, RichHeaders, FlatHeaders } from './api.js';
 import { Pgp } from './pgp.js';
 import { Att } from './att.js';
 import { BrowserWidnow, FcWindow, AnyThirdPartyLibrary } from './extension.js';
+import { Catch } from './catch.js';
 
 type MimeContent = { headers: FlatHeaders; atts: Att[]; signature: string | undefined; html: string | undefined; text: string | undefined; };
 type MimeParserNode = {
