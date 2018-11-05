@@ -30,9 +30,9 @@ Catch.try(async () => {
         if (hostPageInfo.email) {
           return hostPageInfo.email;
         }
-        let accountEmailLoadingMatch = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
-        if (accountEmailLoadingMatch !== null) { // try parse from loading div
-          return accountEmailLoadingMatch[0].trim().toLowerCase();
+        let acctEmailLoadingMatch = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
+        if (acctEmailLoadingMatch !== null) { // try parse from loading div
+          return acctEmailLoadingMatch[0].trim().toLowerCase();
         }
         let emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
         if (Str.isEmailValid(emailFromAccountDropdown)) {

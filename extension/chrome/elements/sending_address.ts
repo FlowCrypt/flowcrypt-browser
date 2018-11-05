@@ -11,7 +11,7 @@ import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let urlParams = Env.urlParams(['accountEmail', 'parentTabId', 'placement']);
+  let urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'placement']);
   let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   let parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   let hash = Pgp.hash.sha1;

@@ -9,12 +9,12 @@ import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
-  let redirectToInitSetup = async (acctEmail:string|null=null) => {
+  let redirectToInitSetup = async (acctEmail: string | null = null) => {
     await BrowserMsg.sendAwait(null, 'settings', { acctEmail });
     window.close();
   };
 
-  let chooseEmailOrSettingsPopup = (activeAcctEmail:string|null=null) => {
+  let chooseEmailOrSettingsPopup = (activeAcctEmail: string | null = null) => {
     $('#email_or_settings').css('display', 'block');
     $('.action_open_settings').click(Ui.event.handle(async () => {
       if (activeAcctEmail) {
@@ -41,7 +41,7 @@ Catch.try(async () => {
 
   let activeTab = await BrowserMsg.sendAwait(null, 'get_active_tab_info', {});
   if (activeTab && activeTab.acctEmail !== null) {
-    let {setup_done} = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
+    let { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
     if (setup_done) {
       chooseEmailOrSettingsPopup(activeTab.acctEmail);
     } else {
@@ -50,9 +50,9 @@ Catch.try(async () => {
   } else if (activeTab && activeTab.provider !== null && activeTab.sameWorld === true) {
     setupAcctPromptPopup(activeTab.acctEmail);
   } else {
-    let accountEmails = await Store.acctEmailsGet();
-    if (accountEmails && accountEmails.length) {
-      let acctStorages = await Store.getAccounts(accountEmails, ['setup_done']);
+    let acctEmails = await Store.acctEmailsGet();
+    if (acctEmails && acctEmails.length) {
+      let acctStorages = await Store.getAccounts(acctEmails, ['setup_done']);
       let functioningAccts = 0;
       for (let email of Object.keys(acctStorages)) {
         functioningAccts += Number(acctStorages[email].setup_done === true);

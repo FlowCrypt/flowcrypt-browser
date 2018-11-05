@@ -8,7 +8,7 @@ import { Catch, Value, Str, Env, UnreportableError, Dict, UrlParams } from './co
 import { Att } from './att.js';
 import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
 import { Pgp } from './pgp.js';
-import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, StandardError, SendableMsgBody } from './api.js';
+import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, RichHeaders, StandardError, SendableMsgBody, AwsS3UploadItem } from './api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Pwd } from './browser.js';
 import { FromToHeaders, Mime } from './mime.js';
 
@@ -696,12 +696,12 @@ export class Composer {
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
     try {
       let pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : null);
-      const items: any[] = []; // todo - stop using "any"
+      const items: AwsS3UploadItem[] = []; // todo - stop using "any"
       for (let i of pfRes.approvals.keys()) {
-        items.push({ base_url: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, attachment: atts[i] });
+        items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
       }
       await Api.aws.s3Upload(items, this.renderUploadProgress);
-      let { admin_codes, confirmed } = await Api.fc.messageConfirmFiles(items.map((item) => item.fields.key));
+      let { admin_codes, confirmed } = await Api.fc.messageConfirmFiles(items.map(item => item.fields.key));
       if (!confirmed || confirmed.length !== items.length) {
         throw new Error('Atts did not upload properly, please try again');
       }
@@ -712,8 +712,10 @@ export class Composer {
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
         throw e;
-      } else {
+      } else if (Api.err.isNetErr(e)) {
         throw new ComposerNetworkError(e && typeof e === 'object' && e.message ? e.message : 'Some files failed to upload, please try again');
+      } else {
+        throw e;
       }
     }
   }

@@ -344,7 +344,7 @@ export class Catch {
 
   public static test = () => {
     // @ts-ignore - intentional exception
-    this_will_fail();
+    thisWillFail();
   }
 
   public static promiseErrAlert = (note: string) => (error: Error) => { // returns a function

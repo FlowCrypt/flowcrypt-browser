@@ -47,6 +47,7 @@ export type SendableMsg = { headers: FlatHeaders; from: string; to: string[]; su
 export type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 export type SubscriptionInfo = { active: boolean | null; method: PaymentMethod | null; level: SubscriptionLevel; expire: string | null; };
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
+export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
 export namespace R { // responses
 
@@ -874,16 +875,16 @@ export class Api {
   };
 
   public static aws = {
-    s3Upload: (items: { baseUrl: string, fields: Dict<Serializable | Att>, att: Att }[], progressCb: ProgressCb) => {
+    s3Upload: (items: AwsS3UploadItem[], progressCb: ProgressCb) => {
       let progress = Value.arr.zeroes(items.length);
       let promises: Promise<void>[] = [];
       if (!items.length) {
         return Promise.resolve(promises);
       }
       for (let i of items.keys()) {
-        let values = items[i].fields;
-        values.file = new Att({ name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].att.data() });
-        promises.push(Api.internal.apiCall(items[i].baseUrl, '', values, 'FORM', {
+        let fields = items[i].fields;
+        fields.file = new Att({ name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].att.data() });
+        promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
             progress[i] = singleFileProgress;
             Ui.event.prevent('spree', () => {
