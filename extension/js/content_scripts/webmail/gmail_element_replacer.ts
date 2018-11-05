@@ -91,7 +91,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       $(emailContainer).addClass('evaluated');
       let senderEmail = this.getSenderEmail(emailContainer);
       let isOutgoing = Value.is(senderEmail).in(this.addresses);
-      let replacementXssSafe = Pgp.armor.replace_blocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
+      let replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
         let newSel = this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe

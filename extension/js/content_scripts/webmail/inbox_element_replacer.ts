@@ -52,7 +52,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
       let msgId = self.domExtractMsgId(msgEl);
       let senderEmail = self.domExtractSenderEmail(msgEl);
       let isOutgoing = Value.is(senderEmail).in(this.addresses);
-      let replacementXssSafe = Pgp.armor.replace_blocks(self.factory, msgEl.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
+      let replacementXssSafe = Ui.replaceRenderableMsgBlocks(self.factory, msgEl.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
       if (typeof replacementXssSafe !== 'undefined') {
         $(msgEl).parents('.ap').addClass('pgp_message_container');
         $(msgEl).html(replacementXssSafe.replace(/^…|…$/g, '').trim()); // xss-safe-factory

@@ -4,7 +4,6 @@
 
 import { Store, KeyInfo, Contact } from './store.js';
 import { Value, Str } from './common.js';
-import { Ui, XssSafeFactory, Pwd } from './browser.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
 import { Catch } from './catch.js';
 
@@ -32,6 +31,7 @@ type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType 
 type PrepareForDecryptRes = { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message }
   | { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage };
 
+export type Pwd = { question?: string; answer: string; };
 export type MsgVerifyResult = { signer: string | null; contact: Contact | null; match: boolean | null; error: null | string; };
 export type DecryptResult = DecryptSuccess | DecryptError;
 export type DiagnoseMsgPubkeysResult = { found_match: boolean, receivers: number, };
@@ -166,24 +166,6 @@ export class Pgp {
           startAt = r.continue_at;
         }
       }
-    },
-    /**
-     * XSS WARNING
-     *
-     * Return values are inserted directly into DOM. Results must be html escaped.
-     *
-     * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
-     */
-    replace_blocks: (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-      let { blocks } = Pgp.armor.detectBlocks(origText);
-      if (blocks.length === 1 && blocks[0].type === 'text') {
-        return;
-      }
-      let r = '';
-      for (let block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
-      }
-      return r;
     },
     normalize: (armored: string, type: string) => {
       armored = Str.normalize(armored);

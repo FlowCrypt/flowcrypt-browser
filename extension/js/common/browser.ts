@@ -7,7 +7,7 @@ import { Str, Value, Dict } from './common.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './store.js';
 import { Api } from './api.js';
-import { Pgp } from './pgp.js';
+import { Pgp, Pwd } from './pgp.js';
 import { mnemonic } from './mnemonic.js';
 import { Att } from './att.js';
 import { MsgBlock, KeyBlockType } from './mime.js';
@@ -27,7 +27,6 @@ type KeyImportUiCheckResult = {
 };
 
 export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
-export type Pwd = { question?: string; answer: string; };
 export type WebmailVariantString = null | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'sign' | 'attest';
 export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
@@ -485,6 +484,25 @@ export class Ui {
       Catch.report('dunno how to process block type: ' + block.type);
       return '';
     }
+  }
+
+  /**
+   * XSS WARNING
+   *
+   * Return values are inserted directly into DOM. Results must be html escaped.
+   *
+   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
+   */
+  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
+    let { blocks } = Pgp.armor.detectBlocks(origText);
+    if (blocks.length === 1 && blocks[0].type === 'text') {
+      return;
+    }
+    let r = '';
+    for (let block of blocks) {
+      r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
+    }
+    return r;
   }
 
   public static time = {

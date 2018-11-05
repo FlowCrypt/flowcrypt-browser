@@ -110,7 +110,7 @@ Catch.try(async () => {
     }));
 
     $('#bulk_import .action_process').off().click(Ui.event.prevent('double', self => {
-      let replacedHtmlSafe = Pgp.armor.replace_blocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
+      let replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
       if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
       } else {
