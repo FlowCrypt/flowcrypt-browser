@@ -6,7 +6,7 @@ export class BrowserRecipe {
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(Url.extensionSettings());
-    let oauthPopup0 = await browser.newPageTriggeredBy(() => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    const oauthPopup0 = await browser.newPageTriggeredBy(() => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(oauthPopup0, acctEmail, 'close');
     // dialog shows up with permission explanation
     await SettingsPageRecipe.closeDialog(settingsPage);
@@ -15,40 +15,40 @@ export class BrowserRecipe {
 
   public static openSettingsLoginApprove = async (browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(Url.extensionSettings());
-    let oauthPopup = await browser.newPageTriggeredBy(() => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    const oauthPopup = await browser.newPageTriggeredBy(() => settingsPage.waitAndClick('@action-connect-to-gmail'));
     await OauthPageRecipe.google(oauthPopup, acctEmail, 'approve');
     return settingsPage;
   }
 
   public static openGmailPage = async (browser: BrowserHandle, googleLoginIndex = 0) => {
-    let gmailPage = await browser.newPage(Url.gmail(googleLoginIndex));
+    const gmailPage = await browser.newPage(Url.gmail(googleLoginIndex));
     await gmailPage.waitAll('div.z0'); // compose button container visible
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
     return gmailPage;
   }
 
   public static openGmailPageAndVerifyComposeBtnPresent = async (browser: BrowserHandle, googleLoginIndex = 0) => {
-    let gmailPage = await BrowserRecipe.openGmailPage(browser, googleLoginIndex);
+    const gmailPage = await BrowserRecipe.openGmailPage(browser, googleLoginIndex);
     await gmailPage.waitAll('@action-secure-compose');
     return gmailPage;
   }
 
   public static openGmailPageAndVerifyComposeBtnNotPresent = async (browser: BrowserHandle, googleLoginIndex = 0) => {
-    let gmailPage = await BrowserRecipe.openGmailPage(browser, googleLoginIndex);
+    const gmailPage = await BrowserRecipe.openGmailPage(browser, googleLoginIndex);
     await Util.sleep(3);
     await gmailPage.notPresent('@action-secure-compose');
     return gmailPage;
   }
 
   public static setUpFcCompatAcct = async (browser: BrowserHandle) => {
-    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
+    const settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.compatibility@gmail.com');
     await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
     await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
     await settingsPage.close();
   }
 
   public static pgpBlockVerifyDecryptedContent = async (browser: BrowserHandle, url: string, expectedContents: string[], password?: string) => {
-    let pgpBlockPage = await browser.newPage(url);
+    const pgpBlockPage = await browser.newPage(url);
     await pgpBlockPage.waitAll('@pgp-block-content');
     await pgpBlockPage.waitForSelTestStaet('ready', 100);
     await Util.sleep(1);
@@ -58,8 +58,8 @@ export class BrowserRecipe {
       await Util.sleep(1);
       await pgpBlockPage.waitForSelTestStaet('ready', 10);
     }
-    let content = await pgpBlockPage.read('@pgp-block-content');
-    for (let expectedContent of expectedContents) {
+    const content = await pgpBlockPage.read('@pgp-block-content');
+    for (const expectedContent of expectedContents) {
       if (content.indexOf(expectedContent) === -1) {
         await pgpBlockPage.close();
         throw new Error(`pgp_block_verify_decrypted_content:missing expected content:${expectedContent}`);
