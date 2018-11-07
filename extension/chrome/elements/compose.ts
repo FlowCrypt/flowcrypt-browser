@@ -24,7 +24,7 @@ Catch.try(async () => {
   const isReplyBox = urlParams.isReplyBox === true;
   const skipClickPrompt = urlParams.skipClickPrompt === true;
   const ignoreDraft = urlParams.ignoreDraft === true;
-  const placement = Env.urlParamRequire.oneof(urlParams, 'placement', ['settings', undefined]);
+  const placement = Env.urlParamRequire.oneof(urlParams, 'placement', ['settings', 'gmail', undefined]);
   let draftId = Env.urlParamRequire.optionalString(urlParams, 'draftId') || '';
   let from = Env.urlParamRequire.optionalString(urlParams, 'from') || acctEmail;
   let to = Env.urlParamRequire.optionalString(urlParams, 'to') ? Env.urlParamRequire.optionalString(urlParams, 'to')!.split(',') : [];

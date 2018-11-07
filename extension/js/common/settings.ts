@@ -123,20 +123,22 @@ export class Settings {
   }
 
   static renderSubPage = (acctEmail: string | null, tabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null) => {
-    const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
+    let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     if (page !== '/chrome/elements/compose.htm') {
       iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
       variant = null;
       closeOnClick = 'background';
-    } else {
+    } else { // todo - deprecate this
       iframeWidth = 542;
       iframeHeight = Math.min(600, $('body').height()! - 150);
       variant = 'new_message_featherlight';
       closeOnClick = false;
+      newLocation += `&frameId=${Str.random(5)}`; // does not get added to <iframe>
     }
     ($ as JQS).featherlight({ closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant });
+    // todo - deprecate this
     Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
 
   }
