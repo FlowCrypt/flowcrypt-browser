@@ -10,7 +10,7 @@ export class PageRecipe {
 export class SetupPageRecipe extends PageRecipe {
 
   private static createBegin = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false }: { usedPgpBefore?: boolean } = {}) => {
-    let k = Config.key(keyTitle);
+    const k = Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-create');
     } else {
@@ -51,7 +51,7 @@ export class SetupPageRecipe extends PageRecipe {
 
   // tslint:disable-next-line:max-line-length
   public static manualEnter = async (settingsPage: ControllablePage, keyTitle: string, { usedPgpBefore = false, submitPubkey = false, fixKey = false, naked = false, genPp = false }: { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey?: boolean, naked?: boolean, genPp?: boolean } = {}) => {
-    let k = Config.key(keyTitle);
+    const k = Config.key(keyTitle);
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter');
     } else {
@@ -70,7 +70,7 @@ export class SetupPageRecipe extends PageRecipe {
       if (genPp) {
         await settingsPage.waitAndClick('@action-step2bmanualenter-new-random-passphrase');
         await Util.sleep(1);
-        let generatedPp = await settingsPage.value('@input-step2bmanualenter-passphrase');
+        const generatedPp = await settingsPage.value('@input-step2bmanualenter-passphrase');
         if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedPp)) {
           throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generatedPp}`);
         }
@@ -92,14 +92,14 @@ export class SetupPageRecipe extends PageRecipe {
 
   // tslint:disable-next-line:max-line-length
   public static recover = async (settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) => {
-    let k = Config.key(keyTitle);
+    const k = Config.key(keyTitle);
     await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);
     if (wrongPp) {
-      let dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
+      const dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
       // todo - read the contents - wrong pp
       await dialog.accept();
     } else if (alreadyRecovered) {
-      let dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
+      const dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
       // todo - read the contents - already recovered
       await dialog.accept();
     } else {
@@ -152,7 +152,7 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static changePassphraseRequirement = async (settingsPage: ControllablePage, passphrase: string, outcome: "session" | "storage") => {
-    let securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+    const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAll('@input-toggle-require-pass-phrase');
     await Util.sleep(1); // wait for form to init / fill
     let requirePassphraseIsChecked = await securityFrame.isChecked('@input-toggle-require-pass-phrase');
@@ -180,10 +180,10 @@ export class SettingsPageRecipe extends PageRecipe {
 
   public static verifyMyKeyPage = async (settingsPage: ControllablePage, expectedKeyName: string, trigger: "button" | "link", linkIndex?: number) => {
     await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
-    let myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage,
+    const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage,
       trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`, ['my_key.htm', 'placement=settings']);
     await Util.sleep(1);
-    let k = Config.key(expectedKeyName);
+    const k = Config.key(expectedKeyName);
     await myKeyFrame.waitAll(['@content-key-words', '@content-armored-key']);
     expect(await myKeyFrame.read('@content-key-words')).to.equal(k.keywords);
     await myKeyFrame.waitAndClick('@action-toggle-key-type(show private key)');
@@ -194,15 +194,15 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static passphraseTest = async (settingsPage: ControllablePage, passphrase: string, expectMatch: boolean) => {
-    let securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+    const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAndClick('@action-test-passphrase-begin');
     await securityFrame.waitAndType('@input-test-passphrase', passphrase);
-    let click = () => securityFrame.waitAndClick('@action-test-passphrase');
+    const click = () => securityFrame.waitAndClick('@action-test-passphrase');
     if (expectMatch) {
       await click();
       await securityFrame.waitAndClick('@action-test-passphrase-successful-close');
     } else {
-      let dialog = await settingsPage.triggerAndWaitNewAlert(click);
+      const dialog = await settingsPage.triggerAndWaitNewAlert(click);
       await dialog.accept();
       await SettingsPageRecipe.closeDialog(settingsPage);
     }
@@ -214,7 +214,7 @@ export class SettingsPageRecipe extends PageRecipe {
 export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (browser: BrowserHandle): Promise<ControllablePage> => {
-    let composePage = await browser.newPage('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0');
+    const composePage = await browser.newPage('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none');
     await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
     await composePage.waitForSelTestStaet('ready');
     return composePage;
@@ -223,7 +223,7 @@ export class ComposePageRecipe extends PageRecipe {
   public static openInSettings = async (settingsPage: ControllablePage): Promise<ControllableFrame> => {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
-    let composeFrame = await settingsPage.getFrame(['compose.htm']);
+    const composeFrame = await settingsPage.getFrame(['compose.htm']);
     await composeFrame.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
     await composeFrame.waitForSelTestStaet('ready');
     return composeFrame;
@@ -232,7 +232,7 @@ export class ComposePageRecipe extends PageRecipe {
   public static changeDefSendingAddr = async (composePage: ControllablePage, newDef: string) => {
     await composePage.waitAndClick('@action-open-sending-address-settings');
     await composePage.waitAll('@dialog');
-    let sendingAddrFrame = await composePage.getFrame(['sending_address.htm']);
+    const sendingAddrFrame = await composePage.getFrame(['sending_address.htm']);
     await sendingAddrFrame.waitAndClick(`@action-choose-address(${newDef})`);
     await Util.sleep(0.5); // page reload
     await sendingAddrFrame.waitAndClick('@action-close-sending-address-settings');
@@ -265,11 +265,11 @@ export class OauthPageRecipe extends PageRecipe {
   private static oauthPwdDelay = 2;
 
   public static google = async (oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
-    let selectors = {
+    const selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
     };
-    let auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
+    const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
     await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd');
     if (await oauthPage.target.$('#Email') !== null) { // 2016-style login
       await oauthPage.waitAll('#Email', { timeout: 60 });
@@ -296,7 +296,7 @@ export class OauthPageRecipe extends PageRecipe {
       return await OauthPageRecipe.google(oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
     }
     await Util.sleep(5);
-    let element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice]); // , {timeout: 60}
+    const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice]); // , {timeout: 60}
     await Util.sleep(1);
     if ((await oauthPage.target.$x(selectors.backup_email_verification_choice)).length) { // asks for registered backup email
       await element.click();
@@ -323,14 +323,14 @@ export class GmailPageRecipe extends PageRecipe {
   public static openSecureCompose = async (gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
     await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
     await gmailPage.waitAll('@container-new-message');
-    let urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
+    const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
     return await browser.newPage(urls[0]);
   }
 
   public static getSubscribeDialog = async (gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
     await gmailPage.waitAll('@dialog-subscribe');
-    let urls = await gmailPage.getFramesUrls(['/chrome/elements/subscribe.htm'], { sleep: 1 });
+    const urls = await gmailPage.getFramesUrls(['/chrome/elements/subscribe.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
     return await browser.newPage(urls[0]);
   }
