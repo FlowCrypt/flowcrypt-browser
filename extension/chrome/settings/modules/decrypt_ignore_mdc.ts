@@ -20,11 +20,10 @@ Catch.try(async () => {
   let origContent: string;
   const factory = new XssSafeFactory(acctEmail, tabId);
 
-  BrowserMsg.listen({
-    close_dialog: () => {
-      $('.passphrase_dialog').text('');
-    },
-  }, tabId);
+  BrowserMsg.addListener('close_dialog', () => {
+    $('.passphrase_dialog').text('');
+  });
+  BrowserMsg.listen(tabId);
 
   $('.action_decrypt').click(Ui.event.prevent('double', async self => {
     const encrypted = $('.input_message').val() as string;

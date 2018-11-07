@@ -21,7 +21,7 @@ Catch.try(async () => {
   const backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   const space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
-  BrowserMsg.listen({}, tabId); // set_css
+  BrowserMsg.listen(tabId); // set_css
 
   const renderContactList = async () => {
     const contacts = await Store.dbContactSearch(null, { has_pgp: true });

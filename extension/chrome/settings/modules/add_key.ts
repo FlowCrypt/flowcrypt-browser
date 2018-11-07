@@ -47,7 +47,7 @@ Catch.try(async () => {
     }
   } catch (e) {
     if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+      BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
     }
     $('label[for=source_backup]').text('Load from backup (error checking backups)').css('color', '#AAA');
     $('#source_backup').prop('disabled', true);
@@ -62,7 +62,7 @@ Catch.try(async () => {
       if (checked) {
         await Store.keysAdd(acctEmail, checked.normalized); // resulting new_key checked above
         await Store.passphraseSave($('.input_passphrase_save').prop('checked') ? 'local' : 'session', acctEmail, checked.longid, checked.passphrase);
-        BrowserMsg.send(parentTabId, 'reload', { advanced: true });
+        BrowserMsg.send.reload(parentTabId, { advanced: true });
       }
     } catch (e) {
       if (e instanceof UserAlert) {

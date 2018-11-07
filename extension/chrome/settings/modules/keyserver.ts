@@ -94,7 +94,7 @@ Catch.try(async () => {
     }));
     $('.refresh_after_attest_request').click(Ui.event.prevent('double', async self => {
       Xss.sanitizeRender(self, 'Updating..' + Ui.spinner('white'));
-      BrowserMsg.send(null, 'attest_requested', { acctEmail });
+      BrowserMsg.send.bg.attestRequested({ acctEmail });
       await Ui.time.sleep(30000);
       window.location.reload();
     }));
@@ -108,7 +108,7 @@ Catch.try(async () => {
         if (Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
         } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
           alert('Account needs to be re-connected first. Please try later.');
         } else {
           Catch.handleException(e);

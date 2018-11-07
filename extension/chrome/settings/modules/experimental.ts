@@ -53,7 +53,7 @@ Catch.try(async () => {
           alert('Network error, please try again');
         } else if (Api.err.isAuthPopupNeeded(e)) {
           alert('Error: account needs to be re-connected first.');
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else {
           Catch.handleException(e);
           alert(`Error happened: ${e.message}`);
@@ -89,17 +89,17 @@ Catch.try(async () => {
 
     $('.action_reset_managing_auth').click(Ui.event.handle(async () => {
       await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
-      BrowserMsg.send(parentTabId, 'reload');
+      BrowserMsg.send.reload(parentTabId, {});
     }));
 
     $('.action_make_google_auth_token_unusable').click(Ui.event.handle(async () => {
       await Store.set(acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
-      BrowserMsg.send(parentTabId, 'reload');
+      BrowserMsg.send.reload(parentTabId, {});
     }));
 
     $('.action_make_google_refresh_token_unusable').click(Ui.event.handle(async () => {
       await Store.set(acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
-      BrowserMsg.send(parentTabId, 'reload');
+      BrowserMsg.send.reload(parentTabId, {});
     }));
 
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
@@ -114,7 +114,7 @@ Catch.try(async () => {
               try {
                 await Settings.acctStorageChangeEmail(acctEmail, response.acctEmail);
                 alert(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
-                BrowserMsg.send(null, 'settings', { path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail });
+                BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail });
               } catch (e) {
                 Catch.handleException(e);
                 alert('There was an error changing google account, please write human@flowcrypt.com');

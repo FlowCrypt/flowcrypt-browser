@@ -16,7 +16,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
-  const closeDialog = () => BrowserMsg.send(parentTabId, 'close_dialog');
+  const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
 
   for (const email of (urlParams.emails as string).split(',')) {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
@@ -59,11 +59,7 @@ Catch.try(async () => {
   }));
 
   if (urlParams.placement !== 'settings') {
-    $('.action_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', {
-      path: 'index.htm',
-      page: '/chrome/settings/modules/contacts.htm',
-      acctEmail,
-    })));
+    $('.action_settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/contacts.htm', acctEmail })));
   } else {
     $('#content').addClass('inside_compose');
   }

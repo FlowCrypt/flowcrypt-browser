@@ -5,7 +5,7 @@
 import { Store } from '../../js/common/store.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Settings } from '../../js/common/settings.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -17,6 +17,7 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'attestPacket', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const attestPacket = Env.urlParamRequire.string(urlParams, 'attestPacket');
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -26,7 +27,7 @@ Catch.try(async () => {
   const processAttest = async (passphrase: string | null) => {
     if (passphrase !== null) {
       Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
-      const attestation = await BrowserMsg.sendAwait(null, 'attest_packet_received', { acctEmail, packet: urlParams.attestPacket, passphrase });
+      const attestation = await BrowserMsg.send.await.bg.attestPacketReceived({ acctEmail, packet: attestPacket, passphrase });
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };
@@ -42,15 +43,14 @@ Catch.try(async () => {
   }
 
   Xss.sanitizeRender('.status', 'Pass phrase needed to process this attest message. <a href="#" class="action_passphrase">Enter pass phrase</a>');
-  $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'passphrase_dialog', { type: 'attest', longids: 'primary' })));
+  $('.action_passphrase').click(Ui.event.handle(() => BrowserMsg.send.passphraseDialog(parentTabId, { type: 'attest', longids: ['primary'] })));
   const tabId = await BrowserMsg.requiredTabId();
-  BrowserMsg.listen({
-    passphrase_entry: async (msg: { entered: boolean }, sender, respond) => {
-      if (msg.entered) {
-        const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
-        await processAttest(pp);
-      }
-    },
-  }, tabId);
+  BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+    if (entered) {
+      const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
+      await processAttest(pp);
+    }
+  });
+  BrowserMsg.listen(tabId);
 
 })();

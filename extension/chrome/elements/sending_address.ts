@@ -45,6 +45,6 @@ Catch.try(async () => {
     done();
   }));
 
-  $('.action_close').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_dialog')));
+  $('.action_close').click(Ui.event.handle(() => BrowserMsg.send.closeDialog(parentTabId)));
 
 })();

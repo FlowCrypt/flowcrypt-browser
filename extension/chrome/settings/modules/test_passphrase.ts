@@ -30,7 +30,7 @@ Catch.try(async () => {
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
         <div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>
       `);
-      $('.close').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_page')));
+      $('.close').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
     } else {
       alert('Pass phrase did not match. Please try again. If you are not able to recover your pass phrase, please change it, so that do don\'t get locked out of your encrypted messages.');
     }

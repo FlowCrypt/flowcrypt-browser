@@ -3,12 +3,12 @@
 'use strict';
 
 import { Store } from '../../../js/common/store.js';
-import { Value, Str } from '../../../js/common/common.js';
+import { Value, Str, Dict } from '../../../js/common/common.js';
 import { Xss, Ui, XssSafeFactory, PassphraseDialogType, Env, UrlParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications, NotificationWithHandlers } from '../../../js/common/notifications.js';
 import { Api, R } from '../../../js/common/api.js';
-import { BrowserMsg } from '../../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/mime.js';
 import { Catch } from '../../../js/common/catch.js';
 
@@ -47,11 +47,15 @@ Catch.try(async () => {
     }));
   }
 
-  $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send(null, 'settings', { acctEmail })));
+  $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send.bg.settings({ acctEmail })));
   $('.action_choose_account').get(0).title = acctEmail;
 
-  const notificationShow = (data: NotificationWithHandlers) => {
-    notifications.show(data.notification, data.callbacks);
+  const notificationShowHandler: Bm.ResponselessHandler = ({ notification, callbacks }: Bm.NotificationShow) => {
+    showNotification(notification, callbacks);
+  };
+
+  const showNotification = (notification: string, callbacks?: Dict<() => void>) => {
+    notifications.show(notification, callbacks);
     $('body').one('click', Catch.try(notifications.clear));
   };
 
@@ -60,56 +64,55 @@ Catch.try(async () => {
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 1500);
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
 
-  BrowserMsg.listen({
-    notification_show: notificationShow,
-    close_new_message: (data) => {
-      $('div.new_message').remove();
-    },
-    close_reply_message: (data: { frameId: string }) => {
-      $('iframe#' + data.frameId).remove();
-    },
-    reinsert_reply_box: (data: { threadId: string, threadMsgId: string }) => {
-      renderReplyBox(data.threadId, data.threadMsgId);
-    },
-    passphrase_dialog: (data: { longids: string[], type: PassphraseDialogType }) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogPassphrase(data.longids, data.type)); // xss-safe-factory
-      }
-    },
-    subscribe_dialog: (data) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogSubscribe(undefined, data ? data.source : null, data ? data.subscribeResultTabId : null)); // xss-safe-factory
-      }
-    },
-    add_pubkey_dialog: (data: { emails: string[] }) => {
-      if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogAddPubkey(data.emails)); // xss-safe-factory
-      }
-    },
-    close_dialog: (data) => {
-      $('#cryptup_dialog').remove();
-    },
-    scroll_to_bottom_of_conversation: () => {
-      const scrollableEl = $('.thread').get(0);
-      scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
-    },
-    render_public_keys: (data: { publicKeys: string[], afterFrameFd: string, traverseUp?: number }) => {
-      const traverseUpLevels = data.traverseUp as number || 0;
-      let appendAfter = $('iframe#' + data.afterFrameFd);
-      for (let i = 0; i < traverseUpLevels; i++) {
-        appendAfter = appendAfter.parent();
-      }
-      for (const armoredPubkey of data.publicKeys) {
-        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-      }
-    },
-    reply_pubkey_mismatch: () => {
-      const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
-      if (replyIframe) {
-        replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
-      }
-    },
-  }, tabId);
+  BrowserMsg.addListener('notification_show', notificationShowHandler);
+  BrowserMsg.addListener('close_new_message', () => {
+    $('div.new_message').remove();
+  });
+  BrowserMsg.addListener('close_reply_message', ({ frameId }: Bm.CloseReplyMessage) => {
+    $(`iframe#${frameId}`).remove();
+  });
+  BrowserMsg.addListener('reinsert_reply_box', ({ threadId, threadMsgId }: Bm.ReinsertReplyBox) => {
+    renderReplyBox(threadId, threadMsgId);
+  });
+  BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
+    if (!$('#cryptup_dialog').length) {
+      $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
+    }
+  });
+  BrowserMsg.addListener('subscribe_dialog', ({ source, subscribeResultTabId }: Bm.SubscribeDialog) => {
+    if (!$('#cryptup_dialog').length) {
+      $('body').append(factory.dialogSubscribe(undefined, source, subscribeResultTabId)); // xss-safe-factory
+    }
+  });
+  BrowserMsg.addListener('add_pubkey_dialog', ({ emails }: Bm.AddPubkeyDialog) => {
+    if (!$('#cryptup_dialog').length) {
+      $('body').append(factory.dialogAddPubkey(emails)); // xss-safe-factory
+    }
+  });
+  BrowserMsg.addListener('close_dialog', () => {
+    $('#cryptup_dialog').remove();
+  });
+  BrowserMsg.addListener('scroll_to_bottom_of_conversation', () => {
+    const scrollableEl = $('.thread').get(0);
+    scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
+  });
+  BrowserMsg.addListener('render_public_keys', ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+    const traverseUpLevels = traverseUp || 0;
+    let appendAfter = $(`iframe#${afterFrameId}`);
+    for (let i = 0; i < traverseUpLevels; i++) {
+      appendAfter = appendAfter.parent();
+    }
+    for (const armoredPubkey of publicKeys) {
+      appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+    }
+  });
+  BrowserMsg.addListener('reply_pubkey_mismatch', () => {
+    const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
+    if (replyIframe) {
+      replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
+    }
+  });
+  BrowserMsg.listen(tabId);
 
   const updateUrl = (title: string, params: UrlParams) => {
     const newUrlSearch = Env.urlCreate('', params);
@@ -140,13 +143,11 @@ Catch.try(async () => {
   };
 
   const renderAndHandleAuthPopupNotification = () => {
-    notificationShow({
-      notification: `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, callbacks: {
-        action_auth_popup: async () => {
-          await Api.google.authPopup(acctEmail, tabId);
-          window.location.reload();
-        }
-      }
+    showNotification(`Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, {
+      action_auth_popup: async () => {
+        await Api.google.authPopup(acctEmail, tabId);
+        window.location.reload();
+      },
     });
   };
 
@@ -278,12 +279,12 @@ Catch.try(async () => {
       renderMenuAndLabelStyles(labels);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        notificationShow({ notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {} });
+        showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else {
         Catch.handleException(e);
-        notificationShow({ notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {} });
+        showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
       }
     }
   };
@@ -300,12 +301,12 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        notificationShow({ notification: `Connection error trying to get list of messages ${Ui.retryLink()}`, callbacks: {} });
+        showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else {
         Catch.handleException(e);
-        notificationShow({ notification: `Error trying to get list of messages ${Ui.retryLink()}`, callbacks: {} });
+        showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
       }
     }
   };

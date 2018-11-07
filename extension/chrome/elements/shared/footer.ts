@@ -31,8 +31,8 @@ Catch.try(async () => {
   } else {
     $('.user_free').css('display', 'block');
     $('.action_upgrade').click(Ui.event.prevent('double', async target => {
-      const newlyActive = await BrowserMsg.sendAwait(parentTabId, 'subscribe', {});
-      if (newlyActive) {
+      const { active } = await BrowserMsg.send.await.showSubscribeDialog(parentTabId);
+      if (active) {
         $('.user_subscribed').css('display', 'block');
         $('.user_free').css('display', 'none');
       }
@@ -41,9 +41,9 @@ Catch.try(async () => {
 
   $('.action_add_footer').click(Ui.event.prevent('double', async self => {
     await saveFooterIfHasSubscriptionAndRequested($('.input_remember').prop('checked'), $('.input_email_footer').val() as string); // is textarea
-    BrowserMsg.send(parentTabId, 'set_footer', { footer: $('.input_email_footer').val() });
+    BrowserMsg.send.setFooter(parentTabId, { footer: $('.input_email_footer').val() as string });
   }));
 
-  $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_dialog')));
+  $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send.closeDialog(parentTabId)));
 
 })();

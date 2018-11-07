@@ -6,15 +6,12 @@ import { Store } from '../common/store.js';
 import { Value, Str, Dict } from '../common/common.js';
 import { Api, R } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
-import { BrowserMsgHandler, BrowserMsgSender } from '../common/extension.js';
+import { Bm } from '../common/extension.js';
 import { Catch } from '../common/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 
 type AttestResult = { message: string, acctEmail: string, attestPacketText: string | null };
-type AttestPacketRecvdHandler$req = { acctEmail: string, packet: string, passphrase: string };
-type AttestPacketRecvdHandler$resp = (r: { success: boolean, result: string }) => void;
-type AttestPacketRecvdHandler = (m: AttestPacketRecvdHandler$req, sender: BrowserMsgSender, r: AttestPacketRecvdHandler$resp) => void;
 
 class AttestError extends Error implements AttestResult {
   attestPacketText: null | string;
@@ -46,15 +43,14 @@ export class BgAttests {
     }
   }
 
-  static attestRequestedHandler: BrowserMsgHandler = async (request: { acctEmail: string }, sender, respond) => {
-    respond();
+  static attestRequestedHandler: Bm.ResponselessHandler = async ({ acctEmail }: Bm.AttestRequested) => {
     await BgAttests.getPendingAttestRequests();
-    BgAttests.watchForAttestEmail(request.acctEmail);
+    BgAttests.watchForAttestEmail(acctEmail);
   }
 
-  static attestPacketReceivedHandler: AttestPacketRecvdHandler = async (request, sender, respond) => {
+  static attestPacketReceivedHandler = async ({ acctEmail, packet, passphrase }: Bm.AttestPacketReceived, sender: Bm.Sender, respond: (r: Bm.Res.AttestPacketReceived) => void) => {
     try { // todo - could be refactored to pass AttestResult directly
-      const r = await BgAttests.processAttestAndLogResult(request.acctEmail, request.packet, request.passphrase);
+      const r = await BgAttests.processAttestAndLogResult(acctEmail, packet, passphrase);
       respond({ success: true, result: r.message });
     } catch (e) {
       respond({ success: false, result: e.message });

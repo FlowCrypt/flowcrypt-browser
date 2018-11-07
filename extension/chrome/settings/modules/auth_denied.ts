@@ -41,10 +41,10 @@ Catch.try(async () => {
     $('.permission_read').text('Read messages');
   }
 
-  $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', { acctEmail })));
+  $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send.openGoogleAuthDialog(parentTabId, { acctEmail })));
 
-  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'open_google_auth_dialog', { omitReadScope: true, acctEmail })));
+  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send.openGoogleAuthDialog(parentTabId, { omitReadScope: true, acctEmail })));
 
-  $('.close_page').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_page')));
+  $('.close_page').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
 
 })();

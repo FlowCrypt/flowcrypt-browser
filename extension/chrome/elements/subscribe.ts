@@ -8,7 +8,7 @@ import { Xss, Ui, XssSafeFactory, Env } from '../../js/common/browser.js';
 import { FcAcct } from './../../js/common/account.js';
 import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api.js';
-import { BrowserMsgHandler, BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
@@ -18,6 +18,7 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'placement', 'source', 'parentTabId', 'subscribeResultTabId']);
   let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const subscribeResultTabId = Env.urlParamRequire.optionalString(urlParams, 'subscribeResultTabId');
 
   const authInfo = await Store.authInfo();
   if (authInfo.acctEmail) {
@@ -47,10 +48,10 @@ Catch.try(async () => {
     }
   };
 
-  const stripeCcEnteredHandler: BrowserMsgHandler = async (data: { token: string }, sender, respond) => {
+  const stripeCcEnteredHandler: Bm.ResponselessHandler = async ({ token }: Bm.StripeResult) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
-      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advanced_monthly, data.token);
+      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advanced_monthly, token);
       handleSuccessfulUpgrade();
     } catch (e) {
       handleErrRes(e);
@@ -72,9 +73,9 @@ Catch.try(async () => {
   };
 
   const handleSuccessfulUpgrade = () => {
-    BrowserMsg.send(parentTabId, 'notification_show', { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
-    if (urlParams.subscribeResultTabId) {
-      BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', { active: true });
+    BrowserMsg.send.notificationShow(parentTabId, { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
+    if (subscribeResultTabId) {
+      BrowserMsg.send.subscribeResult(subscribeResultTabId, { active: true });
     }
     closeDialog();
   };
@@ -83,9 +84,9 @@ Catch.try(async () => {
     if (urlParams.placement === 'settings_compose') {
       window.close();
     } else if (urlParams.placement === 'settings') {
-      BrowserMsg.send(parentTabId, 'reload');
+      BrowserMsg.send.reload(parentTabId, {});
     } else {
-      BrowserMsg.send(parentTabId, 'close_dialog');
+      BrowserMsg.send.closeDialog(parentTabId);
     }
   };
 
@@ -127,7 +128,7 @@ Catch.try(async () => {
     $('.stripe_checkout').css('display', 'block');
   }));
 
-  $('.action_contact_page').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { page: '/chrome/settings/modules/contact_page.htm', acctEmail: urlParams.acctEmail })));
+  $('.action_contact_page').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/contact_page.htm', acctEmail })));
 
   $('.action_close').click(Ui.event.handle(closeDialog));
 
@@ -181,8 +182,8 @@ Catch.try(async () => {
       } else {
         Xss.sanitizeRender('#content', `<div class="line">${Lang.account.alreadyUpgraded}</div><div class="line"><div class="button green long action_close">close</div></div>`);
         $('.action_close').click(Ui.event.handle(() => {
-          if (urlParams.subscribeResultTabId) {
-            BrowserMsg.send(urlParams.subscribeResultTabId as string, 'subscribe_result', { active: true });
+          if (subscribeResultTabId) {
+            BrowserMsg.send.subscribeResult(subscribeResultTabId, { active: true });
           }
           closeDialog();
         }));
@@ -207,9 +208,9 @@ Catch.try(async () => {
   }
 
   const tabId = await BrowserMsg.requiredTabId();
-  BrowserMsg.listen({
-    stripe_result: stripeCcEnteredHandler,
-  }, tabId || undefined);
+  BrowserMsg.addListener('stripe_result', stripeCcEnteredHandler);
+  BrowserMsg.listen(tabId);
+
   $('.stripe_checkout').html(`${Lang.account.creditOrDebit}<br><br>${new XssSafeFactory(acctEmail, tabId).embeddedStripeCheckout()}<br>${Ui.retryLink('back')}`); // xss-safe-factory
 
 })();

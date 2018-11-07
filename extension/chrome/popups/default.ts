@@ -10,7 +10,8 @@ import { Catch } from '../../js/common/catch.js';
 Catch.try(async () => {
 
   const redirectToInitSetup = async (acctEmail: string | null = null) => {
-    await BrowserMsg.sendAwait(null, 'settings', { acctEmail });
+    BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
+    await Ui.time.sleep(100);
     window.close();
   };
 
@@ -25,7 +26,8 @@ Catch.try(async () => {
     }));
     $('.action_open_encrypted_inbox').click(Ui.event.handle(async () => {
       if (activeAcctEmail) {
-        await BrowserMsg.sendAwait(null, 'inbox', { acctEmail: activeAcctEmail });
+        BrowserMsg.send.bg.inbox({ acctEmail: activeAcctEmail });
+        await Ui.time.sleep(100);
         window.close();
       } else {
         window.location.href = 'select_account.htm?action=inbox';
@@ -39,7 +41,7 @@ Catch.try(async () => {
     $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.rejection)));
   };
 
-  const activeTab = await BrowserMsg.sendAwait(null, 'get_active_tab_info', {});
+  const activeTab = await BrowserMsg.send.await.bg.getActiveTabInfo();
   if (activeTab && activeTab.acctEmail !== null) {
     const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
     if (setup_done) {
@@ -47,7 +49,7 @@ Catch.try(async () => {
     } else {
       setupAcctPromptPopup(activeTab.acctEmail);
     }
-  } else if (activeTab && activeTab.provider !== null && activeTab.sameWorld === true) {
+  } else if (activeTab && activeTab.provider !== null && activeTab.sameWorld === true && activeTab.acctEmail) {
     setupAcctPromptPopup(activeTab.acctEmail);
   } else {
     const acctEmails = await Store.acctEmailsGet();

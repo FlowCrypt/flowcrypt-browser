@@ -27,7 +27,6 @@ Catch.try(async () => {
   let additionalMsgHeaders: FlatHeaders;
 
   const appFunctions = Composer.defaultAppFunctions();
-  appFunctions.sendMsgToMainWin = (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data);
   const composer = new Composer(appFunctions, { isReplyBox: true, frameId: urlParams.frameId, disable_draft_saving: true }, new Subscription(null));
 
   const sendBtnText = 'Send Response';
@@ -39,7 +38,7 @@ Catch.try(async () => {
   // render
   $('.pubkey_file_name').text(att.name);
   composer.resizeReplyBox();
-  BrowserMsg.send(parentTabId, 'scroll_to_bottom_of_conversation');
+  BrowserMsg.send.scrollToBottomOfConversation(parentTabId);
   $('#input_text').focus();
 
   // determine reply headers
@@ -52,7 +51,7 @@ Catch.try(async () => {
     }
   } catch (e) {
     if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+      BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
     } else if (Api.err.isNetErr(e)) {
       // todo - render retry button
     } else {
@@ -71,12 +70,12 @@ Catch.try(async () => {
     }
     try {
       await Api.gmail.msgSend(acctEmail, message);
-      BrowserMsg.send(parentTabId, 'notification_show', { notification: 'Message sent.' });
+      BrowserMsg.send.notificationShow(parentTabId, { notification: 'Message sent.' });
       Xss.sanitizeReplace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         $(target).text(sendBtnText);
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         alert('Google account permission needed, please re-connect account and try again.');
       } else if (Api.err.isNetErr(e)) {
         $(target).text(sendBtnText);

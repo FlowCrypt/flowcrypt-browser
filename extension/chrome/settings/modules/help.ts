@@ -45,7 +45,7 @@ Catch.try(async () => {
       if (r.sent) {
         $(button).text('sent!');
         alert(`Message sent! You will find your response in ${myEmail}, check your email later. Thanks!`);
-        BrowserMsg.send(parentTabId, 'close_page');
+        BrowserMsg.send.closePage(parentTabId);
       } else {
         $(button).text(origBtnText);
         alert('There was an error sending message. Our direct email is human@flowcrypt.com');

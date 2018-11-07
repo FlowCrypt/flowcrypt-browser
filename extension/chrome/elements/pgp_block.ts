@@ -23,8 +23,8 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature', 'short']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
   const hasChallengePassword = urlParams.hasPassword === true;
-  const frameId = urlParams.frameId;
   const isOutgoing = urlParams.isOutgoing === true;
   const short = urlParams.short;
   const senderEmail = urlParams.senderEmail;
@@ -63,7 +63,7 @@ Catch.try(async () => {
       }
     };
     if (!isInfiniteResizeLoop()) {
-      BrowserMsg.send(parentTabId, 'set_css', { selector: `iframe#${frameId}`, css: { height } });
+      BrowserMsg.send.setCss(parentTabId, { selector: `iframe#${frameId}`, css: { height: `${height}px` } });
     }
   };
 
@@ -149,11 +149,11 @@ Catch.try(async () => {
   const renderErr = async (errBoxContent: string, rawMsgSubstitute: string | null = null) => {
     setFrameColor('red');
     await renderContent('<div class="error">' + errBoxContent.replace(/\n/g, '<br>') + '</div>' + armoredMsgAsHtml(rawMsgSubstitute), true);
-    $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
-    $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail })));
-    $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
+    $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
+    $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail })));
+    $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
     $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => {
-      BrowserMsg.send(parentTabId, 'reply_pubkey_mismatch');
+      BrowserMsg.send.replyPubkeyMismatch(parentTabId);
     }));
     setTestState('ready');
   };
@@ -254,7 +254,7 @@ Catch.try(async () => {
       btns += ' <a href="#" class="expire_settings">settings</a>';
     }
     Xss.sanitizeAppend('#pgp_block', Ui.e('div', { class: 'future_expiration', html: `This message will expire on ${Str.datetimeToDate(date)}. ${btns}` }));
-    $('.expire_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/security.htm' })));
+    $('.expire_settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/security.htm' })));
     $('.extend_expiration').click(Ui.event.handle(target => renderMsgExpirationRenewOptions(target)));
   };
 
@@ -279,7 +279,7 @@ Catch.try(async () => {
       } else {
         alert('FlowCrypt Advanced users can choose expiration of password encrypted messages. Try it free.');
       }
-      BrowserMsg.send(parentTabId, 'subscribe_dialog');
+      BrowserMsg.send.subscribeDialog(parentTabId, {});
     }
   };
 
@@ -296,7 +296,7 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
-        BrowserMsg.send(parentTabId, 'subscribe_dialog', { source: 'authErr' });
+        BrowserMsg.send.subscribeDialog(parentTabId, { source: 'authErr' });
       } else {
         Catch.report('error when extending message expiration', e);
       }
@@ -319,7 +319,7 @@ Catch.try(async () => {
       decryptedContent = Str.stripFcTeplyToken(decryptedContent);
       decryptedContent = Str.stripPublicKeys(decryptedContent, publicKeys);
       if (publicKeys.length) {
-        BrowserMsg.send(parentTabId, 'render_public_keys', { afterFrameId: frameId, publicKeys });
+        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
       decryptedContent = Xss.escape(decryptedContent);
       await renderContent(doAnchor(decryptedContent.replace(/\n/g, '<br>')), false);
@@ -351,7 +351,7 @@ Catch.try(async () => {
         renderInnerAtts(decoded.atts);
       }
       if (publicKeys.length) {
-        BrowserMsg.send(parentTabId, 'render_public_keys', { afterFrameId: frameId, publicKeys });
+        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
     }
     setTestState('ready');
@@ -419,7 +419,7 @@ Catch.try(async () => {
       clearInterval(passphraseInterval);
       passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 1000);
       $('.enter_passphrase').click(Ui.event.handle(() => {
-        BrowserMsg.send(parentTabId, 'passphrase_dialog', { type: 'message', longids: missingOrWrongPpKeyLongids });
+        BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
         clearInterval(passphraseInterval);
         passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 250);
       }));
@@ -466,7 +466,7 @@ Catch.try(async () => {
       expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
       await renderErr(expirationMsg, null);
       setFrameColor('gray');
-      $('.action_security').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { page: '/chrome/settings/modules/security.htm' })));
+      $('.action_security').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail })));
       $('.extend_expiration').click(Ui.event.handle(renderMsgExpirationRenewOptions));
     } else if (!linkRes.url) {
       await renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink);
@@ -527,14 +527,14 @@ Catch.try(async () => {
           const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
           Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
           sendResizeMsg();
-          $('.auth_settings').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
+          $('.auth_settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         await renderErr(`Could not load message due to network error. ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`);
       } else if (Value.is(Pgp.armor.headers('publicKey').end as string).in(e.data)) { // public key .end is always string
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: e.data, minimized: Boolean(isOutgoing), acctEmail, parentTabId, frameId });

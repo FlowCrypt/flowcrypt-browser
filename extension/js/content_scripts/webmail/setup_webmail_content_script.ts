@@ -6,7 +6,7 @@ import { Store } from '../../common/store.js';
 import { Value } from '../../common/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications, NotificationWithHandlers } from '../../common/notifications.js';
-import { ContentScriptWindow, BrowserMsg, TabIdRequiredError } from '../../common/extension.js';
+import { ContentScriptWindow, BrowserMsg, TabIdRequiredError, Bm } from '../../common/extension.js';
 import { Ui, XssSafeFactory, PassphraseDialogType, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
 import { Catch } from '../../common/catch.js';
 
@@ -83,7 +83,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
           notification_setup_needed_dismiss: () => Store.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
-          action_open_settings: () => BrowserMsg.sendAwait(null, 'settings', { acctEmail }),
+          action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
           },
@@ -97,62 +97,61 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
-    BrowserMsg.listen({
-      open_new_message: () => {
-        inject.openComposeWin();
-      },
-      close_new_message: () => {
-        $('div.new_message').remove();
-      },
-      close_reply_message: (data: { frameId: string }) => {
-        $('iframe#' + data.frameId).remove();
-      },
-      reinsert_reply_box: (data: { subject: string, myEmail: string, theirEmail: string[], threadId: string }) => {
-        webmailSpecific.getReplacer().reinsertReplyBox(data.subject, data.myEmail, data.theirEmail, data.threadId);
-      },
-      render_public_keys: (data: { publicKeys: string[], afterFrameId: string, traverseUp?: number }) => {
-        const traverseUpLevels = data.traverseUp as number || 0;
-        let appendAfter = $('iframe#' + data.afterFrameId);
-        for (let i = 0; i < traverseUpLevels; i++) {
-          appendAfter = appendAfter.parent();
-        }
-        for (const armoredPubkey of data.publicKeys) {
-          appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
-        }
-      },
-      close_dialog: () => {
-        $('#cryptup_dialog').remove();
-      },
-      scroll_to_bottom_of_conversation: () => webmailSpecific.getReplacer().scrollToBottomOfConvo(),
-      passphrase_dialog: (data: { longids: string[], type: PassphraseDialogType }) => {
-        if (!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialogPassphrase(data.longids, data.type)); // xss-safe-factory
-        }
-      },
-      subscribe_dialog: (data: { source: string, subscribeResultTabId: string }) => {
-        if (!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialogSubscribe(undefined, data ? data.source : undefined, data ? data.subscribeResultTabId : undefined)); // xss-safe-factory
-        }
-      },
-      add_pubkey_dialog: (data: { emails: string[] }) => {
-        if (!$('#cryptup_dialog').length) {
-          $('body').append(factory.dialogAddPubkey(data.emails)); // xss-safe-factory
-        }
-      },
-      notification_show: (data: NotificationWithHandlers) => {
-        notifications.show(data.notification, data.callbacks);
-        $('body').one('click', Catch.try(notifications.clear));
-      },
-      notification_show_auth_popup_needed: (data: { acctEmail: string }) => {
-        notifications.showAuthPopupNeeded(data.acctEmail);
-      },
-      reply_pubkey_mismatch: () => {
-        const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
-        if (replyIframe) {
-          replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
-        }
-      },
-    }, tabId);
+    BrowserMsg.addListener('open_new_message', inject.openComposeWin);
+    BrowserMsg.addListener('close_new_message', () => {
+      $('div.new_message').remove();
+    });
+    BrowserMsg.addListener('close_reply_message', ({ frameId }: Bm.CloseReplyMessage) => {
+      $(`iframe#${frameId}`).remove();
+    });
+    BrowserMsg.addListener('reinsert_reply_box', ({ subject, myEmail, theirEmail, threadId }: Bm.ReinsertReplyBox) => {
+      webmailSpecific.getReplacer().reinsertReplyBox(subject, myEmail, theirEmail, threadId);
+    });
+    BrowserMsg.addListener('render_public_keys', ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+      const traverseUpLevels = traverseUp as number || 0;
+      let appendAfter = $(`iframe#${afterFrameId}`);
+      for (let i = 0; i < traverseUpLevels; i++) {
+        appendAfter = appendAfter.parent();
+      }
+      for (const armoredPubkey of publicKeys) {
+        appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
+      }
+    });
+    BrowserMsg.addListener('close_dialog', () => {
+      $('#cryptup_dialog').remove();
+    });
+    BrowserMsg.addListener('scroll_to_bottom_of_conversation', () => {
+      webmailSpecific.getReplacer().scrollToBottomOfConvo();
+    });
+    BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
+      if (!$('#cryptup_dialog').length) {
+        $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
+      }
+    });
+    BrowserMsg.addListener('subscribe_dialog', ({ source, subscribeResultTabId }: Bm.SubscribeDialog) => {
+      if (!$('#cryptup_dialog').length) {
+        $('body').append(factory.dialogSubscribe(undefined, source, subscribeResultTabId)); // xss-safe-factory
+      }
+    });
+    BrowserMsg.addListener('add_pubkey_dialog', ({ emails }: Bm.AddPubkeyDialog) => {
+      if (!$('#cryptup_dialog').length) {
+        $('body').append(factory.dialogAddPubkey(emails)); // xss-safe-factory
+      }
+    });
+    BrowserMsg.addListener('notification_show', ({ notification, callbacks }: Bm.NotificationShow) => {
+      notifications.show(notification, callbacks);
+      $('body').one('click', Catch.try(notifications.clear));
+    });
+    BrowserMsg.addListener('notification_show_auth_popup_needed', ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+      notifications.showAuthPopupNeeded(acctEmail);
+    });
+    BrowserMsg.addListener('reply_pubkey_mismatch', () => {
+      const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
+      if (replyIframe) {
+        replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
+      }
+    });
+    BrowserMsg.listen(tabId);
   };
 
   const saveAcctEmailFullNameIfNeeded = async (acctEmail: string) => {
@@ -185,7 +184,6 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const { tabId, notifications, factory, inject } = await initInternalVars(acctEmail);
       await showNotificationsAndWaitTilAcctSetUp(acctEmail, notifications);
       browserMsgListen(acctEmail, tabId, inject, factory, notifications);
-      await BrowserMsg.sendAwait(null, 'migrate_account', { acctEmail });
       await webmailSpecific.start(acctEmail, inject, notifications, factory, notifyMurdered);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {

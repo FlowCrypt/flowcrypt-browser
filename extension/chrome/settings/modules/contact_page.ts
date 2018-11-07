@@ -100,7 +100,7 @@ Catch.try(async () => {
     }
   }));
 
-  S.cached('action_close').click(Ui.event.handle(() => BrowserMsg.send(parentTabId, 'close_page')));
+  S.cached('action_close').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
 
   const findAvailableAlias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');

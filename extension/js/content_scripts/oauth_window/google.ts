@@ -4,7 +4,7 @@
 
 import { Value } from '../../common/common.js';
 import { AuthReq } from '../../common/api.js';
-import { FlowCryptManifest, BrowserMsg } from '../../common/extension.js';
+import { FlowCryptManifest, BrowserMsg, GoogleAuthWindowResult$result } from '../../common/extension.js';
 import { Ui, Env } from '../../common/browser.js';
 
 (async () => {
@@ -21,10 +21,17 @@ import { Ui, Env } from '../../common/browser.js';
       const result = parts[0];
       const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
       const state = apiGoogleAuthStateUnpack(params.state as string);
-      await BrowserMsg.sendAwait(state.tabId, 'google_auth_window_result', { result, params, state });
+      await BrowserMsg.send.await.googleAuthWindowResult(state.tabId, {
+        result: result as GoogleAuthWindowResult$result,
+        params: {
+          code: String(params.code),
+          error: String(params.error),
+        },
+        state,
+      });
       const title = 'Close this window';
       $('title').text(title);
-      BrowserMsg.send(null, 'close_popup', { title });
+      BrowserMsg.send.bg.closePopup({ title });
       break;
     }
     await Ui.time.sleep(50);

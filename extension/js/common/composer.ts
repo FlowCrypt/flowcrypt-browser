@@ -6,7 +6,7 @@ import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbC
 import { Lang } from './lang.js';
 import { Value, Str, Dict, StandardError } from './common.js';
 import { Att } from './att.js';
-import { BrowserMsg, Extension, BrowserMsgHandler, BrowserWidnow } from './extension.js';
+import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd } from './pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem } from './api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env, UrlParams } from './browser.js';
@@ -42,8 +42,8 @@ interface ComposerAppFunctionsInterface {
   emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: (r: { new: Contact[], all: Contact[] }) => void) => void;
   emailProviderDetermineReplyMsgHeaderVariables: () => Promise<undefined | { lastMsgId: string, headers: { 'In-Reply-To': string, 'References': string } }>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
-  sendMsgToMainWin: (channel: string, data?: object) => void;
-  sendMsgToBgScript: (channel: string, data?: object) => void;
+  // sendMsgToMainWin: (channel: string, data?: object) => void;
+  // sendMsgToBgScript: (channel: string, data?: object) => void;
   renderFooterDialog: () => void;
   renderAddPubkeyDialog: (emails: string[]) => void;
   renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
@@ -121,7 +121,7 @@ export class Composer {
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
-  private subscribeResListener: ((subscriptionActive: boolean) => void) | undefined;
+  private subscribeResListener: ((r: Bm.Res.ShowSubscribeDialog) => void) | undefined;
   private additionalMsgHeaders: { [key: string]: string } = {};
   private btnUpdateTimeout: number | null = null;
   private isReplyBox: boolean;
@@ -134,6 +134,7 @@ export class Composer {
   private suppliedTo: string;
   private frameId: string;
   private refBodyHeight: number;
+  private parentTabId: string;
 
   constructor(appFunctions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice(subscription));
@@ -143,6 +144,7 @@ export class Composer {
       this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
     }
 
+    this.parentTabId = variables.parentTabId as string;
     this.acctEmail = variables.acctEmail as string;
     this.draftId = variables.draftId as string;
     this.threadId = variables.threadId as string;
@@ -159,7 +161,7 @@ export class Composer {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
       this.app.storageEmailFooterSet(null).catch(Catch.handleException);
-      this.app.sendMsgToMainWin('notification_show', {
+      BrowserMsg.send.notificationShow(this.parentTabId, {
         notification: `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`,
       });
     }
@@ -193,8 +195,8 @@ export class Composer {
             alert(getAdvanced);
           } else {
             if (confirm(getAdvanced)) {
-              this.showSubscribeDialogAndWaitForRes(null, {}, (newSubscriptionActive: boolean) => {
-                if (newSubscriptionActive) {
+              this.showSubscribeDialogAndWaitForRes({}, {}, ({ active }: Bm.Res.ShowSubscribeDialog) => {
+                if (active) {
                   alert('You\'re all set, now you can add your file again.');
                 }
               });
@@ -219,10 +221,10 @@ export class Composer {
   private handleErrs = (couldNotDoWhat: string): BrowserEventErrorHandler => {
     return {
       network: () => alert(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      authPopup: () => this.app.sendMsgToMainWin('notification_show_auth_popup_needed', { acctEmail: this.acctEmail }),
+      authPopup: () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail }),
       auth: () => {
         if (confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          this.app.sendMsgToMainWin('subscribe_dialog', { source: 'authErr' });
+          BrowserMsg.send.subscribeDialog(this.parentTabId, { source: 'authErr' });
         }
       },
       other: (e: any) => {
@@ -302,9 +304,9 @@ export class Composer {
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.handleErrs(`enable/disable signing`)));
   }
 
-  showSubscribeDialogAndWaitForRes: BrowserMsgHandler = (data, sender, respond: (subscribed: boolean) => void) => {
+  showSubscribeDialogAndWaitForRes: Bm.RespondingHandler = (data: Bm.ShowSubscribeDialog, sender, respond: (r: Bm.Res.ShowSubscribeDialog) => void) => {
     this.subscribeResListener = respond;
-    this.app.sendMsgToMainWin('subscribe_dialog', { subscribeResultTabId: this.tabId });
+    BrowserMsg.send.subscribeDialog(this.parentTabId, { subscribeResultTabId: this.tabId });
   }
 
   private initComposeBox = async (variables: UrlParams) => {
@@ -366,7 +368,7 @@ export class Composer {
       if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        this.app.sendMsgToMainWin('notification_show_auth_popup_needed', { acctEmail: this.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
       } else if (this.isReplyBox && Api.err.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.acctEmail);
@@ -384,9 +386,9 @@ export class Composer {
     }
   }
 
-  processSubscribeRes = (newSubscription: Subscription) => {
+  processSubscribeRes = ({ active }: Bm.Res.ShowSubscribeDialog) => {
     if (typeof this.subscribeResListener === 'function') {
-      this.subscribeResListener(newSubscription.active || false);
+      this.subscribeResListener({ active });
       this.subscribeResListener = undefined;
     }
   }
@@ -449,7 +451,7 @@ export class Composer {
         if (Api.err.isNetErr(e)) {
           this.S.cached('send_btn_note').text('Not saved (network)');
         } else if (Api.err.isAuthPopupNeeded(e)) {
-          this.app.sendMsgToMainWin('notification_show_auth_popup_needed', { acctEmail: this.acctEmail });
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
           Catch.handleException(e);
@@ -469,7 +471,7 @@ export class Composer {
         await this.app.emailProviderDraftDelete(this.draftId);
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
-          this.app.sendMsgToMainWin('notification_show_auth_popup_needed', { acctEmail: this.acctEmail });
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
         } else if (!Api.err.isNetErr(e)) {
           Catch.handleException(e);
         }
@@ -507,8 +509,10 @@ export class Composer {
       } else {
         Xss.sanitizeRender(this.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
       }
-      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(target => this.app.sendMsgToMainWin('passphrase_dialog', { type: 'draft', longids: 'primary' })));
-      this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(target => this.app.closeMsg()));
+      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
+        BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'draft', longids: ['primary'] });
+      }));
+      this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
       await this.whenMasterPassphraseEntered();
       await this.decryptAndRenderDraft(encryptedDraft, headers);
     }
@@ -580,17 +584,17 @@ export class Composer {
     if (Api.err.isNetErr(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
-      this.app.sendMsgToMainWin('notification_show_auth_popup_needed', { acctEmail: this.acctEmail });
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.err.isAuthErr(e)) {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        this.app.sendMsgToMainWin('subscribe_dialog', { source: 'authErr' });
+        BrowserMsg.send.subscribeDialog(this.parentTabId, { source: 'authErr' });
       }
     } else if (Api.err.isBadReq(e)) {
       if (confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
         const page = '/chrome/settings/modules/help.htm';
         const pageUrlParams = { bugReport: Extension.prepareBugReport('composer: send: bad request', {}, e) };
-        this.app.sendMsgToBgScript('settings', { acctEmail: this.acctEmail, page, pageUrlParams });
+        BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page, pageUrlParams });
       }
     } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
       Catch.report('StandardError | failed to send message', e);
@@ -660,7 +664,7 @@ export class Composer {
       const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
       const passphrase = await this.app.storagePassphraseGet();
       if (passphrase === null && !prv.isDecrypted()) {
-        this.app.sendMsgToMainWin('passphrase_dialog', { type: 'sign', longids: 'primary' });
+        BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((await this.whenMasterPassphraseEntered(60)) !== null) { // pass phrase entered
           await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
         } else { // timeout - reset - no passphrase entered
@@ -754,7 +758,7 @@ export class Composer {
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          this.app.sendMsgToMainWin('subscribe_dialog', { source: 'authErr' });
+          BrowserMsg.send.subscribeDialog(this.parentTabId, { source: 'authErr' });
         }
         throw new ComposerResetBtnTrigger();
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
@@ -838,7 +842,7 @@ export class Composer {
     }
     const msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
     const isSigned = this.S.cached('icon_sign').is('.active');
-    this.app.sendMsgToMainWin('notification_show', { notification: 'Your ' + (isSigned ? 'signed' : 'encrypted') + ' ' + (this.isReplyBox ? 'reply' : 'message') + ' has been sent.' });
+    BrowserMsg.send.notificationShow(this.parentTabId, { notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.isReplyBox ? 'reply' : 'message'} has been sent.` });
     await this.draftDelete();
     if (this.isReplyBox) {
       this.renderReplySuccess(msg, plaintext, msgSentRes.id);
@@ -1027,7 +1031,7 @@ export class Composer {
       }
       if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
-        this.app.sendMsgToMainWin('set_css', { selector: `iframe#${this.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
+        BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
     }
   }
@@ -1047,7 +1051,7 @@ export class Composer {
       } else if (Api.err.isNetErr(e)) {
         // todo: retry
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        this.app.sendMsgToMainWin('notification_show_auth_popup_needed', { acctEmail: this.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       } else {
         Catch.handleException(e);
       }
@@ -1093,11 +1097,11 @@ export class Composer {
         Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
       `);
       this.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => this.app.sendMsgToBgScript('settings', { acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
-      $('.new_message_button').click(() => this.app.sendMsgToMainWin('open_new_message'));
+      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
+      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.parentTabId));
     }
     this.resizeReplyBox();
-    Catch.setHandledTimeout(() => this.app.sendMsgToMainWin('scroll_to_bottom_of_conversation'), 300);
+    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.parentTabId), 300);
   }
 
   private parseRenderRecipients = async () => {
@@ -1520,7 +1524,8 @@ export class Composer {
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
     return {
-      sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => null,
+      // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => null,
+      // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
       canReadEmails: () => false,
       doesRecipientHaveMyPubkey: (theirEmail: string): Promise<boolean | undefined> => Promise.resolve(false),
       storageGetAddresses: () => [],
@@ -1547,7 +1552,6 @@ export class Composer {
       emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: (r: any) => void) => multiCb({ new: [], all: [] }),
       emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
       emailProviderExtractArmoredBlock: (msgId) => Promise.resolve(''),
-      sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
       renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => Promise.resolve(),
       renderFooterDialog: () => null,
       renderAddPubkeyDialog: (emails: string[]) => null,

@@ -6,24 +6,14 @@ import { Store, FlatTypes, KeyInfo } from '../common/store.js';
 import { Value, Str, Dict } from '../common/common.js';
 import { Api } from '../common/api.js';
 import { Pgp } from '../common/pgp.js';
-import { BrowserMsgHandler } from '../common/extension.js';
 import { Catch } from '../common/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 
-export const migrateAcct: BrowserMsgHandler = async (data: { acctEmail: string }, sender, doneCb) => {
-  if (data.acctEmail) {
-    await Store.set(data.acctEmail, { version: Catch.version('int') });
-    doneCb();
-    await accountUpdateStatusKeyserver(data.acctEmail);
-    await accountUpdateStatusPks(data.acctEmail);
-  } else {
-    Catch.report('not migrating account: no account_email provided');
-  }
-};
-
 export const migrateGlobal = async () => {
   await migrateLocalStorageToExtensionStorage();
+  // await accountUpdateStatusKeyserver(acctEmail);
+  // await accountUpdateStatusPks(acctEmail);
 };
 
 const migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {

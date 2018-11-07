@@ -5,7 +5,7 @@
 import { Store } from '../../js/common/store.js';
 import { Value } from '../../js/common/common.js';
 import { Xss, Ui, KeyImportUi, UserAlert, KeyCanBeFixed, Env } from '../../js/common/browser.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';
@@ -38,7 +38,7 @@ Catch.try(async () => {
   }
 
   if (acctEmail) {
-    BrowserMsg.send(null, 'update_uninstall_url');
+    BrowserMsg.send.bg.updateUninstallUrl();
   } else {
     window.location.href = 'index.htm';
     return;
@@ -74,14 +74,13 @@ Catch.try(async () => {
   keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
 
   const tabId = await BrowserMsg.requiredTabId();
-  BrowserMsg.listen({
-    close_page: () => {
-      $('.featherlight-close').click();
-    },
-    notification_show: (data: { notification: string }) => {
-      alert(data.notification);
-    },
-  }, tabId);
+  BrowserMsg.addListener('close_page', () => {
+    $('.featherlight-close').click();
+  });
+  BrowserMsg.addListener('notification_show', ({ notification }: Bm.NotificationShow) => {
+    alert(notification);
+  });
+  BrowserMsg.listen(tabId);
 
   const showSubmitAllAddrsOption = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
@@ -528,7 +527,11 @@ Catch.try(async () => {
   }));
 
   $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parentTabId was used
-    BrowserMsg.send(parentTabId, 'redirect', { location: Env.urlCreate('index.htm', { acctEmail, advanced: true }) });
+    if (parentTabId) {
+      BrowserMsg.send.redirect(parentTabId, { location: Env.urlCreate('index.htm', { acctEmail, advanced: true }) });
+    } else {
+      Catch.report('setup.ts missing parentTabId');
+    }
   }));
 
   // show alternative account addresses in setup form + save them for later

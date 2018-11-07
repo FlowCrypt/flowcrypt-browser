@@ -5,7 +5,7 @@
 import { Store, GlobalStore, Serializable, AccountStore, Contact } from './store.js';
 import { Value, Str, Dict, StandardError } from './common.js';
 import { Pgp } from './pgp.js';
-import { FlowCryptManifest, BrowserMsg, BrowserWidnow, FcWindow } from './extension.js';
+import { FlowCryptManifest, BrowserMsg, BrowserWidnow, FcWindow, Bm, GoogleAuthWindowResult$result } from './extension.js';
 import { Ui, Env } from './browser.js';
 import { Att } from './att.js';
 import { Mime, SendableMsgBody, FlatHeaders } from './mime.js';
@@ -24,8 +24,6 @@ type FcAuthToken = { account: string, token: string };
 type FcAuthMethods = 'uuid' | FcAuthToken | null;
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string };
-type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
-type GoogleAuthWindowResult = { result: GoogleAuthWindowResult$result, state: AuthReq, params: { code: string, error: string } };
 type AuthResultSuccess = { success: true, result: 'Success', acctEmail: string, messageId?: string };
 type AuthResultError = { success: false, result: GoogleAuthWindowResult$result, acctEmail: string | null, messageId?: string, error?: string };
 type AuthResult = AuthResultSuccess | AuthResultError;
@@ -184,6 +182,7 @@ export class Api {
     plus: {
       peopleMe: (acctEmail: string): Promise<R.GooglePlusPeopleMe> => Api.internal.apiGoogleCall(acctEmail, 'GET', 'https://www.googleapis.com/plus/v1/people/me', { alt: 'json' }),
     },
+    // todo - move to Extension
     authPopup: (acctEmail: string | null, tabId: string, omitReadScope = false, scopes: string[] = []): Promise<AuthResult> => new Promise((resolve, reject) => {
       if (Env.isBackgroundPage()) {
         throw { code: null, message: 'Cannot produce auth window from background script' };
@@ -191,15 +190,14 @@ export class Api {
       let responseHandled = false;
       Api.internal.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
         const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.random(20), scopes };
-        BrowserMsg.listen({
-          google_auth_window_result: (result: GoogleAuthWindowResult, sender: chrome.runtime.MessageSender, closeAuthWin: () => void) => {
-            if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
-              responseHandled = true;
-              Api.internal.googleAuthWinResHandler(result).then(resolve, reject);
-              closeAuthWin();
-            }
-          },
-        }, authRequest.tabId);
+        BrowserMsg.addListener('google_auth_window_result', (result: Bm.GoogleAuthWindowResult, sender, closeAuthWin) => {
+          if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
+            responseHandled = true;
+            Api.internal.googleAuthWinResHandler(result).then(resolve, reject);
+            closeAuthWin({});
+          }
+        });
+        BrowserMsg.listen(authRequest.tabId);
         const authCodeWin = window.open(Api.internal.apiGoogleAuthCodeUrl(authRequest), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
         // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
         // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
@@ -1005,7 +1003,7 @@ export class Api {
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokenInfo>,
-    googleAuthWinResHandler: async (result: GoogleAuthWindowResult): Promise<AuthResult> => {
+    googleAuthWinResHandler: async (result: Bm.GoogleAuthWindowResult): Promise<AuthResult> => {
       if (result.result === 'Success') {
         const tokensObj = await Api.internal.googleAuthGetTokens(result.params.code);
         const _ = await Api.internal.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg

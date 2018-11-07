@@ -18,6 +18,7 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
   urlParams.size = urlParams.size ? parseInt(urlParams.size as string) : undefined;
   const origNameBasedOnFilename = urlParams.name ? (urlParams.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
 
@@ -129,7 +130,7 @@ Catch.try(async () => {
       }
       Browser.saveToDownloads(new Att({ name, type: encryptedAtt.type, data: result.content.uint8! }), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
-      BrowserMsg.send(parentTabId, 'passphrase_dialog', { type: 'attachment', longids: result.longids.needPassphrase });
+      BrowserMsg.send.passphraseDialog(parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       clearInterval(passphraseInterval);
       passphraseInterval = Catch.setHandledInterval(checkPassphraseEntered, 1000);
     } else {
@@ -180,7 +181,7 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         Xss.sanitizeRender('body.attachment', `Error downloading file: google auth needed. ${Ui.retryLink()}`);
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('body.attachment', `Error downloading file: no internet. ${Ui.retryLink()}`);
@@ -222,9 +223,9 @@ Catch.try(async () => {
         if (openpgpType && openpgpType.type === 'publicKey') {
           if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
-            BrowserMsg.send(parentTabId, 'render_public_keys', { afterFrameId: urlParams.frameId, traverseUp: 2, publicKeys: [result.content.text] });
+            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [result.content.text] });
             // hide attachment
-            BrowserMsg.send(parentTabId, 'set_css', { selector: `#${urlParams.frameId}`, traverseUp: 1, css: { display: 'none' } });
+            BrowserMsg.send.setCss(parentTabId, { selector: `#${frameId}`, traverseUp: 1, css: { display: 'none' } });
             $('body').text('');
             return true;
           }
@@ -241,7 +242,7 @@ Catch.try(async () => {
     }
   } catch (e) {
     if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+      BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
       Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);
     } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);

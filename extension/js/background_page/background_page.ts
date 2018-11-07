@@ -4,16 +4,16 @@
 
 import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError, FlatTypes } from '../common/store.js';
 import { Value, Dict } from '../common/common.js';
-import { BgExec, BrowserMsgHandler, BrowserMsgReqtDb, BrowserMsgReqSessionSet, BrowserMsgReqSessionGet, BrowserMsg } from '../common/extension.js';
+import { BgExec, BrowserMsg, Bm } from '../common/extension.js';
 import { BgAttests } from './attests.js';
 import { injectFcIntoWebmailIfNeeded } from './inject.js';
-import { migrateAcct, migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
+import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
 import { Catch } from '../common/catch.js';
-import { Env } from '../common/browser.js';
+import { Env, UrlParam } from '../common/browser.js';
 
 declare const openpgp: typeof OpenPGP;
 
-type OpenSettingsBrowserMsg = { path: string, acctEmail: string, page: string, page_url_params: Dict<FlatTypes>, addNewAcct?: boolean };
+// type OpenSettingsBrowserMsg = { path: string, acctEmail: string, page: string, page_url_params: Dict<FlatTypes>, addNewAcct?: boolean };
 
 console.info('background_process.js starting');
 
@@ -41,7 +41,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  const openSettingsPage = async (path: string = 'index.htm', acctEmail: string | null = null, page: string = '', rawPageUrlParams: Dict<FlatTypes> | null = null, addNewAcct = false) => {
+  const openSettingsPage = async (path: string = 'index.htm', acctEmail: string | null = null, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
     const basePath = chrome.extension.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : null;
     if (acctEmail) {
@@ -54,17 +54,15 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  const openSettingsPageHandler: BrowserMsgHandler = async (message: OpenSettingsBrowserMsg, sender, respond) => {
-    await openSettingsPage(message.path, message.acctEmail, message.page, message.page_url_params, message.addNewAcct === true);
-    respond();
+  const openSettingsPageHandler: Bm.ResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
+    await openSettingsPage(path, acctEmail, page, pageUrlParams, addNewAcct === true);
   };
 
-  const openInboxPageHandler: BrowserMsgHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }, sender, respond) => {
+  const openInboxPageHandler: Bm.ResponselessHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }) => {
     await openExtensionTab(Env.urlCreate(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
-    respond();
   };
 
-  const getActiveTabInfo: BrowserMsgHandler = (message: Dict<any> | null, sender, respond) => {
+  const getActiveTabInfo = (message: {}, sender: Bm.Sender, respond: (r: Bm.Res.GetActiveTabInfo) => void) => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (tabs) => {
       if (tabs.length) {
         if (tabs[0].id !== undefined) {
@@ -93,8 +91,7 @@ chrome.runtime.onInstalled.addListener(event => {
     });
   });
 
-  const updateUninstallUrl: BrowserMsgHandler = async (request: Dict<any> | null, sender, respond) => {
-    respond();
+  const updateUninstallUrl: Bm.ResponselessHandler = async () => {
     const acctEmails = await Store.acctEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
       const email = (acctEmails && acctEmails.length) ? acctEmails[0] : null;
@@ -102,7 +99,7 @@ chrome.runtime.onInstalled.addListener(event => {
     }
   };
 
-  const dbOperationHandler = (request: BrowserMsgReqtDb, sender: chrome.runtime.MessageSender | 'background', respond: Function, db: IDBDatabase) => { // tslint:disable-line:ban-types
+  const dbOperationHandler = (request: Bm.Db, sender: Bm.Sender, respond: Function, db: IDBDatabase) => { // tslint:disable-line:ban-types
     Catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
@@ -131,40 +128,36 @@ chrome.runtime.onInstalled.addListener(event => {
     return;
   }
 
-  BrowserMsg.listenBg({
-    bg_exec: BgExec.bgReqHandler,
-    db: (request, sender, respond) => dbOperationHandler(request as BrowserMsgReqtDb, sender, respond, db),
-    session_set: (r: BrowserMsgReqSessionSet, sender, respond) => Store.sessionSet(r.acctEmail, r.key, r.value).then(respond).catch(Catch.rejection),
-    session_get: (r: BrowserMsgReqSessionGet, sender, respond) => Store.sessionGet(r.acctEmail, r.key).then(respond).catch(Catch.rejection),
-    close_popup: (r: chrome.tabs.QueryInfo, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))),
-    migrate_account: migrateAcct,
-    settings: openSettingsPageHandler,
-    inbox: openInboxPageHandler,
-    attest_requested: BgAttests.attestRequestedHandler,
-    attest_packet_received: BgAttests.attestPacketReceivedHandler,
-    update_uninstall_url: updateUninstallUrl,
-    get_active_tab_info: getActiveTabInfo,
-    runtime: (r, sender, respond) => respond({ environment: Catch.environment(), version: Catch.version() }),
-    ping: (r, sender, respond) => respond(true),
-    _tab_: (r, sender, respond) => {
-      if (sender === 'background') {
-        respond({ tabId: null }); // background script - direct
-      } else if (sender === null || sender === undefined) {
-        respond({ tabId: undefined }); // not sure when or why this happens - maybe orphaned frames during update
-      } else if (sender.tab) {
-        // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-        // fixed in FF55, but currently we still support v52: https://flowcrypt.com/api/update/firefox
-        respond({ tabId: `${sender.tab.id}:${(typeof sender.frameId !== 'undefined' ? sender.frameId : '')}` });
-      } else {
-        // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
-        // https://developers.chrome.com/extensions/runtime#type-MessageSender
-        // MDN says the same - thus this is most likely a background script, through browser message passing
-        respond({ tabId: null });
-      }
-    },
+  BrowserMsg.bgAddListener('bg_exec', BgExec.bgReqHandler);
+  BrowserMsg.bgAddListener('db', (r: Bm.Db, sender, respond) => dbOperationHandler(r, sender, respond, db));
+  BrowserMsg.bgAddListener('session_set', (r: Bm.SessionSet, sender, respond) => Store.sessionSet(r.acctEmail, r.key, r.value).then(respond).catch(Catch.rejection));
+  BrowserMsg.bgAddListener('session_get', (r: Bm.SessionGet, sender, respond) => Store.sessionGet(r.acctEmail, r.key).then(respond).catch(Catch.rejection));
+  BrowserMsg.bgAddListener('close_popup', (r: Bm.ClosePopup, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))));
+  BrowserMsg.bgAddListener('settings', openSettingsPageHandler);
+  BrowserMsg.bgAddListener('inbox', openInboxPageHandler);
+  BrowserMsg.bgAddListener('attest_requested', BgAttests.attestRequestedHandler);
+  BrowserMsg.bgAddListener('attest_packet_received', BgAttests.attestPacketReceivedHandler);
+  BrowserMsg.bgAddListener('update_uninstall_url', updateUninstallUrl);
+  BrowserMsg.bgAddListener('get_active_tab_info', getActiveTabInfo);
+  BrowserMsg.bgAddListener('_tab_', (r: any, sender: Bm.Sender, respond: (r: Bm.Res._tab_) => void) => {
+    if (sender === 'background') {
+      respond({ tabId: null }); // background script - direct
+    } else if (sender === null || sender === undefined) {
+      respond({ tabId: undefined }); // not sure when or why this happens - maybe orphaned frames during update
+    } else if (sender.tab) {
+      // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
+      // fixed in FF55, but currently we still support v52: https://flowcrypt.com/api/update/firefox
+      respond({ tabId: `${sender.tab.id}:${(typeof sender.frameId !== 'undefined' ? sender.frameId : '')}` });
+    } else {
+      // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
+      // https://developers.chrome.com/extensions/runtime#type-MessageSender
+      // MDN says the same - thus this is most likely a background script, through browser message passing
+      respond({ tabId: null });
+    }
   });
+  BrowserMsg.bgListen();
 
-  updateUninstallUrl(null, 'background', Value.noop);
+  updateUninstallUrl({});
   injectFcIntoWebmailIfNeeded();
   scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
   BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.rejection);

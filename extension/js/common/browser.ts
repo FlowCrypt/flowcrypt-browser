@@ -28,7 +28,7 @@ type KeyImportUiCheckResult = {
 
 export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
 export type WebmailVariantString = null | 'html' | 'standard' | 'new';
-export type PassphraseDialogType = 'embedded' | 'sign' | 'attest';
+export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
 export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -117,6 +117,7 @@ export class Env {
 
   public static urlParamRequire = {
     string: (values: UrlParams, name: string): string => Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string') as string,
+    optionalString: (values: UrlParams, name: string): string | undefined => Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string?') as string | undefined,
     oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed) as string,
   };
 
@@ -243,7 +244,7 @@ export class Ui {
           const msg = `Protect your key with a pass phrase to finish setup.`;
           const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);
           if (r === 'finish_setup') {
-            BrowserMsg.send(null, 'settings', { acctEmail });
+            BrowserMsg.send.bg.settings({ acctEmail });
           }
         }
       }
@@ -252,13 +253,17 @@ export class Ui {
 
   public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
     const actualType = typeof values[name];
-    if (actualType !== expectedType) {
-      // tslint:disable-next-line:max-line-length
-      const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
-      throw new UnreportableError(msg);
+    if (actualType === expectedType) {
+      return values[name];
     }
-    return values[name];
+    if (actualType === 'undefined' && expectedType.match(/\?$/) !== null) { // optional type, got undefined: ok
+      return values[name];
+    }
+    // tslint:disable-next-line:max-line-length
+    const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
+    Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
+    throw new UnreportableError(msg);
+
   }
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {

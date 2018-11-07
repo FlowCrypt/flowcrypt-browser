@@ -70,7 +70,7 @@ export class Settings {
       storage.attests_processed = [];
     }
     await Store.set(acctEmail, storage);
-    return await BrowserMsg.sendAwait(null, 'attest_requested', { acctEmail });
+    BrowserMsg.send.bg.attestRequested({ acctEmail });
   }
 
   static markAsAttested = async (acctEmail: string, attester: string) => {
@@ -141,10 +141,10 @@ export class Settings {
 
   }
 
-  static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null) => {
+  static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
     if (Boolean(Env.urlParams(['embedded']).embedded)) { // embedded on the main page
-      BrowserMsg.send(parentTabId, 'open_page', { page, addUrlText: addUrlTextOrParams });
+      BrowserMsg.send.openPage(parentTabId, { page, addUrlText: addUrlTextOrParams });
     } else { // on a sub page/module page, inside a lightbox. Just change location.
       window.location.href = newLocation;
     }

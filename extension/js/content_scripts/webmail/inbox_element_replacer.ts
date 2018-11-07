@@ -88,7 +88,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
           } else {
             const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
             $(newPgpMsgs).prepend(this.factory.embeddedAttaStatus(statusMsg)).children('a.auth_settings').click(Ui.event.handle(() => { // xss-safe-factory
-              BrowserMsg.send(null, 'settings', { acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
+              BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
             }));
           }
         } else {

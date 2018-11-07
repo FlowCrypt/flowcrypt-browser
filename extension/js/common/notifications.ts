@@ -27,7 +27,7 @@ export class Notifications {
       this.show('FlowCrypt was successfully set up for this account. <a href="#" class="close" data-test="notification-successfully-setup-action-close">close</a>');
     } else if (acctStorage.key_backup_prompt !== false && acctStorage.setup_simple === true) {
       this.show('<a href="#" class="action_backup">Back up your FlowCrypt key</a> to keep access to your encrypted email at all times. <a href="#" class="close">not now</a>', {
-        action_backup: () => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/backup.htm' }),
+        action_backup: () => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/backup.htm' }),
       });
     }
   }
@@ -64,7 +64,7 @@ export class Notifications {
       callbacks.reload = Catch.try(() => window.location.reload());
     }
     if (typeof callbacks.subscribe === 'undefined') {
-      callbacks.subscribe = Catch.try(() => BrowserMsg.send(this.tabId, 'subscribe_dialog'));
+      callbacks.subscribe = Catch.try(() => BrowserMsg.send.subscribeDialog(this.tabId, {}));
     }
     for (const name of Object.keys(callbacks)) {
       $(`.webmail_notifications a.${name}`).click(Ui.event.prevent('double', callbacks[name]));

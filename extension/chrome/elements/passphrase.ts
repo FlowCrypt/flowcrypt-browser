@@ -70,8 +70,8 @@ Catch.try(async () => {
   };
 
   $('.action_close').click(Ui.event.handle(() => {
-    BrowserMsg.send('broadcast', 'passphrase_entry', { entered: false });
-    BrowserMsg.send(parentTabId, 'close_dialog');
+    BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
+    BrowserMsg.send.closeDialog(parentTabId);
   }));
 
   $('.action_ok').click(Ui.event.handle(async () => {
@@ -94,8 +94,8 @@ Catch.try(async () => {
       }
     }
     if (atLeastOneMatched) {
-      BrowserMsg.send('broadcast', 'passphrase_entry', { entered: true });
-      BrowserMsg.send(parentTabId, 'close_dialog');
+      BrowserMsg.send.passphraseEntry('broadcast', { entered: true });
+      BrowserMsg.send.closeDialog(parentTabId);
     } else {
       renderErr();
       Catch.setHandledTimeout(renderNormal, 1500);

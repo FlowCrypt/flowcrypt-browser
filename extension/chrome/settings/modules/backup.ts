@@ -61,7 +61,9 @@ Catch.try(async () => {
         if (Api.err.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
         } else if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+          if (parentTabId) {
+            BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
+          }
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
           Catch.handleException(e);
@@ -133,7 +135,7 @@ Catch.try(async () => {
         displayBlock('step_3_manual');
         $('h1').text('Back up your private key');
       }));
-      $('.action_go_auth_denied').click(Ui.event.handle(() => BrowserMsg.send(null, 'settings', { acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
+      $('.action_go_auth_denied').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
     }
   };
 
@@ -174,7 +176,7 @@ Catch.try(async () => {
         if (Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');
         } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
           alert('Account needs to be re-connected first. Please try later.');
         } else {
           Catch.handleException(e);
@@ -233,7 +235,7 @@ Catch.try(async () => {
       if (Api.err.isNetErr(e)) {
         return alert('Need internet connection to finish. Please click the button again to retry.');
       } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send(parentTabId, 'notification_show_auth_popup_needed', { acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
         Catch.handleException(e);
@@ -330,7 +332,11 @@ Catch.try(async () => {
       await Store.set(acctEmail, { key_backup_prompt: false });
       window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail });
     } else {
-      BrowserMsg.send(parentTabId, 'close_page');
+      if (parentTabId) {
+        BrowserMsg.send.closePage(parentTabId);
+      } else {
+        Catch.report(`backup.ts: missing parentTabId for ${urlParams.action}`);
+      }
     }
   }));
 

@@ -29,7 +29,7 @@ Catch.try(async () => {
 
   const sendResizeMsg = () => {
     const desiredHeight = $('#pgp_block').height()! + (urlParams.compact ? 10 : 30); // #pgp_block is defined in template
-    BrowserMsg.send(parentTabId, 'set_css', { selector: `iframe#${frameId}`, css: { height: `${desiredHeight}px` } });
+    BrowserMsg.send.setCss(parentTabId, { selector: `iframe#${frameId}`, css: { height: `${desiredHeight}px` } });
   };
 
   const setBtnText = async () => {

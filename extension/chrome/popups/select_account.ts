@@ -31,10 +31,12 @@ Catch.try(async () => {
   }
   Xss.sanitizeRender('ul.emails', emailsUlHtml).find('a').click(Ui.event.handle(async target => {
     if (urlParams.action === 'inbox') {
-      await BrowserMsg.sendAwait(null, 'inbox', { acctEmail: $(target).attr('email') });
+      BrowserMsg.send.bg.inbox({ acctEmail: $(target).attr('email') });
+      await Ui.time.sleep(100);
       window.close();
     } else {
-      await BrowserMsg.sendAwait(null, 'settings', { acctEmail: $(target).attr('email') });
+      BrowserMsg.send.bg.settings({ acctEmail: $(target).attr('email') });
+      await Ui.time.sleep(100);
       window.close();
     }
   }));
@@ -44,7 +46,8 @@ Catch.try(async () => {
   }));
 
   $('.action_add_account').click(Ui.event.handle(async self => {
-    await BrowserMsg.sendAwait(null, 'settings', { addNewAcct: true });
+    BrowserMsg.send.bg.settings({ addNewAcct: true });
+    await Ui.time.sleep(100);
     window.close();
   }));
 
