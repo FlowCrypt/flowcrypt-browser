@@ -253,7 +253,7 @@ export class Ui {
 
   public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
     const actualType = typeof values[name];
-    if (actualType === expectedType) {
+    if (actualType === expectedType.replace(/\?$/, '')) { // eg expected string or optional string, and got string
       return values[name];
     }
     if (actualType === 'undefined' && expectedType.match(/\?$/) !== null) { // optional type, got undefined: ok
