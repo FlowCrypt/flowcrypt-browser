@@ -105,7 +105,7 @@ Catch.try(async () => {
   const findAvailableAlias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
     while (alias.length < 3) {
-      alias += Str.random(1).toLowerCase();
+      alias += Str.sloppyRandom(1).toLowerCase();
     }
     let i = 0;
     while (true) {

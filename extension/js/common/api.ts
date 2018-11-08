@@ -189,7 +189,7 @@ export class Api {
       }
       let responseHandled = false;
       Api.internal.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
-        const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.random(20), scopes };
+        const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.sloppyRandom(20), scopes };
         BrowserMsg.addListener('google_auth_window_result', (result: Bm.GoogleAuthWindowResult, sender, closeAuthWin) => {
           if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
             responseHandled = true;
@@ -721,7 +721,7 @@ export class Api {
     }),
     accountLogin: async (acctEmail: string, token: string | null = null): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
       const authInfo = await Store.authInfo();
-      const uuid = authInfo.uuid || Pgp.hash.sha1(Str.random(40));
+      const uuid = authInfo.uuid || Pgp.hash.sha1(Pgp.password.random());
       const account = authInfo.acctEmail || acctEmail;
       const response: R.FcAccountLogin = await Api.internal.apiFcCall('account/login', {
         account,
@@ -748,7 +748,7 @@ export class Api {
           if (response.email !== authInfo.acctEmail) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
             localStorageUpdate.cryptup_account_email = response.email;
-            localStorageUpdate.cryptup_account_uuid = Pgp.hash.sha1(Str.random(40));
+            localStorageUpdate.cryptup_account_uuid = Pgp.hash.sha1(Pgp.password.random());
           }
         } else {
           if (authInfo.acctEmail) {
@@ -1108,7 +1108,7 @@ export class Api {
       return authReqScopes;
     },
     encodeAsMultipartRelated: (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
-      const boundary = 'this_sucks_' + Str.random(10);
+      const boundary = 'this_sucks_' + Str.sloppyRandom(10);
       let body = '';
       for (const type of Object.keys(parts)) {
         body += '--' + boundary + '\n';

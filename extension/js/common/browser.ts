@@ -576,7 +576,7 @@ export class Xss {
 
   public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
     let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml);
-    const random = Str.random(5);
+    const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;
     const blockEnd = `CU_BE_${random}`;
@@ -701,7 +701,7 @@ export class XssSafeFactory {
   srcReplyMsgIframe = (convoParams: UrlParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
     const params: UrlParams = {
       isReplyBox: true,
-      frameId: 'frame_' + Str.random(10),
+      frameId: 'frame_' + Str.sloppyRandom(10),
       placement: 'gmail',
       threadId: convoParams.threadId,
       skipClickPrompt: Boolean(skipClickPrompt),
@@ -823,7 +823,7 @@ export class XssSafeFactory {
 
   private extUrl = (s: string) => chrome.extension.getURL(s);
 
-  private newId = () => `frame_${Str.random(10)}`;
+  private newId = () => `frame_${Str.sloppyRandom(10)}`;
 
   private resolveFromTo = (secondaryEmails: string[], myEmail: string, theirEmails: string[]) => {
     // when replaying to email I've sent myself, make sure to send it to the other person, and not myself

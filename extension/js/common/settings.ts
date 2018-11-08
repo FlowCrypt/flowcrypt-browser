@@ -135,7 +135,7 @@ export class Settings {
       iframeHeight = Math.min(600, $('body').height()! - 150);
       variant = 'new_message_featherlight';
       closeOnClick = false;
-      newLocation += `&frameId=${Str.random(5)}`; // does not get added to <iframe>
+      newLocation += `&frameId=${Str.sloppyRandom(5)}`; // does not get added to <iframe>
     }
     ($ as JQS).featherlight({ closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant });
     // todo - deprecate this

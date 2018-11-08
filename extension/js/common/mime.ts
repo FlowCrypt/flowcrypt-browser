@@ -167,7 +167,7 @@ export class Mime {
     rootNode.appendChild(contentNode);
     for (const att of atts) {
       const type = `${att.type}; name="${att.name}"`;
-      const header = { 'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.random(10)}`, 'Content-Transfer-Encoding': 'base64' };
+      const header = { 'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.sloppyRandom(10)}`, 'Content-Transfer-Encoding': 'base64' };
       rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.data()));
     }
     return rootNode.build();

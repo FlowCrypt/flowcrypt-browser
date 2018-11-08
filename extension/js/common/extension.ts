@@ -203,7 +203,7 @@ export class BrowserMsg {
   }
 
   private static sendAwait = (destString: string | null, name: string, bm?: Dict<any>): Promise<Bm.Response> => new Promise(resolve => {
-    const msg = { name, data: bm || {}, to: destString || null, uid: Str.random(10), stack: Catch.stackTrace() };
+    const msg = { name, data: bm || {}, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() };
     const tryResolveNoUndefined = (r?: Bm.Response) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     const isBackgroundPage = Env.isBackgroundPage();
     if (typeof destString === 'undefined') { // don't know where to send the message

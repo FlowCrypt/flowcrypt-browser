@@ -54,7 +54,7 @@ export class Str {
 
   public static monthName = (monthIndex: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
 
-  public static random = (length: number = 5) => {
+  public static sloppyRandom = (length: number = 5) => {
     let id = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (let i = 0; i < length; i++) {
