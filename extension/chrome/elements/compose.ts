@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from '../../js/common/store.js';
-import { Value, Str, Dict } from './../../js/common/common.js';
+import { Store, KeyInfo, ContactUpdate, Contact, DbContactFilter } from '../../js/common/store.js';
+import { Value, Str } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
@@ -219,6 +219,7 @@ Catch.try(async () => {
           // todo: render error
         }
       }
+      return;
     },
     emailProviderExtractArmoredBlock: (msgId: string) => Api.gmail.extractArmoredBlock(acctEmail, msgId, 'full'),
     // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),

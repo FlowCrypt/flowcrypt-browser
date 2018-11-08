@@ -13,7 +13,6 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'verificationEmailText', 'parentTabId', 'subscribeResultTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   const fcAcct = new FcAcct({}, true);
   const token = fcAcct.parseTokenEmailText(urlParams.verificationEmailText as string);
@@ -27,7 +26,7 @@ Catch.try(async () => {
   } else {
     try {
       const { cryptup_subscription_attempt } = await Store.getGlobal(['cryptup_subscription_attempt']);
-      const response = await fcAcct.verify(acctEmail, [token]);
+      await fcAcct.verify(acctEmail, [token]);
       if (cryptup_subscription_attempt) {
         const subscription = await fcAcct.subscribe(acctEmail, cryptup_subscription_attempt, cryptup_subscription_attempt.source);
         if (subscription && subscription.level === 'pro') {

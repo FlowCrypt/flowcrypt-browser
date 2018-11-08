@@ -5,7 +5,6 @@
 import { Store, Serializable } from './store.js';
 import { FcWindow } from './extension.js';
 import { Dict, StandardError, Value } from './common.js';
-import { Env } from './browser.js';
 
 const VERSION = '[BUILD_REPLACEABLE_VERSION]';
 

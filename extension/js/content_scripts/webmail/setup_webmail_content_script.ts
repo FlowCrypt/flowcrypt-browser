@@ -5,9 +5,9 @@
 import { Store } from '../../common/store.js';
 import { Value } from '../../common/common.js';
 import { Injector } from '../../common/inject.js';
-import { Notifications, NotificationWithHandlers } from '../../common/notifications.js';
+import { Notifications } from '../../common/notifications.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError, Bm } from '../../common/extension.js';
-import { Ui, XssSafeFactory, PassphraseDialogType, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
+import { Ui, XssSafeFactory, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
 import { Catch } from '../../common/catch.js';
 
 export type WebmailVariantObject = { newDataLayer: null | boolean, newUi: null | boolean, email: null | string, gmailVariant: WebmailVariantString };

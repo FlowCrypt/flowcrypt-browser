@@ -11,7 +11,6 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'which']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   const which = Env.urlParamRequire.oneof(urlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
 
   const renderCallRes = (api: string, variables: Dict<any>, result: any, error: any = null) => {

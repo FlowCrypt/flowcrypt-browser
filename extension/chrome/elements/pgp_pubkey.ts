@@ -19,7 +19,7 @@ Catch.try(async () => {
   Ui.event.protect();
 
   const urlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  // const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   const armoredPubkey = Env.urlParamRequire.string(urlParams, 'armoredPubkey');
   const frameId = Env.urlParamRequire.string(urlParams, 'frameId');

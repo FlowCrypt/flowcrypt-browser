@@ -2,13 +2,12 @@
 
 'use strict';
 
-import { Store, FlatTypes, KeyInfo } from '../common/store.js';
-import { Value, Str, Dict } from '../common/common.js';
+import { FlatTypes, KeyInfo } from '../common/store.js';
+import { Value, Dict } from '../common/common.js';
 import { Api } from '../common/api.js';
-import { Pgp } from '../common/pgp.js';
 import { Catch } from '../common/catch.js';
 
-declare const openpgp: typeof OpenPGP;
+// declare const openpgp: typeof OpenPGP;
 
 export const migrateGlobal = async () => {
   await migrateLocalStorageToExtensionStorage();
@@ -64,57 +63,57 @@ const legacyLocalStorageRead = (value: string) => {
   }
 };
 
-const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks which emails were registered on Attester
-  const keyinfos = await Store.keysGet(acctEmail);
-  const myLongids = keyinfos.map(ki => ki.longid);
-  const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_keyserver']);
-  if (storage.addresses && storage.addresses.length) {
-    const unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
-    if (unique.length < storage.addresses.length) {
-      storage.addresses = unique;
-      await Store.set(acctEmail, storage); // fix duplicate email addresses
-    }
-    try {
-      const { results } = await Api.attester.lookupEmail(storage.addresses);
-      const addressesKeyserver = [];
-      for (const result of results) {
-        if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(myLongids)) {
-          addressesKeyserver.push(result.email);
-        }
-      }
-      await Store.set(acctEmail, { addressesKeyserver });
-    } catch (e) {
-      if (!Api.err.isNetErr(e)) {
-        Catch.handleException(e);
-      }
-    }
-  }
-};
+// const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks which emails were registered on Attester
+//   const keyinfos = await Store.keysGet(acctEmail);
+//   const myLongids = keyinfos.map(ki => ki.longid);
+//   const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_keyserver']);
+//   if (storage.addresses && storage.addresses.length) {
+//     const unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
+//     if (unique.length < storage.addresses.length) {
+//       storage.addresses = unique;
+//       await Store.set(acctEmail, storage); // fix duplicate email addresses
+//     }
+//     try {
+//       const { results } = await Api.attester.lookupEmail(storage.addresses);
+//       const addressesKeyserver = [];
+//       for (const result of results) {
+//         if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(myLongids)) {
+//           addressesKeyserver.push(result.email);
+//         }
+//       }
+//       await Store.set(acctEmail, { addressesKeyserver });
+//     } catch (e) {
+//       if (!Api.err.isNetErr(e)) {
+//         Catch.handleException(e);
+//       }
+//     }
+//   }
+// };
 
-const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new emails were registered on pks lately
-  // todo - deprecate in certain situations
-  const keyinfos = await Store.keysGet(acctEmail);
-  const myLongids = keyinfos.map(ki => ki.longid);
-  const hkp = new openpgp.HKP('https://pgp.key-server.io');
-  const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
-  const addressesPks = storage.addresses_pks || [];
-  for (const email of storage.addresses || [acctEmail]) {
-    if (!Value.is(email).in(addressesPks)) {
-      try {
-        const pubkey = await hkp.lookup({ query: email });
-        if (typeof pubkey !== 'undefined') {
-          if (Value.is(Pgp.key.longid(pubkey)).in(myLongids)) {
-            addressesPks.push(email);
-            console.info(email + ' newly found matching pubkey on PKS');
-          }
-        }
-      } catch (e) {
-        reportUsefulErrs(e);
-      }
-    }
-  }
-  await Store.set(acctEmail, { addressesPks });
-};
+// const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new emails were registered on pks lately
+//   // todo - deprecate in certain situations
+//   const keyinfos = await Store.keysGet(acctEmail);
+//   const myLongids = keyinfos.map(ki => ki.longid);
+//   const hkp = new openpgp.HKP('https://pgp.key-server.io');
+//   const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
+//   const addressesPks = storage.addresses_pks || [];
+//   for (const email of storage.addresses || [acctEmail]) {
+//     if (!Value.is(email).in(addressesPks)) {
+//       try {
+//         const pubkey = await hkp.lookup({ query: email });
+//         if (typeof pubkey !== 'undefined') {
+//           if (Value.is(Pgp.key.longid(pubkey)).in(myLongids)) {
+//             addressesPks.push(email);
+//             console.info(email + ' newly found matching pubkey on PKS');
+//           }
+//         }
+//       } catch (e) {
+//         reportUsefulErrs(e);
+//       }
+//     }
+//   }
+//   await Store.set(acctEmail, { addressesPks });
+// };
 
 const reportUsefulErrs = (e: any) => {
   if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {

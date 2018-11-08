@@ -228,6 +228,7 @@ export class Pgp {
         }
       } catch (error) {
         Catch.handleException(error);
+        return undefined;
       }
     },
     fingerprint: (key: OpenPGP.key.Key | string, formatting: "default" | "spaced" = 'default'): string | null => {

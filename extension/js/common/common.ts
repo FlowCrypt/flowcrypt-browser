@@ -299,6 +299,7 @@ export class Value {
           return k;
         }
       }
+      return undefined;
     },
   };
 

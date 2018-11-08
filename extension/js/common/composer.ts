@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Store, Subscription, KeyInfo, ContactUpdate, Serializable, Contact, DbContactFilter } from './store.js';
+import { Store, Subscription, KeyInfo, ContactUpdate, Contact, DbContactFilter } from './store.js';
 import { Lang } from './lang.js';
-import { Value, Str, Dict, StandardError } from './common.js';
+import { Value, Str, StandardError } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd } from './pgp.js';
@@ -912,6 +912,7 @@ export class Composer {
     if (!this.S.cached('input_password').val()) {
       return 'No password entered';
     }
+    return;
   }
 
   private showMsgPwdUiAndColorBtn = () => {
@@ -1014,6 +1015,7 @@ export class Composer {
       this.S.cached('input_to').focus().blur();
       return false;
     }
+    return;
   }
 
   resizeReplyBox = (addExtra: number = 0) => {

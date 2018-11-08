@@ -2,8 +2,7 @@
 
 'use strict';
 
-import { Store, Subscription, Serializable } from '../../js/common/store.js';
-import { Dict } from './../../js/common/common.js';
+import { Store, Subscription } from '../../js/common/store.js';
 import { Att } from '../../js/common/att.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Composer } from './../../js/common/composer.js';

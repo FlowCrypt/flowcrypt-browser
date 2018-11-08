@@ -13,7 +13,6 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   $('.action_show_public_key').attr('href', Env.urlCreate('my_key.htm', urlParams));
 

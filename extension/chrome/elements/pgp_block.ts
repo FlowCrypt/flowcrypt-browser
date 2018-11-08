@@ -61,6 +61,7 @@ Catch.try(async () => {
         console.info('pgp_block.js: repetitive resize loop prevented'); // got repetitive, eg [70, 80, 200, 250, 200, 250]
         height = Math.max(heightHistory[len - 1], heightHistory[len - 2]);
       }
+      return;
     };
     if (!isInfiniteResizeLoop()) {
       BrowserMsg.send.setCss(parentTabId, { selector: `iframe#${frameId}`, css: { height: `${height}px` } });

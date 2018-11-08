@@ -559,7 +559,8 @@ Catch.try(async () => {
   } else if (action === 'finalize') {
     const { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
     if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
-      return $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
+      $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
+      return;
     }
     if (typeof key_backup_method !== 'string') {
       alert('Backup has not successfully finished, will retry');

@@ -13,7 +13,9 @@ rules:
     no-console: false
     prefer-const: true
     quotemark: false
-    variable-name: true
+    variable-name: 
+     - true
+     - allow-leading-underscore
     member-access: false
     member-ordering: false
     one-variable-per-declaration: false

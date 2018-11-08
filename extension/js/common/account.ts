@@ -49,7 +49,7 @@ export class FcAcct {
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
         await this.saveSubscriptionAttempt(chosenProduct, source);
-        const response = await this.register(acctEmail);
+        await this.register(acctEmail);
         return await this.doSubscribe(chosenProduct, source);
       }
       throw e;
@@ -111,6 +111,7 @@ export class FcAcct {
         return tokenLinkParams.token as string;
       }
     }
+    return undefined;
   }
 
   private doSubscribe = async (chosenProduct: Product, source: string | null = null) => {
@@ -162,6 +163,7 @@ export class FcAcct {
         await this.sleep(5);
       }
     }
+    return undefined;
   }
 
 }

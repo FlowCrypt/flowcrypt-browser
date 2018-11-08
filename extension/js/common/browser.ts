@@ -375,7 +375,7 @@ export class Ui {
       });
     },
     handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
-      return function (event: JQuery.Event<HTMLElement, null>) {
+      return function (this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
           r = cb(this, event);
@@ -418,7 +418,7 @@ export class Ui {
           Ui.event._dispatchErr(e, errHandler);
         }
       };
-      return function () {
+      return function (this: HTMLElement) {
         if (preventableEvent === 'spree') {
           clearTimeout(eventTimer);
           eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_SPREE_MS);
@@ -940,7 +940,7 @@ export class KeyImportUi {
   checkPub = async (armored: string): Promise<string> => {
     const normalized = this.normalize('publicKey', armored);
     const parsed = this.read('publicKey', normalized);
-    const longid = this.longid(parsed);
+    this.longid(parsed);
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
   }

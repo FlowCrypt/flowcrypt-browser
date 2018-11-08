@@ -2,15 +2,23 @@
   "compilerOptions": {
     "target": "ES2017",
     "module": "es6",
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": false,
+    "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,
     "outDir": "../build/_/content_scripts",
     "baseUrl": "../extension",
     "paths": {
-      "dompurify": ["types/purify.d.ts"]
+      "dompurify": [
+        "types/purify.d.ts"
+      ]
     },
     "typeRoots": [
       "../extension/types"

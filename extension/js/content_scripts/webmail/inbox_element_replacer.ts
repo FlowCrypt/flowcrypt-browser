@@ -197,6 +197,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     if (inboxMsgIdMatch) {
       return Str.intToHex(inboxMsgIdMatch[0]);
     }
+    return undefined;
   }
 
   private domExtractSubject = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
@@ -208,6 +209,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     if (inboxThreadIdMatch) {
       return Str.intToHex(inboxThreadIdMatch[0]);
     }
+    return undefined;
   }
 
   private getConvoParams = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {

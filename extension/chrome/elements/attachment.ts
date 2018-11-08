@@ -39,7 +39,8 @@ Catch.try(async () => {
     }
   } catch (e) {
     Catch.handleException(e);
-    return $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
+    $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
+    return;
   }
 
   let origHtmlContent: string;

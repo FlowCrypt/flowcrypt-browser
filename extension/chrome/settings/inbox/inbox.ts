@@ -4,9 +4,9 @@
 
 import { Store } from '../../../js/common/store.js';
 import { Value, Str, Dict } from '../../../js/common/common.js';
-import { Xss, Ui, XssSafeFactory, PassphraseDialogType, Env, UrlParams } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, Env, UrlParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
-import { Notifications, NotificationWithHandlers } from '../../../js/common/notifications.js';
+import { Notifications } from '../../../js/common/notifications.js';
 import { Api, R } from '../../../js/common/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/mime.js';

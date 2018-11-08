@@ -94,7 +94,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
-        const newSel = this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe
+        this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe
       }
     }
   }
@@ -151,7 +151,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const foundFcLink = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
       if (foundFcLink !== null) {
         let button;
-        const [fullLink, name, buttonHrefId] = foundFcLink;
+        const [, name, buttonHrefId] = foundFcLink;
         if (name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         } else if (name === 'draft_reply') {

@@ -1,25 +1,65 @@
 {
   "compilerOptions": {
     "target": "ES2017",
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
+    "noImplicitThis": true,
+    "strictPropertyInitialization": false,
+    "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,
     "outDir": "build/chrome",
     "baseUrl": "./extension",
     "paths": {
-      "jquery": ["lib/jquery.min.js", "COMMENT"],
-      "openpgp": ["lib/openpgp.js", "COMMENT"],
-      "dompurify": ["types/purify.d.ts", "lib/purify.min.js", "COMMENT"],
-      "anchorme": ["lib/anchorme.js", "COMMENT"],
-      "fine-uploader": ["lib/fine-uploader.js", "COMMENT"],
-      "clipboard": ["lib/clipboard.js", "COMMENT"],
-      "iso-8859-2": ["lib/iso-8859-2.js", "COMMENT"],
-      "zxcvbn": ["lib/zxcvbn.js", "COMMENT"],
-      "emailjs-mime-parser": ["lib/emailjs/emailjs-mime-parser.js", "COMMENT"],
-      "emailjs-mime-builder": ["lib/emailjs/emailjs-mime-builder.js", "COMMENT"],
-      "featherlight": ["lib/featherlight/featherlight.js", "COMMENT"]
+      "jquery": [
+        "lib/jquery.min.js",
+        "COMMENT"
+      ],
+      "openpgp": [
+        "lib/openpgp.js",
+        "COMMENT"
+      ],
+      "dompurify": [
+        "types/purify.d.ts",
+        "lib/purify.min.js",
+        "COMMENT"
+      ],
+      "anchorme": [
+        "lib/anchorme.js",
+        "COMMENT"
+      ],
+      "fine-uploader": [
+        "lib/fine-uploader.js",
+        "COMMENT"
+      ],
+      "clipboard": [
+        "lib/clipboard.js",
+        "COMMENT"
+      ],
+      "iso-8859-2": [
+        "lib/iso-8859-2.js",
+        "COMMENT"
+      ],
+      "zxcvbn": [
+        "lib/zxcvbn.js",
+        "COMMENT"
+      ],
+      "emailjs-mime-parser": [
+        "lib/emailjs/emailjs-mime-parser.js",
+        "COMMENT"
+      ],
+      "emailjs-mime-builder": [
+        "lib/emailjs/emailjs-mime-builder.js",
+        "COMMENT"
+      ],
+      "featherlight": [
+        "lib/featherlight/featherlight.js",
+        "COMMENT"
+      ]
     },
     "typeRoots": [
       "./extension/types"

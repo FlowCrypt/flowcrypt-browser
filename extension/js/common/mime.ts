@@ -235,18 +235,21 @@ export class Mime {
         }
       }
     }
+    return undefined;
   }
 
   private static getNodeType = (node: MimeParserNode) => {
     if (node.headers['content-type'] && node.headers['content-type'][0]) {
       return node.headers['content-type'][0].value;
     }
+    return undefined;
   }
 
   private static getNodeContentId = (node: MimeParserNode) => {
     if (node.headers['content-id'] && node.headers['content-id'][0]) {
       return node.headers['content-id'][0].value;
     }
+    return undefined;
   }
 
   private static getNodeFilename = (node: MimeParserNode) => {

@@ -50,6 +50,7 @@ export namespace Bm {
   export type Inbox = { acctEmail?: string };
 
   export namespace Res {
+    export type GoogleAuthWindowResult = {};
     export type ShowSubscribeDialog = { active: boolean };
     export type BgExec = { result?: PossibleBgExecResults, exception?: { name: string, message: string, stack: string } };
     export type AttestPacketReceived = { success: boolean; result: string };
@@ -58,12 +59,12 @@ export namespace Bm {
     export type SessionSet = void;
     export type _tab_ = { tabId: string | null | undefined };
     export type Db = any; // not included in Any
-    export type Any = BgExec | AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ShowSubscribeDialog;
+    export type Any = BgExec | AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ShowSubscribeDialog | GoogleAuthWindowResult;
   }
 
-  export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload | SetFooter |
+  export type AnyRequest = GoogleAuthWindowResult | PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
     SubscribeResult | AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | ClosePopup | Settings | SetCss | BgExec | GoogleAuthWindowResult | Db | SessionSet |
+    NotificationShow | PassphraseDialog | PassphraseDialog | ClosePopup | Settings | SetCss | BgExec | Db | SessionSet | SetFooter |
     SessionGet | AttestPacketReceived;
 
   export type ResponselessHandler = (req: AnyRequest) => void | Promise<void>;
@@ -273,6 +274,7 @@ export class BrowserMsg {
         // todo - a way to callback the error to be re-thrown to caller stack
         Catch.handleException(e);
       }
+      return undefined;
     });
   }
 
@@ -312,6 +314,7 @@ export class BrowserMsg {
         // todo - a way to callback the error to be re-thrown to caller stack
         Catch.handleException(e);
       }
+      return undefined;
     });
   }
 

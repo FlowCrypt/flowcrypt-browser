@@ -14,7 +14,6 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   const tabId = await BrowserMsg.requiredTabId();
   let origContent: string;

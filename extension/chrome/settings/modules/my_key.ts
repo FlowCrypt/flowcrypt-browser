@@ -17,7 +17,6 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   $('.action_view_user_ids').attr('href', Env.urlCreate('my_key_user_ids.htm', urlParams));
   $('.action_view_update').attr('href', Env.urlCreate('my_key_update.htm', urlParams));
@@ -65,6 +64,6 @@ Catch.try(async () => {
   }));
 
   const clipboardOpts = { text: () => key.toPublic().armor() };
-  const cbjs = new ClipboardJS('.action_copy_pubkey', clipboardOpts);
+  new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression
 
 })();

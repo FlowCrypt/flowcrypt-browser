@@ -190,7 +190,7 @@ export class Api {
       let responseHandled = false;
       Api.internal.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
         const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.sloppyRandom(20), scopes };
-        BrowserMsg.addListener('google_auth_window_result', (result: Bm.GoogleAuthWindowResult, sender, closeAuthWin) => {
+        BrowserMsg.addListener('google_auth_window_result', (result: Bm.GoogleAuthWindowResult, sender, closeAuthWin: (r: Bm.Res.GoogleAuthWindowResult) => void) => {
           if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
             responseHandled = true;
             Api.internal.googleAuthWinResHandler(result).then(resolve, reject);
@@ -774,6 +774,7 @@ export class Api {
           return false;
         }
       }
+      return undefined;
     },
     accountUpdate: async (updateValues?: Dict<Serializable>): Promise<R.FcAccountUpdate> => {
       const authInfo = await Store.authInfo();
@@ -881,9 +882,7 @@ export class Api {
         promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
             progress[i] = singleFileProgress;
-            Ui.event.prevent('spree', () => {
-              progressCb(Value.arr.average(progress), null, null);
-            })();
+            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress), null, null)).bind(undefined)();
           }
         }));
       }
@@ -1006,7 +1005,7 @@ export class Api {
     googleAuthWinResHandler: async (result: Bm.GoogleAuthWindowResult): Promise<AuthResult> => {
       if (result.result === 'Success') {
         const tokensObj = await Api.internal.googleAuthGetTokens(result.params.code);
-        const _ = await Api.internal.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        await Api.internal.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
         const { emailAddress: acctEmail } = await Api.gmail.usersMeProfile(null, tokensObj.access_token);
         if (result.state.acctEmail !== acctEmail) {
           Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress');
@@ -1076,7 +1075,7 @@ export class Api {
         return `Bearer ${storage.google_token_access}`;
       } else { // refresh token
         const refreshTokenRes = await Api.internal.googleAuthRefreshToken(storage.google_token_refresh);
-        const _ = await Api.internal.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+        await Api.internal.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
         await Api.internal.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
         const auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
         if (Api.internal.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token

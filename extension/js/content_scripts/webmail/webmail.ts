@@ -40,6 +40,7 @@ Catch.try(async () => {
           return emailFromAccountDropdown;
         }
       }
+      return undefined;
     };
 
     const getInsightsFromHostVariables = () => {
@@ -157,6 +158,7 @@ Catch.try(async () => {
           console.info('Loading for ' + acctEmail + ' (' + fullName + ')');
           return acctEmail;
         }
+        return undefined;
       },
       getUserFullName: () => fullName,
       getReplacer: () => replacer,
