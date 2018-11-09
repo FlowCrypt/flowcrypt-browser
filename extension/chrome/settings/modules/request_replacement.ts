@@ -24,15 +24,14 @@ Catch.try(async () => {
 
   const primaryPubkeyArmored = primaryKi.public;
   let keyserverRes: PubkeySearchResult;
-  let expectLongid: string;
 
-  const reqReplacement = async () => {
+  const reqReplacement = async (expectLongid: string) => {
     try {
       const keyImportUi = new KeyImportUi({ expectLongid, rejectKnown: true, checkSigning: true });
       const checkedOldKey = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
       if (checkedOldKey) {
         const reqDict: Dict<string> = {
-          'ATT': 'CRYPTUP', // todo - should be the original attester
+          'ATT': 'CRYPTUP',
           'ACT': 'REQUEST_REPLACEMENT',
           'ADD': Pgp.hash.doubleSha1Upper(acctEmail),
           'OLD': checkedOldKey.fingerprint,
@@ -75,13 +74,12 @@ Catch.try(async () => {
   if (!keyserverRes.pubkey || !keyserverRes.attested || Pgp.key.fingerprint(primaryPubkeyArmored) === Pgp.key.fingerprint(keyserverRes.pubkey)) {
     Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/keyserver.htm');
   } else { // email previously attested, and there indeed is a pubkey mismatch
-    expectLongid = Pgp.key.longid(keyserverRes.pubkey!)!;
     Xss.sanitizeRender('#status',
       `Original key KeyWords:<br/>
       <span class="good">${mnemonic(keyserverRes.longid!)}<br/>${Pgp.key.fingerprint(keyserverRes.pubkey, 'spaced')}</span>
     `);
     $('#step_2b_manual_enter').css('display', 'block');
-    $('.action_request_replacement').click(Ui.event.prevent('double', reqReplacement));
+    $('.action_request_replacement').click(Ui.event.prevent('double', () => reqReplacement(keyserverRes.longid!)));
   }
 
 })();
