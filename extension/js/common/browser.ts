@@ -279,14 +279,14 @@ export class Ui {
   public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide: "show" | "hide" | null = null) => {
     const buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
     const buttonShow = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-    const { hidePassphrases } = await Store.getGlobal(['hide_pass_phrases']);
+    const storage = await Store.getGlobal(['hide_pass_phrases']);
     let show: boolean;
     if (forceInitialShowOrHide === 'hide') {
       show = false;
     } else if (forceInitialShowOrHide === 'show') {
       show = true;
     } else {
-      show = !hidePassphrases;
+      show = !storage.hide_pass_phrases;
     }
     for (const id of passphraseInputIds) {
       const passphraseInput = $('#' + id);
