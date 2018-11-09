@@ -62,7 +62,7 @@ Catch.try(async () => {
     $('a.action_show').off().click(Ui.event.prevent('double', async (self) => {
       const [contact] = await Store.dbContactGet(null, [$(self).closest('tr').attr('email')!]); // defined above
       $('.hide_when_rendering_subpage').css('display', 'none');
-      Xss.sanitizeRender('h1', `'${backBtn}${space}${contact!.email}`); // should exist - from list of contacts
+      Xss.sanitizeRender('h1', `${backBtn}${space}${contact!.email}`); // should exist - from list of contacts
       if (contact!.client === 'cryptup') {
         Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
       } else {
