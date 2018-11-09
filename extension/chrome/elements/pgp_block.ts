@@ -100,7 +100,7 @@ Catch.try(async () => {
 
   const renderContent = async (htmlContent: string, isErr: boolean) => {
     if (!isErr && !isOutgoing) { // successfully opened incoming message
-      await Store.set(acctEmail, { successfully_received_at_leat_one_message: true });
+      await Store.setAcct(acctEmail, { successfully_received_at_leat_one_message: true });
     }
     if (!isErr) { // rendering message content
       const pgpBlock = $('#pgp_block').html(Xss.htmlSanitizeKeepBasicTags(htmlContent)); // xss-sanitized

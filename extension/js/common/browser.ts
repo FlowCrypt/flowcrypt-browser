@@ -302,11 +302,11 @@ export class Ui {
         if (passphraseInput.attr('type') === 'password') {
           $('#' + id).attr('type', 'text');
           Xss.sanitizeRender(target, buttonHide);
-          Store.set(null, { hide_pass_phrases: false }).catch(Catch.rejection);
+          Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.rejection);
         } else {
           $('#' + id).attr('type', 'password');
           Xss.sanitizeRender(target, buttonShow);
-          Store.set(null, { hide_pass_phrases: true }).catch(Catch.rejection);
+          Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.rejection);
         }
       }));
     }

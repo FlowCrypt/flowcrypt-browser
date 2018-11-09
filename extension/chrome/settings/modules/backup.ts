@@ -52,7 +52,7 @@ Catch.try(async () => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     displayBlock('loading');
-    const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider', 'microsoft_auth']);
+    const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider']);
     if (emailProvider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
@@ -266,7 +266,7 @@ Catch.try(async () => {
   };
 
   const writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
-    await Store.set(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
+    await Store.setAcct(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
     if (urlParams.action === 'setup') {
       window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail, action: 'finalize' });
     } else {
@@ -329,7 +329,7 @@ Catch.try(async () => {
 
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
     if (urlParams.action === 'setup') {
-      await Store.set(acctEmail, { key_backup_prompt: false });
+      await Store.setAcct(acctEmail, { key_backup_prompt: false });
       window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail });
     } else {
       if (parentTabId) {

@@ -69,7 +69,7 @@ export class Settings {
     if (typeof storage.attests_processed === 'undefined') {
       storage.attests_processed = [];
     }
-    await Store.set(acctEmail, storage);
+    await Store.setAcct(acctEmail, storage);
     BrowserMsg.send.bg.attestRequested({ acctEmail });
   }
 
@@ -85,7 +85,7 @@ export class Settings {
     } else if (!Value.is(attester).in(storage.attests_processed)) {
       storage.attests_processed.push(attester); // add attester as processed if not already there
     }
-    await Store.set(acctEmail, storage);
+    await Store.setAcct(acctEmail, storage);
   }
 
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
@@ -155,7 +155,7 @@ export class Settings {
   static refreshAcctAliases = async (acctEmail: string) => {
     const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const all = Value.arr.unique(addresses.concat(acctEmail));
-    await Store.set(acctEmail, { addresses: all });
+    await Store.setAcct(acctEmail, { addresses: all });
     return all;
   }
 
@@ -228,8 +228,8 @@ export class Settings {
             storageIndexesToChange.push(key.replace(oldAcctEmailIndexPrefix, ''));
           }
         }
-        const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange);
-        await Store.set(newAcctEmail, oldAcctStorage);
+        const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange as any);
+        await Store.setAcct(newAcctEmail, oldAcctStorage);
         for (const localStorageIndex of Object.keys(localStorage)) {
           if (localStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
             const v = localStorage.getItem(localStorageIndex);
@@ -377,7 +377,7 @@ export class Settings {
         alert('You\'re all set.');
         window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
       } else {
-        await Store.set(response.acctEmail, { email_provider: 'gmail' });
+        await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
       }
     } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
@@ -394,7 +394,7 @@ export class Settings {
     if (storage.setup_done && !storage.picture) {
       try {
         const { image } = await Api.google.plus.peopleMe(acctEmail);
-        await Store.set(acctEmail, { picture: image.url });
+        await Store.setAcct(acctEmail, { picture: image.url });
       } catch (e) {
         if (!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
           Catch.handleException(e);

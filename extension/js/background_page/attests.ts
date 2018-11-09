@@ -217,7 +217,7 @@ export class BgAttests {
       if (!Value.is(attester).in(storage.attests_processed)) {
         storage.attests_processed.push(attester); // add attester as processed if not already there
       }
-      await Store.set(acctEmail, storage);
+      await Store.setAcct(acctEmail, storage);
     }
   }
 
@@ -230,7 +230,7 @@ export class BgAttests {
       storage.attest_log = [{ attempt: 100, success: false, result: 'DELETED 100 LOGS' }];
     }
     storage.attest_log.push({ attempt: storage.attest_log.length + 1, packet: String(ar.attestPacketText), success, result: ar.message });
-    await Store.set(ar.acctEmail, storage);
+    await Store.setAcct(ar.acctEmail, storage);
     return ar;
   }
 

@@ -22,7 +22,7 @@ interface SetupOptions {
   submit_main: boolean;
   submit_all: boolean;
   setup_simple: boolean;
-  key_backup_prompt: number | boolean;
+  key_backup_prompt: number | false;
   recovered?: boolean;
   is_newly_created_key: boolean;
 }
@@ -50,9 +50,7 @@ Catch.try(async () => {
   await Ui.passphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
   await Ui.passphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
-  const storage = await Store.getAcct(acctEmail, [
-    'setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'microsoft_auth', 'addresses',
-  ]);
+  const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'addresses']);
 
   storage.email_provider = storage.email_provider || 'gmail';
   let acctEmailAttestedFingerprint: string | null = null;
@@ -91,7 +89,7 @@ Catch.try(async () => {
 
   const saveAndFillSubmitOption = async (addresses: string[]) => {
     allAddrs = Value.arr.unique(addresses.concat(acctEmail));
-    await Store.set(acctEmail, { addresses: allAddrs });
+    await Store.setAcct(acctEmail, { addresses: allAddrs });
     showSubmitAllAddrsOption(allAddrs);
   };
 
@@ -225,7 +223,7 @@ Catch.try(async () => {
   };
 
   const preFinalizeSetup = async (options: SetupOptions): Promise<void> => {
-    await Store.set(acctEmail, {
+    await Store.setAcct(acctEmail, {
       tmp_submit_main: options.submit_main,
       tmp_submit_all: options.submit_all,
       setup_simple: options.setup_simple,
@@ -242,7 +240,7 @@ Catch.try(async () => {
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, 'Failed to submit to Attester.\nThis may be due to internet connection issue.', () => finalizeSetup({ submit_main, submit_all }));
     }
-    await Store.set(acctEmail, {
+    await Store.setAcct(acctEmail, {
       setup_date: Date.now(),
       setup_done: true,
       cryptup_enabled: true,
@@ -290,7 +288,7 @@ Catch.try(async () => {
         return { full_name: '' };
       }
       const result = { full_name: me.displayName || '', locale: me.language, picture: me.image.url };
-      await Store.set(acctEmail, result);
+      await Store.setAcct(acctEmail, result);
       return result;
     } else {
       return { full_name: '' };
@@ -410,7 +408,7 @@ Catch.try(async () => {
   $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => displayBlock('step_2b_manual_enter')));
 
   $('#step_2b_manual_enter .action_save_private').click(Ui.event.handle(async () => {
-    const options = {
+    const options: SetupOptions = {
       full_name: '',
       passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
       key_backup_prompt: false,

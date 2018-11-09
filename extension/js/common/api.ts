@@ -731,7 +731,7 @@ export class Api {
       if (response.registered !== true) {
         throw new Error('account_login did not result in successful registration');
       }
-      await Store.set(null, { cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription });
+      await Store.setGlobal({ cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription });
       return { verified: response.verified === true, subscription: response.subscription };
     },
     accountCheck: (emails: string[]) => Api.internal.apiFcCall('account/check', {
@@ -768,7 +768,7 @@ export class Api {
         }
         if (Object.keys(localStorageUpdate).length) {
           Catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : null), response);
-          await Store.set(null, localStorageUpdate);
+          await Store.setGlobal(localStorageUpdate);
           return true;
         } else {
           return false;
@@ -795,7 +795,7 @@ export class Api {
         source: paymentSourceToken,
         product,
       });
-      await Store.set(null, { cryptup_account_subscription: response.subscription });
+      await Store.setGlobal({ cryptup_account_subscription: response.subscription });
       return response;
     },
     messagePresignFiles: async (atts: Att[], authMethod: FcAuthMethods): Promise<R.FcMsgPresignFiles> => {
@@ -983,7 +983,7 @@ export class Api {
       if (typeof tokensObj.refresh_token !== 'undefined') {
         toSave.google_token_refresh = tokensObj.refresh_token;
       }
-      await Store.set(acctEmail, toSave);
+      await Store.setAcct(acctEmail, toSave);
     },
     googleAuthGetTokens: (code: string) => $.ajax({
       url: Env.urlCreate(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'authorization_code', code, client_id: Api.GOOGLE_OAUTH2!.client_id, redirect_uri: Api.GOOGLE_OAUTH2!.url_redirect }),

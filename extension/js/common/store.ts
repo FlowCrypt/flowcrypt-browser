@@ -50,10 +50,7 @@ export interface SubscriptionAttempt extends Product {
   source: string | null;
 }
 
-export interface BaseStore extends RawStore {
-}
-
-export interface GlobalStore extends BaseStore {
+export type GlobalStore = {
   version?: number | null;
   account_emails?: string; // stringified array
   errors?: string[];
@@ -65,11 +62,13 @@ export interface GlobalStore extends BaseStore {
   dev_outlook_allow?: boolean;
   cryptup_subscription_attempt?: SubscriptionAttempt;
   admin_codes?: Dict<StoredAdminCode>;
-  // following are not used anymore but may still be present in storage:
-  // cryptup_account_verified?: boolean;
-}
+};
 
-export interface AccountStore extends BaseStore {
+export type GlobalIndex = 'version' | 'account_emails' | 'errors' | 'settings_seen' | 'hide_pass_phrases' |
+  'cryptup_account_email' | 'cryptup_account_uuid' | 'cryptup_account_subscription' | 'dev_outlook_allow' |
+  'cryptup_subscription_attempt' | 'admin_codes';
+
+export type AccountStore = {
   keys?: KeyInfo[];
   notification_setup_needed_dismissed?: boolean;
   email_provider?: EmailProvider;
@@ -99,10 +98,17 @@ export interface AccountStore extends BaseStore {
   attest_log?: StoredAttestLog[];
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
+  setup_date?: number;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
-}
+};
+
+export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
+  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'addresses_pks' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
+  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' | 'attests_requested' |
+  'attests_processed' | 'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'attest_log' | 'picture' |
+  'outgoing_language' | 'setup_date' | 'tmp_submit_main' | 'tmp_submit_all';
 
 export class Subscription implements SubscriptionInfo {
   active: boolean | null = null;
@@ -154,20 +160,20 @@ export class Store {
     }
   }
 
-  private static acctStorageObjKeysToOrig(acctOrAccts: string | string[], storageObj: RawStore): BaseStore | Dict<BaseStore> {
+  private static acctStorageObjKeysToOrig(acctOrAccts: string | string[], storageObj: RawStore): AccountStore | Dict<AccountStore> {
     if (typeof acctOrAccts === 'string') {
-      const fixedKeysObj: BaseStore = {};
+      const fixedKeysObj: AccountStore = {};
       for (const k of Object.keys(storageObj)) {
         const fixedKey = k.replace(Store.index(acctOrAccts as string, '') as string, ''); // checked it's a string above
         if (fixedKey !== k) {
-          fixedKeysObj[fixedKey] = storageObj[k];
+          fixedKeysObj[fixedKey as AccountIndex] = storageObj[k] as any;
         }
       }
       return fixedKeysObj;
     } else {
-      const resultsByAcct: Dict<BaseStore> = {};
+      const resultsByAcct: Dict<AccountStore> = {};
       for (const account of acctOrAccts) {
-        resultsByAcct[account] = Store.acctStorageObjKeysToOrig(account, storageObj) as BaseStore;
+        resultsByAcct[account] = Store.acctStorageObjKeysToOrig(account, storageObj);
       }
       return resultsByAcct;
     }
@@ -194,23 +200,23 @@ export class Store {
   }
 
   static async passphraseSave(storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) {
-    const storageKey = 'passphrase_' + longid;
+    const storageKey: AccountIndex = `passphrase_${longid}` as AccountIndex;
     if (storageType === 'session') {
       await Store.sessionSet(acctEmail, storageKey, passphrase);
     } else {
       if (typeof passphrase === 'undefined') {
         await Store.remove(acctEmail, [storageKey]);
       } else {
-        const toSave: Dict<string> = {};
+        const toSave: AccountStore = {};
         toSave[storageKey] = passphrase;
-        await Store.set(acctEmail, toSave);
+        await Store.setAcct(acctEmail, toSave);
       }
     }
   }
 
   static async passphraseGet(acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | null> {
-    const storageKey = 'passphrase_' + longid;
-    const storage = await Store.getAcct(acctEmail, [storageKey]);
+    const storageKey = `passphrase_${longid}` as AccountIndex;
+    const storage = await Store.getAcct(acctEmail, [storageKey as AccountIndex]);
     if (typeof storage[storageKey] === 'string') {
       return storage[storageKey] as string; // checked above
     } else {
@@ -257,29 +263,39 @@ export class Store {
       if (!updated) {
         keyinfos.push(Store.keysObj(newKeyArmored, keyinfos.length === 0));
       }
-      await Store.set(acctEmail, { keys: keyinfos });
+      await Store.setAcct(acctEmail, { keys: keyinfos });
     }
   }
 
   static async keysRemove(acctEmail: string, removeLongid: string): Promise<void> {
     const privateKeys = await Store.keysGet(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
-    await Store.set(acctEmail, { keys: filteredPrivateKeys });
+    await Store.setAcct(acctEmail, { keys: filteredPrivateKeys });
   }
 
   private static globalStorageIndexIfNull(account: string[] | string | null): string[] | string {
     return (account === null) ? Store.globalStorageScope : account;
   }
 
-  static set(acctEmail: string | null, values: BaseStore): Promise<void> {
-    const storageUpdate: Dict<any> = {};
+  static setAcct(acctEmail: string, values: AccountStore): Promise<void> {
+    const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
-      storageUpdate[Store.index(Store.globalStorageIndexIfNull(acctEmail), key) as string] = values[key];
+      const index = Store.index(Store.globalStorageIndexIfNull(acctEmail), key) as string;
+      storageUpdate[index] = values[key as AccountIndex];
     }
     return new Promise(resolve => chrome.storage.local.set(storageUpdate, () => resolve()));
   }
 
-  static getGlobal(keys: string[]): Promise<GlobalStore> {
+  static setGlobal(values: GlobalStore): Promise<void> {
+    const storageUpdate: RawStore = {};
+    for (const key of Object.keys(values)) {
+      const index = Store.index(Store.globalStorageIndexIfNull(null), key) as string;
+      storageUpdate[index] = values[key as GlobalIndex];
+    }
+    return new Promise(resolve => chrome.storage.local.set(storageUpdate, () => resolve()));
+  }
+
+  static getGlobal(keys: GlobalIndex[]): Promise<GlobalStore> {
     return new Promise(resolve => {
       chrome.storage.local.get(Store.index(Store.globalStorageScope, keys) as string[], (storageObj: RawStore) => {
         resolve(Store.acctStorageObjKeysToOrig(Store.globalStorageScope, storageObj) as GlobalStore);
@@ -297,11 +313,11 @@ export class Store {
       } else {
         s.errors.unshift(errMsg || String(err));
       }
-      Store.set(null, s).catch(console.error);
+      Store.setGlobal(s).catch(console.error);
     }).catch(console.error);
   }
 
-  static getAcct(acctEmail: string, keys: string[]): Promise<AccountStore> {
+  static getAcct(acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> {
     return new Promise(resolve => {
       chrome.storage.local.get(Store.index(acctEmail, keys) as string[], (storageObj: RawStore) => {
         resolve(Store.acctStorageObjKeysToOrig(acctEmail, storageObj) as AccountStore);
@@ -341,14 +357,14 @@ export class Store {
     const acctEmails = await Store.acctEmailsGet();
     if (!Value.is(acctEmail).in(acctEmails) && acctEmail) {
       acctEmails.push(acctEmail);
-      await Store.set(null, { account_emails: JSON.stringify(acctEmails) });
+      await Store.setGlobal({ account_emails: JSON.stringify(acctEmails) });
       BrowserMsg.send.bg.updateUninstallUrl();
     }
   }
 
   static async acctEmailsRemove(acctEmail: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await Store.acctEmailsGet();
-    await Store.set(null, { account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
+    await Store.setGlobal({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
     BrowserMsg.send.bg.updateUninstallUrl();
   }
 

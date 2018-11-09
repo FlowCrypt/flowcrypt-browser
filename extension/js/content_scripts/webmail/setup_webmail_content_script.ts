@@ -82,7 +82,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
-          notification_setup_needed_dismiss: () => Store.set(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
+          notification_setup_needed_dismiss: () => Store.setAcct(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
           action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
@@ -161,7 +161,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       while (true) {
         const fullName = webmailSpecific.getUserFullName();
         if (fullName) {
-          await Store.set(acctEmail, { fullName });
+          await Store.setAcct(acctEmail, { full_name: fullName });
           return;
         }
         await Ui.time.sleep(timeout, (window as ContentScriptWindow).TrySetDestroyableTimeout);

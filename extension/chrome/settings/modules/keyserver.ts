@@ -85,7 +85,7 @@ Catch.try(async () => {
     }));
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
       const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
-      await Store.set(acctEmail, { 'addresses': Value.arr.withoutVal(addresses || [], $(self).attr('email')!) });
+      await Store.setAcct(acctEmail, { 'addresses': Value.arr.withoutVal(addresses || [], $(self).attr('email')!) });
       window.location.reload();
     }));
     $('.request_replacement').click(Ui.event.prevent('double', self => {
@@ -103,7 +103,7 @@ Catch.try(async () => {
       Xss.sanitizeRender(self, Ui.spinner('green'));
       try {
         const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-        await Store.set(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
+        await Store.setAcct(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           alert('Need internet connection to finish. Please click the button again to retry.');

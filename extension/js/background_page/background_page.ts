@@ -29,7 +29,7 @@ chrome.runtime.onInstalled.addListener(event => {
   let db: IDBDatabase;
 
   await migrateGlobal();
-  await Store.set(null, { version: Catch.version('int') });
+  await Store.setGlobal({ version: Number(Catch.version('int')) });
   const storage = await Store.getGlobal(['settings_seen', 'errors']);
 
   const openExtensionTab = async (url: string) => {
@@ -112,7 +112,7 @@ chrome.runtime.onInstalled.addListener(event => {
 
   if (!storage.settings_seen) {
     await openSettingsPage('initial.htm'); // called after the very first installation of the plugin
-    await Store.set(null, { settings_seen: true });
+    await Store.setGlobal({ settings_seen: true });
   }
 
   try {

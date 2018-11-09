@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Storable, BaseStore } from '../../js/common/store.js';
+import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex } from '../../js/common/store.js';
 import { Value, Str, Dict } from '../../js/common/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Catch } from '../../js/common/catch.js';
@@ -67,14 +67,21 @@ Catch.try(async () => {
     $('.save').click(Ui.event.handle(async () => {
       try {
         const namespaceSel = $('.namespace');
-        const keySel = $('.key');
-        if (namespaceSel.val() === '-- namespace --' || $('.type').val() === '-- type --' || !keySel.val()) {
+        const keySelVal = $('.key').val() as string;
+        if (namespaceSel.val() === '-- namespace --' || $('.type').val() === '-- type --' || !keySelVal) {
           alert('Namespace, key and type need to be filled');
         } else {
-          const storageUpdate: BaseStore = {};
-          storageUpdate[keySel.val() as string] = JSON.parse($('.value').val() as string); // it's a text input
           const acctEmail = namespaceSel.val() === 'global' ? null : decodeURIComponent(namespaceSel.val() as string); // it's a text input
-          await Store.set(acctEmail, storageUpdate);
+          const newValue: Storable = JSON.parse($('.value').val() as string); // it's a text input
+          if (acctEmail === null) {
+            const globalStoreUpdate: GlobalStore = {};
+            globalStoreUpdate[keySelVal as GlobalIndex] = newValue as any;
+            await Store.setGlobal(globalStoreUpdate);
+          } else {
+            const accountStoreUpdate: AccountStore = {};
+            accountStoreUpdate[keySelVal as AccountIndex] = newValue as any;
+            await Store.setAcct(acctEmail, accountStoreUpdate);
+          }
           window.location.reload();
         }
       } catch (e) {

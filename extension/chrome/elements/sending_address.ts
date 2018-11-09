@@ -32,7 +32,7 @@ Catch.try(async () => {
     const chosenSendingAddr = $(target).val() as string;
     if (chosenSendingAddr !== addresses[0]) {
       const orderedAddrs = Value.arr.unique([chosenSendingAddr].concat(storage.addresses || []));
-      await Store.set(acctEmail, { addresses: orderedAddrs });
+      await Store.setAcct(acctEmail, { addresses: orderedAddrs });
       window.location.reload();
     }
   }));
@@ -40,7 +40,7 @@ Catch.try(async () => {
   $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (target, done) => {
     Xss.sanitizeRender(target, Ui.spinner('green'));
     const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-    await Store.set(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
+    await Store.setAcct(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
     window.location.reload();
     done();
   }));

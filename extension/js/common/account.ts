@@ -93,14 +93,14 @@ export class FcAcct {
   }
 
   registerNewDevice = async (acctEmail: string) => {
-    await Store.set(null, { cryptup_account_uuid: undefined });
+    await Store.setGlobal({ cryptup_account_uuid: undefined });
     this.eventHandlers.renderStatusText('checking..', true);
     return await this.register(acctEmail);
   }
 
   saveSubscriptionAttempt = async (product: Product, source: string | null) => {
     (product as any as SubscriptionAttempt).source = source;
-    await Store.set(null, { 'cryptup_subscription_attempt': product as any as SubscriptionAttempt });
+    await Store.setGlobal({ 'cryptup_subscription_attempt': product as any as SubscriptionAttempt });
   }
 
   parseTokenEmailText = (verifEmailText: string, storedUuidToCrossCheck?: string): string | undefined => {

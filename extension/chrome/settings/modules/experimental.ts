@@ -33,7 +33,7 @@ Catch.try(async () => {
     $('.email').text(acctEmail);
 
     $('.action_allow_outlook').change(Ui.event.handle(async target => {
-      await Store.set(null, { 'dev_outlook_allow': $(target).prop('checked') });
+      await Store.setGlobal({ 'dev_outlook_allow': $(target).prop('checked') });
       window.location.reload();
     }));
 
@@ -93,12 +93,12 @@ Catch.try(async () => {
     }));
 
     $('.action_make_google_auth_token_unusable').click(Ui.event.handle(async () => {
-      await Store.set(acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
+      await Store.setAcct(acctEmail, { google_token_access: 'flowcrypt_test_bad_access_token' });
       BrowserMsg.send.reload(parentTabId, {});
     }));
 
     $('.action_make_google_refresh_token_unusable').click(Ui.event.handle(async () => {
-      await Store.set(acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
+      await Store.setAcct(acctEmail, { google_token_refresh: 'flowcrypt_test_bad_refresh_token' });
       BrowserMsg.send.reload(parentTabId, {});
     }));
 
@@ -154,7 +154,7 @@ Catch.try(async () => {
         'acctEmail: ' + acctEmail,
       ];
       const globalStorage = await Store.getGlobal(['version']);
-      const acctStorage = await Store.getAcct(acctEmail, ['is_newly_created_key', 'setup_date', 'version', 'full_name']);
+      const acctStorage = await Store.getAcct(acctEmail, ['is_newly_created_key', 'setup_date', 'full_name']);
       text.push('global_storage: ' + JSON.stringify(globalStorage));
       text.push('account_storage: ' + JSON.stringify(acctStorage));
       text.push('');

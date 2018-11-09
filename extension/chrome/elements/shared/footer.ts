@@ -19,7 +19,7 @@ Catch.try(async () => {
   const saveFooterIfHasSubscriptionAndRequested = async (requested: boolean, footer: string) => {
     const subscription = await Store.subscription();
     if (requested && subscription.active) {
-      await Store.set(acctEmail, { email_footer: footer });
+      await Store.setAcct(acctEmail, { email_footer: footer });
     }
   };
 

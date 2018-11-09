@@ -71,7 +71,7 @@ const legacyLocalStorageRead = (value: string) => {
 //     const unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
 //     if (unique.length < storage.addresses.length) {
 //       storage.addresses = unique;
-//       await Store.set(acctEmail, storage); // fix duplicate email addresses
+//       await Store.setAcct(acctEmail, storage); // fix duplicate email addresses
 //     }
 //     try {
 //       const { results } = await Api.attester.lookupEmail(storage.addresses);
@@ -81,7 +81,7 @@ const legacyLocalStorageRead = (value: string) => {
 //           addressesKeyserver.push(result.email);
 //         }
 //       }
-//       await Store.set(acctEmail, { addressesKeyserver });
+//       await Store.setAcct(acctEmail, { addressesKeyserver });
 //     } catch (e) {
 //       if (!Api.err.isNetErr(e)) {
 //         Catch.handleException(e);
@@ -112,7 +112,7 @@ const legacyLocalStorageRead = (value: string) => {
 //       }
 //     }
 //   }
-//   await Store.set(acctEmail, { addressesPks });
+//   await Store.setAcct(acctEmail, { addressesPks });
 // };
 
 const reportUsefulErrs = (e: any) => {

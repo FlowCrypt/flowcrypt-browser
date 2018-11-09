@@ -8,6 +8,7 @@ import { Pgp } from '../../../js/common/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api.js';
 import { Catch } from '../../../js/common/catch.js';
+import { Value } from '../../../js/common/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -40,8 +41,11 @@ Catch.try(async () => {
   };
 
   const onMsgLanguageUserChange = async () => {
-    await Store.set(acctEmail, { outgoing_language: $('.password_message_language').val() });
-    window.location.reload();
+    const outgoingLanguage = $('.password_message_language').val() as string;
+    if (Value.is(outgoingLanguage).in(['EN', 'DE'])) {
+      await Store.setAcct(acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
+      window.location.reload();
+    }
   };
 
   const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
@@ -85,7 +89,7 @@ Catch.try(async () => {
   $('#hide_message_password').prop('checked', storage.hide_message_password === true);
   $('.password_message_language').val(storage.outgoing_language || 'EN');
   $('#hide_message_password').change(Ui.event.handle(async target => {
-    await Store.set(acctEmail, { hide_message_password: $(target).is(':checked') });
+    await Store.setAcct(acctEmail, { hide_message_password: $(target).is(':checked') });
     window.location.reload();
   }));
 

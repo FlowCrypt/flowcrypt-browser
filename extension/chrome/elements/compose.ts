@@ -32,8 +32,9 @@ Catch.try(async () => {
   let subject = Env.urlParamRequire.optionalString(urlParams, 'subject') || '';
 
   const subscriptionWhenPageWasOpened = await Store.subscription();
-  const storageKeys = ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'];
-  const storage = await Store.getAcct(acctEmail, storageKeys);
+  const storage = await Store.getAcct(acctEmail, [
+    'google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'
+  ]);
 
   await (async () => { // attempt to recover missing params
     if (!isReplyBox || (threadId && threadId !== threadMsgId && to.length && from && subject)) {
@@ -109,7 +110,7 @@ Catch.try(async () => {
       try {
         const response = await Api.gmail.msgList(acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
         if (response.messages) {
-          await Store.set(acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
+          await Store.setAcct(acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
           return true;
         } else {
           return false;
@@ -129,7 +130,7 @@ Catch.try(async () => {
     storageEmailFooterGet: () => storage.email_footer || null,
     storageEmailFooterSet: async (footer: string | null) => {
       storage.email_footer = footer;
-      await Store.set(acctEmail, { email_footer: footer });
+      await Store.setAcct(acctEmail, { email_footer: footer });
     },
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
@@ -150,7 +151,7 @@ Catch.try(async () => {
         } else {
           delete drafts[threadId];
         }
-        await Store.set(acctEmail, { drafts_reply: drafts });
+        await Store.setAcct(acctEmail, { drafts_reply: drafts });
       } else { // it's a new message
         const drafts = draftStorage.drafts_compose || {};
         if (storeIfTrue) {
@@ -158,7 +159,7 @@ Catch.try(async () => {
         } else {
           delete drafts[draftId];
         }
-        await Store.set(acctEmail, { drafts_compose: drafts });
+        await Store.setAcct(acctEmail, { drafts_compose: drafts });
       }
     },
     storagePassphraseGet: async () => {
@@ -175,7 +176,7 @@ Catch.try(async () => {
         date: Date.now(),
         codes: [msgAdminCode].concat(attAdminCodes || []),
       };
-      await Store.set(null, adminCodeStorage);
+      await Store.setGlobal(adminCodeStorage);
     },
     storageContactGet: (email: string[]) => Store.dbContactGet(null, email),
     storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Store.dbContactUpdate(null, email, update),
