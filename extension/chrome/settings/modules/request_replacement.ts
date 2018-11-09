@@ -75,10 +75,10 @@ Catch.try(async () => {
   if (!keyserverRes.pubkey || !keyserverRes.attested || Pgp.key.fingerprint(primaryPubkeyArmored) === Pgp.key.fingerprint(keyserverRes.pubkey)) {
     Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/keyserver.htm');
   } else { // email previously attested, and there indeed is a pubkey mismatch
-    expectLongid = Pgp.key.fingerprint(keyserverRes.pubkey!)!;
+    expectLongid = Pgp.key.longid(keyserverRes.pubkey!)!;
     Xss.sanitizeRender('#status',
       `Original key KeyWords:<br/>
-      <span class="good">${mnemonic(Pgp.key.longid(keyserverRes.pubkey)!)}<br/>${Pgp.key.fingerprint(keyserverRes.pubkey, 'spaced')}</span>
+      <span class="good">${mnemonic(keyserverRes.longid!)}<br/>${Pgp.key.fingerprint(keyserverRes.pubkey, 'spaced')}</span>
     `);
     $('#step_2b_manual_enter').css('display', 'block');
     $('.action_request_replacement').click(Ui.event.prevent('double', reqReplacement));
