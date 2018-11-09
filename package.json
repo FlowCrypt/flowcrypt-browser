@@ -31,7 +31,9 @@
     "prebuild": "rm -rf ./build && ./node_modules/typescript/bin/tsc --project conf/tsconfig.tooling.json",
     "build": "gulp --gulpfile ./conf/gulpfile.js",
     "pretest": "npm run-script build --silent && ./node_modules/typescript/bin/tsc --project conf/tsconfig.test.json",
-    "test": "npm run-script test_0_tslint && npm run-script test_1_patterns && npm run-script test_2_puppeteer"
+    "test": "npm run-script test_0_tslint && npm run-script test_1_patterns && npm run-script test_2_puppeteer",
+    "release": "npm run-script prebuild && gulp --gulpfile ./conf/gulpfile.js release",
+    "run_firefox": "npm run-script build && web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes"
   },
   "repository": {
     "type": "git",
