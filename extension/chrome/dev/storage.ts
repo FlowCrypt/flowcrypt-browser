@@ -46,7 +46,7 @@ Catch.try(async () => {
   chrome.storage.local.get(storage => {
     let realFilter: string;
     if (urlParams.filter) {
-      realFilter = Store.index(urlParams.filter as string, urlParams.keys as string || '') as string;
+      realFilter = Store.singleScopeRawIndex(urlParams.filter as string, urlParams.keys as string || '');
     } else {
       realFilter = '';
     }

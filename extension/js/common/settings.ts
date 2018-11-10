@@ -168,7 +168,7 @@ export class Settings {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToRemove: string[] = [];
-    const filter = Store.index(acctEmail, '') as string;
+    const filter = Store.singleScopeRawIndex(acctEmail, '');
     if (!filter) {
       throw new Error('Filter is empty for account_email"' + acctEmail + '"');
     }
@@ -206,8 +206,8 @@ export class Settings {
       throw new Error(`"${oldAcctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToChange: string[] = [];
-    const oldAcctEmailIndexPrefix = Store.index(oldAcctEmail, '') as string;
-    const newAcctEmailIndexPrefix = Store.index(newAcctEmail, '') as string;
+    const oldAcctEmailIndexPrefix = Store.singleScopeRawIndex(oldAcctEmail, '');
+    const newAcctEmailIndexPrefix = Store.singleScopeRawIndex(newAcctEmail, '');
     // in case the destination email address was already set up with an account, recover keys and pass phrases before it's overwritten
     const destAccountPrivateKeys = await Store.keysGet(newAcctEmail);
     const destAcctPassPhrases: Dict<string> = {};

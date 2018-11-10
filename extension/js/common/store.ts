@@ -143,45 +143,32 @@ export class Store {
   private static globalStorageScope = 'global';
   private static dbQueryKeys = ['limit', 'substring', 'has_pgp'];
 
-  static index(acctkeyOrList: string | string[], key: string | string[]) {
-    if (Array.isArray(acctkeyOrList)) {
-      let allResults: string[] = [];
-      for (const acctKey of acctkeyOrList) {
-        allResults = allResults.concat(Store.index(acctKey, key));
-      }
-      return allResults;
-    } else {
-      const prefix = 'cryptup_' + acctkeyOrList.replace(/[^A-Za-z0-9]+/g, '').toLowerCase() + '_';
-      if (Array.isArray(key)) {
-        return key.map(k => prefix + k);
-      } else {
-        return prefix + key;
-      }
+  static singleScopeRawIndex = (scope: string, key: string) => `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
+
+  private static singleScopeRawIndexArr = (scope: string, keys: string[]) => keys.map(key => Store.singleScopeRawIndex(scope, key));
+
+  private static manyScopesRawIndexArr = (scopes: string[], keys: string[]) => {
+    let allResults: string[] = [];
+    for (const scope of scopes) {
+      allResults = allResults.concat(Store.singleScopeRawIndexArr(scope, keys));
     }
+    return allResults;
   }
 
-  private static acctStorageObjKeysToOrig(acctOrAccts: string | string[], storageObj: RawStore): AccountStore | Dict<AccountStore> {
-    if (typeof acctOrAccts === 'string') {
-      const fixedKeysObj: AccountStore = {};
-      for (const k of Object.keys(storageObj)) {
-        const fixedKey = k.replace(Store.index(acctOrAccts as string, '') as string, ''); // checked it's a string above
-        if (fixedKey !== k) {
-          fixedKeysObj[fixedKey as AccountIndex] = storageObj[k] as any;
-        }
+  private static buildSingleAccountStoreFromRawResults(scope: string, storageObj: RawStore): AccountStore {
+    const accountStore: AccountStore = {};
+    for (const k of Object.keys(storageObj)) {
+      const fixedKey = k.replace(Store.singleScopeRawIndex(scope, ''), '');
+      if (fixedKey !== k) { // the scope matches and was thus removed from the raw index
+        accountStore[fixedKey as AccountIndex] = storageObj[k] as any;
       }
-      return fixedKeysObj;
-    } else {
-      const resultsByAcct: Dict<AccountStore> = {};
-      for (const account of acctOrAccts) {
-        resultsByAcct[account] = Store.acctStorageObjKeysToOrig(account, storageObj);
-      }
-      return resultsByAcct;
     }
+    return accountStore;
   }
 
   static async sessionGet(acctEmail: string, key: string): Promise<string | null> {
     if (Env.isBackgroundPage()) {
-      return window.sessionStorage.getItem(Store.index(acctEmail, key) as string);
+      return window.sessionStorage.getItem(Store.singleScopeRawIndex(acctEmail, key));
     } else {
       return await BrowserMsg.send.await.bg.sessionGet({ acctEmail, key });
     }
@@ -190,9 +177,9 @@ export class Store {
   static async sessionSet(acctEmail: string, key: string, value: string | undefined): Promise<void> {
     if (Env.isBackgroundPage()) {
       if (typeof value !== 'undefined') {
-        sessionStorage.setItem(Store.index(acctEmail, key) as string, String(value));
+        sessionStorage.setItem(Store.singleScopeRawIndex(acctEmail, key), String(value));
       } else {
-        sessionStorage.removeItem(Store.index(acctEmail, key) as string);
+        sessionStorage.removeItem(Store.singleScopeRawIndex(acctEmail, key));
       }
     } else {
       await BrowserMsg.send.await.bg.sessionSet({ acctEmail, key, value });
@@ -273,14 +260,10 @@ export class Store {
     await Store.setAcct(acctEmail, { keys: filteredPrivateKeys });
   }
 
-  private static globalStorageIndexIfNull(account: string[] | string | null): string[] | string {
-    return (account === null) ? Store.globalStorageScope : account;
-  }
-
   static setAcct(acctEmail: string, values: AccountStore): Promise<void> {
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
-      const index = Store.index(Store.globalStorageIndexIfNull(acctEmail), key) as string;
+      const index = Store.singleScopeRawIndex(acctEmail, key);
       storageUpdate[index] = values[key as AccountIndex];
     }
     return new Promise(resolve => chrome.storage.local.set(storageUpdate, () => resolve()));
@@ -289,7 +272,7 @@ export class Store {
   static setGlobal(values: GlobalStore): Promise<void> {
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
-      const index = Store.index(Store.globalStorageIndexIfNull(null), key) as string;
+      const index = Store.singleScopeRawIndex(Store.globalStorageScope, key);
       storageUpdate[index] = values[key as GlobalIndex];
     }
     return new Promise(resolve => chrome.storage.local.set(storageUpdate, () => resolve()));
@@ -297,8 +280,8 @@ export class Store {
 
   static getGlobal(keys: GlobalIndex[]): Promise<GlobalStore> {
     return new Promise(resolve => {
-      chrome.storage.local.get(Store.index(Store.globalStorageScope, keys) as string[], (storageObj: RawStore) => {
-        resolve(Store.acctStorageObjKeysToOrig(Store.globalStorageScope, storageObj) as GlobalStore);
+      chrome.storage.local.get(Store.singleScopeRawIndexArr(Store.globalStorageScope, keys), (storageObj: RawStore) => {
+        resolve(Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore);
       });
     });
   }
@@ -319,22 +302,26 @@ export class Store {
 
   static getAcct(acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> {
     return new Promise(resolve => {
-      chrome.storage.local.get(Store.index(acctEmail, keys) as string[], (storageObj: RawStore) => {
-        resolve(Store.acctStorageObjKeysToOrig(acctEmail, storageObj) as AccountStore);
+      chrome.storage.local.get(Store.singleScopeRawIndexArr(acctEmail, keys), (storageObj: RawStore) => {
+        resolve(Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj));
       });
     });
   }
 
   static getAccounts(acctEmails: string[], keys: string[]): Promise<Dict<AccountStore>> {
     return new Promise(resolve => {
-      chrome.storage.local.get(Store.index(acctEmails, keys) as string[], (storageObj: RawStore) => {
-        resolve(Store.acctStorageObjKeysToOrig(acctEmails, storageObj) as Dict<AccountStore>);
+      chrome.storage.local.get(Store.manyScopesRawIndexArr(acctEmails, keys), (storageObj: RawStore) => {
+        const resultsByAcct: Dict<AccountStore> = {};
+        for (const account of acctEmails) {
+          resultsByAcct[account] = Store.buildSingleAccountStoreFromRawResults(account, storageObj);
+        }
+        resolve(resultsByAcct);
       });
     });
   }
 
   static async remove(acctEmail: string | null, keys: string[]) {
-    return new Promise(resolve => chrome.storage.local.remove(Store.index(Store.globalStorageIndexIfNull(acctEmail), keys), () => resolve()));
+    return new Promise(resolve => chrome.storage.local.remove(Store.singleScopeRawIndexArr(acctEmail || Store.globalStorageScope, keys), () => resolve()));
   }
 
   static async acctEmailsGet(): Promise<string[]> {
