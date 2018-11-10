@@ -88,6 +88,10 @@ export class BgAttests {
             } else if (Api.err.isServerErr(e)) {
               console.info('cannot fetch attest emails - Google server error ' + acctEmail);
               return;
+            } else if (Api.err.isMailOrAcctDisabled(e)) {
+              await BgAttests.addAttestLog(false, new AttestError('cannot fetch attest emails - Account or Gmail disabled: ' + acctEmail, null, acctEmail));
+              BgAttests.stopWatching(acctEmail);
+              return;
             } else {
               throw e;
             }

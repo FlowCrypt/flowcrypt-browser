@@ -173,6 +173,14 @@ export class Api {
       }
       return false;
     },
+    isMailOrAcctDisabled: (e: Thrown): boolean => {
+      if (Api.err.isBadReq(e) && typeof e.responseText === 'string') {
+        if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
+          return true;
+        }
+      }
+      return false;
+    },
     isNotFound: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
     isBadReq: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
     isServerErr: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
