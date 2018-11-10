@@ -2,65 +2,21 @@
 
 'use strict';
 
-import { FlatTypes, KeyInfo } from '../common/store.js';
-import { Value, Dict } from '../common/common.js';
+import { Value } from '../common/common.js';
 import { Api } from '../common/api.js';
 import { Catch } from '../common/catch.js';
 
 // declare const openpgp: typeof OpenPGP;
 
 export const migrateGlobal = async () => {
-  await migrateLocalStorageToExtensionStorage();
+  if (window.localStorage.length > 0) {
+    // a very long time ago, this extension used to store values in localStorage
+    // for a very long time, there used to be a procedure to migrate this localStorage into current form of storage
+    // not anymore. users who had this extension disabled the whole time and now re-enabled will have to set it up again
+    window.localStorage.clear();
+  }
   // await accountUpdateStatusKeyserver(acctEmail);
   // await accountUpdateStatusPks(acctEmail);
-};
-
-const migrateLocalStorageToExtensionStorage = () => new Promise(resolve => {
-  // todo - deprecate and show error like dberror
-  if (window.localStorage.length === 0) {
-    resolve(); // nothing in localStorage
-  } else {
-    const values: Dict<FlatTypes> = {};
-    for (const legacyStorageKey of Object.keys(localStorage)) {
-      const value = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey)!);
-      if (legacyStorageKey === 'settings_seen') {
-        values.cryptup_global_settings_seen = true;
-      } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_keys$/g)) {
-        values[legacyStorageKey] = value;
-      } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_master_passphrase$/g)) {
-        try {
-          const primaryLongid = legacyLocalStorageRead(localStorage.getItem(legacyStorageKey.replace('master_passphrase', 'keys'))!).filter((ki: KeyInfo) => ki.primary)[0].longid;
-          values[legacyStorageKey.replace('master_passphrase', 'passphrase_' + primaryLongid)] = value;
-        } catch (e) {
-          // this would fail if user manually edited storage. Defensive coding in case that crashes migration. They'd need to enter their phrase again.
-        }
-      } else if (legacyStorageKey.match(/^cryptup_[a-z0-9]+_passphrase_[0-9A-F]{16}$/g)) {
-        values[legacyStorageKey] = value;
-      }
-    }
-    chrome.storage.local.set(values, () => {
-      localStorage.clear();
-      resolve();
-    });
-  }
-});
-
-const legacyLocalStorageRead = (value: string) => {
-  if (typeof value === 'undefined') {
-    return value;
-  } else if (value === 'null#null') {
-    return null;
-  } else if (value === 'bool#true') {
-    return true;
-  } else if (value === 'bool#false') {
-    return false;
-  } else if (value.indexOf('int#') === 0) {
-    return Number(value.replace(/^int#/, ''));
-  } else if (value.indexOf('json#') === 0) {
-    return JSON.parse(value.replace(/^json#/, ''));
-  } else {
-    return value.replace(/^str#/, '');
-  }
 };
 
 // const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks which emails were registered on Attester
