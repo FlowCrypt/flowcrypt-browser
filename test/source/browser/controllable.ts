@@ -2,7 +2,7 @@
 import { Page, ElementHandle, Frame, Dialog } from 'puppeteer';
 import { Util } from '../util';
 
-let jQuery: any;
+declare const jQuery: any;
 
 abstract class ControllableBase {
 
@@ -56,9 +56,9 @@ abstract class ControllableBase {
   public attr = async (elHandle: ElementHandle, name: string): Promise<string> => await (await elHandle.getProperty(name)).jsonValue();
 
   public waitAll = async (selector: string | string[], { timeout = 20, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
-    let selectors = this.selsAsProcessedArr(selector);
+    const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
-    for (let selector of selectors) {
+    for (const selector of selectors) {
       this.log(`wait_all:2:${selector}`);
       if (this.isXpath(selector)) {
         this.log(`wait_all:3:${selector}`);
@@ -75,12 +75,12 @@ abstract class ControllableBase {
 
   public waitAny = async (selector: string | string[], { timeout = 20, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
     timeout = Math.max(timeout, 1);
-    let selectors = this.selsAsProcessedArr(selector);
+    const selectors = this.selsAsProcessedArr(selector);
     while (timeout-- > 0) {
       try {
-        for (let selector of selectors) {
-          let elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
-          for (let element of elements) {
+        for (const selector of selectors) {
+          const elements = await (this.isXpath(selector) ? this.target.$x(selector) : this.target.$$(selector));
+          for (const element of elements) {
             if ((await element.boundingBox()) !== null || !visible) { // element is visible
               return element;
             }
@@ -98,7 +98,7 @@ abstract class ControllableBase {
 
   public waitTillGone = async (selector: string | string[], { timeout = 5 }: { timeout?: number } = { timeout: 30 }) => {
     let secondsLeft = timeout;
-    let selectors = Array.isArray(selector) ? selector : [selector];
+    const selectors = Array.isArray(selector) ? selector : [selector];
     while (secondsLeft-- >= 0) {
       try {
         await this.waitAny(selectors, { timeout: 0 }); // if this fails, that means there are none left: return success
@@ -116,7 +116,7 @@ abstract class ControllableBase {
 
   public click = async (selector: string) => {
     this.log(`click:1:${selector}`);
-    let e = await this.element(selector);
+    const e = await this.element(selector);
     this.log(`click:2:${selector}`);
     if (!e) {
       throw Error(`Element not found: ${selector}`);
@@ -127,7 +127,7 @@ abstract class ControllableBase {
   }
 
   public type = async (selector: string, text: string, letterByLetter = false) => {
-    let e = await this.element(selector);
+    const e = await this.element(selector);
     if (!e) {
       throw Error(`Element not found: ${selector}`);
     }
@@ -135,7 +135,7 @@ abstract class ControllableBase {
       await e.type(text);
     } else {
       await this.target.evaluate((s, t) => {
-        let e = document.querySelector(s);
+        const e = document.querySelector(s);
         e[e.tagName === 'DIV' ? 'innerText' : 'value'] = t;
       }, this.selector(selector), text.substring(0, text.length - 10));
       await e.type(text.substring(text.length - 10, text.length));
@@ -144,7 +144,7 @@ abstract class ControllableBase {
 
   public value = async (selector: string): Promise<string> => {
     return await this.target.evaluate((s) => {
-      let e = document.querySelector(s); // this will get evaluated in the browser
+      const e = document.querySelector(s); // this will get evaluated in the browser
       if (e.tagName === 'SELECT') {
         return e.options[e.selectedIndex].value;
       } else {
@@ -172,7 +172,7 @@ abstract class ControllableBase {
   }
 
   public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false }: { delay?: number, confirmGone?: boolean, retryErrs?: boolean } = {}) => {
-    for (let i of [1, 2, 3]) {
+    for (const i of [1, 2, 3]) {
       this.log(`wait_and_click(i${i}):1:${selector}`);
       await this.waitAll(selector);
       this.log(`wait_and_click(i${i}):2:${selector}`);
@@ -184,7 +184,7 @@ abstract class ControllableBase {
         this.log(`wait_and_click(i${i}):5:${selector}`);
         break;
       } catch (e) {
-        this.log(`wait_and_click(i${i}):6:err(${e.message}):${selector}`);
+        this.log(`wait_and_click(i${i}):6:err(${String(e)}):${selector}`);
         if (e.message === 'Node is either not visible or not an HTMLElement') { // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
             throw e;
@@ -207,10 +207,10 @@ abstract class ControllableBase {
     if (sleep) {
       await Util.sleep(sleep);
     }
-    let matchingLinks = [];
-    for (let iframe of await this.target.$$('iframe')) {
-      let srcHandle = await iframe.getProperty('src');
-      let src = await srcHandle.jsonValue() as string;
+    const matchingLinks = [];
+    for (const iframe of await this.target.$$('iframe')) {
+      const srcHandle = await iframe.getProperty('src');
+      const src = await srcHandle.jsonValue() as string;
       if (urlMatchables.filter(m => src.indexOf(m) !== -1).length === urlMatchables.length) {
         matchingLinks.push(src);
       }
@@ -230,8 +230,8 @@ abstract class ControllableBase {
     } else {
       throw Error(`Unknown this.target.constructor.name: ${this.target.constructor.name}`);
     }
-    let frame = frames.find(frame => {
-      for (let fragment of urlMatchables) {
+    const frame = frames.find(frame => {
+      for (const fragment of urlMatchables) {
         if (frame.url().indexOf(fragment) === -1) {
           return false;
         }

@@ -3,7 +3,6 @@ import { launch } from "puppeteer";
 import { BrowserHandle } from './browser_handle';
 import { Util } from "../util";
 import * as ava from 'ava';
-import { resolve } from "url";
 import { GlobalBrowser } from "../test";
 
 class TimeoutError extends Error { }
@@ -23,7 +22,7 @@ export class BrowserPool {
   public newBrowserHandle = async (closeInitialPage = true) => {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
-    let args = [
+    const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
       '--disable-features=site-per-process',
@@ -32,8 +31,8 @@ export class BrowserPool {
       `--window-size=${this.width + 10},${this.height + 132}`,
     ];
     // to run headless-like: "xvfb-run node test.js"
-    let browser = await launch({ args, headless: false, slowMo: 50, devtools: false });
-    let handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
+    const browser = await launch({ args, headless: false, slowMo: 50, devtools: false });
+    const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       await this.closeInitialExtensionPage(handle);
     }
@@ -41,10 +40,10 @@ export class BrowserPool {
   }
 
   public getExtensionId = async (): Promise<string> => {
-    let browser = await this.newBrowserHandle(false);
-    let initialPage = await browser.newPageTriggeredBy(() => null); // the page triggered on its own
-    let url = initialPage.page.url();
-    let match = url.match(/[a-z]{32}/);
+    const browser = await this.newBrowserHandle(false);
+    const initialPage = await browser.newPageTriggeredBy(() => null); // the page triggered on its own
+    const url = initialPage.page.url();
+    const match = url.match(/[a-z]{32}/);
     if (match !== null) {
       await browser.close();
       return match[0];
@@ -53,7 +52,7 @@ export class BrowserPool {
   }
 
   public withNewBrowser = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) => {
-    let browser = await this.newBrowserHandle();
+    const browser = await this.newBrowserHandle();
     try {
       await cb(browser, t);
     } finally {
@@ -68,9 +67,9 @@ export class BrowserPool {
   })
 
   public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
-    for (let i of [1, 2, 3]) {
+    for (const i of [1, 2, 3]) {
       try {
-        let browser = await this.newBrowserHandle();
+        const browser = await this.newBrowserHandle();
         try {
           return await this.cbWithTimeout(async () => await cb(browser, t), timeout);
         } finally {
@@ -79,7 +78,7 @@ export class BrowserPool {
         }
       } catch (e) {
         if (i < 3) {
-          console.log(`Retrying: ${t.title} (${e.message})\n${e.stack}`);
+          console.log(`Retrying: ${t.title} (${String(e)})\n${e.stack}`);
         } else {
           throw e;
         }
@@ -89,7 +88,7 @@ export class BrowserPool {
 
   // tslint:disable-next-line:max-line-length
   public withGlobalBrowserTimeoutAndRetry = async (globalBrowser: GlobalBrowser, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
-    for (let i of [1, 2, 3]) {
+    for (const i of [1, 2, 3]) {
       try {
         await globalBrowser.beforeEachTest();
         await globalBrowser.browser!.closeAllPages();
@@ -101,7 +100,7 @@ export class BrowserPool {
         }
       } catch (e) {
         if (i < 3) {
-          console.log(`Retrying: ${t.title} (${e.message})\n${e.stack}`);
+          console.log(`Retrying: ${t.title} (${String(e)})\n${e.stack}`);
         } else {
           throw e;
         }
@@ -110,7 +109,7 @@ export class BrowserPool {
   }
 
   private closeInitialExtensionPage = async (browser: BrowserHandle) => {
-    let initialPage = await browser.newPageTriggeredBy(() => null); // the page triggered on its own
+    const initialPage = await browser.newPageTriggeredBy(() => null); // the page triggered on its own
     await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
     await initialPage.close();
   }
