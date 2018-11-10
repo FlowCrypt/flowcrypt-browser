@@ -904,13 +904,13 @@ export class KeyImportUi {
     attach.initAttDialog('fineuploader', 'fineuploader_button');
     attach.setAttAddedCb(file => {
       let k;
-      if (Value.is(Pgp.armor.headers('privateKey').begin).in(file.as_text())) {
-        const firstPrv = Pgp.armor.detectBlocks(file.as_text()).blocks.filter(b => b.type === 'privateKey')[0];
+      if (Value.is(Pgp.armor.headers('privateKey').begin).in(file.asText())) {
+        const firstPrv = Pgp.armor.detectBlocks(file.asText()).blocks.filter(b => b.type === 'privateKey')[0];
         if (firstPrv) {
           k = openpgp.key.readArmored(firstPrv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
         }
       } else {
-        k = openpgp.key.read(file.as_bytes()).keys[0];
+        k = openpgp.key.read(file.asBytes()).keys[0];
       }
       if (typeof k !== 'undefined') {
         $('.input_private_key').val(k.armor()).change().prop('disabled', true);
@@ -1055,7 +1055,7 @@ export class AttUI {
   private getLimits: () => AttLimits;
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
-  private attAddedCb: (r: any) => void;
+  private attAddedCb: (r: Att) => void;
 
   constructor(getLimits: () => AttLimits) {
     this.getLimits = getLimits;
@@ -1080,7 +1080,7 @@ export class AttUI {
     });
   }
 
-  setAttAddedCb = (cb: (r: any) => void) => {
+  setAttAddedCb = (cb: (r: Att) => void) => {
     this.attAddedCb = cb;
   }
 
