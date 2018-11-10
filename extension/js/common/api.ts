@@ -4,8 +4,8 @@
 
 import { Store, GlobalStore, Serializable, AccountStore, Contact } from './store.js';
 import { Value, Str, Dict, StandardError } from './common.js';
-import { Pgp } from './pgp.js';
-import { FlowCryptManifest, BrowserMsg, BrowserWidnow, FcWindow, Bm, GoogleAuthWindowResult$result } from './extension.js';
+import { Pgp, FormatError } from './pgp.js';
+import { FlowCryptManifest, BrowserMsg, BrowserWidnow, Bm, GoogleAuthWindowResult$result } from './extension.js';
 import { Ui, Env } from './browser.js';
 import { Att } from './att.js';
 import { Mime, SendableMsgBody, FlatHeaders } from './mime.js';
@@ -14,7 +14,6 @@ import { Catch } from './catch.js';
 
 declare const openpgp: typeof OpenPGP;
 
-type Thrown = Error | StandardError | any;
 type ParsedAttest$content = {
   [key: string]: string | undefined; action?: string; attester?: string; email_hash?: string;
   fingerprint?: string; fingerprint_old?: string; random?: string;
@@ -32,7 +31,16 @@ type ReqFmt = 'JSON' | 'FORM';
 type ResFmt = 'json';
 type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 type ProviderContactsResults = { new: Contact[], all: Contact[] };
+type RawAjaxError = {
+  // getAllResponseHeaders?: () => any,
+  // getResponseHeader?: (e: string) => any,
+  readyState: number,
+  responseText?: "",
+  status?: number,
+  statusText?: string,
+};
 
+export type ChunkedCb = (r: ProviderContactsResults) => void;
 export type AuthReq = { tabId: string, acctEmail: string | null, scopes: string[], messageId?: string, authResponderId: string, omitReadScope?: boolean };
 export type ProgressCb = (percent: number | null, loaded: number | null, total: number | null) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
@@ -42,6 +50,31 @@ export type SendableMsg = { headers: FlatHeaders; from: string; to: string[]; su
 export type SubscriptionInfo = { active: boolean | null; method: PaymentMethod | null; level: SubscriptionLevel; expire: string | null; };
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
+
+export class AjaxError extends Error {
+  public xhr: any;
+  public status: number;
+  public url: string;
+  public responseText: string;
+  public statusText: string;
+  constructor(xhr: RawAjaxError, url: string) {
+    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)}`);
+    this.xhr = xhr;
+    this.status = typeof xhr.status === 'number' ? xhr.status : -1;
+    this.url = url;
+    this.responseText = xhr.responseText || '';
+    this.statusText = xhr.statusText || '(no status text)';
+  }
+}
+
+export class ApiErrorResponse extends Error {
+  public response: any;
+  public url: any;
+  constructor(response: any, url: string) {
+    super(`Error response from ${url}`);
+    this.response = response;
+  }
+}
 
 export namespace R { // responses
 
@@ -69,6 +102,7 @@ export namespace R { // responses
   export type AttReplaceConfirm = { attested: boolean };
   export type AttTestWelcome = { sent: boolean };
   export type AttInitialLegacySugmit = { attested: boolean, saved: boolean };
+  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ attested: boolean, pubkey: string | null, match: boolean }> };
 
   export type GmailUsersMeProfile = { emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string };
   export type GmailMsg$header = { name: string, value: string };
@@ -125,11 +159,11 @@ export class Api {
         }
       };
     },
-    parseIdToken: (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1])),
+    // parseIdToken: (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1])),
   };
 
   public static err = {
-    isNetErr: (e: Thrown) => {
+    isNetErr: (e: any) => {
       if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
@@ -137,53 +171,57 @@ export class Api {
         if (Api.err.isStandardErr(e, 'network')) { // StandardError
           return true;
         }
-        if (e.status === 0 && e.statusText === 'error') { // $.ajax network error
+        if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') { // $.ajax network error
           return true;
         }
       }
       return false;
     },
-    isAuthErr: (e: Thrown) => {
+    isAuthErr: (e: any) => {
       if (e && typeof e === 'object') {
         if (Api.err.isStandardErr(e, 'auth')) {
           return true; // API auth error response
         }
-        if (e.status === 401) { // $.ajax auth error
+        if (e instanceof AjaxError && e.status === 401) { // $.ajax auth error
           return true;
         }
       }
       return false;
     },
-    isStandardErr: (e: Thrown, internalType: string) => {
+    isStandardErr: (e: any, internalType: string) => {
       if (e && typeof e === 'object') {
-        if (e.internal === internalType) {
+        if ((e as StandardError).internal === internalType) {
           return true;
         }
-        if (e.error && typeof e.error === 'object' && e.error.internal === internalType) {
-          return true;
-        }
-      }
-      return false;
-    },
-    isAuthPopupNeeded: (e: Thrown) => {
-      if (e && typeof e === 'object' && e.status === 400 && typeof e.responseJSON === 'object') {
-        if (e.responseJSON.error === 'invalid_grant' && Value.is(e.responseJSON.error_description).in(['Bad Request', "Token has been expired or revoked."])) {
+        if ((e as { error: StandardError }).error && typeof (e as { error: StandardError }).error === 'object' && (e as { error: StandardError }).error.internal === internalType) {
           return true;
         }
       }
       return false;
     },
-    isMailOrAcctDisabled: (e: Thrown): boolean => {
+    isAuthPopupNeeded: (e: any) => {
+      if (e instanceof AjaxError && e.status === 400 && typeof e.responseText === 'string') {
+        try {
+          const json = JSON.parse(e.responseText);
+          if (json && (json as any).error === 'invalid_grant') {
+            const jsonErrorDesc = (json as any).error_description;
+            return jsonErrorDesc === 'Bad Request' || jsonErrorDesc === 'Token has been expired or revoked.';
+          }
+        } catch (e) {
+          return false;
+        }
+      }
+      return false;
+    },
+    isMailOrAcctDisabled: (e: any): boolean => {
       if (Api.err.isBadReq(e) && typeof e.responseText === 'string') {
-        if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
-          return true;
-        }
+        return e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1;
       }
       return false;
     },
-    isNotFound: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 404, // $.ajax rejection
-    isBadReq: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status === 400, // $.ajax rejection
-    isServerErr: (e: Thrown): boolean => e && typeof e === 'object' && e.readyState === 4 && e.status >= 500, // $.ajax rejection
+    isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404, // $.ajax rejection
+    isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400, // $.ajax rejection
+    isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500, // $.ajax rejection
   };
 
   public static google = {
@@ -285,10 +323,11 @@ export class Api {
     usersMeProfile: async (acctEmail: string | null, accessToken?: string): Promise<R.GmailUsersMeProfile> => {
       const url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       if (acctEmail && !accessToken) {
-        return await Api.internal.apiGoogleCall(acctEmail, 'GET', url, {});
+        return await Api.internal.apiGoogleCall(acctEmail, 'GET', url, {}) as R.GmailUsersMeProfile;
       } else if (!acctEmail && accessToken) {
         const contentType = 'application/json; charset=UTF-8';
-        return await $.ajax({ url, method: 'GET', headers: { 'Authorization': `Bearer ${accessToken}` }, crossDomain: true, contentType, async: true });
+        const headers = { 'Authorization': `Bearer ${accessToken}` };
+        return await $.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }) as R.GmailUsersMeProfile;
       } else {
         throw new Error('Api.gmail.users_me_profile: need either account_email or access_token');
       }
@@ -345,7 +384,7 @@ export class Api {
     },
     labelsGet: (acctEmail: string): Promise<R.GmailLabels> => Api.internal.apiGmailCall(acctEmail, 'GET', `labels`, {}),
     attGet: async (acctEmail: string, msgId: string, attId: string, progressCb: ProgressCb | null = null): Promise<R.GmailAtt> => {
-      const r: R.GmailAtt = await Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb });
+      const r = await Api.internal.apiGmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb }) as R.GmailAtt;
       r.data = Str.base64urlDecode(r.data);
       return r;
     },
@@ -368,7 +407,7 @@ export class Api {
           }
           let parsedJsonDataField;
           try {
-            parsedJsonDataField = JSON.parse(chunk).data;
+            parsedJsonDataField = JSON.parse(chunk).data; // tslint:disable-line:no-unsafe-any
           } catch (e) {
             console.log(e);
             reject({ code: null, message: "Chunk response could not be parsed" });
@@ -376,12 +415,12 @@ export class Api {
           }
           for (let i = 0; parsedJsonDataField && i < 50; i++) {
             try {
-              resolve(Str.base64urlDecode(parsedJsonDataField));
+              resolve(Str.base64urlDecode(parsedJsonDataField)); // tslint:disable-line:no-unsafe-any
               return;
             } catch (e) {
               // the chunk of data may have been cut at an inconvenient index
               // shave off up to 50 trailing characters until it can be decoded
-              parsedJsonDataField = parsedJsonDataField.slice(0, -1);
+              parsedJsonDataField = parsedJsonDataField.slice(0, -1); // tslint:disable-line:no-unsafe-any
             }
           }
           reject({ code: null, message: "Chunk response could not be decoded" });
@@ -417,7 +456,7 @@ export class Api {
                 r.abort();
               }
             } else {  // done as a fail - reject
-              reject({ code: null, message: "Network connection error when downloading a chunk", internal: "network" });
+              reject({ code: null, message: 'Network connection error when downloading a chunk', internal: 'network' });
               window.clearInterval(responsePollInterval);
             }
           }
@@ -457,21 +496,24 @@ export class Api {
       }
       return internalResults;
     },
-    findBodies: (gmailMsg: Dict<any>, internalResults: Dict<any> = {}): SendableMsgBody => {
-      // todo - should not use any
-      // R.GmailMsg|R.GmailMsg$payload|R.GmailMsg$payload$part
-      if (typeof gmailMsg.payload !== 'undefined') {
+    findBodies: (gmailMsg: R.GmailMsg | R.GmailMsg$payload | R.GmailMsg$payload$part, internalResults: SendableMsgBody = {}): SendableMsgBody => {
+      const isGmailMsg = (v: any): v is R.GmailMsg => v && typeof (v as R.GmailMsg).payload !== 'undefined';
+      const isGmailMsgPayload = (v: any): v is R.GmailMsg$payload => v && typeof (v as R.GmailMsg$payload).parts !== 'undefined';
+      const isGmailMsgPayloadPart = (v: any): v is R.GmailMsg$payload$part => v && typeof (v as R.GmailMsg$payload$part).body !== 'undefined';
+      if (isGmailMsg(gmailMsg)) {
         Api.gmail.findBodies(gmailMsg.payload, internalResults);
       }
-      if (typeof gmailMsg.parts !== 'undefined') {
+      if (isGmailMsgPayload(gmailMsg) && gmailMsg.parts) {
         for (const part of gmailMsg.parts) {
           Api.gmail.findBodies(part, internalResults);
         }
       }
-      if (typeof gmailMsg.body !== 'undefined' && typeof gmailMsg.body.data !== 'undefined' && gmailMsg.body.size !== 0) {
-        internalResults[gmailMsg.mimeType] = gmailMsg.body.data;
+      if (isGmailMsgPayloadPart(gmailMsg) && gmailMsg.body && typeof gmailMsg.body.data !== 'undefined' && gmailMsg.body.size !== 0) {
+        if (gmailMsg.mimeType) {
+          internalResults[gmailMsg.mimeType] = gmailMsg.body.data;
+        }
       }
-      return internalResults as SendableMsgBody;
+      return internalResults;
     },
     fetchAtts: async (acctEmail: string, atts: Att[]) => {
       const responses = await Promise.all(atts.map(a => Api.gmail.attGet(acctEmail, a.msgId!, a.id!)));
@@ -479,7 +521,7 @@ export class Api {
         atts[i].setData(responses[i].data);
       }
     },
-    searchContacts: async (acctEmail: string, userQuery: string, knownContacts: Contact[], chunkedCb: (r: ProviderContactsResults) => void) => {
+    searchContacts: async (acctEmail: string, userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb) => {
       // This will keep triggering callback with new emails as they are being discovered
       const gmailQuery = ['is:sent', Api.GMAIL_USELESS_CONTACTS_FILTER];
       if (userQuery) {
@@ -515,16 +557,15 @@ export class Api {
             if (att.treatAs() === 'message') {
               await Api.gmail.fetchAtts(acctEmail, [att]);
               const armoredMsg = Pgp.armor.clip(att.asText());
-              if (armoredMsg) {
-                return armoredMsg;
-              } else {
-                throw { code: null, internal: 'format', message: 'Problem extracting armored message', data: att.asText() };
+              if (!armoredMsg) {
+                throw new FormatError('Problem extracting armored message', att.asText());
               }
+              return armoredMsg;
             }
           }
-          throw { code: null, internal: 'format', message: 'Armored message not found', data: JSON.stringify(gmailMsg.payload, undefined, 2) };
+          throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
         } else {
-          throw { code: null, internal: 'format', message: 'No attachments', data: JSON.stringify(gmailMsg.payload, undefined, 2) };
+          throw new FormatError('No attachments', JSON.stringify(gmailMsg.payload, undefined, 2));
         }
       } else { // format === raw
         const mimeMsg = await Mime.decode(Str.base64urlDecode(gmailMsg.raw!));
@@ -533,10 +574,10 @@ export class Api {
           if (armoredMsg) {
             return armoredMsg;
           } else {
-            throw { code: null, internal: 'format', message: 'Could not find armored message in parsed raw mime', data: mimeMsg };
+            throw new FormatError('Could not find armored message in parsed raw mime', Str.base64urlDecode(gmailMsg.raw!));
           }
         } else {
-          throw { code: null, internal: 'format', message: 'No text in parsed raw mime', data: mimeMsg };
+          throw new FormatError('No text in parsed raw mime', Str.base64urlDecode(gmailMsg.raw!));
         }
       }
     },
@@ -593,8 +634,8 @@ export class Api {
       email,
       pubkey,
     }),
-    diagnoseKeyserverPubkeys: async (acctEmail: string) => {
-      const diagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} as Dict<{ attested: boolean, pubkey: string | null, match: boolean }> };
+    diagnoseKeyserverPubkeys: async (acctEmail: string): Promise<R.AttKeyserverDiagnosis> => {
+      const diagnosis: R.AttKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
       const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
       const storedKeys = await Store.keysGet(acctEmail);
       const storedKeysLongids = storedKeys.map(ki => ki.longid);
@@ -731,11 +772,11 @@ export class Api {
       const authInfo = await Store.authInfo();
       const uuid = authInfo.uuid || Pgp.hash.sha1(Pgp.password.random());
       const account = authInfo.acctEmail || acctEmail;
-      const response: R.FcAccountLogin = await Api.internal.apiFcCall('account/login', {
+      const response = await Api.internal.apiFcCall('account/login', {
         account,
         uuid,
         token,
-      });
+      }) as R.FcAccountLogin;
       if (response.registered !== true) {
         throw new Error('account_login did not result in successful registration');
       }
@@ -751,32 +792,32 @@ export class Api {
         const response = await Api.fc.accountCheck(emails);
         const authInfo = await Store.authInfo();
         const subscription = await Store.subscription();
-        const localStorageUpdate: GlobalStore = {};
+        const globalStoreUpdate: GlobalStore = {};
         if (response.email) {
           if (response.email !== authInfo.acctEmail) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
-            localStorageUpdate.cryptup_account_email = response.email;
-            localStorageUpdate.cryptup_account_uuid = Pgp.hash.sha1(Pgp.password.random());
+            globalStoreUpdate.cryptup_account_email = response.email;
+            globalStoreUpdate.cryptup_account_uuid = Pgp.hash.sha1(Pgp.password.random());
           }
         } else {
           if (authInfo.acctEmail) {
-            localStorageUpdate.cryptup_account_email = null;
-            localStorageUpdate.cryptup_account_uuid = null;
+            globalStoreUpdate.cryptup_account_email = null;
+            globalStoreUpdate.cryptup_account_uuid = null;
           }
         }
         if (response.subscription) {
           const rs = response.subscription;
           if (rs.level !== subscription.level || rs.method !== subscription.method || rs.expire !== subscription.expire || subscription.active !== !rs.expired) {
-            localStorageUpdate.cryptup_account_subscription = { active: !rs.expired, method: rs.method, level: rs.level, expire: rs.expire };
+            globalStoreUpdate.cryptup_account_subscription = { active: !rs.expired, method: rs.method, level: rs.level, expire: rs.expire };
           }
         } else {
           if (subscription.level || subscription.expire || subscription.active || subscription.method) {
-            localStorageUpdate.cryptup_account_subscription = null;
+            globalStoreUpdate.cryptup_account_subscription = null;
           }
         }
-        if (Object.keys(localStorageUpdate).length) {
+        if (Object.keys(globalStoreUpdate).length) {
           Catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : null), response);
-          await Store.setGlobal(localStorageUpdate);
+          await Store.setGlobal(globalStoreUpdate);
           return true;
         } else {
           return false;
@@ -792,17 +833,17 @@ export class Api {
           request[k] = updateValues[k];
         }
       }
-      return await Api.internal.apiFcCall('account/update', request);
+      return await Api.internal.apiFcCall('account/update', request) as R.FcAccountUpdate;
     },
     accountSubscribe: async (product: string, method: string, paymentSourceToken: string | null = null): Promise<R.FcAccountSubscribe> => {
       const authInfo = await Store.authInfo();
-      const response: R.FcAccountSubscribe = await Api.internal.apiFcCall('account/subscribe', {
+      const response = await Api.internal.apiFcCall('account/subscribe', {
         account: authInfo.acctEmail,
         uuid: authInfo.uuid,
         method,
         source: paymentSourceToken,
         product,
-      });
+      }) as R.FcAccountSubscribe;
       await Store.setGlobal({ cryptup_account_subscription: response.subscription });
       return response;
     },
@@ -812,20 +853,20 @@ export class Api {
       if (!authMethod) {
         response = await Api.internal.apiFcCall('message/presign_files', {
           lengths,
-        });
+        }) as R.FcMsgPresignFiles;
       } else if (authMethod === 'uuid') {
         const authInfo = await Store.authInfo();
         response = await Api.internal.apiFcCall('message/presign_files', {
           account: authInfo.acctEmail,
           uuid: authInfo.uuid,
           lengths,
-        });
+        }) as R.FcMsgPresignFiles;
       } else {
         response = await Api.internal.apiFcCall('message/presign_files', {
           message_token_account: authMethod.account,
           message_token: authMethod.token,
           lengths,
-        });
+        }) as R.FcMsgPresignFiles;
       }
       if (response.approvals && response.approvals.length === atts.length) {
         return response;
@@ -841,19 +882,24 @@ export class Api {
       }
       const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataArmored });
       if (!authMethod) {
-        return await Api.internal.apiFcCall('message/upload', { content }, 'FORM');
+        return await Api.internal.apiFcCall('message/upload', { content }, 'FORM') as R.FcMsgUpload;
       } else {
         const authInfo = await Store.authInfo();
-        return await Api.internal.apiFcCall('message/upload', { account: authInfo.acctEmail, uuid: authInfo.uuid, content }, 'FORM');
+        return await Api.internal.apiFcCall('message/upload', { account: authInfo.acctEmail, uuid: authInfo.uuid, content }, 'FORM') as R.FcMsgUpload;
       }
     },
     messageToken: async (): Promise<R.FcMsgToken> => {
       const authInfo = await Store.authInfo();
-      return await Api.internal.apiFcCall('message/token', { account: authInfo.acctEmail, uuid: authInfo.uuid });
+      return await Api.internal.apiFcCall('message/token', { account: authInfo.acctEmail, uuid: authInfo.uuid }) as R.FcMsgToken;
     },
     messageExpiration: async (adminCodes: string[], addDays: null | number = null): Promise<R.ApirFcMsgExpiration> => {
       const authInfo = await Store.authInfo();
-      return await Api.internal.apiFcCall('message/expiration', { account: authInfo.acctEmail, uuid: authInfo.uuid, admin_codes: adminCodes, add_days: addDays });
+      return await Api.internal.apiFcCall('message/expiration', {
+        account: authInfo.acctEmail,
+        uuid: authInfo.uuid,
+        admin_codes: adminCodes,
+        add_days: addDays
+      }) as R.ApirFcMsgExpiration;
     },
     messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.apiFcCall('message/reply', {
       short,
@@ -890,7 +936,7 @@ export class Api {
         promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
             progress[i] = singleFileProgress;
-            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress), null, null)).bind(undefined)();
+            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress), null, null)).bind(undefined)(); // tslint:disable-line:no-unsafe-any
           }
         }));
       }
@@ -906,13 +952,13 @@ export class Api {
       request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
     }
     request.onerror = reject;
-    request.onload = e => resolve(new Uint8Array(request.response));
+    request.onload = e => resolve(new Uint8Array(request.response as ArrayBuffer));
     request.send();
   })
 
   private static internal = {
     getAjaxProgressXhr: (progressCbs?: ProgressCbs) => {
-      const progressPeportingXhr = new (window as FcWindow).XMLHttpRequest();
+      const progressPeportingXhr = new XMLHttpRequest();
       if (progressCbs && typeof progressCbs.upload === 'function') {
         progressPeportingXhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
           progressCbs.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
@@ -925,6 +971,18 @@ export class Api {
       }
       return progressPeportingXhr;
     },
+    isRawAjaxError: (e: any): e is RawAjaxError => {
+      return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
+    },
+    normalizeAjaxError: (e: any, request: JQueryAjaxSettings) => {
+      if (Api.internal.isRawAjaxError(e)) {
+        return new AjaxError(e, String(request.url));
+      }
+      if (e instanceof Error) {
+        return e;
+      }
+      return new Error(`Unknown Ajax error type when calling ${request.url}`);
+    },
     apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: FlatHeaders, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
       progress = progress || {} as ProgressCbs;
       let formattedData: FormData | string;
@@ -935,7 +993,7 @@ export class Api {
       } else if (fmt === 'FORM') {
         formattedData = new FormData();
         for (const formFieldName of Object.keys(fields)) {
-          const a: Att | string = fields[formFieldName];
+          const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
           if (a instanceof Att) {
             formattedData.append(formFieldName, new Blob([a.data()], { type: a.type }), a.name); // xss-none
           } else {
@@ -961,15 +1019,12 @@ export class Api {
       };
       try {
         const response = await $.ajax(request);
-        if (response && typeof response === 'object' && typeof response.error === 'object') {
-          throw response as StandardError;
+        if (response && typeof response === 'object' && typeof (response as any).error === 'object') {
+          throw new ApiErrorResponse(response, request.url!);
         }
         return response;
       } catch (e) {
-        if (e && typeof e === 'object' && e.readyState === 4) {
-          e.url = request.url; // for debugging
-        }
-        throw e;
+        throw Api.internal.normalizeAjaxError(e, request);
       }
     },
     apiGoogleAuthStatePack: (authReq: AuthReq) => Api.GOOGLE_OAUTH2!.state_header + JSON.stringify(authReq),
@@ -1031,15 +1086,17 @@ export class Api {
     apiGoogleCallRetryAuthErrorOneTime: async (acctEmail: string, request: JQuery.AjaxSettings) => {
       try {
         return await $.ajax(request);
-      } catch (e) {
-        if (Api.err.isAuthErr(e)) { // force refresh token
+      } catch (firstAttemptErr) {
+        const normalizedFirstAttemptError = Api.internal.normalizeAjaxError(firstAttemptErr, request);
+        if (Api.err.isAuthErr(normalizedFirstAttemptError)) { // force refresh token
           request.headers!.Authorization = await Api.internal.googleApiAuthHeader(acctEmail, true);
-          return await $.ajax(request);
+          try {
+            return await $.ajax(request);
+          } catch (secondAttemptErr) {
+            throw Api.internal.normalizeAjaxError(secondAttemptErr, request);
+          }
         }
-        if (e && typeof e === 'object' && e.readyState === 4) {
-          e.url = request.url; // for debugging
-        }
-        throw e;
+        throw normalizedFirstAttemptError;
       }
     },
     apiGoogleCall: async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {

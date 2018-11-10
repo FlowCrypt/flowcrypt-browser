@@ -66,7 +66,7 @@ Catch.try(async () => {
           }
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
-          Catch.handleException(e);
+          Catch.handleErr(e);
           Xss.sanitizeRender('#content', `Could not check for backups: unknown error. ${Ui.retryLink()}`);
         }
         return;
@@ -179,8 +179,8 @@ Catch.try(async () => {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
           alert('Account needs to be re-connected first. Please try later.');
         } else {
-          Catch.handleException(e);
-          alert(`Error happened, please try again (${e.message})`);
+          Catch.handleErr(e);
+          alert(`Error happened, please try again (${String(e)})`);
         }
         $(target).text(btnText);
         return;
@@ -210,7 +210,7 @@ Catch.try(async () => {
   };
 
   const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
-    const emailMsg = await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' });
+    const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [asBackupFile(acctEmail, armoredKey)];
     const msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
@@ -238,8 +238,8 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         return alert('Account needs to be re-connected first. Please try later.');
       } else {
-        Catch.handleException(e);
-        return alert(`Error happened: ${e.message}`);
+        Catch.handleErr(e);
+        return alert(`Error happened: ${String(e)}`);
       }
     } finally {
       btn.text(origBtnText);

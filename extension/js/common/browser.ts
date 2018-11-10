@@ -75,16 +75,16 @@ export class Browser {
         if (typeof a.click === 'function') {
           a.click();
         } else { // safari
-          const e = document.createEvent('MouseEvents');
+          const ev = document.createEvent('MouseEvents');
           // @ts-ignore - safari only. expected 15 arguments, but works well with 4
-          e.initMouseEvent('click', true, true, window);
-          a.dispatchEvent(e);
+          ev.initMouseEvent('click', true, true, window);
+          a.dispatchEvent(ev);
         }
         if (Catch.browser().name === 'firefox') {
           try {
             document.body.removeChild(a);
           } catch (err) {
-            if (err.message !== 'Node was not found') {
+            if (!(err instanceof Error && err.message === 'Node was not found')) {
               throw err;
             }
           }
@@ -302,11 +302,11 @@ export class Ui {
         if (passphraseInput.attr('type') === 'password') {
           $('#' + id).attr('type', 'text');
           Xss.sanitizeRender(target, buttonHide);
-          Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.rejection);
+          Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.handleErr);
         } else {
           $('#' + id).attr('type', 'password');
           Xss.sanitizeRender(target, buttonShow);
-          Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.rejection);
+          Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.handleErr);
         }
       }));
     }
@@ -397,7 +397,7 @@ export class Ui {
       } else if (errHandler && errHandler.other) {
         errHandler.other(e);
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
     },
     prevent: (preventableEvent: PreventableEventName, cb: (e: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
@@ -1076,7 +1076,7 @@ export class AttUI {
           onCancel: (id: string) => Catch.try(() => this.cancelAtt(id))(),
         },
       };
-      this.uploader = new qq.FineUploader(config);
+      this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
     });
   }
 
@@ -1124,11 +1124,11 @@ export class AttUI {
     const limits = this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       alert('Amount of attached files is limited to ' + limits.count);
-      this.uploader.cancel(id);
+      this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
     } else {
-      const newFile = this.uploader.getFile(id);
+      const newFile: File = this.uploader.getFile(id); // tslint:disable-line:no-unsafe-any
       if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
-        this.uploader.cancel(id);
+        this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
         if (typeof limits.oversize === 'function') {
           limits.oversize(this.getFileSizeSum() + newFile.size);
         } else {
@@ -1138,7 +1138,7 @@ export class AttUI {
       }
       this.attachedFiles[id] = newFile;
       if (typeof this.attAddedCb === 'function') {
-        this.collectAtt(id).then((a) => this.attAddedCb(a)).catch(Catch.rejection);
+        this.collectAtt(id).then((a) => this.attAddedCb(a)).catch(Catch.handleErr);
       }
     }
   }

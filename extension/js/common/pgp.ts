@@ -47,6 +47,14 @@ export enum DecryptErrTypes {
   other = 'other',
 }
 
+export class FormatError extends Error {
+  public data: string;
+  constructor(message: string, data: string) {
+    super(message);
+    this.data = data;
+  }
+}
+
 export class Pgp {
 
   private static ARMOR_HEADER_MAX_LENGTH = 50;
@@ -206,7 +214,7 @@ export class Pgp {
       try {
         return await key.decrypt(passphrases);
       } catch (e) {
-        if (Value.is('passphrase').in(e.message.toLowerCase())) {
+        if (e instanceof Error && Value.is('passphrase').in(e.message.toLowerCase())) {
           return false;
         }
         throw e;
@@ -227,7 +235,7 @@ export class Pgp {
           return armored;
         }
       } catch (error) {
-        Catch.handleException(error);
+        Catch.handleErr(error);
         return undefined;
       }
     },
@@ -251,11 +259,11 @@ export class Pgp {
       } else {
         try {
           return Pgp.key.fingerprint(openpgp.key.readArmored(key).keys[0], formatting);
-        } catch (error) {
-          if (error.message === 'openpgp is not defined') {
-            Catch.handleException(error);
+        } catch (e) {
+          if (e instanceof Error && e.message === 'openpgp is not defined') {
+            Catch.handleErr(e);
           }
-          console.log(error);
+          console.log(e);
           return null;
         }
       }
@@ -354,11 +362,11 @@ export class Pgp {
         }
       } catch (verifyErr) {
         signature.match = null;
-        if (verifyErr.message === 'Can only verify message with one literal data packet.') {
+        if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
           signature.error = 'FlowCrypt is not equipped to verify this message (err 101)';
         } else {
-          signature.error = `FlowCrypt had trouble verifying this message (${verifyErr.message})`;
-          Catch.handleException(verifyErr);
+          signature.error = `FlowCrypt had trouble verifying this message (${String(verifyErr)})`;
+          Catch.handleErr(verifyErr);
         }
       }
       return signature;
@@ -381,7 +389,7 @@ export class Pgp {
       try {
         prepared = Pgp.internal.cryptoMsgPrepareForDecrypt(encryptedData);
       } catch (formatErr) {
-        return { success: false, error: { type: DecryptErrTypes.format, error: formatErr.message }, longids, isEncrypted: null, signature: null };
+        return { success: false, error: { type: DecryptErrTypes.format, error: String(formatErr) }, longids, isEncrypted: null, signature: null };
       }
       const keys = await Pgp.internal.cryptoMsgGetSortedKeysForMsg(acctEmail, prepared.message);
       longids.message = keys.encryptedFor;
@@ -451,7 +459,7 @@ export class Pgp {
       }
       const msgKeyIds = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
       const privateKeys = await Store.keysGet(acctEmail);
-      const localKeyIds = [].concat.apply([], privateKeys.map(ki => ki.public).map(Pgp.internal.cryptoKeyIds));
+      const localKeyIds: OpenPGP.Keyid[] = [].concat.apply([], privateKeys.map(ki => ki.public).map(Pgp.internal.cryptoKeyIds)); // tslint:disable-line:no-unsafe-any
       const diagnosis = { found_match: false, receivers: msgKeyIds.length };
       for (const msgKeyId of msgKeyIds) {
         for (const localKeyId of localKeyIds) {
@@ -585,7 +593,7 @@ export class Pgp {
       };
       const encryptedFor = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
       keys.encryptedFor = encryptedFor.map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
-      keys.signedBy = (msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid((id as any).bytes)).filter(Boolean) as string[];
+      keys.signedBy = (msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
       const privateKeysAll = await Store.keysGet(acctEmail);
       keys.prvMatching = privateKeysAll.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
       if (keys.prvMatching.length) {
@@ -607,11 +615,12 @@ export class Pgp {
       if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
         const verificationContacts = await Store.dbContactGet(null, keys.signedBy);
         keys.verificationContacts = verificationContacts.filter(contact => contact !== null && contact.pubkey) as Contact[];
+        // tslint:disable-next-line:no-unsafe-any
         keys.forVerification = [].concat.apply([], keys.verificationContacts.map(contact => openpgp.key.readArmored(contact.pubkey!).keys)); // pubkey! checked above
       }
       return keys;
     },
-    cryptoMsgDecryptCategorizeErr: (decryptErr: Error, msgPwd: string | null): DecryptError$error => {
+    cryptoMsgDecryptCategorizeErr: (decryptErr: any, msgPwd: string | null): DecryptError$error => {
       const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
       const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
         'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];

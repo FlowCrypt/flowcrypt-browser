@@ -3,14 +3,14 @@
 'use strict';
 
 import { Store } from '../../js/common/store.js';
-import { Value, Str, Dict } from './../../js/common/common.js';
+import { Str, Dict } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';
 
 import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
-import { MsgVerifyResult, DecryptErrTypes, Pgp } from '../../js/common/pgp.js';
+import { MsgVerifyResult, DecryptErrTypes, FormatError } from '../../js/common/pgp.js';
 import { Mime } from '../../js/common/mime.js';
 import { Catch } from '../../js/common/catch.js';
 
@@ -537,13 +537,11 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`);
-      } else if (Value.is(Pgp.armor.headers('publicKey').end as string).in(e.data)) { // public key .end is always string
-        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: e.data, minimized: Boolean(isOutgoing), acctEmail, parentTabId, frameId });
-      } else if (Api.err.isStandardErr(e, 'format')) {
+      } else if (e instanceof FormatError) {
         console.log(e.data);
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         await renderErr(String(e));
       }
     }

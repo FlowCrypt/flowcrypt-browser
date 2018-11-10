@@ -7,7 +7,7 @@ import { Value } from '../../../js/common/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api.js';
+import { Api, R } from '../../../js/common/api.js';
 import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
@@ -20,7 +20,7 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  const renderDiagnosis = (diagnosis: any, attestsRequested: string[]) => {
+  const renderDiagnosis = (diagnosis: R.AttKeyserverDiagnosis, attestsRequested: string[]) => {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, remove, color;
@@ -111,8 +111,8 @@ Catch.try(async () => {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
           alert('Account needs to be re-connected first. Please try later.');
         } else {
-          Catch.handleException(e);
-          alert(`Error happened: ${e.message}`);
+          Catch.handleErr(e);
+          alert(`Error happened: ${String(e)}`);
         }
       }
       window.location.reload();
@@ -131,7 +131,7 @@ Catch.try(async () => {
         await Api.attester.initialLegacySubmit(email, primaryKi.public, false);
       }
     } catch (e) {
-      Catch.handleException(e);
+      Catch.handleErr(e);
     } finally {
       window.location.reload();
     }
@@ -147,7 +147,7 @@ Catch.try(async () => {
       Xss.sanitizeRender('.summary', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
       Xss.sanitizeRender('.summary', `Failed to load. ${Ui.retryLink()}`);
-      Catch.handleException(e);
+      Catch.handleErr(e);
     }
   }
 

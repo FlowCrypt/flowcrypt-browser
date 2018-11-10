@@ -42,7 +42,7 @@ export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftM
   | SubscriptionAttempt | SubscriptionInfo | StoredAttestLog[];
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
-interface RawStore {
+export interface RawStore {
   [key: string]: Storable;
 }
 
@@ -328,7 +328,7 @@ export class Store {
     const storage = await Store.getGlobal(['account_emails']);
     const acctEmails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
-      for (const acctEmail of JSON.parse(storage.account_emails)) {
+      for (const acctEmail of JSON.parse(storage.account_emails) as string[]) {
         if (!Value.is(acctEmail.toLowerCase()).in(acctEmails)) {
           acctEmails.push(acctEmail.toLowerCase());
         }
@@ -384,7 +384,7 @@ export class Store {
     } else if (exception.message === 'The operation failed for reasons unrelated to the database itself and not covered by any other error code.') {
       return new StoreDbFailedError(exception.message);
     } else {
-      Catch.handleException(exception);
+      Catch.handleErr(exception);
       return new StoreDbDeniedError(exception.message);
     }
   }
@@ -394,9 +394,9 @@ export class Store {
       let openDbReq: IDBOpenDBRequest;
       openDbReq = indexedDB.open('cryptup', 2);
       openDbReq.onupgradeneeded = (event) => {
-        let contacts;
+        let contacts: IDBObjectStore;
         if (event.oldVersion < 1) {
-          contacts = openDbReq.result.createObjectStore('contacts', { keyPath: 'email', });
+          contacts = openDbReq.result.createObjectStore('contacts', { keyPath: 'email', }); // tslint:disable-line:no-unsafe-any
           contacts.createIndex('search', 'searchable', { multiEntry: true, });
           contacts.createIndex('index_has_pgp', 'has_pgp');
           contacts.createIndex('index_pending_lookup', 'pending_lookup');
@@ -406,7 +406,7 @@ export class Store {
           contacts.createIndex('index_longid', 'longid');
         }
       };
-      openDbReq.onsuccess = () => resolve(openDbReq.result);
+      openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
       const stackFill = String((new Error()).stack);
       openDbReq.onblocked = () => reject(Store.dbErrCategorize(openDbReq.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
       openDbReq.onerror = () => reject(Store.dbErrCategorize(openDbReq.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
@@ -468,7 +468,7 @@ export class Store {
   static dbContactSave = (db: IDBDatabase | null, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
     if (db === null) { // relay op through background process
       // todo - currently will silently swallow errors
-      BrowserMsg.send.await.bg.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.rejection);
+      BrowserMsg.send.await.bg.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.handleErr);
     } else {
       if (Array.isArray(contact)) {
         for (const singleContact of contact) {
@@ -490,7 +490,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send.await.bg.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.rejection);
+        BrowserMsg.send.await.bg.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.handleErr);
       } else {
         if (Array.isArray(email)) {
           for (const singleEmail of email) {
@@ -534,7 +534,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send.await.bg.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(Catch.rejection);
+        BrowserMsg.send.await.bg.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(Catch.handleErr);
       } else {
         if (emailOrLongid.length === 1) {
           let tx: IDBRequest;
@@ -543,7 +543,7 @@ export class Store {
           } else { // longid
             tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid[0]);
           }
-          tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : null]));
+          tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : null])); // tslint:disable-line:no-unsafe-any
           const stackFill = String((new Error()).stack);
           tx.onerror = () => reject(Store.dbErrCategorize(tx.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
         } else {
@@ -562,7 +562,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (db === null) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send.await.bg.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.rejection);
+        BrowserMsg.send.await.bg.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.handleErr);
       } else {
         for (const key of Object.keys(query)) {
           if (!Value.is(key).in(Store.dbQueryKeys)) {
@@ -598,8 +598,8 @@ export class Store {
             if (!cursor || found.length === query.limit) {
               resolve(found);
             } else {
-              found.push(cursor.value);
-              cursor.continue();
+              found.push(cursor.value); // tslint:disable-line:no-unsafe-any
+              cursor.continue(); // tslint:disable-line:no-unsafe-any
             }
           });
           const stackFill = String((new Error()).stack);

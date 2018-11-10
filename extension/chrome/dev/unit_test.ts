@@ -4,13 +4,12 @@
 
 import { Pgp } from '../../js/common/pgp.js';
 import { Env } from '../../js/common/browser.js';
-import { StandardError } from '../../js/common/common.js';
 
 (() => {
 
   const urlParams = Env.urlParams(['f', 'args']);
   const f = String(urlParams.f);
-  const args = JSON.parse(String(urlParams.args));
+  const args = JSON.parse(String(urlParams.args)) as any[];
 
   const test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
     try {
@@ -20,7 +19,7 @@ import { StandardError } from '../../js/common/common.js';
     }
   };
 
-  const finish = (error: string | StandardError | Error | null, result?: any) => {
+  const finish = (error: any, result?: any) => {
     error = (error === null) ? null : String(error);
     $('#result').text(JSON.stringify({ error, result }));
     $('#result').attr('data-test-state', 'ready');

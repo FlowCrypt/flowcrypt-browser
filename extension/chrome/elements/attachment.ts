@@ -38,7 +38,7 @@ Catch.try(async () => {
       });
     }
   } catch (e) {
-    Catch.handleException(e);
+    Catch.handleErr(e);
     $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
     return;
   }
@@ -147,7 +147,7 @@ Catch.try(async () => {
       if (size !== null) {
         urlParams.size = size;
       }
-    }).catch(Catch.rejection);
+    }).catch(Catch.handleErr);
   }
 
   const renderProgress = (percent: number, received: number, size: number) => {
@@ -187,7 +187,7 @@ Catch.try(async () => {
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('body.attachment', `Error downloading file: no internet. ${Ui.retryLink()}`);
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         Xss.sanitizeRender('body.attachment', `Error downloading file: unknown error. ${Ui.retryLink()}`);
       }
     }
@@ -248,7 +248,7 @@ Catch.try(async () => {
     } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
     } else {
-      Catch.handleException(e);
+      Catch.handleErr(e);
       Xss.sanitizeRender('body.attachment', `Error downloading file - unknown error. ${Ui.retryLink()}`);
     }
   }

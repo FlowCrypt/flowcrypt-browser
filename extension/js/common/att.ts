@@ -11,7 +11,7 @@ type AttMeta = {
   inline?: boolean | null; id?: string | null; msgId?: string | null; treatAs?: Att$treatAs; cid?: string | null;
 };
 
-export type FlowCryptAttLinkData = { name: string, type: string, size: number };
+export type FcAttLinkData = { name: string, type: string, size: number };
 
 export class Att {
 

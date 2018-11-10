@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex } from '../../js/common/store.js';
+import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex, RawStore } from '../../js/common/store.js';
 import { Value, Str, Dict } from '../../js/common/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Catch } from '../../js/common/catch.js';
@@ -43,7 +43,7 @@ Catch.try(async () => {
     }));
   };
 
-  chrome.storage.local.get(storage => {
+  chrome.storage.local.get((storage: RawStore) => {
     let realFilter: string;
     if (urlParams.filter) {
       realFilter = Store.singleScopeRawIndex(urlParams.filter as string, urlParams.keys as string || '');
@@ -72,7 +72,7 @@ Catch.try(async () => {
           alert('Namespace, key and type need to be filled');
         } else {
           const acctEmail = namespaceSel.val() === 'global' ? null : decodeURIComponent(namespaceSel.val() as string); // it's a text input
-          const newValue: Storable = JSON.parse($('.value').val() as string); // it's a text input
+          const newValue: Storable = JSON.parse($('.value').val() as string) as Storable; // tslint:disable:no-unsafe-any
           if (acctEmail === null) {
             const globalStoreUpdate: GlobalStore = {};
             globalStoreUpdate[keySelVal as GlobalIndex] = newValue as any;

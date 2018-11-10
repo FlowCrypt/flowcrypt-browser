@@ -11,6 +11,7 @@ type MimeContent = { headers: FlatHeaders; atts: Att[]; signature: string | unde
 type MimeParserNode = {
   path: string[]; headers: { [key: string]: { value: string }[]; }; rawContent: string; content: Uint8Array;
   appendChild: (child: MimeParserNode) => void; contentTransferEncoding: { value: string }; charset?: string;
+  addHeader: (name: string, value: string) => void;
 };
 
 export type FlatHeaders = Dict<string>;
@@ -67,11 +68,11 @@ export class Mime {
         // @ts-ignore - I should check this - does it really have .address?
         if (to.address) {
           // @ts-ignore - I should check this - does it really have .address?
-          headerTo.push(to.address);
+          headerTo.push(String(to.address));
         }
       }
     }
-    return { from: headerFrom, to: headerTo };
+    return { from: String(headerFrom), to: headerTo };
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
@@ -101,22 +102,22 @@ export class Mime {
     return new Promise(async resolve => {
       const mimeContent = { atts: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined } as MimeContent;
       try {
-        const parser = new (window as any)['emailjs-mime-parser']();
+        const parser = new (window as any)['emailjs-mime-parser'](); // tslint:disable-line:no-unsafe-any
         const parsed: { [key: string]: MimeParserNode } = {};
-        parser.onheader = (node: MimeParserNode) => {
+        parser.onheader = (node: MimeParserNode) => { // tslint:disable-line:no-unsafe-any
           if (!String(node.path.join('.'))) { // root node headers
             for (const name of Object.keys(node.headers)) {
               mimeContent.headers[name] = node.headers[name][0].value;
             }
           }
         };
-        parser.onbody = (node: MimeParserNode) => {
+        parser.onbody = (node: MimeParserNode) => { // tslint:disable-line:no-unsafe-any
           const path = String(node.path.join('.'));
           if (typeof parsed[path] === 'undefined') {
             parsed[path] = node;
           }
         };
-        parser.onend = () => {
+        parser.onend = () => { // tslint:disable-line:no-unsafe-any
           for (const node of Object.values(parsed)) {
             if (Mime.getNodeType(node) === 'application/pgp-signature') {
               mimeContent.signature = node.rawContent;
@@ -137,10 +138,10 @@ export class Mime {
           }
           resolve(mimeContent);
         };
-        parser.write(mimeMsg);
-        parser.end();
+        parser.write(mimeMsg); // tslint:disable-line:no-unsafe-any
+        parser.end(); // tslint:disable-line:no-unsafe-any
       } catch (e) {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         resolve(mimeContent);
       }
     });
@@ -148,9 +149,9 @@ export class Mime {
 
   public static encode = async (body: string | SendableMsgBody, headers: RichHeaders, atts: Att[] = []): Promise<string> => {
     const MimeBuilder = (window as any)['emailjs-mime-builder']; // tslint:disable-line:variable-name
-    const rootNode = new MimeBuilder('multipart/mixed');
+    const rootNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
-      rootNode.addHeader(key, headers[key]);
+      rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
     }
     if (typeof body === 'string') {
       body = { 'text/plain': body };
@@ -159,18 +160,18 @@ export class Mime {
     if (Object.keys(body).length === 1) {
       contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain" | "text/html"] || '');
     } else {
-      contentNode = new MimeBuilder('multipart/alternative');
+      contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
       for (const type of Object.keys(body)) {
         contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
       }
     }
-    rootNode.appendChild(contentNode);
+    rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
     for (const att of atts) {
       const type = `${att.type}; name="${att.name}"`;
       const header = { 'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.sloppyRandom(10)}`, 'Content-Transfer-Encoding': 'base64' };
-      rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.data()));
+      rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.data())); // tslint:disable-line:no-unsafe-any
     }
-    return rootNode.build();
+    return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
   public static signed = (mimeMsg: string) => {
@@ -252,20 +253,22 @@ export class Mime {
     return undefined;
   }
 
-  private static getNodeFilename = (node: MimeParserNode) => {
+  private static getNodeFilename = (node: MimeParserNode): string | undefined => {
     // @ts-ignore - lazy
-    if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) {
+    if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) { // tslint:disable-line:no-unsafe-any
       // @ts-ignore - lazy
-      if (node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) {
+      if (node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) { // tslint:disable-line:no-unsafe-any
         // @ts-ignore - lazy
-        return node.headers['content-disposition'][0].params.filename;
+        return String(node.headers['content-disposition'][0].params.filename); // tslint:disable-line:no-unsafe-any
       }
     }
     // @ts-ignore - lazy
+    // tslint:disable-next-line:no-unsafe-any
     if (node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
       // @ts-ignore - lazy
-      return node.headers['content-type'][0].params.name;
+      return String(node.headers['content-type'][0].params.name); // tslint:disable-line:no-unsafe-any
     }
+    return;
   }
 
   private static getNodeContentAsText = (node: MimeParserNode): string => {
@@ -275,17 +278,18 @@ export class Mime {
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
       return Str.fromEqualSignNotationAsUtf(node.rawContent);
     }
-    if (node.charset === 'iso-8859-2') {
-      return (window as any).iso88592.decode(node.rawContent);  // todo - use iso88592.labels for detection
+    if (node.charset === 'iso-8859-2') { // todo - use iso88592.labels for detection
+      return (window as any).iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any
     }
     return node.rawContent;
   }
 
   // tslint:disable-next-line:variable-name
   private static newContentNode = (MimeBuilder: any, type: string, content: string): MimeParserNode => {
-    const node = new MimeBuilder(type).setContent(content);
+    const node: MimeParserNode = new MimeBuilder(type).setContent(content); // tslint:disable-line:no-unsafe-any
     if (type === 'text/plain') {
-      node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // gmail likes this
+      // gmail likes this
+      node.addHeader('Content-Transfer-Encoding', 'quoted-printable'); // tslint:disable-line:no-unsafe-any
     }
     return node;
   }

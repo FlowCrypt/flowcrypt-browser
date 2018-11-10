@@ -37,9 +37,9 @@ Catch.try(async () => {
       } else {
         renderStatus('Email verified, no further action needed.');
       }
-    } catch (error) {
-      renderStatus('Could not complete: ' + error.message);
-      Catch.log('problem in verification.js', error);
+    } catch (e) {
+      renderStatus(`Could not complete: ${String(e)}`);
+      Catch.log('problem in verification.js', String(e));
     }
   }
 

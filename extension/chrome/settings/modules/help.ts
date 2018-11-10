@@ -51,7 +51,7 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
       $(target).text(origBtnText);
       alert('There was an error sending message. Our direct email is human@flowcrypt.com');

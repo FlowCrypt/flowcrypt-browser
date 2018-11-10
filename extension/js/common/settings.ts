@@ -33,7 +33,7 @@ export class Settings {
   }
 
   static evalPasswordStrength = (passphrase: string) => {
-    return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses);
+    return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses); // tslint:disable-line:no-unsafe-any
   }
 
   static renderPasswordStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
@@ -180,11 +180,6 @@ export class Settings {
           }
         }
         await Store.remove(acctEmail, storageIndexesToRemove);
-        for (const localStorageIndex of Object.keys(localStorage)) {
-          if (localStorageIndex.indexOf(filter) === 0) {
-            localStorage.removeItem(localStorageIndex);
-          }
-        }
         for (const sessionStorageIndex of Object.keys(sessionStorage)) {
           if (sessionStorageIndex.indexOf(filter) === 0) {
             sessionStorage.removeItem(sessionStorageIndex);
@@ -230,13 +225,6 @@ export class Settings {
         }
         const oldAcctStorage = await Store.getAcct(oldAcctEmail, storageIndexesToChange as any);
         await Store.setAcct(newAcctEmail, oldAcctStorage);
-        for (const localStorageIndex of Object.keys(localStorage)) {
-          if (localStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
-            const v = localStorage.getItem(localStorageIndex);
-            localStorage.setItem(localStorageIndex.replace(oldAcctEmailIndexPrefix, newAcctEmailIndexPrefix), v!);
-            localStorage.removeItem(localStorageIndex);
-          }
-        }
         for (const sessionStorageIndex of Object.keys(sessionStorage)) {
           if (sessionStorageIndex.indexOf(oldAcctEmailIndexPrefix) === 0) {
             const v = sessionStorage.getItem(sessionStorageIndex);
@@ -335,18 +323,18 @@ export class Settings {
     }
   }
 
-  static promptToRetry = async (type: 'REQUIRED', e: Error, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
+  static promptToRetry = async (type: 'REQUIRED', e: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     // todo - his needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
     if (!Api.err.isNetErr(e)) {
-      Catch.handleException(e);
+      Catch.handleErr(e);
     }
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userMsg) === 'retry') {
       try {
         return await retryCb();
       } catch (e2) {
         if (!Api.err.isNetErr(e2)) {
-          Catch.handleException(e2);
+          Catch.handleErr(e2);
         }
       }
     }
@@ -397,7 +385,7 @@ export class Settings {
         await Store.setAcct(acctEmail, { picture: image.url });
       } catch (e) {
         if (!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
-          Catch.handleException(e);
+          Catch.handleErr(e);
         }
       }
     }

@@ -53,7 +53,7 @@ export class BgAttests {
       const r = await BgAttests.processAttestAndLogResult(acctEmail, packet, passphrase);
       respond({ success: true, result: r.message });
     } catch (e) {
-      respond({ success: false, result: e.message });
+      respond({ success: false, result: String(e) });
     }
   }
 
@@ -134,7 +134,7 @@ export class BgAttests {
             try {
               signed = await Pgp.msg.sign(key, attest.text);
             } catch (e) {
-              throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${e.message}`, attestPacketText, acctEmail);
+              throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${String(e)}`, attestPacketText, acctEmail);
             }
             try {
               let apiRes;
@@ -150,7 +150,7 @@ export class BgAttests {
               if (Api.err.isNetErr(e)) {
                 throw new AttestError('Attester API not available (network error)', attestPacketText, acctEmail);
               }
-              throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${e.message}`, attestPacketText, acctEmail);
+              throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${String(e)}`, attestPacketText, acctEmail);
             }
             await BgAttests.acctStorageMarkAsAttested(acctEmail, attest.content.attester!);
             return { attestPacketText, message: `Successfully attested ${acctEmail}`, acctEmail };
@@ -173,9 +173,8 @@ export class BgAttests {
     try {
       return await BgAttests.addAttestLog(true, await BgAttests.processAttestPacketText(acctEmail, attestPacketText, passphrase));
     } catch (e) {
-      e.acctEmail = acctEmail;
-      e.attestPacketText = attestPacketText;
-      return await BgAttests.addAttestLog(false, e);
+      Catch.handleErr(e);
+      return new AttestError(String(e), attestPacketText, acctEmail);
     }
   }
 

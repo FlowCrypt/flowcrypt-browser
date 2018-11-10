@@ -24,8 +24,8 @@ const getContentCcriptTabIds = (matches: string[], callback: (tabIds: number[]) 
 };
 
 const isContentScriptInjectionNeeded = (tabId: number, callback: (injected: boolean) => void) => {
-  chrome.tabs.executeScript(tabId, { code: 'Boolean(window.injected)' }, results => {
-    callback(results[0]);
+  chrome.tabs.executeScript(tabId, { code: 'Boolean(window.injected)' }, (results: (boolean | undefined)[]) => {
+    callback(results[0] === true);
   });
 };
 

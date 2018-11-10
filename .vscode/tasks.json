@@ -42,6 +42,11 @@
         "type": "npm",
         "script": "release",
         "problemMatcher": []
+      },
+      {
+        "type": "npm",
+        "script": "test_0_tslint",
+        "problemMatcher": []
       }
     ]
   }

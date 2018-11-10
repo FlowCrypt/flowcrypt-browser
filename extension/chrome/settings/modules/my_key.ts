@@ -33,7 +33,7 @@ Catch.try(async () => {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
   } catch (e) {
-    Catch.handleException(e);
+    Catch.handleErr(e);
     $('.pubkey_link_container').remove();
   }
 
@@ -64,6 +64,6 @@ Catch.try(async () => {
   }));
 
   const clipboardOpts = { text: () => key.toPublic().armor() };
-  new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression
+  new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
 
 })();

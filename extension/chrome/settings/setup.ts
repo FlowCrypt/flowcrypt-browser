@@ -273,7 +273,7 @@ Catch.try(async () => {
       const prv = openpgp.key.readArmored(key.private).keys[0];
       await saveKeys([prv], options);
     } catch (e) {
-      Catch.handleException(e);
+      Catch.handleErr(e);
       Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
     }
   };
@@ -284,7 +284,7 @@ Catch.try(async () => {
       try {
         me = await Api.google.plus.peopleMe(acctEmail);
       } catch (e) {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         return { full_name: '' };
       }
       const result = { full_name: me.displayName || '', locale: me.language, picture: me.image.url };
@@ -412,9 +412,9 @@ Catch.try(async () => {
       full_name: '',
       passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
       key_backup_prompt: false,
-      submit_main: $('#step_2b_manual_enter .input_submit_key').prop('checked'),
-      submit_all: $('#step_2b_manual_enter .input_submit_all').prop('checked'),
-      passphrase_save: $('#step_2b_manual_enter .input_passphrase_save').prop('checked'),
+      submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked')),
+      submit_all: Boolean($('#step_2b_manual_enter .input_submit_all').prop('checked')),
+      passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
       is_newly_created_key: false,
       recovered: false,
       setup_simple: false,
@@ -432,7 +432,7 @@ Catch.try(async () => {
       } else if (e instanceof KeyCanBeFixed) {
         return await renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
@@ -444,7 +444,7 @@ Catch.try(async () => {
     try {
       fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
-      Catch.handleException(e);
+      Catch.handleErr(e);
       alert(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
       displayBlock('step_2b_manual_enter');
       return;
@@ -491,12 +491,12 @@ Catch.try(async () => {
       const options: SetupOptions = {
         full_name: userinfo.full_name,
         passphrase: $('#step_2a_manual_create .input_password').val() as string,
-        passphrase_save: $('#step_2a_manual_create .input_passphrase_save').prop('checked'),
-        submit_main: $('#step_2a_manual_create .input_submit_key').prop('checked'),
-        submit_all: $('#step_2a_manual_create .input_submit_all').prop('checked'),
+        passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
+        submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked')),
+        submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked')),
         key_backup_prompt: rules.canBackupKeys() ? Date.now() : false,
         recovered: false,
-        setup_simple: $('#step_2a_manual_create .input_backup_inbox').prop('checked'),
+        setup_simple: Boolean($('#step_2a_manual_create .input_backup_inbox').prop('checked')),
         is_newly_created_key: true,
       };
       await createSaveKeyPair(options);
@@ -504,7 +504,7 @@ Catch.try(async () => {
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
       window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
     } catch (e) {
-      Catch.handleException(e);
+      Catch.handleErr(e);
       alert(`There was an error, please try again.\n\n(${String(e)})`);
       $('#step_2a_manual_create .action_create_private').text('CREATE AND SAVE');
     }
@@ -539,9 +539,9 @@ Catch.try(async () => {
     }
     if (typeof storage.addresses === 'undefined') {
       if (Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
-        Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.rejection);
+        Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
       } else { // cannot read emails, don't fetch alternative addresses
-        saveAndFillSubmitOption([acctEmail]).catch(Catch.rejection);
+        saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);
       }
     } else {
       showSubmitAllAddrsOption(storage.addresses as string[]);

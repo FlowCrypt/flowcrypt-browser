@@ -12,6 +12,15 @@ rules:
     arrow-parens: false
     no-console: false
     prefer-const: true
+    ban-types:
+     - true
+     - ["Object", "Avoid using the `Object` type. Did you mean `object`?"]
+     - ["Function", "Avoid using the `Function` type. Prefer `() => void`"]
+     - ["Boolean", "Avoid using the `Boolean` type. Did you mean `boolean`?"]
+     - ["Number", "Avoid using the `Number` type. Did you mean `number`?"]
+     - ["String", "Avoid using the `String` type. Did you mean `string`?"]
+     - ["Symbol", "Avoid using the `Symbol` type. Did you mean `symbol`?"]
+    no-unsafe-any: true
     quotemark: false
     variable-name: 
      - true

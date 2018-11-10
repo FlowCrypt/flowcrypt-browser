@@ -216,7 +216,7 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         threadItem.find('.loading').text('Failed to load');
       }
     }
@@ -283,7 +283,7 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
       }
     }
@@ -305,7 +305,7 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
       }
     }
@@ -329,7 +329,7 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeRender('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
       }
@@ -362,7 +362,7 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeAppend('.thread', wrapMsg(htmlId, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }

@@ -7,8 +7,8 @@ import { Lang } from './lang.js';
 import { Value, Str, StandardError } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
-import { Pgp, Pwd } from './pgp.js';
-import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem } from './api.js';
+import { Pgp, Pwd, FormatError } from './pgp.js';
+import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env, UrlParams } from './browser.js';
 import { FromToHeaders, Mime, SendableMsgBody } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
@@ -39,7 +39,7 @@ interface ComposerAppFunctionsInterface {
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
   emailProviderDraftDelete: (draftId: string) => Promise<R.GmailDraftDelete>;
   emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<R.GmailMsgSend>;
-  emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: (r: { new: Contact[], all: Contact[] }) => void) => void;
+  emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderDetermineReplyMsgHeaderVariables: () => Promise<undefined | { lastMsgId: string, headers: { 'In-Reply-To': string, 'References': string } }>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
   // sendMsgToMainWin: (channel: string, data?: object) => void;
@@ -160,7 +160,7 @@ export class Composer {
     if (subscription.active) {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
-      this.app.storageEmailFooterSet(null).catch(Catch.handleException);
+      this.app.storageEmailFooterSet(null).catch(Catch.handleErr);
       BrowserMsg.send.notificationShow(this.parentTabId, {
         notification: `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`,
       });
@@ -168,7 +168,7 @@ export class Composer {
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initComposeBox(variables).catch(Catch.rejection);
+    this.initComposeBox(variables).catch(Catch.handleErr);
     this.initActions();
   }
 
@@ -228,18 +228,17 @@ export class Composer {
         }
       },
       other: (e: any) => {
-        // todo - add an alert that action could not be finished
-        // alert(`Could not ${could_not_do_what} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
-        } else if (typeof e === 'object' && e && typeof e.stack === 'undefined') {
+        } else if (typeof e === 'object' && e && typeof (e as StandardError).stack === 'undefined') {
           try {
-            e.stack = `[compose action: ${couldNotDoWhat}]`;
+            (e as any).stack = `[compose action: ${couldNotDoWhat}]`;
           } catch (e) {
             // no need
           }
         }
-        Catch.handleException(e);
+        Catch.handleErr(e);
+        alert(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
       },
     };
   }
@@ -378,7 +377,7 @@ export class Composer {
         window.location.reload();
       } else {
         console.info('Api.gmail.draft_get success===false');
-        Catch.handleException(e);
+        Catch.handleErr(e);
         if (this.isReplyBox) {
           await this.renderReplyMsgComposeTable();
         }
@@ -454,7 +453,7 @@ export class Composer {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
-          Catch.handleException(e);
+          Catch.handleErr(e);
           this.S.cached('send_btn_note').text('Not saved');
         }
       }
@@ -473,7 +472,7 @@ export class Composer {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
         } else if (!Api.err.isNetErr(e)) {
-          Catch.handleException(e);
+          Catch.handleErr(e);
         }
       }
     }
@@ -580,7 +579,7 @@ export class Composer {
     }
   }
 
-  private handleSendErr(e: Error | StandardError) {
+  private handleSendErr(e: any) {
     if (Api.err.isNetErr(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -596,19 +595,20 @@ export class Composer {
         const pageUrlParams = { bugReport: Extension.prepareBugReport('composer: send: bad request', {}, e) };
         BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page, pageUrlParams });
       }
-    } else if (typeof e === 'object' && e.hasOwnProperty('internal')) {
+    } else if (typeof e === 'object' && (e as any).hasOwnProperty('internal')) { // tslint:disable-line:no-unsafe-any
+      // todo - stop throwin StandardError, then stop catching it here
       Catch.report('StandardError | failed to send message', e);
-      alert(`Failed to send message: [${(e as StandardError).internal}] ${e.message}`);
+      alert(`Failed to send message: [${(e as StandardError).internal}] ${String(e)}`);
     } else if (e instanceof ComposerUserError) {
-      alert(`Could not send message: ${e.message}`);
+      alert(`Could not send message: ${String(e)}`);
     } else {
       if (!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
         if (e instanceof Error) {
-          Catch.handleException(e);
+          Catch.handleErr(e);
         } else {
           Catch.report('Thrown object | failed to send message', e);
         }
-        alert(`Failed to send message due to: ${e.message}`);
+        alert(`Failed to send message due to: ${String(e)}`);
       }
     }
     if (!(e instanceof ComposerNotReadyError)) {
@@ -680,7 +680,7 @@ export class Composer {
         //  - don't require text to be sent as an attachment
         //  - don't require all other clients to support PGP/MIME
         // then please const me know. Eagerly waiting! In the meanwhile..
-        plaintext = (window as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true);
+        plaintext = (window as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
 
         // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
         // Removing them here will prevent Gmail from screwing up the signature
@@ -691,7 +691,7 @@ export class Composer {
         }
         const signedData = await Pgp.msg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
-        this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.rejection);
+        this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.handleErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
         await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
@@ -722,7 +722,7 @@ export class Composer {
       if (Api.err.isAuthErr(e)) {
         throw e;
       } else if (Api.err.isNetErr(e)) {
-        throw new ComposerNetworkError(e && typeof e === 'object' && e.message ? e.message : 'Some files failed to upload, please try again');
+        throw new ComposerNetworkError(e instanceof Error ? e.message : 'Some files failed to upload, please try again');
       } else {
         throw e;
       }
@@ -764,7 +764,7 @@ export class Composer {
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
         return plaintext;
       } else {
-        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + msgTokenErr.message);
+        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + String(msgTokenErr));
       }
     }
     return plaintext + '\n\n' + Ui.e('div', {
@@ -886,7 +886,7 @@ export class Composer {
         }
       } catch (e) {
         if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
-          Catch.handleException(e);
+          Catch.handleErr(e);
         }
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
       }
@@ -998,7 +998,7 @@ export class Composer {
     this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private respondToInputHotkeys = (inputToKeydownEvent: KeyboardEvent) => {
+  private respondToInputHotkeys = (inputToKeydownEvent: JQuery.Event<HTMLElement, null>) => {
     const value = this.S.cached('input_to').val();
     const keys = Env.keyCodes();
     if (!value && inputToKeydownEvent.which === keys.backspace) {
@@ -1048,14 +1048,14 @@ export class Composer {
     try {
       armoredMsg = await this.app.emailProviderExtractArmoredBlock(msgId);
     } catch (e) {
-      if (e.data) {
+      if (e instanceof FormatError) {
         Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
       } else if (Api.err.isNetErr(e)) {
         // todo: retry
       } else if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
       return;
     }
@@ -1437,9 +1437,9 @@ export class Composer {
     }
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
-    this.S.cached('input_to').keydown((ke: any) => this.respondToInputHotkeys(ke));
+    this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
-    this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parseRenderRecipients().catch(Catch.rejection)));
+    this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parseRenderRecipients().catch(Catch.handleErr)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.handleErrs(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
@@ -1551,7 +1551,7 @@ export class Composer {
       emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise.resolve({}),
       emailProviderDraftDelete: (draftId: string) => Promise.resolve({}),
       emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise.reject({ message: 'not implemented' }),
-      emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: (r: any) => void) => multiCb({ new: [], all: [] }),
+      emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => multiCb({ new: [], all: [] }),
       emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
       emailProviderExtractArmoredBlock: (msgId) => Promise.resolve(''),
       renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => Promise.resolve(),

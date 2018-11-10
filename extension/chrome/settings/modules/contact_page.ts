@@ -77,8 +77,8 @@ Catch.try(async () => {
       }
       window.location.reload();
     } catch (e) {
-      Catch.handleException(e);
-      alert('Failed to create account, possibly a network issue. Please try again.\n\n' + e.message);
+      Catch.handleErr(e);
+      alert(`Failed to create account, possibly a network issue. Please try again.\n\n${String(e)}`);
       window.location.reload();
     }
   };

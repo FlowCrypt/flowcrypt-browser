@@ -50,10 +50,10 @@ Catch.try(async () => {
       closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {
-        return alert(e.message);
+        alert(e.message);
       } else {
-        Catch.handleException(e);
-        return alert(`Error happened when processing the public key: ${e.message}`);
+        Catch.handleErr(e);
+        alert(`Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
   }));

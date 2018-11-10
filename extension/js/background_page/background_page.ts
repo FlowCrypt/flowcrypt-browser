@@ -66,7 +66,8 @@ chrome.runtime.onInstalled.addListener(event => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (tabs) => {
       if (tabs.length) {
         if (tabs[0].id !== undefined) {
-          chrome.tabs.executeScript(tabs[0].id!, { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' }, result => {
+          type ScriptRes = { acctEmail: string | undefined, sameWorld: boolean | undefined }[];
+          chrome.tabs.executeScript(tabs[0].id!, { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' }, (result: ScriptRes) => {
             respond({ provider: 'gmail', acctEmail: result[0].acctEmail || null, sameWorld: result[0].sameWorld === true });
           });
         } else {
@@ -103,7 +104,7 @@ chrome.runtime.onInstalled.addListener(event => {
     Catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
-        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(Catch.rejection);
+        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(Catch.handleErr); // tslint:disable-line:no-unsafe-any
       } else {
         Catch.log('db corrupted, skipping: ' + request.f);
       }
@@ -130,8 +131,8 @@ chrome.runtime.onInstalled.addListener(event => {
 
   BrowserMsg.bgAddListener('bg_exec', BgExec.bgReqHandler);
   BrowserMsg.bgAddListener('db', (r: Bm.Db, sender, respond) => dbOperationHandler(r, sender, respond, db));
-  BrowserMsg.bgAddListener('session_set', (r: Bm.SessionSet, sender, respond) => Store.sessionSet(r.acctEmail, r.key, r.value).then(respond).catch(Catch.rejection));
-  BrowserMsg.bgAddListener('session_get', (r: Bm.SessionGet, sender, respond) => Store.sessionGet(r.acctEmail, r.key).then(respond).catch(Catch.rejection));
+  BrowserMsg.bgAddListener('session_set', (r: Bm.SessionSet, sender, respond) => Store.sessionSet(r.acctEmail, r.key, r.value).then(respond).catch(Catch.handleErr));
+  BrowserMsg.bgAddListener('session_get', (r: Bm.SessionGet, sender, respond) => Store.sessionGet(r.acctEmail, r.key).then(respond).catch(Catch.handleErr));
   BrowserMsg.bgAddListener('close_popup', (r: Bm.ClosePopup, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))));
   BrowserMsg.bgAddListener('settings', openSettingsPageHandler);
   BrowserMsg.bgAddListener('inbox', openInboxPageHandler);
@@ -160,10 +161,10 @@ chrome.runtime.onInstalled.addListener(event => {
   updateUninstallUrl({});
   injectFcIntoWebmailIfNeeded();
   scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
-  BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.rejection);
+  BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.handleErr);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be concating it to show the last 100
     await Store.remove(null, ['errors']);
   }
 
-})().catch(Catch.rejection);
+})().catch(Catch.handleErr);

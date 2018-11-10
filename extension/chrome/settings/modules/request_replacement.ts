@@ -41,13 +41,13 @@ Catch.try(async () => {
         try {
           signedPacket = await Api.attester.packet.createSign(reqDict, checkedOldKey.decrypted);
         } catch (e) {
-          Catch.report('Error signing REQUEST_REPLACEMENT: ' + e.message);
-          return alert('Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
+          Catch.report(`Error signing REQUEST_REPLACEMENT: ${String(e)}`);
+          return alert(`Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n${String(e)}`);
         }
         try {
           await Api.attester.replaceRequest(acctEmail, signedPacket, primaryPubkeyArmored);
         } catch (e) {
-          return alert('Error requesting Re-Attestation. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n' + JSON.stringify(e.message));
+          return alert(`Error requesting Re-Attestation. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n${String(e)}`);
         }
         await Settings.saveAttestReq(acctEmail, 'CRYPTUP'); // todo - should be the original attester
         alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
@@ -57,7 +57,7 @@ Catch.try(async () => {
       if (e instanceof UserAlert) {
         return alert(e.message);
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

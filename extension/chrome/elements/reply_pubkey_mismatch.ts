@@ -54,7 +54,7 @@ Catch.try(async () => {
     } else if (Api.err.isNetErr(e)) {
       // todo - render retry button
     } else {
-      Catch.handleException(e);
+      Catch.handleErr(e);
       // todo - render error
     }
   }
@@ -80,7 +80,7 @@ Catch.try(async () => {
         $(target).text(sendBtnText);
         alert('No internet connection, please try again.');
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         $(target).text(sendBtnText);
         alert('There was an error sending, please try again.');
       }

@@ -69,7 +69,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
     inject.meta();
     await Store.acctEmailsAdd(acctEmail);
-    saveAcctEmailFullNameIfNeeded(acctEmail).catch(Catch.rejection); // may take a long time, thus async
+    saveAcctEmailFullNameIfNeeded(acctEmail).catch(Catch.handleErr); // may take a long time, thus async
     return { tabId, notifications, factory, inject };
   };
 
@@ -82,7 +82,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
-          notification_setup_needed_dismiss: () => Store.setAcct(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.rejection),
+          notification_setup_needed_dismiss: () => Store.setAcct(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.handleErr),
           action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
@@ -187,13 +187,13 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       await webmailSpecific.start(acctEmail, inject, notifications, factory, notifyMurdered);
     } catch (e) {
       if (e instanceof TabIdRequiredError) {
-        e.message = `FlowCrypt cannot start: ${e.message}`;
-        Catch.handleException(e);
+        e.message = `FlowCrypt cannot start: ${String(e)}`;
+        Catch.handleErr(e);
       } else if (e && e.message === 'Extension context invalidated.') {
         console.info(`FlowCrypt cannot start: extension context invalidated. Destroying.`);
         (window as ContentScriptWindow).destroy();
       } else if (!(e instanceof DestroyTrigger)) {
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
     }
   };

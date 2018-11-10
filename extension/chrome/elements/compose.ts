@@ -7,7 +7,7 @@ import { Value, Str } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
-import { Api, ProgressCb, SendableMsg } from '../../js/common/api.js';
+import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 
@@ -48,7 +48,7 @@ Catch.try(async () => {
       if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
       } else if (!Api.err.isNetErr(e) && !Api.err.isAuthErr(e) && !Api.err.isServerErr(e)) {
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
       threadId = threadId || threadMsgId;
       console.info('FlowCrypt: Substituting threadId: could cause issues. Value:' + String(threadId));
@@ -119,7 +119,7 @@ Catch.try(async () => {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else if (!Api.err.isNetErr(e)) {
-          Catch.handleException(e);
+          Catch.handleErr(e);
         }
         return undefined;
       }
@@ -188,14 +188,14 @@ Catch.try(async () => {
     emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Api.gmail.draftUpdate(acctEmail, draftId, mimeMsg),
     emailProviderDraftDelete: (draftId: string) => Api.gmail.draftDelete(acctEmail, draftId),
     emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Api.gmail.msgSend(acctEmail, message, renderUploadProgress),
-    emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: any) => { // todo remove the any
+    emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
       Api.gmail.searchContacts(acctEmail, query, knownContacts, multiCb).catch(e => {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else if (Api.err.isNetErr(e)) {
           // todo: render network error
         } else {
-          Catch.handleException(e);
+          Catch.handleErr(e);
           // todo: render error
         }
       });
@@ -216,7 +216,7 @@ Catch.try(async () => {
         } else if (Api.err.isNetErr(e)) {
           // todo: render retry
         } else {
-          Catch.handleException(e);
+          Catch.handleErr(e);
           // todo: render error
         }
       }
@@ -228,7 +228,7 @@ Catch.try(async () => {
     renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => {
       BrowserMsg.send.reinsertReplyBox(parentTabId, { acctEmail, myEmail: from, subject, theirEmail: recipients, threadId, threadMsgId: lastMsgId });
     },
-    renderFooterDialog: () => ($ as JQS).featherlight({
+    renderFooterDialog: () => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
       iframe: factory.srcAddFooterDialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
         $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
       }

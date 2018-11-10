@@ -21,6 +21,8 @@ export type PaymentMethod = 'stripe' | 'group' | 'trial';
 export type ProductLevel = 'pro' | null;
 export type Product = { id: null | string, method: null | PaymentMethod, name: null | string, level: ProductLevel };
 
+export class CheckVerificationEmail extends Error { }
+
 export class FcAcct {
 
   PRODUCTS: Dict<Product> = {
@@ -68,10 +70,10 @@ export class FcAcct {
       if (tokens && tokens.length) {
         return await this.verify(acctEmail, tokens);
       } else {
-        throw { code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email` };
+        throw new CheckVerificationEmail(`Please check your inbox (${acctEmail}) for a verification email`);
       }
     } else {
-      throw { code: null, internal: 'email', message: `Please check your inbox (${acctEmail}) for a verification email` };
+      throw new CheckVerificationEmail(`Please check your inbox (${acctEmail}) for a verification email`);
     }
   }
 

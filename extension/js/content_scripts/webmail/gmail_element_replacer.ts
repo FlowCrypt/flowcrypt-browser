@@ -54,11 +54,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   everything = () => {
     this.replaceArmoredBlocks();
-    this.replaceAtts().catch(Catch.handleException);
+    this.replaceAtts().catch(Catch.handleErr);
     this.replaceFcTags();
     this.replaceConvoBtns();
     this.replaceStandardReplyBox();
-    this.evaluateStandardComposeReceivers().catch(Catch.handleException);
+    this.evaluateStandardComposeReceivers().catch(Catch.handleErr);
   }
 
   setReplyBoxEditable = () => {

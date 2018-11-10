@@ -6,7 +6,7 @@
 
 import { FlatTypes } from './store.js';
 import { Pgp } from './pgp.js';
-import { Att, FlowCryptAttLinkData } from './att.js';
+import { Att, FcAttLinkData } from './att.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type EmailProvider = 'gmail';
@@ -67,7 +67,7 @@ export class Str {
 
   public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
 
-  public static htmlAttrDecode = (encoded: string): FlowCryptAttLinkData | any => JSON.parse(Str.base64urlUtfDecode(encoded));
+  public static htmlAttrDecode = (encoded: string): any => JSON.parse(Str.base64urlUtfDecode(encoded)); // tslint:disable-line:no-unsafe-any
 
   /**
    * used for 3rd party API calls - do not change w/o testing Gmail api attachments
@@ -177,14 +177,19 @@ export class Str {
     return str;
   }
 
+  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
+    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
+      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
+  }
+
   public static extractFcAtts = (decryptedContent: string, fcAtts: Att[]) => {
     if (Value.is('cryptup_file').in(decryptedContent)) {
       decryptedContent = decryptedContent.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, foundLink => {
         const el = $(foundLink);
         const fcData = el.attr('cryptup-data');
         if (fcData) {
-          const a: FlowCryptAttLinkData = Str.htmlAttrDecode(fcData);
-          if (a && typeof a === 'object' && typeof a.name !== 'undefined' && typeof a.size !== 'undefined' && typeof a.type !== 'undefined') {
+          const a = Str.htmlAttrDecode(fcData);
+          if (Str.isFcAttLinkData(a)) {
             fcAtts.push(new Att({ type: a.type, name: a.name, length: a.size, url: el.attr('href') }));
           }
         }
@@ -244,7 +249,7 @@ export class Str {
     if (typeof str === 'undefined') {
       return str;
     }
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
   private static base64urlUtfDecode = (str: string) => {
@@ -252,6 +257,7 @@ export class Str {
     if (typeof str === 'undefined') {
       return str;
     }
+    // tslint:disable-next-line:no-unsafe-any
     return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
   }
 

@@ -38,7 +38,7 @@ Catch.try(async () => {
   const setupAcctPromptPopup = (activeAcctEmail: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(activeAcctEmail);
-    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.rejection)));
+    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.handleErr)));
   };
 
   const activeTab = await BrowserMsg.send.await.bg.getActiveTabInfo();

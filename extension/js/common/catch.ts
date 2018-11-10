@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Store, Serializable } from './store.js';
+import { Store } from './store.js';
 import { FcWindow } from './extension.js';
-import { Dict, StandardError, Value } from './common.js';
+import { StandardError } from './common.js';
 
 const VERSION = '[BUILD_REPLACEABLE_VERSION]';
 
@@ -15,52 +15,48 @@ export class Catch {
   public static RUNTIME_VERSION = VERSION;
   public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIG_ONERROR = window.onerror;
+  private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
+  private static IGNORE_ERR_MSG = [
+    // happens in gmail window when reloaded extension + now reloading gmail
+    'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
+    // happens in gmail window when reloaded extension + now reloading gmail
+    'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)',
+    // not sure when this one happens, but likely have to do with extnsion lifecycle as well
+    'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
+  ];
 
-  public static onErr = (errMsg: string | undefined, url: string, line: number, col: number, err: string | Error | Dict<Serializable>, isManuallyCalled: boolean) => {
-    if (typeof err === 'string') {
-      errMsg = err;
-      err = { name: 'thrown_string', message: errMsg, stack: errMsg };
+  private static stringify = (e: any) => {
+    try { // this sometimes happen with unhandled Promise.then(_, reject)
+      return JSON.stringify(e);
+    } catch (cannotStringify) {
+      return `[unstringifiable typeof: ${(typeof e)}] ${String(e)}`;
     }
-    if (errMsg && url && typeof line !== 'undefined' && !col && !err && !isManuallyCalled) { // safari has limited support
-      err = { name: 'safari_error', message: errMsg, stack: errMsg };
-    }
-    if (typeof errMsg === 'undefined' && line === 0 && col === 0 && isManuallyCalled && typeof err === 'object' && !(err instanceof Error)) {
-      let stringified;
-      try { // this sometimes happen with unhandled Promise.then(_, reject)
-        stringified = JSON.stringify(err);
-      } catch (cannot) {
-        stringified = 'typeof: ' + (typeof err) + '\n' + String(err);
+  }
+
+  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, err: any, isManuallyCalled: boolean) => {
+    let exception: Error;
+    if (typeof err !== 'object') {
+      exception = new Error(`THROWN_NON_OBJECT[${typeof err}]: ${String(err)}`);
+    } else if (errMsg && url && typeof line !== 'undefined' && !col && !err && !isManuallyCalled) { // safari has limited support
+      exception = new Error(`SAFARI_ERROR: ${errMsg}`);
+    } else if (err instanceof Error) {
+      exception = err;
+    } else {
+      exception = new Error(`THROWN_OBJECT: [${errMsg}] ${Catch.stringify(err)}`);
+      if (err && typeof err === 'object' && (err as StandardError).stack) {
+        exception.stack = `${(exception.stack || '')}\n\nORIGINAL_THROWN_OBJECT_STACK:\n${(err as StandardError).stack}`;
       }
-      err = { name: 'thrown_object', message: err.message || '(unknown)', stack: stringified };
-      errMsg = 'thrown_object';
     }
-    const userLogMsg = ' Please report errors above to human@flowcrypt.com. I fix errors VERY promptly.';
-    const ignoredErrs = [
-      // happens in gmail window when reloaded extension + now reloading gmail
-      'Invocation of form get(, function) doesn\'t match definition get(optional string or array or object keys, function callback)',
-      // happens in gmail window when reloaded extension + now reloading gmail
-      'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)',
-      'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
-    ];
-    if (!err) {
+    if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) {
       return;
     }
-    if (err instanceof Error && ignoredErrs.indexOf(err.message) !== -1) {
-      return true;
-    }
-    if (err instanceof Error && err.stack) {
-      console.log('%c[' + errMsg + ']\n' + err.stack, 'color: #F00; font-weight: bold;');
-    } else {
-      console.error(err);
-      console.log('%c' + errMsg, 'color: #F00; font-weight: bold;');
-    }
-    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErr as ErrorEventHandler)) {
+    console.error(err);
+    console.error(exception);
+    console.error(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
+    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as ErrorEventHandler)) {
       Catch.ORIG_ONERROR.apply(null, arguments); // Call any previously assigned handler
     }
-    if (err instanceof Error && (err.stack || '').indexOf('PRIVATE') !== -1) {
-      return;
-    }
-    if (err instanceof UnreportableError) {
+    if ((exception.stack || '').indexOf('PRIVATE') !== -1 || exception instanceof UnreportableError) {
       return;
     }
     try {
@@ -68,12 +64,12 @@ export class Catch {
         url: 'https://flowcrypt.com/api/help/error',
         method: 'POST',
         data: JSON.stringify({
-          name: ((err as Error).name || '').substring(0, 50), // todo - remove cast & debug
-          message: (errMsg || '').substring(0, 200),
+          name: exception.name.substring(0, 50),
+          message: exception.message.substring(0, 200),
           url: (url || '').substring(0, 100),
           line: line || 0,
           col: col || 0,
-          trace: (err as Error).stack || '', // todo - remove cast & debug
+          trace: exception.stack || '',
           version: Catch.RUNTIME_VERSION,
           environment: Catch.RUNTIME_ENVIRONMENT,
         }),
@@ -81,81 +77,64 @@ export class Catch {
         crossDomain: true,
         contentType: 'application/json; charset=UTF-8',
         async: true,
-        success: (response) => {
-          if (response.saved === true) {
-            console.log('%cFlowCrypt ERROR:' + userLogMsg, 'font-weight: bold;');
+        success: (response: { saved: boolean }) => {
+          if (response && typeof response === 'object' && response.saved === true) {
+            console.error('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
           } else {
-            console.log('%cFlowCrypt EXCEPTION:' + userLogMsg, 'font-weight: bold;');
+            console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
           }
         },
         error: (req, status, error) => {
-          console.log('%cFlowCrypt FAILED:' + userLogMsg, 'font-weight: bold;');
+          console.error('%cFlowCrypt FAILED:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
         },
       });
     } catch (ajaxErr) {
-      console.log(ajaxErr.message);
-      console.log('%cFlowCrypt ISSUE:' + userLogMsg, 'font-weight: bold;');
+      console.error(ajaxErr);
+      console.error('%cFlowCrypt ISSUE:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
     }
     try {
-      Store.saveError(err, errMsg);
+      Store.saveError(exception);
     } catch (storageErr) {
-      console.error('failed to locally log error "' + String(errMsg) + '" because: ' + storageErr.message);
+      console.error(`failed to locally log error ${String(exception)} because: ${String(storageErr)}`);
     }
     return true;
   }
 
-  public static handleException = (exception: any) => {
-    let line, col;
+  private static getErrorLineAndCol = (e: any) => {
     try {
-      const callerLine = exception.stack!.split('\n')[1]; // will be catched below
-      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/);
-      line = Number(matched![1]); // will be catched below
-      col = Number(matched![2]); // will be catched below
+      const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
+      const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
+      return { line: Number(matched![1]), col: Number(matched![2]) }; // tslint:disable-line:no-unsafe-any
     } catch (lineErr) {
-      line = 0;
-      col = 0;
+      return { line: 0, col: 0 };
     }
-    Catch.onErr(exception.message, window.location.href, line, col, exception, true);
   }
 
-  public static report = (name: string, details: Error | Serializable | StandardError | PromiseRejectionEvent = undefined) => {
+  public static handleErr = (e: any) => {
+    const { line, col } = Catch.getErrorLineAndCol(e);
+    Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
+  }
+
+  private static nameAndDetailsAsException = (name: string, details: any): Error => {
     try {
       // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
     } catch (e) {
-      if (typeof details !== 'string') {
-        try {
-          details = JSON.stringify(details);
-        } catch (stringifyErr) {
-          details = '(could not stringify details "' + String(details) + '" in Catch.report because: ' + stringifyErr.message + ')';
-        }
-      }
-      e.stack = e.stack + '\n\n\ndetails: ' + details;
-      Catch.handleException(e);
+      (e as Error).stack = (e as Error).stack + `\n\n\ndetails: ${typeof details !== 'string' ? details : Catch.stringify(details)}`;
+      return e as Error;
     }
   }
 
-  public static log = (name: string, details: Serializable | Error | Dict<Serializable> = undefined) => {
-    name = 'Catch.log: ' + name;
-    console.log(name);
+  public static report = (name: string, details?: any) => {
+    Catch.handleErr(Catch.nameAndDetailsAsException(name, details));
+  }
+
+  public static log = (name: string, details?: any) => {
+    const e = Catch.nameAndDetailsAsException(`Catch.log: ${name}`, details);
     try {
-      // noinspection ExceptionCaughtLocallyJS
-      throw new Error(name);
-    } catch (localErr) {
-      const e = localErr as Error;
-      if (typeof details !== 'string') {
-        try {
-          details = JSON.stringify(details);
-        } catch (stringifyError) {
-          details = '(could not stringify details "' + String(details) + '" in Catch.log because: ' + stringifyError.message + ')';
-        }
-      }
-      e.stack = e.stack + '\n\n\ndetails: ' + details;
-      try {
-        Store.saveError(localErr, name);
-      } catch (storageErr) {
-        console.error('failed to locally log info "' + String(name) + '" because: ' + storageErr.message);
-      }
+      Store.saveError(e, name);
+    } catch (storageErr) {
+      console.error(`failed to locally log "${String(name)}" because "${String(storageErr)}"`);
     }
   }
 
@@ -167,14 +146,18 @@ export class Catch {
     }
   }
 
+  public static isPromise = (v: any): v is Promise<any> => {
+    return v && typeof v === 'object' && typeof (v as Promise<any>).then === 'function' && typeof (v as Promise<any>).catch === 'function';
+  }
+
   public static try = (code: Function) => () => { // tslint:disable-line:ban-types // returns a function
     try {
       const r = code();
-      if (r && typeof r === 'object' && typeof r.then === 'function' && typeof r.catch === 'function') { // a promise - async catching
-        r.catch(Catch.rejection);
+      if (Catch.isPromise(r)) {
+        r.catch(Catch.handleErr);
       }
     } catch (codeErr) {
-      Catch.handleException(codeErr);
+      Catch.handleErr(codeErr);
     }
   }
 
@@ -221,7 +204,7 @@ export class Catch {
 
   public static test = () => {
     // @ts-ignore - intentional exception
-    thisWillFail();
+    thisWillFail(); // tslint:disable-line:no-unsafe-any
   }
 
   public static promiseErrAlert = (note: string) => (error: Error) => { // returns a function
@@ -233,25 +216,31 @@ export class Catch {
     try {
       Catch.test();
     } catch (e) {
-      return e.stack.split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
+      return ((e as Error).stack || '').split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
     }
     return ''; // make ts happy - this will never happen
   }
 
-  public static rejection = (e: PromiseRejectionEvent | StandardError | Error) => {
-    if (!(e instanceof UnreportableError)) {
-      const eHasReason = e && typeof e === 'object' && e.hasOwnProperty('reason') && typeof (e as PromiseRejectionEvent).reason === 'object';
-      if (eHasReason && (e as PromiseRejectionEvent).reason && (e as PromiseRejectionEvent).reason.message) {
-        Catch.handleException((e as PromiseRejectionEvent).reason); // actual exception that happened in Promise, unhandled
-      } else if (!Value.is(JSON.stringify(e)).in(['{"isTrusted":false}', '{"isTrusted":true}'])) {  // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
-        if (typeof e === 'object' && typeof (e as StandardError).stack === 'string' && (e as StandardError).stack) { // thrown object that has a stack attached
-          const stack = (e as StandardError).stack;
-          delete (e as StandardError).stack;
-          Catch.report('unhandled_promise_reject_object with stack', `${JSON.stringify(e)}\n\n${stack}`);
-        } else {
-          Catch.report('unhandled_promise_reject_object', e); // some x that was called with reject(x) and later not handled
-        }
+  private static isPromiseRejectionEvent = (ev: any): ev is PromiseRejectionEvent => {
+    if (ev && typeof ev === 'object') {
+      const eHasReason = (ev as {}).hasOwnProperty('reason') && typeof (ev as PromiseRejectionEvent).reason === 'object';
+      const eHasPromise = (ev as {}).hasOwnProperty('promise') && Catch.isPromise((ev as PromiseRejectionEvent).promise);
+      return eHasReason && eHasPromise;
+    }
+    return false;
+  }
+
+  public static onUnhandledRejectionInternalHandler = (e: any) => {
+    if (Catch.isPromiseRejectionEvent(e)) {
+      Catch.handleErr(e.reason);
+    } else {
+      const stringified = Catch.stringify(e);
+      if (stringified === '{"isTrusted":false}' || stringified === '{"isTrusted":true}') {
+        return; // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
       }
+      const { line, col } = Catch.getErrorLineAndCol(e);
+      const msg = e instanceof Error ? e.message : String(e);
+      Catch.onErrorInternalHandler(`[rejection] ${msg}`, window.location.href, line, col, e, true);
     }
   }
 
@@ -266,5 +255,5 @@ export class Catch {
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-(window as FcWindow).onerror = (Catch.onErr as ErrorEventHandler);
-(window as FcWindow).onunhandledrejection = Catch.rejection;
+(window as FcWindow).onerror = (Catch.onErrorInternalHandler as ErrorEventHandler);
+(window as FcWindow).onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;

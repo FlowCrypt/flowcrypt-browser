@@ -110,7 +110,7 @@ Catch.try(async () => {
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }

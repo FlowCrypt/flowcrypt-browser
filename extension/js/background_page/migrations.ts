@@ -40,7 +40,7 @@ export const migrateGlobal = async () => {
 //       await Store.setAcct(acctEmail, { addressesKeyserver });
 //     } catch (e) {
 //       if (!Api.err.isNetErr(e)) {
-//         Catch.handleException(e);
+//         Catch.handleErr(e);
 //       }
 //     }
 //   }
@@ -73,7 +73,7 @@ export const migrateGlobal = async () => {
 
 const reportUsefulErrs = (e: any) => {
   if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
-    Catch.handleException(e);
+    Catch.handleErr(e);
   }
 };
 

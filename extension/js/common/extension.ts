@@ -19,6 +19,7 @@ export namespace Bm {
   export type Dest = string;
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = any;
+  export type Raw = { name: string; data: AnyRequest | {}; to: Dest | null; uid: string; stack: string; sender?: Sender; };
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
   export type Settings = { path?: string, page?: string, acctEmail?: string, pageUrlParams?: UrlParams, addNewAcct?: boolean };
@@ -75,7 +76,6 @@ type Handler = Bm.RespondingHandler | Bm.ResponselessHandler;
 export type Handlers = Dict<Handler>;
 
 export interface BrowserWidnow extends Window {
-  XMLHttpRequest: any;
   onunhandledrejection: (e: any) => void;
   'emailjs-mime-codec': AnyThirdPartyLibrary;
   'emailjs-mime-parser': AnyThirdPartyLibrary;
@@ -200,11 +200,11 @@ export class BrowserMsg {
   };
 
   private static sendCatch = (dest: Bm.Dest | null, name: string, bm: Dict<any>) => {
-    BrowserMsg.sendAwait(dest, name, bm).catch(Catch.handleException);
+    BrowserMsg.sendAwait(dest, name, bm).catch(Catch.handleErr);
   }
 
   private static sendAwait = (destString: string | null, name: string, bm?: Dict<any>): Promise<Bm.Response> => new Promise(resolve => {
-    const msg = { name, data: bm || {}, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() };
+    const msg: Bm.Raw = { name, data: bm || {}, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() };
     const tryResolveNoUndefined = (r?: Bm.Response) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     const isBackgroundPage = Env.isBackgroundPage();
     if (typeof destString === 'undefined') { // don't know where to send the message
@@ -221,12 +221,8 @@ export class BrowserMsg {
   })
 
   public static tabId = async (): Promise<string | null | undefined> => {
-    const r = await BrowserMsg.sendAwait(null, '_tab_', undefined);
-    if (typeof r === 'string' || typeof r === 'undefined' || r === null) {
-      return r; // for compatibility reasons when upgrading from 5.7.2 - can be removed later
-    } else {
-      return r.tabId; // new format
-    }
+    const r = await BrowserMsg.sendAwait(null, '_tab_', undefined) as Bm.Res._tab_;
+    return r.tabId;
   }
 
   public static requiredTabId = async (): Promise<string> => {
@@ -247,7 +243,7 @@ export class BrowserMsg {
 
   public static listen = (listenForTabId: string) => {
     const processed: string[] = [];
-    chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, respond) => {
       try {
         if (msg.to === listenForTabId || msg.to === 'broadcast') {
           if (!Value.is(msg.uid).in(processed)) {
@@ -257,7 +253,7 @@ export class BrowserMsg {
               const r = handler(msg.data, sender, respond);
               if (r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
                 // todo - a way to callback the error to be re-thrown to caller stack
-                (r as Promise<void>).catch(Catch.rejection);
+                (r as Promise<void>).catch(Catch.handleErr);
               }
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
               if (BrowserMsg.browserMsgDestParse(msg.to).frame !== null) {
@@ -272,7 +268,7 @@ export class BrowserMsg {
         return !!respond; // indicate that this listener intends to respond
       } catch (e) {
         // todo - a way to callback the error to be re-thrown to caller stack
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
       return undefined;
     });
@@ -283,15 +279,16 @@ export class BrowserMsg {
   }
 
   public static bgListen = () => {
-    chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+    chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, respond) => {
       try {
         const safeRespond = (response: any) => {
           try { // avoiding unnecessary errors when target tab gets closed
             respond(response);
           } catch (e) {
-            // todo - the sender should still know - could have PageClosedError
-            if (e.message !== 'Attempting to use a disconnected port object') {
-              Catch.handleException(e);
+            if (e instanceof Error && e.message === 'Attempting to use a disconnected port object') {
+              // todo - the sender should still know - could have PageClosedError
+            } else {
+              Catch.handleErr(e);
               throw e;
             }
           }
@@ -304,7 +301,7 @@ export class BrowserMsg {
           const r = handler(msg.data, sender, safeRespond); // is !null because checked above
           if (r && typeof r === 'object' && (r as Promise<void>).then && (r as Promise<void>).catch) {
             // todo - a way to callback the error to be re-thrown to caller stack
-            (r as Promise<void>).catch(Catch.rejection);
+            (r as Promise<void>).catch(Catch.handleErr);
           }
         } else if (msg.to !== 'broadcast') {
           Catch.report('BrowserMsg.listen_background error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
@@ -312,7 +309,7 @@ export class BrowserMsg {
         return !!respond; // indicate that we intend to respond later
       } catch (e) {
         // todo - a way to callback the error to be re-thrown to caller stack
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
       return undefined;
     });
@@ -342,11 +339,12 @@ export class BgExec {
       respond({ result });
     } catch (e) {
       try {
+        const eIsObj = e instanceof Object;
         respond({
           exception: {
-            name: e.constructor.name,
-            message: e.message,
-            stack: (e.stack || '') + ((e as any).workerStack ? `\n\nWorker stack:\n${(e as any).workerStack}` : ''),
+            name: eIsObj ? (e as Object).constructor.name : String(e), // tslint:disable-line:ban-types
+            message: e instanceof Error ? e.message : String(e),
+            stack: `${eIsObj && (e as any).stack ? (e as any).stack : ''}\n\n${eIsObj && (e as any).workerStack ? `Worker stack:\n${(e as any).workerStack}` : ''}`,
           },
         });
       } catch (e2) {
@@ -388,7 +386,7 @@ export class BgExec {
 
   private static executeAndFormatResult = async (path: string, resolvedArgs: any[]): Promise<PossibleBgExecResults> => {
     const f = BgExec.resolvePathToCallableFunction(path);
-    const returned: Promise<PossibleBgExecResults> | PossibleBgExecResults = f.apply(null, resolvedArgs);
+    const returned: Promise<PossibleBgExecResults> | PossibleBgExecResults = f.apply(null, resolvedArgs); // tslint:disable-line:no-unsafe-any
     if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       const resolved = await returned;
       if (path === 'Pgp.msg.decrypt') {
@@ -415,9 +413,9 @@ export class BgExec {
 
   private static shouldBeObjUrl = (arg: any) => (typeof arg === 'string' && arg.length > BrowserMsg.MAX_SIZE) || arg instanceof Uint8Array;
 
-  private static argObjUrlsConsume = (args: any[]) => args.map((arg: any) => BgExec.isObjUrl(arg) ? Browser.objUrlConsume(arg) : arg);
+  private static argObjUrlsConsume = (args: any[]) => args.map((arg: any) => BgExec.isObjUrl(arg) ? Browser.objUrlConsume(arg) : arg); // tslint:disable-line:no-unsafe-any
 
-  private static argObjUrlsCreate = (args: any[]) => args.map(arg => BgExec.shouldBeObjUrl(arg) ? Browser.objUrlCreate(arg) : arg);
+  private static argObjUrlsCreate = (args: any[]) => args.map(arg => BgExec.shouldBeObjUrl(arg) ? Browser.objUrlCreate(arg) : arg); // tslint:disable-line:no-unsafe-any
 
   private static resolvePathToCallableFunction = (path: string): Function => {  // tslint:disable-line:ban-types
     let f: Function | object | null = null; // tslint:disable-line:ban-types
@@ -430,7 +428,7 @@ export class BgExec {
         }
       } else {
         // @ts-ignore
-        f = f[step];
+        f = f[step]; // tslint:disable-line:no-unsafe-any
       }
     }
     return f as Function; // tslint:disable-line:ban-types

@@ -33,7 +33,7 @@ Catch.try(async () => {
     $('.email').text(acctEmail);
 
     $('.action_allow_outlook').change(Ui.event.handle(async target => {
-      await Store.setGlobal({ 'dev_outlook_allow': $(target).prop('checked') });
+      await Store.setGlobal({ 'dev_outlook_allow': Boolean($(target).prop('checked')) });
       window.location.reload();
     }));
 
@@ -41,7 +41,7 @@ Catch.try(async () => {
 
     $('.action_open_decrypt_ignore_mdc').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt_ignore_mdc.htm')));
 
-    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.rejection)));
+    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.handleErr)));
 
     $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
@@ -55,8 +55,8 @@ Catch.try(async () => {
           alert('Error: account needs to be re-connected first.');
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else {
-          Catch.handleException(e);
-          alert(`Error happened: ${e.message}`);
+          Catch.handleErr(e);
+          alert(`Error happened: ${String(e)}`);
         }
       }
       window.location.reload();
@@ -116,7 +116,7 @@ Catch.try(async () => {
                 alert(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
                 BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail });
               } catch (e) {
-                Catch.handleException(e);
+                Catch.handleErr(e);
                 alert('There was an error changing google account, please write human@flowcrypt.com');
               }
             }

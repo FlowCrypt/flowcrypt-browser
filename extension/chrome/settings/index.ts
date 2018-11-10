@@ -4,7 +4,7 @@
 
 import { Store, KeyInfo } from '../../js/common/store.js';
 import { Str } from '../../js/common/common.js';
-import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, Env, JQS, UrlParams } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
@@ -18,7 +18,7 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
   const acctEmail = urlParams.acctEmail as string | undefined;
-  const pageUrlParams = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) : null;
+  const pageUrlParams: UrlParams | null = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) as UrlParams : null;
   const acctEmails = await Store.acctEmailsGet();
   const addNewAcct = urlParams.addNewAcct === true;
 
@@ -75,7 +75,7 @@ Catch.try(async () => {
   });
   BrowserMsg.addListener('open_google_auth_dialog', ({ acctEmail, omitReadScope }: Bm.OpenGoogleAuthDialog) => {
     $('.featherlight-close').click();
-    Settings.newGoogleAcctAuthPrompt(tabId, acctEmail, omitReadScope).catch(Catch.handleException);
+    Settings.newGoogleAcctAuthPrompt(tabId, acctEmail, omitReadScope).catch(Catch.handleErr);
   });
   BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
@@ -110,8 +110,8 @@ Catch.try(async () => {
       $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
       const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
       if (storage.setup_done) {
-        checkGoogleAcct().catch(Catch.handleException);
-        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.handleException);
+        checkGoogleAcct().catch(Catch.handleErr);
+        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.handleErr);
         if (storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
@@ -150,7 +150,7 @@ Catch.try(async () => {
     try {
       await renderSubscriptionStatusHeader();
     } catch (e) {
-      Catch.handleException(e);
+      Catch.handleErr(e);
     }
     const authInfo = await Store.authInfo();
     if (authInfo.acctEmail) { // have auth email set
@@ -174,7 +174,7 @@ Catch.try(async () => {
         } else {
           statusContainer.text('ecp error');
           $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
-          Catch.handleException(e);
+          Catch.handleErr(e);
         }
       }
     } else { // never set up
@@ -191,7 +191,7 @@ Catch.try(async () => {
       alert(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
       window.location.href = Env.urlCreate('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
     } catch (e) {
-      Catch.handleException(e);
+      Catch.handleErr(e);
       alert('There was an error changing google account, please write human@flowcrypt.com');
     }
   };
@@ -199,7 +199,7 @@ Catch.try(async () => {
   const checkGoogleAcct = async () => {
     try {
       const me = await Api.gmail.usersMeProfile(acctEmail!);
-      Settings.updateProfilePicIfMissing(acctEmail!).catch(Catch.handleException);
+      Settings.updateProfilePicIfMissing(acctEmail!).catch(Catch.handleErr);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
       if (me.emailAddress !== acctEmail) {
         $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
@@ -220,7 +220,7 @@ Catch.try(async () => {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.escape(String(e))}`);
-        Catch.handleException(e);
+        Catch.handleErr(e);
       }
     }
   };
@@ -232,7 +232,7 @@ Catch.try(async () => {
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
-        Catch.handleException(e);
+        Catch.handleErr(e);
         liveness = 'err';
       } else {
         liveness = 'offline';
@@ -293,6 +293,7 @@ Catch.try(async () => {
     }));
   };
 
+  // tslint:disable-next-line:no-unsafe-any
   $.get(chrome.extension.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
 
   $('.show_settings_page').click(Ui.event.handle(target => {

@@ -26,7 +26,7 @@ Catch.try(async () => {
       const picEscaped = Xss.escape(acctStorages[email].picture || '/img/svgs/profile-icon.svg');
       const emailEscaped = Xss.escape(email);
       emailsUlHtml += `<li><a class="button gray2 long" href="#" email="${emailEscaped}"><img class="picture" src="${picEscaped}">${emailEscaped}</a></li>`;
-      Settings.updateProfilePicIfMissing(email).catch(Catch.handleException); // will show next time page is rendered
+      Settings.updateProfilePicIfMissing(email).catch(Catch.handleErr); // will show next time page is rendered
     }
   }
   Xss.sanitizeRender('ul.emails', emailsUlHtml).find('a').click(Ui.event.handle(async target => {

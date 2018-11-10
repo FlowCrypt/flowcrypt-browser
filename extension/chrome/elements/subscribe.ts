@@ -5,7 +5,7 @@
 import { Store } from '../../js/common/store.js';
 import { Str } from './../../js/common/common.js';
 import { Xss, Ui, XssSafeFactory, Env } from '../../js/common/browser.js';
-import { FcAcct } from './../../js/common/account.js';
+import { FcAcct, CheckVerificationEmail } from './../../js/common/account.js';
 import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
@@ -37,10 +37,10 @@ Catch.try(async () => {
       renderErr('network error');
     } else if (Api.err.isAuthErr(e)) {
       renderErr('auth error', e);
-    } else if (Api.err.isStandardErr(e, 'email')) {
+    } else if (e instanceof CheckVerificationEmail) {
       $('.action_get_trial, .action_add_device').css('display', 'none');
       $('.action_close').text('ok');
-      renderStatusText(e.message || e.error.message);
+      renderStatusText(e.message);
       btnRestore();
     } else {
       renderErr('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);
@@ -99,7 +99,7 @@ Catch.try(async () => {
     } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('#content', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
-      Catch.handleException(e);
+      Catch.handleErr(e);
       Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retryLink()}`);
     }
   }
@@ -201,7 +201,7 @@ Catch.try(async () => {
         $('.action_close').removeClass('gray').addClass('green').text('ok');
       } catch (e) {
         if (!Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
-          Catch.handleException(e);
+          Catch.handleErr(e);
         }
       }
     }

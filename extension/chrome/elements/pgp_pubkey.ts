@@ -72,7 +72,7 @@ Catch.try(async () => {
           const pubToEmail = (pubkey: OpenPGP.key.Key) => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
           Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubkeys.map(pubToEmail).filter(e => Str.isEmailValid(e)).join(', ')));
         }
-        setBtnText().catch(Catch.rejection);
+        setBtnText().catch(Catch.handleErr);
       }
     } else {
       let fixed = urlParams.armoredPubkey as string;
