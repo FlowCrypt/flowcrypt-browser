@@ -71,10 +71,11 @@ export class AjaxError extends Error {
 
 export class ApiErrorResponse extends Error {
   public res: StandardErrorRes;
-  public url: any;
-  constructor(response: any, url: string) {
+  public url: string;
+  constructor(response: StandardErrorRes, url: string) {
     super(`Error response from ${url}`);
     this.res = response;
+    this.url = url;
   }
 }
 
@@ -1030,8 +1031,8 @@ export class Api {
       };
       try {
         const response = await $.ajax(request);
-        if (response && typeof response === 'object' && typeof (response as any).error === 'object') {
-          throw new ApiErrorResponse(response, request.url!);
+        if (response && typeof response === 'object' && typeof (response as StandardErrorRes).error === 'object' && (response as StandardErrorRes).error.message) {
+          throw new ApiErrorResponse(response as StandardErrorRes, request.url!);
         }
         return response;
       } catch (e) {
