@@ -146,9 +146,7 @@ chrome.runtime.onInstalled.addListener(event => {
     } else if (sender === null || sender === undefined) {
       respond({ tabId: undefined }); // not sure when or why this happens - maybe orphaned frames during update
     } else if (sender.tab) {
-      // firefox doesn't include frameId due to a bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
-      // fixed in FF55, but currently we still support v52: https://flowcrypt.com/api/update/firefox
-      respond({ tabId: `${sender.tab.id}:${(typeof sender.frameId !== 'undefined' ? sender.frameId : '')}` });
+      respond({ tabId: `${sender.tab.id}:${sender.frameId}` });
     } else {
       // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
       // https://developers.chrome.com/extensions/runtime#type-MessageSender
