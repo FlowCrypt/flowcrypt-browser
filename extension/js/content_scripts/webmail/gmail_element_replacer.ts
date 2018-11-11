@@ -184,8 +184,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             } catch (e) {
               if (Api.err.isAuthPopupNeeded(e)) {
                 this.notifications.showAuthPopupNeeded(this.acctEmail);
+                $(newPgpAtts).find('.attachment_loader').text('Auth needed');
+              } else if (Api.err.isNetErr(e)) {
+                $(newPgpAtts).find('.attachment_loader').text('Network error');
+              } else {
+                if (!Api.err.isServerErr(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isNotFound(e)) {
+                  Catch.handleErr(e);
+                }
+                $(newPgpAtts).find('.attachment_loader').text('Failed to load');
               }
-              $(newPgpAtts).find('.attachment_loader').text('Failed to load');
             }
           } else {
             const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
