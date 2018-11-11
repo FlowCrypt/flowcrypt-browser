@@ -17,9 +17,9 @@ import { FlowCryptApi } from './tests/api';
 type GlobalBrowserGroup = 'compatibility' | 'trial';
 export type GlobalBrowser = { browser?: BrowserHandle, semaphore: Semaphore, beforeEachTest: () => Promise<void> };
 
-let testTimeout = 5 * 60 * 1000;
-let browserPool = new BrowserPool(5);
-let browserGlobal: { [group: string]: GlobalBrowser } = {
+const testTimeout = 5 * 60 * 1000;
+const browserPool = new BrowserPool(5);
+const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
     browser: undefined,
     semaphore: new Semaphore(1),
@@ -45,14 +45,14 @@ ava.before('set up global browser and config', async t => {
   t.pass();
 });
 
-export let testWithNewBrowser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
+export const testWithNewBrowser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
   return async (t: ava.ExecutionContext<{}>) => {
     await browserPool.withNewBrowserTimeoutAndRetry(cb, t, testTimeout);
     t.pass();
   };
 };
 
-export let testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
+export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
   return async (t: ava.ExecutionContext<{}>) => {
     await browserGlobal[group].semaphore.acquire();
     try {
