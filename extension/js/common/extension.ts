@@ -235,7 +235,7 @@ export class BrowserMsg {
       }
       await Ui.time.sleep(delay);
     }
-    throw new TabIdRequiredError(`Tab id is required, but received '${String(tabId)}' after 10 attempts`);
+    throw new TabIdRequiredError(`Tab id is required, but received '${String(tabId)}' after ${attempts} attempts`);
   }
 
   public static addListener = (name: string, handler: Handler) => {
