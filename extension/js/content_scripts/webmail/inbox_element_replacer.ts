@@ -34,7 +34,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   setReplyBoxEditable = () => {
-    throw Error('not implemented');
+    throw new Error('not implemented');
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {

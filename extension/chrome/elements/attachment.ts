@@ -178,7 +178,7 @@ Catch.try(async () => {
         encryptedAtt.setData(await Api.download(encryptedAtt.url, renderProgress));
         await decryptAndSaveAttToDownloads(encryptedAtt);
       } else {
-        throw Error('Missing both id and url');
+        throw new Error('Missing both id and url');
       }
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {

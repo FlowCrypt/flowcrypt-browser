@@ -123,7 +123,7 @@ export class FcAcct {
     if (response.subscription.level === chosenProduct.level && response.subscription.method === chosenProduct.method) {
       return response.subscription;
     }
-    throw { code: null, message: 'Something went wrong when upgrading, please email human@flowcrypt.com to get this resolved.', internal: 'mismatch' };
+    throw new Error('Something went wrong when upgrading (values don\'t match), please email human@flowcrypt.com to get this resolved.');
   }
 
   private fetchTokenEmailsOnGmailAndFindMatchingToken = async (acctEmail: string, uuid: string): Promise<string[] | null> => {

@@ -10,7 +10,6 @@ import { Att, FcAttLinkData } from './att.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type EmailProvider = 'gmail';
-export type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 
 export class Str {
 

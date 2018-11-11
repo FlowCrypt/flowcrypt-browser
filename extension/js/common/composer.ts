@@ -4,7 +4,7 @@
 
 import { Store, Subscription, KeyInfo, ContactUpdate, Contact, DbContactFilter } from './store.js';
 import { Lang } from './lang.js';
-import { Value, Str, StandardError } from './common.js';
+import { Value, Str } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError } from './pgp.js';
@@ -230,7 +230,7 @@ export class Composer {
       other: (e: any) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
-        } else if (typeof e === 'object' && e && typeof (e as StandardError).stack === 'undefined') {
+        } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
           try {
             (e as any).stack = `[compose action: ${couldNotDoWhat}]`;
           } catch (e) {
@@ -595,10 +595,6 @@ export class Composer {
         const pageUrlParams = { bugReport: Extension.prepareBugReport('composer: send: bad request', {}, e) };
         BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page, pageUrlParams });
       }
-    } else if (typeof e === 'object' && (e as any).hasOwnProperty('internal')) { // tslint:disable-line:no-unsafe-any
-      // todo - stop throwin StandardError, then stop catching it here
-      Catch.report('StandardError | failed to send message', e);
-      alert(`Failed to send message: [${(e as StandardError).internal}] ${String(e)}`);
     } else if (e instanceof ComposerUserError) {
       alert(`Could not send message: ${String(e)}`);
     } else {

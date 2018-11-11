@@ -41,9 +41,9 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 40 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
     } else if (backup === 'email') {
-      throw Error('tests.setup_manual_create options.backup=email not implemented');
+      throw new Error('tests.setup_manual_create options.backup=email not implemented');
     } else if (backup === 'file') {
-      throw Error('tests.setup_manual_create options.backup=file not implemented');
+      throw new Error('tests.setup_manual_create options.backup=file not implemented');
     }
     await settingsPage.waitAndClick('@action-backup-step3manual-continue');
     await settingsPage.waitAndClick('@action-step4done-account-settings');
@@ -157,10 +157,10 @@ export class SettingsPageRecipe extends PageRecipe {
     await Util.sleep(1); // wait for form to init / fill
     let requirePassphraseIsChecked = await securityFrame.isChecked('@input-toggle-require-pass-phrase');
     if (requirePassphraseIsChecked && outcome === 'session') {
-      throw Error('change_pass_phrase_requirement: already checked to be in session only');
+      throw new Error('change_pass_phrase_requirement: already checked to be in session only');
     }
     if (!requirePassphraseIsChecked && outcome === 'storage') {
-      throw Error('change_pass_phrase_requirement: already checked to be in storage');
+      throw new Error('change_pass_phrase_requirement: already checked to be in storage');
     }
     await securityFrame.click('@input-toggle-require-pass-phrase');
     await securityFrame.waitAndType('@input-confirm-pass-phrase', passphrase);
@@ -170,10 +170,10 @@ export class SettingsPageRecipe extends PageRecipe {
     await Util.sleep(1); // wait to init
     requirePassphraseIsChecked = await securityFrame.isChecked('@input-toggle-require-pass-phrase');
     if (!requirePassphraseIsChecked && outcome === 'session') {
-      throw Error('change_pass_phrase_requirement: did not remember to only save in sesion');
+      throw new Error('change_pass_phrase_requirement: did not remember to only save in sesion');
     }
     if (requirePassphraseIsChecked && outcome === 'storage') {
-      throw Error('change_pass_phrase_requirement: did not remember to save in storage');
+      throw new Error('change_pass_phrase_requirement: did not remember to save in storage');
     }
     await SettingsPageRecipe.closeDialog(settingsPage);
   }
@@ -310,7 +310,7 @@ export class OauthPageRecipe extends PageRecipe {
     if (action === 'close') {
       await oauthPage.close();
     } else if (action === 'deny') {
-      throw Error('tests.handle_gmail_oauth options.deny.true not implemented');
+      throw new Error('tests.handle_gmail_oauth options.deny.true not implemented');
     } else {
       await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
     }

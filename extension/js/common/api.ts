@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store, GlobalStore, Serializable, AccountStore, Contact } from './store.js';
-import { Value, Str, Dict, StandardError } from './common.js';
+import { Value, Str, Dict } from './common.js';
 import { Pgp, FormatError } from './pgp.js';
 import { FlowCryptManifest, BrowserMsg, BrowserWidnow, Bm, GoogleAuthWindowResult$result } from './extension.js';
 import { Ui, Env } from './browser.js';
@@ -14,6 +14,8 @@ import { Catch } from './catch.js';
 
 declare const openpgp: typeof OpenPGP;
 
+type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
+type StandardErrorRes = { error: StandardError };
 type ParsedAttest$content = {
   [key: string]: string | undefined; action?: string; attester?: string; email_hash?: string;
   fingerprint?: string; fingerprint_old?: string; random?: string;
@@ -68,13 +70,15 @@ export class AjaxError extends Error {
 }
 
 export class ApiErrorResponse extends Error {
-  public res: { error: StandardError };
+  public res: StandardErrorRes;
   public url: any;
   constructor(response: any, url: string) {
     super(`Error response from ${url}`);
     this.res = response;
   }
 }
+
+class AuthError extends Error { }
 
 export namespace R { // responses
 
@@ -168,7 +172,7 @@ export class Api {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
       if (e && typeof e === 'object') {
-        if (Api.err.isStandardErr(e, 'network')) { // StandardError
+        if (Api.err.isStandardErr(e, 'network')) {
           return true;
         }
         if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') { // $.ajax network error
@@ -178,6 +182,9 @@ export class Api {
       return false;
     },
     isAuthErr: (e: any) => {
+      if (e instanceof AuthError) {
+        return true;
+      }
       if (e && typeof e === 'object') {
         if (Api.err.isStandardErr(e, 'auth')) {
           return true; // API auth error response
@@ -192,13 +199,11 @@ export class Api {
       if (e instanceof ApiErrorResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
         return true;
       }
-      if (e && typeof e === 'object') {
-        if ((e as StandardError).internal === internalType) {
-          return true;
-        }
-        if ((e as { error: StandardError }).error && typeof (e as { error: StandardError }).error === 'object' && (e as { error: StandardError }).error.internal === internalType) {
-          return true;
-        }
+      if (Api.internal.isStandardError(e) && e.internal === internalType) {
+        return true;
+      }
+      if ((e as StandardErrorRes).error && typeof (e as StandardErrorRes).error === 'object' && (e as StandardErrorRes).error.internal === internalType) {
+        return true;
       }
       return false;
     },
@@ -234,7 +239,7 @@ export class Api {
     // todo - move to Extension
     authPopup: (acctEmail: string | null, tabId: string, omitReadScope = false, scopes: string[] = []): Promise<AuthResult> => new Promise((resolve, reject) => {
       if (Env.isBackgroundPage()) {
-        throw { code: null, message: 'Cannot produce auth window from background script' };
+        throw new Error('Cannot produce auth window from background script');
       }
       let responseHandled = false;
       Api.internal.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
@@ -667,7 +672,7 @@ export class Api {
         const contentText = lines.join('\n');
         const packet = Api.attester.packet.parse(Api.internal.apiAttesterPacketArmor(contentText));
         if (packet.success !== true) {
-          throw { code: null, message: packet.error, internal: 'parse' };
+          throw new FormatError(packet.error || 'packet parse error', JSON.stringify(packet, undefined, 2));
         }
         return await Pgp.msg.sign(decryptedPrv, contentText);
       },
@@ -881,7 +886,7 @@ export class Api {
     }),
     messageUpload: async (encryptedDataArmored: string, authMethod: FcAuthMethods): Promise<R.FcMsgUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
       if (encryptedDataArmored.length > 100000) {
-        throw { code: null, message: 'Message text should not be more than 100 KB. You can send very long texts as attachments.' };
+        throw new Error('Message text should not be more than 100 KB. You can send very long texts as attachments.');
       }
       const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataArmored });
       if (!authMethod) {
@@ -960,6 +965,9 @@ export class Api {
   })
 
   private static internal = {
+    isStandardError: (e: any): e is StandardError => {
+      return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
+    },
     getAjaxProgressXhr: (progressCbs?: ProgressCbs) => {
       const progressPeportingXhr = new XMLHttpRequest();
       if (progressCbs && typeof progressCbs.upload === 'function') {
@@ -1005,7 +1013,7 @@ export class Api {
         }
         contentType = false;
       } else {
-        throw Error('unknown format:' + String(fmt));
+        throw new Error('unknown format:' + String(fmt));
       }
       const request: JQueryAjaxSettings = {
         xhr: () => Api.internal.getAjaxProgressXhr(progress),
@@ -1149,7 +1157,7 @@ export class Api {
         if (Api.internal.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
           return `Bearer ${auth.google_token_access}`;
         } else {
-          throw { code: 401, message: 'Could not refresh google auth token - did not become valid', internal: 'auth' };
+          throw new AuthError('Could not refresh google auth token - did not become valid');
         }
       }
     },

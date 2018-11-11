@@ -49,6 +49,6 @@ rules:
     object-literal-shorthand: true
     only-arrow-functions: true
     no-bitwise: false  # may enable in the future
-    no-namespace: false  # can consider later
+    no-namespace: false
     jsdoc-format: false  # add back later
 ...

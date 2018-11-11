@@ -4,11 +4,11 @@
 
 import { Store } from './store.js';
 import { FcWindow } from './extension.js';
-import { StandardError } from './common.js';
 
 const VERSION = '[BUILD_REPLACEABLE_VERSION]';
 
 export class UnreportableError extends Error { }
+export type ObjWithStack = { stack: string };
 
 export class Catch {
 
@@ -33,24 +33,28 @@ export class Catch {
     }
   }
 
-  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, err: any, isManuallyCalled: boolean) => {
+  public static hasStack = (e: any): e is ObjWithStack => {
+    return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
+  }
+
+  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
     let exception: Error;
-    if (typeof err !== 'object') {
-      exception = new Error(`THROWN_NON_OBJECT[${typeof err}]: ${String(err)}`);
-    } else if (errMsg && url && typeof line !== 'undefined' && !col && !err && !isManuallyCalled) { // safari has limited support
+    if (typeof originalErr !== 'object') {
+      exception = new Error(`THROWN_NON_OBJECT[${typeof originalErr}]: ${String(originalErr)}`);
+    } else if (errMsg && url && typeof line !== 'undefined' && !col && !originalErr && !isManuallyCalled) { // safari has limited support
       exception = new Error(`SAFARI_ERROR: ${errMsg}`);
-    } else if (err instanceof Error) {
-      exception = err;
+    } else if (originalErr instanceof Error) {
+      exception = originalErr;
     } else {
-      exception = new Error(`THROWN_OBJECT: [${errMsg}] ${Catch.stringify(err)}`);
-      if (err && typeof err === 'object' && (err as StandardError).stack) {
-        exception.stack = `${(exception.stack || '')}\n\nORIGINAL_THROWN_OBJECT_STACK:\n${(err as StandardError).stack}`;
+      exception = new Error(`THROWN_OBJECT: [${errMsg}] ${Catch.stringify(originalErr)}`);
+      if (Catch.hasStack(originalErr)) {
+        exception.stack = `${(exception.stack || '')}\n\nORIGINAL_THROWN_OBJECT_STACK:\n${originalErr.stack}`;
       }
     }
     if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) {
       return;
     }
-    console.error(err);
+    console.error(originalErr);
     console.error(exception);
     console.error(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as ErrorEventHandler)) {
