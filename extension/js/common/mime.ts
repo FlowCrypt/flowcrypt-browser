@@ -7,14 +7,18 @@ import { Pgp } from './pgp.js';
 import { Att } from './att.js';
 import { Catch } from './catch.js';
 
-type MimeContent = { headers: FlatHeaders; atts: Att[]; signature: string | undefined; html: string | undefined; text: string | undefined; };
+type MimeContentHeader = string | { address: string; name: string; }[];
+type MimeContent = { headers: Dict<MimeContentHeader>; atts: Att[]; signature: string | undefined; html: string | undefined; text: string | undefined; };
 type MimeParserNode = {
-  path: string[]; headers: { [key: string]: { value: string }[]; }; rawContent: string; content: Uint8Array;
-  appendChild: (child: MimeParserNode) => void; contentTransferEncoding: { value: string }; charset?: string;
+  path: string[];
+  headers: { [key: string]: { value: string; initial: string; params?: { charset?: string, filename?: string, name?: string } }[]; };
+  rawContent: string;
+  content: Uint8Array;
+  appendChild: (child: MimeParserNode) => void;
+  contentTransferEncoding: { value: string }; charset?: string;
   addHeader: (name: string, value: string) => void;
 };
 
-export type FlatHeaders = Dict<string>;
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type KeyBlockType = 'publicKey' | 'privateKey';
@@ -58,16 +62,12 @@ export class Mime {
   public static headersToFrom = (parsedMimeMsg: MimeContent): FromToHeaders => {
     const headerTo: string[] = [];
     let headerFrom;
-    // @ts-ignore - I should check this - does it really have .address?
-    if (parsedMimeMsg.headers.from && parsedMimeMsg.headers.from.length && parsedMimeMsg.headers.from[0] && parsedMimeMsg.headers.from[0].address) {
-      // @ts-ignore - I should check this - does it really have .address?
+    if (Array.isArray(parsedMimeMsg.headers.from) && parsedMimeMsg.headers.from[0] && parsedMimeMsg.headers.from[0].address) {
       headerFrom = parsedMimeMsg.headers.from[0].address;
     }
-    if (parsedMimeMsg.headers.to && parsedMimeMsg.headers.to.length) {
+    if (Array.isArray(parsedMimeMsg.headers.to)) {
       for (const to of parsedMimeMsg.headers.to) {
-        // @ts-ignore - I should check this - does it really have .address?
         if (to.address) {
-          // @ts-ignore - I should check this - does it really have .address?
           headerTo.push(String(to.address));
         }
       }
@@ -100,7 +100,7 @@ export class Mime {
 
   public static decode = (mimeMsg: string): Promise<MimeContent> => {
     return new Promise(async resolve => {
-      const mimeContent = { atts: [], headers: {} as FlatHeaders, text: undefined, html: undefined, signature: undefined } as MimeContent;
+      const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined };
       try {
         const parser = new (window as any)['emailjs-mime-parser'](); // tslint:disable-line:no-unsafe-any
         const parsed: { [key: string]: MimeParserNode } = {};
@@ -254,19 +254,17 @@ export class Mime {
   }
 
   private static getNodeFilename = (node: MimeParserNode): string | undefined => {
-    // @ts-ignore - lazy
-    if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) { // tslint:disable-line:no-unsafe-any
-      // @ts-ignore - lazy
-      if (node.headers['content-disposition'][0].params && node.headers['content-disposition'][0].params.filename) { // tslint:disable-line:no-unsafe-any
-        // @ts-ignore - lazy
-        return String(node.headers['content-disposition'][0].params.filename); // tslint:disable-line:no-unsafe-any
+    if (node.headers['content-disposition'] && node.headers['content-disposition'][0]) {
+      const header = node.headers['content-disposition'][0];
+      if (header.params && header.params.filename) {
+        return String(header.params.filename);
       }
     }
-    // @ts-ignore - lazy
-    // tslint:disable-next-line:no-unsafe-any
-    if (node.headers['content-type'] && node.headers['content-type'][0] && node.headers['content-type'][0].params && node.headers['content-type'][0].params.name) {
-      // @ts-ignore - lazy
-      return String(node.headers['content-type'][0].params.name); // tslint:disable-line:no-unsafe-any
+    if (node.headers['content-type'] && node.headers['content-type'][0]) {
+      const header = node.headers['content-type'][0];
+      if (header.params && header.params.name) {
+        return String(header.params.name);
+      }
     }
     return;
   }

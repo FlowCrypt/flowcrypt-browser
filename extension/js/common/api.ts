@@ -8,7 +8,7 @@ import { Pgp, FormatError } from './pgp.js';
 import { FlowCryptManifest, BrowserMsg, BrowserWidnow, Bm, GoogleAuthWindowResult$result } from './extension.js';
 import { Ui, Env } from './browser.js';
 import { Att } from './att.js';
-import { Mime, SendableMsgBody, FlatHeaders } from './mime.js';
+import { Mime, SendableMsgBody } from './mime.js';
 import { PaymentMethod } from './account.js';
 import { Catch } from './catch.js';
 
@@ -48,7 +48,7 @@ export type ProgressCb = (percent: number | null, loaded: number | null, total: 
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 export type ProviderContactsQuery = { substring: string };
-export type SendableMsg = { headers: FlatHeaders; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread: string | null; };
+export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread: string | null; };
 export type SubscriptionInfo = { active: boolean | null; method: PaymentMethod | null; level: SubscriptionLevel; expire: string | null; };
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
@@ -1004,7 +1004,7 @@ export class Api {
     isRawAjaxError: (e: any): e is RawAjaxError => {
       return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
     },
-    apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: FlatHeaders, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
+    apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
       progress = progress || {} as ProgressCbs;
       let formattedData: FormData | string;
       let contentType: string | false;
@@ -1220,9 +1220,9 @@ export class Api {
         }
       }
     },
-    apiGmailFetchMsgsSequentiallyFromListAndExtractFirstAvailableHeader: async (acctEmail: string, messages: R.GmailMsgList$message[], headerNames: string[]): Promise<FlatHeaders> => {
+    apiGmailFetchMsgsSequentiallyFromListAndExtractFirstAvailableHeader: async (acctEmail: string, messages: R.GmailMsgList$message[], headerNames: string[]): Promise<Dict<string>> => {
       for (const message of messages) {
-        const headerVals: FlatHeaders = {};
+        const headerVals: Dict<string> = {};
         const msgGetRes = await Api.gmail.msgGet(acctEmail, message.id, 'metadata');
         for (const headerName of headerNames) {
           const value = Api.gmail.findHeader(msgGetRes, headerName);

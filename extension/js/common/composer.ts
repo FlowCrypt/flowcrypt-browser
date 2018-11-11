@@ -348,7 +348,7 @@ export class Composer {
       const parsedMsg = await Mime.decode(Str.base64urlDecode(draftGetRes.message.raw!));
       const armored = Pgp.armor.clip(parsedMsg.text || Pgp.armor.strip(parsedMsg.html || '') || '');
       if (armored) {
-        this.S.cached('input_subject').val(parsedMsg.headers.subject || '');
+        this.S.cached('input_subject').val((parsedMsg.headers.subject as string) || '');
         await this.decryptAndRenderDraft(armored, Mime.headersToFrom(parsedMsg));
       } else {
         console.info('Api.gmail.draft_get Mime.decode else {}');

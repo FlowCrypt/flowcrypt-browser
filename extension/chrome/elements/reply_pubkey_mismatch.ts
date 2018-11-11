@@ -9,7 +9,7 @@ import { Composer } from './../../js/common/composer.js';
 import { Api } from '../../js/common/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
-import { FlatHeaders } from '../../js/common/mime.js';
+import { Dict } from '../../js/common/common.js';
 
 Catch.try(async () => {
 
@@ -27,7 +27,7 @@ Catch.try(async () => {
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
-  let additionalMsgHeaders: FlatHeaders;
+  let additionalMsgHeaders: Dict<string>;
 
   const appFunctions = Composer.defaultAppFunctions();
   const tabId = await BrowserMsg.requiredTabId();
