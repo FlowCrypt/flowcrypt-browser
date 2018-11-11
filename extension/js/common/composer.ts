@@ -690,7 +690,7 @@ export class Composer {
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
     try {
       const pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : null);
-      const items: AwsS3UploadItem[] = []; // todo - stop using "any"
+      const items: AwsS3UploadItem[] = [];
       for (const i of pfRes.approvals.keys()) {
         items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
       }
