@@ -1,11 +1,9 @@
 
 import { TestWithBrowser, TestWithGlobalBrowser } from '..';
-import { PageRecipe, ComposePageRecipe, SetupPageRecipe, GmailPageRecipe } from '../page_recipe';
+import { ComposePageRecipe, SetupPageRecipe, GmailPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
-import { Url, Semaphore } from '../../browser';
-import { FlowCryptApi } from '../api';
 import * as ava from 'ava';
-import { Util, Config } from '../../util';
+import { Config } from '../../util';
 import { expect } from 'chai';
 
 export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
