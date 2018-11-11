@@ -1,5 +1,7 @@
 <div>
 
+version 6.2.1 on November 11, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/274?closed=1" target="_blank">Refactoring bugfixes</a>
+
 version 6.2.0 on November 9, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/272?closed=1" target="_blank">ES6 Modules</a>
 
 version 6.1.6 on November 2, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/271?closed=1" target="_blank">Draft Newlines Fix</a>
