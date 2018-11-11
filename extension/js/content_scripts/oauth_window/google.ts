@@ -12,7 +12,7 @@ import { Ui, Env } from '../../common/browser.js';
   const googleOauth2 = (chrome.runtime.getManifest() as any as FlowCryptManifest).oauth2;
 
   const apiGoogleAuthStateUnpack = (statusString: string): AuthReq => {
-    return JSON.parse(statusString.replace(googleOauth2.state_header, ''));
+    return JSON.parse(statusString.replace(googleOauth2.state_header, '')) as AuthReq; // todo - maybe can check with a type guard and throw if not
   };
 
   while (true) {

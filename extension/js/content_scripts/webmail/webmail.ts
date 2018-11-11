@@ -56,7 +56,7 @@ Catch.try(async () => {
         '</script>',
       ].join('')); // executed synchronously - we can read the vars below
       try {
-        const extracted = JSON.parse($('body > div#FC_VAR_PASS').text()).map(String);
+        const extracted = (JSON.parse($('body > div#FC_VAR_PASS').text()) as any[]).map(String);
         if (extracted[0] === 'true') {
           insights.newDataLayer = true;
         } else if (extracted[0] === 'false') {
@@ -77,7 +77,9 @@ Catch.try(async () => {
         } else if (insights.newUi === true) {
           insights.gmailVariant = 'new';
         }
-      } catch (e) { } // tslint:disable-line:no-empty
+      } catch (e) {
+        // no need to handle
+      }
       return insights;
     };
 
