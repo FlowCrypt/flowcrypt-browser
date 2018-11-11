@@ -131,7 +131,7 @@ export class Composer {
   private draftId: string;
   private suppliedSubject: string;
   private suppliedFrom: string;
-  private suppliedTo: string;
+  private suppliedTo: string[];
   private frameId: string;
   private refBodyHeight: number;
   private parentTabId: string;
@@ -150,7 +150,7 @@ export class Composer {
     this.threadId = variables.threadId as string;
     this.suppliedSubject = variables.subject as string;
     this.suppliedFrom = variables.from as string;
-    this.suppliedTo = variables.to as string;
+    this.suppliedTo = variables.to as string[];
     this.frameId = variables.frameId as string;
     this.tabId = variables.tabId as string;
     this.isReplyBox = variables.isReplyBox as boolean;
@@ -325,9 +325,9 @@ export class Composer {
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             if ($(target).attr('id') === 'a_reply') {
-              this.suppliedTo = this.suppliedTo.split(',')[0];
+              this.suppliedTo = [this.suppliedTo[0]];
             } else if ($(target).attr('id') === 'a_forward') {
-              this.suppliedTo = '';
+              this.suppliedTo = [];
             }
             await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.handleErrs(`activate repply box`)));
@@ -1076,7 +1076,7 @@ export class Composer {
 
   private renderReplyMsgComposeTable = async (method: "forward" | "reply" = "reply") => {
     this.S.cached('prompt').css({ display: 'none' });
-    this.S.cached('input_to').val(this.suppliedTo + (this.suppliedTo ? ',' : '')); // the comma causes the last email to be get evaluated
+    this.S.cached('input_to').val(this.suppliedTo.join(',') + (this.suppliedTo.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
@@ -1397,7 +1397,7 @@ export class Composer {
     this.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_msg_successful').find('div.replied_from').text(this.suppliedFrom);
-    this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.suppliedTo);
+    this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.suppliedTo.join(','));
     Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
@@ -1447,7 +1447,7 @@ export class Composer {
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.S.cached('input_to').focus();
     if (this.isReplyBox) {
-      if (this.suppliedTo) {
+      if (this.suppliedTo.length) {
         this.S.cached('input_text').focus();
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
