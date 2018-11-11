@@ -173,6 +173,9 @@ export class BgAttests {
     try {
       return await BgAttests.addAttestLog(true, await BgAttests.processAttestPacketText(acctEmail, attestPacketText, passphrase));
     } catch (e) {
+      if (e instanceof AttestError) {
+        return e;
+      }
       Catch.handleErr(e);
       return new AttestError(String(e), attestPacketText, acctEmail);
     }
