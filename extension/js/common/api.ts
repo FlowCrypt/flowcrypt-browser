@@ -66,7 +66,10 @@ export class AjaxError extends Error {
     this.url = url;
     this.responseText = xhr.responseText || '';
     this.statusText = xhr.statusText || '(no status text)';
-    this.stack = `${(this.stack || '')}\n\nprovided ajax call stack:\n${stack}`;
+    this.stack += `\n\nprovided ajax call stack:\n${stack}`;
+    if (this.status === 400) {
+      this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}`;
+    }
   }
 }
 
