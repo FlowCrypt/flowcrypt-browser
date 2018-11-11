@@ -16,7 +16,7 @@ export class BrowserPool {
   constructor(poolSize: number, width = 1280, height = 900) {
     this.height = height;
     this.width = width;
-    this.semaphore = new Semaphore(poolSize);
+    this.semaphore = new Semaphore(poolSize, 'BrowserPool');
   }
 
   public newBrowserHandle = async (closeInitialPage = true) => {
@@ -119,28 +119,41 @@ export class BrowserPool {
 export class Semaphore {
 
   private availableLocks: number;
+  private name: string;
+  private debug = false;
 
-  constructor(poolSize: number) {
+  constructor(poolSize: number, name = 'semaphore') {
     this.availableLocks = poolSize;
+    this.name = name;
   }
 
-  private wait = () => new Promise(resolve => setTimeout(resolve, 50 + Math.round(Math.random() * 100))); // wait 50-150 ms
+  private wait = () => new Promise(resolve => setTimeout(resolve, 50 + Math.round(Math.random() * 1000))); // wait 500-1500 ms
 
   acquire = async () => {
-    // let i = 0;
+    let i = 0;
     while (this.availableLocks < 1) {
-      // console.log(`waiting for semaphore attempt ${i++}, now available: ${this.available_locks}`);
+      if (this.debug) {
+        console.log(`[${this.name}] waiting for semaphore attempt ${i++}, now available: ${this.availableLocks}`);
+      }
       await this.wait();
     }
-    // console.log(`acquiring, semaphors available: ${this.available_locks}`);
+    if (this.debug) {
+      console.log(`[${this.name}] acquiring, semaphors available: ${this.availableLocks}`);
+    }
     this.availableLocks--;
-    // console.log(`acquired, now avaialbe: ${this.available_locks}`);
+    if (this.debug) {
+      console.log(`[${this.name}] acquired, now avaialbe: ${this.availableLocks}`);
+    }
   }
 
   release = () => {
-    // console.log(`releasing semaphore, previously available: ${this.available_locks}`);
+    if (this.debug) {
+      console.log(`[${this.name}] releasing semaphore, previously available: ${this.availableLocks}`);
+    }
     this.availableLocks++;
-    // console.log(`released semaphore, now available: ${this.available_locks}`);
+    if (this.debug) {
+      console.log(`[${this.name}] released semaphore, now available: ${this.availableLocks}`);
+    }
   }
 
 }

@@ -185,12 +185,13 @@ abstract class ControllableBase {
         break;
       } catch (e) {
         this.log(`wait_and_click(i${i}):6:err(${String(e)}):${selector}`);
-        if (e.message === 'Node is either not visible or not an HTMLElement') { // maybe the node just re-rendered?
+        if (e.message === 'Node is either not visible or not an HTMLElement' || e.message === 'Node is detached from document') {
+          // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
             throw e;
           }
           this.log(`wait_and_click(i${i}):retrying`);
-          await Util.sleep(2);
+          await Util.sleep(1);
           continue;
         }
         throw e;

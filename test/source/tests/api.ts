@@ -15,7 +15,7 @@ class ApiErrorResponse extends Error {
 export class FlowCryptApi {
 
   private static call = async (path: string, values: { [k: string]: any }) => {
-    let r = await request.post({ url: `https://flowcrypt.com/api${path}`, json: values, headers: { 'api-version': 3 } });
+    const r = await request.post({ url: `https://flowcrypt.com/api${path}`, json: values, headers: { 'api-version': 3 } });
     if (r.body.error) {
       throw new ApiErrorResponse(`FlowCryptApi ${path} returned an error: ${r.body.error.message}`, r);
     }
