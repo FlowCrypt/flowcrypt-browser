@@ -186,7 +186,7 @@ export class Catch {
     let env = 'unknown';
     if (url.indexOf('bnjglocicd') !== -1) {
       env = 'ex:prod';
-    } else if (url.indexOf('gjdhkacdgd') !== -1) {
+    } else if (url.indexOf('gjdhkacdgd') !== -1 || url.indexOf('gggocmadhd') !== -1) {
       env = 'ex:dev';
     } else if (url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
       env = 'ex:test';
