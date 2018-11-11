@@ -10,7 +10,7 @@ import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError } from './pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
-import { FromToHeaders, Mime, SendableMsgBody } from './mime.js';
+import { Mime, SendableMsgBody } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -349,7 +349,7 @@ export class Composer {
       const armored = Pgp.armor.clip(parsedMsg.text || Pgp.armor.strip(parsedMsg.html || '') || '');
       if (armored) {
         this.S.cached('input_subject').val((parsedMsg.headers.subject as string) || '');
-        await this.decryptAndRenderDraft(armored, Mime.headersToFrom(parsedMsg));
+        await this.decryptAndRenderDraft(armored, parsedMsg);
       } else {
         console.info('Api.gmail.draft_get Mime.decode else {}');
         if (this.v.isReplyBox) {
@@ -471,7 +471,7 @@ export class Composer {
     }
   }
 
-  private decryptAndRenderDraft = async (encryptedDraft: string, headers: FromToHeaders) => {
+  private decryptAndRenderDraft = async (encryptedDraft: string, headers: { from?: string; to: string[] }) => {
     const passphrase = await this.app.storagePassphraseGet();
     if (passphrase !== null) {
       const result = await Pgp.msg.decrypt(this.v.acctEmail, encryptedDraft);

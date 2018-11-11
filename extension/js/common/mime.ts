@@ -8,7 +8,15 @@ import { Att } from './att.js';
 import { Catch } from './catch.js';
 
 type MimeContentHeader = string | { address: string; name: string; }[];
-type MimeContent = { headers: Dict<MimeContentHeader>; atts: Att[]; signature: string | undefined; html: string | undefined; text: string | undefined; };
+type MimeContent = {
+  headers: Dict<MimeContentHeader>;
+  atts: Att[];
+  signature?: string;
+  html?: string;
+  text?: string;
+  from?: string;
+  to: string[];
+};
 type MimeParserNode = {
   path: string[];
   headers: { [key: string]: { value: string; initial: string; params?: { charset?: string, filename?: string, name?: string } }[]; };
@@ -25,7 +33,6 @@ export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'message' | 'passwordMsg';
 export type MsgBlockType = 'text' | ReplaceableMsgBlockType;
 export type MsgBlock = { type: MsgBlockType; content: string; complete: boolean; signature?: string; };
-export type FromToHeaders = { from: string; to: string[]; };
 
 export class Mime {
 
@@ -56,10 +63,10 @@ export class Mime {
         }
       }
     }
-    return { headers: decoded.headers, blocks };
+    return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to };
   }
 
-  public static headersToFrom = (parsedMimeMsg: MimeContent): FromToHeaders => {
+  private static headersToFrom = (parsedMimeMsg: MimeContent) => {
     const headerTo: string[] = [];
     let headerFrom;
     if (Array.isArray(parsedMimeMsg.headers.from) && parsedMimeMsg.headers.from[0] && parsedMimeMsg.headers.from[0].address) {
@@ -72,7 +79,7 @@ export class Mime {
         }
       }
     }
-    return { from: String(headerFrom), to: headerTo };
+    return { from: headerFrom, to: headerTo };
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
@@ -100,7 +107,7 @@ export class Mime {
 
   public static decode = (mimeMsg: string): Promise<MimeContent> => {
     return new Promise(async resolve => {
-      const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined };
+      const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
       try {
         const parser = new (window as any)['emailjs-mime-parser'](); // tslint:disable-line:no-unsafe-any
         const parsed: { [key: string]: MimeParserNode } = {};
@@ -136,6 +143,9 @@ export class Mime {
               }));
             }
           }
+          const { from, to } = Mime.headersToFrom(mimeContent);
+          mimeContent.from = from;
+          mimeContent.to = to;
           resolve(mimeContent);
         };
         parser.write(mimeMsg); // tslint:disable-line:no-unsafe-any
