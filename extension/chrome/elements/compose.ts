@@ -25,6 +25,7 @@ Catch.try(async () => {
   const skipClickPrompt = urlParams.skipClickPrompt === true;
   const ignoreDraft = urlParams.ignoreDraft === true;
   const placement = Env.urlParamRequire.oneof(urlParams, 'placement', ['settings', 'gmail', undefined]);
+  const disableDraftSaving = false;
   let draftId = Env.urlParamRequire.optionalString(urlParams, 'draftId') || '';
   let from = Env.urlParamRequire.optionalString(urlParams, 'from') || acctEmail;
   let to = Env.urlParamRequire.optionalString(urlParams, 'to') ? Env.urlParamRequire.optionalString(urlParams, 'to')!.split(',') : [];
@@ -79,6 +80,8 @@ Catch.try(async () => {
     // there may be a draft we want to load
     draftId = storage.drafts_reply[threadId];
   }
+
+  const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving };
 
   const closeMsg = () => {
     $('body').attr('data-test-state', 'closed');  // used by automated tests
@@ -244,7 +247,7 @@ Catch.try(async () => {
     renderSendingAddrDialog: () => ($ as JQS).featherlight({ iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500 }),
     closeMsg,
     factoryAtt: (att: Att) => factory.embeddedAtta(att),
-  }, { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId }, subscriptionWhenPageWasOpened);
+  }, processedUrlParams, subscriptionWhenPageWasOpened);
 
   BrowserMsg.addListener('close_dialog', () => {
     $('.featherlight.featherlight-iframe').remove();

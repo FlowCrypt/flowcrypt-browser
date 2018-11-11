@@ -9,7 +9,7 @@ import { Att } from './att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError } from './pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api.js';
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env, UrlParams } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { FromToHeaders, Mime, SendableMsgBody } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
 
@@ -42,8 +42,6 @@ interface ComposerAppFunctionsInterface {
   emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderDetermineReplyMsgHeaderVariables: () => Promise<undefined | { lastMsgId: string, headers: { 'In-Reply-To': string, 'References': string } }>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
-  // sendMsgToMainWin: (channel: string, data?: object) => void;
-  // sendMsgToBgScript: (channel: string, data?: object) => void;
   renderFooterDialog: () => void;
   renderAddPubkeyDialog: (emails: string[]) => void;
   renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
@@ -57,6 +55,20 @@ export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
 export class ComposerNetworkError extends Error { }
 export class ComposerResetBtnTrigger extends Error { }
+export type ComposerUrlParams = {
+  disableDraftSaving: boolean;
+  isReplyBox: boolean;
+  tabId: string;
+  acctEmail: string;
+  threadId: string;
+  draftId: string;
+  subject: string;
+  from: string;
+  to: string[];
+  frameId: string;
+  parentTabId: string;
+  skipClickPrompt: boolean;
+};
 
 export class Composer {
 
@@ -103,6 +115,7 @@ export class Composer {
   private PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
   private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
   private BTN_SIGN_AND_SEND = 'Sign and Send';
+  private BTN_READY_TEXTS = [this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND];
   private BTN_WRONG_ENTRY = 'Re-enter recipient..';
   private BTN_LOADING = 'Loading..';
   private BTN_SENDING = 'Sending..';
@@ -124,36 +137,16 @@ export class Composer {
   private subscribeResListener: ((r: Bm.Res.ShowSubscribeDialog) => void) | undefined;
   private additionalMsgHeaders: { [key: string]: string } = {};
   private btnUpdateTimeout: number | null = null;
-  private isReplyBox: boolean;
-  private tabId: string;
-  private acctEmail: string;
-  private threadId: string;
-  private draftId: string;
-  private suppliedSubject: string;
-  private suppliedFrom: string;
-  private suppliedTo: string[];
-  private frameId: string;
   private refBodyHeight: number;
-  private parentTabId: string;
+  private v: ComposerUrlParams;
 
-  constructor(appFunctions: ComposerAppFunctionsInterface, variables: UrlParams, subscription: Subscription) {
+  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, subscription: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice(subscription));
     this.app = appFunctions;
-
-    if (!variables.disableDraftSaving) {
+    this.v = urlParams;
+    if (!this.v.disableDraftSaving) {
       this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
     }
-
-    this.parentTabId = variables.parentTabId as string;
-    this.acctEmail = variables.acctEmail as string;
-    this.draftId = variables.draftId as string;
-    this.threadId = variables.threadId as string;
-    this.suppliedSubject = variables.subject as string;
-    this.suppliedFrom = variables.from as string;
-    this.suppliedTo = variables.to as string[];
-    this.frameId = variables.frameId as string;
-    this.tabId = variables.tabId as string;
-    this.isReplyBox = variables.isReplyBox as boolean;
     this.myAddrsOnPks = this.app.storageGetAddressesPks() || [];
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
@@ -161,14 +154,14 @@ export class Composer {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
       this.app.storageEmailFooterSet(null).catch(Catch.handleErr);
-      BrowserMsg.send.notificationShow(this.parentTabId, {
+      BrowserMsg.send.notificationShow(this.v.parentTabId, {
         notification: `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`,
       });
     }
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initComposeBox(variables).catch(Catch.handleErr);
+    this.initComposeBox().catch(Catch.handleErr);
     this.initActions();
   }
 
@@ -206,7 +199,7 @@ export class Composer {
       };
     } else {
       const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
+      const sizeMb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.v.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,
@@ -221,10 +214,10 @@ export class Composer {
   private handleErrs = (couldNotDoWhat: string): BrowserEventErrorHandler => {
     return {
       network: () => alert(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      authPopup: () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail }),
+      authPopup: () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail }),
       auth: () => {
         if (confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          BrowserMsg.send.subscribeDialog(this.parentTabId, { source: 'authErr' });
+          BrowserMsg.send.subscribeDialog(this.v.parentTabId, { source: 'authErr' });
         }
       },
       other: (e: any) => {
@@ -305,37 +298,37 @@ export class Composer {
 
   showSubscribeDialogAndWaitForRes: Bm.RespondingHandler = (data: Bm.ShowSubscribeDialog, sender, respond: (r: Bm.Res.ShowSubscribeDialog) => void) => {
     this.subscribeResListener = respond;
-    BrowserMsg.send.subscribeDialog(this.parentTabId, { subscribeResultTabId: this.tabId });
+    BrowserMsg.send.subscribeDialog(this.v.parentTabId, { subscribeResultTabId: this.v.tabId });
   }
 
-  private initComposeBox = async (variables: UrlParams) => {
-    if (this.isReplyBox) {
+  private initComposeBox = async () => {
+    if (this.v.isReplyBox) {
       this.S.cached('header').remove();
       this.S.cached('subject').remove();
       this.S.cached('contacts').css('top', '39px');
       this.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
       this.S.cached('input_text').css('overflow-y', 'hidden');
     }
-    if (this.draftId) {
+    if (this.v.draftId) {
       await this.initialDraftLoad();
     } else {
-      if (this.isReplyBox) {
-        if (variables.skipClickPrompt) {
+      if (this.v.isReplyBox) {
+        if (this.v.skipClickPrompt) {
           await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             if ($(target).attr('id') === 'a_reply') {
-              this.suppliedTo = [this.suppliedTo[0]];
+              this.v.to = [this.v.to[0]];
             } else if ($(target).attr('id') === 'a_forward') {
-              this.suppliedTo = [];
+              this.v.to = [];
             }
             await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.handleErrs(`activate repply box`)));
         }
       }
     }
-    if (this.isReplyBox) {
-      if (!variables.skipClickPrompt && !this.draftId) {
+    if (this.v.isReplyBox) {
+      if (!this.v.skipClickPrompt && !this.v.draftId) {
         this.S.cached('prompt').css('display', 'block');
       }
       $(document).ready(() => this.resizeReplyBox());
@@ -347,11 +340,11 @@ export class Composer {
   }
 
   private initialDraftLoad = async () => {
-    if (this.isReplyBox) {
+    if (this.v.isReplyBox) {
       Xss.sanitizeRender(this.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
-      const draftGetRes = await this.app.emailProviderDraftGet(this.draftId);
+      const draftGetRes = await this.app.emailProviderDraftGet(this.v.draftId);
       const parsedMsg = await Mime.decode(Str.base64urlDecode(draftGetRes.message.raw!));
       const armored = Pgp.armor.clip(parsedMsg.text || Pgp.armor.strip(parsedMsg.html || '') || '');
       if (armored) {
@@ -359,7 +352,7 @@ export class Composer {
         await this.decryptAndRenderDraft(armored, Mime.headersToFrom(parsedMsg));
       } else {
         console.info('Api.gmail.draft_get Mime.decode else {}');
-        if (this.isReplyBox) {
+        if (this.v.isReplyBox) {
           await this.renderReplyMsgComposeTable();
         }
       }
@@ -367,18 +360,18 @@ export class Composer {
       if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
         Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
-      } else if (this.isReplyBox && Api.err.isNotFound(e)) {
-        Catch.log('about to reload reply_message automatically: get draft 404', this.acctEmail);
+      } else if (this.v.isReplyBox && Api.err.isNotFound(e)) {
+        Catch.log('about to reload reply_message automatically: get draft 404', this.v.acctEmail);
         await Ui.time.sleep(500);
-        await this.app.storageSetDraftMeta(false, this.draftId, this.threadId, null, null);
+        await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId, null, null);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
       } else {
         console.info('Api.gmail.draft_get success===false');
         Catch.handleErr(e);
-        if (this.isReplyBox) {
+        if (this.v.isReplyBox) {
           await this.renderReplyMsgComposeTable();
         }
       }
@@ -416,41 +409,41 @@ export class Composer {
     if (this.shouldSaveDraft(this.S.cached('input_text').text()) || forceSave) {
       this.draftSaveInProgress = true;
       this.S.cached('send_btn_note').text('Saving');
-      const primaryKi = await this.app.storageGetKey(this.acctEmail);
+      const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
       const encrypted = await Pgp.msg.encrypt([primaryKi.public], null, null, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
       let body;
-      if (this.threadId) { // replied message
-        body = '[cryptup:link:draft_reply:' + this.threadId + ']\n\n' + encrypted.data;
-      } else if (this.draftId) {
-        body = '[cryptup:link:draft_compose:' + this.draftId + ']\n\n' + encrypted.data;
+      if (this.v.threadId) { // replied message
+        body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
+      } else if (this.v.draftId) {
+        body = '[cryptup:link:draft_compose:' + this.v.draftId + ']\n\n' + encrypted.data;
       } else {
         body = encrypted.data;
       }
-      const subject = String(this.S.cached('input_subject').val() || this.suppliedSubject || 'FlowCrypt draft');
+      const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
       const mimeMsg = await Mime.encode(body as string, {
         To: this.getRecipientsFromDom(),
-        From: this.suppliedFrom || this.getSenderFromDom(),
+        From: this.v.from || this.getSenderFromDom(),
         Subject: subject
       }, []);
       try {
-        if (!this.draftId) {
+        if (!this.v.draftId) {
           const newDraft = await this.app.emailProviderDraftCreate(mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
-          this.draftId = newDraft.id;
-          await this.app.storageSetDraftMeta(true, newDraft.id, this.threadId, this.getRecipientsFromDom(), this.S.cached('input_subject').val() as string); // text input
+          this.v.draftId = newDraft.id;
+          await this.app.storageSetDraftMeta(true, newDraft.id, this.v.threadId, this.getRecipientsFromDom(), this.S.cached('input_subject').val() as string); // text input
           // recursing one more time, because we need the draft_id we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // save_draft_in_process will remain true because well.. it's still in process
           await this.draftSave(true); // force_save = true
         } else {
-          await this.app.emailProviderDraftUpdate(this.draftId, mimeMsg);
+          await this.app.emailProviderDraftUpdate(this.v.draftId, mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           this.S.cached('send_btn_note').text('Not saved (network)');
         } else if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else {
           Catch.handleErr(e);
@@ -464,13 +457,13 @@ export class Composer {
   private draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.draftSaveInProgress ? true : undefined);
-    if (this.draftId) {
-      await this.app.storageSetDraftMeta(false, this.draftId, this.threadId, null, null);
+    if (this.v.draftId) {
+      await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId, null, null);
       try {
-        await this.app.emailProviderDraftDelete(this.draftId);
+        await this.app.emailProviderDraftDelete(this.v.draftId);
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
         } else if (!Api.err.isNetErr(e)) {
           Catch.handleErr(e);
         }
@@ -481,7 +474,7 @@ export class Composer {
   private decryptAndRenderDraft = async (encryptedDraft: string, headers: FromToHeaders) => {
     const passphrase = await this.app.storagePassphraseGet();
     if (passphrase !== null) {
-      const result = await Pgp.msg.decrypt(this.acctEmail, encryptedDraft);
+      const result = await Pgp.msg.decrypt(this.v.acctEmail, encryptedDraft);
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.text!.replace(/\n/g, '<br>')));
@@ -497,19 +490,19 @@ export class Composer {
       } else {
         this.setInputTextHeightManuallyIfNeeded();
       }
-      if (this.isReplyBox) {
+      if (this.v.isReplyBox) {
         await this.renderReplyMsgComposeTable();
       }
     } else {
       const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
-      if (this.isReplyBox) {
+      if (this.v.isReplyBox) {
         Xss.sanitizeRender(this.S.cached('prompt'), promptText).css({ display: 'block' });
         this.resizeReplyBox();
       } else {
         Xss.sanitizeRender(this.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
       }
       this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
-        BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'draft', longids: ['primary'] });
+        BrowserMsg.send.passphraseDialog(this.v.parentTabId, { type: 'draft', longids: ['primary'] });
       }));
       this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
       await this.whenMasterPassphraseEntered();
@@ -553,7 +546,7 @@ export class Composer {
   }
 
   private throwIfFormNotReady = (recipients: string[]): void => {
-    if (Value.is(this.S.now('send_btn_span').text().trim()).in([this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND]) && recipients && recipients.length) {
+    if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients && recipients.length) {
       return; // all good
     }
     if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
@@ -583,27 +576,23 @@ export class Composer {
     if (Api.err.isNetErr(e)) {
       alert('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+      BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
       alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.err.isAuthErr(e)) {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        BrowserMsg.send.subscribeDialog(this.parentTabId, { source: 'authErr' });
+        BrowserMsg.send.subscribeDialog(this.v.parentTabId, { source: 'authErr' });
       }
     } else if (Api.err.isBadReq(e)) {
       if (confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
         const page = '/chrome/settings/modules/help.htm';
         const pageUrlParams = { bugReport: Extension.prepareBugReport('composer: send: bad request', {}, e) };
-        BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page, pageUrlParams });
+        BrowserMsg.send.bg.settings({ acctEmail: this.v.acctEmail, page, pageUrlParams });
       }
     } else if (e instanceof ComposerUserError) {
       alert(`Could not send message: ${String(e)}`);
     } else {
       if (!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
-        if (e instanceof Error) {
-          Catch.handleErr(e);
-        } else {
-          Catch.report('Thrown object | failed to send message', e);
-        }
+        Catch.handleErr(e);
         alert(`Failed to send message due to: ${String(e)}`);
       }
     }
@@ -619,14 +608,14 @@ export class Composer {
   private extractProcessSendMsg = async () => {
     try {
       const recipients = this.getRecipientsFromDom();
-      const subject = this.suppliedSubject || String($('#input_subject').val()); // replies have subject in url params
+      const subject = this.v.subject || String($('#input_subject').val()); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
       this.throwIfFormNotReady(recipients);
       this.S.now('send_btn_span').text('Loading');
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
-      const { armoredPubkeys, emailsWithoutPubkeys } = await this.collectAllAvailablePublicKeys(this.acctEmail, recipients);
+      const { armoredPubkeys, emailsWithoutPubkeys } = await this.collectAllAvailablePublicKeys(this.v.acctEmail, recipients);
       const challenge = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : null;
       this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, challenge);
       if (this.S.cached('icon_sign').is('.active')) {
@@ -655,12 +644,12 @@ export class Composer {
 
   private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | null, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
-    const [primaryKi] = await Store.keysGet(this.acctEmail, ['primary']);
+    const [primaryKi] = await Store.keysGet(this.v.acctEmail, ['primary']);
     if (primaryKi) {
       const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
       const passphrase = await this.app.storagePassphraseGet();
       if (passphrase === null && !prv.isDecrypted()) {
-        BrowserMsg.send.passphraseDialog(this.parentTabId, { type: 'sign', longids: ['primary'] });
+        BrowserMsg.send.passphraseDialog(this.v.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((await this.whenMasterPassphraseEntered(60)) !== null) { // pass phrase entered
           await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
         } else { // timeout - reset - no passphrase entered
@@ -690,7 +679,7 @@ export class Composer {
         this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.handleErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
-        await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), recipients, subject, body, atts, this.threadId), plaintext);
+        await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), recipients, subject, body, atts, this.v.threadId), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -754,7 +743,7 @@ export class Composer {
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          BrowserMsg.send.subscribeDialog(this.parentTabId, { source: 'authErr' });
+          BrowserMsg.send.subscribeDialog(this.v.parentTabId, { source: 'authErr' });
         }
         throw new ComposerResetBtnTrigger();
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
@@ -765,8 +754,8 @@ export class Composer {
     }
     return plaintext + '\n\n' + Ui.e('div', {
       'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.htmlAttrEncode({
-        sender: this.suppliedFrom || this.getSenderFromDom(),
-        recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.suppliedFrom || this.getSenderFromDom()), this.acctEmail),
+        sender: this.v.from || this.getSenderFromDom(),
+        recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.v.from || this.getSenderFromDom()), this.v.acctEmail),
         subject,
         token: response.token,
       })
@@ -815,14 +804,14 @@ export class Composer {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
       const { short, admin_code } = await Api.fc.messageUpload(body['text/plain']!, subs.active ? 'uuid' : null);
-      const storage = await Store.getAcct(this.acctEmail, ['outgoing_language']);
+      const storage = await Store.getAcct(this.v.acctEmail, ['outgoing_language']);
       body = this.formatPasswordProtectedEmail(short, body, pubkeys, storage.outgoing_language || 'EN');
       body = this.formatEmailTextFooter(body);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), to, subj, body, atts, this.threadId), plaintext);
+      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, body, atts, this.v.threadId), plaintext);
     } else {
       body = this.formatEmailTextFooter(body);
-      await this.doSendMsg(await Api.common.msg(this.acctEmail, this.suppliedFrom || this.getSenderFromDom(), to, subj, body, atts, this.threadId), plaintext);
+      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, body, atts, this.v.threadId), plaintext);
     }
   }
 
@@ -834,13 +823,13 @@ export class Composer {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.S.cached('icon_pubkey').is('.active')) {
-      msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.acctEmail)));
+      msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.v.acctEmail)));
     }
     const msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
     const isSigned = this.S.cached('icon_sign').is('.active');
-    BrowserMsg.send.notificationShow(this.parentTabId, { notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.isReplyBox ? 'reply' : 'message'} has been sent.` });
+    BrowserMsg.send.notificationShow(this.v.parentTabId, { notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.v.isReplyBox ? 'reply' : 'message'} has been sent.` });
     await this.draftDelete();
-    if (this.isReplyBox) {
+    if (this.v.isReplyBox) {
       this.renderReplySuccess(msg, plaintext, msgSentRes.id);
     } else {
       this.app.closeMsg();
@@ -942,7 +931,7 @@ export class Composer {
    * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
   private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
-    if (!this.isReplyBox && Catch.browser().name === 'firefox') {
+    if (!this.v.isReplyBox && Catch.browser().name === 'firefox') {
       let cellHeightExceptText = 0;
       this.S.cached('all_cells_except_text').each(function () {
         const cell = $(this);
@@ -984,7 +973,7 @@ export class Composer {
       this.hideMsgPwdUi();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     }
-    if (this.isReplyBox) {
+    if (this.v.isReplyBox) {
       if (!wasPreviouslyVisible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {
         this.resizeReplyBox((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
       } else {
@@ -1015,7 +1004,7 @@ export class Composer {
   }
 
   resizeReplyBox = (addExtra: number = 0) => {
-    if (this.isReplyBox) {
+    if (this.v.isReplyBox) {
       this.S.cached('input_text').css('max-width', (this.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
       let currentHeight = 0;
@@ -1029,7 +1018,7 @@ export class Composer {
       }
       if (currentHeight !== this.lastReplyBoxTableHeight && Math.abs(currentHeight - this.lastReplyBoxTableHeight) > 2) { // more then two pixel difference compared to last time
         this.lastReplyBoxTableHeight = currentHeight;
-        BrowserMsg.send.setCss(this.parentTabId, { selector: `iframe#${this.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
+        BrowserMsg.send.setCss(this.v.parentTabId, { selector: `iframe#${this.v.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
     }
   }
@@ -1049,13 +1038,13 @@ export class Composer {
       } else if (Api.err.isNetErr(e)) {
         // todo: retry
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.parentTabId, { acctEmail: this.acctEmail });
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
       } else {
         Catch.handleErr(e);
       }
       return;
     }
-    const result = await Pgp.msg.decrypt(this.acctEmail, armoredMsg);
+    const result = await Pgp.msg.decrypt(this.v.acctEmail, armoredMsg);
     if (result.success) {
       if (!Mime.resemblesMsg(result.content.text!)) {
         this.appendForwardedMsg(result.content.text!.replace(/\n/g, '<br>'));
@@ -1076,7 +1065,7 @@ export class Composer {
 
   private renderReplyMsgComposeTable = async (method: "forward" | "reply" = "reply") => {
     this.S.cached('prompt').css({ display: 'none' });
-    this.S.cached('input_to').val(this.suppliedTo.join(',') + (this.suppliedTo.length ? ',' : '')); // the comma causes the last email to be get evaluated
+    this.S.cached('input_to').val(this.v.to.join(',') + (this.v.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
@@ -1084,7 +1073,7 @@ export class Composer {
         this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
         this.additionalMsgHeaders.References = determined.headers.References;
         if (method === 'forward') {
-          this.suppliedSubject = 'Fwd: ' + this.suppliedSubject;
+          this.v.subject = 'Fwd: ' + this.v.subject;
           await this.retrieveDecryptAddForwardedMsg(determined.lastMsgId);
         }
       }
@@ -1095,11 +1084,11 @@ export class Composer {
         Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
       `);
       this.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
-      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.parentTabId));
+      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.v.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
+      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.v.parentTabId));
     }
     this.resizeReplyBox();
-    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.parentTabId), 300);
+    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.v.parentTabId), 300);
   }
 
   private parseRenderRecipients = async () => {
@@ -1153,7 +1142,7 @@ export class Composer {
     const lastRecipient = $('.recipients span').last();
     this.S.cached('input_to').val(lastRecipient.text());
     lastRecipient.last().remove();
-    const authRes = await Api.google.authPopup(acctEmail, this.tabId, false, Api.gmail.scope(['read']));
+    const authRes = await Api.google.authPopup(acctEmail, this.v.tabId, false, Api.gmail.scope(['read']));
     if (authRes && authRes.success === true) {
       this.canReadEmails = true;
       await this.searchContacts();
@@ -1209,7 +1198,7 @@ export class Composer {
         }
       }, this.handleErrs(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
-      this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.acctEmail), this.handleErrs(`authorize contact search`)));
+      this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.v.acctEmail), this.handleErrs(`authorize contact search`)));
       this.S.cached('contacts').css({
         display: 'block',
         top: `${$('#compose > tbody > tr:first').height()! + this.S.cached('input_addresses_container_inner').height()! + 10}px`, // both are in the template
@@ -1266,7 +1255,7 @@ export class Composer {
   private updatePubkeyIcon = (include: boolean | null = null) => {
     if (include === null) { // decide if pubkey should be included
       if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
-        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.suppliedFrom || this.getSenderFromDom()).in(this.myAddrsOnPks));
+        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.v.from || this.getSenderFromDom()).in(this.myAddrsOnPks));
       }
     } else { // set icon to specific state
       if (include) {
@@ -1319,8 +1308,8 @@ export class Composer {
   private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | "fail" | "wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnPks = Value.is(this.suppliedFrom || this.getSenderFromDom()).in(this.myAddrsOnPks);
-        const sendingAddrOnKeyserver = Value.is(this.suppliedFrom || this.getSenderFromDom()).in(this.myAddrsOnKeyserver);
+        const sendingAddrOnPks = Value.is(this.v.from || this.getSenderFromDom()).in(this.myAddrsOnPks);
+        const sendingAddrOnKeyserver = Value.is(this.v.from || this.getSenderFromDom()).in(this.myAddrsOnKeyserver);
         if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup' && !sendingAddrOnPks)) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
@@ -1384,7 +1373,7 @@ export class Composer {
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
     } else {
-      return this.acctEmail;
+      return this.v.acctEmail;
     }
   }
 
@@ -1396,8 +1385,8 @@ export class Composer {
     }
     this.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.S.cached('compose_table').css('display', 'none');
-    this.S.cached('reply_msg_successful').find('div.replied_from').text(this.suppliedFrom);
-    this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.suppliedTo.join(','));
+    this.S.cached('reply_msg_successful').find('div.replied_from').text(this.v.from);
+    this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.v.to.join(','));
     Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
@@ -1446,8 +1435,8 @@ export class Composer {
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.S.cached('input_to').focus();
-    if (this.isReplyBox) {
-      if (this.suppliedTo.length) {
+    if (this.v.isReplyBox) {
+      if (this.v.to.length) {
         this.S.cached('input_text').focus();
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()

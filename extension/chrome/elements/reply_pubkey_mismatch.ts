@@ -18,6 +18,10 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const from = Env.urlParamRequire.optionalString(urlParams, 'from') || acctEmail;
+  const subject = Env.urlParamRequire.optionalString(urlParams, 'subject') || '';
+  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
+  const threadId = Env.urlParamRequire.optionalString(urlParams, 'threadId') || '';
   const to = urlParams.to ? String(urlParams.to).split(',') : [];
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
@@ -26,7 +30,13 @@ Catch.try(async () => {
   let additionalMsgHeaders: FlatHeaders;
 
   const appFunctions = Composer.defaultAppFunctions();
-  const composer = new Composer(appFunctions, { isReplyBox: true, frameId: urlParams.frameId, disable_draft_saving: true }, new Subscription(null));
+  const tabId = await BrowserMsg.requiredTabId();
+  const processedUrlParams = {
+    acctEmail, draftId: '', threadId, subject, from, to, frameId, tabId,
+    isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
+    parentTabId, disableDraftSaving: true,
+  };
+  const composer = new Composer(appFunctions, processedUrlParams, new Subscription(null));
 
   const sendBtnText = 'Send Response';
 
@@ -59,8 +69,7 @@ Catch.try(async () => {
     }
   }
 
-  // send
-  $('#send_btn').click(Ui.event.prevent('double', async target => {
+  $('#send_btn').off().click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
     const body = { 'text/plain': $('#input_text').get(0).innerText };
     const message = await Api.common.msg(acctEmail, urlParams.from as string, to, urlParams.subject as string, body, [att], urlParams.threadId as string);
