@@ -68,11 +68,11 @@ export class AjaxError extends Error {
 }
 
 export class ApiErrorResponse extends Error {
-  public response: any;
+  public res: { error: StandardError };
   public url: any;
   constructor(response: any, url: string) {
     super(`Error response from ${url}`);
-    this.response = response;
+    this.res = response;
   }
 }
 
@@ -189,6 +189,9 @@ export class Api {
       return false;
     },
     isStandardErr: (e: any, internalType: string) => {
+      if (e instanceof ApiErrorResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
+        return true;
+      }
       if (e && typeof e === 'object') {
         if ((e as StandardError).internal === internalType) {
           return true;
