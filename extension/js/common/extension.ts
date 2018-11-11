@@ -225,14 +225,15 @@ export class BrowserMsg {
     return r.tabId;
   }
 
-  public static requiredTabId = async (): Promise<string> => {
+  public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
     let tabId;
-    for (let i = 0; i < 10; i++) { // up to 10 attempts. Sometimes returns undefined right after browser start
+    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start
       tabId = await BrowserMsg.tabId();
+      console.log(tabId);
       if (tabId) {
         return tabId;
       }
-      await Ui.time.sleep(200); // sleep 200ms between attempts
+      await Ui.time.sleep(delay);
     }
     throw new TabIdRequiredError(`Tab id is required, but received '${String(tabId)}' after 10 attempts`);
   }
