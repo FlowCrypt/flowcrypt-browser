@@ -176,7 +176,7 @@ export class Api {
         if (Api.err.isStandardErr(e, 'network')) {
           return true;
         }
-        if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') { // $.ajax network error
+        if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') {
           return true;
         }
       }
@@ -190,7 +190,7 @@ export class Api {
         if (Api.err.isStandardErr(e, 'auth')) {
           return true; // API auth error response
         }
-        if (e instanceof AjaxError && e.status === 401) { // $.ajax auth error
+        if (e instanceof AjaxError && e.status === 401) {
           return true;
         }
       }
@@ -228,9 +228,9 @@ export class Api {
       }
       return false;
     },
-    isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404, // $.ajax rejection
-    isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400, // $.ajax rejection
-    isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500, // $.ajax rejection
+    isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404,
+    isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
+    isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500,
   };
 
   public static google = {
@@ -336,7 +336,7 @@ export class Api {
       } else if (!acctEmail && accessToken) {
         const contentType = 'application/json; charset=UTF-8';
         const headers = { 'Authorization': `Bearer ${accessToken}` };
-        return await $.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }) as R.GmailUsersMeProfile;
+        return await Api.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }) as R.GmailUsersMeProfile;
       } else {
         throw new Error('Api.gmail.users_me_profile: need either account_email or access_token');
       }
@@ -965,6 +965,14 @@ export class Api {
     request.send();
   })
 
+  public static ajax = async (req: JQueryAjaxSettings): Promise<any> => {
+    try {
+      return await $.ajax(req);
+    } catch (e) {
+      throw Api.internal.normalizeAjaxError(e, req);
+    }
+  }
+
   private static internal = {
     isStandardError: (e: any): e is StandardError => {
       return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
@@ -987,13 +995,13 @@ export class Api {
       return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
     },
     normalizeAjaxError: (e: any, request: JQueryAjaxSettings) => {
-      if (Api.internal.isRawAjaxError(e)) {
-        return new AjaxError(e, String(request.url));
-      }
       if (e instanceof Error) {
         return e;
       }
-      return new Error(`Unknown Ajax error type when calling ${request.url}`);
+      if (Api.internal.isRawAjaxError(e)) {
+        return new AjaxError(e, String(request.url));
+      }
+      return new Error(`Unknown Ajax error (${String(e)}) type when calling ${request.url}`);
     },
     apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: FlatHeaders, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
       progress = progress || {} as ProgressCbs;
@@ -1016,7 +1024,7 @@ export class Api {
       } else {
         throw new Error('unknown format:' + String(fmt));
       }
-      const request: JQueryAjaxSettings = {
+      const req: JQueryAjaxSettings = {
         xhr: () => Api.internal.getAjaxProgressXhr(progress),
         url: url + path,
         method,
@@ -1029,15 +1037,11 @@ export class Api {
         async: true,
         timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
       };
-      try {
-        const response = await $.ajax(request);
-        if (response && typeof response === 'object' && typeof (response as StandardErrorRes).error === 'object' && (response as StandardErrorRes).error.message) {
-          throw new ApiErrorResponse(response as StandardErrorRes, request.url!);
-        }
-        return response;
-      } catch (e) {
-        throw Api.internal.normalizeAjaxError(e, request);
+      const res = await Api.ajax(req);
+      if (res && typeof res === 'object' && typeof (res as StandardErrorRes).error === 'object' && (res as StandardErrorRes).error.message) {
+        throw new ApiErrorResponse(res as StandardErrorRes, req.url!);
       }
+      return res;
     },
     apiGoogleAuthStatePack: (authReq: AuthReq) => Api.GOOGLE_OAUTH2!.state_header + JSON.stringify(authReq),
     apiGoogleAuthCodeUrl: (authReq: AuthReq) => Env.urlCreate(Api.GOOGLE_OAUTH2!.url_code, {
@@ -1060,19 +1064,19 @@ export class Api {
       }
       await Store.setAcct(acctEmail, toSave);
     },
-    googleAuthGetTokens: (code: string) => $.ajax({
+    googleAuthGetTokens: (code: string) => Api.ajax({
       url: Env.urlCreate(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'authorization_code', code, client_id: Api.GOOGLE_OAUTH2!.client_id, redirect_uri: Api.GOOGLE_OAUTH2!.url_redirect }),
       method: 'POST',
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokensResponse>,
-    googleAuthRefreshToken: (refreshToken: string) => $.ajax({
+    googleAuthRefreshToken: (refreshToken: string) => Api.ajax({
       url: Env.urlCreate(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: Api.GOOGLE_OAUTH2!.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
     }) as any as Promise<GoogleAuthTokensResponse>,
-    googleAuthCheckAccessToken: (accessToken: string) => $.ajax({
+    googleAuthCheckAccessToken: (accessToken: string) => Api.ajax({
       url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token: accessToken }),
       crossDomain: true,
       async: true,
@@ -1097,18 +1101,13 @@ export class Api {
     },
     apiGoogleCallRetryAuthErrorOneTime: async (acctEmail: string, request: JQuery.AjaxSettings) => {
       try {
-        return await $.ajax(request);
+        return await Api.ajax(request);
       } catch (firstAttemptErr) {
-        const normalizedFirstAttemptError = Api.internal.normalizeAjaxError(firstAttemptErr, request);
-        if (Api.err.isAuthErr(normalizedFirstAttemptError)) { // force refresh token
+        if (Api.err.isAuthErr(firstAttemptErr)) { // force refresh token
           request.headers!.Authorization = await Api.internal.googleApiAuthHeader(acctEmail, true);
-          try {
-            return await $.ajax(request);
-          } catch (secondAttemptErr) {
-            throw Api.internal.normalizeAjaxError(secondAttemptErr, request);
-          }
+          return await Api.ajax(request);
         }
-        throw normalizedFirstAttemptError;
+        throw firstAttemptErr;
       }
     },
     apiGoogleCall: async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {
