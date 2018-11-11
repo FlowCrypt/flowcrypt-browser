@@ -229,7 +229,6 @@ export class BrowserMsg {
     let tabId;
     for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start
       tabId = await BrowserMsg.tabId();
-      console.log(tabId);
       if (tabId) {
         return tabId;
       }
