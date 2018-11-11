@@ -59,13 +59,14 @@ export class AjaxError extends Error {
   public url: string;
   public responseText: string;
   public statusText: string;
-  constructor(xhr: RawAjaxError, url: string) {
-    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)}`);
+  constructor(xhr: RawAjaxError, url: string, stack: string) {
+    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when calling ${url}`);
     this.xhr = xhr;
     this.status = typeof xhr.status === 'number' ? xhr.status : -1;
     this.url = url;
     this.responseText = xhr.responseText || '';
     this.statusText = xhr.statusText || '(no status text)';
+    this.stack = `${(this.stack || '')}\n\nprovided ajax call stack:\n${stack}`;
   }
 }
 
@@ -336,7 +337,7 @@ export class Api {
       } else if (!acctEmail && accessToken) {
         const contentType = 'application/json; charset=UTF-8';
         const headers = { 'Authorization': `Bearer ${accessToken}` };
-        return await Api.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }) as R.GmailUsersMeProfile;
+        return await Api.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }, Catch.stackTrace()) as R.GmailUsersMeProfile;
       } else {
         throw new Error('Api.gmail.users_me_profile: need either account_email or access_token');
       }
@@ -965,11 +966,17 @@ export class Api {
     request.send();
   })
 
-  public static ajax = async (req: JQueryAjaxSettings): Promise<any> => {
+  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any> => {
     try {
       return await $.ajax(req);
     } catch (e) {
-      throw Api.internal.normalizeAjaxError(e, req);
+      if (e instanceof Error) {
+        throw e;
+      }
+      if (Api.internal.isRawAjaxError(e)) {
+        throw new AjaxError(e, String(req.url), stack);
+      }
+      throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
   }
 
@@ -993,15 +1000,6 @@ export class Api {
     },
     isRawAjaxError: (e: any): e is RawAjaxError => {
       return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
-    },
-    normalizeAjaxError: (e: any, request: JQueryAjaxSettings) => {
-      if (e instanceof Error) {
-        return e;
-      }
-      if (Api.internal.isRawAjaxError(e)) {
-        return new AjaxError(e, String(request.url));
-      }
-      return new Error(`Unknown Ajax error (${String(e)}) type when calling ${request.url}`);
     },
     apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: FlatHeaders, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
       progress = progress || {} as ProgressCbs;
@@ -1037,7 +1035,7 @@ export class Api {
         async: true,
         timeout: typeof progress!.upload === 'function' || typeof progress!.download === 'function' ? undefined : 20000, // substituted with {} above
       };
-      const res = await Api.ajax(req);
+      const res = await Api.ajax(req, Catch.stackTrace());
       if (res && typeof res === 'object' && typeof (res as StandardErrorRes).error === 'object' && (res as StandardErrorRes).error.message) {
         throw new ApiErrorResponse(res as StandardErrorRes, req.url!);
       }
@@ -1069,18 +1067,18 @@ export class Api {
       method: 'POST',
       crossDomain: true,
       async: true,
-    }) as any as Promise<GoogleAuthTokensResponse>,
+    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>,
     googleAuthRefreshToken: (refreshToken: string) => Api.ajax({
       url: Env.urlCreate(Api.GOOGLE_OAUTH2!.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: Api.GOOGLE_OAUTH2!.client_id }),
       method: 'POST',
       crossDomain: true,
       async: true,
-    }) as any as Promise<GoogleAuthTokensResponse>,
+    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>,
     googleAuthCheckAccessToken: (accessToken: string) => Api.ajax({
       url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token: accessToken }),
       crossDomain: true,
       async: true,
-    }) as any as Promise<GoogleAuthTokenInfo>,
+    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>,
     googleAuthWinResHandler: async (result: Bm.GoogleAuthWindowResult): Promise<AuthResult> => {
       if (result.result === 'Success') {
         const tokensObj = await Api.internal.googleAuthGetTokens(result.params.code);
@@ -1101,11 +1099,11 @@ export class Api {
     },
     apiGoogleCallRetryAuthErrorOneTime: async (acctEmail: string, request: JQuery.AjaxSettings) => {
       try {
-        return await Api.ajax(request);
+        return await Api.ajax(request, Catch.stackTrace());
       } catch (firstAttemptErr) {
         if (Api.err.isAuthErr(firstAttemptErr)) { // force refresh token
           request.headers!.Authorization = await Api.internal.googleApiAuthHeader(acctEmail, true);
-          return await Api.ajax(request);
+          return await Api.ajax(request, Catch.stackTrace());
         }
         throw firstAttemptErr;
       }
