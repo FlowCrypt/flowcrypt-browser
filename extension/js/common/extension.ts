@@ -55,7 +55,7 @@ export namespace Bm {
     export type ShowSubscribeDialog = { active: boolean };
     export type BgExec = { result?: PossibleBgExecResults, exception?: { name: string, message: string, stack: string } };
     export type AttestPacketReceived = { success: boolean; result: string };
-    export type GetActiveTabInfo = { provider: 'gmail' | null, acctEmail: string | null, sameWorld: boolean | null };
+    export type GetActiveTabInfo = { provider: 'gmail' | null, acctEmail: string | null | undefined, sameWorld: boolean | null };
     export type SessionGet = string | null;
     export type SessionSet = void;
     export type _tab_ = { tabId: string | null | undefined };

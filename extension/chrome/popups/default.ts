@@ -42,7 +42,7 @@ Catch.try(async () => {
   };
 
   const activeTab = await BrowserMsg.send.await.bg.getActiveTabInfo();
-  if (activeTab && activeTab.acctEmail !== null) {
+  if (activeTab && activeTab.acctEmail) {
     const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
     if (setup_done) {
       chooseEmailOrSettingsPopup(activeTab.acctEmail);
