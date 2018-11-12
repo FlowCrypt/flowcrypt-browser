@@ -24,14 +24,14 @@ export class Catch {
     // not sure when this one happens, but likely have to do with extnsion lifecycle as well
     'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
     // this is thrown often by gmail and cought by content script
-    'THROWN_OBJECT: [TypeError: a is null] {}',
+    'TypeError: a is null', // this one includes the type because it's tested against errMsg as opposed to exception.message
   ];
 
   private static stringify = (e: any) => {
     try { // this sometimes happen with unhandled Promise.then(_, reject)
-      return JSON.stringify(e);
+      return `[typeof:${(typeof e)}:${String(e)}] ${JSON.stringify(e)}`;
     } catch (cannotStringify) {
-      return `[unstringifiable typeof: ${(typeof e)}] ${String(e)}`;
+      return `[unstringifiable typeof:${(typeof e)}:${String(e)}]`;
     }
   }
 
@@ -40,6 +40,9 @@ export class Catch {
   }
 
   public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
+    if (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1) {
+      return;
+    }
     let exception: Error;
     if (typeof originalErr !== 'object') {
       exception = new Error(`THROWN_NON_OBJECT[${typeof originalErr}]: ${String(originalErr)}`);
