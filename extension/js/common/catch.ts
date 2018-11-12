@@ -195,8 +195,12 @@ export class Catch {
       env = 'ex:dev';
     } else if (url.indexOf('gjdhkacdgd') !== -1) { // in case it differs in the future
       env = 'ex:test';
+    } else if (url.indexOf('mefaeofbcc') !== -1) {
+      env = 'ex:stable';
     } else if (/chrome-extension:\/\/[a-z]{32}\/.+/.test(url)) {
       env = 'ex:fork';
+    } else if (/moz-extension:\/\/.+/.test(url)) {
+      env = 'ex';
     } else if (url.indexOf('l.flowcrypt.com') !== -1 || url.indexOf('127.0.0.1') !== -1) {
       env = 'web:local';
     } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('flowcrypt.com') !== -1) {
@@ -205,8 +209,6 @@ export class Catch {
       env = 'ex:script:gmail';
     } else if (url.indexOf('inbox.google.com') !== -1) {
       env = 'ex:script:inbox';
-    } else if (/moz-extension:\/\/.+/.test(url)) {
-      env = 'ex';
     }
     return browserName + ':' + env;
   }
