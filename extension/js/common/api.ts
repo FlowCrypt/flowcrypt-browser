@@ -183,6 +183,9 @@ export class Api {
         if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') {
           return true;
         }
+        if (e instanceof AjaxError && e.status === -1 && e.statusText === 'timeout') {
+          return true;
+        }
       }
       return false;
     },
