@@ -23,6 +23,8 @@ export class Catch {
     'Invocation of form set(, function) doesn\'t match definition set(object items, optional function callback)',
     // not sure when this one happens, but likely have to do with extnsion lifecycle as well
     'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
+    // this is thrown often by gmail and cought by content script
+    'THROWN_OBJECT: [TypeError: a is null] {}',
   ];
 
   private static stringify = (e: any) => {
