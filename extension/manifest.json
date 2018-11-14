@@ -25,20 +25,50 @@
     "64": "/img/logo/flowcrypt-logo-64-64.png",
     "128": "/img/logo/flowcrypt-logo-128-128.png"
   },
-  "permissions": ["storage", "tabs", "*://*/*", "unlimitedStorage", "clipboardWrite", "webRequest"],
+  "permissions": [
+    "storage",
+    "tabs",
+    "*://*/*",
+    "unlimitedStorage",
+    "clipboardWrite",
+    "webRequest"
+  ],
   "content_scripts": [
     {
-      "matches": ["*://mail.google.com/*", "*://inbox.google.com/*"],
-      "css": ["/css/webmail.css"],
-      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/lib/openpgp.js", "/js/content_scripts/webmail_bundle.js"]
+      "matches": [
+        "*://mail.google.com/*",
+        "*://inbox.google.com/*"
+      ],
+      "css": [
+        "/css/webmail.css"
+      ],
+      "js": [
+        "/lib/purify.min.js",
+        "/lib/jquery.min.js",
+        "/lib/openpgp.js",
+        "/js/content_scripts/webmail_bundle.js"
+      ]
     },
     {
-      "matches": ["*://accounts.google.com/o/oauth2/approval*"],
-      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/js/content_scripts/google_bundle.js"]
+      "matches": [
+        "*://accounts.google.com/o/oauth2/approval*"
+      ],
+      "js": [
+        "/lib/purify.min.js",
+        "/lib/jquery.min.js",
+        "/js/content_scripts/google_bundle.js"
+      ]
     },
     {
-      "matches": ["https://flowcrypt.com/stripe*", "https://cryptup.org/stripe*"],
-      "js": ["/lib/purify.min.js", "/lib/jquery.min.js", "/js/content_scripts/stripe_bundle.js"],
+      "matches": [
+        "https://flowcrypt.com/stripe*",
+        "https://cryptup.org/stripe*"
+      ],
+      "js": [
+        "/lib/purify.min.js",
+        "/lib/jquery.min.js",
+        "/js/content_scripts/stripe_bundle.js"
+      ],
       "all_frames": true
     }
   ],
@@ -66,17 +96,5 @@
     "/chrome/elements/sending_address.htm",
     "/chrome/elements/shared/footer.htm"
   ],
-  "minimum_chrome_version": "61",
-  "oauth2": {
-    "client_id": "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
-    "url_code": "https://accounts.google.com/o/oauth2/auth",
-    "url_tokens": "https://www.googleapis.com/oauth2/v4/token",
-    "url_redirect": "urn:ietf:wg:oauth:2.0:oob:auto",
-    "state_header": "CRYPTUP_STATE_",
-    "scopes": [
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.readonly",
-      "https://www.googleapis.com/auth/userinfo.profile"
-    ]
-  }
+  "minimum_chrome_version": "61"
 }

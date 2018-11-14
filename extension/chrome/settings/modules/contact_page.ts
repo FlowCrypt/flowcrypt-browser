@@ -8,7 +8,7 @@ import { Att } from '../../../js/common/att.js';
 import { Xss, Ui, AttUI, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api, R } from '../../../js/common/api.js';
+import { Api, R } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Catch } from '../../../js/common/catch.js';
 

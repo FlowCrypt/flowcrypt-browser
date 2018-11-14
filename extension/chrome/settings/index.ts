@@ -8,10 +8,11 @@ import { Xss, Ui, XssSafeFactory, Env, JQS, UrlParams } from '../../js/common/br
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
-import { Api } from '../../js/common/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 import { Lang } from '../../js/common/lang.js';
+import { Google } from '../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -118,7 +119,7 @@ Catch.try(async () => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!Api.gmail.hasScope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
+        if (!Google.auth.hasScope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         displayOrig('.hide_if_setup_not_done');
@@ -207,7 +208,7 @@ Catch.try(async () => {
 
   const checkGoogleAcct = async () => {
     try {
-      const me = await Api.gmail.usersMeProfile(acctEmail!);
+      const me = await Google.gmail.usersMeProfile(acctEmail!);
       Settings.updateProfilePicIfMissing(acctEmail!).catch(Catch.handleErr);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
       if (me.emailAddress !== acctEmail) {

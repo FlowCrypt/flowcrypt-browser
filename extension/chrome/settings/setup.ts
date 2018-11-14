@@ -9,9 +9,10 @@ import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';
-import { Api, R } from '../../js/common/api.js';
+import { Api, R } from '../../js/common/api/api.js';
 import { Pgp } from '../../js/common/pgp.js';
 import { Catch } from '../../js/common/catch.js';
+import { Google } from '../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -131,9 +132,9 @@ Catch.try(async () => {
       if (!rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         displayBlock('step_2b_manual_enter');
-      } else if (storage.email_provider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
+      } else if (storage.email_provider === 'gmail' && Google.auth.hasScope(storage.google_token_scopes as string[], 'read')) {
         try {
-          fetchedKeys = await Api.gmail.fetchKeyBackups(acctEmail);
+          fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
         } catch (e) {
           return await Settings.promptToRetry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => renderSetupDialog());
         }
@@ -172,7 +173,7 @@ Catch.try(async () => {
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
-      fetchedKeys = await Api.gmail.fetchKeyBackups(acctEmail);
+      fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
     } catch (e) {
       window.location.href = Env.urlCreate('modules/add_key.htm', { acctEmail, parentTabId });
       return;
@@ -282,7 +283,7 @@ Catch.try(async () => {
     if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and const the user choose
       let me: R.GooglePlusPeopleMe;
       try {
-        me = await Api.google.plus.peopleMe(acctEmail);
+        me = await Google.google.plus.peopleMe(acctEmail);
       } catch (e) {
         Catch.handleErr(e);
         return { full_name: '' };
@@ -534,11 +535,11 @@ Catch.try(async () => {
 
   // show alternative account addresses in setup form + save them for later
   if (storage.email_provider === 'gmail') {
-    if (!Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
+    if (!Google.auth.hasScope(storage.google_token_scopes as string[], 'read')) {
       $('.auth_denied_warning').css('display', 'block');
     }
     if (typeof storage.addresses === 'undefined') {
-      if (Api.gmail.hasScope(storage.google_token_scopes as string[], 'read')) {
+      if (Google.auth.hasScope(storage.google_token_scopes as string[], 'read')) {
         Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
       } else { // cannot read emails, don't fetch alternative addresses
         saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);

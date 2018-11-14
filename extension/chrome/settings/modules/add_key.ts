@@ -6,9 +6,10 @@ import { Store } from '../../../js/common/store.js';
 import { Value } from '../../../js/common/common.js';
 import { Xss, Ui, KeyImportUi, UserAlert, KeyCanBeFixed, Env } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
-import { Api } from '../../../js/common/api.js';
+import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Catch } from '../../../js/common/catch.js';
+import { Google } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -27,7 +28,7 @@ Catch.try(async () => {
   let keyBackups;
 
   try {
-    keyBackups = await Api.gmail.fetchKeyBackups(acctEmail);
+    keyBackups = await Google.gmail.fetchKeyBackups(acctEmail);
     if (keyBackups.length) {
       const notImportedBackupLongids: string[] = [];
       for (const longid of Value.arr.unique(keyBackups.map(Pgp.key.longid))) {

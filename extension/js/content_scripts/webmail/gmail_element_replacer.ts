@@ -5,13 +5,14 @@
 import { Value, Str, Dict } from '../../common/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api } from '../../common/api.js';
+import { Api } from '../../common/api/api.js';
 import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory, WebmailVariantString } from '../../common/browser.js';
 import { Att } from '../../common/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/catch.js';
+import { Google } from '../../common/api/google.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -179,8 +180,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           if (this.canReadEmails) {
             Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
             try {
-              const msg = await Api.gmail.msgGet(this.acctEmail, msgId, 'full');
-              await this.processAtts(msgId, Api.gmail.findAtts(msg), attsContainer, false, newPgpAttsNames);
+              const msg = await Google.gmail.msgGet(this.acctEmail, msgId, 'full');
+              await this.processAtts(msgId, Google.gmail.findAtts(msg), attsContainer, false, newPgpAttsNames);
             } catch (e) {
               if (Api.err.isAuthPopupNeeded(e)) {
                 this.notifications.showAuthPopupNeeded(this.acctEmail);
@@ -228,7 +229,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
           const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
           if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
-            const fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+            const fileChunk = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
             const openpgpType = Pgp.msg.type(fileChunk);
             if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
               nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
@@ -250,7 +251,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
         }
       } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
-        const fileChunk = await Api.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+        const fileChunk = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
         const openpgpType = Pgp.msg.type(fileChunk);
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
           nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
@@ -286,7 +287,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
     let downloadedAtt;
     try {
-      downloadedAtt = await Api.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id is present when fetched from api
+      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id is present when fetched from api
     } catch (e) {
       attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       nRenderedAtts++;

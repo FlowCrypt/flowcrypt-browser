@@ -6,7 +6,7 @@ import * as DOMPurify from 'dompurify';
 import { Str, Value, Dict } from './common.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './store.js';
-import { Api } from './api.js';
+import { Api } from './api/api.js';
 import { Pgp, Pwd } from './pgp.js';
 import { mnemonic } from './mnemonic.js';
 import { Att } from './att.js';

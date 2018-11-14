@@ -4,8 +4,8 @@
 
 import { Dict } from '../../../js/common/common.js';
 import { Xss, Env } from '../../../js/common/browser.js';
-import { Api } from '../../../js/common/api.js';
 import { Catch } from '../../../js/common/catch.js';
+import { Google } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -21,13 +21,13 @@ Catch.try(async () => {
   if (which === 'google_account') {
     const variables = { acctEmail };
     try {
-      const r = await Api.gmail.usersMeProfile(acctEmail);
+      const r = await Google.gmail.usersMeProfile(acctEmail);
       renderCallRes('gmail.users_me_profile', variables, r);
     } catch (e) {
       renderCallRes('gmail.users_me_profile', variables, null, e);
     }
     try {
-      const r = await Api.google.plus.peopleMe(acctEmail);
+      const r = await Google.google.plus.peopleMe(acctEmail);
       renderCallRes('google.plus.people_me', variables, r);
     } catch (e) {
       renderCallRes('google.plus.people_me', variables, null, e);

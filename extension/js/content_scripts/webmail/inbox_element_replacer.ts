@@ -4,13 +4,14 @@
 
 import { Injector } from '../../common/inject.js';
 import { Value, Str } from '../../common/common.js';
-import { Api } from '../../common/api.js';
+import { Api } from '../../common/api/api.js';
 import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory, WebmailVariantString } from '../../common/browser.js';
 import { Att } from '../../common/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/catch.js';
+import { Google } from '../../common/api/google.js';
 
 export class InboxElementReplacer implements WebmailElementReplacer {
 
@@ -82,8 +83,8 @@ export class InboxElementReplacer implements WebmailElementReplacer {
         if (msgId) {
           if (this.canReadEmails) {
             Xss.sanitizePrepend(newPgpMsgs, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
-            Api.gmail.msgGet(this.acctEmail, msgId, 'full').then(msg => {
-              this.processAtts(msgId!, msgEl, Api.gmail.findAtts(msg), attsContainer); // msgId checked right above
+            Google.gmail.msgGet(this.acctEmail, msgId, 'full').then(msg => {
+              this.processAtts(msgId!, msgEl, Google.gmail.findAtts(msg), attsContainer); // msgId checked right above
             }, () => $(newPgpMsgs).find('.attachment_loader').text('Failed to load'));
           } else {
             const statusMsg = 'Missing Gmail permission to decrypt attachments. <a href="#" class="auth_settings">Settings</a></div>';
@@ -113,7 +114,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
         } else if (treatAs === 'message') {
           msgEl.append(this.factory.embeddedMsg('', msgId, false, senderEmail || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
-          Api.gmail.attGet(this.acctEmail, msgId, a.id!).then(downloadedAtt => {
+          Google.gmail.attGet(this.acctEmail, msgId, a.id!).then(downloadedAtt => {
             if (Value.is(Pgp.armor.headers('null').begin).in(downloadedAtt.data)) {
               msgEl.append(this.factory.embeddedPubkey(downloadedAtt.data, isOutgoing)); // xss-safe-factory
             } else {

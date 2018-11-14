@@ -4,9 +4,10 @@
 
 import { Store, SubscriptionAttempt } from './store.js';
 import { Str, Dict } from './common.js';
-import { Api } from './api.js';
+import { Api } from './api/api.js';
 import { Catch } from './catch.js';
 import { Env } from './browser.js';
+import { Google } from './api/google.js';
 
 type AccountEventHandlersOptional = {
   renderStatusText?: (text: string, showSpinner?: boolean) => void;
@@ -128,11 +129,11 @@ export class FcAcct {
 
   private fetchTokenEmailsOnGmailAndFindMatchingToken = async (acctEmail: string, uuid: string): Promise<string[] | null> => {
     const tokens: string[] = [];
-    const response = await Api.gmail.msgList(acctEmail, 'from:' + this.cryptupVerificationEmailSender + ' to:' + acctEmail + ' in:anywhere', true);
+    const response = await Google.gmail.msgList(acctEmail, 'from:' + this.cryptupVerificationEmailSender + ' to:' + acctEmail + ' in:anywhere', true);
     if (!response.messages) {
       return null;
     }
-    const msgs = await Api.gmail.msgsGet(acctEmail, response.messages.map(m => m.id), 'full');
+    const msgs = await Google.gmail.msgsGet(acctEmail, response.messages.map(m => m.id), 'full');
     for (const gmailMsg of msgs) {
       if (gmailMsg.payload.mimeType === 'text/plain' && gmailMsg.payload.body && gmailMsg.payload.body.size > 0 && gmailMsg.payload.body.data) {
         const token = this.parseTokenEmailText(Str.base64urlDecode(gmailMsg.payload.body.data), uuid);

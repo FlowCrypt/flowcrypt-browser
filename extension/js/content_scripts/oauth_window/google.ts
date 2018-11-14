@@ -3,9 +3,9 @@
 'use strict';
 
 import { Value } from '../../common/common.js';
-import { AuthReq } from '../../common/api.js';
 import { FlowCryptManifest, BrowserMsg, GoogleAuthWindowResult$result } from '../../common/extension.js';
 import { Ui, Env } from '../../common/browser.js';
+import { AuthReq } from '../../common/api/google.js';
 
 (async () => {
 

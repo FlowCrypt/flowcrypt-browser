@@ -7,9 +7,10 @@ import { Value, Str } from './../../js/common/common.js';
 import { Att } from '../../js/common/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
-import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api.js';
+import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
+import { Google } from '../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -44,7 +45,7 @@ Catch.try(async () => {
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
     let gmailMsg;
     try {
-      gmailMsg = await Api.gmail.msgGet(acctEmail, threadMsgId, 'metadata');
+      gmailMsg = await Google.gmail.msgGet(acctEmail, threadMsgId, 'metadata');
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
@@ -59,7 +60,7 @@ Catch.try(async () => {
     if (gmailMsg.threadId) {
       threadId = gmailMsg.threadId;
     }
-    const reply = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Api.gmail.findHeader(gmailMsg, 'from'), (Api.gmail.findHeader(gmailMsg, 'to') || '').split(','));
+    const reply = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'), (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
     if (!to.length) {
       to = reply.to;
     }
@@ -67,14 +68,14 @@ Catch.try(async () => {
       from = reply.from;
     }
     if (!subject) {
-      subject = Api.gmail.findHeader(gmailMsg, 'subject') || '';
+      subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
     }
     $('#loader').remove();
   })();
 
   const tabId = await BrowserMsg.requiredTabId();
 
-  const canReadEmail = Api.gmail.hasScope(storage.google_token_scopes as string[], 'read');
+  const canReadEmail = Google.auth.hasScope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(acctEmail, tabId);
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     // there may be a draft we want to load
@@ -111,7 +112,7 @@ Catch.try(async () => {
       const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;
       const qReceivedMsg = `from:${theirEmail} "BEGIN PGP MESSAGE" "END PGP MESSAGE"`;
       try {
-        const response = await Api.gmail.msgList(acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
+        const response = await Google.gmail.msgList(acctEmail, `(${qSentPubkey}) OR (${qReceivedMsg})`, true);
         if (response.messages) {
           await Store.setAcct(acctEmail, { pubkey_sent_to: (storage.pubkey_sent_to || []).concat(theirEmail) });
           return true;
@@ -186,13 +187,13 @@ Catch.try(async () => {
     storageContactSave: (contact: Contact) => Store.dbContactSave(null, contact),
     storageContactSearch: (query: DbContactFilter) => Store.dbContactSearch(null, query),
     storageContactObj: Store.dbContactObj,
-    emailProviderDraftGet: (draftId: string) => Api.gmail.draftGet(acctEmail, draftId, 'raw'),
-    emailProviderDraftCreate: (mimeMsg: string) => Api.gmail.draftCreate(acctEmail, mimeMsg, threadId),
-    emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Api.gmail.draftUpdate(acctEmail, draftId, mimeMsg),
-    emailProviderDraftDelete: (draftId: string) => Api.gmail.draftDelete(acctEmail, draftId),
-    emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Api.gmail.msgSend(acctEmail, message, renderUploadProgress),
+    emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(acctEmail, draftId, 'raw'),
+    emailProviderDraftCreate: (mimeMsg: string) => Google.gmail.draftCreate(acctEmail, mimeMsg, threadId),
+    emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(acctEmail, draftId, mimeMsg),
+    emailProviderDraftDelete: (draftId: string) => Google.gmail.draftDelete(acctEmail, draftId),
+    emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Google.gmail.msgSend(acctEmail, message, renderUploadProgress),
     emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
-      Api.gmail.searchContacts(acctEmail, query, knownContacts, multiCb).catch(e => {
+      Google.gmail.searchContacts(acctEmail, query, knownContacts, multiCb).catch(e => {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else if (Api.err.isNetErr(e)) {
@@ -205,10 +206,10 @@ Catch.try(async () => {
     },
     emailProviderDetermineReplyMsgHeaderVariables: async () => {
       try {
-        const thread = await Api.gmail.threadGet(acctEmail, threadId, 'full');
+        const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full');
         if (thread.messages && thread.messages.length > 0) {
-          const threadMsgIdLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-          const threadMsgRefsLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+          const threadMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+          const threadMsgRefsLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
           return { lastMsgId: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast } };
         } else {
           return;
@@ -225,7 +226,7 @@ Catch.try(async () => {
       }
       return;
     },
-    emailProviderExtractArmoredBlock: (msgId: string) => Api.gmail.extractArmoredBlock(acctEmail, msgId, 'full'),
+    emailProviderExtractArmoredBlock: (msgId: string) => Google.gmail.extractArmoredBlock(acctEmail, msgId, 'full'),
     // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),
     // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
     renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => {

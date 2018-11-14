@@ -5,11 +5,12 @@
 import { Store } from '../../js/common/store.js';
 import { Value } from '../../js/common/common.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
-import { Api } from '../../js/common/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { Pgp, DecryptErrTypes } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Att } from '../../js/common/att.js';
 import { Catch } from '../../js/common/catch.js';
+import { Google } from '../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -171,7 +172,7 @@ Catch.try(async () => {
       } else if (encryptedAtt && encryptedAtt.hasData()) { // when encrypted content was already downloaded
         await decryptAndSaveAttToDownloads(encryptedAtt);
       } else if (encryptedAtt && encryptedAtt.id && encryptedAtt.msgId) { // gmail attId
-        const att = await Api.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id, renderProgress);
+        const att = await Google.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id, renderProgress);
         encryptedAtt.setData(att.data);
         await decryptAndSaveAttToDownloads(encryptedAtt!);
       } else if (encryptedAtt && encryptedAtt.url) { // gneneral url to download attachment
@@ -196,7 +197,7 @@ Catch.try(async () => {
   const recoverMissingAttIdIfNeeded = async () => {
     if (!urlParams.url && !urlParams.attId && urlParams.msgId) {
       try {
-        const result = await Api.gmail.msgGet(acctEmail, urlParams.msgId as string, 'full');
+        const result = await Google.gmail.msgGet(acctEmail, urlParams.msgId as string, 'full');
         if (result && result.payload && result.payload.parts) {
           for (const attMeta of result.payload.parts) {
             if (attMeta.filename === urlParams.name && attMeta.body && attMeta.body.size === urlParams.size && attMeta.body.attachmentId) {
@@ -217,7 +218,7 @@ Catch.try(async () => {
   const processAsPublicKeyAndHideAttIfAppropriate = async () => {
     if (encryptedAtt && encryptedAtt.msgId && encryptedAtt.id && encryptedAtt.treatAs() === 'publicKey') {
       // this is encrypted public key - download && decrypt & parse & render
-      const att = await Api.gmail.attGet(acctEmail, urlParams.msgId as string, urlParams.attId as string);
+      const att = await Google.gmail.attGet(acctEmail, urlParams.msgId as string, urlParams.attId as string);
       const result = await Pgp.msg.decrypt(acctEmail, att.data);
       if (result.success && result.content.text) {
         const openpgpType = Pgp.msg.type(result.content.text);

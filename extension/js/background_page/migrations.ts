@@ -3,7 +3,7 @@
 'use strict';
 
 import { Value } from '../common/common.js';
-import { Api } from '../common/api.js';
+import { Api } from '../common/api/api.js';
 import { Catch } from '../common/catch.js';
 
 // declare const openpgp: typeof OpenPGP;

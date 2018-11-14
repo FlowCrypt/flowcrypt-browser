@@ -8,9 +8,10 @@ import { Xss, Ui, Env, UrlParams, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
-import { Api } from './api.js';
+import { Api } from './api/api.js';
 import { Pgp } from './pgp.js';
 import { Catch, UnreportableError } from './catch.js';
+import { Google } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -23,7 +24,7 @@ export class Settings {
     let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
     const results = [];
     while (true) {
-      const headers = await Api.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['from']);
+      const headers = await Google.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['from']);
       if (!headers.from) {
         return results.filter(email => !Value.is(email).in(Settings.ignoreEmailAliases));
       }
@@ -357,7 +358,7 @@ export class Settings {
   }
 
   static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
-    const response = await Api.google.authPopup(acctEmail || null, tabId, omitReadScope);
+    const response = await Google.auth.popup(acctEmail || null, tabId, omitReadScope);
     if (response && response.success === true && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
       const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
@@ -381,7 +382,7 @@ export class Settings {
     const storage = await Store.getAcct(acctEmail, ['setup_done', 'picture']);
     if (storage.setup_done && !storage.picture) {
       try {
-        const { image } = await Api.google.plus.peopleMe(acctEmail);
+        const { image } = await Google.google.plus.peopleMe(acctEmail);
         await Store.setAcct(acctEmail, { picture: image.url });
       } catch (e) {
         if (!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {

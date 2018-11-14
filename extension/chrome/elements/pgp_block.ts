@@ -8,11 +8,11 @@ import { Att } from '../../js/common/att.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from './../../js/common/lang.js';
-
-import { Api, GmailResponseFormat, R } from '../../js/common/api.js';
+import { Api, R } from '../../js/common/api/api.js';
 import { MsgVerifyResult, DecryptErrTypes, FormatError } from '../../js/common/pgp.js';
 import { Mime } from '../../js/common/mime.js';
 import { Catch } from '../../js/common/catch.js';
+import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
 
 declare const anchorme: (input: string, opts: { emails?: boolean, attributes?: { name: string, value: string }[] }) => string;
 
@@ -480,7 +480,7 @@ Catch.try(async () => {
     try {
       if (canReadEmails && msg && signature === true) {
         renderText('Loading signature...');
-        const result = await Api.gmail.msgGet(acctEmail, msgId as string, 'raw');
+        const result = await Google.gmail.msgGet(acctEmail, msgId as string, 'raw');
         if (!result.raw) {
           await decryptAndRender();
         } else {
@@ -519,7 +519,7 @@ Catch.try(async () => {
         if (canReadEmails) {
           renderText('Retrieving message...');
           const format: GmailResponseFormat = (!msgFetchedFromApi) ? 'full' : 'raw';
-          msg = await Api.gmail.extractArmoredBlock(acctEmail, msgId as string, format);
+          msg = await Google.gmail.extractArmoredBlock(acctEmail, msgId as string, format);
           renderText('Decrypting...');
           msgFetchedFromApi = format;
           await decryptAndRender();
@@ -548,7 +548,7 @@ Catch.try(async () => {
   };
 
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes']);
-  canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
+  canReadEmails = Google.auth.hasScope(storage.google_token_scopes || [], 'read');
   if (storage.setup_done) {
     await initialize();
   } else {

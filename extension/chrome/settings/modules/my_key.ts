@@ -7,7 +7,7 @@ import { Att } from '../../../js/common/att.js';
 import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api.js';
+import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/catch.js';
 
 declare const openpgp: typeof OpenPGP;

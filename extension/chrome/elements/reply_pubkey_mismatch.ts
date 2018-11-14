@@ -6,10 +6,11 @@ import { Store, Subscription } from '../../js/common/store.js';
 import { Att } from '../../js/common/att.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Composer } from './../../js/common/composer.js';
-import { Api } from '../../js/common/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 import { Dict } from '../../js/common/common.js';
+import { Google } from '../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -52,10 +53,10 @@ Catch.try(async () => {
 
   // determine reply headers
   try {
-    const thread = await Api.gmail.threadGet(acctEmail, urlParams.threadId as string, 'full');
+    const thread = await Google.gmail.threadGet(acctEmail, urlParams.threadId as string, 'full');
     if (thread.messages && thread.messages.length > 0) {
-      const threadMsgIdLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-      const threadMsgRefsLast = Api.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
+      const threadMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      const threadMsgRefsLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
       additionalMsgHeaders = { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast };
     }
   } catch (e) {
@@ -77,7 +78,7 @@ Catch.try(async () => {
       message.headers[k] = additionalMsgHeaders[k];
     }
     try {
-      await Api.gmail.msgSend(acctEmail, message);
+      await Google.gmail.msgSend(acctEmail, message);
       BrowserMsg.send.notificationShow(parentTabId, { notification: 'Message sent.' });
       Xss.sanitizeReplace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {

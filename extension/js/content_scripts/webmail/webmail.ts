@@ -13,10 +13,10 @@ import { Notifications } from '../../common/notifications.js';
 import { InboxElementReplacer } from './inbox_element_replacer.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
-import { Api } from '../../common/api.js';
 import { ContentScriptWindow, FcWindow } from '../../common/extension.js';
 import { XssSafeFactory, Env } from '../../common/browser.js';
 import { Catch } from '../../common/catch.js';
+import { Google } from '../../common/api/google.js';
 
 Catch.try(async () => {
 
@@ -86,7 +86,7 @@ Catch.try(async () => {
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
       const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      const canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
+      const canReadEmails = Google.auth.hasScope(storage.google_token_scopes || [], 'read');
       injector.btns();
       replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
@@ -134,7 +134,7 @@ Catch.try(async () => {
 
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      const canReadEmails = Api.gmail.hasScope(storage.google_token_scopes || [], 'read');
+      const canReadEmails = Google.auth.hasScope(storage.google_token_scopes || [], 'read');
       injector.btns();
       replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, null);
       await notifications.showInitial(acctEmail);

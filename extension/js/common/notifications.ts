@@ -4,11 +4,11 @@
 
 import { Store } from './store.js';
 import { Dict } from './common.js';
-import { Api } from './api.js';
 import { BrowserMsg } from './extension.js';
 import { Xss, Ui } from './browser.js';
 import { Lang } from './lang.js';
 import { Catch } from './catch.js';
+import { Google } from './api/google.js';
 
 export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
 
@@ -35,7 +35,7 @@ export class Notifications {
   showAuthPopupNeeded = (acctEmail: string) => {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: () => {
-        Api.google.authPopup(acctEmail, this.tabId).then(authRes => {
+        Google.auth.popup(acctEmail, this.tabId).then(authRes => {
           this.show(`${authRes.success ? 'Connected successfully' : 'Failed to connect'}. <a href="#" class="close">Close</a>`);
         }, error => {
           console.info(error);

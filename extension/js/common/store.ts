@@ -5,7 +5,7 @@
 import { Value, Str, Dict, EmailProvider } from './common.js';
 import { mnemonic } from './mnemonic.js';
 import { Pgp } from './pgp.js';
-import { SubscriptionInfo } from './api.js';
+import { SubscriptionInfo } from './api/api.js';
 import { BrowserMsg } from './extension.js';
 import { Product, PaymentMethod, ProductLevel } from './account.js';
 import { Env } from './browser.js';

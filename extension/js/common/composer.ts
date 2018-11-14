@@ -8,10 +8,11 @@ import { Value, Str } from './common.js';
 import { Att } from './att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError } from './pgp.js';
-import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api.js';
+import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
+import { Google } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -351,7 +352,7 @@ export class Composer {
         this.S.cached('input_subject').val((parsedMsg.headers.subject as string) || '');
         await this.decryptAndRenderDraft(armored, parsedMsg);
       } else {
-        console.info('Api.gmail.draft_get Mime.decode else {}');
+        console.info('Google.gmail.draft_get Mime.decode else {}');
         if (this.v.isReplyBox) {
           await this.renderReplyMsgComposeTable();
         }
@@ -369,7 +370,7 @@ export class Composer {
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
       } else {
-        console.info('Api.gmail.draft_get success===false');
+        console.info('Google.gmail.draft_get success===false');
         Catch.handleErr(e);
         if (this.v.isReplyBox) {
           await this.renderReplyMsgComposeTable();
@@ -1142,7 +1143,7 @@ export class Composer {
     const lastRecipient = $('.recipients span').last();
     this.S.cached('input_to').val(lastRecipient.text());
     lastRecipient.last().remove();
-    const authRes = await Api.google.authPopup(acctEmail, this.v.tabId, false, Api.gmail.scope(['read']));
+    const authRes = await Google.auth.popup(acctEmail, this.v.tabId, false, Google.auth.scope(['read']));
     if (authRes && authRes.success === true) {
       this.canReadEmails = true;
       await this.searchContacts();

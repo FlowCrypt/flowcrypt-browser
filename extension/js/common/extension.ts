@@ -7,7 +7,7 @@ import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from '.
 import { FlatTypes } from './store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './catch.js';
-import { AuthReq } from './api.js';
+import { AuthReq } from './api/google.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';

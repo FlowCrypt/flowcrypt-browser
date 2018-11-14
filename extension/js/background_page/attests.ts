@@ -4,10 +4,11 @@
 
 import { Store } from '../common/store.js';
 import { Value, Str, Dict } from '../common/common.js';
-import { Api, R } from '../common/api.js';
+import { Api, R } from '../common/api/api.js';
 import { Pgp } from '../common/pgp.js';
 import { Bm } from '../common/extension.js';
 import { Catch } from '../common/catch.js';
+import { Google } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -189,8 +190,8 @@ export class BgAttests {
       '"' + BgAttests.packetHeaders.begin + '"',
       '"' + BgAttests.packetHeaders.end + '"',
     ];
-    const listRes = await Api.gmail.msgList(acctEmail, q.join(' '), true);
-    return Api.gmail.msgsGet(acctEmail, (listRes.messages || []).map(m => m.id), 'full');
+    const listRes = await Google.gmail.msgList(acctEmail, q.join(' '), true);
+    return Google.gmail.msgsGet(acctEmail, (listRes.messages || []).map(m => m.id), 'full');
   }
 
   private static getPendingAttestRequests = async () => {
@@ -198,7 +199,7 @@ export class BgAttests {
     const storages = await Store.getAccounts(acctEmails, ['attests_requested', 'google_token_scopes']);
     const pending = [];
     for (const email of Object.keys(storages)) {
-      BgAttests.attestTsCanReadEmails[email] = Api.gmail.hasScope(storages[email].google_token_scopes || [], 'read');
+      BgAttests.attestTsCanReadEmails[email] = Google.auth.hasScope(storages[email].google_token_scopes || [], 'read');
       pending.push({ email, attests_requested: storages[email].attests_requested || [] });
     }
     return pending;

@@ -10,9 +10,10 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api.js';
+import { Api } from '../../../js/common/api/api.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { Catch, UnreportableError } from '../../../js/common/catch.js';
+import { Google } from '../../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -53,10 +54,10 @@ Catch.try(async () => {
     $('h1').text('Key Backups');
     displayBlock('loading');
     const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider']);
-    if (emailProvider === 'gmail' && Api.gmail.hasScope(storage.google_token_scopes || [], 'read')) {
+    if (emailProvider === 'gmail' && Google.auth.hasScope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
-        keys = await Api.gmail.fetchKeyBackups(acctEmail);
+        keys = await Google.gmail.fetchKeyBackups(acctEmail);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           Xss.sanitizeRender('#content', `Could not check for backups: no internet. ${Ui.retryLink()}`);
@@ -212,9 +213,9 @@ Catch.try(async () => {
   const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [asBackupFile(acctEmail, armoredKey)];
-    const msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], Api.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    const msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], Google.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
-      return await Api.gmail.msgSend(acctEmail, msg);
+      return await Google.gmail.msgSend(acctEmail, msg);
     } else {
       throw Error(`Backup method not implemented for ${emailProvider}`);
     }
