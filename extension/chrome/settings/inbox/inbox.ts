@@ -253,11 +253,11 @@ Catch.try(async () => {
     if (labelId === 'ALL') {
       return 'all folders';
     }
-    const label = allLabels.find(l => l.id === labelId);
+    const label = (allLabels || []).find(l => l.id === labelId);
     if (label) {
       return label.name;
     }
-    return 'UNKNOWN LABEL';
+    return `UNKNOWN LABEL: ${labelId}`;
   };
 
   const renderMenuAndLabelStyles = (labels: R.GmailLabels$label[]) => {
@@ -282,14 +282,14 @@ Catch.try(async () => {
       renderMenuAndLabelStyles(labels);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
+        showNotification(`Connection error trying to get list of folders ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         showNotification(Lang.account.googleAcctDisabled);
       } else {
         Catch.handleErr(e);
-        showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
+        showNotification(`Error trying to get list of folders ${Ui.retryLink()}`);
       }
     }
   };
