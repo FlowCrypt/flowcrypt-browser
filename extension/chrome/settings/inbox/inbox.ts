@@ -11,6 +11,7 @@ import { Api, R } from '../../../js/common/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/mime.js';
 import { Catch } from '../../../js/common/catch.js';
+import { Lang } from '../../../js/common/lang.js';
 
 Catch.try(async () => {
 
@@ -215,6 +216,8 @@ Catch.try(async () => {
         Xss.sanitizeRender(threadItem.find('.loading'), 'Failed to load (network) <a href="#">retry</a>').find('a').click(Ui.event.handle(() => renderInboxItem(threadId)));
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        showNotification(Lang.account.googleAcctDisabled);
       } else {
         Catch.handleErr(e);
         threadItem.find('.loading').text('Failed to load');
@@ -282,6 +285,8 @@ Catch.try(async () => {
         showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        showNotification(Lang.account.googleAcctDisabled);
       } else {
         Catch.handleErr(e);
         showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
@@ -304,6 +309,8 @@ Catch.try(async () => {
         showNotification(`Connection error trying to get list of messages ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        showNotification(Lang.account.googleAcctDisabled);
       } else {
         Catch.handleErr(e);
         showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
@@ -328,6 +335,8 @@ Catch.try(async () => {
         Xss.sanitizeRender('.thread', `<br>Failed to load thread - network error. ${Ui.retryLink()}`);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        showNotification(Lang.account.googleAcctDisabled);
       } else {
         Catch.handleErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
@@ -361,6 +370,8 @@ Catch.try(async () => {
         Xss.sanitizeAppend('.thread', wrapMsg(htmlId, `Failed to load a message (network error), skipping. ${Ui.retryLink()}`));
       } else if (Api.err.isAuthPopupNeeded(e)) {
         renderAndHandleAuthPopupNotification();
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        showNotification(Lang.account.googleAcctDisabled);
       } else {
         Catch.handleErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));

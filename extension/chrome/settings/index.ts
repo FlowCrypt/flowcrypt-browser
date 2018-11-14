@@ -11,6 +11,7 @@ import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
+import { Lang } from '../../js/common/lang.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -191,8 +192,16 @@ Catch.try(async () => {
       alert(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
       window.location.href = Env.urlCreate('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
     } catch (e) {
-      Catch.handleErr(e);
-      alert('There was an error changing google account, please write human@flowcrypt.com');
+      if (Api.err.isNetErr(e)) {
+        alert('There was a network error, please try again.');
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        alert(Lang.account.googleAcctDisabled);
+      } else if (Api.err.isAuthPopupNeeded(e)) {
+        alert('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
+      } else {
+        Catch.handleErr(e);
+        alert(`There was an error changing google account, please write human@flowcrypt.com\n\n${String(e)}`);
+      }
     }
   };
 
@@ -216,6 +225,8 @@ Catch.try(async () => {
       } else if (Api.err.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
           .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPrompt(tabId, acctEmail)));
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        alert(Lang.account.googleAcctDisabled);
       } else if (Api.err.isNetErr(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
