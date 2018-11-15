@@ -58,5 +58,7 @@ buildContentScript([
   `${sourceDir}/common/common.js`,
   `${sourceDir}/common/browser.js`,
   `${sourceDir}/common/extension.js`,
+  `${sourceDir}/common/api/api.js`,
+  `${sourceDir}/common/api/google.js`,
   `${sourceDir}/content_scripts/oauth_window/google.js`,
 ], 'google_bundle.js');

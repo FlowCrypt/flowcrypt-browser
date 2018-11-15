@@ -105,9 +105,6 @@ export interface ContentScriptWindow extends FcWindow {
   destroy: () => void;
   vacant: () => boolean;
 }
-export interface FlowCryptManifest extends chrome.runtime.Manifest {
-  oauth2: { client_id: string, url_code: string, url_tokens: string, url_redirect: string, state_header: string, scopes: string[] };
-}
 
 export class TabIdRequiredError extends Error { }
 
