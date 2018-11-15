@@ -16,7 +16,7 @@ import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmai
 import { ContentScriptWindow, FcWindow } from '../../common/extension.js';
 import { XssSafeFactory, Env } from '../../common/browser.js';
 import { Catch } from '../../common/catch.js';
-import { Google } from '../../common/api/google.js';
+import { GoogleAuth } from '../../common/api/google.js';
 
 Catch.try(async () => {
 
@@ -86,7 +86,7 @@ Catch.try(async () => {
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
       const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      const canReadEmails = Google.auth.hasScope(storage.google_token_scopes || [], 'read');
+      const canReadEmails = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
       injector.btns();
       replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
@@ -134,7 +134,7 @@ Catch.try(async () => {
 
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      const canReadEmails = Google.auth.hasScope(storage.google_token_scopes || [], 'read');
+      const canReadEmails = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
       injector.btns();
       replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, null);
       await notifications.showInitial(acctEmail);

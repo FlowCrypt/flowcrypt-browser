@@ -37,167 +37,14 @@ export class Google extends Api {
     ]
   };
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
-  private static GMAIL_SCOPE_DICT: Dict<string> = { read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose' };
   public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup',
     'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
 
-  public static auth = {
-    apiGoogleAuthCodeUrl: (authReq: AuthReq) => Env.urlCreate(Google.OAUTH.url_code, {
-      client_id: Google.OAUTH.client_id,
-      response_type: 'code',
-      access_type: 'offline',
-      state: Google.auth.apiGoogleAuthStatePack(authReq),
-      redirect_uri: Google.OAUTH.url_redirect,
-      scope: (authReq.scopes || []).join(' '),
-      login_hint: authReq.acctEmail,
-    }),
-    scope: (scope: string[]): string[] => scope.map(s => Google.GMAIL_SCOPE_DICT[s] as string),
-    hasScope: (scopes: string[], scope: string) => scopes && Value.is(Google.GMAIL_SCOPE_DICT[scope]).in(scopes),
-    apiGoogleAuthStatePack: (authReq: AuthReq) => Google.OAUTH.state_header + JSON.stringify(authReq),
-    googleAuthSaveTokens: async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
-      const toSave: AccountStore = {
-        google_token_access: tokensObj.access_token,
-        google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
-        google_token_scopes: scopes,
-      };
-      if (typeof tokensObj.refresh_token !== 'undefined') {
-        toSave.google_token_refresh = tokensObj.refresh_token;
-      }
-      await Store.setAcct(acctEmail, toSave);
-    },
-    googleAuthGetTokens: (code: string) => Api.ajax({
-      url: Env.urlCreate(Google.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: Google.OAUTH.client_id, redirect_uri: Google.OAUTH.url_redirect }),
-      method: 'POST',
-      crossDomain: true,
-      async: true,
-    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>,
-    googleAuthRefreshToken: (refreshToken: string) => Api.ajax({
-      url: Env.urlCreate(Google.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: Google.OAUTH.client_id }),
-      method: 'POST',
-      crossDomain: true,
-      async: true,
-    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>,
-    googleAuthCheckAccessToken: (accessToken: string) => Api.ajax({
-      url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token: accessToken }),
-      crossDomain: true,
-      async: true,
-    }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>,
-    apiGoogleCallRetryAuthErrorOneTime: async (acctEmail: string, request: JQuery.AjaxSettings) => {
-      try {
-        return await Api.ajax(request, Catch.stackTrace());
-      } catch (firstAttemptErr) {
-        if (Api.err.isAuthErr(firstAttemptErr)) { // force refresh token
-          request.headers!.Authorization = await Google.auth.googleApiAuthHeader(acctEmail, true);
-          return await Api.ajax(request, Catch.stackTrace());
-        }
-        throw firstAttemptErr;
-      }
-    },
-    /**
-     * oauth token will be valid for another 2 min
-     */
-    googleApiIsAuthTokenValid: (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000)),
-    googleApiAuthHeader: async (acctEmail: string, forceRefresh = false): Promise<string> => {
-      if (!acctEmail) {
-        throw new Error('missing account_email in api_gmail_call');
-      }
-      const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
-      if (!storage.google_token_access || !storage.google_token_refresh) {
-        throw new Error('Account not connected to FlowCrypt Browser Extension');
-      } else if (Google.auth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
-        return `Bearer ${storage.google_token_access}`;
-      } else { // refresh token
-        const refreshTokenRes = await Google.auth.googleAuthRefreshToken(storage.google_token_refresh);
-        await Google.auth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        await Google.auth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
-        const auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
-        if (Google.auth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
-          return `Bearer ${auth.google_token_access}`;
-        } else {
-          throw new AuthError('Could not refresh google auth token - did not become valid');
-        }
-      }
-    },
-    // parseIdToken: (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1])),
-    popup: (acctEmail: string | null, tabId: string, omitReadScope = false, scopes: string[] = []): Promise<AuthResult> => new Promise((resolve, reject) => {
-      if (Env.isBackgroundPage()) {
-        throw new Error('Cannot produce auth window from background script');
-      }
-      let responseHandled = false;
-      Google.auth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
-        const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.sloppyRandom(20), scopes };
-        BrowserMsg.addListener('google_auth_window_result', (result: Bm.GoogleAuthWindowResult, sender, closeAuthWin: (r: Bm.Res.GoogleAuthWindowResult) => void) => {
-          if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
-            responseHandled = true;
-            Google.auth.googleAuthWinResHandler(result).then(resolve, reject);
-            closeAuthWin({});
-          }
-        });
-        BrowserMsg.listen(authRequest.tabId);
-        const authCodeWin = window.open(Google.auth.apiGoogleAuthCodeUrl(authRequest), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
-        // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-        // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-        if (Catch.browser().name !== 'firefox') {
-          const winClosedTimer = Catch.setHandledInterval(() => {
-            if (authCodeWin === null || typeof authCodeWin === 'undefined') {
-              clearInterval(winClosedTimer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
-            } else if (authCodeWin.closed) {
-              clearInterval(winClosedTimer);
-              if (!responseHandled) {
-                resolve({ success: false, result: 'Closed', acctEmail: authRequest.acctEmail, messageId: authRequest.messageId });
-                responseHandled = true;
-              }
-            }
-          }, 250);
-        }
-      }, reject);
-    }),
-    googleAuthWinResHandler: async (result: Bm.GoogleAuthWindowResult): Promise<AuthResult> => {
-      if (result.result === 'Success') {
-        const tokensObj = await Google.auth.googleAuthGetTokens(result.params.code);
-        await Google.auth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-        const { emailAddress: acctEmail } = await Google.gmail.usersMeProfile(null, tokensObj.access_token);
-        if (result.state.acctEmail !== acctEmail) {
-          Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress');
-        }
-        await Google.auth.googleAuthSaveTokens(acctEmail, tokensObj, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
-        return { acctEmail, success: true, result: 'Success', messageId: result.state.messageId };
-      } else if (result.result === 'Denied') {
-        return { success: false, result: 'Denied', error: result.params.error, acctEmail: result.state.acctEmail, messageId: result.state.messageId };
-      } else if (result.result === 'Error') {
-        return { success: false, result: 'Error', error: result.params.error, acctEmail: result.state.acctEmail, messageId: result.state.messageId };
-      } else {
-        throw new Error(`Unknown GoogleAuthWindowResult.result === '${result.result}'`);
-      }
-    },
-    apiGoogleAuthPopupPrepareAuthReqScopes: async (acctEmail: string | null, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {
-      let currentTokensScopes: string[] = [];
-      if (acctEmail) {
-        const storage = await Store.getAcct(acctEmail, ['google_token_scopes']);
-        currentTokensScopes = storage.google_token_scopes || [];
-      }
-      const authReqScopes = requestedScopes || [];
-      for (const scope of Google.OAUTH.scopes) {
-        if (!Value.is(scope).in(requestedScopes)) {
-          if (scope !== Google.auth.scope(['read'])[0] || !omitReadScope) { // leave out read messages permission if user chose so
-            authReqScopes.push(scope);
-          }
-        }
-      }
-      for (const scope of currentTokensScopes) {
-        if (!Value.is(scope).in(requestedScopes)) {
-          authReqScopes.push(scope);
-        }
-      }
-      return authReqScopes;
-    },
-  };
-
   private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {
     const data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
-    const headers = { Authorization: await Google.auth.googleApiAuthHeader(acctEmail) };
+    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const request = { url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true };
-    return await Google.auth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
+    return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
 
   public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | null, progress?: ProgressCbs, contentType?: string) => {
@@ -215,10 +62,10 @@ export class Google extends Api {
       }
     }
     contentType = contentType || 'application/json; charset=UTF-8';
-    const headers = { 'Authorization': await Google.auth.googleApiAuthHeader(acctEmail) };
+    const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const xhr = () => Api.getAjaxProgressXhr(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
-    return await Google.auth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
+    return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
 
   public static google = {
@@ -351,7 +198,7 @@ export class Google extends Api {
           reject({ code: null, message: "Chunk response could not be decoded" });
         }
       };
-      Google.auth.googleApiAuthHeader(acctEmail).then(authToken => {
+      GoogleAuth.googleApiAuthHeader(acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attId}`, true);
         r.setRequestHeader('Authorization', authToken);
@@ -576,4 +423,173 @@ export class Google extends Api {
     return {};
   }
 
+}
+
+export class GoogleAuth {
+
+  private static SCOPE_DICT: Dict<string> = { read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose' };
+
+  public static scope = (scope: string[]): string[] => scope.map(s => GoogleAuth.SCOPE_DICT[s] as string);
+
+  public static hasScope = (scopes: string[], scope: string) => scopes && Value.is(GoogleAuth.SCOPE_DICT[scope]).in(scopes);
+
+  public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
+    if (!acctEmail) {
+      throw new Error('missing account_email in api_gmail_call');
+    }
+    const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
+    if (!storage.google_token_access || !storage.google_token_refresh) {
+      throw new Error('Account not connected to FlowCrypt Browser Extension');
+    } else if (GoogleAuth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
+      return `Bearer ${storage.google_token_access}`;
+    } else { // refresh token
+      const refreshTokenRes = await GoogleAuth.googleAuthRefreshToken(storage.google_token_refresh);
+      await GoogleAuth.googleAuthCheckAccessToken(refreshTokenRes.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+      await GoogleAuth.googleAuthSaveTokens(acctEmail, refreshTokenRes, storage.google_token_scopes || []);
+      const auth = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires']);
+      if (GoogleAuth.googleApiIsAuthTokenValid(auth)) { // have a valid gmail_api oauth token
+        return `Bearer ${auth.google_token_access}`;
+      } else {
+        throw new AuthError('Could not refresh google auth token - did not become valid');
+      }
+    }
+  }
+
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings) => {
+    try {
+      return await Api.ajax(request, Catch.stackTrace());
+    } catch (firstAttemptErr) {
+      if (Api.err.isAuthErr(firstAttemptErr)) { // force refresh token
+        request.headers!.Authorization = await GoogleAuth.googleApiAuthHeader(acctEmail, true);
+        return await Api.ajax(request, Catch.stackTrace());
+      }
+      throw firstAttemptErr;
+    }
+  }
+
+  public static popup = (acctEmail: string | null, tabId: string, omitReadScope = false, scopes: string[] = []): Promise<AuthResult> => new Promise((resolve, reject) => {
+    if (Env.isBackgroundPage()) {
+      throw new Error('Cannot produce auth window from background script');
+    }
+    let responseHandled = false;
+    GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
+      const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.sloppyRandom(20), scopes };
+      BrowserMsg.addListener('google_auth_window_result', (result: Bm.GoogleAuthWindowResult, sender, closeAuthWin: (r: Bm.Res.GoogleAuthWindowResult) => void) => {
+        if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
+          responseHandled = true;
+          GoogleAuth.googleAuthWinResHandler(result).then(resolve, reject);
+          closeAuthWin({});
+        }
+      });
+      BrowserMsg.listen(authRequest.tabId);
+      const authCodeWin = window.open(GoogleAuth.apiGoogleAuthCodeUrl(authRequest), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
+      // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
+      // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
+      if (Catch.browser().name !== 'firefox') {
+        const winClosedTimer = Catch.setHandledInterval(() => {
+          if (authCodeWin === null || typeof authCodeWin === 'undefined') {
+            clearInterval(winClosedTimer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
+          } else if (authCodeWin.closed) {
+            clearInterval(winClosedTimer);
+            if (!responseHandled) {
+              resolve({ success: false, result: 'Closed', acctEmail: authRequest.acctEmail, messageId: authRequest.messageId });
+              responseHandled = true;
+            }
+          }
+        }, 250);
+      }
+    }, reject);
+  })
+
+  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => Env.urlCreate(Google.OAUTH.url_code, {
+    client_id: Google.OAUTH.client_id,
+    response_type: 'code',
+    access_type: 'offline',
+    state: GoogleAuth.apiGoogleAuthStatePack(authReq),
+    redirect_uri: Google.OAUTH.url_redirect,
+    scope: (authReq.scopes || []).join(' '),
+    login_hint: authReq.acctEmail,
+  })
+
+  private static apiGoogleAuthStatePack = (authReq: AuthReq) => Google.OAUTH.state_header + JSON.stringify(authReq);
+
+  private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
+    const toSave: AccountStore = {
+      google_token_access: tokensObj.access_token,
+      google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
+      google_token_scopes: scopes,
+    };
+    if (typeof tokensObj.refresh_token !== 'undefined') {
+      toSave.google_token_refresh = tokensObj.refresh_token;
+    }
+    await Store.setAcct(acctEmail, toSave);
+  }
+
+  private static googleAuthGetTokens = (code: string) => Api.ajax({
+    url: Env.urlCreate(Google.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: Google.OAUTH.client_id, redirect_uri: Google.OAUTH.url_redirect }),
+    method: 'POST',
+    crossDomain: true,
+    async: true,
+  }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
+
+  private static googleAuthRefreshToken = (refreshToken: string) => Api.ajax({
+    url: Env.urlCreate(Google.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: Google.OAUTH.client_id }),
+    method: 'POST',
+    crossDomain: true,
+    async: true,
+  }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
+
+  private static googleAuthCheckAccessToken = (accessToken: string) => Api.ajax({
+    url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token: accessToken }),
+    crossDomain: true,
+    async: true,
+  }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>
+
+  /**
+   * oauth token will be valid for another 2 min
+   */
+  private static googleApiIsAuthTokenValid = (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000));
+
+  // private static parseIdToken = (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1]));
+
+  private static googleAuthWinResHandler = async (result: Bm.GoogleAuthWindowResult): Promise<AuthResult> => {
+    if (result.result === 'Success') {
+      const tokensObj = await GoogleAuth.googleAuthGetTokens(result.params.code);
+      await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+      const { emailAddress: acctEmail } = await Google.gmail.usersMeProfile(null, tokensObj.access_token);
+      if (result.state.acctEmail !== acctEmail) {
+        Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress');
+      }
+      await GoogleAuth.googleAuthSaveTokens(acctEmail, tokensObj, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
+      return { acctEmail, success: true, result: 'Success', messageId: result.state.messageId };
+    } else if (result.result === 'Denied') {
+      return { success: false, result: 'Denied', error: result.params.error, acctEmail: result.state.acctEmail, messageId: result.state.messageId };
+    } else if (result.result === 'Error') {
+      return { success: false, result: 'Error', error: result.params.error, acctEmail: result.state.acctEmail, messageId: result.state.messageId };
+    } else {
+      throw new Error(`Unknown GoogleAuthWindowResult.result === '${result.result}'`);
+    }
+  }
+
+  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | null, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {
+    let currentTokensScopes: string[] = [];
+    if (acctEmail) {
+      const storage = await Store.getAcct(acctEmail, ['google_token_scopes']);
+      currentTokensScopes = storage.google_token_scopes || [];
+    }
+    const authReqScopes = requestedScopes || [];
+    for (const scope of Google.OAUTH.scopes) {
+      if (!Value.is(scope).in(requestedScopes)) {
+        if (scope !== GoogleAuth.scope(['read'])[0] || !omitReadScope) { // leave out read messages permission if user chose so
+          authReqScopes.push(scope);
+        }
+      }
+    }
+    for (const scope of currentTokensScopes) {
+      if (!Value.is(scope).in(requestedScopes)) {
+        authReqScopes.push(scope);
+      }
+    }
+    return authReqScopes;
+  }
 }

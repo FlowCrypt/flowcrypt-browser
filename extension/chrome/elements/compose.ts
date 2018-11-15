@@ -10,7 +10,7 @@ import { Composer, ComposerUserError } from '../../js/common/composer.js';
 import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
-import { Google } from '../../js/common/api/google.js';
+import { Google, GoogleAuth } from '../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -75,7 +75,7 @@ Catch.try(async () => {
 
   const tabId = await BrowserMsg.requiredTabId();
 
-  const canReadEmail = Google.auth.hasScope(storage.google_token_scopes as string[], 'read');
+  const canReadEmail = GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read');
   const factory = new XssSafeFactory(acctEmail, tabId);
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     // there may be a draft we want to load

@@ -12,7 +12,7 @@ import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, Sendable
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './mime.js';
 import { Catch, UnreportableError } from './catch.js';
-import { Google } from './api/google.js';
+import { GoogleAuth } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -1143,7 +1143,7 @@ export class Composer {
     const lastRecipient = $('.recipients span').last();
     this.S.cached('input_to').val(lastRecipient.text());
     lastRecipient.last().remove();
-    const authRes = await Google.auth.popup(acctEmail, this.v.tabId, false, Google.auth.scope(['read']));
+    const authRes = await GoogleAuth.popup(acctEmail, this.v.tabId, false, GoogleAuth.scope(['read']));
     if (authRes && authRes.success === true) {
       this.canReadEmails = true;
       await this.searchContacts();

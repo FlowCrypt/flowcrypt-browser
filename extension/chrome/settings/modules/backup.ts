@@ -13,7 +13,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Pgp } from '../../../js/common/pgp.js';
 import { Catch, UnreportableError } from '../../../js/common/catch.js';
-import { Google } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -54,7 +54,7 @@ Catch.try(async () => {
     $('h1').text('Key Backups');
     displayBlock('loading');
     const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider']);
-    if (emailProvider === 'gmail' && Google.auth.hasScope(storage.google_token_scopes || [], 'read')) {
+    if (emailProvider === 'gmail' && GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
       let keys;
       try {
         keys = await Google.gmail.fetchKeyBackups(acctEmail);

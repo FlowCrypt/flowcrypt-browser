@@ -12,7 +12,7 @@ import { Api, R } from '../../js/common/api/api.js';
 import { MsgVerifyResult, DecryptErrTypes, FormatError } from '../../js/common/pgp.js';
 import { Mime } from '../../js/common/mime.js';
 import { Catch } from '../../js/common/catch.js';
-import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
+import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 
 declare const anchorme: (input: string, opts: { emails?: boolean, attributes?: { name: string, value: string }[] }) => string;
 
@@ -548,7 +548,7 @@ Catch.try(async () => {
   };
 
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes']);
-  canReadEmails = Google.auth.hasScope(storage.google_token_scopes || [], 'read');
+  canReadEmails = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
   if (storage.setup_done) {
     await initialize();
   } else {

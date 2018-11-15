@@ -12,7 +12,7 @@ import { Settings } from '../../js/common/settings.js';
 import { Api, R } from '../../js/common/api/api.js';
 import { Pgp } from '../../js/common/pgp.js';
 import { Catch } from '../../js/common/catch.js';
-import { Google } from '../../js/common/api/google.js';
+import { Google, GoogleAuth } from '../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -132,7 +132,7 @@ Catch.try(async () => {
       if (!rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         displayBlock('step_2b_manual_enter');
-      } else if (storage.email_provider === 'gmail' && Google.auth.hasScope(storage.google_token_scopes as string[], 'read')) {
+      } else if (storage.email_provider === 'gmail' && GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read')) {
         try {
           fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
         } catch (e) {
@@ -535,11 +535,11 @@ Catch.try(async () => {
 
   // show alternative account addresses in setup form + save them for later
   if (storage.email_provider === 'gmail') {
-    if (!Google.auth.hasScope(storage.google_token_scopes as string[], 'read')) {
+    if (!GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read')) {
       $('.auth_denied_warning').css('display', 'block');
     }
     if (typeof storage.addresses === 'undefined') {
-      if (Google.auth.hasScope(storage.google_token_scopes as string[], 'read')) {
+      if (GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read')) {
         Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
       } else { // cannot read emails, don't fetch alternative addresses
         saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);

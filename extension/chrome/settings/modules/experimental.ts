@@ -11,7 +11,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Catch } from '../../../js/common/catch.js';
-import { Google } from '../../../js/common/api/google.js';
+import { GoogleAuth } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -106,7 +106,7 @@ Catch.try(async () => {
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
       if (confirm(Lang.setup.confirmManualAcctEmailChange(acctEmail))) {
         const tabId = await BrowserMsg.requiredTabId();
-        const response = await Google.auth.popup(acctEmail, tabId);
+        const response = await GoogleAuth.popup(acctEmail, tabId);
         if (response && response.success === true && response.acctEmail) {
           if (response.acctEmail === acctEmail) {
             alert(`Account email address seems to be the same, nothing to update: ${acctEmail}`);

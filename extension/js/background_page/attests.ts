@@ -8,7 +8,7 @@ import { Api, R } from '../common/api/api.js';
 import { Pgp } from '../common/pgp.js';
 import { Bm } from '../common/extension.js';
 import { Catch } from '../common/catch.js';
-import { Google } from '../common/api/google.js';
+import { Google, GoogleAuth } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -199,7 +199,7 @@ export class BgAttests {
     const storages = await Store.getAccounts(acctEmails, ['attests_requested', 'google_token_scopes']);
     const pending = [];
     for (const email of Object.keys(storages)) {
-      BgAttests.attestTsCanReadEmails[email] = Google.auth.hasScope(storages[email].google_token_scopes || [], 'read');
+      BgAttests.attestTsCanReadEmails[email] = GoogleAuth.hasScope(storages[email].google_token_scopes || [], 'read');
       pending.push({ email, attests_requested: storages[email].attests_requested || [] });
     }
     return pending;

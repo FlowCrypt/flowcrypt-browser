@@ -10,7 +10,7 @@ import { Lang } from './../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
-import { Google } from '../../js/common/api/google.js';
+import { GoogleAuth } from '../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -107,7 +107,7 @@ Catch.try(async () => {
 
   const subscription = await Store.subscription();
   const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
-  const canReadEmail = Google.auth.hasScope(google_token_scopes || [], 'read');
+  const canReadEmail = GoogleAuth.hasScope(google_token_scopes || [], 'read');
   const fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
 
   if (urlParams.placement === 'settings') {

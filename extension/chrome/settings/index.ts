@@ -12,7 +12,7 @@ import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
 import { Lang } from '../../js/common/lang.js';
-import { Google } from '../../js/common/api/google.js';
+import { Google, GoogleAuth } from '../../js/common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -119,7 +119,7 @@ Catch.try(async () => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!Google.auth.hasScope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
+        if (!GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         displayOrig('.hide_if_setup_not_done');
