@@ -30,7 +30,7 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
 }
 
 const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"/]+)(['"];)$/g;
-const importLineNotEndingWithJs = /import (?:.+ from )?['"][^'"]+[^.][^j][^s]['"];/g;
+const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
 
 const resolveLineImports = (line: string, path: string) => line.replace(namedImportLineRegEx, (found, prefix, libname, suffix) => {
   if (moduleMap[libname] === null) {

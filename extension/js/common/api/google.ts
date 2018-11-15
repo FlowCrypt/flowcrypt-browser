@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api';
-import { Env } from '../browser';
-import { Catch } from '../catch';
-import { Store, Contact, AccountStore, Serializable } from '../store';
-import { Dict, Value, Str } from '../common';
-import { BrowserMsg, Bm, GoogleAuthWindowResult$result, BrowserWidnow } from '../extension';
-import { Mime, SendableMsgBody } from '../mime';
-import { Att } from '../att';
-import { FormatError, Pgp } from '../pgp';
+import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api.js';
+import { Env } from '../browser.js';
+import { Catch } from '../catch.js';
+import { Store, Contact, AccountStore, Serializable } from '../store.js';
+import { Dict, Value, Str } from '../common.js';
+import { BrowserMsg, Bm, GoogleAuthWindowResult$result, BrowserWidnow } from '../extension.js';
+import { Mime, SendableMsgBody } from '../mime.js';
+import { Att } from '../att.js';
+import { FormatError, Pgp } from '../pgp.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string };
