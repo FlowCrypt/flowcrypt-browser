@@ -118,21 +118,6 @@ export class Google extends Api {
         }
       }
     },
-    window: (authUrl: string, winClosedByUser: () => void) => {
-      const authCodeWin = window.open(authUrl, '_blank', 'height=600,left=100,menubar=no,status=no,toolbar=no,top=100,width=500');
-      const winClosedTimer = Catch.setHandledInterval(() => {
-        if (authCodeWin !== null && authCodeWin.closed) {
-          clearInterval(winClosedTimer);
-          winClosedByUser();
-        }
-      }, 500);
-      return () => {
-        clearInterval(winClosedTimer);
-        if (authCodeWin !== null) {
-          authCodeWin.close();
-        }
-      };
-    },
     // parseIdToken: (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1])),
     popup: (acctEmail: string | null, tabId: string, omitReadScope = false, scopes: string[] = []): Promise<AuthResult> => new Promise((resolve, reject) => {
       if (Env.isBackgroundPage()) {
