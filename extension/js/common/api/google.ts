@@ -24,18 +24,6 @@ declare const openpgp: typeof OpenPGP;
 
 export class Google extends Api {
 
-  public static OAUTH = {
-    "client_id": "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
-    "url_code": "https://accounts.google.com/o/oauth2/auth",
-    "url_tokens": "https://www.googleapis.com/oauth2/v4/token",
-    "url_redirect": "urn:ietf:wg:oauth:2.0:oob:auto",
-    "state_header": "CRYPTUP_STATE_",
-    "scopes": [
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.readonly",
-      "https://www.googleapis.com/auth/userinfo.profile"
-    ]
-  };
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
   public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup',
     'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
@@ -427,6 +415,19 @@ export class Google extends Api {
 
 export class GoogleAuth {
 
+  public static OAUTH = {
+    "client_id": "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
+    "url_code": "https://accounts.google.com/o/oauth2/auth",
+    "url_tokens": "https://www.googleapis.com/oauth2/v4/token",
+    "url_redirect": "urn:ietf:wg:oauth:2.0:oob:auto",
+    "state_header": "CRYPTUP_STATE_",
+    "scopes": [
+      "https://www.googleapis.com/auth/gmail.compose",
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  };
+
   private static SCOPE_DICT: Dict<string> = { read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose' };
 
   public static scope = (scope: string[]): string[] => scope.map(s => GoogleAuth.SCOPE_DICT[s] as string);
@@ -501,17 +502,17 @@ export class GoogleAuth {
     }, reject);
   })
 
-  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => Env.urlCreate(Google.OAUTH.url_code, {
-    client_id: Google.OAUTH.client_id,
+  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => Env.urlCreate(GoogleAuth.OAUTH.url_code, {
+    client_id: GoogleAuth.OAUTH.client_id,
     response_type: 'code',
     access_type: 'offline',
     state: GoogleAuth.apiGoogleAuthStatePack(authReq),
-    redirect_uri: Google.OAUTH.url_redirect,
+    redirect_uri: GoogleAuth.OAUTH.url_redirect,
     scope: (authReq.scopes || []).join(' '),
     login_hint: authReq.acctEmail,
   })
 
-  private static apiGoogleAuthStatePack = (authReq: AuthReq) => Google.OAUTH.state_header + JSON.stringify(authReq);
+  private static apiGoogleAuthStatePack = (authReq: AuthReq) => GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const toSave: AccountStore = {
@@ -526,14 +527,14 @@ export class GoogleAuth {
   }
 
   private static googleAuthGetTokens = (code: string) => Api.ajax({
-    url: Env.urlCreate(Google.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: Google.OAUTH.client_id, redirect_uri: Google.OAUTH.url_redirect }),
+    url: Env.urlCreate(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
     method: 'POST',
     crossDomain: true,
     async: true,
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
 
   private static googleAuthRefreshToken = (refreshToken: string) => Api.ajax({
-    url: Env.urlCreate(Google.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: Google.OAUTH.client_id }),
+    url: Env.urlCreate(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
     method: 'POST',
     crossDomain: true,
     async: true,
@@ -578,7 +579,7 @@ export class GoogleAuth {
       currentTokensScopes = storage.google_token_scopes || [];
     }
     const authReqScopes = requestedScopes || [];
-    for (const scope of Google.OAUTH.scopes) {
+    for (const scope of GoogleAuth.OAUTH.scopes) {
       if (!Value.is(scope).in(requestedScopes)) {
         if (scope !== GoogleAuth.scope(['read'])[0] || !omitReadScope) { // leave out read messages permission if user chose so
           authReqScopes.push(scope);

@@ -5,17 +5,17 @@
 import { Value } from '../../common/common.js';
 import { BrowserMsg, GoogleAuthWindowResult$result } from '../../common/extension.js';
 import { Ui, Env } from '../../common/browser.js';
-import { Google, AuthReq } from '../../common/api/google.js';
+import { GoogleAuth, AuthReq } from '../../common/api/google.js';
 import { Catch } from '../../common/catch.js';
 
 (async () => {
 
   const apiGoogleAuthStateUnpack = (statusString: string): AuthReq => {
-    return JSON.parse(statusString.replace(Google.OAUTH.state_header, '')) as AuthReq; // todo - maybe can check with a type guard and throw if not
+    return JSON.parse(statusString.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq; // todo - maybe can check with a type guard and throw if not
   };
 
   while (true) {
-    if (document.title && Value.is(Google.OAUTH.state_header).in(document.title)) {
+    if (document.title && Value.is(GoogleAuth.OAUTH.state_header).in(document.title)) {
       // this is FlowCrypt's google oauth - based on a &state= passed on in auth request
       const parts = document.title.split(' ', 2);
       const result = parts[0];
