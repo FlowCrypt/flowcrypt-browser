@@ -2,51 +2,65 @@
 import { readdirSync, statSync, readFileSync, symlinkSync, writeFileSync } from 'fs';
 import * as path from 'path';
 
-const get_all_files_in_directory = (dir: string, file_pattern: RegExp): string[] => {
+const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
   let all: string[] = [];
-  const files_in_dir = readdirSync(dir);
-  for (const file_in_dir of files_in_dir) {
-    const file_path = path.join(dir, file_in_dir);
-    const stat = statSync(file_path);
+  const filesInDir = readdirSync(dir);
+  for (const fileInDir of filesInDir) {
+    const filePath = path.join(dir, fileInDir);
+    const stat = statSync(filePath);
     if (stat.isDirectory()) {
-      all = all.concat(get_all_files_in_directory(file_path, file_pattern));
-    } else if(file_pattern.test(file_path)) {
-      all.push(file_path);
+      all = all.concat(getAllFilesInDir(filePath, filePattern));
+    } else if (filePattern.test(filePath)) {
+      all.push(filePath);
     }
   }
   return all;
 };
 
-const {compilerOptions} = JSON.parse(readFileSync('../tsconfig.json').toString());
-const module_map: {[name: string]: string|null} = {};
-for(let module_name of Object.keys(compilerOptions.paths)) {
-  if(compilerOptions.paths[module_name].indexOf('COMMENT') !== -1) {
-    module_map[module_name] = null; // remove such import statements from the code, because they will be imported with script tags for compatibility
+const { compilerOptions } = JSON.parse(readFileSync('../tsconfig.json').toString());
+const moduleMap: { [name: string]: string | null } = {};
+for (const moduleName of Object.keys(compilerOptions.paths)) {
+  if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {
+    // COMMENT flag, remove such import statements from the code, because they will be imported with script tags for compatibility
+    moduleMap[moduleName] = null;
   } else {
-    module_map[module_name] = `/${compilerOptions.paths[module_name].find((x: string) => x.match(/\.js$/) !== null)}`;
+    // replace import with full path from config
+    moduleMap[moduleName] = `/${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`;
   }
 }
 
-const resolve_imports = (line: string, path: string) => line.replace(/^(import (?:.+ from )?['"])([^.][^'"/]+)(['"];)$/g, (found, prefix, libname, suffix) => {
-  if(module_map[libname] === null) {
+const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"/]+)(['"];)$/g;
+const importLineNotEndingWithJs = /import (?:.+ from )?['"][^'"]+[^.][^j][^s]['"];/g;
+
+const resolveLineImports = (line: string, path: string) => line.replace(namedImportLineRegEx, (found, prefix, libname, suffix) => {
+  if (moduleMap[libname] === null) {
     return `// ${prefix}${libname}${suffix} // commented during build process: imported with script tag`;
-  } else if (!module_map[libname]) {
+  } else if (!moduleMap[libname]) {
     console.error(`Unknown path for module: ${libname} in ${path}`);
     process.exit(1);
     return '';
   } else {
-    const resolved = `${prefix}${module_map[libname]}${suffix}`;
+    const resolved = `${prefix}${moduleMap[libname]}${suffix}`;
     // console.log(`${path}: ${found} -> ${resolved}`);
     return resolved;
   }
 });
 
-const source_file_paths = get_all_files_in_directory(`../${compilerOptions.outDir}`, /\.js$/);
-
-for (const source_file_path of source_file_paths) {
-  const original = readFileSync(source_file_path).toString();
-  const resolved = original.split('\n').map(l => resolve_imports(l, source_file_path)).join('\n');
-  if(resolved !== original) {
-    writeFileSync(source_file_path, resolved);
+const errIfSrcMissingJs = (stc: string, path: string) => {
+  const matched = stc.match(importLineNotEndingWithJs);
+  if (matched) {
+    console.error(`\nresolve-modules ERROR:\nImport not ending with .js in ${path}:\n${matched[0]}`);
+    process.exit(1);
   }
+};
+
+const srcFilePaths = getAllFilesInDir(`../${compilerOptions.outDir}`, /\.js$/);
+
+for (const srcFilePath of srcFilePaths) {
+  const original = readFileSync(srcFilePath).toString();
+  const resolved = original.split('\n').map(l => resolveLineImports(l, srcFilePath)).join('\n');
+  if (resolved !== original) {
+    writeFileSync(srcFilePath, resolved);
+  }
+  errIfSrcMissingJs(resolved, srcFilePath);
 }

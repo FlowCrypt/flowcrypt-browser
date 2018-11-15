@@ -26,7 +26,7 @@
   },
   "scripts": {
     "test_0_tslint": "./node_modules/tslint/bin/tslint --project ./tsconfig.json --config ./conf/tslint.yaml && ./node_modules/tslint/bin/tslint --project ./conf/tsconfig.content_scripts.json --config ./conf/tslint.yaml",
-    "test_1_patterns": "node build/test/patterns.js",
+    "test_1_patterns": "npm run-script pretest --silent && node build/test/patterns.js",
     "test_2_puppeteer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test.js",
     "prebuild": "rm -rf ./build && ./node_modules/typescript/bin/tsc --project conf/tsconfig.tooling.json",
     "build": "gulp --gulpfile ./conf/gulpfile.js",
