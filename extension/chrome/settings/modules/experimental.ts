@@ -11,7 +11,6 @@ import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Catch } from '../../../js/common/catch.js';
-import { GoogleAuth } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -105,9 +104,8 @@ Catch.try(async () => {
 
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
       if (confirm(Lang.setup.confirmManualAcctEmailChange(acctEmail))) {
-        const tabId = await BrowserMsg.requiredTabId();
-        const response = await GoogleAuth.popup(acctEmail, tabId);
-        if (response && response.success === true && response.acctEmail) {
+        const response = await BrowserMsg.send.await.bg.newAuthPopup({ acctEmail });
+        if (response && response.result === 'Success' && response.acctEmail) {
           if (response.acctEmail === acctEmail) {
             alert(`Account email address seems to be the same, nothing to update: ${acctEmail}`);
           } else if (response.acctEmail) {
@@ -124,8 +122,8 @@ Catch.try(async () => {
           } else {
             alert('Not able to retrieve new account email, please write at human@flowcrypt.com');
           }
-        } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
-          alert('Canceled by user, skippoing.');
+        } else if (response && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
+          alert('Canceled by user, skipping.');
         } else {
           Catch.log('failed to log into google', response);
           alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com.');

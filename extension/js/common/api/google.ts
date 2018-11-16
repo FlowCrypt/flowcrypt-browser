@@ -3,22 +3,23 @@
 'use strict';
 
 import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api.js';
-import { Env } from '../browser.js';
+import { Env, Ui } from '../browser.js';
 import { Catch } from '../catch.js';
 import { Store, Contact, AccountStore, Serializable } from '../store.js';
 import { Dict, Value, Str } from '../common.js';
-import { BrowserMsg, Bm, GoogleAuthWindowResult$result, BrowserWidnow } from '../extension.js';
+import { Bm, GoogleAuthWindowResult$result, BrowserWidnow } from '../extension.js';
 import { Mime, SendableMsgBody } from '../mime.js';
 import { Att } from '../att.js';
 import { FormatError, Pgp } from '../pgp.js';
+import { tabsQuery, windowsCreate } from './chrome.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string };
-export type AuthReq = { tabId: string, acctEmail: string | null, scopes: string[], messageId?: string, authResponderId: string, omitReadScope?: boolean };
+export type AuthReq = { acctEmail: string | null, scopes: string[], messageId?: string, omitReadScope?: boolean };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
-type AuthResultSuccess = { success: true, result: 'Success', acctEmail: string, messageId?: string };
-type AuthResultError = { success: false, result: GoogleAuthWindowResult$result, acctEmail: string | null, messageId?: string, error?: string };
-type AuthResult = AuthResultSuccess | AuthResultError;
+type AuthResultSuccess = { result: 'Success', acctEmail: string }; // , messageId?: string
+type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail: string | null, error?: string }; // , messageId?: string
+export type AuthResult = AuthResultSuccess | AuthResultError;
 
 declare const openpgp: typeof OpenPGP;
 
@@ -468,39 +469,61 @@ export class GoogleAuth {
     }
   }
 
-  public static popup = (acctEmail: string | null, tabId: string, omitReadScope = false, scopes: string[] = []): Promise<AuthResult> => new Promise((resolve, reject) => {
-    if (Env.isBackgroundPage()) {
-      throw new Error('Cannot produce auth window from background script');
+  public static newAuthPopup: Bm.RespondingHandler = async ({ acctEmail, omitReadScope, scopes }: Bm.NewAuthPopup, sender, respond: (r: Bm.Res.NewAuthPopup) => void) => {
+    scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || [], omitReadScope === true);
+    const authRequest: AuthReq = { acctEmail, scopes };
+    const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
+    const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
+    if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
+      respond({ result: 'Error', error: 'No oauth window rentuned after initiating it', acctEmail });
+      return;
     }
-    let responseHandled = false;
-    GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes, omitReadScope).then(scopes => {
-      const authRequest: AuthReq = { tabId, acctEmail, authResponderId: Str.sloppyRandom(20), scopes };
-      BrowserMsg.addListener('google_auth_window_result', (result: Bm.GoogleAuthWindowResult, sender, closeAuthWin: (r: Bm.Res.GoogleAuthWindowResult) => void) => {
-        if (result.state.authResponderId === authRequest.authResponderId && !responseHandled) {
-          responseHandled = true;
-          GoogleAuth.googleAuthWinResHandler(result).then(resolve, reject);
-          closeAuthWin({});
-        }
-      });
-      BrowserMsg.listen(authRequest.tabId);
-      const authCodeWin = window.open(GoogleAuth.apiGoogleAuthCodeUrl(authRequest), '_blank', 'height=700,left=100,menubar=no,status=no,toolbar=no,top=50,width=600');
-      // auth window will show up. Inside the window, google_auth_code.js gets executed which will send
-      // a 'gmail_auth_code_result' chrome message to 'google_auth.google_auth_window_result_handler' and close itself
-      if (Catch.browser().name !== 'firefox') {
-        const winClosedTimer = Catch.setHandledInterval(() => {
-          if (authCodeWin === null || typeof authCodeWin === 'undefined') {
-            clearInterval(winClosedTimer);  // on firefox it seems to be sometimes returning a null, due to popup blocking
-          } else if (authCodeWin.closed) {
-            clearInterval(winClosedTimer);
-            if (!responseHandled) {
-              resolve({ success: false, result: 'Closed', acctEmail: authRequest.acctEmail, messageId: authRequest.messageId });
-              responseHandled = true;
-            }
-          }
-        }, 250);
+    const onOauthWinClosed = (closedWinId: number) => {
+      if (closedWinId === oauthWin.id) {
+        respond({ result: 'Closed', acctEmail: authRequest.acctEmail });
+        chrome.windows.onRemoved.removeListener(onOauthWinClosed);
       }
-    }, reject);
-  })
+    };
+    chrome.windows.onRemoved.addListener(onOauthWinClosed);
+    const oauthWinRes = await GoogleAuth.waitForOauthWindowResult(oauthWin.id);
+    chrome.windows.onRemoved.removeListener(onOauthWinClosed);
+    if (oauthWinRes.result === 'Success') {
+      const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(acctEmail, oauthWinRes.params.code, scopes);
+      respond({ acctEmail: authorizedAcctEmail, result: 'Success' });
+    } else if (!Value.is(oauthWinRes.result).in(['Closed', 'Success', 'Denied', 'Error'])) {
+      respond({ acctEmail, result: oauthWinRes.result, error: oauthWinRes.params.error });
+    } else {
+      respond({ acctEmail, result: 'Error', error: `Unknown google auth result === '${oauthWinRes.result}'` });
+    }
+    chrome.windows.remove(oauthWin.id);
+  }
+
+  private static unpackOauthState = (statusString: string): AuthReq => {
+    return JSON.parse(statusString.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq; // todo - maybe can check with a type guard and throw if not
+  }
+
+  private static waitForOauthWindowResult = async (windowId: number) => {
+    while (true) {
+      const [oauthTab] = await tabsQuery({ windowId });
+      console.log(oauthTab);
+      console.log(oauthTab ? oauthTab.title : 'none..');
+      if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title)) {
+        const parts = oauthTab.title.split(' ', 2);
+        const result = parts[0];
+        const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
+        const state = GoogleAuth.unpackOauthState(params.state as string);
+        return {
+          result: result as GoogleAuthWindowResult$result,
+          params: {
+            code: String(params.code),
+            error: String(params.error),
+          },
+          state,
+        };
+      }
+      await Ui.time.sleep(250);
+    }
+  }
 
   private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => Env.urlCreate(GoogleAuth.OAUTH.url_code, {
     client_id: GoogleAuth.OAUTH.client_id,
@@ -553,23 +576,15 @@ export class GoogleAuth {
 
   // private static parseIdToken = (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1]));
 
-  private static googleAuthWinResHandler = async (result: Bm.GoogleAuthWindowResult): Promise<AuthResult> => {
-    if (result.result === 'Success') {
-      const tokensObj = await GoogleAuth.googleAuthGetTokens(result.params.code);
-      await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-      const { emailAddress: acctEmail } = await Google.gmail.usersMeProfile(null, tokensObj.access_token);
-      if (result.state.acctEmail !== acctEmail) {
-        Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress');
-      }
-      await GoogleAuth.googleAuthSaveTokens(acctEmail, tokensObj, result.state.scopes!); // we fill AuthRequest inside .auth_popup()
-      return { acctEmail, success: true, result: 'Success', messageId: result.state.messageId };
-    } else if (result.result === 'Denied') {
-      return { success: false, result: 'Denied', error: result.params.error, acctEmail: result.state.acctEmail, messageId: result.state.messageId };
-    } else if (result.result === 'Error') {
-      return { success: false, result: 'Error', error: result.params.error, acctEmail: result.state.acctEmail, messageId: result.state.messageId };
-    } else {
-      throw new Error(`Unknown GoogleAuthWindowResult.result === '${result.result}'`);
+  private static retrieveAndSaveAuthToken = async (acctEmail: string | null, authCode: string, scopes: string[]): Promise<string> => {
+    const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
+    await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
+    const { emailAddress } = await Google.gmail.usersMeProfile(null, tokensObj.access_token);
+    if (acctEmail && emailAddress !== acctEmail) {
+      Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress', [emailAddress, acctEmail]);
     }
+    await GoogleAuth.googleAuthSaveTokens(emailAddress, tokensObj, scopes);
+    return emailAddress;
   }
 
   private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | null, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {

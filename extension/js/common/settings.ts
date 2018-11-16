@@ -11,7 +11,7 @@ import { Rules } from './rules.js';
 import { Api } from './api/api.js';
 import { Pgp } from './pgp.js';
 import { Catch, UnreportableError } from './catch.js';
-import { Google, GoogleAuth } from './api/google.js';
+import { Google } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -358,8 +358,8 @@ export class Settings {
   }
 
   static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
-    const response = await GoogleAuth.popup(acctEmail || null, tabId, omitReadScope);
-    if (response && response.success === true && response.acctEmail) {
+    const response = await BrowserMsg.send.await.bg.newAuthPopup({ acctEmail: acctEmail || null, omitReadScope });
+    if (response && response.result === 'Success' && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
       const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
       if (storage.setup_done) { // this was just an additional permission
@@ -369,7 +369,7 @@ export class Settings {
         await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
       }
-    } else if (response && response.success === false && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
+    } else if (response && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
       Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/auth_denied.htm');
     } else {
       Catch.log('failed to log into google', response);

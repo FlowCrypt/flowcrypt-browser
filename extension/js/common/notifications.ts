@@ -8,7 +8,6 @@ import { BrowserMsg } from './extension.js';
 import { Xss, Ui } from './browser.js';
 import { Lang } from './lang.js';
 import { Catch } from './catch.js';
-import { GoogleAuth } from './api/google.js';
 
 export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
 
@@ -35,8 +34,8 @@ export class Notifications {
   showAuthPopupNeeded = (acctEmail: string) => {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: () => {
-        GoogleAuth.popup(acctEmail, this.tabId).then(authRes => {
-          this.show(`${authRes.success ? 'Connected successfully' : 'Failed to connect'}. <a href="#" class="close">Close</a>`);
+        BrowserMsg.send.await.bg.newAuthPopup({ acctEmail }).then(authRes => {
+          this.show(`${authRes.result === 'Success' ? 'Connected successfully' : 'Failed to connect'}. <a href="#" class="close">Close</a>`);
         }, error => {
           console.info(error);
           this.show(`Error connecting account. <a href="#" class="close">Close</a>`);

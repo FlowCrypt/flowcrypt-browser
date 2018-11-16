@@ -1143,11 +1143,11 @@ export class Composer {
     const lastRecipient = $('.recipients span').last();
     this.S.cached('input_to').val(lastRecipient.text());
     lastRecipient.last().remove();
-    const authRes = await GoogleAuth.popup(acctEmail, this.v.tabId, false, GoogleAuth.scope(['read']));
-    if (authRes && authRes.success === true) {
+    const authRes = await BrowserMsg.send.await.bg.newAuthPopup({ acctEmail, scopes: GoogleAuth.scope(['read']) });
+    if (authRes && authRes.result === 'Success') {
       this.canReadEmails = true;
       await this.searchContacts();
-    } else if (authRes && authRes.success === false && authRes.result === 'Denied' && authRes.error === 'access_denied') {
+    } else if (authRes && ((authRes.result === 'Denied' && authRes.error === 'access_denied') || authRes.result === 'Closed')) {
       alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
     } else {
       alert(Lang.general.somethingWentWrongTryAgain);
