@@ -51,14 +51,3 @@ buildContentScript([
   `${sourceDir}/common/extension.js`,
   `${sourceDir}/content_scripts/checkout/stripe.js`,
 ], 'stripe_bundle.js');
-
-// oAuth window
-buildContentScript([
-  `${sourceDir}/common/catch.js`,
-  `${sourceDir}/common/common.js`,
-  `${sourceDir}/common/browser.js`,
-  `${sourceDir}/common/extension.js`,
-  `${sourceDir}/common/api/api.js`,
-  `${sourceDir}/common/api/google.js`,
-  `${sourceDir}/content_scripts/oauth_window/google.js`,
-], 'google_bundle.js');

@@ -51,16 +51,6 @@
     },
     {
       "matches": [
-        "*://accounts.google.com/o/oauth2/approval*"
-      ],
-      "js": [
-        "/lib/purify.min.js",
-        "/lib/jquery.min.js",
-        "/js/content_scripts/google_bundle.js"
-      ]
-    },
-    {
-      "matches": [
         "https://flowcrypt.com/stripe*",
         "https://cryptup.org/stripe*"
       ],

@@ -505,8 +505,6 @@ export class GoogleAuth {
   private static waitForOauthWindowResult = async (windowId: number) => {
     while (true) {
       const [oauthTab] = await tabsQuery({ windowId });
-      console.log(oauthTab);
-      console.log(oauthTab ? oauthTab.title : 'none..');
       if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title)) {
         const parts = oauthTab.title.split(' ', 2);
         const result = parts[0];
