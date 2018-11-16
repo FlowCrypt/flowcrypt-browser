@@ -506,8 +506,8 @@ export class GoogleAuth {
           return { acctEmail, result: 'Error', error: `Unknown google auth result '${result}'` };
         }
         if (result === 'Success') {
-          if (result === 'Success' && typeof params.code === 'string' && params.code) {
-            const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(acctEmail, params.code, scopes);
+          if (typeof params.code === 'string' && params.code) {
+            const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(params.code, scopes);
             return { acctEmail: authorizedAcctEmail, result: 'Success' };
           }
           return { acctEmail, result: 'Error', error: `Google auth result was 'Success' but no auth code` };
@@ -569,13 +569,10 @@ export class GoogleAuth {
 
   // private static parseIdToken = (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1]));
 
-  private static retrieveAndSaveAuthToken = async (acctEmail: string | null, authCode: string, scopes: string[]): Promise<string> => {
+  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<string> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
     await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
     const { emailAddress } = await Google.gmail.usersMeProfile(null, tokensObj.access_token);
-    if (acctEmail && emailAddress !== acctEmail) {
-      Catch.report('google_auth_window_result_handler: result.state.acctEmail !== me.emailAddress', [emailAddress, acctEmail]);
-    }
     await GoogleAuth.googleAuthSaveTokens(emailAddress, tokensObj, scopes);
     return emailAddress;
   }
