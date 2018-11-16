@@ -41,7 +41,7 @@ body.cryptup_outlook .cryptup_compose_button_container .new_message_button { dis
 body.cryptup_outlook ._fce_i { padding: 0 6px 0 6px; } /* slightly less horizontal padding on other outlook buttons in the same menu so that it doesn't misbehave */
 
 /* elements */
-div.new_message { position: absolute; bottom: 0; width: 540px; right: 30px; padding: 0; z-index: 5; height: 605px; box-shadow: rgba(0,0,0,0.3) 0 2px 8px; }
+div.new_message { position: absolute; bottom: 0; width: 540px; right: 30px; padding: 0; z-index: 6; height: 605px; box-shadow: rgba(0,0,0,0.3) 0 2px 8px; }
 div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0; margin: 0; overflow: hidden;}
 body.cryptup_inbox div.new_message { right: 100px; }
 @media screen and (max-height: 600px) {
