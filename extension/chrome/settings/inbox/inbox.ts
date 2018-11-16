@@ -12,7 +12,7 @@ import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/mime.js';
 import { Catch } from '../../../js/common/catch.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -147,7 +147,7 @@ Catch.try(async () => {
   const renderAndHandleAuthPopupNotification = () => {
     showNotification(`Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, {
       action_auth_popup: async () => {
-        await BrowserMsg.send.await.bg.newAuthPopup({ acctEmail });
+        await GoogleAuth.newAuthPopup({ acctEmail });
         window.location.reload();
       },
     });

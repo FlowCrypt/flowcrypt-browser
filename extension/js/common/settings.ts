@@ -11,7 +11,7 @@ import { Rules } from './rules.js';
 import { Api } from './api/api.js';
 import { Pgp } from './pgp.js';
 import { Catch, UnreportableError } from './catch.js';
-import { Google } from './api/google.js';
+import { Google, GoogleAuth } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -358,7 +358,7 @@ export class Settings {
   }
 
   static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
-    const response = await BrowserMsg.send.await.bg.newAuthPopup({ acctEmail: acctEmail || null, omitReadScope });
+    const response = await GoogleAuth.newAuthPopup({ acctEmail: acctEmail || null, omitReadScope });
     if (response && response.result === 'Success' && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
       const storage = await Store.getAcct(response.acctEmail, ['setup_done']);

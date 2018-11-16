@@ -7,7 +7,6 @@ import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from '.
 import { FlatTypes } from './store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './catch.js';
-import { AuthReq, AuthResult } from './api/google.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
@@ -23,7 +22,6 @@ export namespace Bm {
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
   export type Settings = { path?: string, page?: string, acctEmail?: string, pageUrlParams?: UrlParams, addNewAcct?: boolean };
-  export type ClosePopup = { title: string };
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[] };
   export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
@@ -43,33 +41,28 @@ export namespace Bm {
   export type StripeResult = { token: string };
   export type PassphraseEntry = { entered: boolean; };
   export type BgExec = { path: string, args: any[] };
-  export type GoogleAuthWindowResult = { result: GoogleAuthWindowResult$result, state: AuthReq, params: { code: string, error: string } };
   export type Db = { f: string, args: any[] };
   export type SessionSet = { acctEmail: string, key: string, value: string | undefined };
   export type SessionGet = { acctEmail: string, key: string };
   export type AttestPacketReceived = { acctEmail: string, packet: string, passphrase: string };
   export type Inbox = { acctEmail?: string };
-  export type NewAuthPopup = { acctEmail: string | null, omitReadScope?: boolean, scopes?: string[] };
 
   export namespace Res {
-    export type GoogleAuthWindowResult = {};
     export type ShowSubscribeDialog = { active: boolean };
     export type BgExec = { result?: PossibleBgExecResults, exception?: { name: string, message: string, stack: string } };
     export type AttestPacketReceived = { success: boolean; result: string };
     export type GetActiveTabInfo = { provider: 'gmail' | null, acctEmail: string | null | undefined, sameWorld: boolean | null };
-    export type NewAuthPopup = AuthResult;
     export type SessionGet = string | null;
     export type SessionSet = void;
     export type _tab_ = { tabId: string | null | undefined };
     export type Db = any; // not included in Any
-    export type Any = BgExec | AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ShowSubscribeDialog | GoogleAuthWindowResult
-      | NewAuthPopup;
+    export type Any = BgExec | AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ShowSubscribeDialog;
   }
 
-  export type AnyRequest = GoogleAuthWindowResult | PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
+  export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
     SubscribeResult | AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | ClosePopup | Settings | SetCss | BgExec | Db | SessionSet | SetFooter |
-    SessionGet | AttestPacketReceived | NewAuthPopup;
+    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | BgExec | Db | SessionSet | SetFooter |
+    SessionGet | AttestPacketReceived;
 
   export type ResponselessHandler = (req: AnyRequest) => void | Promise<void>;
   export type RespondingHandler = (req: AnyRequest, sender: Sender, respond: (r: Res.Any) => void) => void | Promise<void>;
@@ -159,9 +152,7 @@ export class BrowserMsg {
       attestRequested: (bm: Bm.AttestRequested) => BrowserMsg.sendCatch(null, 'attest_requested', bm),
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(null, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(null, 'update_uninstall_url', {}),
-      closePopup: (bm: Bm.ClosePopup) => BrowserMsg.sendCatch(null, 'close_popup', bm),
       inbox: (bm: Bm.Inbox) => BrowserMsg.sendCatch(null, 'inbox', bm),
-      googleAuthWindowResult: (bm: Bm.GoogleAuthWindowResult) => BrowserMsg.sendAwait(null, 'google_auth_window_result', bm),
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     stripeResult: (dest: Bm.Dest, bm: Bm.StripeResult) => BrowserMsg.sendCatch(dest, 'stripe_result', bm),
@@ -188,7 +179,6 @@ export class BrowserMsg {
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     await: {
       bg: {
-        newAuthPopup: (bm: Bm.NewAuthPopup) => BrowserMsg.sendAwait(null, 'new_auth_popup', bm) as Promise<Bm.Res.NewAuthPopup>,
         attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(null, 'attest_packet_received', bm) as Promise<Bm.Res.AttestPacketReceived>,
         bgExec: (bm: Bm.BgExec) => BrowserMsg.sendAwait(null, 'bg_exec', bm) as Promise<Bm.Res.BgExec>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(null, 'get_active_tab_info') as Promise<Bm.Res.GetActiveTabInfo>,

@@ -10,7 +10,6 @@ import { injectFcIntoWebmailIfNeeded } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
 import { Catch } from '../common/catch.js';
 import { Env, UrlParam } from '../common/browser.js';
-import { GoogleAuth } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -134,14 +133,12 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgAddListener('db', (r: Bm.Db, sender, respond) => dbOperationHandler(r, sender, respond, db));
   BrowserMsg.bgAddListener('session_set', (r: Bm.SessionSet, sender, respond) => Store.sessionSet(r.acctEmail, r.key, r.value).then(respond).catch(Catch.handleErr));
   BrowserMsg.bgAddListener('session_get', (r: Bm.SessionGet, sender, respond) => Store.sessionGet(r.acctEmail, r.key).then(respond).catch(Catch.handleErr));
-  BrowserMsg.bgAddListener('close_popup', (r: Bm.ClosePopup, sender, respond) => chrome.tabs.query(r, tabs => chrome.tabs.remove(tabs.map(t => t.id!))));
   BrowserMsg.bgAddListener('settings', openSettingsPageHandler);
   BrowserMsg.bgAddListener('inbox', openInboxPageHandler);
   BrowserMsg.bgAddListener('attest_requested', BgAttests.attestRequestedHandler);
   BrowserMsg.bgAddListener('attest_packet_received', BgAttests.attestPacketReceivedHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', getActiveTabInfo);
-  BrowserMsg.bgAddListener('new_auth_popup', GoogleAuth.newAuthPopup);
   BrowserMsg.bgAddListener('_tab_', (r: any, sender: Bm.Sender, respond: (r: Bm.Res._tab_) => void) => {
     if (sender === 'background') {
       respond({ tabId: null }); // background script - direct
