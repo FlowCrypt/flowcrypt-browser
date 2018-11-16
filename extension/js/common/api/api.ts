@@ -49,16 +49,24 @@ export class AjaxError extends Error {
   public url: string;
   public responseText: string;
   public statusText: string;
-  constructor(xhr: RawAjaxError, url: string, stack: string) {
-    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when calling ${url}`);
+  constructor(xhr: RawAjaxError, req: JQueryAjaxSettings, stack: string) {
+    let payloadStructure = '';
+    if (typeof req.data === 'string') {
+      try {
+        payloadStructure = Object.keys(JSON.parse(req.data) as any).join(',');
+      } catch (e) {
+        payloadStructure = 'not-a-json';
+      }
+    }
+    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${req.method}-ing ${req.url} ${typeof req.data}: ${payloadStructure}`);
     this.xhr = xhr;
     this.status = typeof xhr.status === 'number' ? xhr.status : -1;
-    this.url = url;
+    this.url = req.url || '(unknown url)';
     this.responseText = xhr.responseText || '';
     this.statusText = xhr.statusText || '(no status text)';
     this.stack += `\n\nprovided ajax call stack:\n${stack}`;
     if (this.status === 400) {
-      this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}`;
+      this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}\n\npayload: ${req.data}`;
     }
   }
 }
@@ -595,7 +603,7 @@ export class Api {
         throw e;
       }
       if (Api.internal.isRawAjaxError(e)) {
-        throw new AjaxError(e, String(req.url), stack);
+        throw new AjaxError(e, req, stack);
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
