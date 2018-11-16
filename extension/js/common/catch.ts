@@ -24,7 +24,10 @@ export class Catch {
     // not sure when this one happens, but likely have to do with extnsion lifecycle as well
     'Invocation of form runtime.connect(null, ) doesn\'t match definition runtime.connect(optional string extensionId, optional object connectInfo)',
     // this is thrown often by gmail and cought by content script
-    'TypeError: a is null', // this one includes the type because it's tested against errMsg as opposed to exception.message
+    'TypeError: a is null',
+    'TypeError: d is null',
+    'TypeError: G is null',
+    'TypeError: window.opener is null',
   ];
 
   private static stringify = (e: any) => {
@@ -60,8 +63,10 @@ export class Catch {
       return;
     }
     console.error(originalErr);
-    console.error(exception);
-    console.error(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
+    if (exception !== originalErr) {
+      console.error(exception);
+    }
+    console.log(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as ErrorEventHandler)) {
       Catch.ORIG_ONERROR.apply(null, arguments); // Call any previously assigned handler
     }
@@ -88,7 +93,7 @@ export class Catch {
         async: true,
         success: (response: { saved: boolean }) => {
           if (response && typeof response === 'object' && response.saved === true) {
-            console.error('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
+            console.log('%cFlowCrypt ERROR:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
           } else {
             console.error('%cFlowCrypt EXCEPTION:' + Catch.CONSOLE_MSG, 'font-weight: bold;');
           }
