@@ -251,15 +251,15 @@ export class Api {
       attest,
     }),
     initialConfirm: (signedAttestPacket: string): Promise<R.AttInitialConfirm> => Api.internal.apiAttesterCall('initial/confirm', {
-      signedMsg: signedAttestPacket,
+      signed_message: signedAttestPacket,
     }),
     replaceRequest: (email: string, signedAttestPacket: string, newPubkey: string): Promise<R.AttReplaceRequest> => Api.internal.apiAttesterCall('replace/request', {
-      signedMsg: signedAttestPacket,
+      signed_message: signedAttestPacket,
       newPubkey,
       email,
     }),
     replaceConfirm: (signedAttestPacket: string): Promise<R.AttReplaceConfirm> => Api.internal.apiAttesterCall('replace/confirm', {
-      signedMsg: signedAttestPacket,
+      signed_message: signedAttestPacket,
     }),
     testWelcome: (email: string, pubkey: string): Promise<R.AttTestWelcome> => Api.internal.apiAttesterCall('test/welcome', {
       email,
