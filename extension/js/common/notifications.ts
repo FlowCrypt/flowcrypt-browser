@@ -37,8 +37,8 @@ export class Notifications {
       auth_popup: () => {
         GoogleAuth.newAuthPopup({ acctEmail }).then(authRes => {
           this.show(`${authRes.result === 'Success' ? 'Connected successfully' : 'Failed to connect'}. <a href="#" class="close">Close</a>`);
-        }, error => {
-          console.info(error);
+        }, (e) => {
+          Catch.handleErr(e);
           this.show(`Error connecting account. <a href="#" class="close">Close</a>`);
         });
       },
