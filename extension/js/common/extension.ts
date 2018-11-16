@@ -7,6 +7,7 @@ import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from '.
 import { FlatTypes } from './store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './catch.js';
+import { AuthRes } from './api/google.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
@@ -46,6 +47,7 @@ export namespace Bm {
   export type SessionGet = { acctEmail: string, key: string };
   export type AttestPacketReceived = { acctEmail: string, packet: string, passphrase: string };
   export type Inbox = { acctEmail?: string };
+  export type ReconnectAcctAuthPopup = { acctEmail: string };
 
   export namespace Res {
     export type ShowSubscribeDialog = { active: boolean };
@@ -54,15 +56,16 @@ export namespace Bm {
     export type GetActiveTabInfo = { provider: 'gmail' | null, acctEmail: string | null | undefined, sameWorld: boolean | null };
     export type SessionGet = string | null;
     export type SessionSet = void;
+    export type ReconnectAcctAuthPopup = AuthRes;
     export type _tab_ = { tabId: string | null | undefined };
     export type Db = any; // not included in Any
-    export type Any = BgExec | AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ShowSubscribeDialog;
+    export type Any = BgExec | AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ShowSubscribeDialog | ReconnectAcctAuthPopup;
   }
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
     SubscribeResult | AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | BgExec | Db | SessionSet | SetFooter |
-    SessionGet | AttestPacketReceived;
+    SessionGet | AttestPacketReceived | ReconnectAcctAuthPopup;
 
   export type ResponselessHandler = (req: AnyRequest) => void | Promise<void>;
   export type RespondingHandler = (req: AnyRequest, sender: Sender, respond: (r: Res.Any) => void) => void | Promise<void>;
@@ -179,6 +182,7 @@ export class BrowserMsg {
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     await: {
       bg: {
+        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(null, 'reconnect_acct_auth_popup', bm) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(null, 'attest_packet_received', bm) as Promise<Bm.Res.AttestPacketReceived>,
         bgExec: (bm: Bm.BgExec) => BrowserMsg.sendAwait(null, 'bg_exec', bm) as Promise<Bm.Res.BgExec>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(null, 'get_active_tab_info') as Promise<Bm.Res.GetActiveTabInfo>,

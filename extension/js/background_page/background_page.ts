@@ -10,6 +10,7 @@ import { injectFcIntoWebmailIfNeeded } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
 import { Catch } from '../common/catch.js';
 import { Env, UrlParam } from '../common/browser.js';
+import { GoogleAuth } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -139,6 +140,7 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgAddListener('attest_packet_received', BgAttests.attestPacketReceivedHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', getActiveTabInfo);
+  BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup, s, respond) => GoogleAuth.newAuthPopup(r).then(respond).catch(Catch.handleErr));
   BrowserMsg.bgAddListener('_tab_', (r: any, sender: Bm.Sender, respond: (r: Bm.Res._tab_) => void) => {
     if (sender === 'background') {
       respond({ tabId: null }); // background script - direct
