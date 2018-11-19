@@ -1,5 +1,7 @@
 <div>
 
+version 6.2.5 on November 19, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/278?closed=1" target="_blank">Timeout handling</a>
+
 version 6.2.4 on November 16, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/277?closed=1" target="_blank">Setup improvements</a>
 
 version 6.2.3 on November 12, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/276?closed=1" target="_blank">Stability improvements</a>
