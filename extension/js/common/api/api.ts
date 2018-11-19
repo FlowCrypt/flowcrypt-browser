@@ -149,16 +149,14 @@ export class Api {
       if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
-      if (e && typeof e === 'object') {
-        if (Api.err.isStandardErr(e, 'network')) {
-          return true;
-        }
-        if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') {
-          return true;
-        }
-        if (e instanceof AjaxError && e.status === -1 && e.statusText === 'timeout') {
-          return true;
-        }
+      if (Api.err.isStandardErr(e, 'network')) {
+        return true;
+      }
+      if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') {
+        return true;
+      }
+      if (e instanceof AjaxError && e.statusText === 'timeout') {
+        return true;
       }
       return false;
     },
