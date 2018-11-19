@@ -28,6 +28,8 @@ export class Catch {
     'TypeError: d is null',
     'TypeError: G is null',
     'TypeError: window.opener is null',
+    // errors on other domains: https://bugzilla.mozilla.org/show_bug.cgi?id=363897
+    'Script error.',
   ];
 
   private static stringify = (e: any) => {
@@ -49,8 +51,8 @@ export class Catch {
     let exception: Error;
     if (typeof originalErr !== 'object') {
       exception = new Error(`THROWN_NON_OBJECT[${typeof originalErr}]: ${String(originalErr)}`);
-    } else if (errMsg && url && typeof line !== 'undefined' && !col && !originalErr && !isManuallyCalled) { // safari has limited support
-      exception = new Error(`SAFARI_ERROR: ${errMsg}`);
+    } else if (errMsg && url && typeof line !== 'undefined' && !col && !originalErr && !isManuallyCalled) {
+      exception = new Error(`LIMITED_ERROR: ${errMsg}`);
     } else if (originalErr instanceof Error) {
       exception = originalErr;
     } else {
