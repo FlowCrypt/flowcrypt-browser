@@ -84,7 +84,9 @@ export class Google extends Api {
     usersMeProfile: async (acctEmail: string | null, accessToken?: string): Promise<R.GmailUsersMeProfile> => {
       const url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       if (acctEmail && !accessToken) {
-        return await Google.call(acctEmail, 'GET', url, {}) as R.GmailUsersMeProfile;
+        const r = await Google.call(acctEmail, 'GET', url, {}) as R.GmailUsersMeProfile;
+        r.emailAddress = r.emailAddress.toLowerCase();
+        return r;
       } else if (!acctEmail && accessToken) {
         const contentType = 'application/json; charset=UTF-8';
         const headers = { 'Authorization': `Bearer ${accessToken}` };
@@ -470,6 +472,9 @@ export class GoogleAuth {
   }
 
   public static newAuthPopup = async ({ acctEmail, omitReadScope, scopes }: { acctEmail: string | null, omitReadScope?: boolean, scopes?: string[] }): Promise<AuthRes> => {
+    if (acctEmail) {
+      acctEmail = acctEmail.toLowerCase();
+    }
     scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || [], omitReadScope === true);
     const authRequest: AuthReq = { acctEmail, scopes };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);

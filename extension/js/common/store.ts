@@ -339,7 +339,11 @@ export class Store {
 
   static async acctEmailsAdd(acctEmail: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
     if (!acctEmail) {
-      Catch.report('attempting to save empty acctEmail: ' + acctEmail);
+      throw new Error(`attempting to save empty acctEmail: ${acctEmail}`);
+    }
+    if (acctEmail.match(/[A-Z]/)) {
+      Catch.report(`attempting to save acctEmail that wasn't lowercased: ${acctEmail}`);
+      acctEmail = acctEmail.toLowerCase();
     }
     const acctEmails = await Store.acctEmailsGet();
     if (!Value.is(acctEmail).in(acctEmails) && acctEmail) {
