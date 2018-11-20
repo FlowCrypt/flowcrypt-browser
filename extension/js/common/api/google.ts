@@ -486,7 +486,13 @@ export class GoogleAuth {
       GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes),
       GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
     ]);
-    chrome.windows.remove(oauthWin.id);
+    try {
+      chrome.windows.remove(oauthWin.id);
+    } catch (e) {
+      if (String(e).indexOf('No window with id') === -1) {
+        Catch.handleErr(e);
+      }
+    }
     return authRes;
   }
 
