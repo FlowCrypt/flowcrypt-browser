@@ -1,7 +1,7 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
 import * as ava from 'ava';
-import { BrowserHandle, BrowserPool, Semaphore } from './browser';
+import { BrowserHandle, BrowserPool } from './browser';
 import { BrowserRecipe } from './tests/browser_recipe';
 import { defineUnitTests } from './tests/tests/unit';
 import { defineSetupTests } from './tests/tests/setup';
@@ -18,7 +18,7 @@ type GlobalBrowserGroup = 'compatibility' | 'trial';
 export type GlobalBrowser = { browsers: BrowserPool, beforeEachTest: () => Promise<void> };
 
 const TEST_TIMEOUT = 3 * 60 * 1000;
-const POOL_SIZE = 8;
+const POOL_SIZE = 10;
 const POOL_SIZE_GLOBAL = 3;
 
 const browserPool = new BrowserPool(POOL_SIZE, 'browserPool', false);
