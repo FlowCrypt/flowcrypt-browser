@@ -195,7 +195,11 @@ Catch.try(async () => {
     if (!options.submit_main) {
       return;
     }
-    Api.attester.testWelcome(acctEmail, armoredPubkey).catch(error => Catch.report('Api.attester.test_welcome: failed', error));
+    Api.attester.testWelcome(acctEmail, armoredPubkey).catch(e => {
+      if (Api.err.isSignificant(e)) {
+        Catch.report('Api.attester.test_welcome: failed', e);
+      }
+    });
     let addresses;
     if (typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
       addresses = storage.addresses.concat(acctEmail);
