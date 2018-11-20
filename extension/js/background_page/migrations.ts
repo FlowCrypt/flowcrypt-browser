@@ -18,11 +18,19 @@ export const migrateGlobal = async () => {
     // not anymore. users who had this extension disabled the whole time and now re-enabled will have to set it up again
     window.localStorage.clear();
   }
-  updateAcctInfo().catch(reportSignificantErrs);
+
+  // some emails in storage were not lowercased due to a bug around Oct 2018, this should be kept here until Feb 2019
+  const acctEmails = await Store.acctEmailsGet();
+  const lowerCasedAcctEmails = acctEmails.map(e => e.toLowerCase());
+  if (acctEmails.join() !== lowerCasedAcctEmails.join()) {
+    await Store.setGlobal({ account_emails: JSON.stringify(lowerCasedAcctEmails) });
+  }
+
+  // update local info about keyserver status of user keys
+  updateAcctInfo(acctEmails).catch(reportSignificantErrs);
 };
 
-const updateAcctInfo = async () => {
-  const acctEmails = await Store.acctEmailsGet();
+const updateAcctInfo = async (acctEmails: string[]) => {
   for (const acctEmail of acctEmails) {
     const rules = new Rules(acctEmail);
     await accountUpdateStatusKeyserver(acctEmail);
