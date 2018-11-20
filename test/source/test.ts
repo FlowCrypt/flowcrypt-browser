@@ -48,6 +48,9 @@ ava.before('set up global browsers and config', async t => {
   for (const b of globalBrowsers) {
     await browserGlobal.compatibility.browsers.doneUsingBrowser(b);
   }
+  // initialize trial browser
+  const b = await browserGlobal.trial.browsers.newBrowserHandle();
+  await browserGlobal.trial.browsers.doneUsingBrowser(b);
   t.pass();
 });
 
