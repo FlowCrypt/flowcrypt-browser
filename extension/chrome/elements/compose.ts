@@ -99,7 +99,7 @@ Catch.try(async () => {
     canReadEmails: () => canReadEmail,
     doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean | undefined> => {
       theirEmail = Str.parseEmail(theirEmail).email;
-      if (!theirEmail) {
+      if (!Str.isEmailValid(theirEmail)) {
         return false;
       }
       const storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);

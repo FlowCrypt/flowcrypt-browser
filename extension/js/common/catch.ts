@@ -32,7 +32,10 @@ export class Catch {
     'Script error.',
   ];
 
-  private static stringify = (e: any) => {
+  public static stringify = (e: any) => {
+    if (typeof e === 'string') {
+      return `[typeof:string] ${e}`;
+    }
     try { // this sometimes happen with unhandled Promise.then(_, reject)
       return `[typeof:${(typeof e)}:${String(e)}] ${JSON.stringify(e)}`;
     } catch (cannotStringify) {

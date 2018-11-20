@@ -57,6 +57,8 @@ export class AjaxError extends Error {
       } catch (e) {
         payloadStructure = 'not-a-json';
       }
+    } else if (req.data && typeof req.data === 'object') {
+      payloadStructure = Object.keys(req.data).join(',');
     }
     super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${req.method}-ing ${req.url} ${typeof req.data}: ${payloadStructure}`);
     this.xhr = xhr;
@@ -66,7 +68,7 @@ export class AjaxError extends Error {
     this.statusText = xhr.statusText || '(no status text)';
     this.stack += `\n\nprovided ajax call stack:\n${stack}`;
     if (this.status === 400) {
-      this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}\n\npayload: ${req.data}`;
+      this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}\n\npayload:\n${Catch.stringify(req.data)}`;
     }
   }
 }
