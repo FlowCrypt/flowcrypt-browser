@@ -500,24 +500,29 @@ export class GoogleAuth {
     chrome.windows.onRemoved.addListener(onOauthWinClosed);
   })
 
+  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string } => {
+    const parts = title.split(' ', 2);
+    const result = parts[0];
+    const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
+    if (!Value.is(result).in(['Success', 'Denied', 'Error'])) {
+      return { result: 'Error', error: `Unknown google auth result '${result}'` };
+    }
+    return { result: result as GoogleAuthWindowResult$result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined };
+  }
+
   private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | null, scopes: string[]): Promise<AuthRes> => {
     while (true) {
       const [oauthTab] = await tabsQuery({ windowId });
-      if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title)) {
-        const parts = oauthTab.title.split(' ', 2);
-        const result = parts[0];
-        const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
-        if (!Value.is(result).in(['Closed', 'Success', 'Denied', 'Error'])) {
-          return { acctEmail, result: 'Error', error: `Unknown google auth result '${result}'` };
-        }
+      if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title) && oauthTab.title.match(/^https/) === null) {
+        const { result, error, code } = GoogleAuth.processOauthResTitle(oauthTab.title);
         if (result === 'Success') {
-          if (typeof params.code === 'string' && params.code) {
-            const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(params.code, scopes);
+          if (code) {
+            const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(code, scopes);
             return { acctEmail: authorizedAcctEmail, result: 'Success' };
           }
           return { acctEmail, result: 'Error', error: `Google auth result was 'Success' but no auth code` };
         }
-        return { acctEmail, result: result as GoogleAuthWindowResult$result, error: params.error ? String(params.error) : '(no error provided)' };
+        return { acctEmail, result, error: error ? error : '(no error provided)' };
       }
       await Ui.time.sleep(250);
     }
