@@ -95,7 +95,20 @@ Catch.try(async () => {
       if (newPhotoFile) {
         update.photo_content = btoa(newPhotoFile.asText());
       }
-      await Api.fc.accountUpdate(update);
+      try {
+        await Api.fc.accountUpdate(update);
+      } catch (e) {
+        if (Api.err.isNetErr(e)) {
+          alert('No internet connection, please try again');
+        } else if (Api.err.isReqTooLarge(e)) {
+          alert('Error: the image is too large, please choose a smaller one');
+        } else {
+          if (!Api.err.isServerErr(e) && !Api.err.isAuthErr(e)) {
+            Catch.handleErr(e);
+          }
+          alert('Error happened, please try again');
+        }
+      }
       window.location.reload();
     }
   }));

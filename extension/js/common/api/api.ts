@@ -208,6 +208,7 @@ export class Api {
     },
     isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404,
     isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
+    isReqTooLarge: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 413,
     isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500,
   };
 
