@@ -372,8 +372,8 @@ export class Settings {
     } else if (response && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
       Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/auth_denied.htm');
     } else {
-      Catch.log('failed to log into google', response);
-      alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com to fix it.');
+      Catch.report('failed to log into google in newGoogleAcctAuthPrompt', response);
+      alert(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
       window.location.reload();
     }
   }

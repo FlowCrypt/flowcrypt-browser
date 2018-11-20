@@ -17,8 +17,8 @@ type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string,
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string };
 export type AuthReq = { acctEmail: string | null, scopes: string[], messageId?: string, omitReadScope?: boolean };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
-type AuthResultSuccess = { result: 'Success', acctEmail: string }; // , messageId?: string
-type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail: string | null, error?: string }; // , messageId?: string
+type AuthResultSuccess = { result: 'Success', acctEmail: string, error?: undefined };
+type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail: string | null, error?: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 declare const openpgp: typeof OpenPGP;

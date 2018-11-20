@@ -126,8 +126,8 @@ Catch.try(async () => {
         } else if (response && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
           alert('Canceled by user, skipping.');
         } else {
-          Catch.log('failed to log into google', response);
-          alert('Failed to connect to Gmail. Please try again. If this happens repeatedly, please write us at human@flowcrypt.com.');
+          Catch.report('failed to log into google in action_account_email_changed', response);
+          alert(`Failed to connect to Gmail (change). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
           window.location.reload();
         }
       }
