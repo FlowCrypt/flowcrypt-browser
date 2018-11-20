@@ -36,7 +36,7 @@ export class Catch {
     if (typeof e === 'string') {
       return `[typeof:string] ${e}`;
     }
-    try { // this sometimes happen with unhandled Promise.then(_, reject)
+    try {
       return `[typeof:${(typeof e)}:${String(e)}] ${JSON.stringify(e)}`;
     } catch (cannotStringify) {
       return `[unstringifiable typeof:${(typeof e)}:${String(e)}]`;
@@ -136,10 +136,9 @@ export class Catch {
 
   private static nameAndDetailsAsException = (name: string, details: any): Error => {
     try {
-      // noinspection ExceptionCaughtLocallyJS
       throw new Error(name);
     } catch (e) {
-      (e as Error).stack = (e as Error).stack + `\n\n\ndetails: ${typeof details !== 'string' ? details : Catch.stringify(details)}`;
+      (e as Error).stack += `\n\n\ndetails:\n${Catch.stringify(details)}`;
       return e as Error;
     }
   }
