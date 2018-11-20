@@ -7,6 +7,7 @@ import { Api } from '../common/api/api.js';
 import { Catch } from '../common/catch.js';
 import { Store } from '../common/store.js';
 import { Pgp } from '../common/pgp.js';
+import { Rules } from '../common/rules.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -23,8 +24,11 @@ export const migrateGlobal = async () => {
 const updateAcctInfo = async () => {
   const acctEmails = await Store.acctEmailsGet();
   for (const acctEmail of acctEmails) {
+    const rules = new Rules(acctEmail);
     await accountUpdateStatusKeyserver(acctEmail);
-    await accountUpdateStatusPks(acctEmail);
+    if (!rules.hasStrictGdpr()) {
+      await accountUpdateStatusPks(acctEmail);
+    }
   }
 };
 
