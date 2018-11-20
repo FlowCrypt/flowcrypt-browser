@@ -177,7 +177,7 @@ export class Pgp {
         }
       }
     },
-    normalize: (armored: string, type: string) => {
+    normalize: (armored: string, type: ReplaceableMsgBlockType | 'key') => {
       armored = Str.normalize(armored);
       if (Value.is(type).in(['message', 'publicKey', 'privateKey', 'key'])) {
         armored = armored.replace(/\r?\n/g, '\n').trim();
@@ -186,14 +186,27 @@ export class Pgp {
         const nl4 = armored.match(/\n\n\n\n/g);
         const nl6 = armored.match(/\n\n\n\n\n\n/g);
         if (nl3 && nl6 && nl3.length > 1 && nl6.length === 1) {
-          return armored.replace(/\n\n\n/g, '\n'); // newlines tripled: fix
+          armored = armored.replace(/\n\n\n/g, '\n'); // newlines tripled: fix
         } else if (nl2 && nl4 && nl2.length > 1 && nl4.length === 1) {
-          return armored.replace(/\n\n/g, '\n'); // newlines doubled.GPA on windows does this, and sometimes message can get extracted this way from html
+          armored = armored.replace(/\n\n/g, '\n'); // newlines doubled. GPA on windows does this, and sometimes message can get extracted this way from html
         }
-        return armored;
-      } else {
-        return armored;
       }
+      const lines = armored.split('\n');
+      const h = Pgp.armor.headers(type === 'key' ? 'null' : type);
+      // check for and fix missing a mandatory empty line
+      if (lines.length > 5 && Value.is(h.begin).in(lines[0]) && Value.is(String(h.end)).in(lines[lines.length - 1]) && !Value.is('').in(lines)) {
+        for (let i = 1; i < 5; i++) {
+          if (lines[i].match(/^[a-zA-Z0-9\-_. ]+: .+$/) !== null) {
+            continue; // skip comment lines, looking for first data line
+          }
+          if (lines[i].match(/^[a-zA-Z0-9\/+]{32,77}$/) !== null) { // insert empty line before first data line
+            armored = `${lines.slice(0, i).join('\n')}\n\n${lines.slice(i).join('\n')}`;
+            break;
+          }
+          break; // don't do anything if format not as expected
+        }
+      }
+      return armored;
     },
   };
 
@@ -252,8 +265,8 @@ export class Pgp {
             return fp.replace(/(.{4})/g, '$1 ').trim();
           }
           return fp;
-        } catch (error) {
-          console.log(error);
+        } catch (e) {
+          console.log(e);
           return null;
         }
       } else {
