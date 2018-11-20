@@ -19,7 +19,7 @@ export type GlobalBrowser = { browsers: BrowserPool, beforeEachTest: () => Promi
 
 const TEST_TIMEOUT = 3 * 60 * 1000;
 const POOL_SIZE = 8;
-const POOL_SIZE_GLOBAL = 2;
+const POOL_SIZE_GLOBAL = 3;
 
 const browserPool = new BrowserPool(POOL_SIZE, 'browserPool', false);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
