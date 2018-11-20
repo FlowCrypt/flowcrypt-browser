@@ -334,7 +334,7 @@ export class Settings {
       try {
         return await retryCb();
       } catch (e2) {
-        if (!Api.err.isNetErr(e2)) {
+        if (!Api.err.isNetErr(e2) && !Api.err.isServerErr(e)) {
           Catch.handleErr(e2);
         }
       }
