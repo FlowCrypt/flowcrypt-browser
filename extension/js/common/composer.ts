@@ -1110,20 +1110,17 @@ export class Composer {
     this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private selectContact = (email: string, fromQuery: ProviderContactsQuery) => {
+  private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
     const possiblyBogusRecipient = $('.recipients span.wrong').last();
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
     const q = Str.parseEmail(fromQuery.substring).email;
     if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
       possiblyBogusRecipient.remove();
     }
-    Catch.setHandledTimeout(async () => {
-      if (!Value.is(email).in(this.getRecipientsFromDom())) {
-        this.S.cached('input_to').val(Str.parseEmail(email).email);
-        await this.parseRenderRecipients();
-        this.S.cached('input_to').focus();
-      }
-    }, Value.int.lousyRandom(20, 100)); // desperate amount to remove duplicates. Better solution advisable.
+    if (!Value.is(email).in(this.getRecipientsFromDom())) {
+      this.S.cached('input_to').val(Str.parseEmail(email).email);
+      await this.parseRenderRecipients();
+    }
     this.hideContacts();
   }
 
@@ -1192,10 +1189,10 @@ export class Composer {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.S.cached('contacts').find('ul'), ulHtml);
-      this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', (target: HTMLElement) => {
+      this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', async (target: HTMLElement) => {
         const email = $(target).attr('email');
         if (email) {
-          this.selectContact(Str.parseEmail(email).email, query);
+          await this.selectContact(Str.parseEmail(email).email, query);
         }
       }, this.handleErrs(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
