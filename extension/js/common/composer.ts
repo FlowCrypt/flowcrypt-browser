@@ -422,7 +422,7 @@ export class Composer {
       }
       const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
       const mimeMsg = await Mime.encode(body as string, {
-        To: this.getRecipientsFromDom(),
+        To: this.getRecipientsFromDom().filter(Str.isEmailValid), // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         From: this.v.from || this.getSenderFromDom(),
         Subject: subject
       }, []);
