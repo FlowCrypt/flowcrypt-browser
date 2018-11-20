@@ -18,7 +18,7 @@ type GlobalBrowserGroup = 'compatibility' | 'trial';
 export type GlobalBrowser = { browser?: BrowserHandle, semaphore: Semaphore, beforeEachTest: () => Promise<void> };
 
 const testTimeout = 5 * 60 * 1000;
-const browserPool = new BrowserPool(5); // min 2!
+const browserPool = new BrowserPool(8); // min 2!
 const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
     browser: undefined,
