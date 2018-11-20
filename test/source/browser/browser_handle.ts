@@ -25,13 +25,13 @@ export class BrowserHandle {
   }
 
   newPageTriggeredBy = async (triggeringAction: () => void): Promise<ControllablePage> => {
-    let page = await this.doAwaitTriggeredPage(triggeringAction);
+    const page = await this.doAwaitTriggeredPage(triggeringAction);
     await page.setViewport(this.viewport);
     return new ControllablePage(page);
   }
 
   closeAllPages = async () => {
-    for (let page of await this.browser.pages()) {
+    for (const page of await this.browser.pages()) {
       if (page.url() !== 'about:blank') {
         await page.close();
       }
@@ -40,6 +40,10 @@ export class BrowserHandle {
 
   close = async () => {
     await this.browser.close();
+    this.semaphore.release();
+  }
+
+  release = () => {
     this.semaphore.release();
   }
 

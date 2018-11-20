@@ -3,7 +3,6 @@ import { launch } from "puppeteer";
 import { BrowserHandle } from './browser_handle';
 import { Util } from "../util";
 import * as ava from 'ava';
-import { GlobalBrowser } from "../test";
 
 class TimeoutError extends Error { }
 
@@ -12,11 +11,14 @@ export class BrowserPool {
   private height: number;
   private width: number;
   private semaphore: Semaphore;
+  private reuse: boolean;
+  private browsersForReuse: BrowserHandle[] = [];
 
-  constructor(poolSize: number, width = 1280, height = 900) {
+  constructor(poolSize: number, name: string, reuse: boolean, width = 1280, height = 900) {
     this.height = height;
     this.width = width;
-    this.semaphore = new Semaphore(poolSize, 'BrowserPool');
+    this.semaphore = new Semaphore(poolSize, name);
+    this.reuse = reuse;
   }
 
   public newBrowserHandle = async (closeInitialPage = true) => {
@@ -51,13 +53,31 @@ export class BrowserPool {
     throw new Error(`Cannot determine extension id from url: ${url}`);
   }
 
-  public withNewBrowser = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) => {
-    const browser = await this.newBrowserHandle();
+  public close = async () => {
+    for (const browser of this.browsersForReuse) {
+      await browser.close();
+    }
+  }
+
+  private openOrReuseBrowser = async (): Promise<BrowserHandle> => {
+    if (!this.reuse || !this.browsersForReuse.length) {
+      return await this.newBrowserHandle();
+    }
+    return this.browsersForReuse.pop()!;
+  }
+
+  public getPooledBrowser = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) => {
+    const browser = await this.openOrReuseBrowser();
     try {
       await cb(browser, t);
     } finally {
       await Util.sleep(1);
-      await browser.close();
+      if (this.reuse) {
+        await browser.closeAllPages();
+        this.browsersForReuse.push(browser);
+      } else {
+        await browser.close();
+      }
     }
   }
 
@@ -87,16 +107,16 @@ export class BrowserPool {
   }
 
   // tslint:disable-next-line:max-line-length
-  public withGlobalBrowserTimeoutAndRetry = async (globalBrowser: GlobalBrowser, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
+  public withGlobalBrowserTimeoutAndRetry = async (beforeEachTest: () => Promise<void>, browser: BrowserHandle, cb: (b: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
     for (const i of [1, 2, 3]) {
       try {
-        await globalBrowser.beforeEachTest();
-        await globalBrowser.browser!.closeAllPages();
+        await beforeEachTest();
+        await browser.closeAllPages();
         try {
-          return await this.cbWithTimeout(async () => await cb(globalBrowser.browser!, t), timeout);
+          return await this.cbWithTimeout(async () => await cb(browser, t), timeout);
         } finally {
           await Util.sleep(1);
-          await globalBrowser.browser!.closeAllPages();
+          await browser.closeAllPages();
         }
       } catch (e) {
         if (i < 3) {
@@ -113,14 +133,13 @@ export class BrowserPool {
     await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
     await initialPage.close();
   }
-
 }
 
 export class Semaphore {
 
   private availableLocks: number;
   private name: string;
-  private debug = false;
+  private debug = true;
 
   constructor(poolSize: number, name = 'semaphore') {
     this.availableLocks = poolSize;

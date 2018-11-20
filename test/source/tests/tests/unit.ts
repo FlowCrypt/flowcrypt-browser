@@ -8,12 +8,12 @@ import * as ava from 'ava';
 
 export let defineUnitTests = (testWithBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
-  for (let ut of Config.tests.unit_tests) {
+  for (const ut of Config.tests.unit_tests) {
     ava.test(`unit ${ut.name}`, testWithBrowser(async browser => {
-      let page = await browser.newPage(`chrome/dev/unit_test.htm?f=${ut.f}&args=${encodeURIComponent(JSON.stringify(ut.args))}`);
+      const page = await browser.newPage(`chrome/dev/unit_test.htm?f=${ut.f}&args=${encodeURIComponent(JSON.stringify(ut.args))}`);
       await page.waitForSelTestStaet('ready');
-      let content = await page.read('@unit-test-result');
-      let r = JSON.parse(content);
+      const content = await page.read('@unit-test-result');
+      const r = JSON.parse(content);
       expect(r).to.have.property('error').that.is.null;
       expect(ordered_stringify(r.result)).to.equal(ordered_stringify(ut.result));
     }));
