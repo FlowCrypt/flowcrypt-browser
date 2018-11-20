@@ -1,5 +1,7 @@
 <div>
 
+version 6.2.8 on November 20, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/280?closed=1" target="_blank">Error formatting</a>
+
 version 6.2.7 on November 20, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/279?closed=1" target="_blank">Error handling</a>
 
 version 6.2.6 on November 19, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/278?closed=1" target="_blank">Timeout handling</a>
