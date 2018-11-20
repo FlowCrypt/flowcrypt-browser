@@ -54,16 +54,27 @@ export class BrowserPool {
   }
 
   public close = async () => {
-    for (const browser of this.browsersForReuse) {
-      await browser.close();
+    while (this.browsersForReuse.length) {
+      await this.browsersForReuse.pop()!.close();
     }
   }
 
-  private openOrReuseBrowser = async (): Promise<BrowserHandle> => {
-    if (!this.reuse || !this.browsersForReuse.length) {
+  public openOrReuseBrowser = async (): Promise<BrowserHandle> => {
+    if (!this.reuse) {
       return await this.newBrowserHandle();
     }
+    await this.semaphore.acquire();
     return this.browsersForReuse.pop()!;
+  }
+
+  public doneUsingBrowser = async (browser: BrowserHandle) => {
+    if (this.reuse) {
+      await browser.closeAllPages();
+      this.browsersForReuse.push(browser);
+      browser.release();
+    } else {
+      await browser.close();
+    }
   }
 
   public getPooledBrowser = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) => {
@@ -72,12 +83,7 @@ export class BrowserPool {
       await cb(browser, t);
     } finally {
       await Util.sleep(1);
-      if (this.reuse) {
-        await browser.closeAllPages();
-        this.browsersForReuse.push(browser);
-      } else {
-        await browser.close();
-      }
+      await this.doneUsingBrowser(browser);
     }
   }
 
@@ -139,14 +145,14 @@ export class Semaphore {
 
   private availableLocks: number;
   private name: string;
-  private debug = true;
+  private debug = false;
 
   constructor(poolSize: number, name = 'semaphore') {
     this.availableLocks = poolSize;
     this.name = name;
   }
 
-  private wait = () => new Promise(resolve => setTimeout(resolve, 50 + Math.round(Math.random() * 1000))); // wait 500-1500 ms
+  private wait = () => new Promise(resolve => setTimeout(resolve, 1000 + Math.round(Math.random() * 2000))); // wait 1-3s
 
   acquire = async () => {
     let i = 0;

@@ -37,12 +37,17 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
 
 ava.before('set up global browsers and config', async t => {
   Config.extensionId = await browserPool.getExtensionId();
-  const promises: Promise<void>[] = [];
+  const setupPromises: Promise<void>[] = [];
+  const globalBrowsers = [];
   for (let i = 0; i < POOL_SIZE_GLOBAL; i++) {
     const b = await browserGlobal.compatibility.browsers.newBrowserHandle();
-    promises.push(BrowserRecipe.setUpFcCompatAcct(b));
+    setupPromises.push(BrowserRecipe.setUpFcCompatAcct(b));
+    globalBrowsers.push(b);
   }
-  await Promise.all(promises);
+  await Promise.all(setupPromises);
+  for (const b of globalBrowsers) {
+    await browserGlobal.compatibility.browsers.doneUsingBrowser(b);
+  }
   t.pass();
 });
 
@@ -55,12 +60,12 @@ export const testWithNewBrowser = (cb: (browser: BrowserHandle, t: ava.Execution
 
 export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
   return async (t: ava.ExecutionContext<{}>) => {
-    const browser = await browserGlobal[group].browsers.newBrowserHandle();
+    const browser = await browserGlobal[group].browsers.openOrReuseBrowser();
     try {
       await browserPool.withGlobalBrowserTimeoutAndRetry(browserGlobal[group].beforeEachTest, browser, cb, t, TEST_TIMEOUT);
       t.pass();
     } finally {
-      browser.release();
+      browserGlobal[group].browsers.doneUsingBrowser(browser);
     }
   };
 };
