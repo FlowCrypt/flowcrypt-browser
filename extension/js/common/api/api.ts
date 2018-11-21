@@ -43,24 +43,37 @@ export type SubscriptionInfo = { active: boolean | null; method: PaymentMethod |
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
-export class AjaxError extends Error {
+abstract class ApiCallError extends Error {
+
+  private static getPayloadStructure = (req: JQueryAjaxSettings): string => {
+    if (typeof req.data === 'string') {
+      try {
+        return Object.keys(JSON.parse(req.data) as any).join(',');
+      } catch (e) {
+        return 'not-a-json';
+      }
+    } else if (req.data && typeof req.data === 'object') {
+      return Object.keys(req.data).join(',');
+    }
+    return '';
+  }
+
+  protected static describeApiAction = (req: JQueryAjaxSettings) => {
+    return `${req.method}-ing ${req.url} ${typeof req.data}: ${ApiCallError.getPayloadStructure(req)}`;
+  }
+
+}
+
+export class AjaxError extends ApiCallError {
+
   public xhr: any;
   public status: number;
   public url: string;
   public responseText: string;
   public statusText: string;
+
   constructor(xhr: RawAjaxError, req: JQueryAjaxSettings, stack: string) {
-    let payloadStructure = '';
-    if (typeof req.data === 'string') {
-      try {
-        payloadStructure = Object.keys(JSON.parse(req.data) as any).join(',');
-      } catch (e) {
-        payloadStructure = 'not-a-json';
-      }
-    } else if (req.data && typeof req.data === 'object') {
-      payloadStructure = Object.keys(req.data).join(',');
-    }
-    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${req.method}-ing ${req.url} ${typeof req.data}: ${payloadStructure}`);
+    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallError.describeApiAction(req)}`);
     this.xhr = xhr;
     this.status = typeof xhr.status === 'number' ? xhr.status : -1;
     this.url = req.url || '(unknown url)';
@@ -71,16 +84,20 @@ export class AjaxError extends Error {
       this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}\n\npayload:\n${Catch.stringify(req.data)}`;
     }
   }
+
 }
 
-export class ApiErrorResponse extends Error {
+export class ApiErrorResponse extends ApiCallError {
+
   public res: StandardErrorRes;
   public url: string;
-  constructor(response: StandardErrorRes, url: string) {
-    super(`Error response from ${url}`);
-    this.res = response;
-    this.url = url;
+
+  constructor(res: StandardErrorRes, req: JQueryAjaxSettings) {
+    super(`Api error response when ${ApiCallError.describeApiAction(req)}`);
+    this.res = res;
+    this.stack += `\n\nresponse:\n${Catch.stringify(res)}`;
   }
+
 }
 
 export class AuthError extends Error { }
@@ -686,7 +703,7 @@ export class Api {
       };
       const res = await Api.ajax(req, Catch.stackTrace());
       if (res && typeof res === 'object' && typeof (res as StandardErrorRes).error === 'object' && (res as StandardErrorRes).error.message) {
-        throw new ApiErrorResponse(res as StandardErrorRes, req.url!);
+        throw new ApiErrorResponse(res as StandardErrorRes, req);
       }
       return res;
     },
