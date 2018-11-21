@@ -121,7 +121,7 @@ export namespace R { // responses
   export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
   export type GmailMsg = {
     id: string, historyId: string, threadId?: string | null, payload: GmailMsg$payload, raw?: string, internalDate?: number | string,
-    labelIds: GmailMsg$labelId[], snippet?: string
+    labelIds?: GmailMsg$labelId[], snippet?: string
   };
   export type GmailMsgList$message = { id: string, threadId: string };
   export type GmailMsgList = { messages?: GmailMsgList$message[], resultSizeEstimate: number };

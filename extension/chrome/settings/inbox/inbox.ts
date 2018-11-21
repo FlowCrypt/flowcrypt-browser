@@ -197,7 +197,7 @@ Catch.try(async () => {
       const lastMsg = thread.messages[thread.messages.length - 1];
 
       threadItem.find('.subject').text(Google.gmail.findHeader(firstMsg, 'subject') || '(no subject)');
-      Xss.sanitizeAppend(threadItem.find('.subject'), renderableLabels(firstMsg.labelIds, 'messages'));
+      Xss.sanitizeAppend(threadItem.find('.subject'), renderableLabels(firstMsg.labelIds || [], 'messages'));
       const fromHeaderVal = Google.gmail.findHeader(firstMsg, 'from');
       if (fromHeaderVal) {
         const from = Str.parseEmail(fromHeaderVal);
@@ -206,7 +206,7 @@ Catch.try(async () => {
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(formatDate(lastMsg.internalDate));
       threadItem.addClass('loaded').click(Ui.event.handle(() => renderThread(thread.id, thread)));
-      if (Value.is(LABEL.UNREAD).in(lastMsg.labelIds)) {
+      if (Value.is(LABEL.UNREAD).in(lastMsg.labelIds || [])) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
       if (thread.messages.length > 1) {
