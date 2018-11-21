@@ -516,10 +516,12 @@ export class GoogleAuth {
     return { result: result as GoogleAuthWindowResult$result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined };
   }
 
+  private static isAuthUrl = (title: string) => title.match(/^(https?:\/\/)?accounts.google.com\/o\/oauth2\/auth/) !== null;
+
   private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | null, scopes: string[]): Promise<AuthRes> => {
     while (true) {
       const [oauthTab] = await tabsQuery({ windowId });
-      if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title) && oauthTab.title.match(/^https/) === null) {
+      if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title) && !GoogleAuth.isAuthUrl(oauthTab.title)) {
         const { result, error, code } = GoogleAuth.processOauthResTitle(oauthTab.title);
         if (result === 'Success') {
           if (code) {
