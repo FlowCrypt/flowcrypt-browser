@@ -60,6 +60,7 @@ Catch.try(async () => {
           alert(`Error happened: ${String(e)}`);
         }
       }
+      await Ui.time.sleep(100);
       window.location.reload();
       done();
     }));
@@ -85,6 +86,7 @@ Catch.try(async () => {
     $('.action_flush_attest_info').click(Ui.event.handle(async () => {
       await Store.remove(acctEmail, ['attests_requested', 'attests_processed', 'attest_log']);
       alert('Internal attest info flushed');
+      await Ui.time.sleep(100);
       window.location.reload();
     }));
 
@@ -106,7 +108,7 @@ Catch.try(async () => {
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
       if (confirm(Lang.setup.confirmManualAcctEmailChange(acctEmail))) {
         const response = await GoogleAuth.newAuthPopup({ acctEmail });
-        if (response && response.result === 'Success' && response.acctEmail) {
+        if (response.result === 'Success' && response.acctEmail) {
           if (response.acctEmail === acctEmail) {
             alert(`Account email address seems to be the same, nothing to update: ${acctEmail}`);
           } else if (response.acctEmail) {
@@ -123,7 +125,7 @@ Catch.try(async () => {
           } else {
             alert('Not able to retrieve new account email, please write at human@flowcrypt.com');
           }
-        } else if (response && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
+        } else if (response.result === 'Denied' || response.result === 'Closed') {
           alert('Canceled by user, skipping.');
         } else {
           Catch.report('failed to log into google in action_account_email_changed', response);

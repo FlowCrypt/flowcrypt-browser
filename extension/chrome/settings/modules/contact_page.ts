@@ -75,10 +75,12 @@ Catch.try(async () => {
       if (!response.updated) {
         alert('Failed to enable your Contact Page. Please try again');
       }
+      await Ui.time.sleep(100);
       window.location.reload();
     } catch (e) {
       Catch.handleErr(e);
       alert(`Failed to create account, possibly a network issue. Please try again.\n\n${String(e)}`);
+      await Ui.time.sleep(100);
       window.location.reload();
     }
   };
@@ -109,6 +111,7 @@ Catch.try(async () => {
           alert('Error happened, please try again');
         }
       }
+      await Ui.time.sleep(100);
       window.location.reload();
     }
   }));

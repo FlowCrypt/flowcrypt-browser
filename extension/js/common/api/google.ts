@@ -523,6 +523,9 @@ export class GoogleAuth {
       const [oauthTab] = await tabsQuery({ windowId });
       if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title) && !GoogleAuth.isAuthUrl(oauthTab.title)) {
         const { result, error, code } = GoogleAuth.processOauthResTitle(oauthTab.title);
+        if (error === 'access_denied') {
+          return { acctEmail, result: 'Denied', error }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
+        }
         if (result === 'Success') {
           if (code) {
             const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(code, scopes);

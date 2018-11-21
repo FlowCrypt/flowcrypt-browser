@@ -349,17 +349,17 @@ export class Settings {
     if (action === 'CREATE_KEYS' && !rules.canCreateKeys()) {
       alert(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
-      throw Error('creating_keys_not_allowed_please_import');
+      throw new Error('creating_keys_not_allowed_please_import');
     } else if (action === 'BACKUP_KEYS' && !rules.canBackupKeys()) {
       alert(Lang.setup.keyBackupsNotAllowed);
       window.location.reload();
-      throw Error('key_backups_not_allowed');
+      throw new Error('key_backups_not_allowed');
     }
   }
 
   static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
     const response = await GoogleAuth.newAuthPopup({ acctEmail: acctEmail || null, omitReadScope });
-    if (response && response.result === 'Success' && response.acctEmail) {
+    if (response.result === 'Success' && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
       const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
       if (storage.setup_done) { // this was just an additional permission
@@ -369,11 +369,12 @@ export class Settings {
         await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
       }
-    } else if (response && ((response.result === 'Denied' && response.error === 'access_denied') || response.result === 'Closed')) {
+    } else if (response.result === 'Denied' || response.result === 'Closed') {
       Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/auth_denied.htm');
     } else {
       Catch.report('failed to log into google in newGoogleAcctAuthPrompt', response);
       alert(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
+      await Ui.time.sleep(1000);
       window.location.reload();
     }
   }
