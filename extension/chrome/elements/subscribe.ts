@@ -45,7 +45,7 @@ Catch.try(async () => {
       btnRestore();
     } else {
       renderErr('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);
-      Catch.report('problem during subscribe.js', e);
+      Catch.handleErr(e);
     }
   };
 
