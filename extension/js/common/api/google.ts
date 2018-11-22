@@ -83,17 +83,18 @@ export class Google extends Api {
     },
     usersMeProfile: async (acctEmail: string | null, accessToken?: string): Promise<R.GmailUsersMeProfile> => {
       const url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
+      let r: R.GmailUsersMeProfile;
       if (acctEmail && !accessToken) {
-        const r = await Google.call(acctEmail, 'GET', url, {}) as R.GmailUsersMeProfile;
-        r.emailAddress = r.emailAddress.toLowerCase();
-        return r;
+        r = await Google.call(acctEmail, 'GET', url, {}) as R.GmailUsersMeProfile;
       } else if (!acctEmail && accessToken) {
         const contentType = 'application/json; charset=UTF-8';
         const headers = { 'Authorization': `Bearer ${accessToken}` };
-        return await Api.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }, Catch.stackTrace()) as R.GmailUsersMeProfile;
+        r = await Api.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }, Catch.stackTrace()) as R.GmailUsersMeProfile;
       } else {
         throw new Error('Google.gmail.users_me_profile: need either account_email or access_token');
       }
+      r.emailAddress = r.emailAddress.toLowerCase();
+      return r;
     },
     threadGet: (acctEmail: string, threadId: string, format?: GmailResponseFormat): Promise<R.GmailThread> => Google.gmailCall(acctEmail, 'GET', `threads/${threadId}`, {
       format,
