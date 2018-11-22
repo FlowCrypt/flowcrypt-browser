@@ -14,8 +14,6 @@ import { Mime } from '../../js/common/mime.js';
 import { Catch } from '../../js/common/catch.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 
-declare const anchorme: (input: string, opts: { emails?: boolean, attributes?: { name: string, value: string }[] }) => string;
-
 Catch.try(async () => {
 
   Ui.event.protect();
@@ -40,10 +38,6 @@ Catch.try(async () => {
   let passwordMsgLinkRes: R.FcLinkMsg;
   let adminCodes: string[];
   let userEnteredMsgPassword: string | undefined;
-
-  const doAnchor = (text: string) => {
-    return anchorme(text.replace(/\n/g, '<br>'), { emails: false, attributes: [{ name: 'target', value: '_blank' }] });
-  };
 
   const renderText = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
@@ -322,8 +316,7 @@ Catch.try(async () => {
       if (publicKeys.length) {
         BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
-      decryptedContent = Xss.escape(decryptedContent);
-      await renderContent(doAnchor(decryptedContent.replace(/\n/g, '<br>')), false);
+      await renderContent(Xss.escape(decryptedContent).replace(/\n/g, '<br>'), false);
       if (fcAtts.length) {
         renderInnerAtts(fcAtts);
       }
@@ -336,7 +329,7 @@ Catch.try(async () => {
       if (typeof decoded.html !== 'undefined') {
         await renderContent(decoded.html, false);
       } else if (typeof decoded.text !== 'undefined') {
-        await renderContent(doAnchor(decoded.text.replace(/\n/g, '<br>')), false);
+        await renderContent(Xss.escape(decoded.text).replace(/\n/g, '<br>'), false);
       } else {
         await renderContent((decryptedContent || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
       }
