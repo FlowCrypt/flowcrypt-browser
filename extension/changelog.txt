@@ -1,5 +1,7 @@
 <div>
 
+version 6.3.2 on November 22, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/284?closed=1" target="_blank">Remove text anchoring</a>
+
 version 6.3.1 on November 21, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/283?closed=1" target="_blank">Refactoring</a>
 
 version 6.3.0 on November 21, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/282?closed=1" target="_blank">Tiny Fixes</a>
