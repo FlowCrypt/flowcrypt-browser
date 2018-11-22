@@ -59,10 +59,11 @@ export class Catch {
     } else if (originalErr instanceof Error) {
       exception = originalErr;
     } else {
-      exception = new Error(`THROWN_OBJECT: [${errMsg}] ${Catch.stringify(originalErr)}`);
+      exception = new Error(`THROWN_OBJECT: ${errMsg}`);
       if (Catch.hasStack(originalErr)) {
-        exception.stack = `${(exception.stack || '')}\n\nORIGINAL_THROWN_OBJECT_STACK:\n${originalErr.stack}`;
+        exception.stack += `\n\nORIGINAL_THROWN_OBJECT_STACK:\n${originalErr.stack}\n\n`;
       }
+      exception.stack += `\n\nORIGINAL_ERR:\n${Catch.stringify(originalErr)}`;
     }
     if (Catch.IGNORE_ERR_MSG.indexOf(exception.message) !== -1) {
       return;
@@ -254,13 +255,13 @@ export class Catch {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.handleErr(e.reason);
     } else {
-      const stringified = Catch.stringify(e);
-      if (stringified === '{"isTrusted":false}' || stringified === '{"isTrusted":true}') {
+      const str = Catch.stringify(e);
+      if (str.match(/^\[typeof:object:\[object PromiseRejectionEvent\]\] \{"isTrusted":(?:true|false)\}$/)) {
         return; // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
       }
       const { line, col } = Catch.getErrorLineAndCol(e);
       const msg = e instanceof Error ? e.message : String(e);
-      Catch.onErrorInternalHandler(`[rejection] ${msg}`, window.location.href, line, col, e, true);
+      Catch.onErrorInternalHandler(`REJECTION: ${msg}`, window.location.href, line, col, e, true);
     }
   }
 
