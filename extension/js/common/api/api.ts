@@ -171,10 +171,7 @@ export class Api {
       if (Api.err.isStandardErr(e, 'network')) {
         return true;
       }
-      if (e instanceof AjaxError && e.status === 0 && e.statusText === 'error') {
-        return true;
-      }
-      if (e instanceof AjaxError && e.statusText === 'timeout') {
+      if (e instanceof AjaxError && (e.status === 0 && e.statusText === 'error' || e.statusText === 'timeout' || e.status === -1)) {
         return true;
       }
       return false;
