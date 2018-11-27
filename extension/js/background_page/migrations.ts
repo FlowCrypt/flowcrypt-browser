@@ -73,7 +73,7 @@ const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any n
   const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
   const addressesPks = storage.addresses_pks || [];
   for (const email of storage.addresses || [acctEmail]) {
-    if (!Value.is(email).in(addressesPks)) {
+    if (email && !Value.is(email).in(addressesPks)) {
       try {
         const pubkey = await hkp.lookup({ query: email });
         if (typeof pubkey !== 'undefined') {
