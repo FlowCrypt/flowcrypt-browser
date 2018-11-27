@@ -582,6 +582,8 @@ export class Composer {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
         BrowserMsg.send.subscribeDialog(this.v.parentTabId, { source: 'authErr' });
       }
+    } else if (Api.err.isReqTooLarge(e)) {
+      alert(`Could not send: message or attachments too large.`);
     } else if (Api.err.isBadReq(e)) {
       if (confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
         const page = '/chrome/settings/modules/help.htm';
