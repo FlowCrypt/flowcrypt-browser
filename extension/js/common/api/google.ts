@@ -377,7 +377,7 @@ export class Google extends Api {
   private static apiGmailLoopThroughEmailsToCompileContacts = async (acctEmail: string, query: string, chunkedCb: (r: ProviderContactsResults) => void) => {
     let allResults: Contact[] = [];
     while (true) {
-      const headers = await Google.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['to', 'date']);
+      const headers = await Google.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['to']);
       if (headers.to) {
         const rawParsedResults = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
         const newValidResultPairs = rawParsedResults.filter(r => Str.isEmailValid(r.address));
