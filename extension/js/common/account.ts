@@ -20,13 +20,14 @@ type AccountEventHandlers = {
 
 export type PaymentMethod = 'stripe' | 'group' | 'trial';
 export type ProductLevel = 'pro' | null;
+export type ProductName = 'null' | 'trial' | 'advancedMonthly';
 export type Product = { id: null | string, method: null | PaymentMethod, name: null | string, level: ProductLevel };
 
 export class CheckVerificationEmail extends Error { }
 
 export class FcAcct {
 
-  PRODUCTS: Dict<Product> = {
+  PRODUCTS: { [productName in ProductName]: Product } = {
     null: { id: null, method: null, name: null, level: null },
     trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
     advancedMonthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },

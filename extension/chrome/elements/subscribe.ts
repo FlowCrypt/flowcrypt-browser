@@ -52,7 +52,7 @@ Catch.try(async () => {
   const stripeCcEnteredHandler: Bm.ResponselessHandler = async ({ token }: Bm.StripeResult) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
-      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advanced_monthly, token);
+      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advancedMonthly, token);
       handleSuccessfulUpgrade();
     } catch (e) {
       handleErrRes(e);
