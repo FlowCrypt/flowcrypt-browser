@@ -162,7 +162,7 @@ Catch.try(async () => {
   };
 
   const renderableLabel = (labelId: string, placement: 'messages' | 'menu' | 'labels') => {
-    const label = allLabels.find(l => l.id === labelId);
+    const label = (allLabels || []).find(l => l.id === labelId);
     if (!label) {
       return '';
     }
