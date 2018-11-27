@@ -256,7 +256,7 @@ export class Catch {
       Catch.handleErr(e.reason);
     } else {
       const str = Catch.stringify(e);
-      if (str.match(/^\[typeof:object:\[object PromiseRejectionEvent\]\] \{"isTrusted":(?:true|false)\}$/)) {
+      if (str.match(/^\[typeof:object:\[object (PromiseRejectionEvent|CustomEvent)\]\] \{"isTrusted":(?:true|false)\}$/)) {
         return; // unrelated to FlowCrypt, has to do with JS-initiated clicks/events
       }
       const { line, col } = Catch.getErrorLineAndCol(e);
