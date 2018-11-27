@@ -49,7 +49,7 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-      } else if (!Api.err.isNetErr(e) && !Api.err.isAuthErr(e) && !Api.err.isServerErr(e)) {
+      } else if (Api.err.isSignificant(e)) {
         Catch.handleErr(e);
       }
       threadId = threadId || threadMsgId;
