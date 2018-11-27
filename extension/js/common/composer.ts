@@ -741,7 +741,7 @@ export class Composer {
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
         return plaintext;
       } else {
-        throw new Error('There was an error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.\n\nmessage/token: ' + String(msgTokenErr));
+        throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.');
       }
     }
     return plaintext + '\n\n' + Ui.e('div', {

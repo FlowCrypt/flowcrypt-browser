@@ -32,7 +32,16 @@ export class Catch {
     'Script error.',
   ];
 
+  public static rewrapErr = (e: any, message: string) => {
+    const newErr = new Error(`${message}\n\nDetailed error: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
+    newErr.stack += `\n\n${Catch.stringify(e)}`;
+    return newErr;
+  }
+
   public static stringify = (e: any) => {
+    if (e instanceof Error) {
+      return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
+    }
     if (typeof e === 'string') {
       return `[typeof:string] ${e}`;
     }
