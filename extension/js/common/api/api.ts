@@ -232,10 +232,17 @@ export class Api {
   public static common = {
     msg: async (acctEmail: string, from: string = '', to: string[] = [], subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string): Promise<SendableMsg> => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      if (!to.length) {
+        throw new Error('The To: field is empty. Please add recipients and try again');
+      }
+      const invalidEmails = to.filter(email => !Str.isEmailValid(email));
+      if (invalidEmails.length) {
+        throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
+      }
       return {
         headers: primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {},
         from,
-        to: Array.isArray(to) ? to as string[] : (to as string).split(','),
+        to,
         subject,
         body: typeof by === 'object' ? by : { 'text/plain': by },
         atts: atts || [],
