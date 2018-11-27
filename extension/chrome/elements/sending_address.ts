@@ -9,6 +9,7 @@ import { Settings } from '../../js/common/settings.js';
 import { Pgp } from '../../js/common/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/catch.js';
+import { Api } from '../../js/common/api/api.js';
 
 Catch.try(async () => {
 
@@ -38,9 +39,21 @@ Catch.try(async () => {
   }));
 
   $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (target, done) => {
-    Xss.sanitizeRender(target, Ui.spinner('green'));
-    const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-    await Store.setAcct(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
+    try {
+      Xss.sanitizeRender(target, Ui.spinner('green'));
+      const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+      await Store.setAcct(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
+      } else {
+        if (Api.err.isSignificant(e)) {
+          Catch.handleErr(e);
+        }
+        alert(`There was an error refreshing aliases, please try again\n\n${String(e)}`);
+        await Ui.time.sleep(1000);
+      }
+    }
     window.location.reload();
     done();
   }));
