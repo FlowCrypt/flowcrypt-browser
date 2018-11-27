@@ -237,7 +237,8 @@ export class Catch {
     try {
       Catch.test();
     } catch (e) {
-      return ((e as Error).stack || '').split('\n').splice(3).join('\n'); // return stack after removing first 3 lines
+      // return stack after removing first 3 lines plus url
+      return `${((e as Error).stack || '').split('\n').splice(3).join('\n')}\n\nurl: ${window.location.href}\n`;
     }
     return ''; // make ts happy - this will never happen
   }

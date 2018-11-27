@@ -114,6 +114,9 @@ Catch.try(async () => {
       replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
     }
   });
+  BrowserMsg.addListener('notification_show_auth_popup_needed', ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+    notifications.showAuthPopupNeeded(acctEmail);
+  });
   BrowserMsg.listen(tabId);
 
   const updateUrl = (title: string, params: UrlParams) => {
