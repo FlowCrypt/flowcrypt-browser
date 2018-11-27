@@ -52,10 +52,9 @@ interface ComposerAppFunctionsInterface {
   closeMsg: () => void;
 }
 
-export class ComposerUserError extends Error { }
-export class ComposerNotReadyError extends ComposerUserError { }
-export class ComposerNetworkError extends Error { }
-export class ComposerResetBtnTrigger extends Error { }
+class ComposerUserError extends Error { }
+class ComposerNotReadyError extends ComposerUserError { }
+class ComposerResetBtnTrigger extends Error { }
 export type ComposerUrlParams = {
   disableDraftSaving: boolean;
   isReplyBox: boolean;
@@ -689,30 +688,20 @@ export class Composer {
   }
 
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
-    try {
-      const pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : null);
-      const items: AwsS3UploadItem[] = [];
-      for (const i of pfRes.approvals.keys()) {
-        items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
-      }
-      await Api.aws.s3Upload(items, this.renderUploadProgress);
-      const { admin_codes, confirmed } = await Api.fc.messageConfirmFiles(items.map(item => item.fields.key));
-      if (!confirmed || confirmed.length !== items.length) {
-        throw new Error('Atts did not upload properly, please try again');
-      }
-      for (const i of atts.keys()) {
-        atts[i].url = pfRes.approvals[i].base_url + pfRes.approvals[i].fields.key;
-      }
-      return admin_codes;
-    } catch (e) {
-      if (Api.err.isAuthErr(e)) {
-        throw e;
-      } else if (Api.err.isNetErr(e)) {
-        throw new ComposerNetworkError(e instanceof Error ? e.message : 'Some files failed to upload, please try again');
-      } else {
-        throw e;
-      }
+    const pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : null);
+    const items: AwsS3UploadItem[] = [];
+    for (const i of pfRes.approvals.keys()) {
+      items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
     }
+    await Api.aws.s3Upload(items, this.renderUploadProgress);
+    const { admin_codes, confirmed } = await Api.fc.messageConfirmFiles(items.map(item => item.fields.key));
+    if (!confirmed || confirmed.length !== items.length) {
+      throw new Error('Attachments did not upload properly, please try again');
+    }
+    for (const i of atts.keys()) {
+      atts[i].url = pfRes.approvals[i].base_url + pfRes.approvals[i].fields.key;
+    }
+    return admin_codes;
   }
 
   private renderUploadProgress = (progress: number) => {
