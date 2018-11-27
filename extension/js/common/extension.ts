@@ -190,7 +190,8 @@ export class BrowserMsg {
         sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(null, 'session_set', bm) as Promise<Bm.Res.SessionSet>,
         db: (bm: Bm.Db) => BrowserMsg.sendAwait(null, 'db', bm) as Promise<Bm.Res.Db>,
       },
-      showSubscribeDialog: (dest: Bm.Dest) => BrowserMsg.sendAwait(dest, 'show_subscribe_dialog', {}) as Promise<Bm.Res.ShowSubscribeDialog>,
+      // undefined below due to https://github.com/FlowCrypt/flowcrypt-browser/issues/1395
+      showSubscribeDialog: (dest: Bm.Dest) => BrowserMsg.sendAwait(dest, 'show_subscribe_dialog', {}) as Promise<Bm.Res.ShowSubscribeDialog | undefined>,
     },
   };
 

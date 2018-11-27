@@ -31,8 +31,8 @@ Catch.try(async () => {
   } else {
     $('.user_free').css('display', 'block');
     $('.action_upgrade').click(Ui.event.prevent('double', async target => {
-      const { active } = await BrowserMsg.send.await.showSubscribeDialog(parentTabId);
-      if (active) {
+      const subscribeResult = await BrowserMsg.send.await.showSubscribeDialog(parentTabId);
+      if (subscribeResult && subscribeResult.active) {
         $('.user_subscribed').css('display', 'block');
         $('.user_free').css('display', 'none');
       }
