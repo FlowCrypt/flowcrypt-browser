@@ -20,23 +20,23 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
-  urlParams.size = urlParams.size ? parseInt(urlParams.size as string) : undefined;
+  let size = urlParams.size ? parseInt(String(urlParams.size)) : undefined;
   const origNameBasedOnFilename = urlParams.name ? (urlParams.name as string).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
+  const decrypted = Env.urlParamRequire.optionalString(urlParams, 'decrypted');
+  const type = Env.urlParamRequire.optionalString(urlParams, 'type');
+  const content = Env.urlParamRequire.optionalString(urlParams, 'content');
+  const msgId = Env.urlParamRequire.optionalString(urlParams, 'msgId');
+  let attId = Env.urlParamRequire.optionalString(urlParams, 'attId');
+  const url = Env.urlParamRequire.optionalString(urlParams, 'url');
+  const name = Env.urlParamRequire.optionalString(urlParams, 'name');
 
   let decryptedAtt: Att | null = null;
   let encryptedAtt: Att | null = null;
   try {
-    if (urlParams.decrypted) {
-      decryptedAtt = new Att({ name: origNameBasedOnFilename, type: urlParams.type as string | undefined, data: urlParams.decrypted as string });
+    if (decrypted) {
+      decryptedAtt = new Att({ name: origNameBasedOnFilename, type, data: decrypted });
     } else {
-      encryptedAtt = new Att({
-        name: origNameBasedOnFilename,
-        type: urlParams.type as string | undefined,
-        data: urlParams.content as string | undefined,
-        msgId: urlParams.msgId as string | undefined,
-        id: urlParams.attId as string | undefined,
-        url: urlParams.url as string | undefined,
-      });
+      encryptedAtt = new Att({ name: origNameBasedOnFilename, type, data: content, msgId, id: attId, url });
     }
   } catch (e) {
     Catch.handleErr(e);
@@ -51,8 +51,8 @@ Catch.try(async () => {
   let passphraseInterval: number | undefined;
   let missingPasspraseLongids: string[] = [];
 
-  $('#type').text(urlParams.type as string);
-  $('#name').text(urlParams.name as string);
+  $('#type').text(type || 'unknown type');
+  $('#name').text(name || 'noname');
 
   $('img#file-format').attr('src', (() => {
     const icon = (name: string) => `/img/fileformat/${name}.png`;
@@ -90,29 +90,29 @@ Catch.try(async () => {
   };
 
   const getUrlFileSize = (origUrl: string): Promise<number | null> => new Promise((resolve, reject) => {
-    console.info('trying to figure out file size');
-    let url;
-    if (Value.is('docs.googleusercontent.com/docs/securesc').in(urlParams.url as string)) {
+    console.info('trying to figure out figetUrlFileSizee size');
+    let realUrl;
+    if (Value.is('docs.googleusercontent.getUrlFileSizeom/docs/securesc').in(origUrl)) {
       try {
         const googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // we catch any errors below
         if (googleDriveFileId) {
-          url = 'https://drive.google.com/uc?export=download&id=' + googleDriveFileId; // this one can actually give us headers properly
+          realUrl = 'https://drive.google.com/uc?export=download&id=' + googleDriveFileId; // this one can actually give us headers properly
         } else {
-          url = origUrl;
+          realUrl = origUrl;
         }
       } catch (e) {
-        url = origUrl;
+        realUrl = origUrl;
       }
     } else {
-      url = origUrl;
+      realUrl = origUrl;
     }
     const xhr = new XMLHttpRequest();
-    xhr.open("HEAD", url, true);
+    xhr.open("HEAD", realUrl, true);
     xhr.onreadystatechange = function () {
       if (this.readyState === this.DONE) {
-        const size = xhr.getResponseHeader("Content-Length");
-        if (size !== null) {
-          resolve(parseInt(size));
+        const contentLength = xhr.getResponseHeader("Content-Length");
+        if (contentLength !== null) {
+          resolve(parseInt(contentLength));
         } else {
           console.info('was not able to find out file size');
           resolve(null);
@@ -126,11 +126,11 @@ Catch.try(async () => {
     const result = await Pgp.msg.decrypt(acctEmail, encryptedAtt.data(), null, true);
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
-      let name = result.content.filename;
-      if (!name || Value.is(name).in(['msg.txt', 'null'])) {
-        name = encryptedAtt.name;
+      let fileName = result.content.filename;
+      if (!fileName || Value.is(fileName).in(['msg.txt', 'null'])) {
+        fileName = encryptedAtt.name;
       }
-      Browser.saveToDownloads(new Att({ name, type: encryptedAtt.type, data: result.content.uint8! }), $('body')); // uint8!: requested uint8 above
+      Browser.saveToDownloads(new Att({ name: fileName, type: encryptedAtt.type, data: result.content.uint8! }), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       clearInterval(passphraseInterval);
@@ -139,20 +139,20 @@ Catch.try(async () => {
       delete result.message;
       console.info(result);
       $('body.attachment').text('Error opening file. Downloading original..');
-      Browser.saveToDownloads(new Att({ name: urlParams.name as string, type: urlParams.type as string, data: encryptedAtt.data() }));
+      Browser.saveToDownloads(new Att({ name, type, data: encryptedAtt.data() }));
     }
   };
 
-  if (!urlParams.size && urlParams.url) { // download url of an unknown size
-    getUrlFileSize(urlParams.url as string).then(size => {
-      if (size !== null) {
-        urlParams.size = size;
+  if (!size && url) { // download url of an unknown size
+    getUrlFileSize(url).then(fileSize => {
+      if (fileSize !== null) {
+        size = fileSize;
       }
     }).catch(Catch.handleErr);
   }
 
-  const renderProgress = (percent: number, received: number, size: number) => {
-    size = size || urlParams.size as number;
+  const renderProgress = (percent: number, received: number, fileSize: number) => {
+    size = fileSize || size;
     if (percent) {
       progressEl.text(percent + '%');
     } else if (size) {
@@ -195,13 +195,13 @@ Catch.try(async () => {
   };
 
   const recoverMissingAttIdIfNeeded = async () => {
-    if (!urlParams.url && !urlParams.attId && urlParams.msgId) {
+    if (!url && !attId && msgId) {
       try {
-        const result = await Google.gmail.msgGet(acctEmail, urlParams.msgId as string, 'full');
+        const result = await Google.gmail.msgGet(acctEmail, msgId, 'full');
         if (result && result.payload && result.payload.parts) {
           for (const attMeta of result.payload.parts) {
-            if (attMeta.filename === urlParams.name && attMeta.body && attMeta.body.size === urlParams.size && attMeta.body.attachmentId) {
-              urlParams.attId = attMeta.body.attachmentId;
+            if (attMeta.filename === name && attMeta.body && attMeta.body.size === size && attMeta.body.attachmentId) {
+              attId = attMeta.body.attachmentId;
               break;
             }
           }
@@ -216,9 +216,9 @@ Catch.try(async () => {
   };
 
   const processAsPublicKeyAndHideAttIfAppropriate = async () => {
-    if (encryptedAtt && encryptedAtt.msgId && encryptedAtt.id && encryptedAtt.treatAs() === 'publicKey') {
+    if (encryptedAtt && encryptedAtt.msgId && encryptedAtt.id && encryptedAtt.id && encryptedAtt.treatAs() === 'publicKey') {
       // this is encrypted public key - download && decrypt & parse & render
-      const att = await Google.gmail.attGet(acctEmail, urlParams.msgId as string, urlParams.attId as string);
+      const att = await Google.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id);
       const result = await Pgp.msg.decrypt(acctEmail, att.data);
       if (result.success && result.content.text) {
         const openpgpType = Pgp.msg.type(result.content.text);
