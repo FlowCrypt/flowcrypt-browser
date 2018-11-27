@@ -28,7 +28,7 @@ Catch.try(async () => {
   const senderEmail = Env.urlParamRequire.optionalString(urlParams, 'senderEmail');
   const msgId = Env.urlParamRequire.optionalString(urlParams, 'msgId');
   const heightHistory: number[] = [];
-  let signature = urlParams.signature || null;
+  let signature = urlParams.signature === true ? true : (urlParams.signature ? String(urlParams.signature) : undefined);
   let msg: string | undefined = Env.urlParamRequire.optionalString(urlParams, 'message'); // todo - could be changed to msg
   let missingOrWrongPassprases: Dict<string | null> = {};
   let msgFetchedFromApi: false | GmailResponseFormat = false;
@@ -484,12 +484,12 @@ Catch.try(async () => {
           const mimeMsg = Str.base64urlDecode(result.raw);
           const parsed = Mime.signed(mimeMsg);
           if (parsed) {
-            signature = parsed.signature;
+            signature = parsed.signature || undefined;
             msg = parsed.signed !== null ? parsed.signed : undefined;
             await decryptAndRender();
           } else {
             const decoded = await Mime.decode(mimeMsg);
-            signature = decoded.signature || null;
+            signature = decoded.signature || undefined;
             console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
             console.info(mimeMsg);
             console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');

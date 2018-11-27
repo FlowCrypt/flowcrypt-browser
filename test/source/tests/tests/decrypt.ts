@@ -1,6 +1,6 @@
 import { TestWithBrowser, TestWithGlobalBrowser } from '..';
 import * as ava from 'ava';
-import { Util, Config } from '../../util';
+import { Config } from '../../util';
 import { BrowserRecipe } from '../browser_recipe';
 
 export const defineDecryptTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredBrowser: TestWithGlobalBrowser) => {

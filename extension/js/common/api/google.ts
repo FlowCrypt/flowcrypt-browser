@@ -238,7 +238,7 @@ export class Google extends Api {
       }
       return null;
     },
-    findAtts: (msgOrPayloadOrPart: R.GmailMsg | R.GmailMsg$payload | R.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId: string | null = null) => {
+    findAtts: (msgOrPayloadOrPart: R.GmailMsg | R.GmailMsg$payload | R.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId?: string) => {
       if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
         internalMsgId = (msgOrPayloadOrPart as R.GmailMsg).id;
         Google.gmail.findAtts((msgOrPayloadOrPart as R.GmailMsg).payload, internalResults, internalMsgId);

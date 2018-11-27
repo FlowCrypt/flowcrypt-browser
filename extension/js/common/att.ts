@@ -7,26 +7,26 @@ import { KeyInfo } from './store.js';
 
 type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 type AttMeta = {
-  data?: string | Uint8Array | null; type?: string | null; name?: string | null; length?: number | null; url?: string | null;
-  inline?: boolean | null; id?: string | null; msgId?: string | null; treatAs?: Att$treatAs; cid?: string | null;
+  data?: string | Uint8Array; type?: string; name?: string; length?: number; url?: string;
+  inline?: boolean; id?: string; msgId?: string; treatAs?: Att$treatAs; cid?: string;
 };
 
 export type FcAttLinkData = { name: string, type: string, size: number };
 
 export class Att {
 
-  private text: string | null = null;
-  private bytes: Uint8Array | null = null;
-  private treatAsValue: Att$treatAs | null = null;
+  private text: string | undefined = undefined;
+  private bytes: Uint8Array | undefined = undefined;
+  private treatAsValue: Att$treatAs | undefined = undefined;
 
   public length: number;
   public type: string;
   public name: string;
-  public url: string | null;
-  public id: string | null;
-  public msgId: string | null;
+  public url: string | undefined;
+  public id: string | undefined;
+  public msgId: string | undefined;
   public inline: boolean;
-  public cid: string | null;
+  public cid: string | undefined;
 
   constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid }: AttMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
@@ -41,12 +41,12 @@ export class Att {
     this.name = name || '';
     this.type = type || 'application/octet-stream';
     this.length = data ? data.length : (length || NaN);
-    this.url = url || null;
+    this.url = url || undefined;
     this.inline = inline !== true;
-    this.id = id || null;
-    this.msgId = msgId || null;
-    this.treatAsValue = treatAs || null;
-    this.cid = cid || null;
+    this.id = id || undefined;
+    this.msgId = msgId || undefined;
+    this.treatAsValue = treatAs || undefined;
+    this.cid = cid || undefined;
   }
 
   public setData = (data: string | Uint8Array) => {
@@ -62,37 +62,37 @@ export class Att {
   }
 
   public hasData = () => {
-    if (this.bytes === null && this.text === null) {
+    if (typeof this.bytes === 'undefined' && typeof this.text === 'undefined') {
       return false;
     }
     return true;
   }
 
   public data = (): string | Uint8Array => {
-    if (this.bytes !== null) {
+    if (typeof this.bytes !== 'undefined') {
       return this.bytes;
     }
-    if (this.text !== null) {
+    if (typeof this.text !== 'undefined') {
       return this.text;
     }
     throw new Error('Att has no data set');
   }
 
   public asText = (): string => {
-    if (this.text === null && this.bytes !== null) {
+    if (typeof this.text === 'undefined' && typeof this.bytes !== 'undefined') {
       this.text = Str.fromUint8(this.bytes);
     }
-    if (this.text !== null) {
+    if (typeof this.text !== 'undefined') {
       return this.text;
     }
     throw new Error('Att has no data set');
   }
 
   public asBytes = (): Uint8Array => {
-    if (this.bytes === null && this.text !== null) {
+    if (typeof this.bytes === 'undefined' && typeof this.text !== 'undefined') {
       this.bytes = Str.toUint8(this.text);
     }
-    if (this.bytes !== null) {
+    if (typeof this.bytes !== 'undefined') {
       return this.bytes;
     }
     throw new Error('Att has no data set');

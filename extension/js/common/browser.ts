@@ -252,13 +252,14 @@ export class Ui {
   }
 
   public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
-    const actualType = typeof values[name];
+    const actualType = values[name] === null ? 'null' : typeof values[name];
     if (actualType === expectedType.replace(/\?$/, '')) { // eg expected string or optional string, and got string
       return values[name];
     }
     if (actualType === 'undefined' && expectedType.match(/\?$/) !== null) { // optional type, got undefined: ok
       return values[name];
     }
+    console.info(values[name]);  // for local debugging
     // tslint:disable-next-line:max-line-length
     const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
     Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
