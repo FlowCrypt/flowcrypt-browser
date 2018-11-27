@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store, SubscriptionAttempt } from './store.js';
-import { Str, Dict } from './common.js';
+import { Str } from './common.js';
 import { Api } from './api/api.js';
 import { Catch } from './catch.js';
 import { Env } from './browser.js';
