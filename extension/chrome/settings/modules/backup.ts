@@ -67,8 +67,10 @@ Catch.try(async () => {
           }
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
-          Catch.handleErr(e);
-          Xss.sanitizeRender('#content', `Could not check for backups: unknown error. ${Ui.retryLink()}`);
+          if (Api.err.isSignificant(e)) {
+            Catch.handleErr(e);
+          }
+          Xss.sanitizeRender('#content', `Could not check for backups: unknown error (${String(e)}). ${Ui.retryLink()}`);
         }
         return;
       }
