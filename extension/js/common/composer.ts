@@ -52,7 +52,7 @@ interface ComposerAppFunctionsInterface {
   closeMsg: () => void;
 }
 
-class ComposerUserError extends Error { }
+export class ComposerUserError extends Error { }
 class ComposerNotReadyError extends ComposerUserError { }
 class ComposerResetBtnTrigger extends Error { }
 export type ComposerUrlParams = {
