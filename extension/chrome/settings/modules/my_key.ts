@@ -33,7 +33,9 @@ Catch.try(async () => {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
   } catch (e) {
-    Catch.handleErr(e);
+    if (Api.err.isSignificant(e)) {
+      Catch.handleErr(e);
+    }
     $('.pubkey_link_container').remove();
   }
 
