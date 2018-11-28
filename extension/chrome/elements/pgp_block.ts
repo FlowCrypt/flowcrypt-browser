@@ -30,7 +30,7 @@ Catch.try(async () => {
   const heightHistory: number[] = [];
   let signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
   let msg: string | undefined = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'message'); // todo - could be changed to msg
-  let missingOrWrongPassprases: Dict<string | null> = {};
+  let missingOrWrongPassprases: Dict<string | undefined> = {};
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];
   let passphraseInterval: number | undefined;
@@ -123,7 +123,7 @@ Catch.try(async () => {
     return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
   };
 
-  const armoredMsgAsHtml = (rawMsgSubstitute: string | null = null) => {
+  const armoredMsgAsHtml = (rawMsgSubstitute?: string) => {
     const m = rawMsgSubstitute || msg;
     if (m && typeof m === 'string') {
       return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
@@ -141,7 +141,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderErr = async (errBoxContent: string, rawMsgSubstitute: string | null = null) => {
+  const renderErr = async (errBoxContent: string, rawMsgSubstitute?: string) => {
     setFrameColor('red');
     await renderContent('<div class="error">' + errBoxContent.replace(/\n/g, '<br>') + '</div>' + armoredMsgAsHtml(rawMsgSubstitute), true);
     $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
@@ -165,8 +165,8 @@ Catch.try(async () => {
     }
   };
 
-  const decryptPwd = async (suppliedPwd?: string | null): Promise<string | null> => {
-    const pwd = suppliedPwd || userEnteredMsgPassword || null;
+  const decryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
+    const pwd = suppliedPwd || userEnteredMsgPassword || undefined;
     if (pwd && hasChallengePassword) {
       return await BgExec.cryptoHashChallengeAnswer(pwd);
     }
@@ -188,7 +188,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderProgress = (element: JQuery<HTMLElement>, percent: number | null, received: number | null, size: number) => {
+  const renderProgress = (element: JQuery<HTMLElement>, percent: number | undefined, received: number | undefined, size: number) => {
     if (percent) {
       element.text(percent + '%');
     } else if (size && received) {
@@ -221,7 +221,7 @@ Catch.try(async () => {
     }));
   };
 
-  const renderPgpSignatureCheckResult = (signature: MsgVerifyResult | null) => {
+  const renderPgpSignatureCheckResult = (signature: MsgVerifyResult | undefined) => {
     if (signature) {
       const signerEmail = signature.contact ? signature.contact.name || senderEmail : senderEmail;
       $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
@@ -301,7 +301,7 @@ Catch.try(async () => {
     }
   };
 
-  const decideDecryptedContentFormattingAndRender = async (decryptedContent: Uint8Array | string, isEncrypted: boolean, sigResult: MsgVerifyResult | null) => {
+  const decideDecryptedContentFormattingAndRender = async (decryptedContent: Uint8Array | string, isEncrypted: boolean, sigResult: MsgVerifyResult | undefined) => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
@@ -351,7 +351,7 @@ Catch.try(async () => {
     setTestState('ready');
   };
 
-  const decryptAndRender = async (optionalPwd: string | null = null) => {
+  const decryptAndRender = async (optionalPwd?: string) => {
     if (typeof msg === 'undefined') {
       throw new Error('msg is undefined');
     }
@@ -441,7 +441,7 @@ Catch.try(async () => {
     const longids = Object.keys(missingOrWrongPassprases);
     const updatedPassphrases = await Promise.all(longids.map(longid => Store.passphraseGet(acctEmail, longid)));
     for (const longid of longids) {
-      if ((missingOrWrongPassprases[longid] || null) !== updatedPassphrases[longids.indexOf(longid)]) {
+      if (missingOrWrongPassprases[longid] !== updatedPassphrases[longids.indexOf(longid)]) {
         missingOrWrongPassprases = {};
         clearInterval(passphraseInterval);
         await decryptAndRender();
@@ -461,7 +461,7 @@ Catch.try(async () => {
         expirationMsg += Lang.pgpBlock.askSenderRenew;
       }
       expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
-      await renderErr(expirationMsg, null);
+      await renderErr(expirationMsg);
       setFrameColor('gray');
       $('.action_security').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail })));
       $('.extend_expiration').click(Ui.event.handle(renderMsgExpirationRenewOptions));
@@ -485,7 +485,7 @@ Catch.try(async () => {
           const parsed = Mime.signed(mimeMsg);
           if (parsed) {
             signature = parsed.signature || undefined;
-            msg = parsed.signed !== null ? parsed.signed : undefined;
+            msg = parsed.signed;
             await decryptAndRender();
           } else {
             const decoded = await Mime.decode(mimeMsg);
@@ -505,7 +505,7 @@ Catch.try(async () => {
         const msgLinkRes = await Api.fc.linkMessage(short);
         passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
-          const downloadUintResult = await Api.download(msgLinkRes.url, null);
+          const downloadUintResult = await Api.download(msgLinkRes.url);
           msg = Str.fromUint8(downloadUintResult);
           await decryptAndRender();
         } else {

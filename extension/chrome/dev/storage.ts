@@ -73,9 +73,9 @@ Catch.try(async () => {
         if (namespaceSel.val() === '-- namespace --' || $('.type').val() === '-- type --' || !keySelVal) {
           alert('Namespace, key and type need to be filled');
         } else {
-          const acctEmail = namespaceSel.val() === 'global' ? null : decodeURIComponent(String(namespaceSel.val())); // it's a text input
+          const acctEmail = namespaceSel.val() === 'global' ? undefined : decodeURIComponent(String(namespaceSel.val())); // it's a text input
           const newValue: Storable = JSON.parse(String($('.value').val())) as Storable; // tslint:disable:no-unsafe-any
-          if (acctEmail === null) {
+          if (!acctEmail) {
             const globalStoreUpdate: GlobalStore = {};
             globalStoreUpdate[keySelVal as GlobalIndex] = newValue as any;
             await Store.setGlobal(globalStoreUpdate);

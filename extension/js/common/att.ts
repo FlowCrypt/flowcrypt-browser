@@ -35,7 +35,7 @@ export class Att {
     if (id && !msgId) {
       throw new Error('Att: if id is set, msgId must be set too');
     }
-    if (data !== null && typeof data !== 'undefined') {
+    if (typeof data !== null && typeof data !== 'undefined') {
       this.setData(data);
     }
     this.name = name || '';

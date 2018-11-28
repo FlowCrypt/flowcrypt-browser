@@ -91,7 +91,7 @@ Catch.try(async () => {
     }));
 
     $('.action_reset_managing_auth').click(Ui.event.handle(async () => {
-      await Store.remove(null, ['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
+      await Store.removeGlobal(['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
       BrowserMsg.send.reload(parentTabId, {});
     }));
 

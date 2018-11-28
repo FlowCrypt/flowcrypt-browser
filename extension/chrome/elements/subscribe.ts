@@ -33,7 +33,7 @@ Catch.try(async () => {
   const handleErrRes = (e: any) => {
     const renderErr = (msg: string, e?: any) => {
       msg = Xss.escape(msg);
-      const debug = e ? `<pre>${Xss.escape(JSON.stringify(e, null, 2))}</pre>` : '';
+      const debug = e ? `<pre>${Xss.escape(JSON.stringify(e, undefined, 2))}</pre>` : '';
       Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
     };
     if (Api.err.isNetErr(e)) {
@@ -138,7 +138,7 @@ Catch.try(async () => {
   $('.action_get_trial').click(Ui.event.prevent('parallel', async (target, done) => {
     btnSpin(target);
     try {
-      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.trial, null);
+      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.trial, undefined);
       handleSuccessfulUpgrade();
     } catch (e) {
       handleErrRes(e);

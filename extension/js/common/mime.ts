@@ -33,7 +33,7 @@ export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'message' | 'passwordMsg';
 export type MsgBlockType = 'text' | ReplaceableMsgBlockType;
 export type MsgBlock = { type: MsgBlockType; content: string; complete: boolean; signature?: string; };
-type MimeParseSignedRes = { full: string, signed: string | null, signature: string | null };
+type MimeParseSignedRes = { full: string, signed?: string, signature?: string };
 
 export class Mime {
 
@@ -97,7 +97,7 @@ export class Mime {
     }
     m = m.toLowerCase();
     const contentType = m.match(/content-type: +[0-9a-z\-\/]+/);
-    if (contentType === null) {
+    if (!contentType) {
       return false;
     }
     if (m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || m.match(/content-disposition: +[0-9a-z\-\/]+/) || m.match(/; boundary=/) || m.match(/; charset=/)) {
@@ -220,7 +220,7 @@ export class Mime {
           if (endIndex !== -1) {
             mimeMsg = mimeMsg.substr(0, endIndex + boundaryEnd.length);
             if (mimeMsg) {
-              const res: MimeParseSignedRes = { full: mimeMsg, signed: null, signature: null };
+              const res: MimeParseSignedRes = { full: mimeMsg };
               let firstPartStartIndex = mimeMsg.indexOf(boundaryBegin);
               if (firstPartStartIndex !== -1) {
                 firstPartStartIndex += boundaryBegin.length;
@@ -232,7 +232,7 @@ export class Mime {
                   const secondPart = mimeMsg.substr(secondPartStartIndex, secondPartEndIndex - secondPartStartIndex);
                   const beginSignature = Pgp.armor.headers('signedMsg').middle;
                   const endSignature = String(Pgp.armor.headers('signedMsg').end);
-                  if (firstPart.match(/^content-type: application\/pgp-signature/gi) !== null && Value.is(beginSignature).in(firstPart) && Value.is(endSignature).in(firstPart)) {
+                  if (firstPart.match(/^content-type: application\/pgp-signature/gi) && Value.is(beginSignature).in(firstPart) && Value.is(endSignature).in(firstPart)) {
                     res.signature = Pgp.armor.clip(firstPart);
                     res.signed = secondPart;
                   } else {

@@ -24,8 +24,8 @@ Catch.try(async () => {
 
   const passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
 
-  const processAttest = async (passphrase: string | null) => {
-    if (passphrase !== null) {
+  const processAttest = async (passphrase: string | undefined) => {
+    if (typeof passphrase !== 'undefined') {
       Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
       const attestation = await BrowserMsg.send.await.bg.attestPacketReceived({ acctEmail, packet: attestPacket, passphrase });
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
@@ -37,7 +37,7 @@ Catch.try(async () => {
     return;
   }
 
-  if (passphrase !== null && passphrase) {
+  if (typeof passphrase !== 'undefined' && passphrase) {
     await processAttest(passphrase);
     return;
   }

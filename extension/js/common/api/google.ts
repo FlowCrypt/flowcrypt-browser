@@ -15,10 +15,10 @@ import { tabsQuery, windowsCreate } from './chrome.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string };
-export type AuthReq = { acctEmail: string | null, scopes: string[], messageId?: string, omitReadScope?: boolean };
+export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, omitReadScope?: boolean };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 type AuthResultSuccess = { result: 'Success', acctEmail: string, error?: undefined };
-type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail: string | null, error?: string };
+type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 declare const openpgp: typeof OpenPGP;
@@ -36,18 +36,18 @@ export class Google extends Api {
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
 
-  public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | null, progress?: ProgressCbs, contentType?: string) => {
+  public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) => {
     progress = progress || {};
     let data, url;
     if (typeof progress!.upload === 'function') { // substituted with {} above
       url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + path + '?uploadType=multipart';
-      data = params || undefined;
+      data = params;
     } else {
       url = 'https://www.googleapis.com/gmail/v1/users/me/' + path;
       if (method === 'GET' || method === 'DELETE') {
-        data = params || undefined;
+        data = params;
       } else {
-        data = JSON.stringify(params) || undefined;
+        data = JSON.stringify(params);
       }
     }
     contentType = contentType || 'application/json; charset=UTF-8';
@@ -81,7 +81,7 @@ export class Google extends Api {
         ].join(' ');
       },
     },
-    usersMeProfile: async (acctEmail: string | null, accessToken?: string): Promise<R.GmailUsersMeProfile> => {
+    usersMeProfile: async (acctEmail: string | undefined, accessToken?: string): Promise<R.GmailUsersMeProfile> => {
       const url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
       let r: R.GmailUsersMeProfile;
       if (acctEmail && !accessToken) {
@@ -113,10 +113,10 @@ export class Google extends Api {
     draftCreate: (acctEmail: string, mimeMsg: string, threadId: string): Promise<R.GmailDraftCreate> => Google.gmailCall(acctEmail, 'POST', 'drafts', {
       message: {
         raw: Str.base64urlEncode(mimeMsg),
-        threadId: threadId || null,
+        threadId,
       },
     }),
-    draftDelete: (acctEmail: string, id: string): Promise<R.GmailDraftDelete> => Google.gmailCall(acctEmail, 'DELETE', 'drafts/' + id, null),
+    draftDelete: (acctEmail: string, id: string): Promise<R.GmailDraftDelete> => Google.gmailCall(acctEmail, 'DELETE', 'drafts/' + id, undefined),
     draftUpdate: (acctEmail: string, id: string, mimeMsg: string): Promise<R.GmailDraftUpdate> => Google.gmailCall(acctEmail, 'PUT', `drafts/${id}`, {
       message: {
         raw: Str.base64urlEncode(mimeMsg),
@@ -147,7 +147,7 @@ export class Google extends Api {
       return Promise.all(msgIds.map(id => Google.gmail.msgGet(acctEmail, id, format)));
     },
     labelsGet: (acctEmail: string): Promise<R.GmailLabels> => Google.gmailCall(acctEmail, 'GET', `labels`, {}),
-    attGet: async (acctEmail: string, msgId: string, attId: string, progressCb: ProgressCb | null = null): Promise<R.GmailAtt> => {
+    attGet: async (acctEmail: string, msgId: string, attId: string, progressCb?: ProgressCb): Promise<R.GmailAtt> => {
       const r = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb }) as R.GmailAtt;
       r.data = Str.base64urlDecode(r.data);
       return r;
@@ -174,7 +174,7 @@ export class Google extends Api {
             parsedJsonDataField = JSON.parse(chunk).data; // tslint:disable-line:no-unsafe-any
           } catch (e) {
             console.log(e);
-            reject({ code: null, message: "Chunk response could not be parsed" });
+            reject(new Error("Chunk response could not be parsed"));
             return;
           }
           for (let i = 0; parsedJsonDataField && i < 50; i++) {
@@ -187,7 +187,7 @@ export class Google extends Api {
               parsedJsonDataField = parsedJsonDataField.slice(0, -1); // tslint:disable-line:no-unsafe-any
             }
           }
-          reject({ code: null, message: "Chunk response could not be decoded" });
+          reject(new Error("Chunk response could not be decoded"));
         }
       };
       GoogleAuth.googleApiAuthHeader(acctEmail).then(authToken => {
@@ -219,8 +219,8 @@ export class Google extends Api {
               if (r.readyState === 3) {
                 r.abort();
               }
-            } else {  // done as a fail - reject
-              reject({ code: null, message: 'Network connection error when downloading a chunk', internal: 'network' });
+            } else { // done as a fail - reject
+              reject({ message: 'Network connection error when downloading a chunk', internal: 'network' }); // todo - use a NetworkError of some sort
               window.clearInterval(responsePollInterval);
             }
           }
@@ -236,7 +236,7 @@ export class Google extends Api {
           }
         }
       }
-      return null;
+      return undefined;
     },
     findAtts: (msgOrPayloadOrPart: R.GmailMsg | R.GmailMsg$payload | R.GmailMsg$payload$part, internalResults: Att[] = [], internalMsgId?: string) => {
       if (msgOrPayloadOrPart.hasOwnProperty('payload')) {
@@ -402,7 +402,7 @@ export class Google extends Api {
       const msgGetRes = await Google.gmail.msgGet(acctEmail, message.id, 'metadata');
       for (const headerName of headerNames) {
         const value = Google.gmail.findHeader(msgGetRes, headerName);
-        if (value !== null) {
+        if (typeof value !== 'undefined') {
           headerVals[headerName] = value;
         } else {
           break;
@@ -477,7 +477,7 @@ export class GoogleAuth {
     }
   }
 
-  public static newAuthPopup = async ({ acctEmail, omitReadScope, scopes }: { acctEmail: string | null, omitReadScope?: boolean, scopes?: string[] }): Promise<AuthRes> => {
+  public static newAuthPopup = async ({ acctEmail, omitReadScope, scopes }: { acctEmail?: string, omitReadScope?: boolean, scopes?: string[] }): Promise<AuthRes> => {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
@@ -502,7 +502,7 @@ export class GoogleAuth {
     return authRes;
   }
 
-  private static waitForOauthWindowClosed = (oauthWinId: number, acctEmail: string | null): Promise<AuthRes> => new Promise(resolve => {
+  private static waitForOauthWindowClosed = (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => new Promise(resolve => {
     const onOauthWinClosed = (closedWinId: number) => {
       if (closedWinId === oauthWinId) {
         chrome.windows.onRemoved.removeListener(onOauthWinClosed);
@@ -524,7 +524,7 @@ export class GoogleAuth {
 
   private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null;
 
-  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | null, scopes: string[]): Promise<AuthRes> => {
+  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[]): Promise<AuthRes> => {
     while (true) {
       const [oauthTab] = await tabsQuery({ windowId });
       if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title) && !GoogleAuth.isAuthUrl(oauthTab.title)) {
@@ -599,12 +599,12 @@ export class GoogleAuth {
   private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<string> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
     await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-    const { emailAddress } = await Google.gmail.usersMeProfile(null, tokensObj.access_token);
+    const { emailAddress } = await Google.gmail.usersMeProfile(undefined, tokensObj.access_token);
     await GoogleAuth.googleAuthSaveTokens(emailAddress, tokensObj, scopes);
     return emailAddress;
   }
 
-  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | null, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {
+  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {
     let currentTokensScopes: string[] = [];
     if (acctEmail) {
       const storage = await Store.getAcct(acctEmail, ['google_token_scopes']);

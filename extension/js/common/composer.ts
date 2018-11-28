@@ -22,15 +22,15 @@ interface ComposerAppFunctionsInterface {
   storageGetAddresses: () => string[];
   storageGetAddressesPks: () => string[];
   storageGetAddressesKeyserver: () => string[];
-  storageEmailFooterGet: () => string | null;
-  storageEmailFooterSet: (footer: string | null) => Promise<void>;
+  storageEmailFooterGet: () => string | undefined;
+  storageEmailFooterSet: (footer?: string) => Promise<void>;
   storageGetHideMsgPassword: () => boolean;
   storageGetSubscription: () => Promise<Subscription>;
   storageGetKey: (senderEmail: string) => Promise<KeyInfo>;
-  storageSetDraftMeta: (storeIfTrue: boolean, draftId: string, threadId: string, recipients: string[] | null, subject: string | null) => Promise<void>;
-  storagePassphraseGet: () => Promise<string | null>;
+  storageSetDraftMeta: (storeIfTrue: boolean, draftId: string, threadId: string, recipients?: string[], subject?: string) => Promise<void>;
+  storagePassphraseGet: () => Promise<string | undefined>;
   storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise<void>;
-  storageContactGet: (email: string[]) => Promise<(Contact | null)[]>;
+  storageContactGet: (email: string[]) => Promise<(Contact | undefined)[]>;
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
@@ -136,7 +136,7 @@ export class Composer {
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
   private subscribeResListener: ((r: Bm.Res.ShowSubscribeDialog) => void) | undefined;
   private additionalMsgHeaders: { [key: string]: string } = {};
-  private btnUpdateTimeout: number | null = null;
+  private btnUpdateTimeout?: number;
   private refBodyHeight: number;
   private v: ComposerUrlParams;
 
@@ -153,7 +153,7 @@ export class Composer {
     if (subscription.active) {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
-      this.app.storageEmailFooterSet(null).catch(Catch.handleErr);
+      this.app.storageEmailFooterSet(undefined).catch(Catch.handleErr);
       BrowserMsg.send.notificationShow(this.v.parentTabId, {
         notification: `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`,
       });
@@ -370,7 +370,7 @@ export class Composer {
       } else if (this.v.isReplyBox && Api.err.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.v.acctEmail);
         await Ui.time.sleep(500);
-        await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId, null, null);
+        await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
       } else {
@@ -387,10 +387,10 @@ export class Composer {
     }
   }
 
-  private resetSendBtn = (delay: number | null = null) => {
+  private resetSendBtn = (delay?: number) => {
     const btnText = this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND;
     const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span tabindex="4">${btnText}</span>`);
-    if (this.btnUpdateTimeout !== null) {
+    if (typeof this.btnUpdateTimeout !== 'undefined') {
       clearTimeout(this.btnUpdateTimeout);
     }
     if (!delay) {
@@ -412,7 +412,7 @@ export class Composer {
       this.draftSaveInProgress = true;
       this.S.cached('send_btn_note').text('Saving');
       const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
-      const encrypted = await Pgp.msg.encrypt([primaryKi.public], null, null, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
+      const encrypted = await Pgp.msg.encrypt([primaryKi.public], undefined, undefined, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
       let body: string;
       if (this.v.threadId) { // replied message
         body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
@@ -460,7 +460,7 @@ export class Composer {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.draftSaveInProgress ? true : undefined);
     if (this.v.draftId) {
-      await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId, null, null);
+      await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId);
       try {
         await this.app.emailProviderDraftDelete(this.v.draftId);
       } catch (e) {
@@ -475,7 +475,7 @@ export class Composer {
 
   private decryptAndRenderDraft = async (encryptedDraft: string, headers: { from?: string; to: string[] }) => {
     const passphrase = await this.app.storagePassphraseGet();
-    if (passphrase !== null) {
+    if (typeof passphrase !== 'undefined') {
       const result = await Pgp.msg.decrypt(this.v.acctEmail, encryptedDraft);
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
@@ -512,18 +512,18 @@ export class Composer {
     }
   }
 
-  private whenMasterPassphraseEntered = (secondsTimeout: number | null = null): Promise<string | null> => {
+  private whenMasterPassphraseEntered = (secondsTimeout?: number): Promise<string | undefined> => {
     return new Promise(resolve => {
       clearInterval(this.passphraseInterval);
-      const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : null;
+      const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
       this.passphraseInterval = Catch.setHandledInterval(async () => {
         const passphrase = await this.app.storagePassphraseGet();
-        if (passphrase !== null) {
+        if (typeof passphrase !== 'undefined') {
           clearInterval(this.passphraseInterval);
           resolve(passphrase);
         } else if (timeoutAt && Date.now() > timeoutAt) {
           clearInterval(this.passphraseInterval);
-          resolve(null);
+          resolve(undefined);
         }
       }, 1000);
     });
@@ -560,7 +560,7 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throwIfFormValsInvalid = (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | null) => {
+  private throwIfFormValsInvalid = (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
     const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -620,7 +620,7 @@ export class Composer {
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
       const { armoredPubkeys, emailsWithoutPubkeys } = await this.collectAllAvailablePublicKeys(this.v.acctEmail, recipients);
-      const challenge = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : null;
+      const challenge = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
       this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, challenge);
       if (this.S.cached('icon_sign').is('.active')) {
         await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
@@ -632,7 +632,7 @@ export class Composer {
     }
   }
 
-  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | null, subscription: Subscription) => {
+  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients, subject, plaintext, challenge, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys, challenge);
@@ -646,15 +646,15 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | null, subscription: Subscription) => {
+  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.v.acctEmail, ['primary']);
     if (primaryKi) {
       const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
       const passphrase = await this.app.storagePassphraseGet();
-      if (passphrase === null && !prv.isDecrypted()) {
+      if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.v.parentTabId, { type: 'sign', longids: ['primary'] });
-        if ((await this.whenMasterPassphraseEntered(60)) !== null) { // pass phrase entered
+        if ((typeof await this.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
           await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
         } else { // timeout - reset - no passphrase entered
           clearInterval(this.passphraseInterval);
@@ -676,7 +676,7 @@ export class Composer {
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
 
         if (!prv.isDecrypted()) {
-          await Pgp.key.decrypt(prv, [passphrase!]); // checked !== null above
+          await Pgp.key.decrypt(prv, [passphrase!]); // checked !== undefined above
         }
         const signedData = await Pgp.msg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
@@ -692,7 +692,7 @@ export class Composer {
   }
 
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
-    const pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : null);
+    const pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
     const items: AwsS3UploadItem[] = [];
     for (const i of pfRes.approvals.keys()) {
       items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
@@ -727,7 +727,7 @@ export class Composer {
     return plaintext;
   }
 
-  private addReplyTokenToMsgBodyIfNeeded = async (recipients: string[], subject: string, plaintext: string, challenge: Pwd | null, subscription: Subscription): Promise<string> => {
+  private addReplyTokenToMsgBodyIfNeeded = async (recipients: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription): Promise<string> => {
     if (!challenge || !subscription.active) {
       return plaintext;
     }
@@ -764,7 +764,7 @@ export class Composer {
       const k = openpgp.key.readArmored(armoredPubkey).keys[0];
       const oneSecondBeforeExpiration = await Pgp.key.dateBeforeExpiration(k);
       usableFrom.push(k.getCreationTime().getTime());
-      if (oneSecondBeforeExpiration !== null) { // key does expire
+      if (typeof oneSecondBeforeExpiration !== 'undefined') { // key does expire
         usableUntil.push(oneSecondBeforeExpiration.getTime());
       }
     }
@@ -787,17 +787,17 @@ export class Composer {
   }
 
   private doEncryptFormatSend = async (
-    pubkeys: string[], pwd: Pwd | null, plaintext: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []
+    pubkeys: string[], pwd: Pwd | undefined, plaintext: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []
   ) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
-    const encrypted = await Pgp.msg.encrypt(pubkeys, null, pwd, plaintext, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
+    const encrypted = await Pgp.msg.encrypt(pubkeys, undefined, pwd, plaintext, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
     let body: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate(to, { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      const { short, admin_code } = await Api.fc.messageUpload(body['text/plain']!, subs.active ? 'uuid' : null);
+      const { short, admin_code } = await Api.fc.messageUpload(body['text/plain']!, subs.active ? 'uuid' : undefined);
       const storage = await Store.getAcct(this.v.acctEmail, ['outgoing_language']);
       body = this.formatPasswordProtectedEmail(short, body, pubkeys, storage.outgoing_language || 'EN');
       body = this.formatEmailTextFooter(body);
@@ -841,11 +841,11 @@ export class Composer {
           if (lookupResult.pubkey) {
             const parsed = openpgp.key.readArmored(lookupResult.pubkey);
             if (!parsed.keys[0]) {
-              Catch.log('Dropping found but incompatible public key', { for: lookupResult.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : null });
-              lookupResult.pubkey = null;
-            } else if ((await parsed.keys[0].getEncryptionKey()) === null) {
+              Catch.log('Dropping found but incompatible public key', { for: lookupResult.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
+              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
+            } else if (! await parsed.keys[0].getEncryptionKey()) {
               Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: lookupResult.email, fingerprint: Pgp.key.fingerprint(parsed.keys[0]) });
-              lookupResult.pubkey = null;
+              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
           }
           const ksContact = this.app.storageContactObj(
@@ -1243,8 +1243,8 @@ export class Composer {
     this.S.cached('contacts').css('display', 'none');
   }
 
-  private updatePubkeyIcon = (include: boolean | null = null) => {
-    if (include === null) { // decide if pubkey should be included
+  private updatePubkeyIcon = (include?: boolean) => {
+    if (typeof include === 'undefined') { // decide if pubkey should be included
       if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
         this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.v.from || this.getSenderFromDom()).in(this.myAddrsOnPks));
       }
@@ -1257,8 +1257,8 @@ export class Composer {
     }
   }
 
-  updateFooterIcon = (include: boolean | null = null) => {
-    if (include === null) { // decide if pubkey should be included
+  updateFooterIcon = (include?: boolean) => {
+    if (typeof include === 'undefined') { // decide if pubkey should be included
       this.updateFooterIcon(!!this.app.storageEmailFooterGet());
     } else { // set icon to specific state
       if (include) {
@@ -1346,7 +1346,7 @@ export class Composer {
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  private getRecipientsFromDom = (filter: "no_pgp" | null = null): string[] => {
+  private getRecipientsFromDom = (filter?: "no_pgp"): string[] => {
     let selector;
     if (filter === 'no_pgp') {
       selector = '.recipients span.no_pgp';
@@ -1509,13 +1509,13 @@ export class Composer {
       storageGetAddresses: () => [],
       storageGetAddressesPks: () => [],
       storageGetAddressesKeyserver: () => [],
-      storageEmailFooterGet: () => null,
+      storageEmailFooterGet: () => undefined,
       storageEmailFooterSet: () => Promise.resolve(),
       storageGetHideMsgPassword: () => false,
-      storageGetSubscription: () => Promise.resolve(new Subscription(null)),
+      storageGetSubscription: () => Promise.resolve(new Subscription(undefined)),
       storageSetDraftMeta: () => Promise.resolve(),
       storageGetKey: () => { throw new Error('storage_get_key not implemented'); },
-      storagePassphraseGet: () => Promise.resolve(null),
+      storagePassphraseGet: () => Promise.resolve(undefined),
       storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise.resolve(),
       storageContactGet: (email: string[]) => Promise.resolve([]),
       storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Promise.resolve(),
@@ -1523,7 +1523,7 @@ export class Composer {
       storageContactSearch: (query: DbContactFilter) => Promise.resolve([]),
       storageContactObj: Store.dbContactObj,
       emailProviderDraftGet: (draftId: string) => Promise.resolve(undefined),
-      emailProviderDraftCreate: (mimeMsg: string) => Promise.reject(null),
+      emailProviderDraftCreate: (mimeMsg: string) => Promise.reject(undefined),
       emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise.resolve({}),
       emailProviderDraftDelete: (draftId: string) => Promise.resolve({}),
       emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise.reject({ message: 'not implemented' }),
@@ -1531,11 +1531,11 @@ export class Composer {
       emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
       emailProviderExtractArmoredBlock: (msgId) => Promise.resolve(''),
       renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => Promise.resolve(),
-      renderFooterDialog: () => null,
-      renderAddPubkeyDialog: (emails: string[]) => null,
-      renderHelpDialog: () => null,
-      renderSendingAddrDialog: () => null,
-      closeMsg: () => null,
+      renderFooterDialog: () => undefined,
+      renderAddPubkeyDialog: (emails: string[]) => undefined,
+      renderHelpDialog: () => undefined,
+      renderSendingAddrDialog: () => undefined,
+      closeMsg: () => undefined,
       factoryAtt: (att: Att) => `<div>${att.name}</div>`,
     };
   }

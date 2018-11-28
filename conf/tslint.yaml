@@ -51,4 +51,5 @@ rules:
     no-bitwise: false  # may enable in the future
     no-namespace: false
     jsdoc-format: false  # add back later
+    no-null-keyword: true
 ...

@@ -32,7 +32,7 @@ Catch.try(async () => {
           return hostPageInfo.email;
         }
         const acctEmailLoadingMatch = $("#loading div.msg").text().match(/[a-z0-9._\-]+@[^…< ]+/gi);
-        if (acctEmailLoadingMatch !== null) { // try parse from loading div
+        if (acctEmailLoadingMatch) { // try parse from loading div
           return acctEmailLoadingMatch[0].trim().toLowerCase();
         }
         const emailFromAccountDropdown = $('div.gb_Cb > div.gb_Ib').text().trim().toLowerCase();
@@ -44,7 +44,7 @@ Catch.try(async () => {
     };
 
     const getInsightsFromHostVariables = () => {
-      const insights: WebmailVariantObject = { newDataLayer: null, newUi: null, email: null, gmailVariant: null };
+      const insights: WebmailVariantObject = { newDataLayer: undefined, newUi: undefined, email: undefined, gmailVariant: undefined };
       $('body').append([ // xss-direct - not sanitized because adding a <script> in intentional here
         '<script>',
         '  (function() {',
@@ -70,7 +70,7 @@ Catch.try(async () => {
         if (Str.isEmailValid(extracted[2])) {
           insights.email = extracted[2].trim().toLowerCase();
         }
-        if (insights.newDataLayer === null && insights.newUi === null && insights.email === null) {
+        if (typeof insights.newDataLayer === 'undefined' && typeof insights.newUi === 'undefined' && typeof insights.email === 'undefined') {
           insights.gmailVariant = 'html';
         } else if (insights.newUi === false) {
           insights.gmailVariant = 'standard';
@@ -136,7 +136,7 @@ Catch.try(async () => {
       const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
       const canReadEmails = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
       injector.btns();
-      replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, null);
+      replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, undefined);
       await notifications.showInitial(acctEmail);
       replacer.everything();
       replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {

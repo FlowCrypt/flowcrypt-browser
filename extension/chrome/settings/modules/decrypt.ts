@@ -39,7 +39,7 @@ Catch.try(async () => {
   }));
 
   const decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    const result = await Pgp.msg.decrypt(acctEmail, encrypted.asBytes(), null, true);
+    const result = await Pgp.msg.decrypt(acctEmail, encrypted.asBytes(), undefined, true);
     if (result.success) {
       const attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8! }); // uint8!: requested uint8 above
       Browser.saveToDownloads(attachment);

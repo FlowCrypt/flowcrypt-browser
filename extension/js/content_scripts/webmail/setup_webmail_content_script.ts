@@ -10,7 +10,7 @@ import { ContentScriptWindow, BrowserMsg, TabIdRequiredError, Bm } from '../../c
 import { Ui, XssSafeFactory, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
 import { Catch } from '../../common/catch.js';
 
-export type WebmailVariantObject = { newDataLayer: null | boolean, newUi: null | boolean, email: null | string, gmailVariant: WebmailVariantString };
+export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
@@ -207,7 +207,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
      */
 
     (window as ContentScriptWindow).injected = true; // background script will use this to test if scripts were already injected, and inject if not
-    (window as ContentScriptWindow).account_email_global = null; // used by background script
+    (window as ContentScriptWindow).account_email_global = undefined; // used by background script
     (window as ContentScriptWindow).same_world_global = true; // used by background_script
 
     (window as ContentScriptWindow).destruction_event = Env.runtimeId() + '_destroy';

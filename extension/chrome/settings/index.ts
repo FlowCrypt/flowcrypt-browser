@@ -22,7 +22,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
   let page = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
   page = (page === 'undefined') ? undefined : page; // in case an "undefined" strring slipped in
-  const pageUrlParams: UrlParams | null = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : null;
+  const pageUrlParams: UrlParams | undefined = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : undefined;
   const acctEmails = await Store.acctEmailsGet();
   const addNewAcct = uncheckedUrlParams.addNewAcct === true;
   const advanced = uncheckedUrlParams.advanced === true;
@@ -43,7 +43,7 @@ Catch.try(async () => {
   const notifications = new Notifications(tabId);
 
   BrowserMsg.addListener('open_page', ({ page, addUrlText }: Bm.OpenPage) => {
-    Settings.renderSubPage(acctEmail || null, tabId, page, addUrlText);
+    Settings.renderSubPage(acctEmail, tabId, page, addUrlText);
   });
   BrowserMsg.addListener('redirect', ({ location }: Bm.Redirect) => {
     window.location.href = location;
@@ -256,7 +256,7 @@ Catch.try(async () => {
     const subscription = await Store.subscription();
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
-      const showAcct = () => Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/account.htm');
+      const showAcct = () => Settings.renderSubPage(acctEmail, tabId, '/chrome/settings/modules/account.htm');
       $('.logo-row .subscription .level').text('advanced').css('display', 'inline-block').click(Ui.event.handle(showAcct)).css('cursor', 'pointer');
       if (subscription.method === 'trial') {
         $('.logo-row .subscription .expire').text(subscription.expire ? ('trial ' + subscription.expire.split(' ')[0]) : 'lifetime').css('display', 'inline-block');
@@ -379,9 +379,9 @@ Catch.try(async () => {
   await Ui.abortAndRenderErrOnUnprotectedKey(acctEmail, tabId);
   if (page) {
     if (page === '/chrome/settings/modules/auth_denied.htm') {
-      Settings.renderSubPage(acctEmail || null, tabId, page);
+      Settings.renderSubPage(acctEmail, tabId, page);
     } else {
-      Settings.renderSubPage(acctEmail || null, tabId, page, pageUrlParams);
+      Settings.renderSubPage(acctEmail, tabId, page, pageUrlParams);
     }
   }
 

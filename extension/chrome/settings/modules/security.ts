@@ -50,7 +50,7 @@ Catch.try(async () => {
   };
 
   const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
-  if (storedPassphrase === null) {
+  if (typeof storedPassphrase === 'undefined') {
     $('#passphrase_to_open_email').prop('checked', true);
   }
   $('#passphrase_to_open_email').change(Ui.event.handle(() => {

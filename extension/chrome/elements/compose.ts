@@ -131,8 +131,8 @@ Catch.try(async () => {
     storageGetAddresses: () => storage.addresses || [acctEmail],
     storageGetAddressesPks: () => storage.addresses_pks || [],
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
-    storageEmailFooterGet: () => storage.email_footer || null,
-    storageEmailFooterSet: async (footer: string | null) => {
+    storageEmailFooterGet: () => storage.email_footer || undefined,
+    storageEmailFooterSet: async (footer: string | undefined) => {
       storage.email_footer = footer;
       await Store.setAcct(acctEmail, { email_footer: footer });
     },
@@ -168,8 +168,8 @@ Catch.try(async () => {
     },
     storagePassphraseGet: async () => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      if (primaryKi === null) {
-        return null; // flowcrypt just uninstalled or reset?
+      if (!primaryKi) {
+        return undefined; // flowcrypt just uninstalled or reset?
       }
       return await Store.passphraseGet(acctEmail, primaryKi.longid);
     },
@@ -182,10 +182,10 @@ Catch.try(async () => {
       };
       await Store.setGlobal(adminCodeStorage);
     },
-    storageContactGet: (email: string[]) => Store.dbContactGet(null, email),
-    storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Store.dbContactUpdate(null, email, update),
-    storageContactSave: (contact: Contact) => Store.dbContactSave(null, contact),
-    storageContactSearch: (query: DbContactFilter) => Store.dbContactSearch(null, query),
+    storageContactGet: (email: string[]) => Store.dbContactGet(undefined, email),
+    storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Store.dbContactUpdate(undefined, email, update),
+    storageContactSave: (contact: Contact) => Store.dbContactSave(undefined, contact),
+    storageContactSearch: (query: DbContactFilter) => Store.dbContactSearch(undefined, query),
     storageContactObj: Store.dbContactObj,
     emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(acctEmail, draftId, 'raw'),
     emailProviderDraftCreate: (mimeMsg: string) => Google.gmail.draftCreate(acctEmail, mimeMsg, threadId),

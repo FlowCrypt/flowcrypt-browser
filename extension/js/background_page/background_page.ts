@@ -35,16 +35,16 @@ chrome.runtime.onInstalled.addListener(event => {
 
   const openExtensionTab = async (url: string) => {
     const openedTab = await getFcSettingsTabIdIfOpen();
-    if (openedTab === null) {
+    if (!openedTab) {
       chrome.tabs.create({ url });
     } else {
       chrome.tabs.update(openedTab, { url, active: true });
     }
   };
 
-  const openSettingsPage = async (path: string = 'index.htm', acctEmail: string | null = null, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
+  const openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
     const basePath = chrome.extension.getURL(`chrome/settings/${path}`);
-    const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : null;
+    const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail) {
       await openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams }));
     } else if (addNewAcct) {
@@ -69,18 +69,18 @@ chrome.runtime.onInstalled.addListener(event => {
         if (tabs[0].id !== undefined) {
           type ScriptRes = { acctEmail: string | undefined, sameWorld: boolean | undefined }[];
           chrome.tabs.executeScript(tabs[0].id!, { code: 'var r = {acctEmail: window.account_email_global, sameWorld: window.same_world_global}; r' }, (result: ScriptRes) => {
-            respond({ provider: 'gmail', acctEmail: result[0].acctEmail || null, sameWorld: result[0].sameWorld === true });
+            respond({ provider: 'gmail', acctEmail: result[0].acctEmail, sameWorld: result[0].sameWorld === true });
           });
         } else {
           Catch.report('tabs[0].id is undefined');
         }
       } else {
-        respond({ provider: null, acctEmail: null, sameWorld: null });
+        respond({ provider: undefined, acctEmail: undefined, sameWorld: undefined });
       }
     });
   };
 
-  const getFcSettingsTabIdIfOpen = (): Promise<number | null> => new Promise(resolve => {
+  const getFcSettingsTabIdIfOpen = (): Promise<number | undefined> => new Promise(resolve => {
     chrome.tabs.query({ currentWindow: true }, tabs => {
       const extension = chrome.extension.getURL('/');
       for (const tab of tabs) {
@@ -89,15 +89,15 @@ chrome.runtime.onInstalled.addListener(event => {
           return;
         }
       }
-      resolve(null);
+      resolve(undefined);
     });
   });
 
   const updateUninstallUrl: Bm.ResponselessHandler = async () => {
     const acctEmails = await Store.acctEmailsGet();
     if (typeof chrome.runtime.setUninstallURL !== 'undefined') {
-      const email = (acctEmails && acctEmails.length) ? acctEmails[0] : null;
-      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`);
+      const email = (acctEmails && acctEmails.length) ? acctEmails[0] : undefined;
+      chrome.runtime.setUninstallURL(`https://flowcrypt.com/leaving.htm#${JSON.stringify({ email, metrics: null })}`); // tslint:disable-line:no-null-keyword
     }
   };
 
@@ -105,7 +105,7 @@ chrome.runtime.onInstalled.addListener(event => {
     Catch.try(() => {
       if (db) {
         // @ts-ignore due to https://github.com/Microsoft/TypeScript/issues/6480
-        Store[request.f].apply(null, [db].concat(request.args)).then(respond).catch(Catch.handleErr); // tslint:disable-line:no-unsafe-any
+        Store[request.f].apply(undefined, [db].concat(request.args)).then(respond).catch(Catch.handleErr); // tslint:disable-line:no-unsafe-any
       } else {
         Catch.log('db corrupted, skipping: ' + request.f);
       }
@@ -143,16 +143,14 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup, s, respond) => GoogleAuth.newAuthPopup(r).then(respond).catch(Catch.handleErr));
   BrowserMsg.bgAddListener('_tab_', (r: any, sender: Bm.Sender, respond: (r: Bm.Res._tab_) => void) => {
     if (sender === 'background') {
-      respond({ tabId: null }); // background script - direct
-    } else if (sender === null || sender === undefined) {
-      respond({ tabId: undefined }); // not sure when or why this happens - maybe orphaned frames during update
+      respond({ tabId: null });  // tslint:disable-line:no-null-keyword
     } else if (sender.tab) {
       respond({ tabId: `${sender.tab.id}:${sender.frameId}` });
     } else {
       // sender.tab: "This property will only be present when the connection was opened from a tab (including content scripts)"
       // https://developers.chrome.com/extensions/runtime#type-MessageSender
       // MDN says the same - thus this is most likely a background script, through browser message passing
-      respond({ tabId: null });
+      respond({ tabId: null }); // tslint:disable-line:no-null-keyword
     }
   });
   BrowserMsg.bgListen();
@@ -163,7 +161,7 @@ chrome.runtime.onInstalled.addListener(event => {
   BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.handleErr);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be concating it to show the last 100
-    await Store.remove(null, ['errors']);
+    await Store.removeGlobal(['errors']);
   }
 
 })().catch(Catch.handleErr);

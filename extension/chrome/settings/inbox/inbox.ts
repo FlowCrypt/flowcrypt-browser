@@ -39,7 +39,7 @@ Catch.try(async () => {
   const tabId = await BrowserMsg.requiredTabId();
   notifications = new Notifications(tabId);
   factory = new XssSafeFactory(acctEmail, tabId);
-  injector = new Injector('settings', null, factory);
+  injector = new Injector('settings', undefined, factory);
   const storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'addresses']);
   emailProvider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.metaNotificationContainer()); // xss-safe-factory

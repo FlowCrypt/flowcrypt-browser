@@ -17,7 +17,7 @@ type ParsedAttest$content = {
   [key: string]: string | undefined; action?: string; attester?: string; email_hash?: string;
   fingerprint?: string; fingerprint_old?: string; random?: string;
 };
-type ParsedAttest = { success: boolean; content: ParsedAttest$content; text: string | null; error: string | null; };
+type ParsedAttest = { success: boolean; content: ParsedAttest$content; text?: string; error?: string; };
 type FcAuthToken = { account: string, token: string };
 type FcAuthMethods = 'uuid' | FcAuthToken | null;
 type SubscriptionLevel = 'pro' | null;
@@ -35,11 +35,11 @@ type RawAjaxError = {
 };
 
 export type ChunkedCb = (r: ProviderContactsResults) => void;
-export type ProgressCb = (percent: number | null, loaded: number | null, total: number | null) => void;
+export type ProgressCb = (percent?: number, loaded?: number, total?: number) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 export type ProviderContactsQuery = { substring: string };
-export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread: string | null; };
-export type SubscriptionInfo = { active: boolean | null; method: PaymentMethod | null; level: SubscriptionLevel; expire: string | null; };
+export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
+export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; };
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
@@ -128,7 +128,7 @@ export namespace R { // responses
   export type AttReplaceConfirm = { attested: boolean };
   export type AttTestWelcome = { sent: boolean };
   export type AttInitialLegacySugmit = { attested: boolean, saved: boolean };
-  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ attested: boolean, pubkey: string | null, match: boolean }> };
+  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ attested: boolean, pubkey?: string, match: boolean }> };
 
   export type GmailUsersMeProfile = { emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string };
   export type GmailMsg$header = { name: string, value: string };
@@ -246,10 +246,10 @@ export class Api {
         subject,
         body: typeof by === 'object' ? by : { 'text/plain': by },
         atts: atts || [],
-        thread: threadRef || null,
+        thread: threadRef,
       };
     },
-    replyCorrespondents: (acctEmail: string, addresses: string[], lastMsgSender: string | null, lastMsgRecipients: string[]) => {
+    replyCorrespondents: (acctEmail: string, addresses: string[], lastMsgSender: string | undefined, lastMsgRecipients: string[]) => {
       const replyToEstimate = lastMsgRecipients;
       if (lastMsgSender) {
         replyToEstimate.unshift(lastMsgSender);
@@ -305,7 +305,7 @@ export class Api {
       for (const pubkeySearchResult of results) {
         if (!pubkeySearchResult.pubkey) {
           diagnosis.hasPubkeyMissing = true;
-          diagnosis.results[pubkeySearchResult.email] = { attested: false, pubkey: null, match: false };
+          diagnosis.results[pubkeySearchResult.email] = { attested: false, pubkey: undefined, match: false };
         } else {
           let match = true;
           if (!Value.is(Pgp.key.longid(pubkeySearchResult.pubkey)).in(storedKeysLongids)) {
@@ -340,12 +340,7 @@ export class Api {
           'OLD': 'fingerprint_old',
           'RAN': 'random',
         } as Dict<string>;
-        const result: ParsedAttest = {
-          success: false,
-          content: {},
-          error: null,
-          text: null,
-        };
+        const result: ParsedAttest = { success: false, content: {} };
         const packetHeaders = Pgp.armor.headers('attestPacket', 're');
         const matches = text.match(RegExp(packetHeaders.begin + '([^]+)' + packetHeaders.end, 'm'));
         if (matches && matches[1]) {
@@ -428,16 +423,16 @@ export class Api {
     helpUninstall: (email: string, client: string) => Api.internal.apiFcCall('help/uninstall', {
       email,
       client,
-      metrics: null,
+      metrics: null, // tslint:disable-line:no-null-keyword
     }),
-    accountLogin: async (acctEmail: string, token: string | null = null): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
+    accountLogin: async (acctEmail: string, token?: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
       const authInfo = await Store.authInfo();
       const uuid = authInfo.uuid || Pgp.hash.sha1(Pgp.password.random());
       const account = authInfo.acctEmail || acctEmail;
       const response = await Api.internal.apiFcCall('account/login', {
         account,
         uuid,
-        token,
+        token: token || null, // tslint:disable-line:no-null-keyword
       }) as R.FcAccountLogin;
       if (response.registered !== true) {
         throw new Error('account_login did not result in successful registration');
@@ -463,8 +458,8 @@ export class Api {
           }
         } else {
           if (authInfo.acctEmail) {
-            globalStoreUpdate.cryptup_account_email = null;
-            globalStoreUpdate.cryptup_account_uuid = null;
+            globalStoreUpdate.cryptup_account_email = undefined;
+            globalStoreUpdate.cryptup_account_uuid = undefined;
           }
         }
         if (response.subscription) {
@@ -474,11 +469,11 @@ export class Api {
           }
         } else {
           if (subscription.level || subscription.expire || subscription.active || subscription.method) {
-            globalStoreUpdate.cryptup_account_subscription = null;
+            globalStoreUpdate.cryptup_account_subscription = undefined;
           }
         }
         if (Object.keys(globalStoreUpdate).length) {
-          Catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : null), response);
+          Catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : undefined), response);
           await Store.setGlobal(globalStoreUpdate);
           return true;
         } else {
@@ -497,19 +492,19 @@ export class Api {
       }
       return await Api.internal.apiFcCall('account/update', request) as R.FcAccountUpdate;
     },
-    accountSubscribe: async (product: string, method: string, paymentSourceToken: string | null = null): Promise<R.FcAccountSubscribe> => {
+    accountSubscribe: async (product: string, method: string, paymentSourceToken?: string): Promise<R.FcAccountSubscribe> => {
       const authInfo = await Store.authInfo();
       const response = await Api.internal.apiFcCall('account/subscribe', {
         account: authInfo.acctEmail,
         uuid: authInfo.uuid,
         method,
-        source: paymentSourceToken,
+        source: paymentSourceToken || null, // tslint:disable-line:no-null-keyword
         product,
       }) as R.FcAccountSubscribe;
       await Store.setGlobal({ cryptup_account_subscription: response.subscription });
       return response;
     },
-    messagePresignFiles: async (atts: Att[], authMethod: FcAuthMethods): Promise<R.FcMsgPresignFiles> => {
+    messagePresignFiles: async (atts: Att[], authMethod?: FcAuthMethods): Promise<R.FcMsgPresignFiles> => {
       let response: R.FcMsgPresignFiles;
       const lengths = atts.map(a => a.length);
       if (!authMethod) {
@@ -538,7 +533,7 @@ export class Api {
     messageConfirmFiles: (identifiers: string[]): Promise<R.FcMsgConfirmFiles> => Api.internal.apiFcCall('message/confirm_files', {
       identifiers,
     }),
-    messageUpload: async (encryptedDataArmored: string, authMethod: FcAuthMethods): Promise<R.FcMsgUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
+    messageUpload: async (encryptedDataArmored: string, authMethod?: FcAuthMethods): Promise<R.FcMsgUpload> => { // todo - DEPRECATE THIS. Send as JSON to message/store
       if (encryptedDataArmored.length > 100000) {
         throw new Error('Message text should not be more than 100 KB. You can send very long texts as attachments.');
       }
@@ -554,13 +549,13 @@ export class Api {
       const authInfo = await Store.authInfo();
       return await Api.internal.apiFcCall('message/token', { account: authInfo.acctEmail, uuid: authInfo.uuid }) as R.FcMsgToken;
     },
-    messageExpiration: async (adminCodes: string[], addDays: null | number = null): Promise<R.ApirFcMsgExpiration> => {
+    messageExpiration: async (adminCodes: string[], addDays?: number): Promise<R.ApirFcMsgExpiration> => {
       const authInfo = await Store.authInfo();
       return await Api.internal.apiFcCall('message/expiration', {
         account: authInfo.acctEmail,
         uuid: authInfo.uuid,
         admin_codes: adminCodes,
-        add_days: addDays
+        add_days: addDays || null, // tslint:disable-line:no-null-keyword
       }) as R.ApirFcMsgExpiration;
     },
     messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.apiFcCall('message/reply', {
@@ -598,7 +593,7 @@ export class Api {
         promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
             progress[i] = singleFileProgress;
-            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress), null, null)).bind(undefined)(); // tslint:disable-line:no-unsafe-any
+            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress))).bind(undefined)(); // tslint:disable-line:no-unsafe-any
           }
         }));
       }
@@ -606,12 +601,12 @@ export class Api {
     },
   };
 
-  public static download = (url: string, progress: ProgressCb | null = null): Promise<Uint8Array> => new Promise((resolve, reject) => {
+  public static download = (url: string, progress?: ProgressCb): Promise<Uint8Array> => new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('GET', url, true);
     request.responseType = 'arraybuffer';
     if (typeof progress === 'function') {
-      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total);
+      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
     }
     request.onerror = reject;
     request.onload = e => resolve(new Uint8Array(request.response as ArrayBuffer));
@@ -636,12 +631,12 @@ export class Api {
     const progressPeportingXhr = new XMLHttpRequest();
     if (progressCbs && typeof progressCbs.upload === 'function') {
       progressPeportingXhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
-        progressCbs.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : null, null, null); // checked ===function above
+        progressCbs.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined); // checked ===function above
       }, false);
     }
     if (progressCbs && typeof progressCbs.download === 'function') {
       progressPeportingXhr.onprogress = (evt: ProgressEvent) => {
-        progressCbs.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : null, evt.loaded, evt.total); // checked ===function above
+        progressCbs.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total); // checked ===function above
       };
     }
     return progressPeportingXhr;
@@ -675,7 +670,7 @@ export class Api {
       progress = progress || {} as ProgressCbs;
       let formattedData: FormData | string;
       let contentType: string | false;
-      if (fmt === 'JSON' && fields !== null) {
+      if (fmt === 'JSON') {
         formattedData = JSON.stringify(fields);
         contentType = 'application/json; charset=UTF-8';
       } else if (fmt === 'FORM') {

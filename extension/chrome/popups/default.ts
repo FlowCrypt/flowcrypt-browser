@@ -9,13 +9,13 @@ import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  const redirectToInitSetup = async (acctEmail: string | null = null) => {
+  const redirectToInitSetup = async (acctEmail?: string) => {
     BrowserMsg.send.bg.settings({ acctEmail: acctEmail || undefined });
     await Ui.time.sleep(100);
     window.close();
   };
 
-  const chooseEmailOrSettingsPopup = (activeAcctEmail: string | null = null) => {
+  const chooseEmailOrSettingsPopup = (activeAcctEmail?: string) => {
     $('#email_or_settings').css('display', 'block');
     $('.action_open_settings').click(Ui.event.handle(async () => {
       if (activeAcctEmail) {
@@ -49,7 +49,7 @@ Catch.try(async () => {
     } else {
       setupAcctPromptPopup(activeTab.acctEmail);
     }
-  } else if (activeTab && activeTab.provider !== null && activeTab.sameWorld === true && activeTab.acctEmail) {
+  } else if (activeTab && activeTab.provider && activeTab.sameWorld === true && activeTab.acctEmail) {
     setupAcctPromptPopup(activeTab.acctEmail);
   } else {
     const acctEmails = await Store.acctEmailsGet();

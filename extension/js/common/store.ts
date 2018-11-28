@@ -47,7 +47,7 @@ export interface RawStore {
 }
 
 export interface SubscriptionAttempt extends Product {
-  source: string | null;
+  source: string | undefined;
 }
 
 export type GlobalStore = {
@@ -111,17 +111,17 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'outgoing_language' | 'setup_date' | 'tmp_submit_main' | 'tmp_submit_all';
 
 export class Subscription implements SubscriptionInfo {
-  active: boolean | null = null;
-  method: PaymentMethod | null = null;
-  level: ProductLevel | null = null;
-  expire: string | null = null;
+  active: boolean | undefined;
+  method?: PaymentMethod;
+  level?: ProductLevel;
+  expire?: string;
 
-  constructor(storedSubscription: { active: boolean | null, method: PaymentMethod | null, level: ProductLevel, expire?: string | null } | null) {
+  constructor(storedSubscription: SubscriptionInfo | undefined) {
     if (storedSubscription) {
-      this.active = storedSubscription.active;
-      this.method = storedSubscription.method;
+      this.active = storedSubscription.active || undefined;
+      this.method = storedSubscription.method || undefined;
       this.level = storedSubscription.level;
-      this.expire = storedSubscription.expire || null;
+      this.expire = storedSubscription.expire || undefined;
     }
   }
 
@@ -140,7 +140,7 @@ export class Store {
 
   // static [f: string]: Function; // https://github.com/Microsoft/TypeScript/issues/6480
 
-  private static globalStorageScope = 'global';
+  private static globalStorageScope: 'global' = 'global';
   private static dbQueryKeys = ['limit', 'substring', 'has_pgp'];
 
   static singleScopeRawIndex = (scope: string, key: string) => `cryptup_${scope.replace(/[^A-Za-z0-9]+/g, '').toLowerCase()}_${key}`;
@@ -201,18 +201,18 @@ export class Store {
     }
   }
 
-  static async passphraseGet(acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | null> {
+  static async passphraseGet(acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> {
     const storageKey = `passphrase_${longid}` as AccountIndex;
     const storage = await Store.getAcct(acctEmail, [storageKey as AccountIndex]);
     if (typeof storage[storageKey] === 'string') {
       return String(storage[storageKey]); // make ts happy
     } else {
       const fromSession = await Store.sessionGet(acctEmail, storageKey);
-      return fromSession && !ignoreSession ? fromSession : null;
+      return fromSession && !ignoreSession ? fromSession : undefined;
     }
   }
 
-  static async keysGet(acctEmail: string, longids: string[] | null = null) {
+  static async keysGet(acctEmail: string, longids?: string[]) {
     const stored = await Store.getAcct(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
@@ -320,8 +320,12 @@ export class Store {
     });
   }
 
-  static async remove(acctEmail: string | null, keys: string[]) {
-    return new Promise(resolve => chrome.storage.local.remove(Store.singleScopeRawIndexArr(acctEmail || Store.globalStorageScope, keys), () => resolve()));
+  static async remove(acctEmail: string, keys: string[]) {
+    return new Promise(resolve => chrome.storage.local.remove(Store.singleScopeRawIndexArr(acctEmail, keys), () => resolve()));
+  }
+
+  static async removeGlobal(keys: string[]) {
+    return new Promise(resolve => chrome.storage.local.remove(Store.singleScopeRawIndexArr(this.globalStorageScope, keys), () => resolve()));
   }
 
   static async acctEmailsGet(): Promise<string[]> {
@@ -361,15 +365,15 @@ export class Store {
 
   static async authInfo(): Promise<StoredAuthInfo> {
     const storage = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid']);
-    return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null };
+    return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null }; // tslint:disable-line:no-null-keyword
   }
 
   static async subscription(): Promise<Subscription> {
     const s = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_subscription']);
     if (s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
-      return new Subscription(s.cryptup_account_subscription);
+      return new Subscription(s.cryptup_account_subscription || undefined);
     } else {
-      return new Subscription(null);
+      return new Subscription(undefined);
     }
   }
 
@@ -447,30 +451,30 @@ export class Store {
   }
 
   static dbContactObj(email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Contact {
-    const fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : null;
+    const fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
     }
     return {
       email,
-      name: name || null,
-      pubkey: pubkey || null,
+      name: name || null, // tslint:disable-line:no-null-keyword
+      pubkey: pubkey || null, // tslint:disable-line:no-null-keyword
       has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
-      searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)),
-      client: pubkey ? (client || null) : null,
-      attested: pubkey ? Boolean(attested) : null,
-      fingerprint,
-      longid: fingerprint ? Pgp.key.longid(fingerprint) : null,
-      keywords: fingerprint ? mnemonic(Pgp.key.longid(fingerprint)!) : null,
+      searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
+      client: pubkey ? (client || null) : null, // tslint:disable-line:no-null-keyword
+      attested: pubkey ? Boolean(attested) : null, // tslint:disable-line:no-null-keyword
+      fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
+      longid: fingerprint ? (Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
+      keywords: fingerprint ? mnemonic(Pgp.key.longid(fingerprint)!) || null : null, // tslint:disable-line:no-null-keyword
       pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
-      last_use: lastUse || null,
-      date: null,
+      last_use: lastUse || null, // tslint:disable-line:no-null-keyword
+      date: null, // tslint:disable-line:no-null-keyword
     };
   }
 
-  static dbContactSave = (db: IDBDatabase | null, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
-    if (db === null) { // relay op through background process
+  static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
+    if (!db) { // relay op through background process
       // todo - currently will silently swallow errors
       BrowserMsg.send.await.bg.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.handleErr);
     } else {
@@ -490,9 +494,9 @@ export class Store {
     }
   })
 
-  static dbContactUpdate(db: IDBDatabase | null, email: string | string[], update: ContactUpdate): Promise<void> {
+  static dbContactUpdate(db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> {
     return new Promise(async (resolve, reject) => {
-      if (db === null) { // relay op through background process
+      if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.await.bg.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.handleErr);
       } else {
@@ -503,11 +507,11 @@ export class Store {
           resolve();
         } else {
           let [contact] = await Store.dbContactGet(db, [email]);
-          if (contact === null) { // updating a non-existing contact, insert it first
+          if (!contact) { // updating a non-existing contact, insert it first
             await Store.dbContactSave(db, Store.dbContactObj(email, undefined, undefined, undefined, undefined, false, undefined));
             [contact] = await Store.dbContactGet(db, [email]);
-            if (contact === null) { // todo - temporary. If no such errors show by end of June 2018, remove this.
-              reject({ message: 'contact not found right after inserting it', internal: 'missing_contact', code: null });
+            if (!contact) { // todo - temporary. If no such errors show by end of June 2018, remove this.
+              reject(new Error('contact not found right after inserting it'));
               return;
             }
           }
@@ -534,9 +538,9 @@ export class Store {
     });
   }
 
-  static dbContactGet(db: null | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | null)[]> {
+  static dbContactGet(db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> {
     return new Promise(async (resolve, reject) => {
-      if (db === null) { // relay op through background process
+      if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.await.bg.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(Catch.handleErr);
       } else {
@@ -547,11 +551,11 @@ export class Store {
           } else { // longid
             tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid[0]);
           }
-          tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : null])); // tslint:disable-line:no-unsafe-any
+          tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : undefined])); // tslint:disable-line:no-unsafe-any
           const stackFill = String((new Error()).stack);
           tx.onerror = () => reject(Store.dbErrCategorize(tx.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
         } else {
-          const results: (Contact | null)[] = [];
+          const results: (Contact | undefined)[] = [];
           for (const singleEmailOrLongid of emailOrLongid) {
             const [contact] = await Store.dbContactGet(db, [singleEmailOrLongid]);
             results.push(contact);
@@ -562,9 +566,9 @@ export class Store {
     });
   }
 
-  static dbContactSearch(db: IDBDatabase | null, query: DbContactFilter): Promise<Contact[]> {
+  static dbContactSearch(db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> {
     return new Promise(async (resolve, reject) => {
-      if (db === null) { // relay op through background process
+      if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
         BrowserMsg.send.await.bg.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.handleErr);
       } else {

@@ -149,10 +149,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
     for (const contenteditableEl of allContenteditableEls.get()) {
       const contenteditable = $(contenteditableEl);
-      const foundFcLink = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
-      if (foundFcLink !== null) {
+      const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
+      if (fcLinkMatch) {
         let button;
-        const [, name, buttonHrefId] = foundFcLink;
+        const [, name, buttonHrefId] = fcLinkMatch;
         if (name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
         } else if (name === 'draft_reply') {

@@ -24,7 +24,7 @@ Catch.try(async () => {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, remove, color;
-      if (result.pubkey === null) {
+      if (!result.pubkey) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
         action = `<div class="button gray2 small action_request_attestation" email="${Xss.escape(email)}">Submit public key</div>`;
         remove = ` &nbsp; <b class="bad action_remove_alias" email="${Xss.escape(email)}" title="Remove address from list of send-from addresses.">[x]</b> &nbsp; `;

@@ -83,7 +83,7 @@ export class Catch {
     }
     console.log(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as ErrorEventHandler)) {
-      Catch.ORIG_ONERROR.apply(null, arguments); // Call any previously assigned handler
+      Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
     if ((exception.stack || '').indexOf('PRIVATE') !== -1 || exception instanceof UnreportableError) {
       return;
@@ -201,7 +201,7 @@ export class Catch {
     } else if (/Safari[\/\s](\d+\.\d+)/.test(navigator.userAgent)) {
       return { name: 'safari', v: Number(RegExp.$1) };
     } else {
-      return { name: 'unknown', v: null };
+      return { name: 'unknown', v: undefined };
     }
   }
 

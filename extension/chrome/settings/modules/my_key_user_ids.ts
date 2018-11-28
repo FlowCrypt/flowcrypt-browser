@@ -23,7 +23,7 @@ Catch.try(async () => {
 
   const key = openpgp.key.readArmored(primaryKi.private).keys[0];
 
-  const userIds = key.users.map(u => u.userId).filter(uid => uid !== null).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
+  const userIds = key.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
   Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
 
   $('.email').text(acctEmail);

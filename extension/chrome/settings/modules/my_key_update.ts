@@ -43,7 +43,7 @@ Catch.try(async () => {
     } else if (await Pgp.key.decrypt(uddatedKey, [uddatedKeyPassphrase]) !== true) {
       alert('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
-      if (await uddatedKey.getEncryptionKey() !== null) {
+      if (await uddatedKey.getEncryptionKey()) {
         await storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
       } else { // cannot get a valid encryption key packet
         if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usableButExpired(uddatedKey)) { // known issues - key can be fixed
@@ -62,8 +62,8 @@ Catch.try(async () => {
   const storeUpdatedKeyAndPassphrase = async (updatedPrv: OpenPGP.key.Key, updatedPrvPassphrase: string) => {
     const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
     await Store.keysAdd(acctEmail, updatedPrv.armor());
-    await Store.passphraseSave('local', acctEmail, primaryKi.longid, storedPassphrase !== null ? updatedPrvPassphrase : undefined);
-    await Store.passphraseSave('session', acctEmail, primaryKi.longid, storedPassphrase !== null ? undefined : updatedPrvPassphrase);
+    await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
+    await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
     window.location.href = showKeyUrl;
   };

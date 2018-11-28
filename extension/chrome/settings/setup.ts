@@ -32,7 +32,7 @@ Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  let parentTabId: string | null = null;
+  let parentTabId: string | undefined;
   const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
   if (action === 'add_key') {
     parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -54,7 +54,7 @@ Catch.try(async () => {
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'addresses']);
 
   storage.email_provider = storage.email_provider || 'gmail';
-  let acctEmailAttestedFingerprint: string | null = null;
+  let acctEmailAttestedFingerprint: string | undefined;
   let recoveredKeys: OpenPGP.key.Key[] = [];
   let recoveredKeysMatchingPassphrases: string[] = [];
   let nRecoveredKeysLongid = 0;
@@ -267,7 +267,7 @@ Catch.try(async () => {
       const attested = Boolean(a === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== Pgp.key.fingerprint(prvs[0].toPublic().armor()));
       return Store.dbContactObj(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
     });
-    await Store.dbContactSave(null, myOwnEmailAddrsAsContacts);
+    await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   };
 
   const createSaveKeyPair = async (options: SetupOptions) => {

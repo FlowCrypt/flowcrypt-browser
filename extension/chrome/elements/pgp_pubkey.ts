@@ -38,7 +38,7 @@ Catch.try(async () => {
     if (pubkeys.length > 1) {
       $('.action_add_contact').text('import ' + pubkeys.length + ' public keys');
     } else {
-      const [contact] = await Store.dbContactGet(null, [String($('.input_email').val())]);
+      const [contact] = await Store.dbContactGet(undefined, [String($('.input_email').val())]);
       $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
     }
   };
@@ -58,12 +58,12 @@ Catch.try(async () => {
       $('.line.fingerprints').css({ display: 'none' });
     }
     if (typeof pubkeys[0] !== 'undefined') {
-      if ((await pubkeys[0].getEncryptionKey() === null) && (await pubkeys[0].getSigningKey() === null)) {
+      if (! await pubkeys[0].getEncryptionKey() && ! await pubkeys[0].getSigningKey()) {
         $('.line.add_contact').addClass('bad').text('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       } else {
         if (pubkeys.length === 1) {
-          const email = pubkeys[0].users[0].userId ? Str.parseEmail(pubkeys[0].users[0].userId ? pubkeys[0].users[0].userId!.userid : '').email : null;
+          const email = pubkeys[0].users[0].userId ? Str.parseEmail(pubkeys[0].users[0].userId ? pubkeys[0].users[0].userId!.userid : '').email : undefined;
           if (email) {
             $('.input_email').val(email); // checked above
             $('.email').text(email);
@@ -99,13 +99,13 @@ Catch.try(async () => {
           contacts.push(Store.dbContactObj(emailAddr, undefined, 'pgp', pubkey.armor(), undefined, false, Date.now()));
         }
       }
-      await Store.dbContactSave(null, contacts);
+      await Store.dbContactSave(undefined, contacts);
       Xss.sanitizeReplace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
     } else if (pubkeys.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
         const contact = Store.dbContactObj(String($('.input_email').val()), undefined, 'pgp', pubkeys[0].armor(), undefined, false, Date.now());
-        await Store.dbContactSave(null, contact);
+        await Store.dbContactSave(undefined, contact);
         Xss.sanitizeReplace(target, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
       } else {

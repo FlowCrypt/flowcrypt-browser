@@ -53,7 +53,7 @@ export namespace Bm {
     export type ShowSubscribeDialog = { active: boolean };
     export type BgExec = { result?: PossibleBgExecResults, exception?: { name: string, message: string, stack: string } };
     export type AttestPacketReceived = { success: boolean; result: string };
-    export type GetActiveTabInfo = { provider: 'gmail' | null, acctEmail: string | null | undefined, sameWorld: boolean | null };
+    export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
     export type SessionGet = string | null;
     export type SessionSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
@@ -94,7 +94,7 @@ export interface ContentScriptWindow extends FcWindow {
   TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
   TrySetDestroyableInterval: (code: () => void, ms: number) => number;
   injected: true; // background script will use this to test if scripts were already injected, and inject if not
-  account_email_global: null | string; // used by background script
+  account_email_global: undefined | string; // used by background script
   same_world_global: true; // used by background_script
   destruction_event: string;
   destroyable_class: string;
@@ -115,13 +115,13 @@ export class Extension { // todo - move extension-specific common.js code here
       stack: Catch.stackTrace(),
     };
     try {
-      bugReport.error = JSON.stringify(error, null, 2);
+      bugReport.error = JSON.stringify(error, undefined, 2);
     } catch (e) {
       bugReport.error_as_string = String(error);
       bugReport.error_serialization_error = String(e);
     }
     try {
-      bugReport.details = JSON.stringify(details, null, 2);
+      bugReport.details = JSON.stringify(details, undefined, 2);
     } catch (e) {
       bugReport.details_as_string = String(details);
       bugReport.details_serialization_error = String(e);
@@ -152,10 +152,10 @@ export class BrowserMsg {
 
   public static send = {
     bg: {
-      attestRequested: (bm: Bm.AttestRequested) => BrowserMsg.sendCatch(null, 'attest_requested', bm),
-      settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(null, 'settings', bm),
-      updateUninstallUrl: () => BrowserMsg.sendCatch(null, 'update_uninstall_url', {}),
-      inbox: (bm: Bm.Inbox) => BrowserMsg.sendCatch(null, 'inbox', bm),
+      attestRequested: (bm: Bm.AttestRequested) => BrowserMsg.sendCatch(undefined, 'attest_requested', bm),
+      settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
+      updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
+      inbox: (bm: Bm.Inbox) => BrowserMsg.sendCatch(undefined, 'inbox', bm),
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     stripeResult: (dest: Bm.Dest, bm: Bm.StripeResult) => BrowserMsg.sendCatch(dest, 'stripe_result', bm),
@@ -182,25 +182,25 @@ export class BrowserMsg {
     openGoogleAuthDialog: (dest: Bm.Dest, bm: Bm.OpenGoogleAuthDialog) => BrowserMsg.sendCatch(dest, 'open_google_auth_dialog', bm),
     await: {
       bg: {
-        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(null, 'reconnect_acct_auth_popup', bm) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
-        attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(null, 'attest_packet_received', bm) as Promise<Bm.Res.AttestPacketReceived>,
-        bgExec: (bm: Bm.BgExec) => BrowserMsg.sendAwait(null, 'bg_exec', bm) as Promise<Bm.Res.BgExec>,
-        getActiveTabInfo: () => BrowserMsg.sendAwait(null, 'get_active_tab_info') as Promise<Bm.Res.GetActiveTabInfo>,
-        sessionGet: (bm: Bm.SessionGet) => BrowserMsg.sendAwait(null, 'session_get', bm) as Promise<Bm.Res.SessionGet>,
-        sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(null, 'session_set', bm) as Promise<Bm.Res.SessionSet>,
-        db: (bm: Bm.Db) => BrowserMsg.sendAwait(null, 'db', bm) as Promise<Bm.Res.Db>,
+        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
+        attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(undefined, 'attest_packet_received', bm) as Promise<Bm.Res.AttestPacketReceived>,
+        bgExec: (bm: Bm.BgExec) => BrowserMsg.sendAwait(undefined, 'bg_exec', bm) as Promise<Bm.Res.BgExec>,
+        getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info') as Promise<Bm.Res.GetActiveTabInfo>,
+        sessionGet: (bm: Bm.SessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm) as Promise<Bm.Res.SessionGet>,
+        sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm) as Promise<Bm.Res.SessionSet>,
+        db: (bm: Bm.Db) => BrowserMsg.sendAwait(undefined, 'db', bm) as Promise<Bm.Res.Db>,
       },
       // undefined below due to https://github.com/FlowCrypt/flowcrypt-browser/issues/1395
       showSubscribeDialog: (dest: Bm.Dest) => BrowserMsg.sendAwait(dest, 'show_subscribe_dialog', {}) as Promise<Bm.Res.ShowSubscribeDialog | undefined>,
     },
   };
 
-  private static sendCatch = (dest: Bm.Dest | null, name: string, bm: Dict<any>) => {
+  private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.handleErr);
   }
 
-  private static sendAwait = (destString: string | null, name: string, bm?: Dict<any>): Promise<Bm.Response> => new Promise(resolve => {
-    const msg: Bm.Raw = { name, data: bm || {}, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() };
+  private static sendAwait = (destString: string | undefined, name: string, bm?: Dict<any>): Promise<Bm.Response> => new Promise(resolve => {
+    const msg: Bm.Raw = { name, data: bm || {}, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
     const tryResolveNoUndefined = (r?: Bm.Response) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     const isBackgroundPage = Env.isBackgroundPage();
     if (typeof destString === 'undefined') { // don't know where to send the message
@@ -217,7 +217,7 @@ export class BrowserMsg {
   })
 
   public static tabId = async (): Promise<string | null | undefined> => {
-    const r = await BrowserMsg.sendAwait(null, '_tab_', undefined) as Bm.Res._tab_;
+    const r = await BrowserMsg.sendAwait(undefined, '_tab_', undefined) as Bm.Res._tab_;
     return r.tabId;
   }
 
@@ -252,7 +252,7 @@ export class BrowserMsg {
                 (r as Promise<void>).catch(Catch.handleErr);
               }
             } else if (msg.name !== '_tab_' && msg.to !== 'broadcast') {
-              if (BrowserMsg.browserMsgDestParse(msg.to).frame !== null) {
+              if (typeof BrowserMsg.browserMsgDestParse(msg.to).frame !== 'undefined') {
                 // only consider it an error if frameId was set because of firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1354337
                 Catch.report('BrowserMsg.listen error: handler "' + msg.name + '" not set', 'Message sender stack:\n' + msg.stack);
               } else { // once firefox fixes the bug, it will behave the same as Chrome and the following will never happen.
@@ -312,11 +312,11 @@ export class BrowserMsg {
   }
 
   private static browserMsgDestParse = (destString: string | null) => {
-    const parsed = { tab: null as null | number, frame: null as null | number };
+    const parsed = { tab: undefined as undefined | number, frame: undefined as undefined | number };
     if (destString) {
       parsed.tab = Number(destString.split(':')[0]);
-      // @ts-ignore - adding nonsense into isNaN
-      parsed.frame = !isNaN(destString.split(':')[1]) ? Number(destString.split(':')[1]) : null;
+      const parsedFrame = Number(destString.split(':')[1]);
+      parsed.frame = !isNaN(parsedFrame) ? parsedFrame : undefined;
     }
     return parsed;
   }
@@ -363,7 +363,7 @@ export class BgExec {
     return BgExec.requestToProcessInBg('Pgp.hash.challengeAnswer', [password]) as Promise<string>;
   }
 
-  public static cryptoMsgDecrypt = async (acctEmail: string, encryptedData: string | Uint8Array, msgPwd: string | null = null, getUint8 = false) => {
+  public static cryptoMsgDecrypt = async (acctEmail: string, encryptedData: string | Uint8Array, msgPwd?: string, getUint8 = false) => {
     const result = await BgExec.requestToProcessInBg('Pgp.msg.decrypt', [acctEmail, encryptedData, msgPwd, getUint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if (result.content.blob.blob_type === 'text') {
@@ -382,7 +382,7 @@ export class BgExec {
 
   private static executeAndFormatResult = async (path: string, resolvedArgs: any[]): Promise<PossibleBgExecResults> => {
     const f = BgExec.resolvePathToCallableFunction(path);
-    const returned: Promise<PossibleBgExecResults> | PossibleBgExecResults = f.apply(null, resolvedArgs); // tslint:disable-line:no-unsafe-any
+    const returned: Promise<PossibleBgExecResults> | PossibleBgExecResults = f.apply(undefined, resolvedArgs); // tslint:disable-line:no-unsafe-any
     if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       const resolved = await returned;
       if (path === 'Pgp.msg.decrypt') {
@@ -414,9 +414,9 @@ export class BgExec {
   private static argObjUrlsCreate = (args: any[]) => args.map(arg => BgExec.shouldBeObjUrl(arg) ? Browser.objUrlCreate(arg) : arg); // tslint:disable-line:no-unsafe-any
 
   private static resolvePathToCallableFunction = (path: string): Function => {  // tslint:disable-line:ban-types
-    let f: Function | object | null = null; // tslint:disable-line:ban-types
+    let f: Function | object | undefined; // tslint:disable-line:ban-types
     for (const step of path.split('.')) {
-      if (f === null) {
+      if (typeof f === 'undefined') {
         if (step === 'Pgp') {
           f = Pgp;
         } else {

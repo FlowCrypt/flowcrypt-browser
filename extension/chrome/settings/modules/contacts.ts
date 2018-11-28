@@ -23,13 +23,13 @@ Catch.try(async () => {
   BrowserMsg.listen(tabId); // set_css
 
   const renderContactList = async () => {
-    const contacts = await Store.dbContactSearch(null, { has_pgp: true });
+    const contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
 
     const exportAllHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;';
     Xss.sanitizeRender('.line.actions', exportAllHtml).find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       const allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys });
-      Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : null);
+      Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : undefined);
     }));
 
     const importPublicKeysHtml = '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
@@ -60,7 +60,7 @@ Catch.try(async () => {
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
 
     $('a.action_show').off().click(Ui.event.prevent('double', async (self) => {
-      const [contact] = await Store.dbContactGet(null, [$(self).closest('tr').attr('email')!]); // defined above
+      const [contact] = await Store.dbContactGet(undefined, [$(self).closest('tr').attr('email')!]); // defined above
       $('.hide_when_rendering_subpage').css('display', 'none');
       Xss.sanitizeRender('h1', `${backBtn}${space}${contact!.email}`); // should exist - from list of contacts
       if (contact!.client === 'cryptup') {
@@ -89,8 +89,8 @@ Catch.try(async () => {
       const email = $('#edit_contact .input_pubkey').attr('email');
       if (!armoredPubkey || !email) {
         alert('No public key entered');
-      } else if (Pgp.key.fingerprint(armoredPubkey) !== null) {
-        await Store.dbContactSave(null, Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
+      } else if (Pgp.key.fingerprint(armoredPubkey)) {
+        await Store.dbContactSave(undefined, Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
         await renderContactList();
       } else {
         alert('Cannot recognize a valid public key, please try again. Let me know at human@flowcrypt.com if you need help.');
@@ -119,7 +119,7 @@ Catch.try(async () => {
     }));
 
     $('a.action_remove').off().click(Ui.event.prevent('double', async (self) => {
-      await Store.dbContactSave(null, Store.dbContactObj($(self).closest('tr').attr('email')!, undefined, undefined, undefined, undefined, false, undefined));
+      await Store.dbContactSave(undefined, Store.dbContactObj($(self).closest('tr').attr('email')!, undefined, undefined, undefined, undefined, false, undefined));
       await renderContactList();
     }));
 

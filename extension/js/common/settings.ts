@@ -109,7 +109,7 @@ export class Settings {
     await key.encrypt(passphrase);
   }
 
-  private static prepareNewSettingsLocationUrl = (acctEmail: string | null, parentTabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null): string => {
+  private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
     const pageParams: UrlParams = { placement: 'settings', parentTabId };
     if (acctEmail) {
       pageParams.acctEmail = acctEmail;
@@ -118,18 +118,17 @@ export class Settings {
       for (const k of Object.keys(addUrlTextOrParams)) {
         pageParams[k] = addUrlTextOrParams[k];
       }
-      addUrlTextOrParams = null;
+      addUrlTextOrParams = undefined;
     }
     return Env.urlCreate(page, pageParams) + (addUrlTextOrParams || '');
   }
 
-  static renderSubPage = (acctEmail: string | null, tabId: string, page: string, addUrlTextOrParams: string | UrlParams | null = null) => {
+  static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     if (page !== '/chrome/elements/compose.htm') {
       iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
-      variant = null;
       closeOnClick = 'background';
     } else { // todo - deprecate this
       iframeWidth = 542;
@@ -252,7 +251,7 @@ export class Settings {
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
   ): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      const uids = origPrv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid).filter(Boolean) as string[];
+      const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid).filter(Boolean) as string[];
       if (!uids.length) {
         uids.push(acctEmail);
       }
@@ -358,7 +357,7 @@ export class Settings {
   }
 
   static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
-    const response = await GoogleAuth.newAuthPopup({ acctEmail: acctEmail || null, omitReadScope });
+    const response = await GoogleAuth.newAuthPopup({ acctEmail, omitReadScope });
     if (response.result === 'Success' && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
       const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
@@ -370,7 +369,7 @@ export class Settings {
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
       }
     } else if (response.result === 'Denied' || response.result === 'Closed') {
-      Settings.renderSubPage(acctEmail || null, tabId, '/chrome/settings/modules/auth_denied.htm');
+      Settings.renderSubPage(acctEmail, tabId, '/chrome/settings/modules/auth_denied.htm');
     } else {
       Catch.report('failed to log into google in newGoogleAcctAuthPrompt', response);
       alert(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);

@@ -13,14 +13,14 @@ import { Env } from '../../js/common/browser.js';
 
   const test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
     try {
-      return finish(null, method.apply(null, arg));
+      return finish(undefined, method.apply(undefined, arg));
     } catch (e) {
       return finish(e);
     }
   };
 
   const finish = (error: any, result?: any) => {
-    error = (error === null) ? null : String(error);
+    error = (typeof error === 'undefined') ? undefined : String(error);
     $('#result').text(JSON.stringify({ error, result }));
     $('#result').attr('data-test-state', 'ready');
   };

@@ -37,7 +37,7 @@ Catch.try(async () => {
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true,
   };
-  const composer = new Composer(appFunctions, processedUrlParams, new Subscription(null));
+  const composer = new Composer(appFunctions, processedUrlParams, new Subscription(undefined));
 
   const sendBtnText = 'Send Response';
 

@@ -13,7 +13,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const which = Env.urlParamRequire.oneof(uncheckedUrlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
 
-  const renderCallRes = (api: string, variables: Dict<any>, result: any, error: any = null) => {
+  const renderCallRes = (api: string, variables: Dict<any>, result: any, error?: any) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${JSON.stringify(error)})</pre>`;
     Xss.sanitizeAppend('#content', r);
   };
@@ -24,13 +24,13 @@ Catch.try(async () => {
       const r = await Google.gmail.usersMeProfile(acctEmail);
       renderCallRes('gmail.users_me_profile', variables, r);
     } catch (e) {
-      renderCallRes('gmail.users_me_profile', variables, null, e);
+      renderCallRes('gmail.users_me_profile', variables, undefined, e);
     }
     try {
       const r = await Google.google.plus.peopleMe(acctEmail);
       renderCallRes('google.plus.people_me', variables, r);
     } catch (e) {
-      renderCallRes('google.plus.people_me', variables, null, e);
+      renderCallRes('google.plus.people_me', variables, undefined, e);
     }
   } else if (which === 'flowcrypt_account') {
     Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(which)} (not implemented)`);

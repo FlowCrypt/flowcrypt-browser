@@ -24,7 +24,7 @@ Catch.try(async () => {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
   }
 
-  const contacts = await Store.dbContactSearch(null, { has_pgp: true });
+  const contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
 
   Xss.sanitizeAppend('select.copy_from_email', '<option value=""></option>');
   for (const contact of contacts) {
@@ -33,7 +33,7 @@ Catch.try(async () => {
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {
-      const [contact] = await Store.dbContactGet(null, [String($(target).val())]);
+      const [contact] = await Store.dbContactGet(undefined, [String($(target).val())]);
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
@@ -48,7 +48,7 @@ Catch.try(async () => {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       const normalized = await keyImportUi.checkPub(Pgp.armor.strip(String($('.pubkey').val()))); // .pubkey is a textarea
-      await Store.dbContactSave(null, Store.dbContactObj(String($('select.email').val()), undefined, 'pgp', normalized, undefined, false, Date.now()));
+      await Store.dbContactSave(undefined, Store.dbContactObj(String($('select.email').val()), undefined, 'pgp', normalized, undefined, false, Date.now()));
       closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {

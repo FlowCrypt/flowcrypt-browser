@@ -15,7 +15,7 @@ Catch.try(async () => {
   }
 
   $('.clear').click(Ui.event.handle(async () => {
-    await Store.remove(null, ['errors']);
+    await Store.removeGlobal(['errors']);
     window.location.reload();
   }));
 

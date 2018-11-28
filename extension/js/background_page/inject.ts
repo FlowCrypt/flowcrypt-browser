@@ -29,7 +29,7 @@ const isContentScriptInjectionNeeded = (tabId: number, callback: (injected: bool
   });
 };
 
-const injectContentScripts = (tabId: number, files: string[], callback: (() => void) | null = null) => {
+const injectContentScripts = (tabId: number, files: string[], callback?: () => void) => {
   const filesCopy = files.slice();
   chrome.tabs.executeScript(tabId, { file: filesCopy.shift() }, results => {
     if (filesCopy.length) {

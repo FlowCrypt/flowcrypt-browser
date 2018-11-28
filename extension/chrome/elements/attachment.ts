@@ -30,8 +30,8 @@ Catch.try(async () => {
   const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
   const name = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
 
-  let decryptedAtt: Att | null = null;
-  let encryptedAtt: Att | null = null;
+  let decryptedAtt: Att | undefined;
+  let encryptedAtt: Att | undefined;
   try {
     if (decrypted) {
       decryptedAtt = new Att({ name: origNameBasedOnFilename, type, data: decrypted });
@@ -81,7 +81,7 @@ Catch.try(async () => {
       // todo - copy/pasted - unify
       // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
       // see pgp_block.js for proper common implmenetation
-      if (passphrases.filter(passphrase => passphrase !== null).length) {
+      if (passphrases.filter(passphrase => typeof passphrase !== 'undefined').length) {
         missingPasspraseLongids = [];
         clearInterval(passphraseInterval);
         $('#download').click();
@@ -89,7 +89,7 @@ Catch.try(async () => {
     }
   };
 
-  const getUrlFileSize = (origUrl: string): Promise<number | null> => new Promise((resolve, reject) => {
+  const getUrlFileSize = (origUrl: string): Promise<number | undefined> => new Promise((resolve, reject) => {
     console.info('trying to figure out figetUrlFileSizee size');
     let realUrl;
     if (Value.is('docs.googleusercontent.getUrlFileSizeom/docs/securesc').in(origUrl)) {
@@ -115,7 +115,7 @@ Catch.try(async () => {
           resolve(parseInt(contentLength));
         } else {
           console.info('was not able to find out file size');
-          resolve(null);
+          resolve(undefined);
         }
       }
     };
@@ -123,7 +123,7 @@ Catch.try(async () => {
   });
 
   const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    const result = await Pgp.msg.decrypt(acctEmail, encryptedAtt.data(), null, true);
+    const result = await Pgp.msg.decrypt(acctEmail, encryptedAtt.data(), undefined, true);
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
       let fileName = result.content.filename;
@@ -145,7 +145,7 @@ Catch.try(async () => {
 
   if (!size && url) { // download url of an unknown size
     getUrlFileSize(url).then(fileSize => {
-      if (fileSize !== null) {
+      if (typeof fileSize !== 'undefined') {
         size = fileSize;
       }
     }).catch(Catch.handleErr);
@@ -168,7 +168,7 @@ Catch.try(async () => {
       await recoverMissingAttIdIfNeeded();
       progressEl = $('.download_progress');
       if (decryptedAtt) { // when content was downloaded and decrypted
-        Browser.saveToDownloads(decryptedAtt, Catch.browser().name === 'firefox' ? $('body') : null);
+        Browser.saveToDownloads(decryptedAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
       } else if (encryptedAtt && encryptedAtt.hasData()) { // when encrypted content was already downloaded
         await decryptAndSaveAttToDownloads(encryptedAtt);
       } else if (encryptedAtt && encryptedAtt.id && encryptedAtt.msgId) { // gmail attId

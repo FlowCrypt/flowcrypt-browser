@@ -12,13 +12,13 @@ import { Google, GoogleAuth } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
-type AttestResult = { message: string, acctEmail: string, attestPacketText: string | null };
+type AttestResult = { message: string, acctEmail: string, attestPacketText: string | undefined };
 
 class AttestError extends Error implements AttestResult {
-  attestPacketText: null | string;
+  attestPacketText: undefined | string;
   acctEmail: string;
   success: false;
-  constructor(msg: string, attestPacketText: string | null, acctEmail: string) {
+  constructor(msg: string, attestPacketText: string | undefined, acctEmail: string) {
     super(msg);
     this.attestPacketText = attestPacketText;
     this.acctEmail = acctEmail;
@@ -74,7 +74,7 @@ export class BgAttests {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     if (primaryKi) {
       const passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
-      if (passphrase !== null) {
+      if (typeof passphrase !== 'undefined') {
         if (storage.attests_requested && storage.attests_requested.length && BgAttests.attestTsCanReadEmails[acctEmail]) {
           let msgs: R.GmailMsg[];
           try {
@@ -90,7 +90,7 @@ export class BgAttests {
               console.info('cannot fetch attest emails - Google server error ' + acctEmail);
               return;
             } else if (Api.err.isMailOrAcctDisabled(e)) {
-              await BgAttests.addAttestLog(false, new AttestError('cannot fetch attest emails - Account or Gmail disabled: ' + acctEmail, null, acctEmail));
+              await BgAttests.addAttestLog(false, new AttestError('cannot fetch attest emails - Account or Gmail disabled: ' + acctEmail, undefined, acctEmail));
               BgAttests.stopWatching(acctEmail);
               return;
             } else {
@@ -103,7 +103,7 @@ export class BgAttests {
             }
           }
         } else {
-          await BgAttests.addAttestLog(false, new AttestError('cannot fetch attest emails for ' + acctEmail, null, acctEmail));
+          await BgAttests.addAttestLog(false, new AttestError('cannot fetch attest emails for ' + acctEmail, undefined, acctEmail));
           BgAttests.stopWatching(acctEmail);
         }
       } else {
@@ -114,7 +114,7 @@ export class BgAttests {
     }
   }
 
-  private static processAttestPacketText = async (acctEmail: string, attestPacketText: string, passphrase: string | null): Promise<AttestResult> => {
+  private static processAttestPacketText = async (acctEmail: string, attestPacketText: string, passphrase: string | undefined): Promise<AttestResult> => {
     const attest = Api.attester.packet.parse(attestPacketText);
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     if (!primaryKi) {
@@ -170,7 +170,7 @@ export class BgAttests {
     }
   }
 
-  private static processAttestAndLogResult = async (acctEmail: string, attestPacketText: string, passphrase: string | null) => {
+  private static processAttestAndLogResult = async (acctEmail: string, attestPacketText: string, passphrase: string | undefined) => {
     try {
       return await BgAttests.addAttestLog(true, await BgAttests.processAttestPacketText(acctEmail, attestPacketText, passphrase));
     } catch (e) {

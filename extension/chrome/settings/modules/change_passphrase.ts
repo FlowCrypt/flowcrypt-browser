@@ -38,7 +38,7 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  if (origPassphrase === null) {
+  if (origPassphrase) {
     displayBlock('step_0_enter');
   } else {
     if (origPassphrase === '') {
@@ -92,8 +92,8 @@ Catch.try(async () => {
       await Settings.openpgpKeyEncrypt(prv, newPassphrase);
       const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
       await Store.keysAdd(acctEmail, prv.armor());
-      await Store.passphraseSave('local', acctEmail, primaryKi.longid, storedPassphrase !== null ? newPassphrase : undefined);
-      await Store.passphraseSave('session', acctEmail, primaryKi.longid, storedPassphrase !== null ? undefined : newPassphrase);
+      await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? newPassphrase : undefined);
+      await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : newPassphrase);
       const { setup_simple } = await Store.getAcct(acctEmail, ['setup_simple']);
       if (setup_simple) {
         Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');

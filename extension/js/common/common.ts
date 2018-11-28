@@ -23,12 +23,12 @@ export class Str {
     }
     return {
       email: emailStr.replace(/["']/g, '').trim().toLowerCase(),
-      name: null,
+      name: undefined,
       full: emailStr,
     };
   }
 
-  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, null, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
+  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
 
   public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
 
@@ -85,7 +85,7 @@ export class Str {
     const chunkSize = 0x8000;
     const c = [];
     for (let i = 0; i < u8a.length; i += chunkSize) {
-      c.push(String.fromCharCode.apply(null, u8a.subarray(i, i + chunkSize)));
+      c.push(String.fromCharCode.apply(undefined, u8a.subarray(i, i + chunkSize)));
     }
     return c.join('');
   }

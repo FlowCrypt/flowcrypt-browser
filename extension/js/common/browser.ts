@@ -27,7 +27,7 @@ type KeyImportUiCheckResult = {
 };
 
 export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
-export type WebmailVariantString = null | 'html' | 'standard' | 'new';
+export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
 export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
@@ -43,12 +43,12 @@ export class Browser {
   }
 
   public static objUrlConsume = async (url: string) => {
-    const uint8 = await Api.download(url, null);
+    const uint8 = await Api.download(url);
     window.URL.revokeObjectURL(url);
     return uint8;
   }
 
-  public static saveToDownloads = (att: Att, renderIn: JQuery<HTMLElement> | null = null) => {
+  public static saveToDownloads = (att: Att, renderIn?: JQuery<HTMLElement>) => {
     const blob = new Blob([att.data()], { type: att.type });
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, att.name);
@@ -98,7 +98,7 @@ export class Browser {
 
 export class Env {
 
-  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null };
+  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null }; // tslint:disable-line:no-null-keyword
 
   public static runtimeId = (orig = false) => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
@@ -108,12 +108,12 @@ export class Env {
         return chrome.runtime.id.replace(/[^a-z0-9]/gi, '');
       }
     }
-    return null;
+    return undefined;
   }
 
   public static isBackgroundPage = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
 
-  public static isExtension = () => Env.runtimeId() !== null;
+  public static isExtension = () => typeof Env.runtimeId() !== 'undefined';
 
   public static urlParamRequire = {
     string: (values: UrlParams, name: string): string => {
@@ -161,8 +161,8 @@ export class Env {
   /**
    * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
    */
-  public static urlParams = (expectedKeys: string[], string: string | null = null) => {
-    const url = (string || window.location.search.replace('?', ''));
+  public static urlParams = (expectedKeys: string[], parseThisUrl?: string) => {
+    const url = (parseThisUrl || window.location.search.replace('?', ''));
     const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
     const rawParms: Dict<string> = {};
     const rawParamNameDict: Dict<string> = {};
@@ -266,7 +266,7 @@ export class Ui {
     if (actualType === expectedType.replace(/\?$/, '')) { // eg expected string or optional string, and got string
       return values[name];
     }
-    if (actualType === 'undefined' && expectedType.match(/\?$/) !== null) { // optional type, got undefined: ok
+    if (actualType === 'undefined' && expectedType.match(/\?$/)) { // optional type, got undefined: ok
       return values[name];
     }
     console.info(values[name]);  // for local debugging
@@ -287,7 +287,7 @@ export class Ui {
     return values[name];
   }
 
-  public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide: "show" | "hide" | null = null) => {
+  public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide?: "show" | "hide") => {
     const buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
     const buttonShow = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
     const storage = await Store.getGlobal(['hide_pass_phrases']);
@@ -534,7 +534,7 @@ export class Xss {
   private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5',
     'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
   private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
-  private static HREF_REGEX_CACHE = null as null | RegExp;
+  private static HREF_REGEX_CACHE: RegExp | undefined;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
@@ -616,7 +616,7 @@ export class Xss {
   }
 
   private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
-    if (Xss.HREF_REGEX_CACHE === null) {
+    if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
       if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
         Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
       } else {
@@ -880,20 +880,20 @@ export class UserAlert extends Error { }
 
 export class KeyImportUi {
 
-  private expectedLongid: string | null;
+  private expectedLongid?: string;
   private rejectKnown: boolean;
   private checkEncryption: boolean;
   private checkSigning: boolean;
   public onBadPassphrase: VoidCallback = () => undefined;
 
   constructor(o: { expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
-    this.expectedLongid = o.expectLongid || null;
+    this.expectedLongid = o.expectLongid;
     this.rejectKnown = o.rejectKnown === true;
     this.checkEncryption = o.checkEncryption === true;
     this.checkSigning = o.checkSigning === true;
   }
 
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | null) => {
+  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
     $('input[type=radio][name=source]').off().change(function () {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
@@ -1047,7 +1047,7 @@ export class KeyImportUi {
   }
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
-    if (this.checkEncryption && await k.getEncryptionKey() === null) {
+    if (this.checkEncryption && ! await k.getEncryptionKey()) {
       if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await Pgp.key.usableButExpired(k)) { // known issues - key can be fixed
         const e = new KeyCanBeFixed('');
         e.encrypted = encrypted;
@@ -1065,7 +1065,7 @@ export class KeyImportUi {
   }
 
   private checkSigningIfSelected = async (k: OpenPGP.key.Key) => {
-    if (this.checkSigning && await k.getSigningKey() === null) {
+    if (this.checkSigning && ! await k.getSigningKey()) {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }
   }
@@ -1127,12 +1127,12 @@ export class AttUI {
     return atts;
   }
 
-  collectEncryptAtts = async (armoredPubkeys: string[], challenge: Pwd | null): Promise<Att[]> => {
+  collectEncryptAtts = async (armoredPubkeys: string[], challenge?: Pwd): Promise<Att[]> => {
     const atts: Att[] = [];
     for (const id of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[id];
       const fileData = await this.readAttDataAsUint8(id);
-      const encrypted = await Pgp.msg.encrypt(armoredPubkeys, null, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
+      const encrypted = await Pgp.msg.encrypt(armoredPubkeys, undefined, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;
