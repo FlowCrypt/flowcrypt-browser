@@ -14,7 +14,7 @@ export let defineUnitTests = (testWithBrowser: TestWithBrowser, testWithSemaphor
       await page.waitForSelTestStaet('ready');
       const content = await page.read('@unit-test-result');
       const r = JSON.parse(content);
-      expect(r).to.have.property('error').that.is.null;
+      expect(r).to.not.have.property('error');
       expect(ordered_stringify(r.result)).to.equal(ordered_stringify(ut.result));
     }));
   }
