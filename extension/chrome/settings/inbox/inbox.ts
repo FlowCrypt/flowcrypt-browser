@@ -4,7 +4,7 @@
 
 import { Store } from '../../../js/common/store.js';
 import { Value, Str, Dict } from '../../../js/common/common.js';
-import { Xss, Ui, XssSafeFactory, Env, UrlParams } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Api, R } from '../../../js/common/api/api.js';
@@ -19,7 +19,7 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const labelId = urlParams.labelId ? String(urlParams.labelId) : 'INBOX';
-  const threadId = urlParams.threadId || null;
+  const threadId = Env.urlParamRequire.optionalString(urlParams, 'threadId');
 
   let emailProvider;
   let factory: XssSafeFactory;
@@ -385,13 +385,13 @@ Catch.try(async () => {
   };
 
   const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: R.GmailMsg) => {
-    let params: UrlParams;
+    let params: FactoryReplyParams;
     if (lastMsg) {
       const to = Google.gmail.findHeader(lastMsg, 'to');
       const toArr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
       const headers = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(lastMsg, 'from'), toArr);
-      const subject = Google.gmail.findHeader(lastMsg, 'subject');
-      params = { subject, reply_to: headers.to, addresses: storage.addresses || [], my_email: headers.from, threadId, threadMsgId };
+      const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
+      params = { subject, replyTo: headers.to, addresses: storage.addresses || [], myEmail: headers.from, threadId, threadMsgId };
     } else {
       params = { threadId, threadMsgId };
     }
@@ -420,7 +420,7 @@ Catch.try(async () => {
   } else {
     await renderMenu();
     if (threadId) {
-      await renderThread(threadId as string);
+      await renderThread(threadId);
     } else {
       await renderInbox(labelId);
     }

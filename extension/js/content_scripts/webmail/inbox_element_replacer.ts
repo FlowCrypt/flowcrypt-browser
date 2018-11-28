@@ -7,7 +7,7 @@ import { Value, Str } from '../../common/common.js';
 import { Api } from '../../common/api/api.js';
 import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui, XssSafeFactory, WebmailVariantString } from '../../common/browser.js';
+import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/browser.js';
 import { Att } from '../../common/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/catch.js';
@@ -39,7 +39,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    const params = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMessageId: threadId };
+    const params: FactoryReplyParams = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMsgId: threadId };
     $('.reply_message_iframe_container').append(this.factory.embeddedReply(params, false, true)); // xss-safe-factory
   }
 
@@ -62,11 +62,10 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceStandardReplyBox = (editable = false, forceReplaceEvenIfPgpBlockIsNotPresent = false) => {
-    const self = this;
     $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, replyBox) => {
-      const rootEl = self.domGetConversationRootEl(replyBox);
+      const rootEl = this.domGetConversationRootEl(replyBox);
       if (rootEl.find('iframe.pgp_block').filter(':visible').length || (rootEl.is(':visible') && forceReplaceEvenIfPgpBlockIsNotPresent)) {
-        const iframeXssSafe = self.factory.embeddedReply(self.getConvoParams(rootEl), editable);
+        const iframeXssSafe = this.factory.embeddedReply(this.getReplyParams(rootEl), editable);
         $(replyBox).addClass('reply_message_iframe_container').html(iframeXssSafe).children(':not(iframe)').css('display', 'none'); // xss-safe-factory
       }
     });
@@ -205,7 +204,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     return $(convoRootEl).find('.eo').first().text();
   }
 
-  private domExtractThreadId = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
+  private domExtractThreadId = (convoRootEl: HTMLElement | JQuery<HTMLElement>): string | undefined => {
     const inboxThreadIdMatch = ($(convoRootEl).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
     if (inboxThreadIdMatch) {
       return Str.intToHex(inboxThreadIdMatch[0]);
@@ -213,14 +212,14 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     return undefined;
   }
 
-  private getConvoParams = (convoRootEl: HTMLElement | JQuery<HTMLElement>) => {
+  private getReplyParams = (convoRootEl: HTMLElement | JQuery<HTMLElement>): FactoryReplyParams => {
     const threadId = this.domExtractThreadId(convoRootEl);
     const headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domExtractSenderEmail(convoRootEl) || '', this.domExtractRecipients(convoRootEl));
     return {
       subject: this.domExtractSubject(convoRootEl),
-      reply_to: headers.to,
+      replyTo: headers.to,
       addresses: this.addresses,
-      my_email: headers.from,
+      myEmail: headers.from,
       threadId,
       threadMsgId: threadId ? threadId : this.domExtractMsgId($(convoRootEl).find('.ap').last().children().first()), // backup
     };

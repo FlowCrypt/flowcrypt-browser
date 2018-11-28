@@ -59,7 +59,7 @@ Catch.try(async () => {
 
   $('.action_add_private_key').click(Ui.event.prevent('double', async () => {
     try {
-      const checked = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
+      const checked = await keyImportUi.checkPrv(acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
         await Store.keysAdd(acctEmail, checked.normalized); // resulting new_key checked above
         await Store.passphraseSave($('.input_passphrase_save').prop('checked') ? 'local' : 'session', acctEmail, checked.longid, checked.passphrase);

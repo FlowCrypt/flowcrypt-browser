@@ -252,7 +252,7 @@ export class Settings {
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
   ): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      const uids = origPrv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid) as string[];
+      const uids = origPrv.users.map(u => u.userId).filter(u => u !== null && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid).filter(Boolean) as string[];
       if (!uids.length) {
         uids.push(acctEmail);
       }
@@ -284,7 +284,7 @@ export class Settings {
         }
       }));
       container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
-        const expireYears = $(target).parents(container as string).find('select.input_fix_expire_years').val() as string; // JQuery quirk
+        const expireYears = String($(target).parents(container as string).find('select.input_fix_expire_years').val()); // JQuery quirk
         if (!expireYears) {
           alert('Please select key expiration');
         } else {

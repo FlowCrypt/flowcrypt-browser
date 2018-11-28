@@ -13,10 +13,11 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const longid = Env.urlParamRequire.optionalString(urlParams, 'longid') || 'primary';
 
   $('.action_show_public_key').attr('href', Env.urlCreate('my_key.htm', urlParams));
 
-  const [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const key = openpgp.key.readArmored(primaryKi.private).keys[0];

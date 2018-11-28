@@ -116,9 +116,19 @@ export class Env {
   public static isExtension = () => Env.runtimeId() !== null;
 
   public static urlParamRequire = {
-    string: (values: UrlParams, name: string): string => Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string') as string,
-    optionalString: (values: UrlParams, name: string): string | undefined => Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string?') as string | undefined,
-    oneof: (values: UrlParams, name: string, allowed: UrlParam[]): string => Ui.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed) as string,
+    string: (values: UrlParams, name: string): string => {
+      return String(Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string'));
+    },
+    optionalString: (values: UrlParams, name: string): string | undefined => {
+      const r = Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string?');
+      if (typeof r === 'string' || typeof r === 'undefined') {
+        return r;
+      }
+      throw new Error(`urlParamRequire.optionalString: type of ${name} unexpectedly ${typeof r}`);
+    },
+    oneof: <T>(values: UrlParams, name: string, allowed: T[]): T => {
+      return Ui.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed as any as UrlParam[]) as any as T; // todo - there should be a better way
+    },
   };
 
   private static snakeCaseToCamelCase = (s: string) => s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
@@ -347,7 +357,7 @@ export class Ui {
   }
 
   public static scroll = (sel: string | JQuery<HTMLElement>, repeat: number[] = []) => {
-    const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk
+    const el = $(sel as string).first()[0]; // as string due to JQuery TS quirk. Do not convert to String() as this may actually be JQuery<HTMLElement>
     if (el) {
       el.scrollIntoView();
       for (const delay of repeat) { // useful if mobile keyboard is about to show up
@@ -618,6 +628,15 @@ export class Xss {
 
 }
 
+export type FactoryReplyParams = {
+  threadId?: string,
+  threadMsgId?: string,
+  addresses?: string[],
+  replyTo?: string[],
+  myEmail?: string,
+  subject?: string,
+};
+
 export class XssSafeFactory {
 
   /**
@@ -633,6 +652,7 @@ export class XssSafeFactory {
   private setParams: UrlParams;
   private reloadableCls: string;
   private destroyableCls: string;
+  private acctEmail: string;
   private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
@@ -641,6 +661,7 @@ export class XssSafeFactory {
     this.setParams = setParams;
     this.setParams.acctEmail = acctEmail;
     this.setParams.parentTabId = parentTabId;
+    this.acctEmail = acctEmail;
   }
 
   srcImg = (relPath: string) => this.extUrl(`img/${relPath}`);
@@ -699,10 +720,10 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
   }
 
-  srcReplyMsgIframe = (convoParams: UrlParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
+  srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
     const params: UrlParams = {
       isReplyBox: true,
-      frameId: 'frame_' + Str.sloppyRandom(10),
+      frameId: `frame_${Str.sloppyRandom(10)}`,
       placement: 'gmail',
       threadId: convoParams.threadId,
       skipClickPrompt: Boolean(skipClickPrompt),
@@ -710,7 +731,7 @@ export class XssSafeFactory {
       threadMsgId: convoParams.threadMsgId,
     };
     if (convoParams.replyTo) { // for gmail and inbox. Outlook gets this from API
-      const headers = this.resolveFromTo(convoParams.addresses as string[], convoParams.myEmail as string, convoParams.replyTo as string[]);
+      const headers = this.resolveFromTo(convoParams.addresses || [], convoParams.myEmail || this.acctEmail, convoParams.replyTo);
       params.to = headers.to;
       params.from = headers.from;
       params.subject = 'Re: ' + convoParams.subject;
@@ -767,7 +788,7 @@ export class XssSafeFactory {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
   }
 
-  embeddedReply = (convoParams: UrlParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {
+  embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {
     return this.iframe(this.srcReplyMsgIframe(convoParams, skipClickPrompt, ignoreDraft), ['reply_message']);
   }
 
@@ -835,7 +856,7 @@ export class XssSafeFactory {
   }
 
   private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
-    const id = Env.urlParams(['frameId'], src).frameId as string;
+    const id = String(Env.urlParams(['frameId'], src).frameId);
     const classAttribute = (classes || []).concat(this.reloadableCls).join(' ');
     const attrs: Dict<string> = { id, class: classAttribute, src };
     for (const name of Object.keys(elAttributes)) {
@@ -893,7 +914,7 @@ export class KeyImportUi {
       $('#e_rememberPassphrase').prop('checked', true);
     }));
     $('.input_private_key').change(Ui.event.handle(target => {
-      const k = openpgp.key.readArmored($(target).val() as string).keys[0];
+      const k = openpgp.key.readArmored(String($(target).val())).keys[0];
       $('.input_passphrase').val('');
       if (k && k.isPrivate() && k.isDecrypted()) {
         $('.line.pass_phrase_needed').show();

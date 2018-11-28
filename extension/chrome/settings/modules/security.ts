@@ -17,6 +17,7 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const embedded = urlParams.embedded === true;
 
   await Ui.passphraseToggle(['passphrase_entry']);
 
@@ -28,7 +29,7 @@ Catch.try(async () => {
 
   const storage = await Store.getAcct(acctEmail, ['hide_message_password', 'outgoing_language']);
 
-  if (urlParams.embedded) {
+  if (embedded) {
     $('.change_passhrase_container, .title_container').css('display', 'none');
     $('.line').css('padding', '7px 0');
   }
@@ -41,7 +42,7 @@ Catch.try(async () => {
   };
 
   const onMsgLanguageUserChange = async () => {
-    const outgoingLanguage = $('.password_message_language').val() as string;
+    const outgoingLanguage = String($('.password_message_language').val());
     if (Value.is(outgoingLanguage).in(['EN', 'DE'])) {
       await Store.setAcct(acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
       window.location.reload();
@@ -74,8 +75,8 @@ Catch.try(async () => {
       }
     } else { // save pass phrase
       const key = openpgp.key.readArmored(primaryKi.private).keys[0];
-      if (await Pgp.key.decrypt(key, [$('input#passphrase_entry').val() as string]) === true) { // text input
-        await Store.passphraseSave('local', acctEmail, primaryKi.longid, $('input#passphrase_entry').val() as string);
+      if (await Pgp.key.decrypt(key, [String($('input#passphrase_entry').val())]) === true) {
+        await Store.passphraseSave('local', acctEmail, primaryKi.longid, String($('input#passphrase_entry').val()));
         window.location.reload();
       } else {
         alert('Pass phrase did not match, please try again.');

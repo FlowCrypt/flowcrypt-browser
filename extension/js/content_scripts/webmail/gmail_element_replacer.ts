@@ -8,7 +8,7 @@ import { Notifications } from '../../common/notifications.js';
 import { Api } from '../../common/api/api.js';
 import { Pgp } from '../../common/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui, XssSafeFactory, WebmailVariantString } from '../../common/browser.js';
+import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/browser.js';
 import { Att } from '../../common/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/catch.js';
@@ -65,7 +65,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   setReplyBoxEditable = () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').first();
     if (replyContainerIframe.length) {
-      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getConvoParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
+      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
       this.replaceStandardReplyBox(true);
     }
@@ -73,7 +73,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    const params = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMessageId: threadId };
+    const params: FactoryReplyParams = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMsgId: threadId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
@@ -395,7 +395,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(convoRootEl).find(this.sel.subject).text();
   }
 
-  private getConvoParams = (convoRootEl: JQueryEl) => {
+  private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
     const headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domGetMsgSender(convoRootEl), this.domGetMsgRecipients(convoRootEl));
     return {
       subject: this.domGetMsgSubject(convoRootEl),
@@ -403,7 +403,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       addresses: this.addresses,
       myEmail: headers.from,
       threadId: this.determineThreadId(convoRootEl),
-      threadMessageId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),
+      threadMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),
     };
   }
 
@@ -427,7 +427,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             Xss.sanitizeAppend(replyBox, '<font>&nbsp;&nbsp;Draft skipped</font>');
             replyBox.children(':not(font)').hide();
           } else {
-            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(this.getConvoParams(convoRootEl!), editable)}</div>`;
+            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(this.getReplyParams(convoRootEl!), editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
               const origChildren = replyBox.children();
               replyBox.addClass('reply_message_evaluated').append(secureReplyBoxXssSafe); // xss-safe-factory

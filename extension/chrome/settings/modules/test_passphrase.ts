@@ -25,7 +25,7 @@ Catch.try(async () => {
 
   $('.action_verify').click(Ui.event.handle(async () => {
     const key = openpgp.key.readArmored(primaryKi.private).keys[0];
-    if (await Pgp.key.decrypt(key, [$('#password').val() as string]) === true) { // text input
+    if (await Pgp.key.decrypt(key, [String($('#password').val())]) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
         <div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>

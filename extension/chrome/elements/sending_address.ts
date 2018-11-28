@@ -30,7 +30,7 @@ Catch.try(async () => {
   Xss.sanitizeRender(container, addresses.map(emailAddrToHtmlRadio).join(''));
   container.find('input').first().prop('checked', true);
   container.find('input').click(Ui.event.handle(async target => {
-    const chosenSendingAddr = $(target).val() as string;
+    const chosenSendingAddr = String($(target).val());
     if (chosenSendingAddr !== addresses[0]) {
       const orderedAddrs = Value.arr.unique([chosenSendingAddr].concat(storage.addresses || []));
       await Store.setAcct(acctEmail, { addresses: orderedAddrs });

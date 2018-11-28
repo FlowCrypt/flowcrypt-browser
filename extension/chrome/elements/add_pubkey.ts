@@ -15,10 +15,12 @@ Catch.try(async () => {
   const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const emails = Env.urlParamRequire.string(urlParams, 'emails').split(',');
+  const placement = Env.urlParamRequire.optionalString(urlParams, 'placement');
 
   const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
 
-  for (const email of (urlParams.emails as string).split(',')) {
+  for (const email of emails) {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
   }
 
@@ -31,7 +33,7 @@ Catch.try(async () => {
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {
-      const [contact] = await Store.dbContactGet(null, [$(target).val() as string]);
+      const [contact] = await Store.dbContactGet(null, [String($(target).val())]);
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
@@ -45,8 +47,8 @@ Catch.try(async () => {
   $('.action_ok').click(Ui.event.handle(async () => {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
-      const normalized = await keyImportUi.checkPub(Pgp.armor.strip($('.pubkey').val() as string)); // .pubkey is a textarea
-      await Store.dbContactSave(null, Store.dbContactObj($('select.email').val() as string, undefined, 'pgp', normalized, undefined, false, Date.now()));
+      const normalized = await keyImportUi.checkPub(Pgp.armor.strip(String($('.pubkey').val()))); // .pubkey is a textarea
+      await Store.dbContactSave(null, Store.dbContactObj(String($('select.email').val()), undefined, 'pgp', normalized, undefined, false, Date.now()));
       closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {
@@ -58,7 +60,7 @@ Catch.try(async () => {
     }
   }));
 
-  if (urlParams.placement !== 'settings') {
+  if (placement !== 'settings') {
     $('.action_settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/contacts.htm', acctEmail })));
   } else {
     $('#content').addClass('inside_compose');

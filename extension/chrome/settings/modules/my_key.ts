@@ -17,11 +17,12 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const longid = Env.urlParamRequire.optionalString(urlParams, 'longid') || 'primary';
 
   $('.action_view_user_ids').attr('href', Env.urlCreate('my_key_user_ids.htm', urlParams));
   $('.action_view_update').attr('href', Env.urlCreate('my_key_update.htm', urlParams));
 
-  const [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const key = openpgp.key.readArmored(primaryKi.private).keys[0];

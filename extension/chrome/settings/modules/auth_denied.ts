@@ -10,11 +10,9 @@ import { Catch } from '../../../js/common/catch.js';
 Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
-  const acctEmail = urlParams.acctEmail as string | undefined;
+  const acctEmail = Env.urlParamRequire.optionalString(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  if (!urlParams.emailProvider) {
-    urlParams.emailProvider = 'gmail';
-  }
+  const emailProvider = Env.urlParamRequire.optionalString(urlParams, 'emailProvider') || 'gmail';
 
   const renderSetupDone = (setupDone: boolean) => {
     if (setupDone) {
@@ -24,16 +22,16 @@ Catch.try(async () => {
     }
   };
 
-  if (!urlParams.acctEmail) {
+  if (!acctEmail) {
     renderSetupDone(false);
   } else {
     const { setup_done } = await Store.getAcct(acctEmail!, ['setup_done']);
     renderSetupDone(setup_done || false);
   }
 
-  $('.hidable').not('.' + urlParams.emailProvider).css('display', 'none');
+  $('.hidable').not(`.${emailProvider}`).css('display', 'none');
 
-  if (urlParams.emailProvider === 'outlook') {
+  if (emailProvider === 'outlook') {
     $('.permission_send').text('Manage drafts and send emails');
     $('.permission_read').text('Read messages');
   } else { // gmail

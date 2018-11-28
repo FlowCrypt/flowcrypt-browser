@@ -11,9 +11,9 @@ import { Catch } from '../../../js/common/catch.js';
 Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'bugReport']);
-  const acctEmail = urlParams.acctEmail as string | undefined;
+  const acctEmail = Env.urlParamRequire.optionalString(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const bugReport = urlParams.bugReport as string | undefined;
+  const bugReport = Env.urlParamRequire.optionalString(urlParams, 'bugReport');
 
   if (acctEmail) {
     $('#input_email').val(acctEmail).attr('disabled', 'disabled');
@@ -28,8 +28,8 @@ Catch.try(async () => {
   $('.action_send_feedback').click(Ui.event.handle(async target => {
     let myEmail = acctEmail;
     if (!myEmail) {
-      if (Str.isEmailValid($('#input_email').val() as string)) {
-        myEmail = $('#input_email').val() as string;
+      if (Str.isEmailValid(String($('#input_email').val()))) {
+        myEmail = String($('#input_email').val());
       } else {
         alert('Please enter valid email - so that we can get back to you.');
         return;

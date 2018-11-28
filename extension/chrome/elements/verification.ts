@@ -13,9 +13,10 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'verificationEmailText', 'parentTabId', 'subscribeResultTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const verificationEmailText = Env.urlParamRequire.string(urlParams, 'verificationEmailText');
 
   const fcAcct = new FcAcct({}, true);
-  const token = fcAcct.parseTokenEmailText(urlParams.verificationEmailText as string);
+  const token = fcAcct.parseTokenEmailText(verificationEmailText);
 
   const renderStatus = (content: string, spinner = false) => {
     Xss.sanitizeRender('body .status', Xss.htmlSanitize(content + (spinner ? ' ' + Ui.spinner('white') : '')));

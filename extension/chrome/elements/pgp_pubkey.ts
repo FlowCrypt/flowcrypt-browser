@@ -18,17 +18,19 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
+  // minimized means I have to click to see details. Compact means the details take up very little space.
   const urlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
-  // const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   const armoredPubkey = Env.urlParamRequire.string(urlParams, 'armoredPubkey');
   const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
-  // minimized means I have to click to see details. Compact means the details take up very little space.
+  const compact = urlParams.compact === true;
+  const minimized = urlParams.minimized === true;
 
   const pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armoredPubkey).keys;
 
   const sendResizeMsg = () => {
-    const desiredHeight = $('#pgp_block').height()! + (urlParams.compact ? 10 : 30); // #pgp_block is defined in template
+    const desiredHeight = $('#pgp_block').height()! + (compact ? 10 : 30); // #pgp_block is defined in template
     BrowserMsg.send.setCss(parentTabId, { selector: `iframe#${frameId}`, css: { height: `${desiredHeight}px` } });
   };
 
@@ -36,22 +38,22 @@ Catch.try(async () => {
     if (pubkeys.length > 1) {
       $('.action_add_contact').text('import ' + pubkeys.length + ' public keys');
     } else {
-      const [contact] = await Store.dbContactGet(null, [$('.input_email').val() as string]); // text input
+      const [contact] = await Store.dbContactGet(null, [String($('.input_email').val())]);
       $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
     }
   };
 
   const render = async () => {
-    $('.pubkey').text(urlParams.armoredPubkey as string);
-    if (urlParams.compact) {
+    $('.pubkey').text(armoredPubkey);
+    if (compact) {
       $('.hide_if_compact').remove();
       $('body').css({ border: 'none', padding: 0 });
       $('.line').removeClass('line');
     }
-    $('.line.fingerprints, .line.add_contact').css('display', urlParams.minimized ? 'none' : 'block');
+    $('.line.fingerprints, .line.add_contact').css('display', minimized ? 'none' : 'block');
     if (pubkeys.length === 1) {
-      $('.line.fingerprints .fingerprint').text(Pgp.key.fingerprint(pubkeys[0], 'spaced') as string);
-      $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) || '') || '');
+      $('.line.fingerprints .fingerprint').text(Pgp.key.fingerprint(pubkeys[0], 'spaced') || '(fingerprint error)');
+      $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) || '') || '(mnemonic error)');
     } else {
       $('.line.fingerprints').css({ display: 'none' });
     }
@@ -75,14 +77,12 @@ Catch.try(async () => {
         setBtnText().catch(Catch.handleErr);
       }
     } else {
-      let fixed = urlParams.armoredPubkey as string;
+      let fixed = armoredPubkey;
       while (/\n> |\n>\n/.test(fixed)) {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
-      if (fixed !== urlParams.armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-        window.location.href = Env.urlCreate('pgp_pubkey.htm', {
-          armoredPubkey: fixed, minimized: true, acctEmail: urlParams.acctEmail, parentTabId: urlParams.parentTabId, frameId: urlParams.frameId
-        });
+      if (fixed !== armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
+        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
       } else {
         $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
@@ -103,8 +103,8 @@ Catch.try(async () => {
       Xss.sanitizeReplace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
     } else if (pubkeys.length) {
-      if (Str.isEmailValid($('.input_email').val() as string)) { // text input
-        const contact = Store.dbContactObj($('.input_email').val() as string, undefined, 'pgp', pubkeys[0].armor(), undefined, false, Date.now()); // text input
+      if (Str.isEmailValid(String($('.input_email').val()))) {
+        const contact = Store.dbContactObj(String($('.input_email').val()), undefined, 'pgp', pubkeys[0].armor(), undefined, false, Date.now());
         await Store.dbContactSave(null, contact);
         Xss.sanitizeReplace(target, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();

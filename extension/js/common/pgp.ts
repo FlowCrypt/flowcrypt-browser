@@ -143,7 +143,7 @@ export class Pgp {
       return pgpBlockText;
     },
     clip: (text: string) => {
-      if (text && Value.is(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && Value.is(Pgp.ARMOR_HEADER_DICT.null.end as string).in(text)) {
+      if (text && Value.is(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && Value.is(String(Pgp.ARMOR_HEADER_DICT.null.end)).in(text)) {
         const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
         return (match !== null && match.length) ? match[0] : null;
       }
@@ -398,7 +398,7 @@ export class Pgp {
     },
     decrypt: async (acctEmail: string, encryptedData: string | Uint8Array, msgPwd: string | null = null, getUint8 = false): Promise<DecryptSuccess | DecryptError> => {
       let prepared;
-      const longids = { message: [] as string[], matching: [] as string[], chosen: [] as string[], needPassphrase: [] as string[] };
+      const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
       try {
         prepared = Pgp.internal.cryptoMsgPrepareForDecrypt(encryptedData);
       } catch (formatErr) {

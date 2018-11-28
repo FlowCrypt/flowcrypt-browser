@@ -85,7 +85,7 @@ Catch.try(async () => {
     }));
 
     $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent('double', async (self) => {
-      const armoredPubkey = $('#edit_contact .input_pubkey').val() as string; // textarea
+      const armoredPubkey = String($('#edit_contact .input_pubkey').val());
       const email = $('#edit_contact .input_pubkey').attr('email');
       if (!armoredPubkey || !email) {
         alert('No public key entered');
@@ -109,7 +109,7 @@ Catch.try(async () => {
     }));
 
     $('#bulk_import .action_process').off().click(Ui.event.prevent('double', self => {
-      const replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, $('#bulk_import .input_pubkey').val() as string); // textarea
+      const replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, String($('#bulk_import .input_pubkey').val()));
       if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
         alert('Could not find any new public keys');
       } else {

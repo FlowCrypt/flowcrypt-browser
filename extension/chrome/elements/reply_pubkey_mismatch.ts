@@ -53,7 +53,7 @@ Catch.try(async () => {
 
   // determine reply headers
   try {
-    const thread = await Google.gmail.threadGet(acctEmail, urlParams.threadId as string, 'full');
+    const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full');
     if (thread.messages && thread.messages.length > 0) {
       const threadMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
       const threadMsgRefsLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
@@ -73,7 +73,7 @@ Catch.try(async () => {
   $('#send_btn').off().click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
     const body = { 'text/plain': $('#input_text').get(0).innerText };
-    const message = await Api.common.msg(acctEmail, urlParams.from as string, to, urlParams.subject as string, body, [att], urlParams.threadId as string);
+    const message = await Api.common.msg(acctEmail, from, to, subject, body, [att], threadId);
     for (const k of Object.keys(additionalMsgHeaders)) {
       message.headers[k] = additionalMsgHeaders[k];
     }

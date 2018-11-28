@@ -26,7 +26,7 @@ Catch.try(async () => {
   const subscription = await Store.subscription();
   if (subscription.active) {
     const storage = await Store.getAcct(acctEmail, ['email_footer']);
-    $('.input_email_footer').val(storage.email_footer as string);
+    $('.input_email_footer').val(storage.email_footer || '');
     $('.user_subscribed').css('display', 'block');
   } else {
     $('.user_free').css('display', 'block');

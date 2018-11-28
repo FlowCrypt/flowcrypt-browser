@@ -28,14 +28,14 @@ Catch.try(async () => {
   const reqReplacement = async (expectLongid: string) => {
     try {
       const keyImportUi = new KeyImportUi({ expectLongid, rejectKnown: true, checkSigning: true });
-      const checkedOldKey = await keyImportUi.checkPrv(acctEmail, $('.input_private_key').val() as string, $('.input_passphrase').val() as string);
+      const checkedOldKey = await keyImportUi.checkPrv(acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checkedOldKey) {
         const reqDict: Dict<string> = {
           'ATT': 'CRYPTUP',
           'ACT': 'REQUEST_REPLACEMENT',
           'ADD': Pgp.hash.doubleSha1Upper(acctEmail),
           'OLD': checkedOldKey.fingerprint,
-          'PUB': Pgp.key.fingerprint(primaryPubkeyArmored) as string,
+          'PUB': primaryKi.fingerprint,
         };
         let signedPacket;
         try {

@@ -132,7 +132,7 @@ Catch.try(async () => {
       if (!rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         displayBlock('step_2b_manual_enter');
-      } else if (storage.email_provider === 'gmail' && GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read')) {
+      } else if (storage.email_provider === 'gmail' && GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
         try {
           fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
         } catch (e) {
@@ -308,7 +308,7 @@ Catch.try(async () => {
   }));
 
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
-    const passphrase = $('#recovery_pasword').val() as string; // text input
+    const passphrase = String($('#recovery_pasword').val());
     const matchingKeys: OpenPGP.key.Key[] = [];
     if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
       alert(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
@@ -415,7 +415,7 @@ Catch.try(async () => {
   $('#step_2b_manual_enter .action_save_private').click(Ui.event.handle(async () => {
     const options: SetupOptions = {
       full_name: '',
-      passphrase: $('#step_2b_manual_enter .input_passphrase').val() as string,
+      passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
       key_backup_prompt: false,
       submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked')),
       submit_all: Boolean($('#step_2b_manual_enter .input_submit_all').prop('checked')),
@@ -425,7 +425,7 @@ Catch.try(async () => {
       setup_simple: false,
     };
     try {
-      const checked = await keyImportUi.checkPrv(acctEmail, $('#step_2b_manual_enter .input_private_key').val() as string, options.passphrase);
+      const checked = await keyImportUi.checkPrv(acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);
       Xss.sanitizeRender('#step_2b_manual_enter .action_save_private', Ui.spinner('white'));
       await saveKeys([checked.encrypted], options);
       await preFinalizeSetup(options);
@@ -495,7 +495,7 @@ Catch.try(async () => {
       const userinfo = await getAndSaveGoogleUserInfo();
       const options: SetupOptions = {
         full_name: userinfo.full_name,
-        passphrase: $('#step_2a_manual_create .input_password').val() as string,
+        passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked')),
         submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked')),
@@ -539,17 +539,17 @@ Catch.try(async () => {
 
   // show alternative account addresses in setup form + save them for later
   if (storage.email_provider === 'gmail') {
-    if (!GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read')) {
+    if (!GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
       $('.auth_denied_warning').css('display', 'block');
     }
     if (typeof storage.addresses === 'undefined') {
-      if (GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read')) {
+      if (GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
         Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
       } else { // cannot read emails, don't fetch alternative addresses
         saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);
       }
     } else {
-      showSubmitAllAddrsOption(storage.addresses as string[]);
+      showSubmitAllAddrsOption(storage.addresses || []);
     }
   }
 

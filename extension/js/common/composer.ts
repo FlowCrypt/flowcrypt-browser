@@ -35,7 +35,7 @@ interface ComposerAppFunctionsInterface {
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
   storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean, lastUse?: number) => Contact;
-  emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet>;
+  emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet | undefined>;
   emailProviderDraftCreate: (mimeMsg: string) => Promise<R.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
   emailProviderDraftDelete: (draftId: string) => Promise<R.GmailDraftDelete>;
@@ -343,19 +343,24 @@ export class Composer {
     if (this.v.isReplyBox) {
       Xss.sanitizeRender(this.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
+    const abortAndRenderReplyMsgComposeTableIfIsReplyBox = async (reason: string) => {
+      console.info(`Google.gmail.initialDraftLoad: ${reason}`);
+      if (this.v.isReplyBox) {
+        await this.renderReplyMsgComposeTable();
+      }
+    };
     try {
       const draftGetRes = await this.app.emailProviderDraftGet(this.v.draftId);
+      if (!draftGetRes) {
+        return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
+      }
       const parsedMsg = await Mime.decode(Str.base64urlDecode(draftGetRes.message.raw!));
       const armored = Pgp.armor.clip(parsedMsg.text || Pgp.armor.strip(parsedMsg.html || '') || '');
-      if (armored) {
-        this.S.cached('input_subject').val((parsedMsg.headers.subject as string) || '');
-        await this.decryptAndRenderDraft(armored, parsedMsg);
-      } else {
-        console.info('Google.gmail.draft_get Mime.decode else {}');
-        if (this.v.isReplyBox) {
-          await this.renderReplyMsgComposeTable();
-        }
+      if (!armored) {
+        return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
       }
+      this.S.cached('input_subject').val(String(parsedMsg.headers.subject) || '');
+      await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
@@ -369,11 +374,8 @@ export class Composer {
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         window.location.reload();
       } else {
-        console.info('Google.gmail.draft_get success===false');
         Catch.handleErr(e);
-        if (this.v.isReplyBox) {
-          await this.renderReplyMsgComposeTable();
-        }
+        return abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
       }
     }
   }
@@ -411,7 +413,7 @@ export class Composer {
       this.S.cached('send_btn_note').text('Saving');
       const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
       const encrypted = await Pgp.msg.encrypt([primaryKi.public], null, null, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
-      let body;
+      let body: string;
       if (this.v.threadId) { // replied message
         body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
       } else if (this.v.draftId) {
@@ -420,7 +422,7 @@ export class Composer {
         body = encrypted.data;
       }
       const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
-      const mimeMsg = await Mime.encode(body as string, {
+      const mimeMsg = await Mime.encode(body, {
         To: this.getRecipientsFromDom().filter(Str.isEmailValid), // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         From: this.v.from || this.getSenderFromDom(),
         Subject: subject
@@ -430,7 +432,7 @@ export class Composer {
           const newDraft = await this.app.emailProviderDraftCreate(mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
           this.v.draftId = newDraft.id;
-          await this.app.storageSetDraftMeta(true, newDraft.id, this.v.threadId, this.getRecipientsFromDom(), this.S.cached('input_subject').val() as string); // text input
+          await this.app.storageSetDraftMeta(true, newDraft.id, this.v.threadId, this.getRecipientsFromDom(), String(this.S.cached('input_subject').val()));
           // recursing one more time, because we need the draft_id we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // save_draft_in_process will remain true because well.. it's still in process
@@ -1084,7 +1086,7 @@ export class Composer {
   }
 
   private parseRenderRecipients = async () => {
-    const inputTo = (this.S.cached('input_to').val() as string).toLowerCase();
+    const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     if (Value.is(',').in(inputTo)) {
       const emails = inputTo.split(',');
       for (let i = 0; i < emails.length - 1; i++) {
@@ -1198,7 +1200,7 @@ export class Composer {
   }
 
   private searchContacts = async (dbOnly = false) => {
-    const query = { substring: Str.parseEmail(this.S.cached('input_to').val() as string).email };
+    const query = { substring: Str.parseEmail(String(this.S.cached('input_to').val())).email };
     if (query.substring !== '') {
       const contacts = await this.app.storageContactSearch(query);
       if (dbOnly || !this.canReadEmails) {
@@ -1438,7 +1440,7 @@ export class Composer {
       }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.handleErrs(`close message`)));
-      const addresses = this.app.storageGetAddresses() as string[];
+      const addresses = this.app.storageGetAddresses();
       if (addresses.length > 1) {
         const inputAddrContainer = $('#input_addresses_container');
         inputAddrContainer.addClass('show_send_from');
@@ -1520,7 +1522,7 @@ export class Composer {
       storageContactSave: (contact: Contact) => Promise.resolve(),
       storageContactSearch: (query: DbContactFilter) => Promise.resolve([]),
       storageContactObj: Store.dbContactObj,
-      emailProviderDraftGet: (draftId: string) => Promise.resolve({ id: null as any as string, message: null as any as R.GmailMsg }),
+      emailProviderDraftGet: (draftId: string) => Promise.resolve(undefined),
       emailProviderDraftCreate: (mimeMsg: string) => Promise.reject(null),
       emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise.resolve({}),
       emailProviderDraftDelete: (draftId: string) => Promise.resolve({}),

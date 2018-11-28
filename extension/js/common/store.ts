@@ -205,7 +205,7 @@ export class Store {
     const storageKey = `passphrase_${longid}` as AccountIndex;
     const storage = await Store.getAcct(acctEmail, [storageKey as AccountIndex]);
     if (typeof storage[storageKey] === 'string') {
-      return storage[storageKey] as string; // checked above
+      return String(storage[storageKey]); // make ts happy
     } else {
       const fromSession = await Store.sessionGet(acctEmail, storageKey);
       return fromSession && !ignoreSession ? fromSession : null;

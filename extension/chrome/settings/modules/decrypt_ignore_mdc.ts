@@ -25,7 +25,7 @@ Catch.try(async () => {
   BrowserMsg.listen(tabId);
 
   $('.action_decrypt').click(Ui.event.prevent('double', async self => {
-    const encrypted = $('.input_message').val() as string;
+    const encrypted = String($('.input_message').val());
     if (!encrypted) {
       alert('Please paste an encrypted message');
       return;

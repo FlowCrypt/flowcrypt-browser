@@ -12,7 +12,7 @@ Catch.try(async () => {
   const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
 
   document.addEventListener('cryptup_stripe_result', Catch.try(() => {
-    BrowserMsg.send.stripeResult(parentTabId, { token: $('#stripe_result').text() as string });
+    BrowserMsg.send.stripeResult(parentTabId, { token: String($('#stripe_result').text()) });
   }));
 
 })();

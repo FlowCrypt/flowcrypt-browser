@@ -21,8 +21,9 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  let parentTabId: string | null = null;
-  if (urlParams.action !== 'setup') {
+  const action = Env.urlParamRequire.oneof(urlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
+  let parentTabId: string | undefined;
+  if (action !== 'setup') {
     parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
   }
 
@@ -159,7 +160,7 @@ Catch.try(async () => {
   }));
 
   $('.action_backup').click(Ui.event.prevent('double', async (target) => {
-    const newPassphrase = $('#password').val() as string; // text input
+    const newPassphrase = String($('#password').val());
     if (newPassphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');
       $('#password2').val('');
@@ -270,7 +271,7 @@ Catch.try(async () => {
 
   const writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
     await Store.setAcct(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
-    if (urlParams.action === 'setup') {
+    if (action === 'setup') {
       window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail, action: 'finalize' });
     } else {
       await showStatus();
@@ -331,14 +332,14 @@ Catch.try(async () => {
   };
 
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
-    if (urlParams.action === 'setup') {
+    if (action === 'setup') {
       await Store.setAcct(acctEmail, { key_backup_prompt: false });
       window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail });
     } else {
       if (parentTabId) {
         BrowserMsg.send.closePage(parentTabId);
       } else {
-        Catch.report(`backup.ts: missing parentTabId for ${urlParams.action}`);
+        Catch.report(`backup.ts: missing parentTabId for ${action}`);
       }
     }
   }));
@@ -359,7 +360,7 @@ Catch.try(async () => {
     }
   }));
 
-  if (urlParams.action === 'setup') {
+  if (action === 'setup') {
     $('.back').css('display', 'none');
     $('.action_skip_backup').parent().css('display', 'none');
     if (storage.setup_simple) {
@@ -372,7 +373,7 @@ Catch.try(async () => {
       displayBlock('step_3_manual');
       $('h1').text('Back up your private key');
     }
-  } else if (urlParams.action === 'passphrase_change_gmail_backup') {
+  } else if (action === 'passphrase_change_gmail_backup') {
     if (storage.setup_simple) {
       displayBlock('loading');
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
@@ -388,7 +389,7 @@ Catch.try(async () => {
       displayBlock('step_3_manual');
       $('h1').text('Back up your private key');
     }
-  } else if (urlParams.action === 'options') {
+  } else if (action === 'options') {
     displayBlock('step_3_manual');
     $('h1').text('Back up your private key');
   } else {

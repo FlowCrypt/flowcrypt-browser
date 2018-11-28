@@ -51,8 +51,8 @@ Catch.try(async () => {
 
   $('.action_enter').click(Ui.event.handle(async () => {
     const key = openpgp.key.readArmored(primaryKi.private).keys[0];
-    if (await Pgp.key.decrypt(key, [$('#original_password').val() as string]) === true) { // text input
-      origPassphrase = $('#original_password').val() as string; // text input
+    if (await Pgp.key.decrypt(key, [String($('#original_password').val())]) === true) {
+      origPassphrase = String($('#original_password').val());
       displayBlock('step_1_password');
     } else {
       alert('Pass phrase did not match, please try again.');
@@ -79,7 +79,7 @@ Catch.try(async () => {
   }));
 
   $('.action_change').click(Ui.event.prevent('double', async self => {
-    const newPassphrase = $('#password').val() as string; // text input
+    const newPassphrase = String($('#password').val());
     if (newPassphrase !== $('#password2').val()) {
       alert('The two pass phrases do not match, please try again.');
       $('#password2').val('');

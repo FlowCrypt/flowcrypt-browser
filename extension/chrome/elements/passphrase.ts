@@ -75,7 +75,7 @@ Catch.try(async () => {
   }));
 
   $('.action_ok').click(Ui.event.handle(async () => {
-    const pass = $('#passphrase').val() as string; // it's a text input
+    const pass = String($('#passphrase').val());
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
     for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save them all

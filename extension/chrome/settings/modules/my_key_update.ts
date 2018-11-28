@@ -15,13 +15,14 @@ Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const longid = Env.urlParamRequire.optionalString(urlParams, 'longid') || 'primary';
 
-  const urlMyKeyPage = Env.urlCreate('my_key.htm', urlParams);
-  $('.action_show_public_key').attr('href', urlMyKeyPage);
+  const showKeyUrl = Env.urlCreate('my_key.htm', urlParams);
+  $('.action_show_public_key').attr('href', showKeyUrl);
   const inputPrivateKey = $('.input_private_key');
   const prvHeaders = Pgp.armor.headers('privateKey');
 
-  const [primaryKi] = await Store.keysGet(acctEmail, [urlParams.longid as string || 'primary']);
+  const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
 
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
@@ -30,9 +31,9 @@ Catch.try(async () => {
   inputPrivateKey.attr('placeholder', inputPrivateKey.attr('placeholder') + ' (' + primaryKi.longid + ')');
 
   $('.action_update_private_key').click(Ui.event.prevent('double', async () => {
-    const uddatedKey = openpgp.key.readArmored(inputPrivateKey.val() as string).keys[0];
-    const uddatedKeyEncrypted = openpgp.key.readArmored(inputPrivateKey.val() as string).keys[0];
-    const uddatedKeyPassphrase = $('.input_passphrase').val() as string;
+    const uddatedKey = openpgp.key.readArmored(String(inputPrivateKey.val())).keys[0];
+    const uddatedKeyEncrypted = openpgp.key.readArmored(String(inputPrivateKey.val())).keys[0];
+    const uddatedKeyPassphrase = String($('.input_passphrase').val());
     if (typeof uddatedKey === 'undefined') {
       alert(Lang.setup.keyFormattedWell(prvHeaders.begin, String(prvHeaders.end)));
     } else if (uddatedKey.isPublic()) {
@@ -47,12 +48,12 @@ Catch.try(async () => {
       } else { // cannot get a valid encryption key packet
         if ((await uddatedKey.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) || await Pgp.key.usableButExpired(uddatedKey)) { // known issues - key can be fixed
           const fixedEncryptedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(
-            acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, urlMyKeyPage
+            acctEmail, '.compatibility_fix_container', uddatedKeyEncrypted, uddatedKeyPassphrase, showKeyUrl
           );
           await storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
         } else {
           alert('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');
-          window.location.href = urlMyKeyPage;
+          window.location.href = showKeyUrl;
         }
       }
     }
@@ -64,7 +65,7 @@ Catch.try(async () => {
     await Store.passphraseSave('local', acctEmail, primaryKi.longid, storedPassphrase !== null ? updatedPrvPassphrase : undefined);
     await Store.passphraseSave('session', acctEmail, primaryKi.longid, storedPassphrase !== null ? undefined : updatedPrvPassphrase);
     alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
-    window.location.href = urlMyKeyPage;
+    window.location.href = showKeyUrl;
   };
 
 })();

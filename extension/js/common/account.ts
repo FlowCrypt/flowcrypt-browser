@@ -112,7 +112,7 @@ export class FcAcct {
     if (tokenLinkMatch !== null) {
       const tokenLinkParams = Env.urlParams(['account', 'uuid', 'token'], tokenLinkMatch[0].split('?')[1]);
       if ((!storedUuidToCrossCheck || tokenLinkParams.uuid === storedUuidToCrossCheck) && tokenLinkParams.token) {
-        return tokenLinkParams.token as string;
+        return String(tokenLinkParams.token);
       }
     }
     return undefined;

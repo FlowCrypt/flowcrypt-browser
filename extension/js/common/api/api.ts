@@ -343,8 +343,8 @@ export class Api {
         const result: ParsedAttest = {
           success: false,
           content: {},
-          error: null as string | null,
-          text: null as string | null,
+          error: null,
+          text: null,
         };
         const packetHeaders = Pgp.armor.headers('attestPacket', 're');
         const matches = text.match(RegExp(packetHeaders.begin + '([^]+)' + packetHeaders.end, 'm'));
@@ -653,7 +653,7 @@ export class Api {
     for (const type of Object.keys(parts)) {
       body += '--' + boundary + '\n';
       body += 'Content-Type: ' + type + '\n';
-      if (Value.is('json').in(type as string)) {
+      if (Value.is('json').in(String(type))) {
         body += '\n' + parts[type] + '\n\n';
       } else {
         body += 'Content-Transfer-Encoding: base64\n';

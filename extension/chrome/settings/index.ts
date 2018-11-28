@@ -19,10 +19,13 @@ declare const openpgp: typeof OpenPGP;
 Catch.try(async () => {
 
   const urlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
-  const acctEmail = urlParams.acctEmail as string | undefined;
+  const acctEmail = Env.urlParamRequire.optionalString(urlParams, 'acctEmail');
+  let page = Env.urlParamRequire.optionalString(urlParams, 'page');
+  page = (page === 'undefined') ? undefined : page; // in case an "undefined" strring slipped in
   const pageUrlParams: UrlParams | null = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) as UrlParams : null;
   const acctEmails = await Store.acctEmailsGet();
   const addNewAcct = urlParams.addNewAcct === true;
+  const advanced = urlParams.advanced === true;
 
   $('#status-row #status_v').text(`v:${String(Catch.version())}`);
 
@@ -119,12 +122,12 @@ Catch.try(async () => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
+        if (!GoogleAuth.hasScope(storage.google_token_scopes || [], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         displayOrig('.hide_if_setup_not_done');
         $('.show_if_setup_not_done').css('display', 'none');
-        if (urlParams.advanced) {
+        if (advanced) {
           $("#settings").toggleClass("advanced");
         }
         const privateKeys = await Store.keysGet(acctEmail);
@@ -374,11 +377,11 @@ Catch.try(async () => {
 
   await initialize();
   await Ui.abortAndRenderErrOnUnprotectedKey(acctEmail, tabId);
-  if (urlParams.page && typeof urlParams.page !== 'undefined' && urlParams.page !== 'undefined') {
-    if (urlParams.page === '/chrome/settings/modules/auth_denied.htm') {
-      Settings.renderSubPage(acctEmail || null, tabId, urlParams.page);
+  if (page) {
+    if (page === '/chrome/settings/modules/auth_denied.htm') {
+      Settings.renderSubPage(acctEmail || null, tabId, page);
     } else {
-      Settings.renderSubPage(acctEmail || null, tabId, urlParams.page as string, pageUrlParams);
+      Settings.renderSubPage(acctEmail || null, tabId, page, pageUrlParams);
     }
   }
 

@@ -434,7 +434,12 @@ export class GoogleAuth {
 
   private static SCOPE_DICT: Dict<string> = { read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose' };
 
-  public static scope = (scope: string[]): string[] => scope.map(s => GoogleAuth.SCOPE_DICT[s] as string);
+  public static scope = (scope: string[]): string[] => scope.map(s => {
+    if (!GoogleAuth.SCOPE_DICT[s]) {
+      throw new Error(`Unknown scope: ${s}`);
+    }
+    return GoogleAuth.SCOPE_DICT[s];
+  })
 
   public static hasScope = (scopes: string[], scope: string) => scopes && Value.is(GoogleAuth.SCOPE_DICT[scope]).in(scopes);
 

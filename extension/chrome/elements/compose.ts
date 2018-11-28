@@ -75,7 +75,7 @@ Catch.try(async () => {
 
   const tabId = await BrowserMsg.requiredTabId();
 
-  const canReadEmail = GoogleAuth.hasScope(storage.google_token_scopes as string[], 'read');
+  const canReadEmail = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
   const factory = new XssSafeFactory(acctEmail, tabId);
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     // there may be a draft we want to load
