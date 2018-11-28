@@ -84,6 +84,7 @@ Catch.try(async () => {
   };
 
   const closeDialog = () => {
+    console.info('closing subscribe dialog');
     if (placement === 'settings_compose') {
       window.close();
     } else if (placement === 'settings') {
@@ -118,10 +119,10 @@ Catch.try(async () => {
   } else {
     $('body').css('overflow', 'hidden');
   }
-  if (isAuthErr) {
+  if (!isAuthErr) {
     $('.list_table').css('display', 'block');
   } else {
-    $('.action_get_trial').addClass('action_add_device').removeClass('action_get_trial').text('Add Device');
+    $('.action_get_trial').addClass('action_add_device').removeClass('action_get_trial').attr('data-test', 'action-add-device').text('Add Device');
   }
   $('#content').css('display', 'block');
 
@@ -177,7 +178,7 @@ Catch.try(async () => {
     // todo - upgrade to business
   }
   if (subscription.active) {
-    if (isAuthErr) {
+    if (!isAuthErr) {
       if (subscription.method === 'trial') {
         $('.list_table').css('display', 'none');
         $('.action_get_trial').css('display', 'none');
