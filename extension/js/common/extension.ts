@@ -203,10 +203,7 @@ export class BrowserMsg {
     const msg: Bm.Raw = { name, data: bm || {}, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
     const tryResolveNoUndefined = (r?: Bm.Response) => Catch.try(() => resolve(typeof r === 'undefined' ? {} : r))();
     const isBackgroundPage = Env.isBackgroundPage();
-    if (typeof destString === 'undefined') { // don't know where to send the message
-      Catch.log('BrowserMsg.send to:undefined');
-      tryResolveNoUndefined();
-    } else if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && msg.to === null) {
+    if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && msg.to === null) {
       const handler: Bm.RespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
       handler(msg.data, 'background', tryResolveNoUndefined); // calling from background script to background script: skip messaging completely
     } else if (isBackgroundPage) {
