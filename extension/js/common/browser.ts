@@ -271,10 +271,14 @@ export class Ui {
     }
     console.info(values[name]);  // for local debugging
     // tslint:disable-next-line:max-line-length
-    const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-    Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
+    const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})`;
+    const renderMsg = `${msg}<br><br><div class="button green long action_report_issue">report issue</div>`;
+    Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
+    $('.action_report_issue').click(Ui.event.handle(async target => {
+      Catch.report(msg, { currentUrl: window.location.href, params: values });
+      $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
+    }));
     throw new UnreportableError(msg);
-
   }
 
   public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
