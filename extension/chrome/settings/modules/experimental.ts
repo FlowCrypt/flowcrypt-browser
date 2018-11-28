@@ -15,9 +15,9 @@ import { GoogleAuth } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   // this is for debugging
   if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {

@@ -27,7 +27,7 @@ export namespace Bm {
   export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
-  export type SubscribeDialog = { source?: 'authErr', subscribeResultTabId?: Dest };
+  export type SubscribeDialog = { isAuthErr?: boolean, subscribeResultTabId?: Dest };
   export type ShowSubscribeDialog = {};
   export type CloseReplyMessage = { frameId: string, threadId: string };
   export type ReinsertReplyBox = { acctEmail: string, myEmail: string, subject: string, theirEmail: string[], threadId: string, threadMsgId: string };

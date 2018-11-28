@@ -12,9 +12,9 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   $('.email-address').text(acctEmail);
 

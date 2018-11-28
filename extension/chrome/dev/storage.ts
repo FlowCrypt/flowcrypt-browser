@@ -13,11 +13,11 @@ Catch.try(async () => {
 
   const DEBUG_EMAILS = ['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com'];
 
-  const urlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
-  const filter = Env.urlParamRequire.optionalString(urlParams, 'filter');
-  const keys = Env.urlParamRequire.optionalString(urlParams, 'keys');
-  const title = Env.urlParamRequire.optionalString(urlParams, 'title');
-  const controls = urlParams.controls === true && (Value.is(':dev').in(Catch.environment()) || Value.is(filter).in(DEBUG_EMAILS));
+  const uncheckedUrlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
+  const filter = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'filter');
+  const keys = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'keys');
+  const title = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'title');
+  const controls = uncheckedUrlParams.controls === true && (Value.is(':dev').in(Catch.environment()) || Value.is(filter).in(DEBUG_EMAILS));
 
   if (title) {
     Xss.sanitizePrepend('#content', `<h1>${Xss.escape(title)}</h1>`);

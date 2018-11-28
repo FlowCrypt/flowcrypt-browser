@@ -10,10 +10,10 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'bugReport']);
-  const acctEmail = Env.urlParamRequire.optionalString(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const bugReport = Env.urlParamRequire.optionalString(urlParams, 'bugReport');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'bugReport']);
+  const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const bugReport = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
 
   if (acctEmail) {
     $('#input_email').val(acctEmail).attr('disabled', 'disabled');

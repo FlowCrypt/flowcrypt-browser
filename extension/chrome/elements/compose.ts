@@ -16,22 +16,22 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
     'skipClickPrompt', 'ignoreDraft']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
-  const threadMsgId = Env.urlParamRequire.optionalString(urlParams, 'threadMsgId') || '';
-  const isReplyBox = urlParams.isReplyBox === true;
-  const skipClickPrompt = urlParams.skipClickPrompt === true;
-  const ignoreDraft = urlParams.ignoreDraft === true;
-  const placement = Env.urlParamRequire.oneof(urlParams, 'placement', ['settings', 'gmail', undefined]);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const threadMsgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
+  const isReplyBox = uncheckedUrlParams.isReplyBox === true;
+  const skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
+  const ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
+  const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
   const disableDraftSaving = false;
-  let draftId = Env.urlParamRequire.optionalString(urlParams, 'draftId') || '';
-  let from = Env.urlParamRequire.optionalString(urlParams, 'from') || acctEmail;
-  let to = Env.urlParamRequire.optionalString(urlParams, 'to') ? Env.urlParamRequire.optionalString(urlParams, 'to')!.split(',') : [];
-  let threadId = Env.urlParamRequire.optionalString(urlParams, 'threadId') || '';
-  let subject = Env.urlParamRequire.optionalString(urlParams, 'subject') || '';
+  let draftId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
+  let from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;
+  let to = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
+  let threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
+  let subject = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
   const subscriptionWhenPageWasOpened = await Store.subscription();
   const storage = await Store.getAcct(acctEmail, [

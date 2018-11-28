@@ -9,10 +9,10 @@ import { Catch } from '../../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
-  const acctEmail = Env.urlParamRequire.optionalString(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const emailProvider = Env.urlParamRequire.optionalString(urlParams, 'emailProvider') || 'gmail';
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
+  const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const emailProvider = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';
 
   const renderSetupDone = (setupDone: boolean) => {
     if (setupDone) {

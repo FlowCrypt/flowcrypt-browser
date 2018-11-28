@@ -19,12 +19,12 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const action = Env.urlParamRequire.oneof(urlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
   let parentTabId: string | undefined;
   if (action !== 'setup') {
-    parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+    parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
   let emailProvider: EmailProvider;
@@ -272,7 +272,7 @@ Catch.try(async () => {
   const writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
     await Store.setAcct(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
     if (action === 'setup') {
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail, action: 'finalize' });
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail, action: 'finalize' });
     } else {
       await showStatus();
     }
@@ -334,7 +334,7 @@ Catch.try(async () => {
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
     if (action === 'setup') {
       await Store.setAcct(acctEmail, { key_backup_prompt: false });
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: urlParams.acctEmail });
+      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail });
     } else {
       if (parentTabId) {
         BrowserMsg.send.closePage(parentTabId);

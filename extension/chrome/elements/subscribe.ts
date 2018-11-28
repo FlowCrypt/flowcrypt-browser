@@ -16,10 +16,12 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const urlParams = Env.urlParams(['acctEmail', 'placement', 'source', 'parentTabId', 'subscribeResultTabId']);
-  let acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const subscribeResultTabId = Env.urlParamRequire.optionalString(urlParams, 'subscribeResultTabId');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'placement', 'isAuthErr', 'parentTabId', 'subscribeResultTabId']);
+  let acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const subscribeResultTabId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subscribeResultTabId');
+  const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'embedded', 'compose', undefined]);
+  const isAuthErr = uncheckedUrlParams.isAuthErr === true;
 
   const authInfo = await Store.authInfo();
   if (authInfo.acctEmail) {
@@ -82,9 +84,9 @@ Catch.try(async () => {
   };
 
   const closeDialog = () => {
-    if (urlParams.placement === 'settings_compose') {
+    if (placement === 'settings_compose') {
       window.close();
-    } else if (urlParams.placement === 'settings') {
+    } else if (placement === 'settings') {
       BrowserMsg.send.reload(parentTabId, {});
     } else {
       BrowserMsg.send.closeDialog(parentTabId);
@@ -110,13 +112,13 @@ Catch.try(async () => {
   const canReadEmail = GoogleAuth.hasScope(google_token_scopes || [], 'read');
   const fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
 
-  if (urlParams.placement === 'settings') {
+  if (placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
     $('.line.button_padding').css('padding', 0);
   } else {
     $('body').css('overflow', 'hidden');
   }
-  if (urlParams.source !== 'authErr') {
+  if (isAuthErr) {
     $('.list_table').css('display', 'block');
   } else {
     $('.action_get_trial').addClass('action_add_device').removeClass('action_get_trial').text('Add Device');
@@ -175,7 +177,7 @@ Catch.try(async () => {
     // todo - upgrade to business
   }
   if (subscription.active) {
-    if (urlParams.source !== 'authErr') {
+    if (isAuthErr) {
       if (subscription.method === 'trial') {
         $('.list_table').css('display', 'none');
         $('.action_get_trial').css('display', 'none');

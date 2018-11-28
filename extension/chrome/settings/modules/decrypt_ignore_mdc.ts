@@ -12,8 +12,8 @@ openpgp.config.ignore_mdc_error = true; // will only affect OpenPGP in local fra
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
 
   const tabId = await BrowserMsg.requiredTabId();
   let origContent: string;

@@ -13,14 +13,14 @@ import { Api } from '../../js/common/api/api.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'placement']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'placement']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const hash = Pgp.hash.sha1;
   const container = $('.emails');
 
   const storage = await Store.getAcct(acctEmail, ['addresses']);
-  const addresses = storage.addresses || [urlParams.acctEmail];
+  const addresses = storage.addresses || [acctEmail];
 
   const emailAddrToHtmlRadio = (a: string) => {
     a = Xss.escape(a);

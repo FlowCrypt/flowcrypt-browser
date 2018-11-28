@@ -16,19 +16,19 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const urlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
-  let size = urlParams.size ? parseInt(String(urlParams.size)) : undefined;
-  const origNameBasedOnFilename = urlParams.name ? String(urlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
-  const decrypted = Env.urlParamRequire.optionalString(urlParams, 'decrypted');
-  const type = Env.urlParamRequire.optionalString(urlParams, 'type');
-  const content = Env.urlParamRequire.optionalString(urlParams, 'content');
-  const msgId = Env.urlParamRequire.optionalString(urlParams, 'msgId');
-  let attId = Env.urlParamRequire.optionalString(urlParams, 'attId');
-  const url = Env.urlParamRequire.optionalString(urlParams, 'url');
-  const name = Env.urlParamRequire.optionalString(urlParams, 'name');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  let size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
+  const origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
+  const decrypted = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'decrypted');
+  const type = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
+  const content = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'content');
+  const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
+  let attId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
+  const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
+  const name = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
 
   let decryptedAtt: Att | null = null;
   let encryptedAtt: Att | null = null;

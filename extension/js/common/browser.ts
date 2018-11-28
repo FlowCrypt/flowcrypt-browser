@@ -681,8 +681,8 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, source?: string, subscribeResultTabId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, source, subscribeResultTabId });
+  srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, isAuthErr?: boolean, subscribeResultTabId?: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, isAuthErr, subscribeResultTabId });
   }
 
   srcVerificationDialog = (verificationEmailText: string) => {
@@ -755,8 +755,8 @@ export class XssSafeFactory {
     return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
   }
 
-  dialogSubscribe = (verifEmailText?: string, source?: string, subscribeResultTabId?: string) => {
-    const src = this.srcSubscribeDialog(verifEmailText, 'dialog', source, subscribeResultTabId);
+  dialogSubscribe = (verifEmailText?: string, isAuthErr?: boolean, subscribeResultTabId?: string) => {
+    const src = this.srcSubscribeDialog(verifEmailText, 'dialog', isAuthErr, subscribeResultTabId);
     return this.divDialog_DANGEROUS(this.iframe(src, ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
   }
 
@@ -768,8 +768,8 @@ export class XssSafeFactory {
     return Ui.e('div', { id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], { scrolling: 'no' }) });
   }
 
-  embeddedSubscribe = (verifEmailText: string, source: string) => {
-    return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', source), ['short', 'embedded'], { scrolling: 'no' });
+  embeddedSubscribe = (verifEmailText: string, isAuthErr: boolean) => {
+    return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedVerification = (verifEmailText: string) => {

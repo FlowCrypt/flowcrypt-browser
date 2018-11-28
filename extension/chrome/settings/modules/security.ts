@@ -14,10 +14,10 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const embedded = urlParams.embedded === true;
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const embedded = uncheckedUrlParams.embedded === true;
 
   await Ui.passphraseToggle(['passphrase_entry']);
 
@@ -106,7 +106,7 @@ Catch.try(async () => {
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
-        const showAuthErr = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', '&source=authErr');
+        const showAuthErr = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', { isAuthErr: true });
         Xss.sanitizeRender('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(showAuthErr));
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source

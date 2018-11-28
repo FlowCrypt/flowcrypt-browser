@@ -16,11 +16,11 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const longids = Env.urlParamRequire.string(urlParams, 'longids').split(',');
-  const type = Env.urlParamRequire.oneof(urlParams, 'type', ['embedded', 'sign', 'attest', 'message', 'draft', 'attachment']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const longids = Env.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
+  const type = Env.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'attest', 'message', 'draft', 'attachment']);
 
   if (type === 'embedded') {
     $('h1').parent().css('display', 'none');

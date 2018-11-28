@@ -18,18 +18,18 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const urlParams = Env.urlParams(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature', 'short']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
-  const hasChallengePassword = urlParams.hasPassword === true;
-  const isOutgoing = urlParams.isOutgoing === true;
-  const short = Env.urlParamRequire.optionalString(urlParams, 'short');
-  const senderEmail = Env.urlParamRequire.optionalString(urlParams, 'senderEmail');
-  const msgId = Env.urlParamRequire.optionalString(urlParams, 'msgId');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature', 'short']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const hasChallengePassword = uncheckedUrlParams.hasPassword === true;
+  const isOutgoing = uncheckedUrlParams.isOutgoing === true;
+  const short = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
+  const senderEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
+  const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const heightHistory: number[] = [];
-  let signature = urlParams.signature === true ? true : (urlParams.signature ? String(urlParams.signature) : undefined);
-  let msg: string | undefined = Env.urlParamRequire.optionalString(urlParams, 'message'); // todo - could be changed to msg
+  let signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
+  let msg: string | undefined = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'message'); // todo - could be changed to msg
   let missingOrWrongPassprases: Dict<string | null> = {};
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];
@@ -291,7 +291,7 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
         alert('Your FlowCrypt account information is outdated, please review your account settings.');
-        BrowserMsg.send.subscribeDialog(parentTabId, { source: 'authErr' });
+        BrowserMsg.send.subscribeDialog(parentTabId, { isAuthErr: true });
       } else {
         Catch.report('error when extending message expiration', e);
       }

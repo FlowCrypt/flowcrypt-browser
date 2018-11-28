@@ -128,9 +128,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
       }
     });
-    BrowserMsg.addListener('subscribe_dialog', ({ source, subscribeResultTabId }: Bm.SubscribeDialog) => {
+    BrowserMsg.addListener('subscribe_dialog', ({ isAuthErr, subscribeResultTabId }: Bm.SubscribeDialog) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogSubscribe(undefined, source, subscribeResultTabId)); // xss-safe-factory
+        $('body').append(factory.dialogSubscribe(undefined, isAuthErr, subscribeResultTabId)); // xss-safe-factory
       }
     });
     BrowserMsg.addListener('add_pubkey_dialog', ({ emails }: Bm.AddPubkeyDialog) => {

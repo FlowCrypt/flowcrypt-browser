@@ -19,13 +19,13 @@ Catch.try(async () => {
   Ui.event.protect();
 
   // minimized means I have to click to see details. Compact means the details take up very little space.
-  const urlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const armoredPubkey = Env.urlParamRequire.string(urlParams, 'armoredPubkey');
-  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
-  const compact = urlParams.compact === true;
-  const minimized = urlParams.minimized === true;
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const armoredPubkey = Env.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey');
+  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const compact = uncheckedUrlParams.compact === true;
+  const minimized = uncheckedUrlParams.minimized === true;
 
   const pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armoredPubkey).keys;
 

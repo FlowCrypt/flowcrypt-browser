@@ -11,11 +11,12 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const longid = Env.urlParamRequire.optionalString(urlParams, 'longid') || 'primary';
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const longid = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+  const myKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
 
-  $('.action_show_public_key').attr('href', Env.urlCreate('my_key.htm', urlParams));
+  $('.action_show_public_key').attr('href', myKeyUrl);
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);

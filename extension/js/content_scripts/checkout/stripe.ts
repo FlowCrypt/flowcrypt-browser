@@ -8,8 +8,8 @@ import { Env } from '../../common/browser.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['parentTabId']);
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
+  const uncheckedUrlParams = Env.urlParams(['parentTabId']);
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   document.addEventListener('cryptup_stripe_result', Catch.try(() => {
     BrowserMsg.send.stripeResult(parentTabId, { token: String($('#stripe_result').text()) });

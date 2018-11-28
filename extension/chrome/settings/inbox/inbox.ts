@@ -16,10 +16,10 @@ import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const labelId = urlParams.labelId ? String(urlParams.labelId) : 'INBOX';
-  const threadId = Env.urlParamRequire.optionalString(urlParams, 'threadId');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
+  const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
 
   let emailProvider;
   let factory: XssSafeFactory;
@@ -81,9 +81,9 @@ Catch.try(async () => {
       $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
     }
   });
-  BrowserMsg.addListener('subscribe_dialog', ({ source, subscribeResultTabId }: Bm.SubscribeDialog) => {
+  BrowserMsg.addListener('subscribe_dialog', ({ isAuthErr, subscribeResultTabId }: Bm.SubscribeDialog) => {
     if (!$('#cryptup_dialog').length) {
-      $('body').append(factory.dialogSubscribe(undefined, source, subscribeResultTabId)); // xss-safe-factory
+      $('body').append(factory.dialogSubscribe(undefined, isAuthErr, subscribeResultTabId)); // xss-safe-factory
     }
   });
   BrowserMsg.addListener('add_pubkey_dialog', ({ emails }: Bm.AddPubkeyDialog) => {

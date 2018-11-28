@@ -7,9 +7,9 @@ import { Env } from '../../js/common/browser.js';
 
 (() => {
 
-  const urlParams = Env.urlParams(['f', 'args']);
-  const f = String(urlParams.f);
-  const args = JSON.parse(String(urlParams.args)) as any[];
+  const uncheckedUrlParams = Env.urlParams(['f', 'args']);
+  const f = String(uncheckedUrlParams.f);
+  const args = JSON.parse(String(uncheckedUrlParams.args)) as any[];
 
   const test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
     try {

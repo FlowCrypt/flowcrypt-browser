@@ -9,9 +9,9 @@ import { Google } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'which']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const which = Env.urlParamRequire.oneof(urlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'which']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const which = Env.urlParamRequire.oneof(uncheckedUrlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription']);
 
   const renderCallRes = (api: string, variables: Dict<any>, result: any, error: any = null) => {
     const r = `<b>${api} ${JSON.stringify(variables)}</b><pre>${JSON.stringify(result, undefined, 2)} (${JSON.stringify(error)})</pre>`;

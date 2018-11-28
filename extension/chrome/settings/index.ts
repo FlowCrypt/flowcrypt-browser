@@ -18,14 +18,14 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
-  const acctEmail = Env.urlParamRequire.optionalString(urlParams, 'acctEmail');
-  let page = Env.urlParamRequire.optionalString(urlParams, 'page');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
+  const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+  let page = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
   page = (page === 'undefined') ? undefined : page; // in case an "undefined" strring slipped in
-  const pageUrlParams: UrlParams | null = (typeof urlParams.pageUrlParams === 'string') ? JSON.parse(urlParams.pageUrlParams) as UrlParams : null;
+  const pageUrlParams: UrlParams | null = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : null;
   const acctEmails = await Store.acctEmailsGet();
-  const addNewAcct = urlParams.addNewAcct === true;
-  const advanced = urlParams.advanced === true;
+  const addNewAcct = uncheckedUrlParams.addNewAcct === true;
+  const advanced = uncheckedUrlParams.advanced === true;
 
   $('#status-row #status_v').text(`v:${String(Catch.version())}`);
 
@@ -170,7 +170,7 @@ Catch.try(async () => {
         }
       } catch (e) {
         if (Api.err.isAuthErr(e)) {
-          const actionReauth = Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/elements/subscribe.htm', '&source=authErr'));
+          const actionReauth = Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/elements/subscribe.htm', { isAuthErr: true }));
           Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>').find('a').click(actionReauth);
           $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:auth`).addClass('bad').addClass('link').click(actionReauth);
         } else if (Api.err.isNetErr(e)) {

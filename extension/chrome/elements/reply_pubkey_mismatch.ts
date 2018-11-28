@@ -16,14 +16,14 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const urlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const from = Env.urlParamRequire.optionalString(urlParams, 'from') || acctEmail;
-  const subject = Env.urlParamRequire.optionalString(urlParams, 'subject') || '';
-  const frameId = Env.urlParamRequire.string(urlParams, 'frameId');
-  const threadId = Env.urlParamRequire.optionalString(urlParams, 'threadId') || '';
-  const to = urlParams.to ? String(urlParams.to).split(',') : [];
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;
+  const subject = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
+  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
+  const to = uncheckedUrlParams.to ? String(uncheckedUrlParams.to).split(',') : [];
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 

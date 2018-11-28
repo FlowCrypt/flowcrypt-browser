@@ -5,7 +5,9 @@
 import { Xss, Env } from '../../js/common/browser.js';
 import { Lang } from '../../js/common/lang.js';
 
-const urlParams = Env.urlParams(['reason']);
+const uncheckedUrlParams = Env.urlParams(['reason']);
+const reason = String(uncheckedUrlParams.reason);
+
 const title = $('.title');
 const details = $('.details');
 const dbCorruptedHtml = `
@@ -20,13 +22,13 @@ const dbCorruptedHtml = `
   <p>Email human@flowcrypt.com if you need any help.</p>
 `;
 
-if (urlParams.reason === 'db_corrupted') {
+if (reason === 'db_corrupted') {
   title.text('FlowCrypt cannot function because your Browser Profile is corrupted.');
   Xss.sanitizeRender(details, dbCorruptedHtml);
-} else if (urlParams.reason === 'db_denied') {
+} else if (reason === 'db_denied') {
   title.text('FlowCrypt cannot function because browser IndexedDB is disabled');
   Xss.sanitizeRender(details, `<p>If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser settings.</p>`);
-} else if (urlParams.reason === 'db_failed') {
+} else if (reason === 'db_failed') {
   title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
   Xss.sanitizeRender(details, `<p>${Lang.error.dbFailedOnFirefox}</p>.`);
 } else {

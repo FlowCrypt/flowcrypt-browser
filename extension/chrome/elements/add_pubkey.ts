@@ -12,11 +12,11 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const urlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(urlParams, 'parentTabId');
-  const emails = Env.urlParamRequire.string(urlParams, 'emails').split(',');
-  const placement = Env.urlParamRequire.optionalString(urlParams, 'placement');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const emails = Env.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
+  const placement = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'placement');
 
   const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
 

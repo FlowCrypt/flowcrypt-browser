@@ -217,7 +217,7 @@ export class Composer {
       authPopup: () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail }),
       auth: () => {
         if (confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          BrowserMsg.send.subscribeDialog(this.v.parentTabId, { source: 'authErr' });
+          BrowserMsg.send.subscribeDialog(this.v.parentTabId, { isAuthErr: true });
         }
       },
       other: (e: any) => {
@@ -582,7 +582,7 @@ export class Composer {
       alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.err.isAuthErr(e)) {
       if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        BrowserMsg.send.subscribeDialog(this.v.parentTabId, { source: 'authErr' });
+        BrowserMsg.send.subscribeDialog(this.v.parentTabId, { isAuthErr: true });
       }
     } else if (Api.err.isReqTooLarge(e)) {
       alert(`Could not send: message or attachments too large.`);
@@ -737,7 +737,7 @@ export class Composer {
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
         if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          BrowserMsg.send.subscribeDialog(this.v.parentTabId, { source: 'authErr' });
+          BrowserMsg.send.subscribeDialog(this.v.parentTabId, { isAuthErr: true });
         }
         throw new ComposerResetBtnTrigger();
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {

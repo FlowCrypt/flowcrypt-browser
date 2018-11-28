@@ -15,12 +15,14 @@ declare const ClipboardJS: any;
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(urlParams, 'acctEmail');
-  const longid = Env.urlParamRequire.optionalString(urlParams, 'longid') || 'primary';
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const longid = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+  const myKeyUserIdsUrl = Env.urlCreate('my_key_user_ids.htm', uncheckedUrlParams);
+  const myKeyUpdateUrl = Env.urlCreate('my_key_update.htm', uncheckedUrlParams);
 
-  $('.action_view_user_ids').attr('href', Env.urlCreate('my_key_user_ids.htm', urlParams));
-  $('.action_view_update').attr('href', Env.urlCreate('my_key_update.htm', urlParams));
+  $('.action_view_user_ids').attr('href', myKeyUserIdsUrl);
+  $('.action_view_update').attr('href', myKeyUpdateUrl);
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);

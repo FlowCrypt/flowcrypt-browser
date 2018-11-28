@@ -10,8 +10,8 @@ import { Catch } from '../../js/common/catch.js';
 
 Catch.try(async () => {
 
-  const urlParams = Env.urlParams(['action']);
-  const action = Env.urlParamRequire.oneof(urlParams, 'action', ['inbox', 'settings']);
+  const uncheckedUrlParams = Env.urlParams(['action']);
+  const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
 
   if (action === 'inbox') {
     $('#title').text('Choose inbox account');
@@ -30,7 +30,7 @@ Catch.try(async () => {
     }
   }
   Xss.sanitizeRender('ul.emails', emailsUlHtml).find('a').click(Ui.event.handle(async target => {
-    if (urlParams.action === 'inbox') {
+    if (action === 'inbox') {
       BrowserMsg.send.bg.inbox({ acctEmail: $(target).attr('email') });
       await Ui.time.sleep(100);
       window.close();
