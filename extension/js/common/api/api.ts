@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { Store, GlobalStore, Serializable, Contact } from '../store.js';
-import { Value, Str, Dict } from '../common.js';
-import { Pgp, FormatError } from '../pgp.js';
+import { Store, GlobalStore, Serializable, Contact } from '../platform/store.js';
+import { Value, Str, Dict } from '../core/common.js';
+import { Pgp, FormatError } from '../core/pgp.js';
 import { Ui } from '../browser.js';
-import { Att } from '../att.js';
-import { SendableMsgBody } from '../mime.js';
+import { Att } from '../core/att.js';
+import { SendableMsgBody } from '../core/mime.js';
 import { PaymentMethod } from '../account.js';
-import { Catch } from '../catch.js';
+import { Catch } from '../platform/catch.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };

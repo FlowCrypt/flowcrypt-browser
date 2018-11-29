@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from './store.js';
-import { FcWindow } from './extension.js';
+import { FcWindow } from '../extension.js';
 
 const VERSION = '[BUILD_REPLACEABLE_VERSION]';
 

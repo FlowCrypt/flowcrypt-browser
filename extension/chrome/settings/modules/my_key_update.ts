@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/store.js';
+import { Store } from 'js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Pgp } from '../../../js/common/pgp.js';
+import { Pgp } from 'js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Catch } from '../../../js/common/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 

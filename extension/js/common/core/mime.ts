@@ -5,7 +5,7 @@
 import { Str, Value, Dict } from './common.js';
 import { Pgp } from './pgp.js';
 import { Att } from './att.js';
-import { Catch } from './catch.js';
+import { Catch } from '../platform/catch.js';
 
 type MimeContentHeader = string | { address: string; name: string; }[];
 type MimeContent = {

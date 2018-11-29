@@ -22,7 +22,7 @@ const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
   if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {
     // COMMENT flag, remove such import statements from the code, because they will be imported with script tags for compatibility
-    moduleMap[moduleName] = null;
+    moduleMap[moduleName] = null; // tslint:disable-line:no-null-keyword
   } else {
     // replace import with full path from config
     moduleMap[moduleName] = `/${compilerOptions.paths[moduleName].find((x: string) => x.match(/\.js$/) !== null)}`;

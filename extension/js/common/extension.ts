@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Str, Value, Dict } from './common.js';
-import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from './pgp.js';
-import { FlatTypes } from './store.js';
+import { Str, Value, Dict } from './core/common.js';
+import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from './core/pgp.js';
+import { FlatTypes } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
-import { Catch } from './catch.js';
+import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };

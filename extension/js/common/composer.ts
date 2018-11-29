@@ -2,16 +2,16 @@
 
 'use strict';
 
-import { Store, Subscription, KeyInfo, ContactUpdate, Contact, DbContactFilter } from './store.js';
+import { Store, Subscription, KeyInfo, ContactUpdate, Contact, DbContactFilter } from './platform/store.js';
 import { Lang } from './lang.js';
-import { Value, Str } from './common.js';
-import { Att } from './att.js';
+import { Value, Str } from './core/common.js';
+import { Att } from './core/att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
-import { Pgp, Pwd, FormatError } from './pgp.js';
+import { Pgp, Pwd, FormatError } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
-import { Mime, SendableMsgBody } from './mime.js';
-import { Catch, UnreportableError } from './catch.js';
+import { Mime, SendableMsgBody } from './core/mime.js';
+import { Catch, UnreportableError } from './platform/catch.js';
 import { GoogleAuth } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;

@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Store, KeyInfo, Contact } from './store.js';
+import { Store, KeyInfo, Contact } from '../platform/store.js';
 import { Value, Str } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
-import { Catch } from './catch.js';
+import { Catch } from '../platform/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 

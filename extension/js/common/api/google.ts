@@ -4,13 +4,13 @@
 
 import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api.js';
 import { Env, Ui } from '../browser.js';
-import { Catch } from '../catch.js';
-import { Store, Contact, AccountStore, Serializable } from '../store.js';
-import { Dict, Value, Str } from '../common.js';
+import { Catch } from '../platform/catch.js';
+import { Store, Contact, AccountStore, Serializable } from '../platform/store.js';
+import { Dict, Value, Str } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserWidnow } from '../extension.js';
-import { Mime, SendableMsgBody } from '../mime.js';
-import { Att } from '../att.js';
-import { FormatError, Pgp } from '../pgp.js';
+import { Mime, SendableMsgBody } from '../core/mime.js';
+import { Att } from '../core/att.js';
+import { FormatError, Pgp } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };

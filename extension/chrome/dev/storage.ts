@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex, RawStore } from '../../js/common/store.js';
-import { Value, Str, Dict } from '../../js/common/common.js';
+import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex, RawStore } from 'js/common/platform/store.js';
+import { Value, Str, Dict } from 'js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
-import { Catch } from '../../js/common/catch.js';
+import { Catch } from '../../js/common/platform/catch.js';
 
 Catch.try(async () => {
 

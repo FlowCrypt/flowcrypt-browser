@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Store, KeyInfo } from '../../js/common/store.js';
-import { Str } from '../../js/common/common.js';
+import { Store, KeyInfo } from 'js/common/platform/store.js';
+import { Str } from 'js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS, UrlParams } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
-import { Catch } from '../../js/common/catch.js';
+import { Catch } from '../../js/common/platform/catch.js';
 import { Lang } from '../../js/common/lang.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 

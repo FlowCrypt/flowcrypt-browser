@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Str } from '../../../js/common/common.js';
+import { Str } from 'js/common/core/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Catch } from '../../../js/common/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 Catch.try(async () => {
 

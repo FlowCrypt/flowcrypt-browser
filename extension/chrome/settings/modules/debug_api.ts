@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Dict } from '../../../js/common/common.js';
+import { Dict } from 'js/common/core/common.js';
 import { Xss, Env } from '../../../js/common/browser.js';
-import { Catch } from '../../../js/common/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Google } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {

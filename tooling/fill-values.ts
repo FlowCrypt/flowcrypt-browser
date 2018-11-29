@@ -10,13 +10,13 @@ const replaceables = [
 ];
 
 const paths = [
-  `../${targetDirExtension}/js/common/catch.js`,
-  `${targetDirContentScripts}/common/catch.js`,
+  `../${targetDirExtension}/js/common/platform/catch.js`,
+  `${targetDirContentScripts}/common/platform/catch.js`,
 ];
 
-for (let path of paths) {
+for (const path of paths) {
   let source = readFileSync(path).toString();
-  for (let replaceable of replaceables) {
+  for (const replaceable of replaceables) {
     source = source.replace(replaceable.needle, replaceable.val);
   }
   writeFileSync(path, source);

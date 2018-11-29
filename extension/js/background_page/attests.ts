@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Store } from '../common/store.js';
-import { Value, Str, Dict } from '../common/common.js';
+import { Store } from '../common/platform/store.js';
+import { Value, Str, Dict } from '../common/core/common.js';
 import { Api, R } from '../common/api/api.js';
-import { Pgp } from '../common/pgp.js';
+import { Pgp } from '../common/core/pgp.js';
 import { Bm } from '../common/extension.js';
-import { Catch } from '../common/catch.js';
+import { Catch } from '../common/platform/catch.js';
 import { Google, GoogleAuth } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;

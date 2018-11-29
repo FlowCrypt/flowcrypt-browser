@@ -4,7 +4,7 @@
 
 import { ContentScriptWindow } from './extension.js';
 import { Ui, XssSafeFactory, SelCache, WebMailName, WebmailVariantString } from './browser.js';
-import { Catch } from './catch.js';
+import { Catch } from './platform/catch.js';
 
 export class Injector {
 

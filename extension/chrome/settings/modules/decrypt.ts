@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Att } from '../../../js/common/att.js';
+import { Att } from 'js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, AttUI, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
-import { Pgp, DecryptErrTypes } from '../../../js/common/pgp.js';
-import { Catch } from '../../../js/common/catch.js';
+import { Pgp, DecryptErrTypes } from 'js/common/core/pgp.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 Catch.try(async () => {
 

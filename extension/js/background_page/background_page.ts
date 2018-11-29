@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError } from '../common/store.js';
-import { Value, Dict } from '../common/common.js';
+import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError } from '../common/platform/store.js';
+import { Value, Dict } from '../common/core/common.js';
 import { BgExec, BrowserMsg, Bm } from '../common/extension.js';
 import { BgAttests } from './attests.js';
 import { injectFcIntoWebmailIfNeeded } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
-import { Catch } from '../common/catch.js';
+import { Catch } from '../common/platform/catch.js';
 import { Env, UrlParam } from '../common/browser.js';
 import { GoogleAuth } from '../common/api/google.js';
 

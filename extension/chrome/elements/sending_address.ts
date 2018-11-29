@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Store } from '../../js/common/store.js';
-import { Value } from './../../js/common/common.js';
+import { Store } from 'js/common/platform/store.js';
+import { Value } from 'js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Settings } from '../../js/common/settings.js';
-import { Pgp } from '../../js/common/pgp.js';
+import { Pgp } from 'js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
-import { Catch } from '../../js/common/catch.js';
+import { Catch } from '../../js/common/platform/catch.js';
 import { Api } from '../../js/common/api/api.js';
 
 Catch.try(async () => {

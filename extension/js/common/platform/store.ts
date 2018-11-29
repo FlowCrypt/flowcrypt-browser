@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Value, Str, Dict, EmailProvider } from './common.js';
-import { mnemonic } from './mnemonic.js';
-import { Pgp } from './pgp.js';
-import { SubscriptionInfo } from './api/api.js';
-import { BrowserMsg } from './extension.js';
-import { Product, PaymentMethod, ProductLevel } from './account.js';
-import { Env } from './browser.js';
+import { Value, Str, Dict, EmailProvider } from '../core/common.js';
+import { mnemonic } from '../core/mnemonic.js';
+import { Pgp } from '../core/pgp.js';
+import { SubscriptionInfo } from '../api/api.js';
+import { BrowserMsg } from '../extension.js';
+import { Product, PaymentMethod, ProductLevel } from '../account.js';
+import { Env } from '../browser.js';
 import { Catch } from './catch.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;

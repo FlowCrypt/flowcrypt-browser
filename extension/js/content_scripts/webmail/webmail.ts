@@ -6,8 +6,8 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-import { Str, Value } from '../../common/common.js';
-import { Store } from '../../common/store.js';
+import { Str, Value } from '../../common/core/common.js';
+import { Store } from '../../common/platform/store.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { InboxElementReplacer } from './inbox_element_replacer.js';
@@ -15,7 +15,7 @@ import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { ContentScriptWindow, FcWindow } from '../../common/extension.js';
 import { XssSafeFactory, Env } from '../../common/browser.js';
-import { Catch } from '../../common/catch.js';
+import { Catch } from '../../common/platform/catch.js';
 import { GoogleAuth } from '../../common/api/google.js';
 
 Catch.try(async () => {

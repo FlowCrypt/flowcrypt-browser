@@ -3,14 +3,14 @@
 'use strict';
 
 import { Injector } from '../../common/inject.js';
-import { Value, Str } from '../../common/common.js';
+import { Value, Str } from '../../common/core/common.js';
 import { Api } from '../../common/api/api.js';
-import { Pgp } from '../../common/pgp.js';
+import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/browser.js';
-import { Att } from '../../common/att.js';
+import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
-import { Catch } from '../../common/catch.js';
+import { Catch } from '../../common/platform/catch.js';
 import { Google } from '../../common/api/google.js';
 
 export class InboxElementReplacer implements WebmailElementReplacer {

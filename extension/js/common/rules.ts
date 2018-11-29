@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Value, Str, Dict } from './common.js';
-import { Pgp } from './pgp.js';
+import { Value, Str, Dict } from './core/common.js';
+import { Pgp } from './core/pgp.js';
 
 export type DomainRule = { flags: ('NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'STRICT_GDPR')[] };
 

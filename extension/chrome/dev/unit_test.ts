@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Pgp } from '../../js/common/pgp.js';
+import { Pgp } from 'js/common/core/pgp.js';
 import { Env } from '../../js/common/browser.js';
 
 (() => {

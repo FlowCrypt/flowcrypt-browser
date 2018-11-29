@@ -45,8 +45,8 @@ buildContentScript(([] as string[]).concat(
 
 // checkout
 buildContentScript([
-  `${sourceDir}/common/catch.js`,
-  `${sourceDir}/common/common.js`,
+  `${sourceDir}/common/platform/catch.js`,
+  `${sourceDir}/common/core/common.js`,
   `${sourceDir}/common/browser.js`,
   `${sourceDir}/common/extension.js`,
   `${sourceDir}/content_scripts/checkout/stripe.js`,

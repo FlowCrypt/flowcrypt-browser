@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Store } from './store.js';
-import { Dict } from './common.js';
+import { Store } from './platform/store.js';
+import { Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
 import { Xss, Ui } from './browser.js';
 import { Lang } from './lang.js';
-import { Catch } from './catch.js';
+import { Catch } from './platform/catch.js';
 
 export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
 

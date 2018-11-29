@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Store } from '../../../js/common/store.js';
-import { Att } from '../../../js/common/att.js';
+import { Store } from 'js/common/platform/store.js';
+import { Att } from 'js/common/core/att.js';
 import { Ui, Env, Browser } from '../../../js/common/browser.js';
-import { Pgp } from '../../../js/common/pgp.js';
+import { Pgp } from 'js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Catch } from '../../../js/common/catch.js';
+import { Catch } from '../../../js/common/platform/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
