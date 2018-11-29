@@ -1,7 +1,5 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-/// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
-
 'use strict';
 
 import { Pgp } from './pgp.js';
