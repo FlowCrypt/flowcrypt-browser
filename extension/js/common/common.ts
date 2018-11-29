@@ -4,7 +4,6 @@
 
 'use strict';
 
-import { FlatTypes } from './store.js';
 import { Pgp } from './pgp.js';
 import { Att, FcAttLinkData } from './att.js';
 
@@ -265,7 +264,7 @@ export class Str {
 export class Value {
 
   public static arr = {
-    unique: <T extends FlatTypes>(array: T[]): T[] => {
+    unique: <T>(array: T[]): T[] => {
       const unique: T[] = [];
       for (const v of array) {
         if (!Value.is(v).in(unique)) {
@@ -316,6 +315,6 @@ export class Value {
 
   public static noop = (): void => undefined;
 
-  public static is = (v: FlatTypes) => ({ in: (arrayOrStr: FlatTypes[] | string): boolean => Value.arr.contains(arrayOrStr, v) });  // Value.this(v).in(array_or_string)
+  public static is = <T>(v: T) => ({ in: (arrayOrStr: T[] | string): boolean => Value.arr.contains(arrayOrStr, v) });  // Value.this(v).in(array_or_string)
 
 }
