@@ -5,13 +5,13 @@ import * as path from 'path';
 const OUT_DIR = `../build/chrome/js/content_scripts`;
 const { compilerOptions: { outDir: sourceDir } } = JSON.parse(readFileSync('./tsconfig.content_scripts.json').toString());
 
-const getFilesInDir = (dir: string, filePattern: RegExp): string[] => {
+const getFilesInDir = (dir: string, filePattern: RegExp, recursive = true): string[] => {
   let all: string[] = [];
   const filesInDir = readdirSync(dir);
   for (const fileInDir of filesInDir) {
     const filePath = path.join(dir, fileInDir);
-    if (statSync(filePath).isDirectory()) {
-      all = all.concat(getFilesInDir(filePath, filePattern));
+    if (statSync(filePath).isDirectory() && recursive) {
+      all = all.concat(getFilesInDir(filePath, filePattern, recursive));
     } else if (filePattern.test(filePath)) {
       all.push(filePath);
     }
@@ -39,7 +39,10 @@ mkdirSync(OUT_DIR);
 
 // webmail
 buildContentScript(([] as string[]).concat(
-  getFilesInDir(`${sourceDir}/common`, /\.js$/),
+  getFilesInDir(`${sourceDir}/common/platform`, /\.js$/, false),
+  getFilesInDir(`${sourceDir}/common/core`, /\.js$/, false),
+  getFilesInDir(`${sourceDir}/common/api`, /\.js$/, false),
+  getFilesInDir(`${sourceDir}/common`, /\.js$/, false),
   getFilesInDir(`${sourceDir}/content_scripts/webmail`, /\.js$/),
 ), 'webmail_bundle.js');
 
