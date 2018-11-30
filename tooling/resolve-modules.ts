@@ -31,6 +31,7 @@ for (const moduleName of Object.keys(compilerOptions.paths)) {
 
 const namedImportLineRegEx = /^(import (?:.+ from )?['"])([^.][^'"/]+)(['"];)$/g;
 const importLineNotEndingWithJs = /import (?:.+ from )?['"]\.[^'"]+[^.][^j][^s]['"];/g;
+const importLineEndingWithJsNotStartingWithDot = /import (?:.+ from )?['"][^.][^'"]+\.js['"];/g;
 
 const resolveLineImports = (line: string, path: string) => line.replace(namedImportLineRegEx, (found, prefix, libname, suffix) => {
   if (moduleMap[libname] === null) {
@@ -46,10 +47,18 @@ const resolveLineImports = (line: string, path: string) => line.replace(namedImp
   }
 });
 
-const errIfSrcMissingJs = (stc: string, path: string) => {
-  const matched = stc.match(importLineNotEndingWithJs);
+const errIfSrcMissingJs = (src: string, path: string) => {
+  const matched = src.match(importLineNotEndingWithJs);
   if (matched) {
-    console.error(`\nresolve-modules ERROR:\nImport not ending with .js in ${path}:\n${matched[0]}`);
+    console.error(`\nresolve-modules ERROR:\nImport not ending with .js in ${path}:\n--\n${matched[0]}\n--\n`);
+    process.exit(1);
+  }
+};
+
+const errIfRelativeSrcDoesNotBeginWithDot = (src: string, path: string) => {
+  const matched = src.match(importLineEndingWithJsNotStartingWithDot);
+  if (matched) {
+    console.error(`\nresolve-modules ERROR: Relative import should start with a dot in ${path}:\n--\n${matched[0]}\n--\n`);
     process.exit(1);
   }
 };
@@ -63,4 +72,5 @@ for (const srcFilePath of srcFilePaths) {
     writeFileSync(srcFilePath, resolved);
   }
   errIfSrcMissingJs(resolved, srcFilePath);
+  errIfRelativeSrcDoesNotBeginWithDot(resolved, srcFilePath);
 }
