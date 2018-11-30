@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Store, KeyInfo, ContactUpdate, Contact, DbContactFilter } from 'js/common/platform/store.js';
-import { Value, Str } from 'js/common/core/common.js';
-import { Att } from 'js/common/core/att.js';
+import { Store, KeyInfo, ContactUpdate, Contact, DbContactFilter } from '../../js/common/platform/store.js';
+import { Value, Str } from '../../js/common/core/common.js';
+import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
 import { Composer, ComposerUserError } from '../../js/common/composer.js';
 import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api.js';

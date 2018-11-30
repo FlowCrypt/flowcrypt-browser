@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Store } from 'js/common/platform/store.js';
-import { Str, Dict } from 'js/common/core/common.js';
-import { Att } from 'js/common/core/att.js';
+import { Store } from '../../js/common/platform/store.js';
+import { Str, Dict } from '../../js/common/core/common.js';
+import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
-import { Lang } from './../../js/common/lang.js';
+import { Lang } from '../../js/common/lang.js';
 import { Api, R } from '../../js/common/api/api.js';
-import { MsgVerifyResult, DecryptErrTypes, FormatError } from 'js/common/core/pgp.js';
-import { Mime } from 'js/common/core/mime.js';
+import { MsgVerifyResult, DecryptErrTypes, FormatError } from '../../js/common/core/pgp.js';
+import { Mime } from '../../js/common/core/mime.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 

@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { Store, Subscription } from 'js/common/platform/store.js';
-import { Att } from 'js/common/core/att.js';
+import { Store, Subscription } from '../../js/common/platform/store.js';
+import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
-import { Composer } from './../../js/common/composer.js';
+import { Composer } from '../../js/common/composer.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Dict } from 'js/common/core/common.js';
+import { Dict } from '../../js/common/core/common.js';
 import { Google } from '../../js/common/api/google.js';
 
 Catch.try(async () => {

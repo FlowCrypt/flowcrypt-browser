@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Store, KeyInfo } from 'js/common/platform/store.js';
-import { Str } from 'js/common/core/common.js';
+import { Store, KeyInfo } from '../../js/common/platform/store.js';
+import { Str } from '../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS, UrlParams } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';

@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Store } from 'js/common/platform/store.js';
-import { Dict } from 'js/common/core/common.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Dict } from '../../../js/common/core/common.js';
 import { Xss, Ui, KeyImportUi, UserAlert, Env } from '../../../js/common/browser.js';
-import { Pgp } from 'js/common/core/pgp.js';
-import { mnemonic } from 'js/common/core/mnemonic.js';
+import { Pgp } from '../../../js/common/core/pgp.js';
+import { mnemonic } from '../../../js/common/core/mnemonic.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api, PubkeySearchResult } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';

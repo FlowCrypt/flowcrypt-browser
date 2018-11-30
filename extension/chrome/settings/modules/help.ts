@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Str } from 'js/common/core/common.js';
+import { Str } from '../../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Api } from '../../../js/common/api/api.js';

@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { Store } from 'js/common/platform/store.js';
-import { Value, Str, Dict } from 'js/common/core/common.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Api, R } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
-import { Mime } from 'js/common/core/mime.js';
+import { Mime } from '../../../js/common/core/mime.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Google, GoogleAuth } from '../../../js/common/api/google.js';

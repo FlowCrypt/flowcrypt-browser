@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Store } from 'js/common/platform/store.js';
+import { Store } from '../../js/common/platform/store.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
-import { FcAcct } from './../../js/common/account.js';
+import { FcAcct } from '../../js/common/account.js';
 import { Catch } from '../../js/common/platform/catch.js';
 
 Catch.try(async () => {

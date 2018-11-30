@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from 'js/common/platform/store.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Catch } from '../../../js/common/platform/catch.js';

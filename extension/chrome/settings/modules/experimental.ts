@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Store } from 'js/common/platform/store.js';
-import { Value } from 'js/common/core/common.js';
-import { Att } from 'js/common/core/att.js';
+import { Store } from '../../../js/common/platform/store.js';
+import { Value } from '../../../js/common/core/common.js';
+import { Att } from '../../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';

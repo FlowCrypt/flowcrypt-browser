@@ -2,16 +2,16 @@
 
 'use strict';
 
-import { Store, KeyInfo, KeyBackupMethod } from 'js/common/platform/store.js';
-import { Value, EmailProvider } from 'js/common/core/common.js';
-import { Att } from 'js/common/core/att.js';
+import { Store, KeyInfo, KeyBackupMethod } from '../../../js/common/platform/store.js';
+import { Value, EmailProvider } from '../../../js/common/core/common.js';
+import { Att } from '../../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Pgp } from 'js/common/core/pgp.js';
+import { Pgp } from '../../../js/common/core/pgp.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 

@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Store } from 'js/common/platform/store.js';
-import { Str } from 'js/common/core/common.js';
+import { Store } from '../../js/common/platform/store.js';
+import { Str } from '../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env } from '../../js/common/browser.js';
-import { FcAcct, CheckVerificationEmail } from './../../js/common/account.js';
-import { Lang } from './../../js/common/lang.js';
+import { FcAcct, CheckVerificationEmail } from '../../js/common/account.js';
+import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
