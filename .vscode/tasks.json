@@ -1,57 +1,57 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "type": "npm",
-        "script": "build",
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        },
-        "problemMatcher": []
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
       },
-      {
-        "type": "gulp",
-        "task": "release",
-        "group": "none",
-        "problemMatcher": []
+      "problemMatcher": []
+    },
+    {
+      "type": "gulp",
+      "task": "release",
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "type": "gulp",
+      "task": "runFirefox",
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
       },
-      {
-        "type": "gulp",
-        "task": "runFirefox",
-        "group": "none",
-        "problemMatcher": []
-      },
-      {
-        "type": "npm",
-        "script": "test",
-        "group": {
-          "kind": "test",
-          "isDefault": true
-        },
-        "problemMatcher": []
-      },
-      {
-        "type": "npm",
-        "script": "run_firefox",
-        "problemMatcher": []
-      },
-      {
-        "type": "npm",
-        "script": "release",
-        "problemMatcher": []
-      },
-      {
-        "type": "npm",
-        "script": "test_0_tslint",
-        "problemMatcher": []
-      },
-      {
-        "type": "npm",
-        "script": "test_1_patterns",
-        "problemMatcher": []
-      }
-    ]
-  }
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "run_firefox",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "release",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test_0_tslint",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test_1_patterns",
+      "problemMatcher": []
+    }
+  ]
+}

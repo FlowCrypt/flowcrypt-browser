@@ -416,6 +416,8 @@ export class BgExec {
       if (typeof f === 'undefined') {
         if (step === 'Pgp') {
           f = Pgp;
+        } else if (step === 'PgpMsg') {
+          f = Pgp;
         } else {
           throw new Error(`BgExec: Not prepared for relaying class ${step}`);
         }
