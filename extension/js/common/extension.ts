@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Value, Dict } from './core/common.js';
-import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod } from './core/pgp.js';
+import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod, PgpMsg } from './core/pgp.js';
 import { FlatTypes } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
@@ -417,7 +417,7 @@ export class BgExec {
         if (step === 'Pgp') {
           f = Pgp;
         } else if (step === 'PgpMsg') {
-          f = Pgp;
+          f = PgpMsg;
         } else {
           throw new Error(`BgExec: Not prepared for relaying class ${step}`);
         }
