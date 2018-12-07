@@ -10,7 +10,7 @@ import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api, R } from '../../js/common/api/api.js';
 import { MsgVerifyResult, DecryptErrTypes, FormatError } from '../../js/common/core/pgp.js';
-import { Mime } from '../../js/common/core/mime.js';
+import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 
@@ -310,17 +310,18 @@ Catch.try(async () => {
     if (decryptedContent instanceof Uint8Array) {
       decryptedContent = Str.fromUint8(decryptedContent); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
     }
+    // todo - replace with PgpMsg.fmtDecrypted
     if (!Mime.resemblesMsg(decryptedContent)) {
-      const fcAtts: Att[] = [];
-      decryptedContent = Str.extractFcAtts(decryptedContent, fcAtts);
+      const fcAttBlocks: MsgBlock[] = [];
+      decryptedContent = Str.extractFcAtts(decryptedContent, fcAttBlocks);
       decryptedContent = Str.stripFcTeplyToken(decryptedContent);
       decryptedContent = Str.stripPublicKeys(decryptedContent, publicKeys);
       if (publicKeys.length) {
         BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
       await renderContent(Xss.escape(decryptedContent).replace(/\n/g, '<br>'), false);
-      if (fcAtts.length) {
-        renderInnerAtts(fcAtts);
+      if (fcAttBlocks.length) {
+        renderInnerAtts(fcAttBlocks.map(Att.fromMsgBlock));
       }
       if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
         renderFutureExpiration(passwordMsgLinkRes.expire);

@@ -3,8 +3,8 @@
 'use strict';
 
 import { Str, Value, Dict } from './common.js';
-import { Pgp } from './pgp.js';
-import { Att } from './att.js';
+import { Pgp, KeyDetails } from './pgp.js';
+import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 
 type MimeContentHeader = string | { address: string; name: string; }[];
@@ -31,8 +31,15 @@ export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'message' | 'passwordMsg';
-export type MsgBlockType = 'text' | ReplaceableMsgBlockType;
-export type MsgBlock = { type: MsgBlockType; content: string; complete: boolean; signature?: string; };
+export type MsgBlockType = 'text' | 'html' | 'attachment' | ReplaceableMsgBlockType;
+export type MsgBlock = {
+  type: MsgBlockType;
+  content: string;
+  complete: boolean;
+  signature?: string;
+  keyDetails?: KeyDetails;
+  attMeta?: AttMeta;
+};
 type MimeParseSignedRes = { full: string, signed?: string, signature?: string };
 
 export class Mime {
@@ -48,7 +55,7 @@ export class Mime {
       if (treatAs === 'message') {
         const armored = Pgp.armor.clip(file.asText());
         if (armored) {
-          blocks.push(Pgp.internal.cryptoArmorBlockObj('message', armored));
+          blocks.push(Pgp.internal.msgBlockObj('message', armored));
         }
       } else if (treatAs === 'signature') {
         decoded.signature = decoded.signature || file.asText();

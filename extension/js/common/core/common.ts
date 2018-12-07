@@ -3,7 +3,8 @@
 'use strict';
 
 import { Pgp } from './pgp.js';
-import { Att, FcAttLinkData } from './att.js';
+import { FcAttLinkData } from './att.js';
+import { MsgBlock } from './mime.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type EmailProvider = 'gmail';
@@ -60,6 +61,10 @@ export class Str {
   }
 
   public static regexEscape = (toBeUsedInRegex: string) => toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  public static asEscapedHtml = (text: string) => {
+    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br>');
+  }
 
   public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
 
@@ -178,7 +183,7 @@ export class Str {
       && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }
 
-  public static extractFcAtts = (decryptedContent: string, fcAtts: Att[]) => {
+  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
     if (Value.is('cryptup_file').in(decryptedContent)) {
       decryptedContent = decryptedContent.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, foundLink => {
         const el = $(foundLink);
@@ -186,7 +191,7 @@ export class Str {
         if (fcData) {
           const a = Str.htmlAttrDecode(fcData);
           if (Str.isFcAttLinkData(a)) {
-            fcAtts.push(new Att({ type: a.type, name: a.name, length: a.size, url: el.attr('href') }));
+            blocks.push(Pgp.internal.msgBlockAttObj('attachment', '', { type: a.type, name: a.name, length: a.size, url: el.attr('href') }));
           }
         }
         return '';

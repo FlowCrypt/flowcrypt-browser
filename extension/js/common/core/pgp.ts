@@ -4,8 +4,10 @@
 
 import { Store, Contact, PrvKeyInfo, KeyInfosWithPassphrases } from '../platform/store.js';
 import { Value, Str } from './common.js';
-import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
+import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { Catch } from '../platform/catch.js';
+import { AttMeta } from './att.js';
+import { mnemonic } from './mnemonic.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -19,6 +21,18 @@ export namespace PgpMsgMethod {
   export type DiagnosePubkeys = (acctEmail: string, m: string | Uint8Array | OpenPGP.message.Message) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (plaintext: string | Uint8Array, sigText: string | Uint8Array) => Promise<MsgVerifyResult>;
   export type Decrypt = (kisWithPp: KeyInfosWithPassphrases, encryptedData: string | Uint8Array, msgPwd?: string, getUint8?: boolean) => Promise<DecryptSuccess | DecryptError>;
+}
+
+type KeyDetails$ids = {
+  longid: string;
+  fingerprint: string;
+  keywords: string;
+};
+export interface KeyDetails {
+  private?: string;
+  public: string;
+  ids: KeyDetails$ids[];
+  users: string[];
 }
 
 type SortedKeysForDecrypt = {
@@ -176,7 +190,7 @@ export class Pgp {
       const normalized = Str.normalize(origText);
       let startAt = 0;
       while (true) {
-        const r = Pgp.internal.cryptoArmorDetectBlockNext(normalized, startAt);
+        const r = Pgp.internal.detectBlockNext(normalized, startAt);
         if (r.found) {
           blocks = blocks.concat(r.found);
         }
@@ -247,23 +261,21 @@ export class Pgp {
         throw e;
       }
     },
-    normalize: (armored: string) => {
+    normalize: (armored: string): { normalized: string, keys: OpenPGP.key.Key[] } => {
+      let keys: OpenPGP.key.Key[] = [];
       try {
         armored = Pgp.armor.normalize(armored, 'key');
-        let key: OpenPGP.key.Key | undefined;
         if (RegExp(Pgp.armor.headers('publicKey', 're').begin).test(armored)) {
-          key = openpgp.key.readArmored(armored).keys[0];
+          keys = openpgp.key.readArmored(armored).keys;
+        } else if (RegExp(Pgp.armor.headers('privateKey', 're').begin).test(armored)) {
+          keys = openpgp.key.readArmored(armored).keys;
         } else if (RegExp(Pgp.armor.headers('message', 're').begin).test(armored)) {
-          key = new openpgp.key.Key(openpgp.message.readArmored(armored).packets);
+          keys = [new openpgp.key.Key(openpgp.message.readArmored(armored).packets)];
         }
-        if (key) {
-          return key.armor();
-        } else {
-          return armored;
-        }
+        return { normalized: keys.map(k => k.armor()).join('\n'), keys };
       } catch (error) {
         Catch.handleErr(error);
-        return undefined;
+        return { normalized: '', keys };
       }
     },
     fingerprint: (key: OpenPGP.key.Key | string, formatting: "default" | "spaced" = 'default'): string | undefined => {
@@ -339,6 +351,30 @@ export class Pgp {
       }
       return undefined;
     },
+    parse: (armored: string): { original: string, normalized: string, keys: KeyDetails[] } => {
+      const { normalized, keys } = Pgp.key.normalize(armored);
+      return { original: armored, normalized, keys: keys.map(Pgp.key.serialize) };
+    },
+    serialize: (k: OpenPGP.key.Key): KeyDetails => {
+      const keyPackets: OpenPGP.packet.AnyKeyPacket[] = [];
+      for (const keyPacket of k.getKeys()) {
+        keyPackets.push(keyPacket);
+      }
+      return {
+        private: k.isPrivate() ? k.armor() : undefined,
+        public: k.toPublic().armor(),
+        users: k.getUserIds(),
+        ids: keyPackets.map(k => k.getFingerprint().toUpperCase()).map(fingerprint => {
+          if (fingerprint) {
+            const longid = Pgp.key.longid(fingerprint);
+            if (longid) {
+              return { fingerprint, longid, keywords: mnemonic(longid) };
+            }
+          }
+          return undefined;
+        }).filter(Boolean) as KeyDetails$ids[],
+      };
+    },
   };
 
   public static password = {
@@ -368,8 +404,10 @@ export class Pgp {
   };
 
   public static internal = {
-    cryptoArmorBlockObj: (type: MsgBlockType, content: string, missingEnd = false): MsgBlock => ({ type, content, complete: !missingEnd }),
-    cryptoArmorDetectBlockNext: (origText: string, startAt: number) => {
+    msgBlockObj: (type: MsgBlockType, content: string, missingEnd = false): MsgBlock => ({ type, content, complete: !missingEnd }),
+    msgBlockAttObj: (type: MsgBlockType, content: string, attMeta: AttMeta): MsgBlock => ({ type, content, complete: true, attMeta }),
+    msgBlockKeyObj: (type: MsgBlockType, content: string, keyDetails: KeyDetails): MsgBlock => ({ type, content, complete: true, keyDetails }),
+    detectBlockNext: (origText: string, startAt: number) => {
       const result: { found: MsgBlock[], continueAt?: number } = { found: [] as MsgBlock[] };
       const begin = origText.indexOf(Pgp.armor.headers('null').begin, startAt);
       if (begin !== -1) { // found
@@ -383,7 +421,7 @@ export class Pgp {
               if (begin > startAt) {
                 const potentialTextBeforeBlockBegun = origText.substring(startAt, begin).trim();
                 if (potentialTextBeforeBlockBegun) {
-                  result.found.push(Pgp.internal.cryptoArmorBlockObj('text', potentialTextBeforeBlockBegun));
+                  result.found.push(Pgp.internal.msgBlockObj('text', potentialTextBeforeBlockBegun));
                 }
               }
               let endIndex: number = -1;
@@ -401,19 +439,19 @@ export class Pgp {
               }
               if (endIndex !== -1) { // identified end of the same block
                 if (type !== 'passwordMsg') {
-                  result.found.push(Pgp.internal.cryptoArmorBlockObj(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
+                  result.found.push(Pgp.internal.msgBlockObj(type, origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim()));
                 } else {
                   const pwdMsgFullText = origText.substring(begin, endIndex + foundBlockEndHeaderLength).trim();
                   const pwdMsgShortIdMatch = pwdMsgFullText.match(/[a-zA-Z0-9]{10}$/);
                   if (pwdMsgShortIdMatch) {
-                    result.found.push(Pgp.internal.cryptoArmorBlockObj(type, pwdMsgShortIdMatch[0]));
+                    result.found.push(Pgp.internal.msgBlockObj(type, pwdMsgShortIdMatch[0]));
                   } else {
-                    result.found.push(Pgp.internal.cryptoArmorBlockObj('text', pwdMsgFullText));
+                    result.found.push(Pgp.internal.msgBlockObj('text', pwdMsgFullText));
                   }
                 }
                 result.continueAt = endIndex + foundBlockEndHeaderLength;
               } else { // corresponding end not found
-                result.found.push(Pgp.internal.cryptoArmorBlockObj(type, origText.substr(begin), true));
+                result.found.push(Pgp.internal.msgBlockObj(type, origText.substr(begin), true));
               }
               break;
             }
@@ -423,7 +461,7 @@ export class Pgp {
       if (origText && !result.found.length) { // didn't find any blocks, but input is non-empty
         const potentialText = origText.substr(startAt).trim();
         if (potentialText) {
-          result.found.push(Pgp.internal.cryptoArmorBlockObj('text', potentialText));
+          result.found.push(Pgp.internal.msgBlockObj('text', potentialText));
         }
       }
       return result;
@@ -704,6 +742,45 @@ export class PgpMsg {
       }
     }
     return diagnosis;
+  }
+
+  static fmtDecrypted = async (decryptedContent: string): Promise<MsgBlock[]> => {
+    const blocks: MsgBlock[] = [];
+    if (!Mime.resemblesMsg(decryptedContent)) {
+      if (typeof $ === 'function') { // skip on Node.js
+        decryptedContent = Str.extractFcAtts(decryptedContent, blocks);
+        decryptedContent = Str.stripFcTeplyToken(decryptedContent);
+      }
+      const armoredPubKeys: string[] = [];
+      decryptedContent = Str.stripPublicKeys(decryptedContent, armoredPubKeys);
+      blocks.push(Pgp.internal.msgBlockObj('html', Str.asEscapedHtml(decryptedContent)));
+      PgpMsg.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
+    } else {
+      const decoded = await Mime.decode(decryptedContent);
+      if (typeof decoded.html !== 'undefined') {
+        blocks.push(Pgp.internal.msgBlockObj('html', decoded.html));
+      } else if (typeof decoded.text !== 'undefined') {
+        blocks.push(Pgp.internal.msgBlockObj('html', Str.asEscapedHtml(decoded.text)));
+      } else {
+        blocks.push(Pgp.internal.msgBlockObj('html', Str.asEscapedHtml(decryptedContent)));
+      }
+      for (const att of decoded.atts) {
+        if (att.treatAs() !== 'publicKey') {
+          blocks.push(Pgp.internal.msgBlockAttObj('attachment', att.asText(), { name: att.name }));
+        } else {
+          PgpMsg.pushArmoredPubkeysToBlocks([att.asText()], blocks);
+        }
+      }
+    }
+    return blocks;
+  }
+
+  private static pushArmoredPubkeysToBlocks = (armoredPubkeys: string[], blocks: MsgBlock[]): void => {
+    for (const armoredPubkey of armoredPubkeys) {
+      for (const keyDetails of Pgp.key.parse(armoredPubkey).keys) {
+        blocks.push(Pgp.internal.msgBlockKeyObj('publicKey', keyDetails.public, keyDetails));
+      }
+    }
   }
 
 }

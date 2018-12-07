@@ -952,7 +952,7 @@ export class KeyImportUi {
   }
 
   checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
-    const normalized = this.normalize('privateKey', armored);
+    const { normalized } = this.normalize('privateKey', armored);
     const decrypted = this.read('privateKey', normalized);
     const encrypted = this.read('privateKey', normalized);
     const longid = this.longid(decrypted);
@@ -966,7 +966,7 @@ export class KeyImportUi {
   }
 
   checkPub = async (armored: string): Promise<string> => {
-    const normalized = this.normalize('publicKey', armored);
+    const { normalized } = this.normalize('publicKey', armored);
     const parsed = this.read('publicKey', normalized);
     this.longid(parsed);
     await this.checkEncryptionPubIfSelected(normalized);
