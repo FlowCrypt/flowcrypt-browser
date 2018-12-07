@@ -6,7 +6,7 @@ import { Store } from '../../js/common/platform/store.js';
 import { Value } from '../../js/common/core/common.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { Api } from '../../js/common/api/api.js';
-import { Pgp, DecryptErrTypes } from '../../js/common/core/pgp.js';
+import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Att } from '../../js/common/core/att.js';
 import { Catch } from '../../js/common/platform/catch.js';
@@ -29,6 +29,8 @@ Catch.try(async () => {
   let attId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
   const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
   const name = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
+
+  const keyInfosWithPassphrases = await Store.keysGetAllWithPassphrases(acctEmail);
 
   let decryptedAtt: Att | undefined;
   let encryptedAtt: Att | undefined;
@@ -123,7 +125,7 @@ Catch.try(async () => {
   });
 
   const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    const result = await Pgp.msg.decrypt(acctEmail, encryptedAtt.data(), undefined, true);
+    const result = await PgpMsg.decrypt(keyInfosWithPassphrases, encryptedAtt.data(), undefined, true);
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
       let fileName = result.content.filename;
@@ -219,9 +221,9 @@ Catch.try(async () => {
     if (encryptedAtt && encryptedAtt.msgId && encryptedAtt.id && encryptedAtt.id && encryptedAtt.treatAs() === 'publicKey') {
       // this is encrypted public key - download && decrypt & parse & render
       const att = await Google.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id);
-      const result = await Pgp.msg.decrypt(acctEmail, att.data);
+      const result = await PgpMsg.decrypt(keyInfosWithPassphrases, att.data);
       if (result.success && result.content.text) {
-        const openpgpType = Pgp.msg.type(result.content.text);
+        const openpgpType = PgpMsg.type(result.content.text);
         if (openpgpType && openpgpType.type === 'publicKey') {
           if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey

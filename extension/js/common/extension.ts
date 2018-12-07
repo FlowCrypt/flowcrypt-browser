@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Value, Dict } from './core/common.js';
-import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult } from './core/pgp.js';
+import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod } from './core/pgp.js';
 import { FlatTypes } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
@@ -352,16 +352,16 @@ export class BgExec {
     }
   }
 
-  public static diagnoseMsgPubkeys = (acctEmail: string, message: string) => {
-    return BgExec.requestToProcessInBg('Pgp.msg.diagnosePubkeys', [acctEmail, message]) as Promise<DiagnoseMsgPubkeysResult>;
+  public static pgpMsgDiagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = (acctEmail: string, message: string) => {
+    return BgExec.requestToProcessInBg('PgpMsg.diagnosePubkeys', [acctEmail, message]) as Promise<DiagnoseMsgPubkeysResult>;
   }
 
   public static cryptoHashChallengeAnswer = (password: string) => {
     return BgExec.requestToProcessInBg('Pgp.hash.challengeAnswer', [password]) as Promise<string>;
   }
 
-  public static cryptoMsgDecrypt = async (acctEmail: string, encryptedData: string | Uint8Array, msgPwd?: string, getUint8 = false) => {
-    const result = await BgExec.requestToProcessInBg('Pgp.msg.decrypt', [acctEmail, encryptedData, msgPwd, getUint8]) as DecryptResult;
+  public static pgpMsgDecrypt: PgpMsgMethod.Decrypt = async (kisWithPp, encryptedData, msgPwd, getUint8 = false) => {
+    const result = await BgExec.requestToProcessInBg('PgpMsg.decrypt', [kisWithPp, encryptedData, msgPwd, getUint8]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
       if (result.content.blob.blob_type === 'text') {
         result.content.text = Str.fromUint8(await Browser.objUrlConsume(result.content.blob.blob_url));
@@ -373,8 +373,8 @@ export class BgExec {
     return result;
   }
 
-  public static cryptoMsgVerifyDetached = (acctEmail: string, message: string | Uint8Array, signature: string | Uint8Array) => {
-    return BgExec.requestToProcessInBg('Pgp.msg.verifyDetached', [acctEmail, message, signature]) as Promise<MsgVerifyResult>;
+  public static pgpMsgVerifyDetached: PgpMsgMethod.VerifyDetached = (message, signature) => {
+    return BgExec.requestToProcessInBg('PgpMsg.verifyDetached', [message, signature]) as Promise<MsgVerifyResult>;
   }
 
   private static executeAndFormatResult = async (path: string, resolvedArgs: any[]): Promise<PossibleBgExecResults> => {
@@ -382,15 +382,15 @@ export class BgExec {
     const returned: Promise<PossibleBgExecResults> | PossibleBgExecResults = f.apply(undefined, resolvedArgs); // tslint:disable-line:no-unsafe-any
     if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       const resolved = await returned;
-      if (path === 'Pgp.msg.decrypt') {
-        BgExec.cryptoMsgDecryptResCreateBlobs(resolved as DecryptResult);
+      if (path === 'PgpMsg.decrypt') {
+        BgExec.pgpMsgDecryptResCreateBlobs(resolved as DecryptResult);
       }
       return resolved;
     }
     return returned as PossibleBgExecResults; // direct result
   }
 
-  private static cryptoMsgDecryptResCreateBlobs = (decryptRes: DecryptResult) => {
+  private static pgpMsgDecryptResCreateBlobs = (decryptRes: DecryptResult) => {
     if (decryptRes && decryptRes.success && decryptRes.content) {
       if (decryptRes.content.text && decryptRes.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
         decryptRes.content.blob = { blob_type: 'text', blob_url: Browser.objUrlCreate(decryptRes.content.text) };

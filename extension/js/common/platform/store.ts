@@ -26,10 +26,18 @@ export type Contact = {
   pending_lookup: number; last_use: number | null;
   date: number | null; /* todo - should be removed. email provider search seems to return this? */
 };
-export type KeyInfo = {
-  public: string; private: string; fingerprint: string; longid: string; primary: boolean;
-  decrypted?: OpenPGP.key.Key; keywords: string;
-};
+export interface PrvKeyInfo {
+  private: string;
+  longid: string;
+  decrypted?: OpenPGP.key.Key;
+}
+export interface KeyInfo extends PrvKeyInfo {
+  public: string;
+  fingerprint: string;
+  primary: boolean;
+  keywords: string;
+}
+export type KeyInfosWithPassphrases = { keys: PrvKeyInfo[]; passphrases: string[]; };
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
 export type ContactUpdate = {
@@ -219,6 +227,12 @@ export class Store {
       return keys;
     }
     return keys.filter(ki => Value.is(ki.longid).in(longids) || (Value.is('primary').in(longids) && ki.primary));
+  }
+
+  static async keysGetAllWithPassphrases(acctEmail: string): Promise<KeyInfosWithPassphrases> {
+    const keys = await Store.keysGet(acctEmail);
+    const passphrases = (await Promise.all(keys.map(ki => Store.passphraseGet(acctEmail, ki.longid)))).filter(pp => typeof pp !== 'undefined') as string[];
+    return { keys, passphrases };
   }
 
   private static keysObj(armoredPrv: string, primary = false): KeyInfo {

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, KeyInfo, Contact } from '../platform/store.js';
+import { Store, Contact, PrvKeyInfo, KeyInfosWithPassphrases } from '../platform/store.js';
 import { Value, Str } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType } from './mime.js';
 import { Catch } from '../platform/catch.js';
@@ -15,9 +15,21 @@ if (typeof openpgp !== 'undefined') {
   // openpgp.config.require_uid_self_cert = false;
 }
 
-type InternalSortedKeysForDecrypt = {
-  verificationContacts: Contact[]; forVerification: OpenPGP.key.Key[]; encryptedFor: string[]; signedBy: string[];
-  prvMatching: KeyInfo[]; prvForDecrypt: KeyInfo[]; prvForDecryptDecrypted: KeyInfo[]; prvForDecryptWithoutPassphrases: KeyInfo[];
+export namespace PgpMsgMethod {
+  export type DiagnosePubkeys = (acctEmail: string, m: string | Uint8Array | OpenPGP.message.Message) => Promise<DiagnoseMsgPubkeysResult>;
+  export type VerifyDetached = (plaintext: string | Uint8Array, sigText: string | Uint8Array) => Promise<MsgVerifyResult>;
+  export type Decrypt = (kisWithPp: KeyInfosWithPassphrases, encryptedData: string | Uint8Array, msgPwd?: string, getUint8?: boolean) => Promise<DecryptSuccess | DecryptError>;
+}
+
+type SortedKeysForDecrypt = {
+  verificationContacts: Contact[];
+  forVerification: OpenPGP.key.Key[];
+  encryptedFor: string[];
+  signedBy: string[];
+  prvMatching: PrvKeyInfo[];
+  prvForDecrypt: PrvKeyInfo[];
+  prvForDecryptDecrypted: PrvKeyInfo[];
+  prvForDecryptWithoutPassphrases: PrvKeyInfo[];
 };
 type ConsummableBrowserBlob = { blob_type: 'text' | 'uint8', blob_url: string };
 type DecrytSuccess$content = { blob?: ConsummableBrowserBlob; text?: string; uint8?: Uint8Array; filename?: string };
@@ -32,6 +44,8 @@ type CryptoArmorHeaderDefinition = { begin: string, middle?: string, end: string
 type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType | 'null' | 'signature']: CryptoArmorHeaderDefinition; };
 type PrepareForDecryptRes = { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message }
   | { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage };
+
+type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
 export type Pwd = { question?: string; answer: string; };
 export type MsgVerifyResult = { signer?: string; contact?: Contact; match?: boolean; error?: string; };
@@ -327,164 +341,6 @@ export class Pgp {
     },
   };
 
-  public static msg = {
-    type: (data: string | Uint8Array): { armored: boolean, type: MsgBlockType } | undefined => {
-      if (!data || !data.length) {
-        return undefined;
-      }
-      let d = data.slice(0, 50); // only interested in first 50 bytes
-      // noinspection SuspiciousInstanceOfGuard
-      if (d instanceof Uint8Array) {
-        d = Str.fromUint8(d);
-      }
-      const firstByte = d[0].charCodeAt(0); // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
-      if ((firstByte & 0b10000000) === 0b10000000) { // 1XXX XXXX - potential pgp packet tag
-        let tagNumber = 0; // zero is a forbidden tag number
-        if ((firstByte & 0b11000000) === 0b11000000) { // 11XX XXXX - potential new pgp packet tag
-          tagNumber = firstByte & 0b00111111;  // 11TTTTTT where T is tag number bit
-        } else { // 10XX XXXX - potential old pgp packet tag
-          tagNumber = (firstByte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
-        }
-        if (Value.is(tagNumber).in(Object.values(openpgp.enums.packet))) {
-          // Indeed a valid OpenPGP packet tag number
-          // This does not 100% mean it's OpenPGP message
-          // But it's a good indication that it may
-          const t = openpgp.enums.packet;
-          const msgTpes = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
-          return { armored: false, type: Value.is(tagNumber).in(msgTpes) ? 'message' : 'publicKey' };
-        }
-      }
-      const { blocks } = Pgp.armor.detectBlocks(d.trim());
-      if (blocks.length === 1 && blocks[0].complete === false && Value.is(blocks[0].type).in(['message', 'privateKey', 'publicKey', 'signedMsg'])) {
-        return { armored: true, type: blocks[0].type };
-      }
-      return undefined;
-    },
-    sign: async (signingPrv: OpenPGP.key.Key, data: string): Promise<string> => {
-      const signRes = await openpgp.sign({ data, armor: true, privateKeys: [signingPrv] });
-      return (signRes as OpenPGP.SignArmorResult).data;
-    },
-    verify: async (message: OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage, keysForVerification: OpenPGP.key.Key[], optionalContact?: Contact) => {
-      const signature: MsgVerifyResult = { contact: optionalContact };
-      try {
-        for (const verifyRes of await message.verify(keysForVerification)) {
-          signature.match = Value.is(signature.match).in([true, undefined]) && verifyRes.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
-          if (!signature.signer) {
-            signature.signer = Pgp.key.longid(verifyRes.keyid.bytes);
-          }
-        }
-      } catch (verifyErr) {
-        signature.match = undefined;
-        if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
-          signature.error = 'FlowCrypt is not equipped to verify this message (err 101)';
-        } else {
-          signature.error = `FlowCrypt had trouble verifying this message (${String(verifyErr)})`;
-          Catch.handleErr(verifyErr);
-        }
-      }
-      return signature;
-    },
-    verifyDetached: async (acctEmail: string, plaintext: string | Uint8Array, sigText: string | Uint8Array): Promise<MsgVerifyResult> => {
-      if (plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
-        plaintext = Str.fromUint8(plaintext);
-      }
-      if (sigText instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
-        sigText = Str.fromUint8(sigText);
-      }
-      const message = openpgp.message.fromText(plaintext);
-      message.appendSignature(sigText);
-      const keys = await Pgp.internal.cryptoMsgGetSortedKeysForMsg(acctEmail, message);
-      return await Pgp.msg.verify(message, keys.forVerification, keys.verificationContacts[0]);
-    },
-    decrypt: async (acctEmail: string, encryptedData: string | Uint8Array, msgPwd?: string, getUint8 = false): Promise<DecryptSuccess | DecryptError> => {
-      let prepared;
-      const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
-      try {
-        prepared = Pgp.internal.cryptoMsgPrepareForDecrypt(encryptedData);
-      } catch (formatErr) {
-        return { success: false, error: { type: DecryptErrTypes.format, error: String(formatErr) }, longids };
-      }
-      const keys = await Pgp.internal.cryptoMsgGetSortedKeysForMsg(acctEmail, prepared.message);
-      longids.message = keys.encryptedFor;
-      longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
-      longids.chosen = keys.prvForDecryptDecrypted.map(ki => ki.longid);
-      longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
-      const isEncrypted = !prepared.isCleartext;
-      if (!isEncrypted) {
-        const signature = await Pgp.msg.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]);
-        return { success: true, content: { text: prepared.message.getText() }, isEncrypted, signature };
-      }
-      if (!keys.prvForDecryptDecrypted.length && !msgPwd) {
-        return { success: false, error: { type: DecryptErrTypes.needPassphrase }, message: prepared.message, longids, isEncrypted };
-      }
-      try {
-        const packets = (prepared.message as OpenPGP.message.Message).packets;
-        const isSymEncrypted = packets.filter(p => p.tag === openpgp.enums.packet.symEncryptedSessionKey).length > 0;
-        const isPubEncrypted = packets.filter(p => p.tag === openpgp.enums.packet.publicKeyEncryptedSessionKey).length > 0;
-        if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
-          return { success: false, error: { type: DecryptErrTypes.usePassword }, longids, isEncrypted };
-        }
-        const msgPasswords = msgPwd ? [msgPwd] : undefined;
-        const decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prvForDecryptDecrypted.map(ki => ki.decrypted!), msgPasswords);
-        // const signature = keys.signed_by.length ? Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
-        if (getUint8) {
-          return { success: true, content: { uint8: decrypted.getLiteralData(), filename: decrypted.getFilename() || undefined }, isEncrypted };
-        } else {
-          return { success: true, content: { text: decrypted.getText(), filename: decrypted.getFilename() || undefined }, isEncrypted };
-        }
-      } catch (e) {
-        return { success: false, error: Pgp.internal.cryptoMsgDecryptCategorizeErr(e, msgPwd), message: prepared.message, longids, isEncrypted };
-      }
-    },
-    encrypt: async (
-      pubkeys: string[], signingPrv: OpenPGP.key.Key | undefined, pwd: Pwd | undefined, data: string | Uint8Array, filename?: string, armor?: boolean, date?: Date
-    ): Promise<OpenPGP.EncryptResult> => {
-      const options: OpenPGP.EncryptOptions = { data, armor, date, filename };
-      let usedChallenge = false;
-      if (pubkeys) {
-        options.publicKeys = [];
-        for (const armoredPubkey of pubkeys) {
-          options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armoredPubkey).keys);
-        }
-      }
-      if (pwd && pwd.answer) {
-        options.passwords = [Pgp.hash.challengeAnswer(pwd.answer)];
-        usedChallenge = true;
-      }
-      if (!pubkeys && !usedChallenge) {
-        alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at human@flowcrypt.com if this happens repeatedly.');
-        throw new Error('no-pubkeys-no-challenge');
-      }
-      if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) {
-        options.privateKeys = [signingPrv];
-      }
-      return await openpgp.encrypt(options);
-    },
-    diagnosePubkeys: async (acctEmail: string, m: string | Uint8Array | OpenPGP.message.Message): Promise<DiagnoseMsgPubkeysResult> => {
-      let message: OpenPGP.message.Message;
-      if (typeof m === 'string') {
-        message = openpgp.message.readArmored(m);
-      } else if (m instanceof Uint8Array) {
-        message = openpgp.message.readArmored(Str.fromUint8(m));
-      } else {
-        message = m;
-      }
-      const msgKeyIds = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
-      const privateKeys = await Store.keysGet(acctEmail);
-      const localKeyIds: OpenPGP.Keyid[] = [].concat.apply([], privateKeys.map(ki => ki.public).map(Pgp.internal.cryptoKeyIds)); // tslint:disable-line:no-unsafe-any
-      const diagnosis = { found_match: false, receivers: msgKeyIds.length };
-      for (const msgKeyId of msgKeyIds) {
-        for (const localKeyId of localKeyIds) {
-          if (msgKeyId === localKeyId) {
-            diagnosis.found_match = true;
-            return diagnosis;
-          }
-        }
-      }
-      return diagnosis;
-    },
-  };
-
   public static password = {
     estimateStrength: (zxcvbnResultGuesses: number) => {
       const timeToCrack = zxcvbnResultGuesses / Pgp.PASSWORD_GUESSES_PER_SECOND;
@@ -592,8 +448,8 @@ export class Pgp {
         return { isArmored, isCleartext: false, message: openpgp.message.read(Str.toUint8(data)) };
       }
     },
-    cryptoMsgGetSortedKeysForMsg: async (acctEmail: string, msg: OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage): Promise<InternalSortedKeysForDecrypt> => {
-      const keys: InternalSortedKeysForDecrypt = {
+    cryptoMsgGetSortedKeys: async (kiWithPp: KeyInfosWithPassphrases, msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
+      const keys: SortedKeysForDecrypt = {
         verificationContacts: [],
         forVerification: [],
         encryptedFor: [],
@@ -606,18 +462,15 @@ export class Pgp {
       const encryptedFor = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
       keys.encryptedFor = encryptedFor.map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
       keys.signedBy = (msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
-      const privateKeysAll = await Store.keysGet(acctEmail);
-      keys.prvMatching = privateKeysAll.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
+      keys.prvMatching = kiWithPp.keys.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
       if (keys.prvMatching.length) {
         keys.prvForDecrypt = keys.prvMatching;
       } else {
-        keys.prvForDecrypt = privateKeysAll;
+        keys.prvForDecrypt = kiWithPp.keys;
       }
-      const passphrases = (await Promise.all(keys.prvForDecrypt.map(ki => Store.passphraseGet(acctEmail, ki.longid))));
-      const passphrasesFiltered = passphrases.filter(pp => typeof pp !== 'undefined') as string[];
       for (const prvForDecrypt of keys.prvForDecrypt) {
         const key = openpgp.key.readArmored(prvForDecrypt.private).keys[0];
-        if (key.isDecrypted() || (passphrasesFiltered.length && await Pgp.key.decrypt(key, passphrasesFiltered) === true)) {
+        if (key.isDecrypted() || (kiWithPp.passphrases.length && await Pgp.key.decrypt(key, kiWithPp.passphrases) === true)) {
           prvForDecrypt.decrypted = key;
           keys.prvForDecryptDecrypted.push(prvForDecrypt);
         } else {
@@ -686,5 +539,171 @@ export class Pgp {
       return 'less than a second';
     },
   };
+
+}
+
+export class PgpMsg {
+
+  static type = (data: string | Uint8Array): { armored: boolean, type: MsgBlockType } | undefined => {
+    if (!data || !data.length) {
+      return undefined;
+    }
+    let d = data.slice(0, 50); // only interested in first 50 bytes
+    // noinspection SuspiciousInstanceOfGuard
+    if (d instanceof Uint8Array) {
+      d = Str.fromUint8(d);
+    }
+    const firstByte = d[0].charCodeAt(0); // attempt to understand this as a binary PGP packet: https://tools.ietf.org/html/rfc4880#section-4.2
+    if ((firstByte & 0b10000000) === 0b10000000) { // 1XXX XXXX - potential pgp packet tag
+      let tagNumber = 0; // zero is a forbidden tag number
+      if ((firstByte & 0b11000000) === 0b11000000) { // 11XX XXXX - potential new pgp packet tag
+        tagNumber = firstByte & 0b00111111;  // 11TTTTTT where T is tag number bit
+      } else { // 10XX XXXX - potential old pgp packet tag
+        tagNumber = (firstByte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
+      }
+      if (Value.is(tagNumber).in(Object.values(openpgp.enums.packet))) {
+        // Indeed a valid OpenPGP packet tag number
+        // This does not 100% mean it's OpenPGP message
+        // But it's a good indication that it may
+        const t = openpgp.enums.packet;
+        const msgTpes = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
+        return { armored: false, type: Value.is(tagNumber).in(msgTpes) ? 'message' : 'publicKey' };
+      }
+    }
+    const { blocks } = Pgp.armor.detectBlocks(d.trim());
+    if (blocks.length === 1 && blocks[0].complete === false && Value.is(blocks[0].type).in(['message', 'privateKey', 'publicKey', 'signedMsg'])) {
+      return { armored: true, type: blocks[0].type };
+    }
+    return undefined;
+  }
+
+  static sign = async (signingPrv: OpenPGP.key.Key, data: string): Promise<string> => {
+    const signRes = await openpgp.sign({ data, armor: true, privateKeys: [signingPrv] });
+    return (signRes as OpenPGP.SignArmorResult).data;
+  }
+
+  static verify = async (message: OpenpgpMsgOrCleartext, keysForVerification: OpenPGP.key.Key[], optionalContact?: Contact): Promise<MsgVerifyResult> => {
+    const sig: MsgVerifyResult = { contact: optionalContact };
+    try {
+      for (const verifyRes of await message.verify(keysForVerification)) {
+        sig.match = Value.is(sig.match).in([true, undefined]) && verifyRes.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
+        if (!sig.signer) {
+          sig.signer = Pgp.key.longid(verifyRes.keyid.bytes);
+        }
+      }
+    } catch (verifyErr) {
+      sig.match = undefined;
+      if (verifyErr instanceof Error && verifyErr.message === 'Can only verify message with one literal data packet.') {
+        sig.error = 'FlowCrypt is not equipped to verify this message (err 101)';
+      } else {
+        sig.error = `FlowCrypt had trouble verifying this message (${String(verifyErr)})`;
+        Catch.handleErr(verifyErr);
+      }
+    }
+    return sig;
+  }
+
+  static verifyDetached: PgpMsgMethod.VerifyDetached = async (plaintext, sigText) => {
+    if (plaintext instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
+      plaintext = Str.fromUint8(plaintext);
+    }
+    if (sigText instanceof Uint8Array) { // until https://github.com/openpgpjs/openpgpjs/issues/657 fixed
+      sigText = Str.fromUint8(sigText);
+    }
+    const message = openpgp.message.fromText(plaintext);
+    message.appendSignature(sigText);
+    const keys = await Pgp.internal.cryptoMsgGetSortedKeys({ keys: [], passphrases: [] }, message);
+    return await PgpMsg.verify(message, keys.forVerification, keys.verificationContacts[0]);
+  }
+
+  static decrypt: PgpMsgMethod.Decrypt = async (kisWithPp, encryptedData, msgPwd, getUint8 = false) => {
+    let prepared;
+    const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
+    try {
+      prepared = Pgp.internal.cryptoMsgPrepareForDecrypt(encryptedData);
+    } catch (formatErr) {
+      return { success: false, error: { type: DecryptErrTypes.format, error: String(formatErr) }, longids };
+    }
+    const keys = await Pgp.internal.cryptoMsgGetSortedKeys(kisWithPp, prepared.message);
+    longids.message = keys.encryptedFor;
+    longids.matching = keys.prvForDecrypt.map(ki => ki.longid);
+    longids.chosen = keys.prvForDecryptDecrypted.map(ki => ki.longid);
+    longids.needPassphrase = keys.prvForDecryptWithoutPassphrases.map(ki => ki.longid);
+    const isEncrypted = !prepared.isCleartext;
+    if (!isEncrypted) {
+      const signature = await PgpMsg.verify(prepared.message, keys.forVerification, keys.verificationContacts[0]);
+      return { success: true, content: { text: prepared.message.getText() }, isEncrypted, signature };
+    }
+    if (!keys.prvForDecryptDecrypted.length && !msgPwd) {
+      return { success: false, error: { type: DecryptErrTypes.needPassphrase }, message: prepared.message, longids, isEncrypted };
+    }
+    try {
+      const packets = (prepared.message as OpenPGP.message.Message).packets;
+      const isSymEncrypted = packets.filter(p => p.tag === openpgp.enums.packet.symEncryptedSessionKey).length > 0;
+      const isPubEncrypted = packets.filter(p => p.tag === openpgp.enums.packet.publicKeyEncryptedSessionKey).length > 0;
+      if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
+        return { success: false, error: { type: DecryptErrTypes.usePassword }, longids, isEncrypted };
+      }
+      const msgPasswords = msgPwd ? [msgPwd] : undefined;
+      const decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(keys.prvForDecryptDecrypted.map(ki => ki.decrypted!), msgPasswords);
+      // const signature = keys.signed_by.length ? Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
+      if (getUint8) {
+        return { success: true, content: { uint8: decrypted.getLiteralData(), filename: decrypted.getFilename() || undefined }, isEncrypted };
+      } else {
+        return { success: true, content: { text: decrypted.getText(), filename: decrypted.getFilename() || undefined }, isEncrypted };
+      }
+    } catch (e) {
+      return { success: false, error: Pgp.internal.cryptoMsgDecryptCategorizeErr(e, msgPwd), message: prepared.message, longids, isEncrypted };
+    }
+  }
+
+  static encrypt = async (
+    pubkeys: string[], signingPrv: OpenPGP.key.Key | undefined, pwd: Pwd | undefined, data: string | Uint8Array, filename?: string, armor?: boolean, date?: Date
+  ): Promise<OpenPGP.EncryptResult> => {
+    const options: OpenPGP.EncryptOptions = { data, armor, date, filename };
+    let usedChallenge = false;
+    if (pubkeys) {
+      options.publicKeys = [];
+      for (const armoredPubkey of pubkeys) {
+        options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armoredPubkey).keys);
+      }
+    }
+    if (pwd && pwd.answer) {
+      options.passwords = [Pgp.hash.challengeAnswer(pwd.answer)];
+      usedChallenge = true;
+    }
+    if (!pubkeys && !usedChallenge) {
+      alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at human@flowcrypt.com if this happens repeatedly.');
+      throw new Error('no-pubkeys-no-challenge');
+    }
+    if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) {
+      options.privateKeys = [signingPrv];
+    }
+    return await openpgp.encrypt(options);
+  }
+
+  static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async (acctEmail, m) => {
+    let message: OpenPGP.message.Message;
+    if (typeof m === 'string') {
+      message = openpgp.message.readArmored(m);
+    } else if (m instanceof Uint8Array) {
+      message = openpgp.message.readArmored(Str.fromUint8(m));
+    } else {
+      message = m;
+    }
+    const msgKeyIds = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
+    const privateKeys = await Store.keysGet(acctEmail);
+    const localKeyIds: OpenPGP.Keyid[] = [].concat.apply([], privateKeys.map(ki => ki.public).map(Pgp.internal.cryptoKeyIds)); // tslint:disable-line:no-unsafe-any
+    const diagnosis = { found_match: false, receivers: msgKeyIds.length };
+    for (const msgKeyId of msgKeyIds) {
+      for (const localKeyId of localKeyIds) {
+        if (msgKeyId === localKeyId) {
+          diagnosis.found_match = true;
+          return diagnosis;
+        }
+      }
+    }
+    return diagnosis;
+  }
 
 }

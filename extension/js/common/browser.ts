@@ -9,7 +9,7 @@ import { Str, Value, Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './platform/store.js';
 import { Api } from './api/api.js';
-import { Pgp, Pwd } from './core/pgp.js';
+import { Pgp, Pwd, PgpMsg } from './core/pgp.js';
 import { mnemonic } from './core/mnemonic.js';
 import { Att } from './core/att.js';
 import { MsgBlock, KeyBlockType } from './core/mime.js';
@@ -1138,7 +1138,7 @@ export class AttUI {
     for (const id of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[id];
       const fileData = await this.readAttDataAsUint8(id);
-      const encrypted = await Pgp.msg.encrypt(armoredPubkeys, undefined, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
+      const encrypted = await PgpMsg.encrypt(armoredPubkeys, undefined, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;

@@ -7,7 +7,7 @@ import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
-import { Pgp, Pwd, FormatError } from './core/pgp.js';
+import { Pgp, Pwd, FormatError, PgpMsg } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
@@ -412,7 +412,7 @@ export class Composer {
       this.draftSaveInProgress = true;
       this.S.cached('send_btn_note').text('Saving');
       const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
-      const encrypted = await Pgp.msg.encrypt([primaryKi.public], undefined, undefined, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
+      const encrypted = await PgpMsg.encrypt([primaryKi.public], undefined, undefined, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
       let body: string;
       if (this.v.threadId) { // replied message
         body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
@@ -476,7 +476,7 @@ export class Composer {
   private decryptAndRenderDraft = async (encryptedDraft: string, headers: { from?: string; to: string[] }) => {
     const passphrase = await this.app.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const result = await Pgp.msg.decrypt(this.v.acctEmail, encryptedDraft);
+      const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), encryptedDraft);
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.text!.replace(/\n/g, '<br>')));
@@ -678,7 +678,7 @@ export class Composer {
         if (!prv.isDecrypted()) {
           await Pgp.key.decrypt(prv, [passphrase!]); // checked !== undefined above
         }
-        const signedData = await Pgp.msg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
+        const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
         this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.handleErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -790,7 +790,7 @@ export class Composer {
     pubkeys: string[], pwd: Pwd | undefined, plaintext: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []
   ) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
-    const encrypted = await Pgp.msg.encrypt(pubkeys, undefined, pwd, plaintext, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
+    const encrypted = await PgpMsg.encrypt(pubkeys, undefined, pwd, plaintext, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
     let body: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate(to, { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -1038,7 +1038,7 @@ export class Composer {
       }
       return;
     }
-    const result = await Pgp.msg.decrypt(this.v.acctEmail, armoredMsg);
+    const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), armoredMsg);
     if (result.success) {
       if (!Mime.resemblesMsg(result.content.text!)) {
         this.appendForwardedMsg(result.content.text!.replace(/\n/g, '<br>'));

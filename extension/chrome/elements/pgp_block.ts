@@ -39,6 +39,8 @@ Catch.try(async () => {
   let adminCodes: string[];
   let userEnteredMsgPassword: string | undefined;
 
+  const keyInfosWithPassphrases = await Store.keysGetAllWithPassphrases(acctEmail);
+
   const renderText = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
   };
@@ -154,7 +156,7 @@ Catch.try(async () => {
   };
 
   const handlePrivateKeyMismatch = async (acctEmail: string, message: string) => { // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BgExec.diagnoseMsgPubkeys(acctEmail, message);
+    const msgDiagnosis = await BgExec.pgpMsgDiagnosePubkeys(acctEmail, message);
     if (msgDiagnosis.found_match) {
       await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug);
     } else if (msgDiagnosis.receivers === 1) {
@@ -174,7 +176,7 @@ Catch.try(async () => {
   };
 
   const decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const decrypted = await BgExec.cryptoMsgDecrypt(acctEmail, encrypted.data(), await decryptPwd(), true);
+    const decrypted = await BgExec.pgpMsgDecrypt(keyInfosWithPassphrases, encrypted.data(), await decryptPwd(), true);
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8! });
       Browser.saveToDownloads(att, renderIn);
@@ -356,7 +358,7 @@ Catch.try(async () => {
       throw new Error('msg is undefined');
     }
     if (typeof signature !== 'string') {
-      const result = await BgExec.cryptoMsgDecrypt(acctEmail, msg, await decryptPwd(optionalPwd));
+      const result = await BgExec.pgpMsgDecrypt(keyInfosWithPassphrases, msg, await decryptPwd(optionalPwd));
       if (typeof result === 'undefined') {
         await renderErr(Lang.general.restartBrowserAndTryAgain);
       } else if (result.success) {
@@ -402,7 +404,7 @@ Catch.try(async () => {
         }
       }
     } else {
-      const signatureResult = await BgExec.cryptoMsgVerifyDetached(acctEmail, msg, signature);
+      const signatureResult = await BgExec.pgpMsgVerifyDetached(msg, signature);
       await decideDecryptedContentFormattingAndRender(msg, false, signatureResult);
     }
   };

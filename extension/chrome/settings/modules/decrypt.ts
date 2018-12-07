@@ -5,8 +5,9 @@
 import { Att } from '../../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, AttUI, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
-import { Pgp, DecryptErrTypes } from '../../../js/common/core/pgp.js';
+import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/pgp.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 Catch.try(async () => {
 
@@ -39,7 +40,7 @@ Catch.try(async () => {
   }));
 
   const decryptAndDownload = async (encrypted: Att) => { // todo - this is more or less copy-pasted from att.js, should use common function
-    const result = await Pgp.msg.decrypt(acctEmail, encrypted.asBytes(), undefined, true);
+    const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted.asBytes(), undefined, true);
     if (result.success) {
       const attachment = new Att({ name: encrypted.name.replace(/\.(pgp|gpg|asc)$/i, ''), type: encrypted.type, data: result.content.uint8! }); // uint8!: requested uint8 above
       Browser.saveToDownloads(attachment);

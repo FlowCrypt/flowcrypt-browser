@@ -4,7 +4,7 @@
 
 import { Store, GlobalStore, Serializable, Contact } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
-import { Pgp, FormatError } from '../core/pgp.js';
+import { Pgp, FormatError, PgpMsg } from '../core/pgp.js';
 import { Ui } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
@@ -328,7 +328,7 @@ export class Api {
         if (packet.success !== true) {
           throw new FormatError(packet.error || 'packet parse error', JSON.stringify(packet, undefined, 2));
         }
-        return await Pgp.msg.sign(decryptedPrv, contentText);
+        return await PgpMsg.sign(decryptedPrv, contentText);
       },
       isValidHashFormat: (v: string) => /^[A-F0-9]{40}$/.test(v),
       parse: (text: string): ParsedAttest => {
