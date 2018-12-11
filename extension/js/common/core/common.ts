@@ -92,6 +92,9 @@ export class Str {
     return c.join('');
   }
 
+  /**
+   * this looks broken for any utf8 charcodes - result will have fewer bytes than expected
+   */
   public static toUint8 = (raw: string | Uint8Array): Uint8Array => {
     if (raw instanceof Uint8Array) {
       return raw;

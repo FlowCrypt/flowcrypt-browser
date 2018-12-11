@@ -497,8 +497,8 @@ export class Pgp {
         prvForDecryptDecrypted: [],
         prvForDecryptWithoutPassphrases: [],
       };
-      const encryptedFor = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
-      keys.encryptedFor = encryptedFor.map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
+      const encryptedForKeyId = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
+      keys.encryptedFor = encryptedForKeyId.map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
       keys.signedBy = (msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
       keys.prvMatching = kiWithPp.keys.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
       if (keys.prvMatching.length) {
