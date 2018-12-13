@@ -422,17 +422,14 @@ export class Composer {
         body = encrypted.data;
       }
       const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
-      const mimeMsg = await Mime.encode(body, {
-        To: this.getRecipientsFromDom().filter(Str.isEmailValid), // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-        From: this.v.from || this.getSenderFromDom(),
-        Subject: subject
-      }, []);
+      const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
+      const mimeMsg = await Mime.encode(body, { To: to, From: this.v.from || this.getSenderFromDom(), Subject: subject }, []);
       try {
         if (!this.v.draftId) {
           const newDraft = await this.app.emailProviderDraftCreate(mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
           this.v.draftId = newDraft.id;
-          await this.app.storageSetDraftMeta(true, newDraft.id, this.v.threadId, this.getRecipientsFromDom(), String(this.S.cached('input_subject').val()));
+          await this.app.storageSetDraftMeta(true, newDraft.id, this.v.threadId, to, String(this.S.cached('input_subject').val()));
           // recursing one more time, because we need the draft_id we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // save_draft_in_process will remain true because well.. it's still in process
