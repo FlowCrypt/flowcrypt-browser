@@ -8,8 +8,9 @@ import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js
 import { Catch } from '../platform/catch.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
+import { requireOpenpgp } from '../platform/require.js';
 
-declare const openpgp: typeof OpenPGP;
+const openpgp = requireOpenpgp();
 
 if (typeof openpgp !== 'undefined') {
   openpgp.config.versionstring = `FlowCrypt ${Catch.version()} Gmail Encryption`;
@@ -109,68 +110,7 @@ export class Pgp {
   ];
 
   public static armor = {
-    strip: (pgpBlockText: string) => {
-      if (!pgpBlockText) {
-        return pgpBlockText;
-      }
-      const debug = false;
-      if (debug) {
-        console.info('pgp_block_1');
-        console.info(pgpBlockText);
-      }
-      const newlines = [/<div><br><\/div>/g, /<\/div><div>/g, /<[bB][rR]( [a-zA-Z]+="[^"]*")* ?\/? ?>/g, /<div ?\/?>/g];
-      const spaces = [/&nbsp;/g];
-      const removes = [/<wbr ?\/?>/g, /<\/?div>/g];
-      for (const newline of newlines) {
-        pgpBlockText = pgpBlockText.replace(newline, '\n');
-      }
-      if (debug) {
-        console.info('pgp_block_2');
-        console.info(pgpBlockText);
-      }
-      for (const remove of removes) {
-        pgpBlockText = pgpBlockText.replace(remove, '');
-      }
-      if (debug) {
-        console.info('pgp_block_3');
-        console.info(pgpBlockText);
-      }
-      for (const space of spaces) {
-        pgpBlockText = pgpBlockText.replace(space, ' ');
-      }
-      if (debug) {
-        console.info('pgp_block_4');
-        console.info(pgpBlockText);
-      }
-      pgpBlockText = pgpBlockText.replace(/\r\n/g, '\n');
-      if (debug) {
-        console.info('pgp_block_5');
-        console.info(pgpBlockText);
-      }
-      pgpBlockText = $('<div>' + pgpBlockText + '</div>').text();
-      if (debug) {
-        console.info('pgp_block_6');
-        console.info(pgpBlockText);
-      }
-      const doubleNl = pgpBlockText.match(/\n\n/g);
-      if (doubleNl && doubleNl.length > 2) { // a lot of newlines are doubled
-        pgpBlockText = pgpBlockText.replace(/\n\n/g, '\n');
-        if (debug) {
-          console.info('pgp_block_removed_doubles');
-        }
-      }
-      if (debug) {
-        console.info('pgp_block_7');
-        console.info(pgpBlockText);
-      }
-      pgpBlockText = pgpBlockText.replace(/^ +/gm, '');
-      if (debug) {
-        console.info('pgp_block_final');
-        console.info(pgpBlockText);
-      }
-      return pgpBlockText;
-    },
-    clip: (text: string) => {
+    clip: (text: string): string | undefined => {
       if (text && Value.is(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && Value.is(String(Pgp.ARMOR_HEADER_DICT.null.end)).in(text)) {
         const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
         return (match && match.length) ? match[0] : undefined;

@@ -3,7 +3,7 @@
 'use strict';
 
 import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api.js';
-import { Env, Ui } from '../browser.js';
+import { Env, Ui, Xss } from '../browser.js';
 import { Catch } from '../platform/catch.js';
 import { Store, Contact, AccountStore, Serializable } from '../platform/store.js';
 import { Dict, Value, Str } from '../core/common.js';
@@ -301,22 +301,23 @@ export class Google extends Api {
       }
       await Google.apiGmailLoopThroughEmailsToCompileContacts(acctEmail, gmailQuery.join(' '), chunkedCb);
     },
-    /*
-    * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
-    * success_callback(str armored_pgp_message)
-    * error_callback(str error_type, str html_formatted_data_to_display_to_user)
-    *    ---> html_formatted_data_to_display_to_user might be unknown type of mime message, or pgp message with broken format, etc.
-    *    ---> The motivation is that user might have other tool to process this. Also helps debugging issues in the field.
-    */
+    /**
+     * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
+     */
     extractArmoredBlock: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<string> => {
       const gmailMsg = await Google.gmail.msgGet(acctEmail, msgId, format);
       if (format === 'full') {
         const bodies = Google.gmail.findBodies(gmailMsg);
         const atts = Google.gmail.findAtts(gmailMsg);
-        const armoredMsgFromBodies = Pgp.armor.clip(Str.base64urlDecode(bodies['text/plain'] || '')) || Pgp.armor.clip(Pgp.armor.strip(Str.base64urlDecode(bodies['text/html'] || '')));
-        if (armoredMsgFromBodies) {
-          return armoredMsgFromBodies;
-        } else if (atts.length) {
+        const fromTextBody = Pgp.armor.clip(Str.base64urlDecode(bodies['text/plain'] || ''));
+        if (fromTextBody) {
+          return fromTextBody;
+        }
+        const fromHtmlBody = Pgp.armor.clip(Xss.htmlSanitizeAndStripAllTags(Str.base64urlDecode(bodies['text/plain'] || ''), '\n'));
+        if (fromHtmlBody) {
+          return fromHtmlBody;
+        }
+        if (atts.length) {
           for (const att of atts) {
             if (att.treatAs() === 'message') {
               await Google.gmail.fetchAtts(acctEmail, [att]);

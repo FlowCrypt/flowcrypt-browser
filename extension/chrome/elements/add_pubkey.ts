@@ -4,7 +4,6 @@
 
 import { Xss, Ui, KeyImportUi, UserAlert, Env } from '../../js/common/browser.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Pgp } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
 
@@ -47,7 +46,7 @@ Catch.try(async () => {
   $('.action_ok').click(Ui.event.handle(async () => {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
-      const normalized = await keyImportUi.checkPub(Pgp.armor.strip(String($('.pubkey').val()))); // .pubkey is a textarea
+      const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
       await Store.dbContactSave(undefined, Store.dbContactObj(String($('select.email').val()), undefined, 'pgp', normalized, undefined, false, Date.now()));
       closeDialog();
     } catch (e) {

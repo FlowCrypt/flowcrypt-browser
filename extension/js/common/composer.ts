@@ -355,7 +355,7 @@ export class Composer {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
       }
       const parsedMsg = await Mime.decode(Str.base64urlDecode(draftGetRes.message.raw!));
-      const armored = Pgp.armor.clip(parsedMsg.text || Pgp.armor.strip(parsedMsg.html || '') || '');
+      const armored = Pgp.armor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
       if (!armored) {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
       }
