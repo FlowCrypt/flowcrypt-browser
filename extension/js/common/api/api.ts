@@ -58,8 +58,18 @@ abstract class ApiCallError extends Error {
     return '';
   }
 
+  protected static censoredUrl = (url: string | undefined): string => {
+    if (!url) {
+      return '(unknown url)';
+    }
+    if (url.indexOf('token=') !== -1) {
+      return `${url.split('?')[0]}~censored:token`;
+    }
+    return url;
+  }
+
   protected static describeApiAction = (req: JQueryAjaxSettings) => {
-    return `${req.method}-ing ${req.url} ${typeof req.data}: ${ApiCallError.getPayloadStructure(req)}`;
+    return `${req.method}-ing ${ApiCallError.censoredUrl(req.url)} ${typeof req.data}: ${ApiCallError.getPayloadStructure(req)}`;
   }
 
 }
@@ -76,7 +86,7 @@ export class AjaxError extends ApiCallError {
     super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallError.describeApiAction(req)}`);
     this.xhr = xhr;
     this.status = typeof xhr.status === 'number' ? xhr.status : -1;
-    this.url = req.url || '(unknown url)';
+    this.url = AjaxError.censoredUrl(req.url);
     this.responseText = xhr.responseText || '';
     this.statusText = xhr.statusText || '(no status text)';
     this.stack += `\n\nprovided ajax call stack:\n${stack}`;
