@@ -617,33 +617,33 @@ export class Composer {
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
       const { armoredPubkeys, emailsWithoutPubkeys } = await this.collectAllAvailablePublicKeys(this.v.acctEmail, recipients);
-      const challenge = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
-      this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, challenge);
+      const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
+      this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
-        await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
+        await this.signSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
       } else {
-        await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
+        await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
       }
     } catch (e) {
       this.handleSendErr(e);
     }
   }
 
-  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription) => {
+  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
-    plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients, subject, plaintext, challenge, subscription);
-    const atts = await this.attach.collectEncryptAtts(armoredPubkeys, challenge);
-    if (atts.length && challenge) { // these will be password encrypted attachments
+    plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients, subject, plaintext, pwd, subscription);
+    const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
+    if (atts.length && pwd) { // these will be password encrypted attachments
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
-      await this.doEncryptFormatSend(armoredPubkeys, challenge, plaintext, [], recipients, subject, subscription, attAdminCodes);
+      await this.doEncryptFormatSend(armoredPubkeys, pwd, plaintext, [], recipients, subject, subscription, attAdminCodes);
     } else {
-      await this.doEncryptFormatSend(armoredPubkeys, challenge, plaintext, atts, recipients, subject, subscription);
+      await this.doEncryptFormatSend(armoredPubkeys, pwd, plaintext, atts, recipients, subject, subscription);
     }
   }
 
-  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription) => {
+  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.v.acctEmail, ['primary']);
     if (primaryKi) {
@@ -652,7 +652,7 @@ export class Composer {
       if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.v.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((typeof await this.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
-          await this.signSend(recipients, armoredPubkeys, subject, plaintext, challenge, subscription);
+          await this.signSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
         } else { // timeout - reset - no passphrase entered
           clearInterval(this.passphraseInterval);
           this.resetSendBtn();
