@@ -637,9 +637,9 @@ export class Composer {
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
-      await this.doEncryptFormatSend(armoredPubkeys, pwd, plaintext, [], recipients, subject, subscription, attAdminCodes);
+      await this.doEncryptFmtSend(armoredPubkeys, pwd, plaintext, [], recipients, subject, subscription, attAdminCodes);
     } else {
-      await this.doEncryptFormatSend(armoredPubkeys, pwd, plaintext, atts, recipients, subject, subscription);
+      await this.doEncryptFmtSend(armoredPubkeys, pwd, plaintext, atts, recipients, subject, subscription);
     }
   }
 
@@ -783,26 +783,24 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFormatSend = async (
-    pubkeys: string[], pwd: Pwd | undefined, plaintext: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []
-  ) => {
+  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
-    const encrypted = await PgpMsg.encrypt(pubkeys, undefined, pwd, plaintext, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
-    let body: SendableMsgBody = { 'text/plain': encrypted.data };
+    const encrypted = await PgpMsg.encrypt(pubkeys, undefined, pwd, text, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
+    let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate(to, { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      const { short, admin_code } = await Api.fc.messageUpload(body['text/plain']!, subs.active ? 'uuid' : undefined);
+      const { short, admin_code } = await Api.fc.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
       const storage = await Store.getAcct(this.v.acctEmail, ['outgoing_language']);
-      body = this.formatPasswordProtectedEmail(short, body, pubkeys, storage.outgoing_language || 'EN');
-      body = this.formatEmailTextFooter(body);
+      encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
+      encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, body, atts, this.v.threadId), plaintext);
+      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, encryptedBody, atts, this.v.threadId), text);
     } else {
-      body = this.formatEmailTextFooter(body);
-      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, body, atts, this.v.threadId), plaintext);
+      encryptedBody = this.formatEmailTextFooter(encryptedBody);
+      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, encryptedBody, atts, this.v.threadId), text);
     }
   }
 
@@ -1463,7 +1461,7 @@ export class Composer {
     }
   }
 
-  private formatPasswordProtectedEmail = (shortId: string, origBody: SendableMsgBody, armoredPubkeys: string[], lang: 'DE' | 'EN') => {
+  private fmtPwdProtectedEmail = (shortId: string, encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], lang: 'DE' | 'EN') => {
     const msgUrl = `${this.FC_WEB_URL}/${shortId}`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extractAsText('input_intro') : '';
@@ -1478,13 +1476,10 @@ export class Composer {
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.msgEncryptedHtml[lang] + a + '<br><br>');
     html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl) + '<br><br><br>');
-    const htmlFcWebUrlLink = '<a href="' + Xss.escape(this.FC_WEB_URL) + '" style="color: #999;">' + Xss.escape(this.FC_WEB_URL) + '</a>';
-    if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      const htmlPgpMsg = origBody['text/html'] ? origBody['text/html'] : (origBody['text/plain'] || '').replace(this.FC_WEB_URL, htmlFcWebUrlLink).replace(/\n/g, '<br>\n');
-      html.push('<div style="color: #999;">' + htmlPgpMsg + '</div>');
-      text.push(origBody['text/plain']);
-    }
     html.push('</div>');
+    if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
+      atts.push(new Att({ data: encryptedBody['text/plain'], name: 'encrypted.asc' }));
+    }
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
   }
 
