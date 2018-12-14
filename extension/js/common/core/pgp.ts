@@ -12,7 +12,7 @@ import { requireOpenpgp } from '../platform/require.js';
 
 const openpgp = requireOpenpgp();
 
-if (typeof openpgp !== 'undefined') {
+if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp may be undefined while loading
   openpgp.config.versionstring = `FlowCrypt ${Catch.version()} Gmail Encryption`;
   openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   // openpgp.config.require_uid_self_cert = false;
