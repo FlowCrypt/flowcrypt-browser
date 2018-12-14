@@ -719,6 +719,7 @@ export class Composer {
       const sizeText = sizeMb < 0.1 ? '' : ` ${(Math.round(sizeMb * 10) / 10)}MB`;
       const linkText = `Att: ${att.name} (${att.type})${sizeText}`;
       const fcData = Str.htmlAttrEncode({ size: att.length, type: att.type, name: att.name });
+      // triple-check Str.extractFcAtts() if you change the line below in any way
       plaintext += `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`;
     }
     return plaintext;

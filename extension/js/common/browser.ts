@@ -96,6 +96,15 @@ export class Browser {
     }
   }
 
+  public static arrFromDomNodeList = (obj: NodeList | JQuery<HTMLElement>): Node[] => {
+    // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+    const array = [];
+    for (let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
+      array[i] = obj[i];
+    }
+    return array;
+  }
+
 }
 
 export class Env {

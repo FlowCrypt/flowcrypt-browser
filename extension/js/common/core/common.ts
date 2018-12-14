@@ -68,7 +68,13 @@ export class Str {
 
   public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
 
-  public static htmlAttrDecode = (encoded: string): any => JSON.parse(Str.base64urlUtfDecode(encoded)); // tslint:disable-line:no-unsafe-any
+  public static htmlAttrDecode = (encoded: string): any => {
+    try {
+      return JSON.parse(Str.base64urlUtfDecode(encoded)); // tslint:disable-line:no-unsafe-any
+    } catch (e) {
+      return undefined;
+    }
+  }
 
   /**
    * used for 3rd party API calls - do not change w/o testing Gmail api attachments
@@ -187,15 +193,14 @@ export class Str {
   }
 
   public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
-    if (Value.is('cryptup_file').in(decryptedContent)) {
-      decryptedContent = decryptedContent.replace(/<a[^>]+class="cryptup_file"[^>]+>[^<]+<\/a>\n?/gm, foundLink => {
-        const el = $(foundLink);
-        const fcData = el.attr('cryptup-data');
-        if (fcData) {
-          const a = Str.htmlAttrDecode(fcData);
-          if (Str.isFcAttLinkData(a)) {
-            blocks.push(Pgp.internal.msgBlockAttObj('attachment', '', { type: a.type, name: a.name, length: a.size, url: el.attr('href') }));
-          }
+    // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
+    // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
+    // thus we use RegEx so that it works on both browser and node
+    if (Value.is('class="cryptup_file"').in(decryptedContent)) {
+      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s+>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
+        const a = Str.htmlAttrDecode(fcData);
+        if (Str.isFcAttLinkData(a)) {
+          blocks.push(Pgp.internal.msgBlockAttObj('attachment', '', { type: a.type, name: a.name, length: a.size, url }));
         }
         return '';
       });
@@ -203,15 +208,15 @@ export class Str {
     return decryptedContent;
   }
 
-  public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
-    const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
-    if (fcTokenElement.length) {
-      const fcData = fcTokenElement.attr('cryptup-data');
-      if (fcData) {
-        return Str.htmlAttrDecode(fcData);
-      }
-    }
-  }
+  // public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
+  //   const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
+  //   if (fcTokenElement.length) {
+  //     const fcData = fcTokenElement.attr('cryptup-data');
+  //     if (fcData) {
+  //       return Str.htmlAttrDecode(fcData);
+  //     }
+  //   }
+  // }
 
   public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
 
@@ -278,13 +283,6 @@ export class Value {
         }
       }
       return unique;
-    },
-    fromDomNodeList: (obj: NodeList | JQuery<HTMLElement>): Node[] => { // http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
-      const array = [];
-      for (let i = obj.length >>> 0; i--;) { // iterate backwards ensuring that length is an UInt32
-        array[i] = obj[i];
-      }
-      return array;
     },
     withoutKey: <T>(array: T[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
     withoutVal: <T>(array: T[], withoutVal: T) => {

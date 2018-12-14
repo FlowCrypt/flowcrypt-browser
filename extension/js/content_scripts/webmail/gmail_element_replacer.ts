@@ -8,7 +8,7 @@ import { Notifications } from '../../common/notifications.js';
 import { Api } from '../../common/api/api.js';
 import { Pgp, PgpMsg } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/browser.js';
+import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams, Browser } from '../../common/browser.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
@@ -173,7 +173,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const attsContainerEl of $(this.sel.attsContainerInner).get()) {
       const attsContainer = $(attsContainerEl);
       const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
-      const newPgpAttsNames = Value.arr.fromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
+      const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
       if (newPgpAtts.length) {
         const msgId = this.determineMsgId(attsContainer);
         if (msgId) {

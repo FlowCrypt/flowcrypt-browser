@@ -687,10 +687,8 @@ export class PgpMsg {
   static fmtDecrypted = async (decryptedContent: string): Promise<MsgBlock[]> => {
     const blocks: MsgBlock[] = [];
     if (!Mime.resemblesMsg(decryptedContent)) {
-      if (typeof $ === 'function') { // skip on Node.js
-        decryptedContent = Str.extractFcAtts(decryptedContent, blocks);
-        decryptedContent = Str.stripFcTeplyToken(decryptedContent);
-      }
+      decryptedContent = Str.extractFcAtts(decryptedContent, blocks);
+      decryptedContent = Str.stripFcTeplyToken(decryptedContent);
       const armoredPubKeys: string[] = [];
       decryptedContent = Str.stripPublicKeys(decryptedContent, armoredPubKeys);
       blocks.push(Pgp.internal.msgBlockObj('html', Str.asEscapedHtml(decryptedContent)));
