@@ -16,16 +16,13 @@ export const requireOpenpgp = (): typeof OpenPGP => {
 };
 
 export const requireMimeParser = (): any => {
-  // const MimeParser = (window as any)['emailjs-mime-parser'](); // tslint:disable-line:no-unsafe-any
-  return undefined; // todo
+  return (window as any)['emailjs-mime-parser'];
 };
 
 export const requireMimeBuilder = (): any => {
-  // const MimeBuilder = (window as any)['emailjs-mime-builder']; // tslint:disable-line:variable-name
-  return undefined; // todo
+  return (window as any)['emailjs-mime-builder'];
 };
 
 export const requireIso88592 = (): any => {
-  // (window as any).iso88592
-  return undefined; // todo
+  return (window as any).iso88592;
 };
