@@ -9,6 +9,7 @@ import { Catch } from '../platform/catch.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
 import { requireOpenpgp } from '../platform/require.js';
+import { secureRandomBytes, base64encode } from '../platform/util.js';
 
 const openpgp = requireOpenpgp();
 
@@ -337,9 +338,7 @@ export class Pgp {
       'setpassword', 'set password', 'set pass word', 'setpassphrase', 'set pass phrase', 'set passphrase'
     ],
     random: () => { // eg TDW6-DU5M-TANI-LJXY
-      const secureRandomArray = new Uint8Array(128);
-      window.crypto.getRandomValues(secureRandomArray);
-      return btoa(Str.fromUint8(secureRandomArray)).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
+      return base64encode(Str.fromUint8(secureRandomBytes(128))).toUpperCase().replace(/[^A-Z0-9]|0|O|1/g, '').replace(/(.{4})/g, '$1-').substr(0, 19);
     },
   };
 
@@ -651,7 +650,6 @@ export class PgpMsg {
       usedChallenge = true;
     }
     if (!pubkeys && !usedChallenge) {
-      alert('Internal error: don\'t know how to encryt message. Please refresh the page and try again, or contact me at human@flowcrypt.com if this happens repeatedly.');
       throw new Error('no-pubkeys-no-challenge');
     }
     if (signingPrv && typeof signingPrv.isPrivate !== 'undefined' && signingPrv.isPrivate()) {

@@ -5,6 +5,7 @@
 import { Pgp } from './pgp.js';
 import { FcAttLinkData } from './att.js';
 import { MsgBlock } from './mime.js';
+import { base64encode, base64decode } from '../platform/util.js';
 
 export type Dict<T> = { [key: string]: T; };
 export type EmailProvider = 'gmail';
@@ -79,12 +80,12 @@ export class Str {
   /**
    * used for 3rd party API calls - do not change w/o testing Gmail api attachments
    */
-  public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  public static base64urlEncode = (str: string) => (typeof str === 'undefined') ? str : base64encode(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
   /**
    * // used for 3rd party API calls - do not change w/o testing Gmail api attachments
    */
-  public static base64urlDecode = (str: string) => (typeof str === 'undefined') ? str : atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  public static base64urlDecode = (str: string) => (typeof str === 'undefined') ? str : base64decode(str.replace(/-/g, '+').replace(/_/g, '/'));
 
   public static fromUint8 = (u8a: Uint8Array | string): string => {
     if (typeof u8a === 'string') {
@@ -258,7 +259,8 @@ export class Str {
     if (typeof str === 'undefined') {
       return str;
     }
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return base64encode(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(String(p1), 16))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
   private static base64urlUtfDecode = (str: string) => {
@@ -267,7 +269,9 @@ export class Str {
       return str;
     }
     // tslint:disable-next-line:no-unsafe-any
-    return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return decodeURIComponent(Array.prototype.map.call(base64decode(str.replace(/-/g, '+').replace(/_/g, '/')), (c: string) => {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
   }
 
 }

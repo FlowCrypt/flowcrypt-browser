@@ -6,6 +6,11 @@ import { Str, Value, Dict } from './common.js';
 import { Pgp, KeyDetails } from './pgp.js';
 import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
+import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
+
+const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
+const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
+const Iso88592 = requireIso88592();  // tslint:disable-line:variable-name
 
 type MimeContentHeader = string | { address: string; name: string; }[];
 type MimeContent = {
@@ -117,7 +122,7 @@ export class Mime {
     return new Promise(async resolve => {
       const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
       try {
-        const parser = new (window as any)['emailjs-mime-parser'](); // tslint:disable-line:no-unsafe-any
+        const parser = new MimeParser(); // tslint:disable-line:no-unsafe-any
         const parsed: { [key: string]: MimeParserNode } = {};
         parser.onheader = (node: MimeParserNode) => { // tslint:disable-line:no-unsafe-any
           if (!String(node.path.join('.'))) { // root node headers
@@ -166,7 +171,6 @@ export class Mime {
   }
 
   public static encode = async (body: string | SendableMsgBody, headers: RichHeaders, atts: Att[] = []): Promise<string> => {
-    const MimeBuilder = (window as any)['emailjs-mime-builder']; // tslint:disable-line:variable-name
     const rootNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
@@ -295,7 +299,7 @@ export class Mime {
       return Str.fromEqualSignNotationAsUtf(node.rawContent);
     }
     if (node.charset === 'iso-8859-2') { // todo - use iso88592.labels for detection
-      return (window as any).iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any
+      return Iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any
     }
     return node.rawContent;
   }
