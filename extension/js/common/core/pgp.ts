@@ -26,6 +26,7 @@ export namespace PgpMsgMethod {
 }
 
 type KeyDetails$ids = {
+  shortid: string;
   longid: string;
   fingerprint: string;
   keywords: string;
@@ -35,6 +36,13 @@ export interface KeyDetails {
   public: string;
   ids: KeyDetails$ids[];
   users: string[];
+  created: number;
+  algo: { // same as OpenPGP.key.AlgorithmInfo
+    algorithm: string;
+    algorithmId: number;
+    bits?: number;
+    curve?: string;
+  };
 }
 
 type SortedKeysForDecrypt = {
@@ -203,8 +211,8 @@ export class Pgp {
       }
     },
     normalize: (armored: string): { normalized: string, keys: OpenPGP.key.Key[] } => {
-      let keys: OpenPGP.key.Key[] = [];
       try {
+        let keys: OpenPGP.key.Key[] = [];
         armored = Pgp.armor.normalize(armored, 'key');
         if (RegExp(Pgp.armor.headers('publicKey', 're').begin).test(armored)) {
           keys = openpgp.key.readArmored(armored).keys;
@@ -213,10 +221,15 @@ export class Pgp {
         } else if (RegExp(Pgp.armor.headers('message', 're').begin).test(armored)) {
           keys = [new openpgp.key.Key(openpgp.message.readArmored(armored).packets)];
         }
+        for (const k of keys) {
+          for (const u of k.users) {
+            u.otherCertifications = []; // prevent key bloat
+          }
+        }
         return { normalized: keys.map(k => k.armor()).join('\n'), keys };
       } catch (error) {
         Catch.handleErr(error);
-        return { normalized: '', keys };
+        return { normalized: '', keys: [] };
       }
     },
     fingerprint: (key: OpenPGP.key.Key | string, formatting: "default" | "spaced" = 'default'): string | undefined => {
@@ -301,6 +314,9 @@ export class Pgp {
       for (const keyPacket of k.getKeys()) {
         keyPackets.push(keyPacket);
       }
+      const algoInfo = k.primaryKey.getAlgorithmInfo();
+      const algo = { algorithm: algoInfo.algorithm, bits: algoInfo.bits, curve: (algoInfo as any).curve, algorithmId: openpgp.enums.publicKey[algoInfo.algorithm] };
+      const created = k.primaryKey.created.getTime() / 1000;
       return {
         private: k.isPrivate() ? k.armor() : undefined,
         public: k.toPublic().armor(),
@@ -309,11 +325,14 @@ export class Pgp {
           if (fingerprint) {
             const longid = Pgp.key.longid(fingerprint);
             if (longid) {
-              return { fingerprint, longid, keywords: mnemonic(longid) };
+              const shortid = longid.substr(-8);
+              return { fingerprint, longid, shortid, keywords: mnemonic(longid) };
             }
           }
           return undefined;
         }).filter(Boolean) as KeyDetails$ids[],
+        algo,
+        created,
       };
     },
   };
