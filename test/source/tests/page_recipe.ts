@@ -271,7 +271,7 @@ export class OauthPageRecipe extends PageRecipe {
       approve_button: '#submit_approve_access',
     };
     const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
-    await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd, .bLzI3e .k6Zj8d');
+    await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd');
     if (await oauthPage.target.$('#Email') !== null) { // 2016-style login
       await oauthPage.waitAll('#Email', { timeout: OauthPageRecipe.longTimeout });
       await oauthPage.waitAndType('#Email', auth.email);
