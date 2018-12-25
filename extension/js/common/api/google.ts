@@ -7,7 +7,7 @@ import { Env, Ui, Xss } from '../browser.js';
 import { Catch } from '../platform/catch.js';
 import { Store, Contact, AccountStore, Serializable } from '../platform/store.js';
 import { Dict, Value, Str } from '../core/common.js';
-import { GoogleAuthWindowResult$result, BrowserWidnow } from '../extension.js';
+import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult } from '../extension.js';
 import { Mime, SendableMsgBody } from '../core/mime.js';
 import { Att } from '../core/att.js';
 import { FormatError, Pgp } from '../core/pgp.js';
@@ -25,9 +25,10 @@ declare const openpgp: typeof OpenPGP;
 
 export class Google extends Api {
 
-  private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:reply.craigslist.org -to:sale.craigslist.org -to:hous.craigslist.org';
+  private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
   public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup',
     'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
+  private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 6000;
 
   private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {
     const data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
@@ -173,7 +174,7 @@ export class Google extends Api {
           try {
             parsedJsonDataField = JSON.parse(chunk).data; // tslint:disable-line:no-unsafe-any
           } catch (e) {
-            console.log(e);
+            console.info(e);
             reject(new Error("Chunk response could not be parsed"));
             return;
           }
@@ -287,19 +288,22 @@ export class Google extends Api {
     },
     searchContacts: async (acctEmail: string, userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb) => {
       // This will keep triggering callback with new emails as they are being discovered
-      const gmailQuery = ['is:sent', Google.GMAIL_USELESS_CONTACTS_FILTER];
+      let gmailQuery = `is:sent ${Google.GMAIL_USELESS_CONTACTS_FILTER}`;
       if (userQuery) {
         const variationsOfTo = userQuery.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
         if (!Value.is(userQuery).in(variationsOfTo)) {
           variationsOfTo.push(userQuery);
         }
-        gmailQuery.push(`(to:${variationsOfTo.join(' OR to:')})`);
+        gmailQuery += ` (to:${variationsOfTo.join(' OR to:')})`;
       }
       const filteredContacts = knownContacts.filter(c => Str.isEmailValid(c.email));
       for (const contact of filteredContacts) {
-        gmailQuery.push(`-to:${contact.email}`);
+        gmailQuery += ` -to:${contact.email}`;
+        if (gmailQuery.length > Google.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
+          break;
+        }
       }
-      await Google.apiGmailLoopThroughEmailsToCompileContacts(acctEmail, gmailQuery.join(' '), chunkedCb);
+      await Google.apiGmailLoopThroughEmailsToCompileContacts(acctEmail, gmailQuery, chunkedCb);
     },
     /**
      * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
@@ -346,9 +350,9 @@ export class Google extends Api {
         }
       }
     },
-    fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader: async (acctEmail: string, q: string, headerNames: string[]) => {
+    fetchMsgsHeadersBasedOnQuery: async (acctEmail: string, q: string, headerNames: string[], msgLimit: number) => {
       const { messages } = await Google.gmail.msgList(acctEmail, q, false);
-      return await Google.fetchMsgsSequentiallyFromListExtractFirstAvailableHeader(acctEmail, messages || [], headerNames);
+      return await Google.extractHeadersFromMsgs(acctEmail, messages || [], headerNames, msgLimit);
     },
     fetchKeyBackups: async (acctEmail: string) => {
       const res = await Google.gmail.msgList(acctEmail, Google.gmail.buildSearchQuery.backups(acctEmail), true);
@@ -375,47 +379,87 @@ export class Google extends Api {
     },
   };
 
+  private static apiGmailBuildFilteredQuery = (query: string, allRawEmails: string[]) => {
+    let filteredQuery = query;
+    for (const rawEmail of allRawEmails) {
+      filteredQuery += ` -to:"${rawEmail}"`;
+      if (filteredQuery.length > Google.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
+        return filteredQuery;
+      }
+    }
+    return filteredQuery;
+  }
+
+  private static apiGmailGetNewUniqueRecipientsFromHeaders = (toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Contact[] => {
+    if (!toHeaders.length) {
+      return [];
+    }
+    let rawParsedResults: AddrParserResult[] = [];
+    toHeaders = Value.arr.unique(toHeaders);
+    for (const to of toHeaders) {
+      rawParsedResults = rawParsedResults.concat((window as BrowserWidnow)['emailjs-addressparser'].parse(to));
+    }
+    for (const rawParsedRes of rawParsedResults) {
+      if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {
+        allRawEmails.push(rawParsedRes.address);
+      }
+    }
+    const newValidResultPairs = rawParsedResults.filter(r => Str.isEmailValid(r.address));
+    const newValidResults = newValidResultPairs.map(r => Store.dbContactObj(r.address, r.name, undefined, undefined, undefined, false, undefined));
+    const uniqueNewValidResults: Contact[] = [];
+    for (const newValidRes of newValidResults) {
+      if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
+        const foundIndex = uniqueNewValidResults.map(c => c.email).indexOf(newValidRes.email);
+        if (foundIndex === -1) {
+          uniqueNewValidResults.push(newValidRes);
+        } else if (newValidRes.name && !uniqueNewValidResults[foundIndex].name) {
+          uniqueNewValidResults[foundIndex].name = newValidRes.name; // prefer to also save name if first encountered result is missing it
+        }
+      }
+    }
+    return uniqueNewValidResults;
+  }
+
   private static apiGmailLoopThroughEmailsToCompileContacts = async (acctEmail: string, query: string, chunkedCb: (r: ProviderContactsResults) => void) => {
     let allResults: Contact[] = [];
-    while (true) {
-      const headers = await Google.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['to']);
-      if (headers.to) {
-        const rawParsedResults = (window as BrowserWidnow)['emailjs-addressparser'].parse(headers.to);
-        const newValidResultPairs = rawParsedResults.filter(r => Str.isEmailValid(r.address));
-        const newValidResults = newValidResultPairs.map(r => Store.dbContactObj(r.address, r.name, undefined, undefined, undefined, false, undefined));
-        query += rawParsedResults.map(raw => ` -to:"${raw.address}"`).join('');
-        allResults = allResults.concat(newValidResults);
-        chunkedCb({ new: newValidResults, all: allResults });
-        if (query.length > 6000) { // gmail search string can handle about this much
-          chunkedCb({ new: [], all: allResults });
-          return;
-        }
-      } else {
-        chunkedCb({ new: [], all: allResults });
-        return;
+    const allRawEmails: string[] = [];
+    let lastFilteredQuery = '';
+    let continueSearching = true;
+    while (continueSearching) {
+      const filteredQuery = Google.apiGmailBuildFilteredQuery(query, allRawEmails);
+      if (filteredQuery === lastFilteredQuery) {
+        break;
       }
+      if (filteredQuery.length > Google.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
+        continueSearching = false;
+      }
+      const headers = await Google.gmail.fetchMsgsHeadersBasedOnQuery(acctEmail, filteredQuery, ['to'], 50);
+      lastFilteredQuery = filteredQuery;
+      const uniqueNewValidResults = Google.apiGmailGetNewUniqueRecipientsFromHeaders(headers.to, allResults, allRawEmails);
+      if (!uniqueNewValidResults.length) {
+        break;
+      }
+      allResults = allResults.concat(uniqueNewValidResults);
+      chunkedCb({ new: uniqueNewValidResults, all: allResults });
     }
+    chunkedCb({ new: [], all: allResults });
   }
 
-  private static fetchMsgsSequentiallyFromListExtractFirstAvailableHeader = async (acctEmail: string, messages: R.GmailMsgList$message[], headerNames: string[]): Promise<Dict<string>> => {
-    for (const message of messages) {
-      const headerVals: Dict<string> = {};
-      const msgGetRes = await Google.gmail.msgGet(acctEmail, message.id, 'metadata');
+  private static extractHeadersFromMsgs = async (acctEmail: string, msgsIds: R.GmailMsgList$message[], headerNames: string[], msgLimit: number): Promise<Dict<string[]>> => {
+    const headerVals: Dict<string[]> = {};
+    for (const headerName of headerNames) {
+      headerVals[headerName] = [];
+    }
+    for (const msg of await Google.gmail.msgsGet(acctEmail, msgsIds.slice(0, msgLimit).map(m => m.id), 'metadata')) {
       for (const headerName of headerNames) {
-        const value = Google.gmail.findHeader(msgGetRes, headerName);
+        const value = Google.gmail.findHeader(msg, headerName);
         if (typeof value !== 'undefined') {
-          headerVals[headerName] = value;
-        } else {
-          break;
+          headerVals[headerName].push(value);
         }
       }
-      if (Object.values(headerVals).length === headerNames.length) {
-        return headerVals; // all requested header values found in one msg
-      }
     }
-    return {};
+    return headerVals;
   }
-
 }
 
 export class GoogleAuth {

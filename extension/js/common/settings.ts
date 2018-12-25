@@ -24,12 +24,14 @@ export class Settings {
     let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
     const results = [];
     while (true) {
-      const headers = await Google.gmail.fetchMsgsBasedOnQueryAndExtractFirstAvailableHeader(acctEmail, query, ['from']);
-      if (!headers.from) {
+      const headers = await Google.gmail.fetchMsgsHeadersBasedOnQuery(acctEmail, query, ['from'], 1);
+      if (!headers.from.length) {
         return results.filter(email => !Value.is(email).in(Settings.ignoreEmailAliases));
       }
-      results.push(Str.parseEmail(headers.from).email);
-      query += ' -from:"' + Str.parseEmail(headers.from).email + '"';
+      for (const from of headers.from) {
+        results.push(Str.parseEmail(from).email);
+        query += ' -from:"' + Str.parseEmail(from).email + '"';
+      }
     }
   }
 

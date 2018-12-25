@@ -73,14 +73,14 @@ export namespace Bm {
 
 type Handler = Bm.RespondingHandler | Bm.ResponselessHandler;
 export type Handlers = Dict<Handler>;
-
+export type AddrParserResult = { name: string, address: string };
 export interface BrowserWidnow extends Window {
   onunhandledrejection: (e: any) => void;
   'emailjs-mime-codec': AnyThirdPartyLibrary;
   'emailjs-mime-parser': AnyThirdPartyLibrary;
   'emailjs-mime-builder': AnyThirdPartyLibrary;
   'emailjs-addressparser': {
-    parse: (raw: string) => { name: string, address: string }[];
+    parse: (raw: string) => AddrParserResult[];
   };
 }
 export interface FcWindow extends BrowserWidnow {
