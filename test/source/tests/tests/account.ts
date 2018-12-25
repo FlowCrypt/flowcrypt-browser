@@ -9,7 +9,9 @@ import { FlowCryptApi } from '../api';
 
 export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
-  ava.test.serial.only('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (browser, t) => {
+  // todo - make a helper method that forces account tests to run in sequence with Semaphore
+
+  ava.test('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (browser, t) => {
     // delete account
     await FlowCryptApi.hookCiAcctDelete(Config.secrets.ci_dev_account);
     // set up acct and open compose page
