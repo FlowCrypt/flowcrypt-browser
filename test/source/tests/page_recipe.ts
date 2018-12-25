@@ -216,7 +216,7 @@ export class ComposePageRecipe extends PageRecipe {
   public static openStandalone = async (browser: BrowserHandle): Promise<ControllablePage> => {
     const composePage = await browser.newPage('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none');
     await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await composePage.waitForSelTestStaet('ready');
+    await composePage.waitForSelTestState('ready');
     return composePage;
   }
 
@@ -225,7 +225,7 @@ export class ComposePageRecipe extends PageRecipe {
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
     await composeFrame.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
-    await composeFrame.waitForSelTestStaet('ready');
+    await composeFrame.waitForSelTestState('ready');
     return composeFrame;
   }
 
@@ -254,7 +254,7 @@ export class ComposePageRecipe extends PageRecipe {
       await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
-    await composePage.waitForSelTestStaet('closed', 60); // wait until page closed
+    await composePage.waitForSelTestState('closed', 60); // wait until page closed
     await composePage.close();
   }
 
@@ -263,6 +263,7 @@ export class ComposePageRecipe extends PageRecipe {
 export class OauthPageRecipe extends PageRecipe {
 
   private static oauthPwdDelay = 2;
+  private static longTimeout = 40;
 
   public static google = async (oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
     const selectors = {
@@ -270,9 +271,9 @@ export class OauthPageRecipe extends PageRecipe {
       approve_button: '#submit_approve_access',
     };
     const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
-    await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd');
+    await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd, .bLzI3e .k6Zj8d');
     if (await oauthPage.target.$('#Email') !== null) { // 2016-style login
-      await oauthPage.waitAll('#Email', { timeout: 60 });
+      await oauthPage.waitAll('#Email', { timeout: OauthPageRecipe.longTimeout });
       await oauthPage.waitAndType('#Email', auth.email);
       await oauthPage.waitAndClick('#next');
       await oauthPage.waitForNavigationIfAny();
@@ -282,7 +283,7 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAndClick('#signIn', { delay: 1 });
       await oauthPage.waitForNavigationIfAny();
     } else if (await oauthPage.target.$('#identifierId') !== null) { // 2017-style login
-      await oauthPage.waitAll('#identifierId', { timeout: 60 });
+      await oauthPage.waitAll('#identifierId', { timeout: OauthPageRecipe.longTimeout });
       await oauthPage.waitAndType('#identifierId', auth.email, { delay: 2 });
       await oauthPage.waitAndClick('.zZhnYe', { delay: 2 });  // confirm email
       await oauthPage.waitForNavigationIfAny();

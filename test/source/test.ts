@@ -12,7 +12,6 @@ import { defineSettingsTests } from './tests/tests/settings';
 import { defineElementTests } from './tests/tests/elements';
 import { defineAcctTests } from './tests/tests/account';
 import { Config } from './util';
-import { FlowCryptApi } from './tests/api';
 
 type GlobalBrowserGroup = 'compatibility' | 'trial';
 export type GlobalBrowser = { browsers: BrowserPool, beforeEachTest: () => Promise<void> };
@@ -26,13 +25,7 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
     browsers: new BrowserPool(POOL_SIZE_GLOBAL, 'browserPoolGlobal', true),
     beforeEachTest: async () => undefined,
-  },
-  trial: {
-    browsers: new BrowserPool(1, 'browserPoolTrial', true),
-    beforeEachTest: async () => {
-      await FlowCryptApi.hookCiAcctDelete(Config.secrets.ci_dev_account);
-    },
-  },
+  }
 };
 
 ava.before('set up global browsers and config', async t => {
@@ -48,9 +41,6 @@ ava.before('set up global browsers and config', async t => {
   for (const b of globalBrowsers) {
     await browserGlobal.compatibility.browsers.doneUsingBrowser(b);
   }
-  // initialize trial browser
-  const b = await browserGlobal.trial.browsers.newBrowserHandle();
-  await browserGlobal.trial.browsers.doneUsingBrowser(b);
   t.pass();
 });
 
@@ -76,7 +66,6 @@ export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (
 ava.after('close browsers', async t => {
   await browserPool.close();
   await browserGlobal.compatibility.browsers.close();
-  await browserGlobal.trial.browsers.close();
   t.pass();
 });
 

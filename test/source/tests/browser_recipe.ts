@@ -1,5 +1,5 @@
 import { Url, BrowserHandle } from '../browser';
-import { PageRecipe, OauthPageRecipe, SettingsPageRecipe, SetupPageRecipe } from './page_recipe';
+import { OauthPageRecipe, SettingsPageRecipe, SetupPageRecipe } from './page_recipe';
 import { Util } from '../util';
 
 export class BrowserRecipe {
@@ -50,13 +50,13 @@ export class BrowserRecipe {
   public static pgpBlockVerifyDecryptedContent = async (browser: BrowserHandle, url: string, expectedContents: string[], password?: string) => {
     const pgpBlockPage = await browser.newPage(url);
     await pgpBlockPage.waitAll('@pgp-block-content');
-    await pgpBlockPage.waitForSelTestStaet('ready', 100);
+    await pgpBlockPage.waitForSelTestState('ready', 100);
     await Util.sleep(1);
     if (password) {
       await pgpBlockPage.waitAndType('@input-message-password', password);
       await pgpBlockPage.waitAndClick('@action-decrypt-with-password');
       await Util.sleep(1);
-      await pgpBlockPage.waitForSelTestStaet('ready', 10);
+      await pgpBlockPage.waitForSelTestState('ready', 10);
     }
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of expectedContents) {

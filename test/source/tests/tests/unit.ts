@@ -11,7 +11,7 @@ export let defineUnitTests = (testWithBrowser: TestWithBrowser, testWithSemaphor
   for (const ut of Config.tests.unit_tests) {
     ava.test(`unit ${ut.name}`, testWithBrowser(async browser => {
       const page = await browser.newPage(`chrome/dev/unit_test.htm?f=${ut.f}&args=${encodeURIComponent(JSON.stringify(ut.args))}`);
-      await page.waitForSelTestStaet('ready');
+      await page.waitForSelTestState('ready');
       const content = await page.read('@unit-test-result');
       const r = JSON.parse(content);
       expect(r).to.not.have.property('error');

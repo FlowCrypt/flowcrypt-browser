@@ -5,10 +5,13 @@ import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 import { Config } from '../../util';
 import { expect } from 'chai';
+import { FlowCryptApi } from '../api';
 
 export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
-  ava.test('compose > large file > subscribe > trial > attach again', testWithSemaphoredGlobalBrowser('trial', async (browser, t) => {
+  ava.test.serial.only('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (browser, t) => {
+    // delete account
+    await FlowCryptApi.hookCiAcctDelete(Config.secrets.ci_dev_account);
     // set up acct and open compose page
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, Config.secrets.ci_dev_account);
     await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.trial', { hasRecoverMore: false });

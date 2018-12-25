@@ -7,7 +7,7 @@ declare const jQuery: any;
 abstract class ControllableBase {
 
   public target: Page | Frame;
-  private debugNamespace: string | null = null;
+  private debugNamespace: string | undefined = undefined;
 
   constructor(pageOrFrame: Page | Frame) {
     this.target = pageOrFrame;
@@ -49,7 +49,7 @@ abstract class ControllableBase {
 
   protected selsAsProcessedArr = (selector: string | string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
 
-  public waitForSelTestStaet = async (state: string, timeout = 10) => {
+  public waitForSelTestState = async (state: string, timeout = 10) => {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
