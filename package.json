@@ -21,7 +21,7 @@
     "gulp-replace": "1.0.0",
     "inquirer": "5.2.0",
     "json-stable-stringify": "1.0.1",
-    "puppeteer": "1.3.0-next.1525301631811",
+    "puppeteer": "^1.3.0-next.1525301631811",
     "tslint": "5.11.0",
     "typescript": "3.0.1"
   },
