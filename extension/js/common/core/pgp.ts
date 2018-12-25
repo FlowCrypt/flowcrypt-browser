@@ -432,6 +432,9 @@ export class Pgp {
     },
     cryptoKeyIds: (armoredPubkey: string) => openpgp.key.readArmored(armoredPubkey).keys[0].getKeyIds(),
     cryptoMsgPrepareForDecrypt: (data: string | Uint8Array): PrepareForDecryptRes => {
+      if (!data.length) {
+        throw new Error('Encrypted message could not be parsed because no data was provided');
+      }
       const first100bytes = Str.fromUint8(data.slice(0, 100));
       const isArmoredEncrypted = Value.is(Pgp.armor.headers('message').begin).in(first100bytes);
       const isArmoredSignedOnly = Value.is(Pgp.armor.headers('signedMsg').begin).in(first100bytes);
