@@ -43,7 +43,7 @@ export class BrowserPool {
 
   public getExtensionId = async (): Promise<string> => {
     const browser = await this.newBrowserHandle(false);
-    const initialPage = await browser.newPageTriggeredBy(() => null); // the page triggered on its own
+    const initialPage = await browser.newPageTriggeredBy(() => undefined); // the page triggered on its own
     const url = initialPage.page.url();
     const match = url.match(/[a-z]{32}/);
     if (match !== null) {
@@ -135,7 +135,7 @@ export class BrowserPool {
   }
 
   private closeInitialExtensionPage = async (browser: BrowserHandle) => {
-    const initialPage = await browser.newPageTriggeredBy(() => null); // the page triggered on its own
+    const initialPage = await browser.newPageTriggeredBy(() => undefined); // the page triggered on its own
     await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
     await initialPage.close();
   }
