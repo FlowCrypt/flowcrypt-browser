@@ -173,15 +173,15 @@ export class BgAttests {
     return { attestPacketText, message: `Successfully attested ${acctEmail}`, acctEmail };
   }
 
-  private static processAttestAndLogResult = async (acctEmail: string, attestPacketText: string, passphrase: string | undefined) => {
+  private static processAttestAndLogResult = async (acctEmail: string, attestPacketText: string, passphrase: string | undefined): Promise<AttestResult | AttestError> => {
     try {
       return await BgAttests.addAttestLog(true, await BgAttests.processAttestPacketText(acctEmail, attestPacketText, passphrase));
     } catch (e) {
-      if (!(e instanceof AttestError)) {
-        Catch.handleErr(e);
-        e = new AttestError(String(e), attestPacketText, acctEmail);
+      if (e instanceof AttestError) {
+        return e;
       }
-      return e;
+      Catch.handleErr(e);
+      return new AttestError(String(e), attestPacketText, acctEmail);
     }
   }
 
