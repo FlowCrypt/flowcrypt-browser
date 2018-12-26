@@ -127,62 +127,61 @@ export class BgAttests {
     }
     const key = openpgp.key.readArmored(primaryKi.private).keys[0];
     const { attests_processed } = await Store.getAcct(acctEmail, ['attests_processed']);
-    if (!Value.is(attest.content.attester).in(attests_processed || [])) {
-      const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
-      if (await Pgp.key.decrypt(key, [passphrase || storedPassphrase || '']) === true) {
-        const expectedFingerprint = key.primaryKey.getFingerprint().toUpperCase();
-        const expectedEmailHash = Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
-        if (attest && attest.success && attest.text) {
-          const isKnownAttester = attest.content.attester && attest.content.attester in BgAttests.ATTESTERS;
-          if (isKnownAttester && attest.content.fingerprint === expectedFingerprint && attest.content.email_hash === expectedEmailHash) {
-            let signed;
-            try {
-              signed = await PgpMsg.sign(key, attest.text);
-            } catch (e) {
-              throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${String(e)}`, attestPacketText, acctEmail);
-            }
-            try {
-              let apiRes;
-              if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
-                apiRes = await Api.attester.initialConfirm(signed);
-              } else {
-                apiRes = await Api.attester.replaceConfirm(signed);
-              }
-              if (!apiRes.attested) {
-                throw new AttestError(`Refused by Attester. Email human@flowcrypt.com to find out why.\n\n${JSON.stringify(apiRes)}`, attestPacketText, acctEmail);
-              }
-            } catch (e) {
-              if (Api.err.isNetErr(e)) {
-                throw new AttestError('Attester API not available (network error)', attestPacketText, acctEmail);
-              }
-              throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${String(e)}`, attestPacketText, acctEmail);
-            }
-            await BgAttests.acctStorageMarkAsAttested(acctEmail, attest.content.attester!);
-            return { attestPacketText, message: `Successfully attested ${acctEmail}`, acctEmail };
-          } else {
-            throw new AttestError('This attest message is ignored as it does not match your settings.\n\nEmail human@flowcrypt.com to help.', attestPacketText, acctEmail);
-          }
-        } else {
-          throw new AttestError('Could not parse this attest message.', attestPacketText, acctEmail);
-        }
-      } else {
-        throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attestPacketText, acctEmail);
-      }
-    } else {
+    if (Value.is(attest.content.attester).in(attests_processed || [])) {
       BgAttests.stopWatching(acctEmail);
       return { attestPacketText, message: `Already attested ${acctEmail}`, acctEmail };
     }
+    const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
+    if (key.isDecrypted()) {
+      throw new AttestError('Will not attest unprotected key', attestPacketText, acctEmail);
+    }
+    if (await Pgp.key.decrypt(key, [passphrase || storedPassphrase || '']) !== true) {
+      throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attestPacketText, acctEmail);
+    }
+    const expectedFingerprint = key.primaryKey.getFingerprint().toUpperCase();
+    const expectedEmailHash = Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
+    if (!attest || !attest.success || !attest.text) {
+      throw new AttestError('Could not parse this attest message.', attestPacketText, acctEmail);
+    }
+    const isKnownAttester = attest.content.attester && attest.content.attester in BgAttests.ATTESTERS;
+    if (!isKnownAttester || attest.content.fingerprint !== expectedFingerprint || attest.content.email_hash !== expectedEmailHash) {
+      throw new AttestError('This attest message is ignored as it does not match your settings.\n\nEmail human@flowcrypt.com to help.', attestPacketText, acctEmail);
+    }
+    let signed;
+    try {
+      signed = await PgpMsg.sign(key, attest.text);
+    } catch (e) {
+      throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${String(e)}`, attestPacketText, acctEmail);
+    }
+    try {
+      let apiRes;
+      if (attest.content.action !== 'CONFIRM_REPLACEMENT') {
+        apiRes = await Api.attester.initialConfirm(signed);
+      } else {
+        apiRes = await Api.attester.replaceConfirm(signed);
+      }
+      if (!apiRes.attested) {
+        throw new AttestError(`Refused by Attester. Email human@flowcrypt.com to find out why.\n\n${JSON.stringify(apiRes)}`, attestPacketText, acctEmail);
+      }
+    } catch (e) {
+      if (Api.err.isNetErr(e)) {
+        throw new AttestError('Attester API not available (network error)', attestPacketText, acctEmail);
+      }
+      throw new AttestError(`Error while calling Attester API. Email human@flowcrypt.com to find out why.\n\n${String(e)}`, attestPacketText, acctEmail);
+    }
+    await BgAttests.acctStorageMarkAsAttested(acctEmail, attest.content.attester!);
+    return { attestPacketText, message: `Successfully attested ${acctEmail}`, acctEmail };
   }
 
   private static processAttestAndLogResult = async (acctEmail: string, attestPacketText: string, passphrase: string | undefined) => {
     try {
       return await BgAttests.addAttestLog(true, await BgAttests.processAttestPacketText(acctEmail, attestPacketText, passphrase));
     } catch (e) {
-      if (e instanceof AttestError) {
-        return e;
+      if (!(e instanceof AttestError)) {
+        Catch.handleErr(e);
+        e = new AttestError(String(e), attestPacketText, acctEmail);
       }
-      Catch.handleErr(e);
-      return new AttestError(String(e), attestPacketText, acctEmail);
+      return e;
     }
   }
 
