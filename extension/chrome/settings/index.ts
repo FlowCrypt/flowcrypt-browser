@@ -78,9 +78,9 @@ Catch.try(async () => {
     Catch.setHandledTimeout(clear, 10000);
     $('.webmail_notifications').one('click', clear);
   });
-  BrowserMsg.addListener('open_google_auth_dialog', ({ acctEmail, omitReadScope }: Bm.OpenGoogleAuthDialog) => {
+  BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, omitReadScope }: Bm.OpenGoogleAuthDialog) => {
     $('.featherlight-close').click();
-    Settings.newGoogleAcctAuthPrompt(tabId, acctEmail, omitReadScope).catch(Catch.handleErr);
+    await Settings.newGoogleAcctAuthPrompt(tabId, acctEmail, omitReadScope);
   });
   BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
