@@ -569,11 +569,13 @@ export class GoogleAuth {
 
   private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null;
 
+  private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
+
   private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[]): Promise<AuthRes> => {
     while (true) {
-      const [oauthTab] = await tabsQuery({ windowId });
-      if (oauthTab && oauthTab.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauthTab.title) && !GoogleAuth.isAuthUrl(oauthTab.title)) {
-        const { result, error, code } = GoogleAuth.processOauthResTitle(oauthTab.title);
+      const [oauth] = await tabsQuery({ windowId });
+      if (oauth && oauth.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauth.title) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
+        const { result, error, code } = GoogleAuth.processOauthResTitle(oauth.title);
         if (error === 'access_denied') {
           return { acctEmail, result: 'Denied', error }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
         }
