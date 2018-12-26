@@ -8,7 +8,7 @@ import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, PgpMsg } from './core/pgp.js';
-import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb } from './api/api.js';
+import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { Catch, UnreportableError } from './platform/catch.js';
@@ -127,7 +127,7 @@ export class Composer {
   private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval: number;
   private saveDraftInterval: number;
-  private draftSaveInProgress = false;
+  private currentlySavingDraft = false;
   private passphraseInterval: number;
   private includePubkeyToggledManually = false;
   private myAddrsOnPks: string[] = [];
@@ -407,9 +407,9 @@ export class Composer {
     }
   }
 
-  private draftSave = async (forceSave: boolean = false) => {
+  private draftSave = async (forceSave: boolean = false): Promise<void> => {
     if (this.shouldSaveDraft(this.S.cached('input_text').text()) || forceSave) {
-      this.draftSaveInProgress = true;
+      this.currentlySavingDraft = true;
       this.S.cached('send_btn_note').text('Saving');
       const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
       const encrypted = await PgpMsg.encrypt([primaryKi.public], undefined, undefined, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
@@ -432,8 +432,8 @@ export class Composer {
           await this.app.storageSetDraftMeta(true, newDraft.id, this.v.threadId, to, String(this.S.cached('input_subject').val()));
           // recursing one more time, because we need the draft_id we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
-          // save_draft_in_process will remain true because well.. it's still in process
-          await this.draftSave(true); // force_save = true
+          // currentlySavingDraft will remain true for now
+          await this.draftSave(true); // forceSave = true
         } else {
           await this.app.emailProviderDraftUpdate(this.v.draftId, mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
@@ -444,18 +444,22 @@ export class Composer {
         } else if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
+        } else if (e instanceof AjaxError && e.status === 400 && String(e).indexOf('Message not a draft') !== -1) {
+          // could happen if draft with this ID was already meanwhile sent by user, maybe in other window
+          this.v.draftId = ''; // forget there was a draftId
+          await this.draftSave(true); // forceSave=true to not skip // will create a new draftId
         } else {
           Catch.handleErr(e);
           this.S.cached('send_btn_note').text('Not saved');
         }
       }
-      this.draftSaveInProgress = false;
+      this.currentlySavingDraft = false;
     }
   }
 
   private draftDelete = async () => {
     clearInterval(this.saveDraftInterval);
-    await Ui.time.wait(() => !this.draftSaveInProgress ? true : undefined);
+    await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.v.draftId) {
       await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId);
       try {
