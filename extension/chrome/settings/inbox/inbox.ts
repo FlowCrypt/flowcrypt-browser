@@ -58,7 +58,7 @@ Catch.try(async () => {
 
   const showNotification = (notification: string, callbacks?: Dict<() => void>) => {
     notifications.show(notification, callbacks);
-    $('body').one('click', Catch.try(notifications.clear));
+    $('body').one('click', Ui.event.handle(notifications.clear));
   };
 
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
