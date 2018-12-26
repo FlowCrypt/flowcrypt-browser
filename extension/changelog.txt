@@ -1,5 +1,7 @@
 <div>
 
+version 6.3.9 on December 26, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/291?closed=1" target="_blank">Show Fatal Errors</a>
+
 version 6.3.8 on December 25, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/290?closed=1" target="_blank">Code maintenance</a>
 
 version 6.3.7 on December 14, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/289?closed=1" target="_blank">Core compatibility</a>
