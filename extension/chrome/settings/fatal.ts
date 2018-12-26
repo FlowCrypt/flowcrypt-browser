@@ -31,6 +31,9 @@ if (reason === 'db_corrupted') {
 } else if (reason === 'db_failed') {
   title.text('FlowCrypt cannot function because browser IndexedDB is not working properly');
   Xss.sanitizeRender(details, `<p>${Lang.error.dbFailedOnFirefox}</p>.`);
+} else if (reason === 'storage_undefined') {
+  title.text('FlowCrypt cannot function because browser storage is disabled');
+  Xss.sanitizeRender(details, `<p>browser.storage is undefined</p><p>If you are on Firefox, check for any special browser settings, or use a clean Firefox Profile.</p>`);
 } else {
   details.text('Unknown reason. Write human@flowcrypt.com if you need help.');
 }

@@ -10,6 +10,7 @@ import { BrowserMsg } from '../extension.js';
 import { Product, PaymentMethod, ProductLevel } from '../account.js';
 import { Env } from '../browser.js';
 import { Catch } from './catch.js';
+import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
@@ -163,7 +164,7 @@ export class Store {
     return allResults;
   }
 
-  private static buildSingleAccountStoreFromRawResults(scope: string, storageObj: RawStore): AccountStore {
+  private static buildSingleAccountStoreFromRawResults = (scope: string, storageObj: RawStore): AccountStore => {
     const accountStore: AccountStore = {};
     for (const k of Object.keys(storageObj)) {
       const fixedKey = k.replace(Store.singleScopeRawIndex(scope, ''), '');
@@ -174,7 +175,7 @@ export class Store {
     return accountStore;
   }
 
-  static async sessionGet(acctEmail: string, key: string): Promise<string | null> {
+  static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {
     if (Env.isBackgroundPage()) {
       return window.sessionStorage.getItem(Store.singleScopeRawIndex(acctEmail, key));
     } else {
@@ -182,7 +183,7 @@ export class Store {
     }
   }
 
-  static async sessionSet(acctEmail: string, key: string, value: string | undefined): Promise<void> {
+  static sessionSet = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
     if (Env.isBackgroundPage()) {
       if (typeof value !== 'undefined') {
         sessionStorage.setItem(Store.singleScopeRawIndex(acctEmail, key), String(value));
@@ -194,7 +195,7 @@ export class Store {
     }
   }
 
-  static async passphraseSave(storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) {
+  static passphraseSave = async (storageType: StorageType, acctEmail: string, longid: string, passphrase: string | undefined) => {
     const storageKey: AccountIndex = `passphrase_${longid}` as AccountIndex;
     if (storageType === 'session') {
       await Store.sessionSet(acctEmail, storageKey, passphrase);
@@ -209,7 +210,7 @@ export class Store {
     }
   }
 
-  static async passphraseGet(acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> {
+  static passphraseGet = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storageKey = `passphrase_${longid}` as AccountIndex;
     const storage = await Store.getAcct(acctEmail, [storageKey as AccountIndex]);
     if (typeof storage[storageKey] === 'string') {
@@ -220,7 +221,7 @@ export class Store {
     }
   }
 
-  static async keysGet(acctEmail: string, longids?: string[]) {
+  static keysGet = async (acctEmail: string, longids?: string[]) => {
     const stored = await Store.getAcct(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];
     if (!longids) {
@@ -229,13 +230,13 @@ export class Store {
     return keys.filter(ki => Value.is(ki.longid).in(longids) || (Value.is('primary').in(longids) && ki.primary));
   }
 
-  static async keysGetAllWithPassphrases(acctEmail: string): Promise<KeyInfosWithPassphrases> {
+  static keysGetAllWithPassphrases = async (acctEmail: string): Promise<KeyInfosWithPassphrases> => {
     const keys = await Store.keysGet(acctEmail);
     const passphrases = (await Promise.all(keys.map(ki => Store.passphraseGet(acctEmail, ki.longid)))).filter(pp => typeof pp !== 'undefined') as string[];
     return { keys, passphrases };
   }
 
-  private static keysObj(armoredPrv: string, primary = false): KeyInfo {
+  private static keysObj = (armoredPrv: string, primary = false): KeyInfo => {
     const longid = Pgp.key.longid(armoredPrv)!;
     if (!longid) {
       throw new Error('Store.keysObj: unexpectedly no longid');
@@ -250,7 +251,7 @@ export class Store {
     };
   }
 
-  static async keysAdd(acctEmail: string, newKeyArmored: string) { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
+  static keysAdd = async (acctEmail: string, newKeyArmored: string) => { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
     const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
     const newKeyLongid = Pgp.key.longid(newKeyArmored);
@@ -268,39 +269,36 @@ export class Store {
     }
   }
 
-  static async keysRemove(acctEmail: string, removeLongid: string): Promise<void> {
+  static keysRemove = async (acctEmail: string, removeLongid: string): Promise<void> => {
     const privateKeys = await Store.keysGet(acctEmail);
     const filteredPrivateKeys = privateKeys.filter(ki => ki.longid !== removeLongid);
     await Store.setAcct(acctEmail, { keys: filteredPrivateKeys });
   }
 
-  static setAcct(acctEmail: string, values: AccountStore): Promise<void> {
+  static setAcct = async (acctEmail: string, values: AccountStore): Promise<void> => {
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
       const index = Store.singleScopeRawIndex(acctEmail, key);
       storageUpdate[index] = values[key as AccountIndex];
     }
-    return new Promise(resolve => chrome.storage.local.set(storageUpdate, () => resolve()));
+    await storageLocalSet(storageUpdate);
   }
 
-  static setGlobal(values: GlobalStore): Promise<void> {
+  static setGlobal = async (values: GlobalStore): Promise<void> => {
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
       const index = Store.singleScopeRawIndex(Store.globalStorageScope, key);
       storageUpdate[index] = values[key as GlobalIndex];
     }
-    return new Promise(resolve => chrome.storage.local.set(storageUpdate, () => resolve()));
+    await storageLocalSet(storageUpdate);
   }
 
-  static getGlobal(keys: GlobalIndex[]): Promise<GlobalStore> {
-    return new Promise(resolve => {
-      chrome.storage.local.get(Store.singleScopeRawIndexArr(Store.globalStorageScope, keys), (storageObj: RawStore) => {
-        resolve(Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore);
-      });
-    });
+  static getGlobal = async (keys: GlobalIndex[]): Promise<GlobalStore> => {
+    const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(Store.globalStorageScope, keys)) as RawStore;
+    return Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore;
   }
 
-  static saveError(err: any, errMsg?: string) {
+  static saveError = (err: any, errMsg?: string) => {
     Store.getGlobal(['errors']).then(s => {
       if (typeof s.errors === 'undefined') {
         s.errors = [];
@@ -314,35 +312,29 @@ export class Store {
     }).catch(console.error);
   }
 
-  static getAcct(acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> {
-    return new Promise(resolve => {
-      chrome.storage.local.get(Store.singleScopeRawIndexArr(acctEmail, keys), (storageObj: RawStore) => {
-        resolve(Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj));
-      });
-    });
+  static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
+    const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(acctEmail, keys)) as RawStore;
+    return Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AccountStore;
   }
 
-  static getAccounts(acctEmails: string[], keys: string[]): Promise<Dict<AccountStore>> {
-    return new Promise(resolve => {
-      chrome.storage.local.get(Store.manyScopesRawIndexArr(acctEmails, keys), (storageObj: RawStore) => {
-        const resultsByAcct: Dict<AccountStore> = {};
-        for (const account of acctEmails) {
-          resultsByAcct[account] = Store.buildSingleAccountStoreFromRawResults(account, storageObj);
-        }
-        resolve(resultsByAcct);
-      });
-    });
+  static getAccounts = async (acctEmails: string[], keys: string[]): Promise<Dict<AccountStore>> => {
+    const storageObj = await storageLocalGet(Store.manyScopesRawIndexArr(acctEmails, keys)) as RawStore;
+    const resultsByAcct: Dict<AccountStore> = {};
+    for (const account of acctEmails) {
+      resultsByAcct[account] = Store.buildSingleAccountStoreFromRawResults(account, storageObj);
+    }
+    return resultsByAcct;
   }
 
-  static async remove(acctEmail: string, keys: string[]) {
-    return new Promise(resolve => chrome.storage.local.remove(Store.singleScopeRawIndexArr(acctEmail, keys), () => resolve()));
+  static remove = async (acctEmail: string, keys: string[]) => {
+    await storageLocalRemove(Store.singleScopeRawIndexArr(acctEmail, keys));
   }
 
-  static async removeGlobal(keys: string[]) {
-    return new Promise(resolve => chrome.storage.local.remove(Store.singleScopeRawIndexArr(this.globalStorageScope, keys), () => resolve()));
+  static removeGlobal = async (keys: string[]) => {
+    await storageLocalRemove(Store.singleScopeRawIndexArr(Store.globalStorageScope, keys));
   }
 
-  static async acctEmailsGet(): Promise<string[]> {
+  static acctEmailsGet = async (): Promise<string[]> => {
     const storage = await Store.getGlobal(['account_emails']);
     const acctEmails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
@@ -355,7 +347,7 @@ export class Store {
     return acctEmails;
   }
 
-  static async acctEmailsAdd(acctEmail: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
+  static acctEmailsAdd = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
     if (!acctEmail) {
       throw new Error(`attempting to save empty acctEmail: ${acctEmail}`);
     }
@@ -371,18 +363,18 @@ export class Store {
     }
   }
 
-  static async acctEmailsRemove(acctEmail: string): Promise<void> { // todo: concurrency issues with another tab loaded at the same time
+  static acctEmailsRemove = async (acctEmail: string): Promise<void> => { // todo: concurrency issues with another tab loaded at the same time
     const acctEmails = await Store.acctEmailsGet();
     await Store.setGlobal({ account_emails: JSON.stringify(Value.arr.withoutVal(acctEmails, acctEmail)) });
     BrowserMsg.send.bg.updateUninstallUrl();
   }
 
-  static async authInfo(): Promise<StoredAuthInfo> {
+  static authInfo = async (): Promise<StoredAuthInfo> => {
     const storage = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid']);
     return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null }; // tslint:disable-line:no-null-keyword
   }
 
-  static async subscription(): Promise<Subscription> {
+  static subscription = async (): Promise<Subscription> => {
     const s = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_subscription']);
     if (s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
       return new Subscription(s.cryptup_account_subscription || undefined);
@@ -393,11 +385,11 @@ export class Store {
 
   /* db */
 
-  private static normalizeString(str: string) {
+  private static normalizeString = (str: string) => {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  private static dbErrCategorize(exception: Error, errStack: string): Error {
+  private static dbErrCategorize = (exception: Error, errStack: string): Error => {
     exception.stack = errStack.replace(/^Error/, String(exception));
     if (exception.message === 'Internal error opening backing store for indexedDB.open.') {
       return new StoreDbCorruptedError(exception.message);
@@ -411,7 +403,7 @@ export class Store {
     }
   }
 
-  static dbOpen(): Promise<IDBDatabase> {
+  static dbOpen = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
       let openDbReq: IDBOpenDBRequest;
       openDbReq = indexedDB.open('cryptup', 2);
@@ -435,14 +427,14 @@ export class Store {
     });
   }
 
-  private static dbIndex(hasPgp: boolean, substring: string) {
+  private static dbIndex = (hasPgp: boolean, substring: string) => {
     if (!substring) {
       throw new Error('db_index has to include substring');
     }
     return (hasPgp ? 't:' : 'f:') + substring;
   }
 
-  private static dbCreateSearchIndexList(email: string, name: string | null, hasPgp: boolean) {
+  private static dbCreateSearchIndexList = (email: string, name: string | null, hasPgp: boolean) => {
     email = email.toLowerCase();
     name = name ? name.toLowerCase() : '';
     let parts = [email, name];
@@ -464,7 +456,7 @@ export class Store {
     return index;
   }
 
-  static dbContactObj(email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Contact {
+  static dbContactObj = (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Contact => {
     const fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
@@ -508,7 +500,7 @@ export class Store {
     }
   })
 
-  static dbContactUpdate(db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> {
+  static dbContactUpdate = (db: IDBDatabase | undefined, email: string | string[], update: ContactUpdate): Promise<void> => {
     return new Promise(async (resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
@@ -524,7 +516,7 @@ export class Store {
           if (!contact) { // updating a non-existing contact, insert it first
             await Store.dbContactSave(db, Store.dbContactObj(email, undefined, undefined, undefined, undefined, false, undefined));
             [contact] = await Store.dbContactGet(db, [email]);
-            if (!contact) { // todo - temporary. If no such errors show by end of June 2018, remove this.
+            if (!contact) {
               reject(new Error('contact not found right after inserting it'));
               return;
             }
@@ -552,7 +544,7 @@ export class Store {
     });
   }
 
-  static dbContactGet(db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> {
+  static dbContactGet = (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     return new Promise(async (resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
@@ -580,7 +572,7 @@ export class Store {
     });
   }
 
-  static dbContactSearch(db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> {
+  static dbContactSearch = (db: IDBDatabase | undefined, query: DbContactFilter): Promise<Contact[]> => {
     return new Promise(async (resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
