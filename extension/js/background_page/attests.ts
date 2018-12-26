@@ -8,7 +8,7 @@ import { Api, R } from '../common/api/api.js';
 import { Pgp, PgpMsg } from '../common/core/pgp.js';
 import { Bm } from '../common/extension.js';
 import { Catch } from '../common/platform/catch.js';
-import { Google, GoogleAuth } from '../common/api/google.js';
+import { Google, GoogleAuth, GoogleAcctNotConnected } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -91,6 +91,10 @@ export class BgAttests {
               return;
             } else if (Api.err.isMailOrAcctDisabled(e)) {
               await BgAttests.addAttestLog(false, new AttestError('cannot fetch attest emails - Account or Gmail disabled: ' + acctEmail, undefined, acctEmail));
+              BgAttests.stopWatching(acctEmail);
+              return;
+            } else if (e instanceof GoogleAcctNotConnected) {
+              await BgAttests.addAttestLog(false, new AttestError('cannot fetch attest emails - Account not connected: ' + acctEmail, undefined, acctEmail));
               BgAttests.stopWatching(acctEmail);
               return;
             } else {

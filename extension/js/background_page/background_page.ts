@@ -14,8 +14,6 @@ import { GoogleAuth } from '../common/api/google.js';
 
 declare const openpgp: typeof OpenPGP;
 
-// type OpenSettingsBrowserMsg = { path: string, acctEmail: string, page: string, page_url_params: Dict<FlatTypes>, addNewAcct?: boolean };
-
 console.info('background_process.js starting');
 
 openpgp.initWorker({ path: '/lib/openpgp.worker.js' });

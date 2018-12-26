@@ -21,6 +21,8 @@ type AuthResultSuccess = { result: 'Success', acctEmail: string, error?: undefin
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
+export class GoogleAcctNotConnected extends Error { }
+
 declare const openpgp: typeof OpenPGP;
 
 export class Google extends Api {
@@ -494,7 +496,7 @@ export class GoogleAuth {
     }
     const storage = await Store.getAcct(acctEmail, ['google_token_access', 'google_token_expires', 'google_token_scopes', 'google_token_refresh']);
     if (!storage.google_token_access || !storage.google_token_refresh) {
-      throw new Error('Account not connected to FlowCrypt Browser Extension');
+      throw new GoogleAcctNotConnected(`Account ${acctEmail} not connected to FlowCrypt Browser Extension`);
     } else if (GoogleAuth.googleApiIsAuthTokenValid(storage) && !forceRefresh) {
       return `Bearer ${storage.google_token_access}`;
     } else { // refresh token
