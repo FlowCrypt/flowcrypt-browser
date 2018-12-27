@@ -702,8 +702,10 @@ export class PgpMsg {
     }
     const msgKeyIds = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
     const privateKis = await Store.keysGet(acctEmail);
-    const keys = await Promise.all(privateKis.map(ki => Pgp.key.read(ki.public)));
-    const localKeyIds: OpenPGP.Keyid[] = [].concat.apply([], keys.map(k => k.getKeyIds()));
+    const localKeyIds: OpenPGP.Keyid[] = [];
+    for (const k of await Promise.all(privateKis.map(ki => Pgp.key.read(ki.public)))) {
+      localKeyIds.push(...k.getKeyIds());
+    }
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {
       for (const localKeyId of localKeyIds) {
@@ -724,7 +726,7 @@ export class PgpMsg {
       const armoredPubKeys: string[] = [];
       decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, armoredPubKeys);
       blocks.push(Pgp.internal.msgBlockObj('html', Str.asEscapedHtml(decryptedContent)));
-      PgpMsg.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
+      await PgpMsg.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
     } else {
       const decoded = await Mime.decode(decryptedContent);
       if (typeof decoded.html !== 'undefined') {
@@ -738,7 +740,7 @@ export class PgpMsg {
         if (att.treatAs() !== 'publicKey') {
           blocks.push(Pgp.internal.msgBlockAttObj('attachment', att.asText(), { name: att.name }));
         } else {
-          PgpMsg.pushArmoredPubkeysToBlocks([att.asText()], blocks);
+          await PgpMsg.pushArmoredPubkeysToBlocks([att.asText()], blocks);
         }
       }
     }
