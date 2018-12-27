@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Value, Dict } from './core/common.js';
-import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod, PgpMsg } from './core/pgp.js';
+import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod, PgpMsg, PgpMsgTypeResult } from './core/pgp.js';
 import { FlatTypes } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
@@ -11,7 +11,7 @@ import { AuthRes } from './api/google.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
-export type PossibleBgExecResults = DecryptResult | DiagnoseMsgPubkeysResult | MsgVerifyResult | string;
+export type PossibleBgExecResults = DecryptResult | DiagnoseMsgPubkeysResult | MsgVerifyResult | PgpMsgTypeResult | string;
 
 export type AnyThirdPartyLibrary = any;
 
@@ -354,6 +354,10 @@ export class BgExec {
 
   public static pgpMsgDiagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = (acctEmail: string, message: string) => {
     return BgExec.requestToProcessInBg('PgpMsg.diagnosePubkeys', [acctEmail, message]) as Promise<DiagnoseMsgPubkeysResult>;
+  }
+
+  public static pgpMsgType: PgpMsgMethod.Type = (fileChunk: string) => { // omitted "|Uint8Array" - in case there are special cases in BgExec
+    return BgExec.requestToProcessInBg('PgpMsg.type', [fileChunk]) as Promise<PgpMsgTypeResult>;
   }
 
   public static cryptoHashChallengeAnswer = (password: string) => {

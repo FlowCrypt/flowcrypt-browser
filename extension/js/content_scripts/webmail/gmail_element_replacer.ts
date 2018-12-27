@@ -5,9 +5,9 @@
 import { Value, Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api } from '../../common/api/api.js';
-import { Pgp, PgpMsg } from '../../common/core/pgp.js';
-import { BrowserMsg } from '../../common/extension.js';
+import { Api, R } from '../../common/api/api.js';
+import { Pgp } from '../../common/core/pgp.js';
+import { BrowserMsg, BgExec } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams, Browser } from '../../common/browser.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
@@ -230,7 +230,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
           if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
             const fileChunk = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-            const openpgpType = PgpMsg.type(fileChunk);
+            const openpgpType = await BgExec.pgpMsgType(fileChunk);
             if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
               nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
             } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
@@ -252,7 +252,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
         const fileChunk = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-        const openpgpType = PgpMsg.type(fileChunk);
+        const openpgpType = await BgExec.pgpMsgType(fileChunk);
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
           nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           this.hideAtt(attSel, attsContainerInner);
@@ -285,7 +285,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
-    let downloadedAtt;
+    let downloadedAtt: R.GmailAtt;
     try {
       downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id is present when fetched from api
     } catch (e) {
@@ -293,7 +293,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAtts++;
       return nRenderedAtts;
     }
-    const openpgpType = PgpMsg.type(downloadedAtt.data);
+    const openpgpType = await BgExec.pgpMsgType(downloadedAtt.data);
     if (openpgpType && openpgpType.type === 'publicKey') {
       msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data, isOutgoing)); // xss-safe-factory
     } else {

@@ -24,6 +24,7 @@ export namespace PgpMsgMethod {
   export type DiagnosePubkeys = (acctEmail: string, m: string | Uint8Array | OpenPGP.message.Message) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (plaintext: string | Uint8Array, sigText: string | Uint8Array) => Promise<MsgVerifyResult>;
   export type Decrypt = (kisWithPp: KeyInfosWithPassphrases, encryptedData: string | Uint8Array, msgPwd?: string, getUint8?: boolean) => Promise<DecryptSuccess | DecryptError>;
+  export type Type = (data: string | Uint8Array) => Promise<PgpMsgTypeResult>;
 }
 
 type KeyDetails$ids = {
@@ -74,6 +75,7 @@ type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.Clearte
 
 export type Pwd = { question?: string; answer: string; };
 export type MsgVerifyResult = { signer?: string; contact?: Contact; match?: boolean; error?: string; };
+export type PgpMsgTypeResult = { armored: boolean, type: MsgBlockType } | undefined;
 export type DecryptResult = DecryptSuccess | DecryptError;
 export type DiagnoseMsgPubkeysResult = { found_match: boolean, receivers: number, };
 export enum DecryptErrTypes {
@@ -544,7 +546,7 @@ export class Pgp {
 
 export class PgpMsg {
 
-  static type = (data: string | Uint8Array): { armored: boolean, type: MsgBlockType } | undefined => {
+  static type = async (data: string | Uint8Array): Promise<PgpMsgTypeResult> => { // promisified because used through BgExec
     if (!data || !data.length) {
       return undefined;
     }

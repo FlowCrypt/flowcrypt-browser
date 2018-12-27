@@ -223,7 +223,7 @@ Catch.try(async () => {
       const att = await Google.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id);
       const result = await PgpMsg.decrypt(keyInfosWithPassphrases, att.data);
       if (result.success && result.content.text) {
-        const openpgpType = PgpMsg.type(result.content.text);
+        const openpgpType = await PgpMsg.type(result.content.text);
         if (openpgpType && openpgpType.type === 'publicKey') {
           if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
