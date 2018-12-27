@@ -37,6 +37,7 @@ Catch.try(async () => {
   const storage = await Store.getAcct(acctEmail, [
     'google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'
   ]);
+  const canReadEmail = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
 
   await (async () => { // attempt to recover missing params
     if (!isReplyBox || (threadId && threadId !== threadMsgId && to.length && from && subject)) {
@@ -49,6 +50,8 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
+      } else if (Api.err.isInsufficientPermission(e)) {
+        // no permission - skip
       } else if (Api.err.isSignificant(e)) {
         Catch.handleErr(e);
       }
@@ -74,8 +77,6 @@ Catch.try(async () => {
   })();
 
   const tabId = await BrowserMsg.requiredTabId();
-
-  const canReadEmail = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
   const factory = new XssSafeFactory(acctEmail, tabId);
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     // there may be a draft we want to load
