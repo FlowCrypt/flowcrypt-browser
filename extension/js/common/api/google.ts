@@ -363,9 +363,9 @@ export class Google extends Api {
       }
       const msgIds = res.messages.map(m => m.id);
       const msgs = await Google.gmail.msgsGet(acctEmail, msgIds, 'full');
-      let atts: Att[] = [];
+      const atts: Att[] = [];
       for (const msg of msgs) {
-        atts = atts.concat(Google.gmail.findAtts(msg));
+        atts.push(...Google.gmail.findAtts(msg));
       }
       await Google.gmail.fetchAtts(acctEmail, atts);
       const keys: OpenPGP.key.Key[] = [];
@@ -396,10 +396,10 @@ export class Google extends Api {
     if (!toHeaders.length) {
       return [];
     }
-    let rawParsedResults: AddrParserResult[] = [];
+    const rawParsedResults: AddrParserResult[] = [];
     toHeaders = Value.arr.unique(toHeaders);
     for (const to of toHeaders) {
-      rawParsedResults = rawParsedResults.concat((window as BrowserWidnow)['emailjs-addressparser'].parse(to));
+      rawParsedResults.push(...(window as BrowserWidnow)['emailjs-addressparser'].parse(to));
     }
     for (const rawParsedRes of rawParsedResults) {
       if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {
@@ -423,7 +423,7 @@ export class Google extends Api {
   }
 
   private static apiGmailLoopThroughEmailsToCompileContacts = async (acctEmail: string, query: string, chunkedCb: (r: ProviderContactsResults) => void) => {
-    let allResults: Contact[] = [];
+    const allResults: Contact[] = [];
     const allRawEmails: string[] = [];
     let lastFilteredQuery = '';
     let continueSearching = true;
@@ -441,7 +441,7 @@ export class Google extends Api {
       if (!uniqueNewValidResults.length) {
         break;
       }
-      allResults = allResults.concat(uniqueNewValidResults);
+      allResults.push(...uniqueNewValidResults);
       chunkedCb({ new: uniqueNewValidResults, all: allResults });
     }
     chunkedCb({ new: [], all: allResults });

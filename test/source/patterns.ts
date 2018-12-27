@@ -5,13 +5,13 @@ import * as path from 'path';
 let errsFound = 0;
 
 const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
-  let all: string[] = [];
+  const all: string[] = [];
   const filesInDir = readdirSync(dir);
   for (const fileInDir of filesInDir) {
     const filePath = path.join(dir, fileInDir);
     const stat = statSync(filePath);
     if (stat.isDirectory()) {
-      all = all.concat(getAllFilesInDir(filePath, filePattern));
+      all.push(...getAllFilesInDir(filePath, filePattern));
     } else if (filePattern.test(filePath)) {
       all.push(filePath);
     }

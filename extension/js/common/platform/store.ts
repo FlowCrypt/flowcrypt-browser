@@ -157,9 +157,9 @@ export class Store {
   private static singleScopeRawIndexArr = (scope: string, keys: string[]) => keys.map(key => Store.singleScopeRawIndex(scope, key));
 
   private static manyScopesRawIndexArr = (scopes: string[], keys: string[]) => {
-    let allResults: string[] = [];
+    const allResults: string[] = [];
     for (const scope of scopes) {
-      allResults = allResults.concat(Store.singleScopeRawIndexArr(scope, keys));
+      allResults.push(...Store.singleScopeRawIndexArr(scope, keys));
     }
     return allResults;
   }
@@ -439,9 +439,9 @@ export class Store {
   private static dbCreateSearchIndexList = (email: string, name: string | null, hasPgp: boolean) => {
     email = email.toLowerCase();
     name = name ? name.toLowerCase() : '';
-    let parts = [email, name];
-    parts = parts.concat(email.split(/[^a-z0-9]/));
-    parts = parts.concat(name.split(/[^a-z0-9]/));
+    const parts = [email, name];
+    parts.push(...email.split(/[^a-z0-9]/));
+    parts.push(...name.split(/[^a-z0-9]/));
     const index: string[] = [];
     for (const part of parts) {
       if (part) {

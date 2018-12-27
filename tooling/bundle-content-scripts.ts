@@ -6,12 +6,12 @@ const OUT_DIR = `../build/chrome/js/content_scripts`;
 const { compilerOptions: { outDir: sourceDir } } = JSON.parse(readFileSync('./tsconfig.content_scripts.json').toString());
 
 const getFilesInDir = (dir: string, filePattern: RegExp, recursive = true): string[] => {
-  let all: string[] = [];
+  const all: string[] = [];
   const filesInDir = readdirSync(dir);
   for (const fileInDir of filesInDir) {
     const filePath = path.join(dir, fileInDir);
     if (statSync(filePath).isDirectory() && recursive) {
-      all = all.concat(getFilesInDir(filePath, filePattern, recursive));
+      all.push(...getFilesInDir(filePath, filePattern, recursive));
     } else if (filePattern.test(filePath)) {
       all.push(filePath);
     }

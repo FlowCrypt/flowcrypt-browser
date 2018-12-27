@@ -51,9 +51,9 @@ export class Mime {
 
   public static process = async (mimeMsg: string) => {
     const decoded = await Mime.decode(mimeMsg);
-    let blocks: MsgBlock[] = [];
+    const blocks: MsgBlock[] = [];
     if (decoded.text) {  // may be undefined or empty
-      blocks = blocks.concat(Pgp.armor.detectBlocks(decoded.text).blocks);
+      blocks.push(...Pgp.armor.detectBlocks(decoded.text).blocks);
     }
     for (const file of decoded.atts) {
       const treatAs = file.treatAs();
@@ -65,7 +65,7 @@ export class Mime {
       } else if (treatAs === 'signature') {
         decoded.signature = decoded.signature || file.asText();
       } else if (treatAs === 'publicKey') {
-        blocks = blocks.concat(Pgp.armor.detectBlocks(file.asText()).blocks);
+        blocks.push(...Pgp.armor.detectBlocks(file.asText()).blocks);
       }
     }
     if (decoded.signature) {

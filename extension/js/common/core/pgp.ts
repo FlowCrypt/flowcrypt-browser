@@ -138,13 +138,13 @@ export class Pgp {
       };
     },
     detectBlocks: (origText: string) => {
-      let blocks: MsgBlock[] = [];
+      const blocks: MsgBlock[] = [];
       const normalized = Str.normalize(origText);
       let startAt = 0;
       while (true) {
         const r = Pgp.internal.detectBlockNext(normalized, startAt);
         if (r.found) {
-          blocks = blocks.concat(r.found);
+          blocks.push(...r.found);
         }
         if (typeof r.continueAt === 'undefined') {
           return { blocks, normalized };
