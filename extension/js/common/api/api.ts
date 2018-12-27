@@ -232,6 +232,7 @@ export class Api {
       }
       return false;
     },
+    isInsufficientPermission: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
     isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404,
     isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
     isReqTooLarge: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 413,

@@ -147,10 +147,18 @@ Catch.try(async () => {
     }
   };
 
-  const renderAndHandleAuthPopupNotification = () => {
-    showNotification(`Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`, {
+  const renderAndHandleAuthPopupNotification = (insufficientPermission = false) => {
+    let msg = `Your Google Account needs to be re-connected to your browser <a href="#" class="action_auth_popup">Connect Account</a>`;
+    if (insufficientPermission) {
+      msg = `Permission missing to load inbox <a href="#" class="action_add_permission">Revise Permissions</a>`;
+    }
+    showNotification(msg, {
       action_auth_popup: async () => {
         await GoogleAuth.newAuthPopup({ acctEmail });
+        window.location.reload();
+      },
+      action_add_permission: async () => {
+        await GoogleAuth.newAuthPopup({ acctEmail, omitReadScope: false });
         window.location.reload();
       },
     });
@@ -291,7 +299,11 @@ Catch.try(async () => {
         renderAndHandleAuthPopupNotification();
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         showNotification(Lang.account.googleAcctDisabled);
+      } else if (Api.err.isInsufficientPermission(e)) {
+        renderAndHandleAuthPopupNotification(true);
       } else {
+        console.log(e);
+        console.log(Api.err.isInsufficientPermission(e));
         Catch.handleErr(e);
         showNotification(`Error trying to get list of folders ${Ui.retryLink()}`);
       }
@@ -315,6 +327,8 @@ Catch.try(async () => {
         renderAndHandleAuthPopupNotification();
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         showNotification(Lang.account.googleAcctDisabled);
+      } else if (Api.err.isInsufficientPermission(e)) {
+        renderAndHandleAuthPopupNotification(true);
       } else {
         Catch.handleErr(e);
         showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
