@@ -202,7 +202,10 @@ export class Pgp {
       const k = await openpgp.generateKey({ numBits, userIds, passphrase });
       return { public: k.publicKeyArmored, private: k.privateKeyArmored };
     },
-    read: (armoredKey: string) => openpgp.key.readArmored(armoredKey).keys[0],
+    read: async (armoredKey: string) => {
+      const { keys: [key] } = await openpgp.key.readArmored(armoredKey);
+      return key;
+    },
     decrypt: async (key: OpenPGP.key.Key, passphrases: string[]): Promise<boolean> => {
       try {
         return await key.decrypt(passphrases);
@@ -213,16 +216,16 @@ export class Pgp {
         throw e;
       }
     },
-    normalize: (armored: string): { normalized: string, keys: OpenPGP.key.Key[] } => {
+    normalize: async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
       try {
         let keys: OpenPGP.key.Key[] = [];
         armored = Pgp.armor.normalize(armored, 'key');
         if (RegExp(Pgp.armor.headers('publicKey', 're').begin).test(armored)) {
-          keys = openpgp.key.readArmored(armored).keys;
+          keys = (await openpgp.key.readArmored(armored)).keys;
         } else if (RegExp(Pgp.armor.headers('privateKey', 're').begin).test(armored)) {
-          keys = openpgp.key.readArmored(armored).keys;
+          keys = (await openpgp.key.readArmored(armored)).keys;
         } else if (RegExp(Pgp.armor.headers('message', 're').begin).test(armored)) {
-          keys = [new openpgp.key.Key(openpgp.message.readArmored(armored).packets)];
+          keys = [new openpgp.key.Key((await openpgp.message.readArmored(armored)).packets)];
         }
         for (const k of keys) {
           for (const u of k.users) {
@@ -235,7 +238,7 @@ export class Pgp {
         return { normalized: '', keys: [] };
       }
     },
-    fingerprint: (key: OpenPGP.key.Key | string, formatting: "default" | "spaced" = 'default'): string | undefined => {
+    fingerprint: async (key: OpenPGP.key.Key | string, formatting: "default" | "spaced" = 'default'): Promise<string | undefined> => {
       if (!key) {
         return undefined;
       } else if (key instanceof openpgp.key.Key) {
@@ -254,7 +257,7 @@ export class Pgp {
         }
       } else {
         try {
-          return Pgp.key.fingerprint(openpgp.key.readArmored(key).keys[0], formatting);
+          return await Pgp.key.fingerprint(await Pgp.key.read(key), formatting);
         } catch (e) {
           if (e instanceof Error && e.message === 'openpgp is not defined') {
             Catch.handleErr(e);
@@ -264,7 +267,7 @@ export class Pgp {
         }
       }
     },
-    longid: (keyOrFingerprintOrBytes: string | OpenPGP.key.Key | undefined): string | undefined => {
+    longid: async (keyOrFingerprintOrBytes: string | OpenPGP.key.Key | undefined): Promise<string | undefined> => {
       if (!keyOrFingerprintOrBytes || typeof keyOrFingerprintOrBytes === 'undefined') {
         return undefined;
       } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 8) {
@@ -274,14 +277,14 @@ export class Pgp {
       } else if (typeof keyOrFingerprintOrBytes === 'string' && keyOrFingerprintOrBytes.length === 49) {
         return keyOrFingerprintOrBytes.replace(/ /g, '').substr(-16);
       } else {
-        return Pgp.key.longid(Pgp.key.fingerprint(keyOrFingerprintOrBytes));
+        return await Pgp.key.longid(await Pgp.key.fingerprint(keyOrFingerprintOrBytes));
       }
     },
     usable: async (armored: string) => { // is pubkey usable for encrytion?
       if (!Pgp.key.fingerprint(armored)) {
         return false;
       }
-      const pubkey = openpgp.key.readArmored(armored).keys[0];
+      const { keys: [pubkey] } = await openpgp.key.readArmored(armored);
       if (!pubkey) {
         return false;
       }
@@ -308,11 +311,11 @@ export class Pgp {
       }
       return undefined;
     },
-    parse: (armored: string): { original: string, normalized: string, keys: KeyDetails[] } => {
-      const { normalized, keys } = Pgp.key.normalize(armored);
-      return { original: armored, normalized, keys: keys.map(Pgp.key.serialize) };
+    parse: async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
+      const { normalized, keys } = await Pgp.key.normalize(armored);
+      return { original: armored, normalized, keys: await Promise.all(keys.map(Pgp.key.serialize)) };
     },
-    serialize: (k: OpenPGP.key.Key): KeyDetails => {
+    serialize: async (k: OpenPGP.key.Key): Promise<KeyDetails> => {
       const keyPackets: OpenPGP.packet.AnyKeyPacket[] = [];
       for (const keyPacket of k.getKeys()) {
         keyPackets.push(keyPacket);
@@ -320,20 +323,22 @@ export class Pgp {
       const algoInfo = k.primaryKey.getAlgorithmInfo();
       const algo = { algorithm: algoInfo.algorithm, bits: algoInfo.bits, curve: (algoInfo as any).curve, algorithmId: openpgp.enums.publicKey[algoInfo.algorithm] };
       const created = k.primaryKey.created.getTime() / 1000;
+      const ids: KeyDetails$ids[] = [];
+      for (const keyPacket of keyPackets) {
+        const fingerprint = keyPacket.getFingerprint().toUpperCase();
+        if (fingerprint) {
+          const longid = await Pgp.key.longid(fingerprint);
+          if (longid) {
+            const shortid = longid.substr(-8);
+            ids.push({ fingerprint, longid, shortid, keywords: mnemonic(longid)! });
+          }
+        }
+      }
       return {
         private: k.isPrivate() ? k.armor() : undefined,
         public: k.toPublic().armor(),
         users: k.getUserIds(),
-        ids: keyPackets.map(k => k.getFingerprint().toUpperCase()).map(fingerprint => {
-          if (fingerprint) {
-            const longid = Pgp.key.longid(fingerprint);
-            if (longid) {
-              const shortid = longid.substr(-8);
-              return { fingerprint, longid, shortid, keywords: mnemonic(longid) };
-            }
-          }
-          return undefined;
-        }).filter(Boolean) as KeyDetails$ids[],
+        ids,
         algo,
         created,
       };
@@ -433,7 +438,6 @@ export class Pgp {
       }
       return string;
     },
-    cryptoKeyIds: (armoredPubkey: string) => openpgp.key.readArmored(armoredPubkey).keys[0].getKeyIds(),
     cryptoMsgPrepareForDecrypt: (data: string | Uint8Array): PrepareForDecryptRes => {
       if (!data.length) {
         throw new Error('Encrypted message could not be parsed because no data was provided');
@@ -462,8 +466,8 @@ export class Pgp {
         prvForDecryptWithoutPassphrases: [],
       };
       const encryptedForKeyId = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
-      keys.encryptedFor = encryptedForKeyId.map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
-      keys.signedBy = (msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid(id.bytes)).filter(Boolean) as string[];
+      keys.encryptedFor = (await Promise.all(encryptedForKeyId.map(id => Pgp.key.longid(id.bytes)))).filter(Boolean) as string[];
+      keys.signedBy = (await Promise.all((msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid(id.bytes)))).filter(Boolean) as string[];
       keys.prvMatching = kiWithPp.keys.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
       if (keys.prvMatching.length) {
         keys.prvForDecrypt = keys.prvMatching;
@@ -471,9 +475,9 @@ export class Pgp {
         keys.prvForDecrypt = kiWithPp.keys;
       }
       for (const prvForDecrypt of keys.prvForDecrypt) {
-        const key = openpgp.key.readArmored(prvForDecrypt.private).keys[0];
-        if (key.isDecrypted() || (kiWithPp.passphrases.length && await Pgp.key.decrypt(key, kiWithPp.passphrases) === true)) {
-          prvForDecrypt.decrypted = key;
+        const { keys: [prv] } = await openpgp.key.readArmored(prvForDecrypt.private);
+        if (prv.isDecrypted() || (kiWithPp.passphrases.length && await Pgp.key.decrypt(prv, kiWithPp.passphrases) === true)) {
+          prvForDecrypt.decrypted = prv;
           keys.prvForDecryptDecrypted.push(prvForDecrypt);
         } else {
           keys.prvForDecryptWithoutPassphrases.push(prvForDecrypt);
@@ -482,8 +486,11 @@ export class Pgp {
       if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
         const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
         keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
-        // tslint:disable-next-line:no-unsafe-any
-        keys.forVerification = [].concat.apply([], keys.verificationContacts.map(contact => openpgp.key.readArmored(contact.pubkey!).keys)); // pubkey! checked above
+        keys.forVerification = [];
+        for (const contact of keys.verificationContacts) {
+          const { keys: keysForVerification } = await openpgp.key.readArmored(contact.pubkey!);
+          keys.forVerification.push(...keysForVerification);
+        }
       }
       return keys;
     },
@@ -590,7 +597,7 @@ export class PgpMsg {
       for (const verifyRes of await message.verify(keysForVerification)) {
         sig.match = Value.is(sig.match).in([true, undefined]) && verifyRes.valid; // this will probably falsely show as not matching in some rare cases. Needs testing.
         if (!sig.signer) {
-          sig.signer = Pgp.key.longid(verifyRes.keyid.bytes);
+          sig.signer = await Pgp.key.longid(verifyRes.keyid.bytes);
         }
       }
     } catch (verifyErr) {
@@ -667,7 +674,8 @@ export class PgpMsg {
     if (pubkeys) {
       options.publicKeys = [];
       for (const armoredPubkey of pubkeys) {
-        options.publicKeys = options.publicKeys.concat(openpgp.key.readArmored(armoredPubkey).keys);
+        const { keys: publicKeys } = await openpgp.key.readArmored(armoredPubkey);
+        options.publicKeys.push(...publicKeys);
       }
     }
     if (pwd && pwd.answer) {
@@ -693,12 +701,13 @@ export class PgpMsg {
       message = m;
     }
     const msgKeyIds = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
-    const privateKeys = await Store.keysGet(acctEmail);
-    const localKeyIds: OpenPGP.Keyid[] = [].concat.apply([], privateKeys.map(ki => ki.public).map(Pgp.internal.cryptoKeyIds)); // tslint:disable-line:no-unsafe-any
+    const privateKis = await Store.keysGet(acctEmail);
+    const keys = await Promise.all(privateKis.map(ki => Pgp.key.read(ki.public)));
+    const localKeyIds: OpenPGP.Keyid[] = [].concat.apply([], keys.map(k => k.getKeyIds()));
     const diagnosis = { found_match: false, receivers: msgKeyIds.length };
     for (const msgKeyId of msgKeyIds) {
       for (const localKeyId of localKeyIds) {
-        if (msgKeyId === localKeyId) {
+        if (msgKeyId.bytes === localKeyId.bytes) {
           diagnosis.found_match = true;
           return diagnosis;
         }
@@ -780,9 +789,10 @@ export class PgpMsg {
       && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
   }
 
-  private static pushArmoredPubkeysToBlocks = (armoredPubkeys: string[], blocks: MsgBlock[]): void => {
+  private static pushArmoredPubkeysToBlocks = async (armoredPubkeys: string[], blocks: MsgBlock[]): Promise<void> => {
     for (const armoredPubkey of armoredPubkeys) {
-      for (const keyDetails of Pgp.key.parse(armoredPubkey).keys) {
+      const { keys } = await Pgp.key.parse(armoredPubkey);
+      for (const keyDetails of keys) {
         blocks.push(Pgp.internal.msgBlockKeyObj('publicKey', keyDetails.public, keyDetails));
       }
     }

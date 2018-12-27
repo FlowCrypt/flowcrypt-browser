@@ -50,8 +50,8 @@ Catch.try(async () => {
   }
 
   $('.action_enter').click(Ui.event.handle(async () => {
-    const key = openpgp.key.readArmored(primaryKi.private).keys[0];
-    if (await Pgp.key.decrypt(key, [String($('#original_password').val())]) === true) {
+    const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
+    if (await Pgp.key.decrypt(prv, [String($('#original_password').val())]) === true) {
       origPassphrase = String($('#original_password').val());
       displayBlock('step_1_password');
     } else {
@@ -85,7 +85,7 @@ Catch.try(async () => {
       $('#password2').val('');
       $('#password2').focus();
     } else {
-      const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
+      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
       if (!prv.isDecrypted()) {
         await Pgp.key.decrypt(prv, [origPassphrase!]); // !null because we checked for this above, and user entry cannot be null
       }

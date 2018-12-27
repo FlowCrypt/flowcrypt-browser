@@ -27,12 +27,12 @@ Catch.try(async () => {
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  const key = openpgp.key.readArmored(primaryKi.private).keys[0];
+  const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 
   try {
     const { results: [result] } = await Api.attester.lookupEmail([acctEmail]);
     const url = Api.fc.url('pubkey', acctEmail);
-    if (result.pubkey && Pgp.key.longid(result.pubkey) === primaryKi.longid) {
+    if (result.pubkey && await Pgp.key.longid(result.pubkey) === primaryKi.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }
   } catch (e) {
@@ -43,7 +43,7 @@ Catch.try(async () => {
   }
 
   $('.email').text(acctEmail);
-  $('.key_fingerprint').text(Pgp.key.fingerprint(key, 'spaced')!);
+  $('.key_fingerprint').text(await Pgp.key.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
   $('.key_words').text(primaryKi.keywords);
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');
@@ -54,7 +54,7 @@ Catch.try(async () => {
 
   $('.action_show_other_type').click(Ui.event.handle(() => {
     if ($('.action_show_other_type').text().toLowerCase() === 'show private key') {
-      $('.key_dump').text(key.armor()).removeClass('good').addClass('bad');
+      $('.key_dump').text(prv.armor()).removeClass('good').addClass('bad');
       $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
       $('.key_type').text('Private Key');
       $('.show_when_showing_public').css('display', 'none');
@@ -68,7 +68,7 @@ Catch.try(async () => {
     }
   }));
 
-  const clipboardOpts = { text: () => key.toPublic().armor() };
+  const clipboardOpts = { text: () => prv.toPublic().armor() };
   new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
 
 })();

@@ -21,7 +21,7 @@ Catch.try(async () => {
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-
+  const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
   const passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
 
   const processAttest = async (passphrase: string | undefined) => {
@@ -32,7 +32,7 @@ Catch.try(async () => {
     }
   };
 
-  if (openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) { // unencrypted private key
+  if (prv.isDecrypted()) { // unencrypted private key
     $('.status').text('Not allowed to attest keys that do not have a pass phrase. Please go to FlowCrypt Settings -> Security -> Change pass phrase');
     return;
   }

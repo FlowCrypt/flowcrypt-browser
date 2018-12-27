@@ -134,7 +134,7 @@ Catch.try(async () => {
         if (privateKeys.length > 4) {
           $('.key_list').css('overflow-y', 'scroll');
         }
-        addKeyRowsHtml(privateKeys);
+        await addKeyRowsHtml(privateKeys);
       } else {
         displayOrig('.show_if_setup_not_done');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -279,11 +279,11 @@ Catch.try(async () => {
     }
   };
 
-  const addKeyRowsHtml = (privateKeys: KeyInfo[]) => {
+  const addKeyRowsHtml = async (privateKeys: KeyInfo[]) => {
     let html = '';
     for (let i = 0; i < privateKeys.length; i++) {
       const ki = privateKeys[i];
-      const prv = openpgp.key.readArmored(ki.private).keys[0];
+      const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
       const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
       const escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.escape(ki.longid) + '">remove</a>)';
       const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);

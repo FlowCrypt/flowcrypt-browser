@@ -21,9 +21,9 @@ Catch.try(async () => {
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
-  const key = openpgp.key.readArmored(primaryKi.private).keys[0];
+  const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 
-  const userIds = key.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
+  const userIds = prv.users.map(u => u.userId).filter(Boolean).map(uid => uid!.userid); // todo - create a common function in settings.js for here and setup.js user_ids
   Xss.sanitizeRender('.user_ids', userIds.map((uid: string) => `<div>${Xss.escape(uid)}</div>`).join(''));
 
   $('.email').text(acctEmail);

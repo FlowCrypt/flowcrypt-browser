@@ -31,7 +31,7 @@ Catch.try(async () => {
     keyBackups = await Google.gmail.fetchKeyBackups(acctEmail);
     if (keyBackups.length) {
       const notImportedBackupLongids: string[] = [];
-      for (const longid of Value.arr.unique(keyBackups.map(Pgp.key.longid))) {
+      for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(Pgp.key.longid)))) {
         if (longid && !Value.is(longid).in(privateKeysLongIds)) {
           notImportedBackupLongids.push(longid);
         }

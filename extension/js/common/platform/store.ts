@@ -236,17 +236,19 @@ export class Store {
     return { keys, passphrases };
   }
 
-  private static keysObj = (armoredPrv: string, primary = false): KeyInfo => {
-    const longid = Pgp.key.longid(armoredPrv)!;
+  private static keysObj = async (armoredPrv: string, primary = false): Promise<KeyInfo> => {
+    const longid = await Pgp.key.longid(armoredPrv)!;
     if (!longid) {
       throw new Error('Store.keysObj: unexpectedly no longid');
     }
-    return { // todo - should we not be checking longid!==null? or is it checked before calling this?
+    const prv = await Pgp.key.read(armoredPrv);
+    const fingerprint = await Pgp.key.fingerprint(armoredPrv);
+    return {
       private: armoredPrv,
-      public: Pgp.key.read(armoredPrv).toPublic().armor(),
+      public: prv.toPublic().armor(),
       primary,
       longid,
-      fingerprint: Pgp.key.fingerprint(armoredPrv)!,
+      fingerprint: fingerprint!,
       keywords: mnemonic(longid)!,
     };
   }
@@ -254,16 +256,16 @@ export class Store {
   static keysAdd = async (acctEmail: string, newKeyArmored: string) => { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
     const keyinfos = await Store.keysGet(acctEmail);
     let updated = false;
-    const newKeyLongid = Pgp.key.longid(newKeyArmored);
+    const newKeyLongid = await Pgp.key.longid(newKeyArmored);
     if (newKeyLongid) {
       for (const i in keyinfos) {
         if (newKeyLongid === keyinfos[i].longid) { // replacing a key
-          keyinfos[i] = Store.keysObj(newKeyArmored, keyinfos[i].primary);
+          keyinfos[i] = await Store.keysObj(newKeyArmored, keyinfos[i].primary);
           updated = true;
         }
       }
       if (!updated) {
-        keyinfos.push(Store.keysObj(newKeyArmored, keyinfos.length === 0));
+        keyinfos.push(await Store.keysObj(newKeyArmored, keyinfos.length === 0));
       }
       await Store.setAcct(acctEmail, { keys: keyinfos });
     }
@@ -456,8 +458,8 @@ export class Store {
     return index;
   }
 
-  static dbContactObj = (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Contact => {
-    const fingerprint = pubkey ? Pgp.key.fingerprint(pubkey) : undefined;
+  static dbContactObj = async (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Promise<Contact> => {
+    const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
@@ -471,8 +473,8 @@ export class Store {
       client: pubkey ? (client || null) : null, // tslint:disable-line:no-null-keyword
       attested: pubkey ? Boolean(attested) : null, // tslint:disable-line:no-null-keyword
       fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
-      longid: fingerprint ? (Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
-      keywords: fingerprint ? mnemonic(Pgp.key.longid(fingerprint)!) || null : null, // tslint:disable-line:no-null-keyword
+      longid: fingerprint ? (await Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
+      keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
       pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
       last_use: lastUse || null, // tslint:disable-line:no-null-keyword
       date: null, // tslint:disable-line:no-null-keyword
@@ -514,7 +516,7 @@ export class Store {
         } else {
           let [contact] = await Store.dbContactGet(db, [email]);
           if (!contact) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, Store.dbContactObj(email, undefined, undefined, undefined, undefined, false, undefined));
+            await Store.dbContactSave(db, await Store.dbContactObj(email, undefined, undefined, undefined, undefined, false, undefined));
             [contact] = await Store.dbContactGet(db, [email]);
             if (!contact) {
               reject(new Error('contact not found right after inserting it'));
@@ -527,7 +529,7 @@ export class Store {
           }
           const tx = db.transaction('contacts', 'readwrite');
           const contactsTable = tx.objectStore('contacts');
-          contactsTable.put(Store.dbContactObj(
+          contactsTable.put(await Store.dbContactObj(
             email,
             contact.name || undefined,
             contact.client || undefined,

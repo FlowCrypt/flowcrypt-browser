@@ -31,15 +31,15 @@ Catch.try(async () => {
   inputPrivateKey.attr('placeholder', inputPrivateKey.attr('placeholder') + ' (' + primaryKi.longid + ')');
 
   $('.action_update_private_key').click(Ui.event.prevent('double', async () => {
-    const uddatedKey = openpgp.key.readArmored(String(inputPrivateKey.val())).keys[0];
-    const uddatedKeyEncrypted = openpgp.key.readArmored(String(inputPrivateKey.val())).keys[0];
+    const { keys: [uddatedKey] } = await openpgp.key.readArmored(String(inputPrivateKey.val()));
+    const { keys: [uddatedKeyEncrypted] } = await openpgp.key.readArmored(String(inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
     if (typeof uddatedKey === 'undefined') {
       alert(Lang.setup.keyFormattedWell(prvHeaders.begin, String(prvHeaders.end)));
     } else if (uddatedKey.isPublic()) {
       alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prvHeaders.begin + '"');
-    } else if (Pgp.key.fingerprint(uddatedKey) !== Pgp.key.fingerprint(primaryKi.public)) {
-      alert('This key ' + Pgp.key.longid(uddatedKey) + ' does not match your current key ' + primaryKi.longid);
+    } else if (await Pgp.key.fingerprint(uddatedKey) !== await Pgp.key.fingerprint(primaryKi.public)) {
+      alert(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${primaryKi.longid}`);
     } else if (await Pgp.key.decrypt(uddatedKey, [uddatedKeyPassphrase]) !== true) {
       alert('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {

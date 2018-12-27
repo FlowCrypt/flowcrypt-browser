@@ -125,20 +125,20 @@ export class BgAttests {
       BgAttests.stopWatching(acctEmail);
       return { attestPacketText, message: `No primary_ki for ${acctEmail}`, acctEmail };
     }
-    const key = openpgp.key.readArmored(primaryKi.private).keys[0];
+    const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
     const { attests_processed } = await Store.getAcct(acctEmail, ['attests_processed']);
     if (Value.is(attest.content.attester).in(attests_processed || [])) {
       BgAttests.stopWatching(acctEmail);
       return { attestPacketText, message: `Already attested ${acctEmail}`, acctEmail };
     }
     const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
-    if (key.isDecrypted()) {
+    if (prv.isDecrypted()) {
       throw new AttestError('Will not attest unprotected key', attestPacketText, acctEmail);
     }
-    if (await Pgp.key.decrypt(key, [passphrase || storedPassphrase || '']) !== true) {
+    if (await Pgp.key.decrypt(prv, [passphrase || storedPassphrase || '']) !== true) {
       throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attestPacketText, acctEmail);
     }
-    const expectedFingerprint = key.primaryKey.getFingerprint().toUpperCase();
+    const expectedFingerprint = prv.primaryKey.getFingerprint().toUpperCase();
     const expectedEmailHash = Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
     if (!attest || !attest.success || !attest.text) {
       throw new AttestError('Could not parse this attest message.', attestPacketText, acctEmail);
@@ -149,7 +149,7 @@ export class BgAttests {
     }
     let signed;
     try {
-      signed = await PgpMsg.sign(key, attest.text);
+      signed = await PgpMsg.sign(prv, attest.text);
     } catch (e) {
       throw new AttestError(`Error signing the attest. Email human@flowcrypt.com to find out why: ${String(e)}`, attestPacketText, acctEmail);
     }

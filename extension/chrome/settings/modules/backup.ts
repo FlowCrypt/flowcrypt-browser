@@ -170,7 +170,7 @@ Catch.try(async () => {
       Xss.sanitizeRender(target, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-      const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
+      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
       await Settings.openpgpKeyEncrypt(prv, newPassphrase);
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
       await Store.keysAdd(acctEmail, prv.armor());
@@ -194,16 +194,16 @@ Catch.try(async () => {
   }));
 
   const isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
-    const k = openpgp.key.readArmored(ki.private).keys[0];
-    if (k.primaryKey.isDecrypted()) {
+    const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
+    if (prv.primaryKey.isDecrypted()) {
       return false;
     }
-    for (const packet of k.getKeys()) {
+    for (const packet of prv.getKeys()) {
       if (packet.isDecrypted() === true) {
         return false;
       }
     }
-    if (await Pgp.key.decrypt(k, ['']) === true) {
+    if (await Pgp.key.decrypt(prv, ['']) === true) {
       return false;
     }
     return true;
@@ -298,8 +298,8 @@ Catch.try(async () => {
   }));
 
   const isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
-    const k = Pgp.key.read(ki.private);
-    if (k.isDecrypted()) {
+    const prv = await Pgp.key.read(ki.private);
+    if (prv.isDecrypted()) {
       return false;
     }
     if (!passphrase) {
@@ -307,7 +307,7 @@ Catch.try(async () => {
       if (!pp) {
         return false;
       }
-      if (await Pgp.key.decrypt(k, [pp]) !== true) {
+      if (await Pgp.key.decrypt(prv, [pp]) !== true) {
         alert('Pass phrase did not match, please try again.');
         return false;
       }
@@ -322,7 +322,7 @@ Catch.try(async () => {
 
   const setupCreateSimpleAutomaticInboxBackup = async () => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if (Pgp.key.read(primaryKi.private).isDecrypted()) {
+    if ((await Pgp.key.read(primaryKi.private)).isDecrypted()) {
       alert('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }

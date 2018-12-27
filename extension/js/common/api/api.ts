@@ -319,7 +319,7 @@ export class Api {
           diagnosis.results[pubkeySearchResult.email] = { attested: false, pubkey: undefined, match: false };
         } else {
           let match = true;
-          if (!Value.is(Pgp.key.longid(pubkeySearchResult.pubkey)).in(storedKeysLongids)) {
+          if (!Value.is(await Pgp.key.longid(pubkeySearchResult.pubkey)).in(storedKeysLongids)) {
             diagnosis.hasPubkeyMismatch = true;
             match = false;
           }

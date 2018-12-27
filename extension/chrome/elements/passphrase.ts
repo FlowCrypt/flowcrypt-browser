@@ -79,7 +79,7 @@ Catch.try(async () => {
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
     for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save them all
-      const prv = openpgp.key.readArmored(keyinfo.private).keys[0];
+      const { keys: [prv] } = await openpgp.key.readArmored(keyinfo.private);
       try {
         if (await Pgp.key.decrypt(prv, [pass]) === true) {
           await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);

@@ -257,7 +257,7 @@ export class Ui {
     if (acctEmail) {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
-      if (setup_done && setup_simple && primaryKi && openpgp.key.readArmored(primaryKi.private).keys[0].isDecrypted()) {
+      if (setup_done && setup_simple && primaryKi && (await openpgp.key.readArmored(primaryKi.private)).keys[0].isDecrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
           // @ts-ignore - this lets it compile in content script that is missing Settings
           Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
@@ -928,10 +928,10 @@ export class KeyImportUi {
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
-    $('.input_private_key').change(Ui.event.handle(target => {
-      const k = openpgp.key.readArmored(String($(target).val())).keys[0];
+    $('.input_private_key').change(Ui.event.handle(async target => {
+      const { keys: [prv] } = await openpgp.key.readArmored(String($(target).val()));
       $('.input_passphrase').val('');
-      if (k && k.isPrivate() && k.isDecrypted()) {
+      if (prv && prv.isPrivate() && prv.isDecrypted()) {
         $('.line.pass_phrase_needed').show();
       } else {
         $('.line.pass_phrase_needed').hide();
@@ -939,18 +939,18 @@ export class KeyImportUi {
     }));
     const attach = new AttUI(() => ({ count: 100, size: 1024 * 1024, size_mb: 1 }));
     attach.initAttDialog('fineuploader', 'fineuploader_button');
-    attach.setAttAddedCb(file => {
-      let k;
+    attach.setAttAddedCb(async file => {
+      let prv: OpenPGP.key.Key | undefined;
       if (Value.is(Pgp.armor.headers('privateKey').begin).in(file.asText())) {
         const firstPrv = Pgp.armor.detectBlocks(file.asText()).blocks.filter(b => b.type === 'privateKey')[0];
-        if (firstPrv) {
-          k = openpgp.key.readArmored(firstPrv.content).keys[0];  // filter out all content except for the first encountered private key (GPGKeychain compatibility)
+        if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
+          prv = (await openpgp.key.readArmored(firstPrv.content)).keys[0];
         }
       } else {
-        k = openpgp.key.read(file.asBytes()).keys[0];
+        prv = (await openpgp.key.read(file.asBytes())).keys[0];
       }
-      if (typeof k !== 'undefined') {
-        $('.input_private_key').val(k.armor()).change().prop('disabled', true);
+      if (typeof prv !== 'undefined') {
+        $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
         $('.source_paste_container').css('display', 'block');
       } else {
         $('.input_private_key').val('').change().prop('disabled', false);
@@ -961,47 +961,47 @@ export class KeyImportUi {
   }
 
   checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
-    const { normalized } = this.normalize('privateKey', armored);
-    const decrypted = this.read('privateKey', normalized);
-    const encrypted = this.read('privateKey', normalized);
-    const longid = this.longid(decrypted);
+    const { normalized } = await this.normalize('privateKey', armored);
+    const decrypted = await this.read('privateKey', normalized);
+    const encrypted = await this.read('privateKey', normalized);
+    const longid = await this.longid(decrypted);
     this.rejectIfNot('privateKey', decrypted);
     await this.rejectKnownIfSelected(acctEmail, decrypted);
     this.rejectIfDifferentFromSelectedLongid(longid);
     await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
     await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
     await this.checkSigningIfSelected(decrypted);
-    return { normalized, longid, passphrase, fingerprint: Pgp.key.fingerprint(decrypted)!, decrypted, encrypted }; // will have fp if had longid
+    return { normalized, longid, passphrase, fingerprint: (await Pgp.key.fingerprint(decrypted))!, decrypted, encrypted }; // will have fp if had longid
   }
 
   checkPub = async (armored: string): Promise<string> => {
-    const { normalized } = this.normalize('publicKey', armored);
-    const parsed = this.read('publicKey', normalized);
-    this.longid(parsed);
+    const { normalized } = await this.normalize('publicKey', armored);
+    const parsed = await this.read('publicKey', normalized);
+    await this.longid(parsed);
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
   }
 
-  private normalize = (type: KeyBlockType, armored: string) => {
+  private normalize = async (type: KeyBlockType, armored: string) => {
     const headers = Pgp.armor.headers(type);
-    const normalized = Pgp.key.normalize(armored);
+    const normalized = await Pgp.key.normalize(armored);
     if (!normalized) {
       throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
     return normalized;
   }
 
-  private read = (type: KeyBlockType, normalized: string) => {
+  private read = async (type: KeyBlockType, normalized: string) => {
     const headers = Pgp.armor.headers(type);
-    const k = openpgp.key.readArmored(normalized).keys[0];
+    const { keys: [k] } = await openpgp.key.readArmored(normalized);
     if (typeof k === 'undefined') {
       throw new UserAlert('Private key is not correctly formated. Please insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
     }
     return k;
   }
 
-  private longid = (k: OpenPGP.key.Key) => {
-    const longid = Pgp.key.longid(k);
+  private longid = async (k: OpenPGP.key.Key) => {
+    const longid = await Pgp.key.longid(k);
     if (!longid) {
       throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and const us know which software created this key.\n\n(error: cannot get long_id)');
     }
@@ -1022,7 +1022,7 @@ export class KeyImportUi {
     if (this.rejectKnown) {
       const keyinfos = await Store.keysGet(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
-      if (Value.is(Pgp.key.longid(k)!).in(privateKeysLongids)) {
+      if (Value.is(await Pgp.key.longid(k)).in(privateKeysLongids)) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
     }
@@ -1092,7 +1092,7 @@ export class AttUI {
   private getLimits: () => AttLimits;
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
-  private attAddedCb: (r: Att) => void;
+  private attAddedCb: (r: Att) => Promise<void>;
 
   constructor(getLimits: () => AttLimits) {
     this.getLimits = getLimits;
@@ -1117,7 +1117,7 @@ export class AttUI {
     });
   }
 
-  setAttAddedCb = (cb: (r: Att) => void) => {
+  setAttAddedCb = (cb: (r: Att) => Promise<void>) => {
     this.attAddedCb = cb;
   }
 
@@ -1175,7 +1175,7 @@ export class AttUI {
       }
       this.attachedFiles[id] = newFile;
       if (typeof this.attAddedCb === 'function') {
-        this.collectAtt(id).then((a) => this.attAddedCb(a)).catch(Catch.handleErr);
+        this.collectAtt(id).then((a) => this.attAddedCb(a).catch(Catch.handleErr)).catch(Catch.handleErr);
       }
     }
   }

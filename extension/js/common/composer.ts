@@ -34,7 +34,7 @@ interface ComposerAppFunctionsInterface {
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
-  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean, lastUse?: number) => Contact;
+  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
   emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet | undefined>;
   emailProviderDraftCreate: (mimeMsg: string) => Promise<R.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
@@ -651,7 +651,7 @@ export class Composer {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.v.acctEmail, ['primary']);
     if (primaryKi) {
-      const prv = openpgp.key.readArmored(primaryKi.private).keys[0];
+      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
       const passphrase = await this.app.storagePassphraseGet();
       if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.v.parentTabId, { type: 'sign', longids: ['primary'] });
@@ -763,9 +763,9 @@ export class Composer {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of armoredPubkeys) {
-      const k = openpgp.key.readArmored(armoredPubkey).keys[0];
-      const oneSecondBeforeExpiration = await Pgp.key.dateBeforeExpiration(k);
-      usableFrom.push(k.getCreationTime().getTime());
+      const { keys: [pub] } = await openpgp.key.readArmored(armoredPubkey);
+      const oneSecondBeforeExpiration = await Pgp.key.dateBeforeExpiration(pub);
+      usableFrom.push(pub.getCreationTime().getTime());
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key does expire
         usableUntil.push(oneSecondBeforeExpiration.getTime());
       }
@@ -839,16 +839,16 @@ export class Composer {
         const { results: [lookupResult] } = await Api.attester.lookupEmail([email]);
         if (lookupResult && lookupResult.email) {
           if (lookupResult.pubkey) {
-            const parsed = openpgp.key.readArmored(lookupResult.pubkey);
+            const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
             if (!parsed.keys[0]) {
               Catch.log('Dropping found but incompatible public key', { for: lookupResult.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             } else if (! await parsed.keys[0].getEncryptionKey()) {
-              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: lookupResult.email, fingerprint: Pgp.key.fingerprint(parsed.keys[0]) });
+              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: lookupResult.email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
           }
-          const ksContact = this.app.storageContactObj(
+          const ksContact = await this.app.storageContactObj(
             lookupResult.email,
             dbContact && dbContact.name ? dbContact.name : undefined,
             lookupResult.has_cryptup ? 'cryptup' : 'pgp',
@@ -1213,7 +1213,7 @@ export class Composer {
             for (const contact of searchContactsRes.new) {
               const [inDb] = await this.app.storageContactGet([contact.email]);
               if (!inDb) {
-                await this.app.storageContactSave(this.app.storageContactObj(
+                await this.app.storageContactSave(await this.app.storageContactObj(
                   contact.email,
                   contact.name || undefined,
                   undefined,
@@ -1326,7 +1326,7 @@ export class Composer {
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
       $(emailEl).addClass("wrong");
-    } else if (contact.pubkey && await Pgp.key.usableButExpired(openpgp.key.readArmored(contact.pubkey).keys[0])) {
+    } else if (contact.pubkey && await Pgp.key.usableButExpired((await openpgp.key.readArmored(contact.pubkey)).keys[0])) {
       $(emailEl).addClass("expired");
       Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(emailEl).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));

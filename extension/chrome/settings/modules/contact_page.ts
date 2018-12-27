@@ -53,7 +53,7 @@ Catch.try(async () => {
         S.cached('photo').attr('src', result.photo);
       }
       attachJs.initAttDialog('fineuploader', 'select_photo');
-      attachJs.setAttAddedCb((file: Att) => {
+      attachJs.setAttAddedCb(async file => {
         newPhotoFile = file;
         Xss.sanitizeReplace('#select_photo', Ui.e('span', { text: file.name }));
       });

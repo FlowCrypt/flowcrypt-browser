@@ -371,9 +371,9 @@ export class Google extends Api {
       const keys: OpenPGP.key.Key[] = [];
       for (const att of atts) {
         try {
-          const key = openpgp.key.readArmored(att.asText()).keys[0];
-          if (key.isPrivate()) {
-            keys.push(key);
+          const { keys: [prv] } = await openpgp.key.readArmored(att.asText());
+          if (prv.isPrivate()) {
+            keys.push(prv);
           }
         } catch (err) { } // tslint:disable-line:no-empty
       }
@@ -392,7 +392,7 @@ export class Google extends Api {
     return filteredQuery;
   }
 
-  private static apiGmailGetNewUniqueRecipientsFromHeaders = (toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Contact[] => {
+  private static apiGmailGetNewUniqueRecipientsFromHeaders = async (toHeaders: string[], allResults: Contact[], allRawEmails: string[]): Promise<Contact[]> => {
     if (!toHeaders.length) {
       return [];
     }
@@ -407,7 +407,7 @@ export class Google extends Api {
       }
     }
     const newValidResultPairs = rawParsedResults.filter(r => Str.isEmailValid(r.address));
-    const newValidResults = newValidResultPairs.map(r => Store.dbContactObj(r.address, r.name, undefined, undefined, undefined, false, undefined));
+    const newValidResults = await Promise.all(newValidResultPairs.map(r => Store.dbContactObj(r.address, r.name, undefined, undefined, undefined, false, undefined)));
     const uniqueNewValidResults: Contact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
@@ -437,7 +437,7 @@ export class Google extends Api {
       }
       const headers = await Google.gmail.fetchMsgsHeadersBasedOnQuery(acctEmail, filteredQuery, ['to'], 50);
       lastFilteredQuery = filteredQuery;
-      const uniqueNewValidResults = Google.apiGmailGetNewUniqueRecipientsFromHeaders(headers.to, allResults, allRawEmails);
+      const uniqueNewValidResults = await Google.apiGmailGetNewUniqueRecipientsFromHeaders(headers.to, allResults, allRawEmails);
       if (!uniqueNewValidResults.length) {
         break;
       }

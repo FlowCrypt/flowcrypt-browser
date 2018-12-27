@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store } from '../../js/common/platform/store.js';
+import { Store, Contact } from '../../js/common/platform/store.js';
 import { Value } from '../../js/common/core/common.js';
 import { Xss, Ui, KeyImportUi, UserAlert, KeyCanBeFixed, Env } from '../../js/common/browser.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
@@ -127,7 +127,7 @@ Catch.try(async () => {
 
     if (keyserverRes.pubkey) {
       if (keyserverRes.attested) {
-        acctEmailAttestedFingerprint = Pgp.key.fingerprint(keyserverRes.pubkey);
+        acctEmailAttestedFingerprint = await Pgp.key.fingerprint(keyserverRes.pubkey);
       }
       if (!rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
@@ -140,7 +140,7 @@ Catch.try(async () => {
         }
         if (fetchedKeys.length) {
           recoveredKeys = fetchedKeys;
-          nRecoveredKeysLongid = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
+          nRecoveredKeysLongid = Value.arr.unique(await Promise.all(recoveredKeys.map(Pgp.key.longid))).length;
           displayBlock('step_2_recovery');
         } else {
           displayBlock('step_0_found_key');
@@ -180,7 +180,7 @@ Catch.try(async () => {
     }
     if (fetchedKeys.length) {
       recoveredKeys = fetchedKeys;
-      nRecoveredKeysLongid = Value.arr.unique(recoveredKeys.map(Pgp.key.longid)).length;
+      nRecoveredKeysLongid = Value.arr.unique(await Promise.all(recoveredKeys.map(Pgp.key.longid))).length;
       const storedKeys = await Store.keysGet(acctEmail);
       recoveredKeysSuccessfulLongids = storedKeys.map(ki => ki.longid);
       await renderSetupDone();
@@ -206,7 +206,7 @@ Catch.try(async () => {
     } else {
       addresses = [acctEmail];
     }
-    if (acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== Pgp.key.fingerprint(armoredPubkey)) {
+    if (acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== await Pgp.key.fingerprint(armoredPubkey)) {
       return; // already submitted and ATTESTED another pubkey for this email
     }
     await Settings.submitPubkeys(acctEmail, addresses, armoredPubkey);
@@ -255,7 +255,7 @@ Catch.try(async () => {
 
   const saveKeys = async (prvs: OpenPGP.key.Key[], options: SetupOptions) => {
     for (const prv of prvs) {
-      const longid = Pgp.key.longid(prv);
+      const longid = await Pgp.key.longid(prv);
       if (!longid) {
         alert('Cannot save keys to storage because at least one of them is not valid.');
         return;
@@ -263,10 +263,11 @@ Catch.try(async () => {
       await Store.keysAdd(acctEmail, prv.armor());
       await Store.passphraseSave(options.passphrase_save ? 'local' : 'session', acctEmail, longid, options.passphrase);
     }
-    const myOwnEmailAddrsAsContacts = allAddrs.map(a => {
-      const attested = Boolean(a === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== Pgp.key.fingerprint(prvs[0].toPublic().armor()));
-      return Store.dbContactObj(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now());
-    });
+    const myOwnEmailAddrsAsContacts: Contact[] = [];
+    for (const a of allAddrs) {
+      const attested = Boolean(a === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== await Pgp.key.fingerprint(prvs[0].toPublic().armor()));
+      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
+    }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   };
 
@@ -275,7 +276,7 @@ Catch.try(async () => {
     try {
       const key = await Pgp.key.create([{ name: options.full_name, email: acctEmail }], 4096, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
-      const prv = openpgp.key.readArmored(key.private).keys[0];
+      const { keys: [prv] } = await openpgp.key.readArmored(key.private);
       await saveKeys([prv], options);
     } catch (e) {
       Catch.handleErr(e);
@@ -314,11 +315,12 @@ Catch.try(async () => {
       alert(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
     } else if (passphrase) {
       for (const revoveredKey of recoveredKeys) {
-        const longid = Pgp.key.longid(revoveredKey);
+        const longid = await Pgp.key.longid(revoveredKey);
         const armored = revoveredKey.armor();
         if (longid && !Value.is(longid).in(recoveredKeysSuccessfulLongids) && await Pgp.key.decrypt(revoveredKey, [passphrase]) === true) {
           recoveredKeysSuccessfulLongids.push(longid);
-          matchingKeys.push(openpgp.key.readArmored(armored).keys[0]);
+          const { keys: [prv] } = await openpgp.key.readArmored(armored);
+          matchingKeys.push(prv);
         }
       }
       if (matchingKeys.length) {

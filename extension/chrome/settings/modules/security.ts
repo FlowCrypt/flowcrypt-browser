@@ -74,8 +74,8 @@ Catch.try(async () => {
         $('input#passphrase_entry').val('').focus();
       }
     } else { // save pass phrase
-      const key = openpgp.key.readArmored(primaryKi.private).keys[0];
-      if (await Pgp.key.decrypt(key, [String($('input#passphrase_entry').val())]) === true) {
+      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
+      if (await Pgp.key.decrypt(prv, [String($('input#passphrase_entry').val())]) === true) {
         await Store.passphraseSave('local', acctEmail, primaryKi.longid, String($('input#passphrase_entry').val()));
         window.location.reload();
       } else {

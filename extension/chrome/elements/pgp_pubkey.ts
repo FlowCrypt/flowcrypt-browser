@@ -27,7 +27,7 @@ Catch.try(async () => {
   const compact = uncheckedUrlParams.compact === true;
   const minimized = uncheckedUrlParams.minimized === true;
 
-  const pubkeys: OpenPGP.key.Key[] = openpgp.key.readArmored(armoredPubkey).keys;
+  const { keys: pubs } = await openpgp.key.readArmored(armoredPubkey);
 
   const sendResizeMsg = () => {
     const desiredHeight = $('#pgp_block').height()! + (compact ? 10 : 30); // #pgp_block is defined in template
@@ -35,8 +35,8 @@ Catch.try(async () => {
   };
 
   const setBtnText = async () => {
-    if (pubkeys.length > 1) {
-      $('.action_add_contact').text('import ' + pubkeys.length + ' public keys');
+    if (pubs.length > 1) {
+      $('.action_add_contact').text('import ' + pubs.length + ' public keys');
     } else {
       const [contact] = await Store.dbContactGet(undefined, [String($('.input_email').val())]);
       $('.action_add_contact').text(contact && contact.has_pgp ? 'update contact' : 'add to contacts');
@@ -51,19 +51,19 @@ Catch.try(async () => {
       $('.line').removeClass('line');
     }
     $('.line.fingerprints, .line.add_contact').css('display', minimized ? 'none' : 'block');
-    if (pubkeys.length === 1) {
-      $('.line.fingerprints .fingerprint').text(Pgp.key.fingerprint(pubkeys[0], 'spaced') || '(fingerprint error)');
-      $('.line.fingerprints .keywords').text(mnemonic(Pgp.key.longid(pubkeys[0]) || '') || '(mnemonic error)');
+    if (pubs.length === 1) {
+      $('.line.fingerprints .fingerprint').text(await Pgp.key.fingerprint(pubs[0], 'spaced') || '(fingerprint error)');
+      $('.line.fingerprints .keywords').text(mnemonic(await Pgp.key.longid(pubs[0]) || '') || '(mnemonic error)');
     } else {
       $('.line.fingerprints').css({ display: 'none' });
     }
-    if (typeof pubkeys[0] !== 'undefined') {
-      if (! await pubkeys[0].getEncryptionKey() && ! await pubkeys[0].getSigningKey()) {
+    if (typeof pubs[0] !== 'undefined') {
+      if (! await pubs[0].getEncryptionKey() && ! await pubs[0].getSigningKey()) {
         $('.line.add_contact').addClass('bad').text('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       } else {
-        if (pubkeys.length === 1) {
-          const email = pubkeys[0].users[0].userId ? Str.parseEmail(pubkeys[0].users[0].userId ? pubkeys[0].users[0].userId!.userid : '').email : undefined;
+        if (pubs.length === 1) {
+          const email = pubs[0].users[0].userId ? Str.parseEmail(pubs[0].users[0].userId ? pubs[0].users[0].userId!.userid : '').email : undefined;
           if (email) {
             $('.input_email').val(email); // checked above
             $('.email').text(email);
@@ -72,7 +72,7 @@ Catch.try(async () => {
           $('.email').text('more than one person');
           $('.input_email').css({ display: 'none' });
           const pubToEmail = (pubkey: OpenPGP.key.Key) => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
-          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubkeys.map(pubToEmail).filter(e => Str.isEmailValid(e)).join(', ')));
+          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubs.map(pubToEmail).filter(e => Str.isEmailValid(e)).join(', ')));
         }
         setBtnText().catch(Catch.handleErr);
       }
@@ -91,20 +91,20 @@ Catch.try(async () => {
   };
 
   $('.action_add_contact').click(Ui.event.handle(async target => {
-    if (pubkeys.length > 1) {
+    if (pubs.length > 1) {
       const contacts: Contact[] = [];
-      for (const pubkey of pubkeys) {
+      for (const pubkey of pubs) {
         const emailAddr = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
         if (Str.isEmailValid(emailAddr)) {
-          contacts.push(Store.dbContactObj(emailAddr, undefined, 'pgp', pubkey.armor(), undefined, false, Date.now()));
+          contacts.push(await Store.dbContactObj(emailAddr, undefined, 'pgp', pubkey.armor(), undefined, false, Date.now()));
         }
       }
       await Store.dbContactSave(undefined, contacts);
       Xss.sanitizeReplace(target, '<span class="good">added public keys</span>');
       $('.input_email').remove();
-    } else if (pubkeys.length) {
+    } else if (pubs.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
-        const contact = Store.dbContactObj(String($('.input_email').val()), undefined, 'pgp', pubkeys[0].armor(), undefined, false, Date.now());
+        const contact = await Store.dbContactObj(String($('.input_email').val()), undefined, 'pgp', pubs[0].armor(), undefined, false, Date.now());
         await Store.dbContactSave(undefined, contact);
         Xss.sanitizeReplace(target, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();

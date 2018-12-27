@@ -24,7 +24,7 @@ Catch.try(async () => {
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   $('.action_verify').click(Ui.event.handle(async () => {
-    const key = openpgp.key.readArmored(primaryKi.private).keys[0];
+    const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
     if (await Pgp.key.decrypt(key, [String($('#password').val())]) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>

@@ -54,7 +54,7 @@ const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks wh
       const { results } = await Api.attester.lookupEmail(storage.addresses);
       const addressesKeyserver = [];
       for (const result of results) {
-        if (result && result.pubkey && Value.is(Pgp.key.longid(result.pubkey)).in(myLongids)) {
+        if (result && result.pubkey && Value.is(await Pgp.key.longid(result.pubkey)).in(myLongids)) {
           addressesKeyserver.push(result.email);
         }
       }
@@ -77,7 +77,7 @@ const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any n
       try {
         const pubkey = await hkp.lookup({ query: email });
         if (typeof pubkey !== 'undefined') {
-          if (Value.is(Pgp.key.longid(pubkey)).in(myLongids)) {
+          if (Value.is(await Pgp.key.longid(pubkey)).in(myLongids)) {
             addressesPks.push(email);
             console.info(email + ' newly found matching pubkey on PKS');
           }

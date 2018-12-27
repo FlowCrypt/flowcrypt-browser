@@ -89,8 +89,8 @@ Catch.try(async () => {
       const email = $('#edit_contact .input_pubkey').attr('email');
       if (!armoredPubkey || !email) {
         alert('No public key entered');
-      } else if (Pgp.key.fingerprint(armoredPubkey)) {
-        await Store.dbContactSave(undefined, Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
+      } else if (await Pgp.key.fingerprint(armoredPubkey)) {
+        await Store.dbContactSave(undefined, await Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
         await renderContactList();
       } else {
         alert('Cannot recognize a valid public key, please try again. Let me know at human@flowcrypt.com if you need help.');
@@ -119,7 +119,7 @@ Catch.try(async () => {
     }));
 
     $('a.action_remove').off().click(Ui.event.prevent('double', async (self) => {
-      await Store.dbContactSave(undefined, Store.dbContactObj($(self).closest('tr').attr('email')!, undefined, undefined, undefined, undefined, false, undefined));
+      await Store.dbContactSave(undefined, await Store.dbContactObj($(self).closest('tr').attr('email')!, undefined, undefined, undefined, undefined, false, undefined));
       await renderContactList();
     }));
 
