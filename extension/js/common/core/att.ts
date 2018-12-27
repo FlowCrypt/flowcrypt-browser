@@ -4,7 +4,6 @@
 
 import { Str, Value } from './common.js';
 import { KeyInfo } from '../platform/store.js';
-import { MsgBlock } from './mime.js';
 
 type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 export type AttMeta = {
@@ -129,11 +128,5 @@ export class Att {
   public static pgpNamePatterns = () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''];
 
   public static keyinfoAsPubkeyAtt = (ki: KeyInfo) => new Att({ data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
-
-  public static fromMsgBlock = (attBlock: MsgBlock) => {
-    const attMeta = attBlock.attMeta!;
-    attMeta.data = attBlock.content || attMeta.data;
-    return new Att(attMeta);
-  }
 
 }

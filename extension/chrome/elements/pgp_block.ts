@@ -9,7 +9,7 @@ import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BgExec, BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api, R } from '../../js/common/api/api.js';
-import { MsgVerifyResult, DecryptErrTypes, FormatError } from '../../js/common/core/pgp.js';
+import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
@@ -303,6 +303,12 @@ Catch.try(async () => {
     }
   };
 
+  const attFromAttBlock = (attBlock: MsgBlock) => {
+    const attMeta = attBlock.attMeta!;
+    attMeta.data = attBlock.content || attMeta.data;
+    return new Att(attMeta);
+  };
+
   const decideDecryptedContentFormattingAndRender = async (decryptedContent: Uint8Array | string, isEncrypted: boolean, sigResult: MsgVerifyResult | undefined) => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
@@ -313,15 +319,15 @@ Catch.try(async () => {
     // todo - replace with PgpMsg.fmtDecrypted
     if (!Mime.resemblesMsg(decryptedContent)) {
       const fcAttBlocks: MsgBlock[] = [];
-      decryptedContent = Str.extractFcAtts(decryptedContent, fcAttBlocks);
-      decryptedContent = Str.stripFcTeplyToken(decryptedContent);
-      decryptedContent = Str.stripPublicKeys(decryptedContent, publicKeys);
+      decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
+      decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
+      decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
       if (publicKeys.length) {
         BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
       await renderContent(Xss.escape(decryptedContent).replace(/\n/g, '<br>'), false);
       if (fcAttBlocks.length) {
-        renderInnerAtts(fcAttBlocks.map(Att.fromMsgBlock));
+        renderInnerAtts(fcAttBlocks.map(attFromAttBlock));
       }
       if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
         renderFutureExpiration(passwordMsgLinkRes.expire);

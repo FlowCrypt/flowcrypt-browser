@@ -2,9 +2,6 @@
 
 'use strict';
 
-import { Pgp } from './pgp.js';
-import { FcAttLinkData } from './att.js';
-import { MsgBlock } from './mime.js';
 import { base64encode, base64decode } from '../platform/util.js';
 
 export type Dict<T> = { [key: string]: T; };
@@ -186,50 +183,6 @@ export class Str {
       }
     }
     return str;
-  }
-
-  private static isFcAttLinkData = (o: any): o is FcAttLinkData => {
-    return o && typeof o === 'object' && typeof (o as FcAttLinkData).name !== 'undefined'
-      && typeof (o as FcAttLinkData).size !== 'undefined' && typeof (o as FcAttLinkData).type !== 'undefined';
-  }
-
-  public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {
-    // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
-    // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
-    // thus we use RegEx so that it works on both browser and node
-    if (Value.is('class="cryptup_file"').in(decryptedContent)) {
-      decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
-        const a = Str.htmlAttrDecode(String(fcData));
-        if (Str.isFcAttLinkData(a)) {
-          blocks.push(Pgp.internal.msgBlockAttObj('attachment', '', { type: a.type, name: a.name, length: a.size, url: String(url) }));
-        }
-        return '';
-      });
-    }
-    return decryptedContent;
-  }
-
-  // public static extractFcReplyToken = (decryptedContent: string) => { // todo - used exclusively on the web - move to a web package
-  //   const fcTokenElement = $(`<div>${decryptedContent}</div>`).find('.cryptup_reply');
-  //   if (fcTokenElement.length) {
-  //     const fcData = fcTokenElement.attr('cryptup-data');
-  //     if (fcData) {
-  //       return Str.htmlAttrDecode(fcData);
-  //     }
-  //   }
-  // }
-
-  public static stripFcTeplyToken = (decryptedContent: string) => decryptedContent.replace(/<div[^>]+class="cryptup_reply"[^>]+><\/div>/, '');
-
-  public static stripPublicKeys = (decryptedContent: string, foundPublicKeys: string[]) => {
-    let { blocks, normalized } = Pgp.armor.detectBlocks(decryptedContent); // tslint:disable-line:prefer-const
-    for (const block of blocks) {
-      if (block.type === 'publicKey') {
-        foundPublicKeys.push(block.content);
-        normalized = normalized.replace(block.content, '');
-      }
-    }
-    return normalized;
   }
 
   public static intToHex = (intAsStr: string | number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
