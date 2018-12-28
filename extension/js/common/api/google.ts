@@ -296,14 +296,23 @@ export class Google extends Api {
         if (!Value.is(userQuery).in(variationsOfTo)) {
           variationsOfTo.push(userQuery);
         }
-        gmailQuery += ` (to:${variationsOfTo.join(' OR to:')})`;
+        gmailQuery += '(';
+        while (variationsOfTo.length) {
+          gmailQuery += `to:${variationsOfTo.pop()}`;
+          if (gmailQuery.length > Google.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
+            break;
+          }
+          if (variationsOfTo.length > 1) {
+            gmailQuery += ' OR ';
+          }
+        }
+        gmailQuery += ')';
       }
-      const filteredContacts = knownContacts.filter(c => Str.isEmailValid(c.email));
-      for (const contact of filteredContacts) {
-        gmailQuery += ` -to:${contact.email}`;
+      for (const contact of knownContacts.filter(c => Str.isEmailValid(c.email))) {
         if (gmailQuery.length > Google.GMAIL_SEARCH_QUERY_LENGTH_LIMIT) {
           break;
         }
+        gmailQuery += ` -to:${contact.email}`;
       }
       await Google.apiGmailLoopThroughEmailsToCompileContacts(acctEmail, gmailQuery, chunkedCb);
     },
