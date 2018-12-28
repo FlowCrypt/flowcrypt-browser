@@ -444,10 +444,11 @@ export class Composer {
         } else if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
-        } else if (e instanceof AjaxError && e.status === 400 && String(e).indexOf('Message not a draft') !== -1) {
-          // could happen if draft with this ID was already meanwhile sent by user, maybe in other window
-          this.v.draftId = ''; // forget there was a draftId
-          await this.draftSave(true); // forceSave=true to not skip // will create a new draftId
+        } else if (Api.err.isNotFound(e) || (e instanceof AjaxError && e.status === 400 && String(e).indexOf('Message not a draft') !== -1)) {
+          // not found - updating draft that was since deleted
+          // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
+          this.v.draftId = ''; // forget there was a draftId - next step will create a new draftId
+          await this.draftSave(true); // forceSave=true to not skips
         } else {
           Catch.handleErr(e);
           this.S.cached('send_btn_note').text('Not saved');
