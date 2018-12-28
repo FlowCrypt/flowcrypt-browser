@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Contact, PrvKeyInfo, KeyInfosWithPassphrases, KeyInfo } from '../platform/store.js';
+import { Store } from '../platform/store.js';
 import { Value, Str } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { Catch } from '../platform/catch.js';
@@ -27,12 +27,35 @@ export namespace PgpMsgMethod {
   export type Type = (data: string | Uint8Array) => Promise<PgpMsgTypeResult>;
 }
 
+export type Contact = {
+  email: string; name: string | null; pubkey: string | null; has_pgp: 0 | 1; searchable: string[];
+  client: string | null; attested: boolean | null; fingerprint: string | null; longid: string | null; keywords: string | null;
+  pending_lookup: number; last_use: number | null;
+  date: number | null; /* todo - should be removed. email provider search seems to return this? */
+};
+
+export interface PrvKeyInfo {
+  private: string;
+  longid: string;
+  decrypted?: OpenPGP.key.Key;
+}
+
+export interface KeyInfo extends PrvKeyInfo {
+  public: string;
+  fingerprint: string;
+  primary: boolean;
+  keywords: string;
+}
+
+export type KeyInfosWithPassphrases = { keys: PrvKeyInfo[]; passphrases: string[]; };
+
 type KeyDetails$ids = {
   shortid: string;
   longid: string;
   fingerprint: string;
   keywords: string;
 };
+
 export interface KeyDetails {
   private?: string;
   public: string;
@@ -57,6 +80,7 @@ type SortedKeysForDecrypt = {
   prvForDecryptDecrypted: PrvKeyInfo[];
   prvForDecryptWithoutPassphrases: PrvKeyInfo[];
 };
+
 type ConsummableBrowserBlob = { blob_type: 'text' | 'uint8', blob_url: string };
 type DecrytSuccess$content = { blob?: ConsummableBrowserBlob; text?: string; uint8?: Uint8Array; filename?: string };
 type DecryptSuccess = { success: true; content: DecrytSuccess$content, signature?: MsgVerifyResult; isEncrypted?: boolean };

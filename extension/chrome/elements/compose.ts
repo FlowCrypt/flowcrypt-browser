@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, KeyInfo, ContactUpdate, Contact, DbContactFilter } from '../../js/common/platform/store.js';
+import { Store, ContactUpdate, DbContactFilter } from '../../js/common/platform/store.js';
 import { Value, Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
@@ -11,6 +11,7 @@ import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
+import { KeyInfo, Contact } from '../../js/common/core/pgp.js';
 
 Catch.try(async () => {
 

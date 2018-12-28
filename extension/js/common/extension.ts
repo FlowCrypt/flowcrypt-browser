@@ -3,8 +3,8 @@
 'use strict';
 
 import { Str, Value, Dict } from './core/common.js';
-import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod, PgpMsg, PgpMsgTypeResult } from './core/pgp.js';
-import { FlatTypes, KeyInfo } from './platform/store.js';
+import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod, PgpMsg, PgpMsgTypeResult, KeyInfo } from './core/pgp.js';
+import { FlatTypes } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';

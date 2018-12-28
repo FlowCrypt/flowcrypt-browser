@@ -2,14 +2,14 @@
 
 'use strict';
 
-import { Store, KeyInfo } from './platform/store.js';
+import { Store } from './platform/store.js';
 import { Value, Str, Dict } from './core/common.js';
 import { Xss, Ui, Env, UrlParams, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api } from './api/api.js';
-import { Pgp } from './core/pgp.js';
+import { Pgp, KeyInfo } from './core/pgp.js';
 import { Catch, UnreportableError } from './platform/catch.js';
 import { Google, GoogleAuth } from './api/google.js';
 

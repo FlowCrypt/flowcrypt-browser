@@ -2,9 +2,9 @@
 
 'use strict';
 
-import { Store, GlobalStore, Serializable, Contact } from '../platform/store.js';
+import { Store, GlobalStore, Serializable } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
-import { Pgp, FormatError, PgpMsg } from '../core/pgp.js';
+import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
 import { Ui } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';

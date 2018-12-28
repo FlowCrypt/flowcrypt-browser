@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { Store, Subscription, KeyInfo, ContactUpdate, Contact, DbContactFilter } from './platform/store.js';
+import { Store, Subscription, ContactUpdate, DbContactFilter } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
-import { Pgp, Pwd, FormatError, PgpMsg } from './core/pgp.js';
+import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';

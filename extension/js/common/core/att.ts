@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Value } from './common.js';
-import { KeyInfo } from '../platform/store.js';
+import { KeyInfo } from '../core/pgp.js';
 
 type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 export type AttMeta = {
