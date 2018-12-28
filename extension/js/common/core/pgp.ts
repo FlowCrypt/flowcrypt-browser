@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Store, Contact, PrvKeyInfo, KeyInfosWithPassphrases } from '../platform/store.js';
+import { Store, Contact, PrvKeyInfo, KeyInfosWithPassphrases, KeyInfo } from '../platform/store.js';
 import { Value, Str } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { Catch } from '../platform/catch.js';
@@ -21,7 +21,7 @@ if (typeof openpgp !== 'undefined') { // in certain environments, eg browser con
 }
 
 export namespace PgpMsgMethod {
-  export type DiagnosePubkeys = (acctEmail: string, m: string | Uint8Array | OpenPGP.message.Message) => Promise<DiagnoseMsgPubkeysResult>;
+  export type DiagnosePubkeys = (privateKis: KeyInfo[], m: string | Uint8Array | OpenPGP.message.Message) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (plaintext: string | Uint8Array, sigText: string | Uint8Array) => Promise<MsgVerifyResult>;
   export type Decrypt = (kisWithPp: KeyInfosWithPassphrases, encryptedData: string | Uint8Array, msgPwd?: string, getUint8?: boolean) => Promise<DecryptSuccess | DecryptError>;
   export type Type = (data: string | Uint8Array) => Promise<PgpMsgTypeResult>;
@@ -355,7 +355,6 @@ export class Pgp {
           return { word, seconds: Math.round(timeToCrack), time: readableTime };
         }
       }
-      Catch.report('estimate_strength: got to end without any result');
       throw Error('(thrown) estimate_strength: got to end without any result');
     },
     weakWords: () => [
@@ -691,7 +690,7 @@ export class PgpMsg {
     return await openpgp.encrypt(options);
   }
 
-  static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async (acctEmail, m) => {
+  static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async (privateKis, m) => {
     let message: OpenPGP.message.Message;
     if (typeof m === 'string') {
       message = openpgp.message.readArmored(m);
@@ -701,7 +700,6 @@ export class PgpMsg {
       message = m;
     }
     const msgKeyIds = message.getEncryptionKeyIds ? message.getEncryptionKeyIds() : [];
-    const privateKis = await Store.keysGet(acctEmail);
     const localKeyIds: OpenPGP.Keyid[] = [];
     for (const k of await Promise.all(privateKis.map(ki => Pgp.key.read(ki.public)))) {
       localKeyIds.push(...k.getKeyIds());

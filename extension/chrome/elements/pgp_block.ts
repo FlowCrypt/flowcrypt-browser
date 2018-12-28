@@ -156,7 +156,7 @@ Catch.try(async () => {
   };
 
   const handlePrivateKeyMismatch = async (acctEmail: string, message: string) => { // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BgExec.pgpMsgDiagnosePubkeys(acctEmail, message);
+    const msgDiagnosis = await BgExec.pgpMsgDiagnosePubkeys(await Store.keysGet(acctEmail), message);
     if (msgDiagnosis.found_match) {
       await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug);
     } else if (msgDiagnosis.receivers === 1) {
