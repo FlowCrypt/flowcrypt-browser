@@ -65,6 +65,9 @@ abstract class ApiCallError extends Error {
     if (url.indexOf('token=') !== -1) {
       return `${url.split('?')[0]}~censored:token`;
     }
+    if (url.indexOf('code=') !== -1) {
+      return `${url.split('?')[0]}~censored:code`;
+    }
     return url;
   }
 
