@@ -288,9 +288,11 @@ export class Google extends Api {
         atts[i].setData(responses[i].data);
       }
     },
+    /**
+     * This will keep triggering callback with new emails as they are being discovered
+     */
     searchContacts: async (acctEmail: string, userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb) => {
-      // This will keep triggering callback with new emails as they are being discovered
-      let gmailQuery = `is:sent ${Google.GMAIL_USELESS_CONTACTS_FILTER}`;
+      let gmailQuery = `is:sent ${Google.GMAIL_USELESS_CONTACTS_FILTER} `;
       if (userQuery) {
         const variationsOfTo = userQuery.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
         if (!Value.is(userQuery).in(variationsOfTo)) {
