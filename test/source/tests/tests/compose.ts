@@ -77,6 +77,13 @@ export const defineComposeTests = (testWithNewBrowser: TestWithBrowser, testWith
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
+  ava.test.failing('compose - standalone - recipient pasted including name', testWithNewBrowser(async (browser, t) => {
+    await BrowserRecipe.setUpFcCompatAcct(browser);
+    const composePage = await ComposePageRecipe.openStandalone(browser);
+    await ComposePageRecipe.fillMsg(composePage, 'Human at Flowcrypt <Human@FlowCrypt.com>', 'recipient pasted including name');
+    await ComposePageRecipe.sendAndClose(composePage);
+  }));
+
   ava.test('compose[global] - standalone - nopgp', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
     const composePage = await ComposePageRecipe.openStandalone(browser);
     await ComposePageRecipe.fillMsg(composePage, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
