@@ -79,6 +79,11 @@ abstract class ApiCallError extends Error {
 
 export class AjaxError extends ApiCallError {
 
+  public STD_ERR_MSGS = {
+    GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
+    GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
+  };
+
   public xhr: any;
   public status: number;
   public url: string;
@@ -96,6 +101,20 @@ export class AjaxError extends ApiCallError {
     if (this.status === 400 || this.status === 403) {
       this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}\n\npayload:\n${Catch.stringify(req.data)}`;
     }
+  }
+
+  public parseErrResMsg = (format: 'google') => {
+    try {
+      if (format === 'google') {
+        const errMsg = (((this.xhr as JQueryXHR).responseJSON as any).error as any).message as string; // catching all errs below
+        if (typeof errMsg === 'string') {
+          return errMsg;
+        }
+      }
+    } catch (e) {
+      return undefined;
+    }
+    return undefined;
   }
 
 }

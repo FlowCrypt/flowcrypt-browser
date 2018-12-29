@@ -589,10 +589,15 @@ export class Composer {
     } else if (Api.err.isReqTooLarge(e)) {
       alert(`Could not send: message or attachments too large.`);
     } else if (Api.err.isBadReq(e)) {
-      if (confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
-        const page = '/chrome/settings/modules/help.htm';
-        const pageUrlParams = { bugReport: Extension.prepareBugReport('composer: send: bad request', {}, e) };
-        BrowserMsg.send.bg.settings({ acctEmail: this.v.acctEmail, page, pageUrlParams });
+      const errMsg = e.parseErrResMsg('google');
+      if (errMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || errMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
+        alert('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
+      } else {
+        if (confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
+          const page = '/chrome/settings/modules/help.htm';
+          const pageUrlParams = { bugReport: Extension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
+          BrowserMsg.send.bg.settings({ acctEmail: this.v.acctEmail, page, pageUrlParams });
+        }
       }
     } else if (e instanceof ComposerUserError) {
       alert(`Could not send message: ${String(e)}`);
