@@ -1093,13 +1093,13 @@ export class Composer {
 
   private parseRenderRecipients = async () => {
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
-    if (Value.is(',').in(inputTo)) {
-      const emails = inputTo.split(',');
-      for (let i = 0; i < emails.length - 1; i++) {
-        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(emails[i])} ${Ui.spinner('green')}</span>`);
+    if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
+      for (const rawRecipientAddrInput of inputTo.split(',')) {
+        // rawRecipientAddrInput may be Human at Flowcrypt <Human@FlowCrypt.com>
+        // but what we want is just human@flowcrypt.com, assigned below to email constant
+        const { email } = Str.parseEmail(rawRecipientAddrInput);
+        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
       }
-    } else if (!this.S.cached('input_to').is(':focus') && inputTo) {
-      Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(inputTo)} ${Ui.spinner('green')}</span>`);
     } else {
       return;
     }
@@ -1360,9 +1360,9 @@ export class Composer {
       selector = '.recipients span';
     }
     const recipients: string[] = [];
-    $(selector).each(function () {
-      recipients.push($(this).text().trim());
-    });
+    for (const recipientEl of $(selector).get()) {
+      recipients.push($(recipientEl).text().trim());
+    }
     return recipients;
   }
 
