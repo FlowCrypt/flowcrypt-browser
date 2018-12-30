@@ -38,7 +38,7 @@ const preserveAsyncStackTracesTransformerFactory = () => {
       errStack,
       ts.createAdd(
         ts.createLogicalOr(errStack, ts.createStringLiteral('(no stack)')),
-        ts.createStringLiteral(`\n    at async ${name} (${sf.fileName}:${line}:${character})`),
+        ts.createStringLiteral(`\n    at async ${name} (${sf.fileName.split('flowcrypt-browser').pop()}:${line + 1}:${character + 1})`),
       ),
     ));
     const rethrow: ts.Statement = ts.createThrow(ts.createIdentifier("e"));
