@@ -35,8 +35,8 @@ let recipe = {
 }
 
 let subTask = {
-  runTscExtension: () => recipe.exec('../node_modules/typescript/bin/tsc --project ../tsconfig.json'),
-  runTscContentScripts: () => recipe.exec('../node_modules/typescript/bin/tsc --project tsconfig.content_scripts.json'),
+  runTscExtension: () => recipe.exec('node ../build/tooling/tsc-compiler --project ../tsconfig.json'),
+  runTscContentScripts: () => recipe.exec('node ../build/tooling/tsc-compiler --project tsconfig.content_scripts.json'),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
   chromeBuildSpacesToTabs: () => Promise.all([
     recipe.spacesToTabs(`${chromeTo}/js`),

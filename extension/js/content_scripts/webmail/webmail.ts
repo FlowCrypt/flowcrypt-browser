@@ -107,7 +107,7 @@ Catch.try(async () => {
       $(document).keypress(e => {
         Catch.try(() => {
           const causesUnsecureReply = Value.is(e.which).in(unsecureReplyKeyShortcuts);
-          if (causesUnsecureReply && !$(document.activeElement).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
+          if (causesUnsecureReply && !$(document.activeElement!).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
             e.stopImmediatePropagation();
             replacer.setReplyBoxEditable();
           }

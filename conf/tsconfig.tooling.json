@@ -15,7 +15,8 @@
   "files": [
     "../tooling/resolve-modules.ts",
     "../tooling/bundle-content-scripts.ts",
-    "../tooling/fill-values.ts"
+    "../tooling/fill-values.ts",
+    "../tooling/tsc-compiler.ts"
   ],
   "exclude": [
     "**/build/**",
