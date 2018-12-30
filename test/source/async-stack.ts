@@ -50,23 +50,25 @@ class ClassAsync {
   try {
     await ClassAsync.staticAsyncFunc();
   } catch (e) {
-    const expectedStack = `Error: this failed
-    at thisWillFail (/home/luke/git/flowcrypt-browser/experimental/code/experimental-code.js:5:11)
-    at func (/home/luke/git/flowcrypt-browser/experimental/code/experimental-code.js:8:5)
-    at Function.Class.staticConstAttr (/home/luke/git/flowcrypt-browser/experimental/code/experimental-code.js:16:5)
-    at Function.staticFunc (/home/luke/git/flowcrypt-browser/experimental/code/experimental-code.js:12:15)
-    at asyncArrowConst (/home/luke/git/flowcrypt-browser/experimental/code/experimental-code.js:21:15)
-    at <anonymous>
-    at async asyncArrowConst? (../code/experimental-code.ts:21:23)
-    at async asyncFunc (../code/experimental-code.ts:25:2)
-    at async staticConstAttrAsync? (../code/experimental-code.ts:34:31)
-    at async staticAsyncFunc (../code/experimental-code.ts:38:3)`;
-    if (e.stack !== expectedStack) {
-      console.error(`Unexpected stack format:\n${e.stack}\n\n\nExpected:\n${expectedStack}`);
-      process.exit(1);
-    } else {
-      process.exit(0);
+    const expectedStackStatements = [
+      'Error: this failed',
+      ' at thisWillFail ',
+      ' at func ',
+      ' at Function.Class.staticConstAttr ',
+      ' at Function.staticFunc ',
+      ' at asyncArrowConst ',
+      ' at async asyncArrowConst? ',
+      ' at async asyncFunc ',
+      ' at async staticConstAttrAsync? ',
+      ' at async staticAsyncFunc ',
+    ];
+    for (const statement of expectedStackStatements) {
+      if (e instanceof Error && (e.stack || '').indexOf(statement) === -1) {
+        console.error(`Unexpected stack format:\n${e.stack}\n\n\nExpected to include:\n${expectedStackStatements.join('\n')}`);
+        process.exit(1);
+      }
     }
+    process.exit(0);
   }
 
   console.error(`Fail - expected Error to be thrown`);

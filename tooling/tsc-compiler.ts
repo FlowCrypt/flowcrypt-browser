@@ -59,7 +59,7 @@ const preserveAsyncStackTracesTransformerFactory = () => {
     const recursiveVisitor: ts.Visitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
       if ((ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node))) {
         if (node.modifiers && node.modifiers.filter(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword).length) {
-          if (node.body && (node.body as ts.FunctionBody).statements.length) {
+          if (node.body && (node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
             const origFuncContent = ts.createBlock((node.body as ts.FunctionBody).statements, true);
             const catchClause = ts.createCatchClause('e', ts.createBlock(createStackTracePreservingCatchBlockStatements(node), false));
             (node.body as ts.FunctionBody).statements = ts.createNodeArray([ts.createTry(origFuncContent, catchClause, undefined)]);
@@ -97,11 +97,15 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
  * Compile using the transformer above
  */
 const compile = (): void => {
-  const { compilerOptions, include, exclude } = JSON.parse(readFileSync(tsconfigAbsPath!).toString());
+  const { compilerOptions, include, exclude, files } = JSON.parse(readFileSync(tsconfigAbsPath!).toString());
   const { options, errors } = ts.convertCompilerOptionsFromJson(compilerOptions, tsconfigAbsDir); // , tsconfigAbsPath!
   printErrsAndExitIfPresent(errors);
   const compilerHost = ts.createCompilerHost(options);
-  const fileList = compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include);
+  const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include);
+  if (!fileList.length) {
+    console.error(`fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join('\n')}`);
+    process.exit(1);
+  }
   const program = ts.createProgram(fileList, options, compilerHost);
   const emitResult = program.emit(undefined, undefined, undefined, undefined, { before: [preserveAsyncStackTracesTransformerFactory()] });
   printErrsAndExitIfPresent(ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics));

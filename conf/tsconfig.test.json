@@ -14,10 +14,7 @@
   },
   "files": [
     "../test/source/test.ts",
-    "../test/source/patterns.ts"
-  ],
-  "exclude": [
-    "**/build/**",
-    "**/node_modules/**"
+    "../test/source/patterns.ts",
+    "../test/source/async-stack.ts"
   ]
 }
