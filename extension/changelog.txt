@@ -1,5 +1,7 @@
 <div>
 
+version 6.4.4 on December 30, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/296?closed=1" target="_blank">OpenPGP.js v4</a>
+
 version 6.4.3 on December 30, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/295?closed=1" target="_blank">Async Stack Traces</a>
 
 version 6.4.2 on December 28, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/294?closed=1" target="_blank">Preparing for OpenPGP.js v4</a>
