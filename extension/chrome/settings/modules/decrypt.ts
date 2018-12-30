@@ -18,7 +18,7 @@ Catch.try(async () => {
 
   let origContent: string;
 
-  const attUi = new AttUI(() => ({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
+  const attUi = new AttUI(() => Promise.resolve({ count: 1, size: 100 * 1024 * 1024, size_mb: 100 }));
   attUi.initAttDialog('fineuploader', 'fineuploader_button');
   const factory = new XssSafeFactory(acctEmail, tabId);
 

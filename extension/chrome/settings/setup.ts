@@ -61,7 +61,7 @@ Catch.try(async () => {
   let recoveredKeysSuccessfulLongids: string[] = [];
   let allAddrs: string[] = [acctEmail];
 
-  const rules = new Rules(acctEmail);
+  const rules = await Rules.newInstance(acctEmail);
   if (!rules.canCreateKeys()) {
     const forbidden = `${Lang.setup.creatingKeysNotAllowedPleaseImport} <a href="${Xss.escape(window.location.href)}">Back</a>`;
     Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);

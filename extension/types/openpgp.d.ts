@@ -620,7 +620,7 @@ declare namespace OpenPGP {
           @param algo Hash algorithm type
           @param data Data to be hashed
       */
-      function digest(algo: enums.hash, data: string): Uint8Array;
+      function digest(algo: enums.hash, data: Uint8Array): Promise<Uint8Array>;
 
       /** Returns the hash size in bytes of the specified hash algorithm type
           @param algo Hash algorithm type

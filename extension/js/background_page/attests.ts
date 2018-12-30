@@ -139,7 +139,7 @@ export class BgAttests {
       throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attestPacketText, acctEmail);
     }
     const expectedFingerprint = prv.primaryKey.getFingerprint().toUpperCase();
-    const expectedEmailHash = Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
+    const expectedEmailHash = await Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
     if (!attest || !attest.success || !attest.text) {
       throw new AttestError('Could not parse this attest message.', attestPacketText, acctEmail);
     }

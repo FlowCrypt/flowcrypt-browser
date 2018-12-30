@@ -215,10 +215,10 @@ export class Pgp {
   };
 
   public static hash = {
-    sha1: (string: string) => Str.toHex(Str.fromUint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, string))),
-    doubleSha1Upper: (string: string) => Pgp.hash.sha1(Pgp.hash.sha1(string)).toUpperCase(),
-    sha256: (string: string) => Str.toHex(Str.fromUint8(openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, string))),
-    challengeAnswer: (answer: string) => Pgp.internal.cryptoHashSha256Loop(answer),
+    sha1: async (string: string) => Str.toHex(Str.fromUint8(await openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, Str.toUint8(string)))),
+    doubleSha1Upper: async (string: string) => (await Pgp.hash.sha1(await Pgp.hash.sha1(string))).toUpperCase(),
+    sha256: async (string: string) => Str.toHex(Str.fromUint8(await openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, Str.toUint8(string)))),
+    challengeAnswer: async (answer: string) => await Pgp.internal.cryptoHashSha256Loop(answer),
   };
 
   public static key = {
@@ -455,9 +455,9 @@ export class Pgp {
       }
       return result;
     },
-    cryptoHashSha256Loop: (string: string, times = 100000) => {
+    cryptoHashSha256Loop: async (string: string, times = 100000) => {
       for (let i = 0; i < times; i++) {
-        string = Pgp.hash.sha256(string);
+        string = await Pgp.hash.sha256(string);
       }
       return string;
     },
@@ -707,7 +707,7 @@ export class PgpMsg {
       }
     }
     if (pwd && pwd.answer) {
-      options.passwords = [Pgp.hash.challengeAnswer(pwd.answer)];
+      options.passwords = [await Pgp.hash.challengeAnswer(pwd.answer)];
       usedChallenge = true;
     }
     if (!pubkeys && !usedChallenge) {

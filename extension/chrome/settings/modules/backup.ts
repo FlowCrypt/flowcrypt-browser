@@ -34,7 +34,7 @@ Catch.try(async () => {
   const storage = await Store.getAcct(acctEmail, ['setup_simple', 'email_provider']);
   emailProvider = storage.email_provider || 'gmail';
 
-  const rules = new Rules(acctEmail);
+  const rules = await Rules.newInstance(acctEmail);
   if (!rules.canBackupKeys()) {
     Xss.sanitizeRender('body', `<div class="line" style="margin-top: 100px;">${Lang.setup.keyBackupsNotAllowed}</div>`);
     return;

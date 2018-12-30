@@ -460,7 +460,7 @@ export class Api {
     }),
     accountLogin: async (acctEmail: string, token?: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
       const authInfo = await Store.authInfo();
-      const uuid = authInfo.uuid || Pgp.hash.sha1(Pgp.password.random());
+      const uuid = authInfo.uuid || await Pgp.hash.sha1(Pgp.password.random());
       const account = authInfo.acctEmail || acctEmail;
       const response = await Api.internal.apiFcCall('account/login', {
         account,
@@ -487,7 +487,7 @@ export class Api {
           if (response.email !== authInfo.acctEmail) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
             globalStoreUpdate.cryptup_account_email = response.email;
-            globalStoreUpdate.cryptup_account_uuid = Pgp.hash.sha1(Pgp.password.random());
+            globalStoreUpdate.cryptup_account_uuid = await Pgp.hash.sha1(Pgp.password.random());
           }
         } else {
           if (authInfo.acctEmail) {

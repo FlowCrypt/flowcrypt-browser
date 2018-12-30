@@ -30,7 +30,7 @@ Catch.try(async () => {
 
   $('#status-row #status_v').text(`v:${String(Catch.version())}`);
 
-  const rules = new Rules(acctEmail);
+  const rules = await Rules.newInstance(acctEmail);
   if (!rules.canBackupKeys()) {
     $('.show_settings_page[page="modules/backup.htm"]').parent().remove();
     $('.settings-icons-rows').css({ position: 'relative', left: '64px' }); // lost a button - center it again

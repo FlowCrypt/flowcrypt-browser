@@ -18,7 +18,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  const attachJs = new AttUI(() => ({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  const attachJs = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let newPhotoFile: Att;
 
   const S = Ui.buildJquerySels({

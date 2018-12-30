@@ -937,7 +937,7 @@ export class KeyImportUi {
         $('.line.pass_phrase_needed').hide();
       }
     }));
-    const attach = new AttUI(() => ({ count: 100, size: 1024 * 1024, size_mb: 1 }));
+    const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
     attach.initAttDialog('fineuploader', 'fineuploader_button');
     attach.setAttAddedCb(async file => {
       let prv: OpenPGP.key.Key | undefined;
@@ -1089,12 +1089,12 @@ export class KeyImportUi {
 export class AttUI {
 
   private templatePath = '/chrome/elements/shared/attach.template.htm';
-  private getLimits: () => AttLimits;
+  private getLimits: () => Promise<AttLimits>;
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
   private attAddedCb: (r: Att) => Promise<void>;
 
-  constructor(getLimits: () => AttLimits) {
+  constructor(getLimits: () => Promise<AttLimits>) {
     this.getLimits = getLimits;
   }
 
@@ -1109,7 +1109,7 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (id: string, name: string) => Catch.try(() => this.processNewAtt(id, name))(),
+          onSubmitted: (id: string, name: string) => this.processNewAtt(id, name).catch(Catch.handleErr),
           onCancel: (id: string) => Catch.try(() => this.cancelAtt(id))(),
         },
       };
@@ -1157,8 +1157,8 @@ export class AttUI {
     delete this.attachedFiles[id];
   }
 
-  private processNewAtt = (id: string, name: string) => {
-    const limits = this.getLimits();
+  private processNewAtt = async (id: string, name: string) => {
+    const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       alert('Amount of attached files is limited to ' + limits.count);
       this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
@@ -1175,7 +1175,8 @@ export class AttUI {
       }
       this.attachedFiles[id] = newFile;
       if (typeof this.attAddedCb === 'function') {
-        this.collectAtt(id).then((a) => this.attAddedCb(a).catch(Catch.handleErr)).catch(Catch.handleErr);
+        const a = await this.collectAtt(id);
+        await this.attAddedCb(a);
       }
     }
   }

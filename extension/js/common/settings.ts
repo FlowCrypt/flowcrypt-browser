@@ -326,7 +326,7 @@ export class Settings {
   }
 
   static promptToRetry = async (type: 'REQUIRED', e: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
-    // todo - his needs to be refactored, hard to follow, hard to use
+    // todo - this needs to be refactored, hard to follow, hard to use
     // |'OPTIONAL' - needs to be tested again
     if (Api.err.isSignificant(e)) {
       Catch.handleErr(e);

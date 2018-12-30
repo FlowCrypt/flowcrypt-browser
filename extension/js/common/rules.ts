@@ -17,13 +17,17 @@ export class Rules {
     [this.other]: { flags: [] },
   };
 
-  constructor(email?: string) {
+  public static newInstance = async (email?: string) => {
     if (email && Str.isEmailValid(email)) {
       const domain = email.split('@')[1];
-      const domainHash = Pgp.hash.sha1(domain);
-      if (Value.is(domainHash).in(Object.keys(this.rules))) {
-        this.domainHash = domainHash; // known domain, else initialized to this.other
-      }
+      return new Rules(await Pgp.hash.sha1(domain));
+    }
+    return new Rules();
+  }
+
+  private constructor(domainHash?: string) {
+    if (domainHash && Value.is(domainHash).in(Object.keys(this.rules))) {
+      this.domainHash = domainHash; // known domain, else initialized to this.other
     }
   }
 

@@ -33,7 +33,7 @@ Catch.try(async () => {
         const reqDict: Dict<string> = {
           'ATT': 'CRYPTUP',
           'ACT': 'REQUEST_REPLACEMENT',
-          'ADD': Pgp.hash.doubleSha1Upper(acctEmail),
+          'ADD': await Pgp.hash.doubleSha1Upper(acctEmail),
           'OLD': checkedOldKey.fingerprint,
           'PUB': primaryKi.fingerprint,
         };

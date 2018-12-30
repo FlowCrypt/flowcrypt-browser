@@ -32,7 +32,7 @@ export const migrateGlobal = async () => {
 
 const updateAcctInfo = async (acctEmails: string[]) => {
   for (const acctEmail of acctEmails) {
-    const rules = new Rules(acctEmail);
+    const rules = await Rules.newInstance(acctEmail);
     await accountUpdateStatusKeyserver(acctEmail);
     if (!rules.hasStrictGdpr()) {
       await accountUpdateStatusPks(acctEmail);

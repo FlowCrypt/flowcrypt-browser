@@ -165,7 +165,7 @@ export class Composer {
     this.initActions();
   }
 
-  private getMaxAttSizeAndOversizeNotice = (subscription: Subscription) => {
+  private getMaxAttSizeAndOversizeNotice = async (subscription: Subscription) => {
     if (!subscription.active) {
       return {
         sizeMb: 5,
@@ -199,7 +199,7 @@ export class Composer {
       };
     } else {
       const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && Value.is(Pgp.hash.sha1(this.v.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
+      const sizeMb = (subscription.method !== 'trial' && Value.is(await Pgp.hash.sha1(this.v.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,
