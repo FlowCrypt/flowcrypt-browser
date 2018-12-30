@@ -16,18 +16,18 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'placement']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const hash = Pgp.hash.sha1;
   const container = $('.emails');
 
   const storage = await Store.getAcct(acctEmail, ['addresses']);
   const addresses = storage.addresses || [acctEmail];
 
-  const emailAddrToHtmlRadio = (a: string) => {
+  const emailAddrToHtmlRadio = async (a: string) => {
     a = Xss.escape(a);
-    return `<input type="radio" name="a" value="${a}" id="${hash(a)}"> <label data-test="action-choose-address" for="${hash(a)}">${a}</label><br>`;
+    const h = await Pgp.hash.sha1(a);
+    return `<input type="radio" name="a" value="${a}" id="${h}"> <label data-test="action-choose-address" for="${h}">${a}</label><br>`;
   };
 
-  Xss.sanitizeRender(container, addresses.map(emailAddrToHtmlRadio).join(''));
+  Xss.sanitizeRender(container, (await Promise.all(addresses.map(emailAddrToHtmlRadio))).join(''));
   container.find('input').first().prop('checked', true);
   container.find('input').click(Ui.event.handle(async target => {
     const chosenSendingAddr = String($(target).val());

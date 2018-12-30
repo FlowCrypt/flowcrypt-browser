@@ -215,10 +215,20 @@ export class Pgp {
   };
 
   public static hash = {
-    sha1: async (string: string) => Str.toHex(Str.fromUint8(await openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, Str.toUint8(string)))),
-    doubleSha1Upper: async (string: string) => (await Pgp.hash.sha1(await Pgp.hash.sha1(string))).toUpperCase(),
-    sha256: async (string: string) => Str.toHex(Str.fromUint8(await openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, Str.toUint8(string)))),
-    challengeAnswer: async (answer: string) => await Pgp.internal.cryptoHashSha256Loop(answer),
+    sha1: async (string: string): Promise<string> => {
+      const digest = await openpgp.crypto.hash.digest(openpgp.enums.hash.sha1, Str.toUint8(string));
+      return Str.toHex(Str.fromUint8(digest));
+    },
+    doubleSha1Upper: async (string: string) => {
+      return (await Pgp.hash.sha1(await Pgp.hash.sha1(string))).toUpperCase();
+    },
+    sha256: async (string: string) => {
+      const digest = await openpgp.crypto.hash.digest(openpgp.enums.hash.sha256, Str.toUint8(string));
+      return Str.toHex(Str.fromUint8(digest));
+    },
+    challengeAnswer: async (answer: string) => {
+      return await Pgp.internal.cryptoHashSha256Loop(answer);
+    },
   };
 
   public static key = {
