@@ -3,10 +3,9 @@
 'use strict';
 
 import { Store } from '../../js/common/platform/store.js';
-import { Value } from '../../js/common/core/common.js';
+import { Value, Str } from '../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Settings } from '../../js/common/settings.js';
-import { Pgp } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Api } from '../../js/common/api/api.js';
@@ -21,13 +20,13 @@ Catch.try(async () => {
   const storage = await Store.getAcct(acctEmail, ['addresses']);
   const addresses = storage.addresses || [acctEmail];
 
-  const emailAddrToHtmlRadio = async (a: string) => {
+  const emailAddrToHtmlRadio = (a: string) => {
     a = Xss.escape(a);
-    const h = await Pgp.hash.sha1(a);
-    return `<input type="radio" name="a" value="${a}" id="${h}"> <label data-test="action-choose-address" for="${h}">${a}</label><br>`;
+    const b64 = Str.base64urlEncode(a);
+    return `<input type="radio" name="a" value="${a}" id="${b64}"> <label data-test="action-choose-address" for="${b64}">${a}</label><br>`;
   };
 
-  Xss.sanitizeRender(container, (await Promise.all(addresses.map(emailAddrToHtmlRadio))).join(''));
+  Xss.sanitizeRender(container, addresses.map(emailAddrToHtmlRadio).join(''));
   container.find('input').first().prop('checked', true);
   container.find('input').click(Ui.event.handle(async target => {
     const chosenSendingAddr = String($(target).val());
