@@ -253,8 +253,8 @@ declare namespace OpenPGP {
   export type EncryptResult = EncryptArmorResult | EncryptBinaryResult;
 
   export interface SignArmorResult {
-    data: string;
-    signature: string;
+    data: string | Stream<string>;
+    signature: string | Stream<string>;
   }
 
   export interface SignBinaryResult {
@@ -284,11 +284,12 @@ declare namespace OpenPGP {
   }
 
   export interface SignOptions {
-    data: string | Uint8Array;
-    dataType?: DataPacketType;
-    armor?: boolean;
-    detached?: boolean;
+    message: cleartext.CleartextMessage | message.Message;
     privateKeys?: key.Key | key.Key[];
+    armor?: boolean;
+    streaming?: 'web' | 'node' | false;
+    dataType?: DataPacketType;
+    detached?: boolean;
     date?: Date;
     fromUserId?: UserId;
   }
