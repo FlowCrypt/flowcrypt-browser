@@ -98,7 +98,7 @@ export class AjaxError extends ApiCallError {
     this.responseText = xhr.responseText || '';
     this.statusText = xhr.statusText || '(no status text)';
     this.stack += `\n\nprovided ajax call stack:\n${stack}`;
-    if (this.status === 400 || this.status === 403) {
+    if (this.status === 400 || this.status === 403 || this.status === 200) { // RawAjaxError with status 200 can happen when it fails to parse response
       this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}\n\npayload:\n${Catch.stringify(req.data)}`;
     }
   }
