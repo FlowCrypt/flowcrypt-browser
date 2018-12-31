@@ -160,9 +160,8 @@ export class Store {
   static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {
     if (Env.isBackgroundPage()) {
       return window.sessionStorage.getItem(Store.singleScopeRawIndex(acctEmail, key));
-    } else {
-      return await BrowserMsg.send.await.bg.sessionGet({ acctEmail, key });
     }
+    return await BrowserMsg.send.await.bg.sessionGet({ acctEmail, key });
   }
 
   static sessionSet = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
@@ -195,12 +194,12 @@ export class Store {
   static passphraseGet = async (acctEmail: string, longid: string, ignoreSession: boolean = false): Promise<string | undefined> => {
     const storageKey = `passphrase_${longid}` as AccountIndex;
     const storage = await Store.getAcct(acctEmail, [storageKey as AccountIndex]);
-    if (typeof storage[storageKey] === 'string') {
-      return String(storage[storageKey]); // make ts happy
-    } else {
-      const fromSession = await Store.sessionGet(acctEmail, storageKey);
-      return fromSession && !ignoreSession ? fromSession : undefined;
+    const found = storage[storageKey];
+    if (typeof found === 'string') {
+      return found;
     }
+    const fromSession = await Store.sessionGet(acctEmail, storageKey);
+    return fromSession && !ignoreSession ? fromSession : undefined;
   }
 
   static keysGet = async (acctEmail: string, longids?: string[]) => {
