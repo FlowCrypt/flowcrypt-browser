@@ -419,13 +419,13 @@ Catch.try(async () => {
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
     for (const i of missingOrWrongPpKeyLongids.keys()) {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
-      await renderErr('<a href="#" class="enter_passphrase">' + Lang.pgpBlock.enterPassphrase + '</a> ' + Lang.pgpBlock.toOpenMsg, undefined);
+      await renderErr(`<a href="#" class="enter_passphrase">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
       clearInterval(passphraseInterval);
       passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 1000);
       $('.enter_passphrase').click(Ui.event.handle(() => {
         BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
         clearInterval(passphraseInterval);
-        passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 250);
+        passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 400);
       }));
     }
   };
@@ -445,10 +445,12 @@ Catch.try(async () => {
   };
 
   const checkPassphraseChanged = async () => {
-    const longids = Object.keys(missingOrWrongPassprases);
-    const updatedPassphrases = await Promise.all(longids.map(longid => Store.passphraseGet(acctEmail, longid)));
-    for (const longid of longids) {
-      if (missingOrWrongPassprases[longid] !== updatedPassphrases[longids.indexOf(longid)]) {
+    const longidsMissingPp = Object.keys(missingOrWrongPassprases);
+    const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => Store.passphraseGet(acctEmail, longid)));
+    for (let i = 0; i < longidsMissingPp.length; i++) {
+      const missingOrWrongPp = missingOrWrongPassprases[longidsMissingPp[i]];
+      const updatedPp = updatedPpArr[i];
+      if (updatedPp !== missingOrWrongPp) {
         missingOrWrongPassprases = {};
         clearInterval(passphraseInterval);
         await decryptAndRender();
