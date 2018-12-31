@@ -213,9 +213,13 @@ export class SettingsPageRecipe extends PageRecipe {
 
 export class ComposePageRecipe extends PageRecipe {
 
-  public static openStandalone = async (browser: BrowserHandle): Promise<ControllablePage> => {
-    const composePage = await browser.newPage('chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none');
-    await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+  public static openStandalone = async (browser: BrowserHandle, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}): Promise<ControllablePage> => {
+    const composePage = await browser.newPage(`chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none&${appendUrl || ''}`);
+    if (!hasReplyPrompt) {
+      await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+    } else {
+      await composePage.waitAll(['@action-accept-reply-prompt']);
+    }
     await composePage.waitForSelTestState('ready');
     return composePage;
   }
@@ -239,7 +243,7 @@ export class ComposePageRecipe extends PageRecipe {
     await composePage.waitTillGone('@dialog');
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, to: string | null, subject: string) => {
+  public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
     if (to) {
       await composePageOrFrame.type('@input-to', to);
     }
@@ -254,7 +258,10 @@ export class ComposePageRecipe extends PageRecipe {
       await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
-    await composePage.waitForSelTestState('closed', 60); // wait until page closed
+    await Promise.race([
+      composePage.waitForSelTestState('closed', 60), // in case this was a new message compose
+      composePage.waitAny('@container-reply-msg-successful', { timeout: 60 }) // in case of reply
+    ]);
     await composePage.close();
   }
 

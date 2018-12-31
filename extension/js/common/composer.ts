@@ -1095,9 +1095,10 @@ export class Composer {
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
       for (const rawRecipientAddrInput of inputTo.split(',')) {
-        // rawRecipientAddrInput may be Human at Flowcrypt <Human@FlowCrypt.com>
-        // but what we want is just human@flowcrypt.com, assigned below to email constant
-        const { email } = Str.parseEmail(rawRecipientAddrInput);
+        if (!rawRecipientAddrInput) {
+          continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
+        }
+        const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
       }
     } else {
