@@ -12,7 +12,8 @@ import { Rules } from '../common/rules.js';
 declare const openpgp: typeof OpenPGP;
 
 export const migrateGlobal = async () => {
-  if (window.localStorage.length > 0) {
+
+  if (window.localStorage && window.localStorage.length > 0) { // window.localStorage may be null on Firefox, likely disabled in settings?
     // a very long time ago, this extension used to store values in localStorage
     // for a very long time, there used to be a procedure to migrate this localStorage into current form of storage
     // not anymore. users who had this extension disabled the whole time and now re-enabled will have to set it up again
