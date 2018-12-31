@@ -487,6 +487,16 @@ export class Pgp {
         return { isArmored, isCleartext: false, message: await openpgp.message.read(Str.toUint8(data)) };
       }
     },
+    longids: async (keyIds: OpenPGP.Keyid[]) => {
+      const longids: string[] = [];
+      for (const id of keyIds) {
+        const longid = await Pgp.key.longid(id.bytes);
+        if (longid) {
+          longids.push(longid);
+        }
+      }
+      return longids;
+    },
     cryptoMsgGetSortedKeys: async (kiWithPp: KeyInfosWithPassphrases, msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
       const keys: SortedKeysForDecrypt = {
         verificationContacts: [],
@@ -498,15 +508,10 @@ export class Pgp {
         prvForDecryptDecrypted: [],
         prvForDecryptWithoutPassphrases: [],
       };
-      const encryptedForKeyId = msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : [];
-      keys.encryptedFor = (await Promise.all(encryptedForKeyId.map(id => Pgp.key.longid(id.bytes)))).filter(Boolean) as string[];
-      keys.signedBy = (await Promise.all((msg.getSigningKeyIds ? msg.getSigningKeyIds() : []).filter(Boolean).map(id => Pgp.key.longid(id.bytes)))).filter(Boolean) as string[];
+      keys.encryptedFor = await Pgp.internal.longids(msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : []);
+      keys.signedBy = await Pgp.internal.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []);
       keys.prvMatching = kiWithPp.keys.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
-      if (keys.prvMatching.length) {
-        keys.prvForDecrypt = keys.prvMatching;
-      } else {
-        keys.prvForDecrypt = kiWithPp.keys;
-      }
+      keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp.keys;
       for (const prvForDecrypt of keys.prvForDecrypt) {
         const { keys: [prv] } = await openpgp.key.readArmored(prvForDecrypt.private);
         if (prv.isDecrypted() || (kiWithPp.passphrases.length && await Pgp.key.decrypt(prv, kiWithPp.passphrases) === true)) {
@@ -693,10 +698,10 @@ export class PgpMsg {
       const decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(privateKeys, passwords, undefined, false);
       // const signature = keys.signed_by.length ? Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
       if (getUint8) {
-        const uint8 = await openpgp.stream.readToEnd(decrypted.getLiteralData()!);
+        const uint8 = new Uint8Array(await openpgp.stream.readToEnd(decrypted.getLiteralData()!));
         return { success: true, content: { uint8, filename: decrypted.getFilename() || undefined }, isEncrypted };
       } else {
-        const text = await openpgp.stream.readToEnd(decrypted.getText()!);
+        const text = String(await openpgp.stream.readToEnd(decrypted.getText()!));
         return { success: true, content: { text, filename: decrypted.getFilename() || undefined }, isEncrypted };
       }
     } catch (e) {

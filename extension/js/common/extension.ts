@@ -326,8 +326,7 @@ export class BgExec {
 
   public static bgReqHandler: Bm.RespondingHandler = async (message: Bm.BgExec, sender, respond: (r: Bm.Res.BgExec) => void) => {
     try {
-      const argPromises = BgExec.argObjUrlsConsume(message.args);
-      const args = await Promise.all(argPromises);
+      const args = await Promise.all(BgExec.argObjUrlsConsume(message.args));
       const result = await BgExec.executeAndFormatResult(message.path, args);
       respond({ result });
     } catch (e) {
@@ -395,13 +394,22 @@ export class BgExec {
   }
 
   private static pgpMsgDecryptResCreateBlobs = (decryptRes: DecryptResult) => {
-    if (decryptRes && decryptRes.success && decryptRes.content) {
-      if (decryptRes.content.text && decryptRes.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
-        decryptRes.content.blob = { blob_type: 'text', blob_url: Browser.objUrlCreate(decryptRes.content.text) };
-        decryptRes.content.text = undefined; // replaced with a blob
-      } else if (decryptRes.content.uint8 && decryptRes.content.uint8 instanceof Uint8Array) {
-        decryptRes.content.blob = { blob_type: 'uint8', blob_url: Browser.objUrlCreate(decryptRes.content.uint8) };
-        decryptRes.content.uint8 = undefined; // replaced with a blob
+    if (decryptRes) {
+      if (decryptRes.success) {
+        if (decryptRes.content) {
+          if (decryptRes.content.text && decryptRes.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
+            decryptRes.content.blob = { blob_type: 'text', blob_url: Browser.objUrlCreate(decryptRes.content.text) };
+            decryptRes.content.text = undefined; // replaced with a blob
+          } else if (decryptRes.content.uint8 && decryptRes.content.uint8 instanceof Uint8Array) {
+            decryptRes.content.blob = { blob_type: 'uint8', blob_url: Browser.objUrlCreate(decryptRes.content.uint8) };
+            decryptRes.content.uint8 = undefined; // replaced with a blob
+          }
+        }
+      } else {
+        if (decryptRes.message) {
+          // meant for debugging - could cause issues when trying to serialize
+          decryptRes.message = undefined;
+        }
       }
     }
   }
@@ -410,7 +418,7 @@ export class BgExec {
 
   private static shouldBeObjUrl = (arg: any) => (typeof arg === 'string' && arg.length > BrowserMsg.MAX_SIZE) || arg instanceof Uint8Array;
 
-  private static argObjUrlsConsume = (args: any[]) => args.map((arg: any) => BgExec.isObjUrl(arg) ? Browser.objUrlConsume(arg) : arg); // tslint:disable-line:no-unsafe-any
+  private static argObjUrlsConsume = (args: any[]): Promise<any>[] => args.map((arg: any) => BgExec.isObjUrl(arg) ? Browser.objUrlConsume(arg) : arg); // tslint:disable-line:no-unsafe-any
 
   private static argObjUrlsCreate = (args: any[]) => args.map(arg => BgExec.shouldBeObjUrl(arg) ? Browser.objUrlCreate(arg) : arg); // tslint:disable-line:no-unsafe-any
 
