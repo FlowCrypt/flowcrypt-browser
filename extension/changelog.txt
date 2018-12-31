@@ -1,5 +1,7 @@
 <div>
 
+version 6.4.6 on December 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/298?closed=1" target="_blank">Decrypt Bugfixes</a>
+
 version 6.4.5 on December 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/297?closed=1" target="_blank">Bugfixes</a>
 
 version 6.4.4 on December 30, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/296?closed=1" target="_blank">OpenPGP.js v4</a>
