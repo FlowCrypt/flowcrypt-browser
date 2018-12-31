@@ -23,11 +23,19 @@ export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.wind
   }
 });
 
-export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise((resolve) => { // tslint:disable-line:ban-types
+export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise((resolve, reject) => { // tslint:disable-line:ban-types
   if (typeof chrome.storage === 'undefined') {
     showFatalError('storage_undefined');
   } else {
-    chrome.storage.local.get(keys, resolve);
+    chrome.storage.local.get(keys, result => {
+      if (typeof result !== 'undefined') {
+        resolve(result);
+      } else if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        reject(new Error(`storageLocalGet(${keys.join(',')}) produced undefined result without an error`));
+      }
+    });
   }
 });
 
