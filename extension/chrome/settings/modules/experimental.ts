@@ -65,7 +65,15 @@ Catch.try(async () => {
       done();
     }));
 
-    $('.action_exception').click(() => Catch.test());
+    $('.action_throw_unchecked').click(() => Catch.test('error'));
+
+    $('.action_throw_err').click(Ui.event.handle(async () => {
+      Catch.test('error');
+    }));
+
+    $('.action_throw_obj').click(Ui.event.handle(async () => {
+      Catch.test('object');
+    }));
 
     $('.action_reset_account').click(Ui.event.prevent('double', async () => {
       if (confirm(Lang.setup.confirmResetAcct(acctEmail))) {
