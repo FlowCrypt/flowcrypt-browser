@@ -31,14 +31,17 @@ let recipe = {
   }),
   copyEditJson: (from, to, json_processor) => gulp.src(from).pipe(jeditor(json_processor)).pipe(gulp.dest(to)),
   confirm: (keyword) => inquirer.prompt([{ type: 'input', message: `Type "${keyword}" to confirm`, name: 'r' }]).then(q => q.r === keyword ? null : process.exit(1)),
-  spacesToTabs: (folder) => gulp.src(`${folder}/**/*.js`).pipe(replace(/^( {4})+/gm, (m) => '\t'.repeat(m.length / 4))).pipe(gulp.dest(folder)),
+  spacesToTabs: (folder) => gulp.src(`${folder}/**/*.js`)
+    .pipe(replace(/}\n\s+(else|catch)/gm, (_, statement) => `} ${statement}`)) // `} catch () {` and `} else {` on the same line
+    .pipe(replace(/^( {4})+/gm, (m) => '\t'.repeat(m.length / 4)))
+    .pipe(gulp.dest(folder)),
 }
 
 let subTask = {
   runTscExtension: () => recipe.exec('node ../build/tooling/tsc-compiler --project ../tsconfig.json'),
   runTscContentScripts: () => recipe.exec('node ../build/tooling/tsc-compiler --project tsconfig.content_scripts.json'),
   copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
-  chromeBuildSpacesToTabs: () => Promise.all([
+  chromeFixOutputWhitespaces: () => Promise.all([
     recipe.spacesToTabs(`${chromeTo}/js`),
     recipe.spacesToTabs(`${chromeTo}/chrome`),
   ]),
@@ -68,7 +71,7 @@ let task = {
       subTask.copySourceFiles,
       subTask.copyVersionedManifest,
     ),
-    subTask.chromeBuildSpacesToTabs,
+    subTask.chromeFixOutputWhitespaces,
     subTask.chromeResolveModules,
     subTask.chromeFillValues,
     subTask.chromeBundleContentScripts,
