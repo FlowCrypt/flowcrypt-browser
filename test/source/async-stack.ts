@@ -5,7 +5,23 @@
 
   type Type = 'error' | 'object';
 
-  const wait = () => new Promise(resolve => setTimeout(resolve, 100));
+  const wait = (): Promise<void> => new Promise(resolve => setTimeout(resolve, 100));
+
+  const acceptCb = (cb: () => Promise<number | void>) => {
+    // nothing
+  };
+
+  acceptCb(async () => { // test if will get replaced
+    await wait();
+  });
+
+  acceptCb(async () => { // test if will get replaced
+    Math.random();
+  });
+
+  acceptCb(async () => await wait()); // test if will get replaced
+
+  acceptCb(async () => Math.random()); // test if will get replaced
 
   const thisWillFail = (type: Type) => {
     if (type === 'error') {
