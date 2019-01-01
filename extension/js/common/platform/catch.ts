@@ -67,6 +67,9 @@ export class Catch {
       exception = new Error(`LIMITED_ERROR: ${errMsg}`);
     } else if (originalErr instanceof Error) {
       exception = originalErr;
+      if (originalErr.hasOwnProperty('thrown')) { // this is created by custom async stack reporting in tooling/tsc-compiler.ts
+        exception.stack += `\n\ne.thrown:\n${Catch.stringify((originalErr as any).thrown)}`;
+      }
     } else {
       exception = new Error(`THROWN_OBJECT: ${errMsg}`);
       if (Catch.hasStack(originalErr)) {
@@ -85,8 +88,11 @@ export class Catch {
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as ErrorEventHandler)) {
       Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
-    if ((exception.stack || '').indexOf('PRIVATE') !== -1 || exception instanceof UnreportableError) {
+    if (exception instanceof UnreportableError) {
       return;
+    }
+    if ((exception.stack || '').indexOf('PRIVATE') !== -1) {
+      exception.stack = '~censored:PRIVATE';
     }
     try {
       $.ajax({
@@ -232,9 +238,12 @@ export class Catch {
     return browserName + ':' + env;
   }
 
-  public static test = () => {
-    // @ts-ignore - intentional exception
-    thisWillFail(); // tslint:disable-line:no-unsafe-any
+  public static test = (type: 'error' | 'object' = 'error') => {
+    if (type === 'error') {
+      throw new Error('intentional error for debugging');
+    } else {
+      throw { what: 'intentional thrown object for debugging' };
+    }
   }
 
   public static promiseErrAlert = (note: string) => (error: Error) => { // returns a function
