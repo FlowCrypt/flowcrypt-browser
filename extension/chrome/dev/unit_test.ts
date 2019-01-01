@@ -5,30 +5,38 @@
 import { Pgp } from '../../js/common/core/pgp.js';
 import { Env } from '../../js/common/browser.js';
 
-(() => {
+(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['f', 'args']);
   const f = String(uncheckedUrlParams.f);
   const args = JSON.parse(String(uncheckedUrlParams.args)) as any[];
 
-  const test = (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
-    try {
-      return finish(undefined, method.apply(undefined, arg));
-    } catch (e) {
-      return finish(e);
-    }
-  };
-
-  const finish = (error: any, result?: any) => {
+  const renderRes = (error: any, result?: any) => {
     error = (typeof error === 'undefined') ? undefined : String(error);
     $('#result').text(JSON.stringify({ error, result }));
     $('#result').attr('data-test-state', 'ready');
   };
 
-  if (f === 'Pgp.armor.detectBlocks' && args.length === 1 && typeof args[0] === 'string') {
-    return test(Pgp.armor.detectBlocks, args);
+  const test = async (method: Function, arg: any[]) => { // tslint:disable-line:ban-types
+    try {
+      return renderRes(undefined, await method.apply(undefined, arg)); // tslint:disable-line:no-unsafe-any
+    } catch (e) {
+      return renderRes(e);
+    }
+  };
+
+  if (f === 'Pgp.armor.detectBlocks') {
+    return await test(Pgp.armor.detectBlocks, args);
+  } else if (f === 'Pgp.hash.sha1') {
+    return await test(Pgp.hash.sha1, args);
+  } else if (f === 'Pgp.hash.sha256') {
+    return await test(Pgp.hash.sha256, args);
+  } else if (f === 'Pgp.hash.doubleSha1Upper') {
+    return await test(Pgp.hash.doubleSha1Upper, args);
+  } else if (f === 'Pgp.hash.challengeAnswer') {
+    return await test(Pgp.hash.challengeAnswer, args);
   } else {
-    return finish('Unknown unit test f');
+    return renderRes('Unknown unit test f');
   }
 
-})();
+})().catch(console.error);
