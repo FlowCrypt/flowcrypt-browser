@@ -1,5 +1,7 @@
 <div>
 
+version 6.4.8 on January 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/300?closed=1" target="_blank">Fix signing</a>
+
 version 6.4.7 on January 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/299?closed=1" target="_blank">Improved async stack</a>
 
 version 6.4.6 on December 31, 2018: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/298?closed=1" target="_blank">Decrypt Bugfixes</a>
