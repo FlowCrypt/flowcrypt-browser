@@ -62,7 +62,7 @@ Catch.try(async () => {
     }
   };
 
-  const setTestState = (state: 'ready' | 'working') => {
+  const setTestState = (state: 'ready' | 'working' | 'waiting') => {
     $('body').attr('data-test-state', state); // for automated tests
   };
 
@@ -419,10 +419,11 @@ Catch.try(async () => {
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
     for (const i of missingOrWrongPpKeyLongids.keys()) {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
-      await renderErr(`<a href="#" class="enter_passphrase">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
+      await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
       clearInterval(passphraseInterval);
       passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 1000);
       $('.enter_passphrase').click(Ui.event.handle(() => {
+        setTestState('waiting');
         BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
         clearInterval(passphraseInterval);
         passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 400);
