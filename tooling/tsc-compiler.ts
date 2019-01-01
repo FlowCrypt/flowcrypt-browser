@@ -46,10 +46,16 @@ const preserveAsyncStackTracesTransformerFactory = () => {
     const recursiveVisitor: ts.Visitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
       if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node) || ts.isFunctionExpression(node)) {
         if (node.modifiers && node.modifiers.filter(modifier => modifier.kind === ts.SyntaxKind.AsyncKeyword).length) {
-          if (node.body && (node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
-            const origFuncContent = ts.createBlock((node.body as ts.FunctionBody).statements, true);
-            const catchClause = ts.createCatchClause('t', ts.createBlock(createStackTracePreservingCatchBlockStatements(node), false));
-            (node.body as ts.FunctionBody).statements = ts.createNodeArray([ts.createTry(origFuncContent, catchClause, undefined)]);
+          if (node.body) {
+            const catchClause = ts.createCatchClause('t', ts.createBlock(createStackTracePreservingCatchBlockStatements(node), true));
+            if ((node.body as ts.FunctionBody).statements && (node.body as ts.FunctionBody).statements.length) {
+              const origFuncContent = ts.createBlock((node.body as ts.FunctionBody).statements, true);
+              (node.body as ts.FunctionBody).statements = ts.createNodeArray([ts.createTry(origFuncContent, catchClause, undefined)]);
+            } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) { // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
+              console.log(`replacing ${node.kind} => ${node.body.expression.kind} (${getNameAndPos(node)})`);
+              const origFuncContent = ts.createBlock([ts.createReturn(node.body)], true);
+              node.body = ts.createBlock([ts.createTry(origFuncContent, catchClause, undefined)], true);
+            }
           }
         }
       }
