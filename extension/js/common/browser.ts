@@ -334,7 +334,7 @@ export class Ui {
           Xss.sanitizeRender(target, buttonShow);
           Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.handleErr);
         }
-      }));
+      })).click().click(); // double-click the toggle to prevent browser from prefilling values
     }
   }
 
