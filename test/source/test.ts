@@ -16,9 +16,12 @@ import { Config } from './util';
 type GlobalBrowserGroup = 'compatibility' | 'trial';
 export type GlobalBrowser = { browsers: BrowserPool, beforeEachTest: () => Promise<void> };
 
+const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
+
 const TEST_TIMEOUT = 3 * 60 * 1000;
-const POOL_SIZE = 10;
-const POOL_SIZE_GLOBAL = 3;
+const POOL_SIZE = poolSizeOne ? 1 : 10;
+const POOL_SIZE_GLOBAL = poolSizeOne ? 1 : 3;
+console.log(`POOL_SIZE:${POOL_SIZE}, POOL_SIZE_GLOBAL:${POOL_SIZE_GLOBAL}\n`);
 
 const browserPool = new BrowserPool(POOL_SIZE, 'browserPool', false);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
