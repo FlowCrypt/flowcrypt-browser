@@ -625,7 +625,7 @@ export class PgpMsg {
   }
 
   static sign = async (signingPrv: OpenPGP.key.Key, data: string | Uint8Array): Promise<string> => {
-    const message = openpgp.message.fromBinary(Str.toUint8(data));
+    const message = openpgp.cleartext.fromText(Str.fromUint8(data));
     const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv] });
     return await openpgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
