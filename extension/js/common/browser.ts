@@ -315,22 +315,22 @@ export class Ui {
       show = !storage.hide_pass_phrases;
     }
     for (const id of passphraseInputIds) {
-      const passphraseInput = $('#' + id);
+      const passphraseInput = $(`#${id}`);
       passphraseInput.addClass('toggled_passphrase');
       if (show) {
-        passphraseInput.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + buttonHide + '</label>');
+        passphraseInput.after(`<label href="#" id="toggle_${id}" class="toggle_show_hide_pass_phrase" for="${id}">${buttonHide}</label>`);
         passphraseInput.attr('type', 'text');
       } else {
-        passphraseInput.after('<label href="#" id="toggle_' + id + '" class="toggle_show_hide_pass_phrase" for="' + id + '">' + buttonShow + '</label>');
+        passphraseInput.after(`<label href="#" id="toggle_${id}" class="toggle_show_hide_pass_phrase" for="${id}">${buttonShow}</label>`);
         passphraseInput.attr('type', 'password');
       }
-      $('#toggle_' + id).click(Ui.event.handle(target => {
+      $(`#toggle_${id}`).click(Ui.event.handle(target => {
         if (passphraseInput.attr('type') === 'password') {
-          $('#' + id).attr('type', 'text');
+          $(`#${id}`).attr('type', 'text');
           Xss.sanitizeRender(target, buttonHide);
           Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.handleErr);
         } else {
-          $('#' + id).attr('type', 'password');
+          $(`#${id}`).attr('type', 'password');
           Xss.sanitizeRender(target, buttonShow);
           Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.handleErr);
         }
