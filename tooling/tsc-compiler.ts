@@ -15,17 +15,21 @@ const tsconfigAbsDir = tsconfigAbsPath.replace(/\/[^/]+$/g, '');
 
 const getNameAndPos = (f: ts.FunctionLike) => {
   const sf = f.getSourceFile();
+  const { line, character } = sf.getLineAndCharacterOfPosition(f.pos);
   let name = f.name && f.name.getText();
-  if (!name && ts.isArrowFunction(f) && (ts.isVariableDeclaration(f.parent) || ts.isPropertyDeclaration(f.parent))) {
-    const firstIdentifier = f.parent.getChildren(sf).find(ts.isIdentifier);
-    if (firstIdentifier && firstIdentifier.getText()) {
-      name = `${firstIdentifier.getText()}`;
+  if (!name && ts.isArrowFunction(f)) {
+    if (ts.isVariableDeclaration(f.parent) || ts.isPropertyDeclaration(f.parent)) { // get the variable or property name anon f is assigned to
+      const firstIdentifier = f.parent.getChildren(sf).find(ts.isIdentifier);
+      if (firstIdentifier && firstIdentifier.getText()) {
+        name = firstIdentifier.getText();
+      }
+    } else if (ts.isPropertyAssignment(f.parent)) { // get property name anon f is assigned to
+      name = f.parent.name && f.parent.name.getText();
     }
   }
   if (!name) {
     name = `<anonymous>`;
   }
-  const { line, character } = sf.getLineAndCharacterOfPosition(f.pos);
   return `${name} (${sf.fileName.split('flowcrypt-browser').pop()}:${line + 1}:${character + 1})`;
 };
 
@@ -52,7 +56,6 @@ const preserveAsyncStackTracesTransformerFactory = () => {
               const origFuncContent = ts.createBlock((node.body as ts.FunctionBody).statements, true);
               (node.body as ts.FunctionBody).statements = ts.createNodeArray([ts.createTry(origFuncContent, catchClause, undefined)]);
             } else if (ts.isCallExpression(node.body) || ts.isAwaitExpression(node.body)) { // eg: `x.click(async () => whatever())` or `x.click(async () => await whatever())`
-              console.log(`replacing ${node.kind} => ${node.body.expression.kind} (${getNameAndPos(node)})`);
               const origFuncContent = ts.createBlock([ts.createReturn(node.body)], true);
               node.body = ts.createBlock([ts.createTry(origFuncContent, catchClause, undefined)], true);
             }
@@ -75,9 +78,9 @@ const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {
     if (diag.file) {
       const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start!);
       const message = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
-      console.log(`${diag.file.fileName} (${line + 1},${character + 1}): ${message}`);
+      console.error(`${diag.file.fileName} (${line + 1},${character + 1}): ${message}`);
     } else {
-      console.log(`${ts.flattenDiagnosticMessageText(diag.messageText, "\n")}`);
+      console.error(`${ts.flattenDiagnosticMessageText(diag.messageText, "\n")}`);
     }
   }
   if (allDiagnostics.length) {

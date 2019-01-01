@@ -56,10 +56,16 @@
     await wait();
   }
 
+  const obj = {
+    paramFunc: async (type: Type) => {
+      await asyncFunc(type);
+    },
+  };
+
   class ClassAsync {
     static staticConstAttrAsync = async (type: Type) => {
       await wait();
-      await asyncFunc(type);
+      await obj.paramFunc(type);
       await wait();
     }
     static async staticAsyncFunc(type: Type) {
@@ -105,6 +111,7 @@
         ' at asyncArrowConst ',
         ' at <async> asyncArrowConst ',
         ' at <async> asyncFunc ',
+        ' at <async> paramFunc ',
         ' at <async> staticConstAttrAsync ',
         ' at <async> staticAsyncFunc ',
       ]);
@@ -112,6 +119,7 @@
         'Error: Thrown[object][object Object]',
         ' at asyncArrowConst ',
         ' at <async> asyncFunc ',
+        ' at <async> paramFunc ',
         ' at <async> staticConstAttrAsync ',
         ' at <async> staticAsyncFunc ',
       ]);
