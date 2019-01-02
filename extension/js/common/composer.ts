@@ -444,6 +444,8 @@ export class Composer {
         } else if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
+        } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
+          this.S.cached('send_btn_note').text('Not saved (bad key)');
         } else if (Api.err.isNotFound(e) || (e instanceof AjaxError && e.status === 400 && String(e).indexOf('Message not a draft') !== -1)) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
