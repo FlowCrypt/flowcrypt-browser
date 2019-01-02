@@ -417,8 +417,9 @@ export class Google extends Api {
         allRawEmails.push(rawParsedRes.address);
       }
     }
-    const newValidResultPairs = rawParsedResults.filter(r => Str.isEmailValid(r.address));
-    const newValidResults = await Promise.all(newValidResultPairs.map(r => Store.dbContactObj(r.address, r.name, undefined, undefined, undefined, false, undefined)));
+    const newValidResults = await Promise.all(rawParsedResults
+      .filter(r => r.address && Str.isEmailValid(r.address))
+      .map(r => Store.dbContactObj(r.address!, r.name, undefined, undefined, undefined, false, undefined))); // r.address! because we .filter based on r.address being truthy
     const uniqueNewValidResults: Contact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {
