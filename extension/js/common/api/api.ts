@@ -259,7 +259,11 @@ export class Api {
     isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
     isReqTooLarge: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 413,
     isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500,
-    isSignificant: (e: any) => !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isAuthErr(e),
+    isBlockedByProxy: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 200 && e.responseText.indexOf('Access to this site is blocked') !== -1,
+    isSignificant: (e: any) => {
+      return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isAuthErr(e)
+        && !Api.err.isBlockedByProxy(e);
+    },
   };
 
   public static common = {
