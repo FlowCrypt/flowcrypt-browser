@@ -81,7 +81,7 @@ Catch.try(async () => {
   });
   BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, omitReadScope }: Bm.OpenGoogleAuthDialog) => {
     $('.featherlight-close').click();
-    await Settings.newGoogleAcctAuthPrompt(tabId, acctEmail, omitReadScope);
+    await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail, omitReadScope);
   });
   BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
@@ -110,7 +110,7 @@ Catch.try(async () => {
     if (addNewAcct) {
       $('.show_if_setup_not_done').css('display', 'initial');
       $('.hide_if_setup_not_done').css('display', 'none');
-      await Settings.newGoogleAcctAuthPrompt(tabId);
+      await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId);
     } else if (acctEmail) {
       $('.email-address').text(acctEmail);
       $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
@@ -226,10 +226,10 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         $('#status-row #status_google').text(`g:?:disconnected`).addClass('bad').attr('title', 'Not connected to Google Account, click to resolve.')
-          .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPrompt(tabId, acctEmail)));
+          .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail)));
       } else if (Api.err.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
-          .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPrompt(tabId, acctEmail)));
+          .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail)));
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         alert(Lang.account.googleAcctDisabled);
       } else if (Api.err.isNetErr(e)) {
@@ -322,9 +322,9 @@ Catch.try(async () => {
 
   $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/auth_denied.htm')));
 
-  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPrompt(tabId)));
+  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId)));
 
-  $('.action_google_auth').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPrompt(tabId, acctEmail)));
+  $('.action_google_auth').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail)));
 
   // $('.action_microsoft_auth').click(Ui.event.prevent('double', function() {
   //   new_microsoft_account_authentication_prompt(account_email);

@@ -105,6 +105,7 @@ export class Settings {
   }
 
   static openpgpKeyEncrypt = async (key: OpenPGP.key.Key, passphrase: string) => {
+    // todo: remove. new versions of OpenPGP.js check this, so this function is probably unnecessary
     if (!passphrase) {
       throw new Error("Encryption passphrase should not be empty");
     }
@@ -358,7 +359,7 @@ export class Settings {
     }
   }
 
-  static newGoogleAcctAuthPrompt = async (tabId: string, acctEmail?: string, omitReadScope = false) => {
+  static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, omitReadScope = false) => {
     const response = await GoogleAuth.newAuthPopup({ acctEmail, omitReadScope });
     if (response.result === 'Success' && response.acctEmail) {
       await Store.acctEmailsAdd(response.acctEmail);
@@ -371,9 +372,11 @@ export class Settings {
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
       }
     } else if (response.result === 'Denied' || response.result === 'Closed') {
-      Settings.renderSubPage(acctEmail, tabId, '/chrome/settings/modules/auth_denied.htm');
+      if (settingsTabId) {
+        Settings.renderSubPage(acctEmail, settingsTabId, '/chrome/settings/modules/auth_denied.htm');
+      }
     } else {
-      Catch.report('failed to log into google in newGoogleAcctAuthPrompt', response);
+      Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
       alert(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
       await Ui.time.sleep(1000);
       window.location.reload();
