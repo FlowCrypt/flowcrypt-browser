@@ -1,5 +1,7 @@
 <div>
 
+version 6.5.0 on January 4, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/302?closed=1" target="_blank">Fix pass phrase change dialog</a>
+
 version 6.4.9 on January 2, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/301?closed=1" target="_blank">Error handling</a>
 
 version 6.4.8 on January 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/300?closed=1" target="_blank">Fix signing</a>
