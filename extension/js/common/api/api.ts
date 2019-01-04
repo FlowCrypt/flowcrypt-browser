@@ -84,7 +84,7 @@ export class AjaxError extends ApiCallError {
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };
 
-  public xhr: any;
+  public xhr: RawAjaxError;
   public status: number;
   public url: string;
   public responseText: string;
