@@ -261,7 +261,7 @@ export class ControllablePage extends ControllableBase {
       this.page.on('dialog', resolve);
       setTimeout(() => reject(new Error('triggerAndWaitNewAlert timout - no alert')), 60 * 1000);
     });
-    await triggeringAction();
+    triggeringAction(); // ignoring await
     return await dialogPromise;
   }
 
