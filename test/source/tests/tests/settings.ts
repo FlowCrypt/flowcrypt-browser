@@ -85,4 +85,10 @@ export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithS
 
   ava.test.todo('settings - edit contact public key');
 
+  ava.test.todo('settings - change passphrase - in local storage');
+
+  ava.test.todo('settings - change passphrase - in session');
+
+  ava.test.todo('settings - change passphrase - unknown');
+
 };

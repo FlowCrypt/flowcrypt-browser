@@ -211,6 +211,33 @@ export class SettingsPageRecipe extends PageRecipe {
 
 }
 
+type DecryptMsgCheckContent$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPassphrase?: string };
+
+export class InboxPageRecipe extends PageRecipe {
+
+  public static decryptMsgCheckContent = async (browser: BrowserHandle, { acctEmail, threadId, enterPassphrase, expectedContent }: DecryptMsgCheckContent$opt) => {
+    const inboxPage = await browser.newPage(Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    await inboxPage.waitAll('iframe');
+    const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
+    await pgpBlockFrame.waitAll('@pgp-block-content');
+    await pgpBlockFrame.waitForSelTestState('ready');
+    if (enterPassphrase) {
+      await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
+      await inboxPage.waitAll('@dialog-passphrase');
+      const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
+      await ppFrame.waitAndType('@input-pass-phrase', enterPassphrase);
+      await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
+      await pgpBlockFrame.waitForSelTestState('ready');
+      await Util.sleep(1);
+    }
+    const content = await pgpBlockFrame.read('@pgp-block-content');
+    if (content.indexOf(expectedContent) === -1) {
+      throw new Error(`message did not decrypt`);
+    }
+  }
+
+}
+
 export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (browser: BrowserHandle, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}): Promise<ControllablePage> => {
