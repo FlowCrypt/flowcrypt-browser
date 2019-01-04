@@ -382,8 +382,17 @@ Catch.try(async () => {
         await doBackupOnEmailProvider(acctEmail, primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');
       } catch (e) {
-        Xss.sanitizeRender('#content', 'Connection failed, please <a href="#" class="reload">try again</a>.');
-        $('.reload').click(() => window.location.reload());
+        if (Api.err.isNetErr(e)) {
+          Xss.sanitizeRender('#content', 'Connection failed, please <a href="#" class="reload">try again</a>').find('.reload').click(() => window.location.reload());
+        } else if (Api.err.isAuthPopupNeeded(e)) {
+          Xss.sanitizeRender('#content', 'Need to reconnect to Google to save backup: <a href="#" class="auth">reconnect now</a>').find('.auth').click(async () => {
+            await GoogleAuth.newAuthPopup({ acctEmail });
+            window.location.reload();
+          });
+        } else {
+          Xss.sanitizeRender('#content', `Unknown error: ${String(e)}<br><a href="#" class="reload">try again</a>`).find('.reload').click(() => window.location.reload());
+          Catch.handleErr(e);
+        }
       }
     } else { // should never happen on this action. Just in case.
       displayBlock('step_3_manual');
