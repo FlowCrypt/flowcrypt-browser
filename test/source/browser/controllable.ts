@@ -256,8 +256,13 @@ export class ControllablePage extends ControllableBase {
     this.page = page;
   }
 
-  public triggerAndWaitNewAlert = async (triggeringAction: () => void): Promise<Dialog> => {
-    return new Promise(resolve => this.page.on('dialog', resolve) && triggeringAction()) as Promise<Dialog>;
+  public triggerAndWaitNewAlert = async (triggeringAction: () => Promise<void>): Promise<Dialog> => {
+    const dialogPromise: Promise<Dialog> = new Promise((resolve, reject) => {
+      this.page.on('dialog', resolve);
+      setTimeout(() => reject(new Error('triggerAndWaitNewAlert timout - no alert')), 60 * 1000);
+    });
+    await triggeringAction();
+    return await dialogPromise;
   }
 
   public waitForNavigationIfAny = async (seconds: number = 5) => {

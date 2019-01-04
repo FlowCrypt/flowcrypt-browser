@@ -13,17 +13,18 @@ export const defineDecryptTests = (testWithNewBrowser: TestWithBrowser, testWith
     }));
   }
 
-  ava.test('decrypt[global] - by entering pass phrase', testWithNewBrowser(async (browser, t) => {
+  ava.test('decrypt[global] - by entering pass phrase + remember in session', testWithNewBrowser(async (browser, t) => {
     const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
+    const threadId = '15f7f5630573be2d';
+    const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
+    const acctEmail = 'flowcrypt.compatibility@gmail.com';
     await BrowserRecipe.setUpFcCompatAcct(browser);
     const settingsPage = await browser.newPage(Url.extensionSettings());
     await SettingsPageRecipe.changePassphraseRequirement(settingsPage, pp, 'session');
-    await InboxPageRecipe.decryptMsgCheckContent(browser, {
-      acctEmail: 'flowcrypt.compatibility@gmail.com',
-      threadId: '15f7f5630573be2d',
-      enterPassphrase: Config.key('flowcrypt.compatibility.1pp1').passphrase,
-      expectedContent: 'The International DUBLIN Literary Award is an international literary award',
-    });
+    // requires pp entry
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId, expectedContent, enterPp: Config.key('flowcrypt.compatibility.1pp1').passphrase });
+    // now remembers pp in session
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId, expectedContent });
   }));
 
   ava.test.todo('decrypt[global] - by entering secondary pass phrase');

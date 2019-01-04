@@ -29,7 +29,7 @@ export class Util {
 
   public static sleep = (seconds: number) => new Promise(resolve => setTimeout(resolve, seconds * 1000));
 
-  public static random = () => Math.random().toString(36).substring(7);
+  public static lousyRandom = () => Math.random().toString(36).substring(2);
 
   public static htmlEscape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
 

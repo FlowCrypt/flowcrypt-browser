@@ -1,6 +1,6 @@
 import { Url, BrowserHandle } from '../browser';
 import { OauthPageRecipe, SettingsPageRecipe, SetupPageRecipe } from './page_recipe';
-import { Util } from '../util';
+import { Util, Config } from '../util';
 
 export class BrowserRecipe {
 
@@ -45,6 +45,14 @@ export class BrowserRecipe {
     await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
     await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
     await settingsPage.close();
+  }
+
+  public static setUpFcPpChangeAcct = async (browser: BrowserHandle) => {
+    const acctEmail = 'flowcrypt.test.key.imported@gmail.com';
+    const k = Config.key('flowcrypt.test.key.used.pgp');
+    const settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, acctEmail);
+    await SetupPageRecipe.manualEnter(settingsPage, k.title, { usedPgpBefore: false, submitPubkey: false });
+    return { acctEmail, k, settingsPage };
   }
 
   public static pgpBlockVerifyDecryptedContent = async (browser: BrowserHandle, url: string, expectedContents: string[], password?: string) => {

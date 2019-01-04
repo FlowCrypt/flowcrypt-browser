@@ -152,6 +152,24 @@ export class SettingsPageRecipe extends PageRecipe {
     await settingsPage.waitAndClick(`@action-switch-to-account(${acctEmail})`);
   }
 
+  public static changePassphrase = async (settingsPage: ControllablePage, currentPp: string | undefined, newPp: string) => {
+    const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
+    await securityFrame.waitAndClick('@action-change-passphrase-begin', { delay: 1 });
+    if (currentPp) {
+      await securityFrame.waitAndType('@input-current-pp', currentPp, { delay: 1 });
+      await securityFrame.waitAndClick('@action-confirm-current-pp', { delay: 1 });
+    }
+    await securityFrame.waitAndType('@input-new-pp', newPp, { delay: 1 });
+    await securityFrame.waitAndClick('@action-show-confirm-new-pp', { delay: 1 });
+    await securityFrame.waitAndType('@input-confirm-new-pp', newPp, { delay: 1 });
+    const alert = await settingsPage.triggerAndWaitNewAlert(() => securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 }));
+    expect(await alert.message()).to.contain('Now that you changed your pass phrase, you should back up your key');
+    await alert.accept();
+    await securityFrame.waitAll('@container-backup-dialog'); // offers a new backup
+    await Util.sleep(3);
+    await SettingsPageRecipe.closeDialog(settingsPage);
+  }
+
   public static changePassphraseRequirement = async (settingsPage: ControllablePage, passphrase: string, outcome: "session" | "storage") => {
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAll('@input-toggle-require-pass-phrase');
@@ -212,21 +230,21 @@ export class SettingsPageRecipe extends PageRecipe {
 
 }
 
-type DecryptMsgCheckContent$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPassphrase?: string };
+type DecryptMsgCheckContent$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string };
 
 export class InboxPageRecipe extends PageRecipe {
 
-  public static decryptMsgCheckContent = async (browser: BrowserHandle, { acctEmail, threadId, enterPassphrase, expectedContent }: DecryptMsgCheckContent$opt) => {
+  public static checkDecryptMsg = async (browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent }: DecryptMsgCheckContent$opt) => {
     const inboxPage = await browser.newPage(Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
-    if (enterPassphrase) {
+    if (enterPp) {
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await inboxPage.waitAll('@dialog-passphrase');
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
-      await ppFrame.waitAndType('@input-pass-phrase', enterPassphrase);
+      await ppFrame.waitAndType('@input-pass-phrase', enterPp);
       await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
       await pgpBlockFrame.waitForSelTestState('ready');
       await Util.sleep(1);
@@ -235,6 +253,7 @@ export class InboxPageRecipe extends PageRecipe {
     if (content.indexOf(expectedContent) === -1) {
       throw new Error(`message did not decrypt`);
     }
+    await inboxPage.close();
   }
 
 }

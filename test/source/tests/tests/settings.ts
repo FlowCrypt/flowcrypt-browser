@@ -1,9 +1,10 @@
 import { TestWithBrowser, TestWithGlobalBrowser } from '..';
-import { SettingsPageRecipe } from '../page_recipe';
+import { SettingsPageRecipe, SetupPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { Url } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { expect } from 'chai';
+import { BrowserRecipe } from '../browser_recipe';
 
 export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
@@ -85,19 +86,47 @@ export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithS
 
   ava.test.todo('settings - edit contact public key');
 
-  ava.test.todo('settings - change passphrase - in local storage');
+  ava.test('settings - change passphrase - current in local storage', testWithNewBrowser(async (browser, t) => {
+    const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(browser);
+    const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
+    await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp); // change pp and test
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted' });
+  }));
 
-  ava.test.todo('settings - change passphrase - in session');
+  ava.test('settings - change passphrase - current in session known', testWithNewBrowser(async (browser, t) => {
+    const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(browser);
+    const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
+    await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
+    // decrypt msg and enter pp so that it's remembered in session
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: k.passphrase });
+    // change pp - should not ask for pp because already in session
+    await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
+    // now it will remember the pass phrase so decrypts without asking
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted' });
+    // make it forget pass phrase by switching requirement to storage then back to session
+    await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'storage');
+    await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'session');
+    // test decrypt - should ask for new pass phrase
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp });
+  }));
 
-  ava.test.todo('settings - change passphrase - unknown');
+  ava.test.only('settings - change passphrase - current in session unknown', testWithNewBrowser(async (browser, t) => {
+    const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(browser);
+    const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
+    await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
+    // pp wiped after switching to session - should be needed to change pp
+    await SettingsPageRecipe.changePassphrase(settingsPage, k.passphrase, newPp);
+    // now it will remember the pass phrase so decrypts without asking
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted' });
+    // make it forget pass phrase by switching requirement to storage then back to session
+    await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'storage');
+    await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'session');
+    // test decrypt - should ask for new pass phrase
+    await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp });
+  }));
 
-  /**
-   * input-current-pp
-   * data-test="action-confirm-current-pp"
-   * input-new-pp
-   * action-show-confirm-new-pp
-   * input-confirm-new-pp
-   * action-confirm-new-pp
-   */
+  ava.test.todo('settings - change passphrase - mismatch curent pp');
+
+  ava.test.todo('settings - change passphrase - mismatch new pp');
 
 };
