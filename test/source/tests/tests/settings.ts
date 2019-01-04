@@ -110,7 +110,7 @@ export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithS
     await InboxPageRecipe.checkDecryptMsg(browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp });
   }));
 
-  ava.test.only('settings - change passphrase - current in session unknown', testWithNewBrowser(async (browser, t) => {
+  ava.test('settings - change passphrase - current in session unknown', testWithNewBrowser(async (browser, t) => {
     const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(browser);
     const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
     await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
