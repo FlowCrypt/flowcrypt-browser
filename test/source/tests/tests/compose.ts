@@ -61,7 +61,7 @@ export const defineComposeTests = (testWithNewBrowser: TestWithBrowser, testWith
     const composePage = await ComposePageRecipe.openStandalone(browser);
     // composePage.enable_debugging('choose-contact');
     await composePage.type('@input-to', 'human'); // test loading of contacts
-    await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
+    await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)'], { timeout: 30 });
     await composePage.waitAndClick('@action-select-contact(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });
     // todo - verify that the contact/pubkey is showing in green once clicked
     await composePage.click('@input-subject');

@@ -96,8 +96,8 @@ export class BrowserPool {
     if (i < 3) {
       t.log(`Retrying: ${String(e)}`);
     } else {
-      t.log(e instanceof Error ? e.stack : String(e));
-      t.fail('all test retries failed');
+      t.log(`Failed:   ${e instanceof Error ? e.stack : String(e)}`);
+      t.fail('[ALL RETRIES FAILED]');
     }
   }
 

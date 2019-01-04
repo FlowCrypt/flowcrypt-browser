@@ -86,10 +86,9 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAll('@input-compatibility-fix-expire-years');
       await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
       await settingsPage.waitAndClick('@action-fix-and-import-key');
-      await settingsPage.waitAndClick('@action-step4done-account-settings', { delay: 45 });
-    } else {
-      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      await settingsPage.waitAll('@action-step4done-account-settings', { timeout: 45 });
     }
+    await settingsPage.waitAndClick('@action-step4done-account-settings');
   }
 
   // tslint:disable-next-line:max-line-length
@@ -307,7 +306,7 @@ export class OauthPageRecipe extends PageRecipe {
       approve_button: '#submit_approve_access',
     };
     const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
-    await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd');
+    await oauthPage.waitAll('#Email, #submit_approve_access, #identifierId, .w6VTHd', { timeout: 45 });
     if (await oauthPage.target.$('#Email') !== null) { // 2016-style login
       await oauthPage.waitAll('#Email', { timeout: OauthPageRecipe.longTimeout });
       await oauthPage.waitAndType('#Email', auth.email);
