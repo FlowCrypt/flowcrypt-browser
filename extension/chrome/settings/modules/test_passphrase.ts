@@ -23,8 +23,15 @@ Catch.try(async () => {
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
+  const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
+  if (key.isDecrypted()) {
+    const setUpPpUrl = Env.urlCreate('change_passphrase.htm', { acctEmail, parentTabId });
+    Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
+    return;
+  }
+
   $('.action_verify').click(Ui.event.handle(async () => {
-    const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
+
     if (await Pgp.key.decrypt(key, [String($('#password').val())]) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
