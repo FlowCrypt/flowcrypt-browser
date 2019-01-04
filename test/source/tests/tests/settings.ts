@@ -91,4 +91,13 @@ export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithS
 
   ava.test.todo('settings - change passphrase - unknown');
 
+  /**
+   * input-current-pp
+   * data-test="action-confirm-current-pp"
+   * input-new-pp
+   * action-show-confirm-new-pp
+   * input-confirm-new-pp
+   * action-confirm-new-pp
+   */
+
 };
