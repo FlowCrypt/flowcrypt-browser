@@ -92,6 +92,15 @@ export class BrowserPool {
     cb().then(resolve, reject);
   })
 
+  private processTestError = (e: any, i: number, t: ava.ExecutionContext<{}>) => {
+    if (i < 3) {
+      t.log(`Retrying: ${String(e)}`);
+    } else {
+      t.log(e instanceof Error ? e.stack : String(e));
+      t.fail('all test retries failed');
+    }
+  }
+
   public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
     for (const i of [1, 2, 3]) {
       try {
@@ -103,11 +112,7 @@ export class BrowserPool {
           await browser.close();
         }
       } catch (e) {
-        if (i < 3) {
-          console.log(`Retrying: ${t.title} (${String(e)})\n${e.stack}`);
-        } else {
-          throw e;
-        }
+        this.processTestError(e, i, t);
       }
     }
   }
@@ -125,11 +130,7 @@ export class BrowserPool {
           await browser.closeAllPages();
         }
       } catch (e) {
-        if (i < 3) {
-          console.log(`Retrying: ${t.title} (${String(e)})\n${e.stack}`);
-        } else {
-          throw e;
-        }
+        this.processTestError(e, i, t);
       }
     }
   }
