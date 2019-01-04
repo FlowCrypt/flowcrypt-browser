@@ -110,7 +110,7 @@ export const defineComposeTests = (testWithNewBrowser: TestWithBrowser, testWith
     await ComposePageRecipe.fillMsg(composePage, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
     const fileInput = await composePage.target.$('input[type=file]');
     await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
-    await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+    await ComposePageRecipe.sendAndClose(composePage, 'test-pass', 90);
   }));
 
   ava.test('compose[global] - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {

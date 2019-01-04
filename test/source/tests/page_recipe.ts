@@ -86,8 +86,10 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAll('@input-compatibility-fix-expire-years');
       await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
       await settingsPage.waitAndClick('@action-fix-and-import-key');
+      await settingsPage.waitAndClick('@action-step4done-account-settings', { delay: 45 });
+    } else {
+      await settingsPage.waitAndClick('@action-step4done-account-settings');
     }
-    await settingsPage.waitAndClick('@action-step4done-account-settings');
   }
 
   // tslint:disable-next-line:max-line-length
@@ -279,15 +281,15 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.type('@input-body', `This is an automated puppeteer test: ${subject}`);
   }
 
-  public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined) => {
+  public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
     if (password) {
       await composePage.waitAndType('@input-password', 'test-pass');
       await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
     await Promise.race([
-      composePage.waitForSelTestState('closed', 60), // in case this was a new message compose
-      composePage.waitAny('@container-reply-msg-successful', { timeout: 60 }) // in case of reply
+      composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
+      composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
     ]);
     await composePage.close();
   }
