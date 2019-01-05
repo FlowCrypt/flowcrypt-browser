@@ -20,7 +20,7 @@ Catch.try(async () => {
   Xss.sanitizeRender('#status', 'Loading from keyserver<br/><br/><br/>' + Ui.spinner('green'));
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const primaryPubkeyArmored = primaryKi.public;
   let keyserverRes: PubkeySearchResult;

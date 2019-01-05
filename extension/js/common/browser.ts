@@ -9,7 +9,7 @@ import { Str, Value, Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './platform/store.js';
 import { Api } from './api/api.js';
-import { Pgp, Pwd, PgpMsg } from './core/pgp.js';
+import { Pgp, Pwd, PgpMsg, KeyInfo } from './core/pgp.js';
 import { mnemonic } from './core/mnemonic.js';
 import { Att } from './core/att.js';
 import { MsgBlock, KeyBlockType } from './core/mime.js';
@@ -251,6 +251,16 @@ export class Ui {
         });
       }
     });
+  }
+
+  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
+    if (!ki) {
+      const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
+      Xss.sanitizeRender($('#content').length ? '#content' : 'body', msg);
+      if (doThrow) {
+        throw new UnreportableError(msg);
+      }
+    }
   }
 
   public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {

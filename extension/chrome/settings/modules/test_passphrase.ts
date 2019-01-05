@@ -21,7 +21,7 @@ Catch.try(async () => {
   await Ui.passphraseToggle(['password']);
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
   if (key.isDecrypted()) {

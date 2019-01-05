@@ -169,7 +169,7 @@ Catch.try(async () => {
       const btnText = $(target).text();
       Xss.sanitizeRender(target, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
       await Settings.openpgpKeyEncrypt(prv, newPassphrase);
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
@@ -281,7 +281,7 @@ Catch.try(async () => {
   $('.action_manual_backup').click(Ui.event.prevent('double', async (target) => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     if (!await isMasterPrivateKeyEncrypted(primaryKi)) {
       alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
@@ -326,7 +326,7 @@ Catch.try(async () => {
       alert('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
-    Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     await doBackupOnEmailProvider(acctEmail, primaryKi.private);
     await writeBackupDoneAndRender(false, 'inbox');
   };
@@ -377,7 +377,7 @@ Catch.try(async () => {
     if (storage.setup_simple) {
       displayBlock('loading');
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
         await doBackupOnEmailProvider(acctEmail, primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');

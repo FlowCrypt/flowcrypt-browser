@@ -9,8 +9,8 @@ import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api } from './api/api.js';
-import { Pgp, KeyInfo } from './core/pgp.js';
-import { Catch, UnreportableError } from './platform/catch.js';
+import { Pgp } from './core/pgp.js';
+import { Catch } from './platform/catch.js';
 import { Google, GoogleAuth } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -314,16 +314,6 @@ export class Settings {
         }
       }));
     });
-  }
-
-  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
-    if (!ki) {
-      const msg = 'Cannot find primary key. Is FlowCrypt not set up yet?';
-      Xss.sanitizeRender('#content', `${msg} ${Ui.retryLink()}`);
-      if (doThrow) {
-        throw new UnreportableError(msg);
-      }
-    }
   }
 
   static promptToRetry = async (type: 'REQUIRED', e: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {

@@ -6,7 +6,6 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
-import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 
@@ -25,7 +24,7 @@ Catch.try(async () => {
   $('.action_view_update').attr('href', myKeyUpdateUrl);
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 

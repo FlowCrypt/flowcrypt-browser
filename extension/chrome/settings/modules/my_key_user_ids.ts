@@ -3,8 +3,7 @@
 'use strict';
 
 import { Store } from '../../../js/common/platform/store.js';
-import { Xss, Env } from '../../../js/common/browser.js';
-import { Settings } from '../../../js/common/settings.js';
+import { Xss, Env, Ui } from '../../../js/common/browser.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -19,7 +18,7 @@ Catch.try(async () => {
   $('.action_show_public_key').attr('href', myKeyUrl);
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 

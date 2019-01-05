@@ -239,7 +239,7 @@ Catch.try(async () => {
 
   const finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {

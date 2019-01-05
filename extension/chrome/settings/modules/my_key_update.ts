@@ -24,7 +24,7 @@ Catch.try(async () => {
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
 
-  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   $('.email').text(acctEmail);
   $('.key_words').text(primaryKi.keywords).attr('title', primaryKi.longid);

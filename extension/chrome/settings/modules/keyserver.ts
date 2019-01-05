@@ -122,7 +122,7 @@ Catch.try(async () => {
 
   const actionSubmitOrReqAttestation = async (email: string) => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       if (email === acctEmail) { // request attestation
         await Settings.saveAttestReq(acctEmail, 'CRYPTUP');

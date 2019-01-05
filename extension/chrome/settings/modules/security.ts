@@ -22,7 +22,7 @@ Catch.try(async () => {
   await Ui.passphraseToggle(['passphrase_entry']);
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
+  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
   if (!primaryKi) {
     return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   }

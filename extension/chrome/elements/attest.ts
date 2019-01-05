@@ -4,7 +4,6 @@
 
 import { Store } from '../../js/common/platform/store.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
-import { Settings } from '../../js/common/settings.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
 
@@ -20,7 +19,7 @@ Catch.try(async () => {
   const attestPacket = Env.urlParamRequire.string(uncheckedUrlParams, 'attestPacket');
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Settings.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
   const passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
 
