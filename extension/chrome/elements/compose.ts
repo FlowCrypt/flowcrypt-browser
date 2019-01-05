@@ -6,7 +6,7 @@ import { Store, ContactUpdate, DbContactFilter } from '../../js/common/platform/
 import { Value, Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
-import { Composer, ComposerUserError } from '../../js/common/composer.js';
+import { Composer } from '../../js/common/composer.js';
 import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
@@ -142,11 +142,8 @@ Catch.try(async () => {
     storageGetSubscription: () => Store.subscription(),
     storageGetKey: async (senderEmail: string): Promise<KeyInfo> => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      if (primaryKi) {
-        return primaryKi;
-      } else {
-        throw new ComposerUserError('FlowCrypt is not properly set up. No Public Key found in storage.');
-      }
+      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      return primaryKi;
     },
     storageSetDraftMeta: async (storeIfTrue: boolean, draftId: string, threadId: string, recipients: string[], subject: string) => {
       const draftStorage = await Store.getAcct(acctEmail, ['drafts_reply', 'drafts_compose']);
