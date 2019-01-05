@@ -135,8 +135,12 @@ export class BgAttests {
     if (prv.isDecrypted()) {
       throw new AttestError('Will not attest unprotected key', attestPacketText, acctEmail);
     }
-    if (await Pgp.key.decrypt(prv, [passphrase || storedPassphrase || '']) !== true) {
-      throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attestPacketText, acctEmail);
+    try {
+      if (await Pgp.key.decrypt(prv, [passphrase || storedPassphrase || '']) !== true) {
+        throw new AttestError('Missing pass phrase to process this attest message.\n\nIt will be processed automatically later.', attestPacketText, acctEmail);
+      }
+    } catch (e) {
+      throw new AttestError(`Error decrypting key: ${String(e)}`, attestPacketText, acctEmail);
     }
     const expectedFingerprint = prv.primaryKey.getFingerprint().toUpperCase();
     const expectedEmailHash = await Pgp.hash.doubleSha1Upper(Str.parseEmail(acctEmail).email);
