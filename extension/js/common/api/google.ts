@@ -30,7 +30,7 @@ export class Google extends Api {
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
   public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup',
     'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
-  private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 6000;
+  private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;
 
   private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {
     const data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
