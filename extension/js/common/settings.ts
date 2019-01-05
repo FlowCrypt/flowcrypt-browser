@@ -350,24 +350,37 @@ export class Settings {
   }
 
   static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, omitReadScope = false) => {
-    const response = await GoogleAuth.newAuthPopup({ acctEmail, omitReadScope });
-    if (response.result === 'Success' && response.acctEmail) {
-      await Store.acctEmailsAdd(response.acctEmail);
-      const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
-      if (storage.setup_done) { // this was just an additional permission
-        alert('You\'re all set.');
-        window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
+    try {
+      const response = await GoogleAuth.newAuthPopup({ acctEmail, omitReadScope });
+      if (response.result === 'Success' && response.acctEmail) {
+        await Store.acctEmailsAdd(response.acctEmail);
+        const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
+        if (storage.setup_done) { // this was just an additional permission
+          alert('You\'re all set.');
+          window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
+        } else {
+          await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
+          window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
+        }
+      } else if (response.result === 'Denied' || response.result === 'Closed') {
+        if (settingsTabId) {
+          Settings.renderSubPage(acctEmail, settingsTabId, '/chrome/settings/modules/auth_denied.htm');
+        }
       } else {
-        await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
-        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
+        Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
+        alert(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
+        await Ui.time.sleep(1000);
+        window.location.reload();
       }
-    } else if (response.result === 'Denied' || response.result === 'Closed') {
-      if (settingsTabId) {
-        Settings.renderSubPage(acctEmail, settingsTabId, '/chrome/settings/modules/auth_denied.htm');
+    } catch (e) {
+      if (Api.err.isNetErr(e)) {
+        alert('Could not complete due to network error. Please try again.');
+      } else if (Api.err.isMailOrAcctDisabled(e)) {
+        alert('Your Google account or Gmail service is disabled. Please check your Google account settings.');
+      } else {
+        Catch.handleErr(e);
+        alert(`Unknown error happened when connecting to Google: ${String(e)}`);
       }
-    } else {
-      Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
-      alert(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
       await Ui.time.sleep(1000);
       window.location.reload();
     }
