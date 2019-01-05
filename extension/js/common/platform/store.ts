@@ -9,7 +9,7 @@ import { SubscriptionInfo } from '../api/api.js';
 import { BrowserMsg } from '../extension.js';
 import { Product, PaymentMethod, ProductLevel } from '../account.js';
 import { Env } from '../browser.js';
-import { Catch } from './catch.js';
+import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
@@ -387,6 +387,8 @@ export class Store {
       return new StoreFailedError(`db: ${exception.message}`);
     } else if (/IO error: .+: Unable to create sequential file/.test(exception.message)) {
       return new StoreCorruptedError(`storage.local: ${exception.message}`);
+    } else if (/The browser is shutting down/.test(exception.message)) {
+      return new UnreportableError(exception.message);
     } else {
       Catch.handleErr(exception);
       return new StoreDeniedError(exception.message);
