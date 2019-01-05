@@ -3,6 +3,7 @@
 'use strict';
 
 import { Env } from '../browser.js';
+import { Store } from '../platform/store.js';
 
 export const showFatalError = (reason: 'storage_undefined') => {
   const url = chrome.extension.getURL(`chrome/settings/fatal.htm?reason=${reason}`);
@@ -31,7 +32,7 @@ export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise(
       if (typeof result !== 'undefined') {
         resolve(result);
       } else if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
+        reject(Store.errCategorize(chrome.runtime.lastError));
       } else {
         reject(new Error(`storageLocalGet(${keys.join(',')}) produced undefined result without an error`));
       }

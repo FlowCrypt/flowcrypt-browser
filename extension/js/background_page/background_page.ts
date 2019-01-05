@@ -2,15 +2,15 @@
 
 'use strict';
 
-import { Store, StoreDbCorruptedError, StoreDbDeniedError, StoreDbFailedError } from '../common/platform/store.js';
-import { Value, Dict } from '../common/core/common.js';
+import { Store } from '../common/platform/store.js';
 import { BgExec, BrowserMsg, Bm } from '../common/extension.js';
 import { BgAttests } from './attests.js';
 import { injectFcIntoWebmailIfNeeded } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
 import { Catch } from '../common/platform/catch.js';
-import { Env, UrlParam } from '../common/browser.js';
+import { Env } from '../common/browser.js';
 import { GoogleAuth } from '../common/api/google.js';
+import { BgUtils } from './bgutils.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -27,38 +27,21 @@ chrome.runtime.onInstalled.addListener(event => {
 
   let db: IDBDatabase;
 
-  await migrateGlobal();
-  await Store.setGlobal({ version: Number(Catch.version('int')) });
+  try {
+    await migrateGlobal();
+    await Store.setGlobal({ version: Number(Catch.version('int')) });
+  } catch (e) {
+    await BgUtils.handleStoreErr(e);
+  }
+
   const storage = await Store.getGlobal(['settings_seen', 'errors']);
 
-  const openExtensionTab = async (url: string) => {
-    const openedTab = await getFcSettingsTabIdIfOpen();
-    if (!openedTab) {
-      chrome.tabs.create({ url });
-    } else {
-      chrome.tabs.update(openedTab, { url, active: true });
-    }
-  };
-
-  const openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
-    const basePath = chrome.extension.getURL(`chrome/settings/${path}`);
-    const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
-    if (acctEmail) {
-      await openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams }));
-    } else if (addNewAcct) {
-      await openExtensionTab(Env.urlCreate(basePath, { addNewAcct }));
-    } else {
-      const acctEmails = await Store.acctEmailsGet();
-      await openExtensionTab(Env.urlCreate(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
-    }
-  };
-
   const openSettingsPageHandler: Bm.ResponselessHandler = async ({ page, path, pageUrlParams, addNewAcct, acctEmail }: Bm.Settings) => {
-    await openSettingsPage(path, acctEmail, page, pageUrlParams, addNewAcct === true);
+    await BgUtils.openSettingsPage(path, acctEmail, page, pageUrlParams, addNewAcct === true);
   };
 
   const openInboxPageHandler: Bm.ResponselessHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }) => {
-    await openExtensionTab(Env.urlCreate(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
+    await BgUtils.openExtensionTab(Env.urlCreate(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
   };
 
   const getActiveTabInfo = (message: {}, sender: Bm.Sender, respond: (r: Bm.Res.GetActiveTabInfo) => void) => {
@@ -77,19 +60,6 @@ chrome.runtime.onInstalled.addListener(event => {
       }
     });
   };
-
-  const getFcSettingsTabIdIfOpen = (): Promise<number | undefined> => new Promise(resolve => {
-    chrome.tabs.query({ currentWindow: true }, tabs => {
-      const extension = chrome.extension.getURL('/');
-      for (const tab of tabs) {
-        if (Value.is(extension).in(tab.url || '')) {
-          resolve(tab.id);
-          return;
-        }
-      }
-      resolve(undefined);
-    });
-  });
 
   const updateUninstallUrl: Bm.ResponselessHandler = async () => {
     const acctEmails = await Store.acctEmailsGet();
@@ -111,21 +81,14 @@ chrome.runtime.onInstalled.addListener(event => {
   };
 
   if (!storage.settings_seen) {
-    await openSettingsPage('initial.htm'); // called after the very first installation of the plugin
+    await BgUtils.openSettingsPage('initial.htm'); // called after the very first installation of the plugin
     await Store.setGlobal({ settings_seen: true });
   }
 
   try {
     db = await Store.dbOpen(); // takes 4-10 ms first time
   } catch (e) {
-    if (e instanceof StoreDbCorruptedError) {
-      await openSettingsPage('fatal.htm?reason=db_corrupted');
-    } else if (e instanceof StoreDbDeniedError) {
-      await openSettingsPage('fatal.htm?reason=db_denied');
-    } else if (e instanceof StoreDbFailedError) {
-      await openSettingsPage('fatal.htm?reason=db_failed');
-    }
-    return;
+    await BgUtils.handleStoreErr(e);
   }
 
   BrowserMsg.bgAddListener('bg_exec', BgExec.bgReqHandler);

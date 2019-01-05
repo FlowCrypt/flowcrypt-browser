@@ -121,11 +121,11 @@ export class Subscription implements SubscriptionInfo {
   }
 }
 
-export class StoreDbCorruptedError extends Error { }
+export class StoreCorruptedError extends Error { }
 
-export class StoreDbDeniedError extends Error { }
+export class StoreDeniedError extends Error { }
 
-export class StoreDbFailedError extends Error { }
+export class StoreFailedError extends Error { }
 
 export class Store {
 
@@ -372,17 +372,24 @@ export class Store {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  private static dbErrCategorize = (exception: Error, errStack: string): Error => {
-    exception.stack = errStack.replace(/^Error/, String(exception));
-    if (exception.message === 'Internal error opening backing store for indexedDB.open.') {
-      return new StoreDbCorruptedError(exception.message);
-    } else if (exception.message === 'A mutation operation was attempted on a database that did not allow mutations.') {
-      return new StoreDbDeniedError(exception.message);
-    } else if (exception.message === 'The operation failed for reasons unrelated to the database itself and not covered by any other error code.') {
-      return new StoreDbFailedError(exception.message);
+  public static errCategorize = (err: any): Error => {
+    let exception: Error;
+    if (err instanceof Error) {
+      exception = err;
+    } else {
+      exception = new Error(String(err).replace('Error: ', ''));
+    }
+    if (/Internal error opening backing store for indexedDB.open/.test(exception.message)) {
+      return new StoreCorruptedError(`db: ${exception.message}`);
+    } else if (/A mutation operation was attempted on a database that did not allow mutations/.test(exception.message)) {
+      return new StoreDeniedError(`db: ${exception.message}`);
+    } else if (/The operation failed for reasons unrelated to the database itself and not covered by any other error code/.test(exception.message)) {
+      return new StoreFailedError(`db: ${exception.message}`);
+    } else if (/IO error: .+: Unable to create sequential file/.test(exception.message)) {
+      return new StoreCorruptedError(`storage.local: ${exception.message}`);
     } else {
       Catch.handleErr(exception);
-      return new StoreDbDeniedError(exception.message);
+      return new StoreDeniedError(exception.message);
     }
   }
 
@@ -404,9 +411,8 @@ export class Store {
         }
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
-      const stackFill = String((new Error()).stack);
-      openDbReq.onblocked = () => reject(Store.dbErrCategorize(openDbReq.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
-      openDbReq.onerror = () => reject(Store.dbErrCategorize(openDbReq.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
+      openDbReq.onblocked = () => reject(Store.errCategorize(openDbReq.error));
+      openDbReq.onerror = () => reject(Store.errCategorize(openDbReq.error));
     });
   }
 
@@ -477,8 +483,7 @@ export class Store {
         const contactsTable = tx.objectStore('contacts');
         contactsTable.put(contact);
         tx.oncomplete = () => resolve();
-        const stackFill = String((new Error()).stack);
-        tx.onabort = () => reject(Store.dbErrCategorize(tx.error, stackFill));
+        tx.onabort = () => reject(Store.errCategorize(tx.error));
       }
     }
   })
@@ -520,8 +525,7 @@ export class Store {
             contact.last_use || undefined
           ));
           tx.oncomplete = Catch.try(resolve);
-          const stackFill = String((new Error()).stack);
-          tx.onabort = () => reject(Store.dbErrCategorize(tx.error, stackFill));
+          tx.onabort = () => reject(Store.errCategorize(tx.error));
         }
       }
     });
@@ -541,8 +545,7 @@ export class Store {
             tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid[0]);
           }
           tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : undefined])); // tslint:disable-line:no-unsafe-any
-          const stackFill = String((new Error()).stack);
-          tx.onerror = () => reject(Store.dbErrCategorize(tx.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
+          tx.onerror = () => reject(Store.errCategorize(tx.error!)); // todo - added ! after ts3 upgrade - investigate
         } else {
           const results: (Contact | undefined)[] = [];
           for (const singleEmailOrLongid of emailOrLongid) {
@@ -599,8 +602,7 @@ export class Store {
               cursor.continue(); // tslint:disable-line:no-unsafe-any
             }
           });
-          const stackFill = String((new Error()).stack);
-          search.onerror = () => reject(Store.dbErrCategorize(search!.error!, stackFill)); // todo - added ! after ts3 upgrade - investigate
+          search.onerror = () => reject(Store.errCategorize(search!.error!)); // todo - added ! after ts3 upgrade - investigate
         }
       }
     });
