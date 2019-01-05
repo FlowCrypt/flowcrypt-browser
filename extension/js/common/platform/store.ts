@@ -387,6 +387,8 @@ export class Store {
       return new StoreFailedError(`db: ${exception.message}`);
     } else if (/IO error: .+: Unable to create sequential file/.test(exception.message)) {
       return new StoreCorruptedError(`storage.local: ${exception.message}`);
+    } else if (/IO error: .+LOCK: No further details/.test(exception.message)) {
+      return new StoreFailedError(`storage.local: ${exception.message}`);
     } else if (/The browser is shutting down/.test(exception.message)) {
       return new UnreportableError(exception.message);
     } else {
