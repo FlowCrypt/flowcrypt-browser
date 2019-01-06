@@ -223,7 +223,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         this.hideAtt(attSel, attsContainerInner);
         nRenderedAtts--;
         if (treatAs === 'encrypted') { // actual encrypted attachment - show it
-          attsContainerInner.prepend(this.factory.embeddedAtta(a)); // xss-safe-factory
+          attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
           nRenderedAtts++;
         } else if (treatAs === 'message') {
           const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name

@@ -49,7 +49,7 @@ interface ComposerAppFunctionsInterface {
   renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
   renderHelpDialog: () => void;
   renderSendingAddrDialog: () => void;
-  factoryAtt: (att: Att) => string;
+  factoryAtt: (att: Att, isEncrypted: boolean) => string;
   closeMsg: () => void;
 }
 
@@ -1405,7 +1405,7 @@ export class Composer {
     if (msg.atts.length) {
       this.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
         a.msgId = msgId;
-        return this.app.factoryAtt(a);
+        return this.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
     this.resizeReplyBox();
@@ -1543,7 +1543,7 @@ export class Composer {
       renderHelpDialog: () => undefined,
       renderSendingAddrDialog: () => undefined,
       closeMsg: () => undefined,
-      factoryAtt: (att: Att) => `<div>${att.name}</div>`,
+      factoryAtt: (att: Att, isEncrypted: boolean) => `<div>${att.name}</div>`,
     };
   }
 

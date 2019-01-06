@@ -379,7 +379,7 @@ Catch.try(async () => {
       }
       const { atts } = await Mime.decode(m.rawBytes!);
       if (atts.length) {
-        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(factory.embeddedAtta).join('')}</div>`;
+        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(a => factory.embeddedAtta(a, true)).join('')}</div>`;
       }
       r = `<p class="message_header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrapMsg(htmlId, r)); // xss-safe-factory

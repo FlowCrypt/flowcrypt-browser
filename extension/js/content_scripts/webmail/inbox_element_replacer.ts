@@ -109,7 +109,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
         const attSel = (attsContainer as JQuery<HTMLElement>).find(this.getAttSel(a.name)).first();
         this.hideAtt(attSel, attsContainer);
         if (treatAs === 'encrypted') { // actual encrypted attachment - show it
-          (attsContainer as JQuery<HTMLElement>).prepend(this.factory.embeddedAtta(a)); // xss-safe-factory
+          (attsContainer as JQuery<HTMLElement>).prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
         } else if (treatAs === 'message') {
           msgEl.append(this.factory.embeddedMsg('', msgId, false, senderEmail || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js

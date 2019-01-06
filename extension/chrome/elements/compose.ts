@@ -246,7 +246,7 @@ Catch.try(async () => {
     renderHelpDialog: () => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/help.htm' }),
     renderSendingAddrDialog: () => ($ as JQS).featherlight({ iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500 }),
     closeMsg,
-    factoryAtt: (att: Att) => factory.embeddedAtta(att),
+    factoryAtt: (att: Att, isEncrypted: boolean) => factory.embeddedAtta(att, isEncrypted),
   }, processedUrlParams, subscriptionWhenPageWasOpened);
 
   BrowserMsg.addListener('close_dialog', () => {

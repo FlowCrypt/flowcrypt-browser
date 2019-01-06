@@ -730,11 +730,13 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/sending_address.htm'), { placement });
   }
 
-  srcPgpAttIframe = (a: Att) => {
+  srcPgpAttIframe = (a: Att, isEncrypted: boolean) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
     }
-    return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), { frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url });
+    return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), {
+      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url, isEncrypted
+    });
   }
 
   srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
@@ -801,8 +803,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcVerificationDialog(verifEmailText), ['short', 'embedded'], { scrolling: 'no' });
   }
 
-  embeddedAtta = (meta: Att) => {
-    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta)) });
+  embeddedAtta = (meta: Att, isEncrypted: boolean) => {
+    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted)) });
   }
 
   embeddedMsg = (armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
