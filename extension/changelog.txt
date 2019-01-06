@@ -1,5 +1,7 @@
 <div>
 
+version 6.5.2 on January 6, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/304?closed=1" target="_blank">Fix storage errors handling</a>
+
 version 6.5.1 on January 6, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/303?closed=1" target="_blank">Unicode fix</a>
 
 version 6.5.0 on January 4, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/302?closed=1" target="_blank">Fix pass phrase change dialog</a>
