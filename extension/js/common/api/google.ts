@@ -12,6 +12,7 @@ import { Mime, SendableMsgBody } from '../core/mime.js';
 import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
+import { Buf } from '../core/buf.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string };
@@ -115,14 +116,14 @@ export class Google extends Api {
     }),
     draftCreate: (acctEmail: string, mimeMsg: string, threadId: string): Promise<R.GmailDraftCreate> => Google.gmailCall(acctEmail, 'POST', 'drafts', {
       message: {
-        raw: Str.base64urlEncode(mimeMsg),
+        raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(),
         threadId,
       },
     }),
     draftDelete: (acctEmail: string, id: string): Promise<R.GmailDraftDelete> => Google.gmailCall(acctEmail, 'DELETE', 'drafts/' + id, undefined),
     draftUpdate: (acctEmail: string, id: string, mimeMsg: string): Promise<R.GmailDraftUpdate> => Google.gmailCall(acctEmail, 'PUT', `drafts/${id}`, {
       message: {
-        raw: Str.base64urlEncode(mimeMsg),
+        raw: Buf.fromUtfStr(mimeMsg).toBase64UrlStr(),
       },
     }),
     draftGet: (acctEmail: string, id: string, format: GmailResponseFormat = 'full'): Promise<R.GmailDraftGet> => Google.gmailCall(acctEmail, 'GET', `drafts/${id}`, {
@@ -143,19 +144,26 @@ export class Google extends Api {
       q,
       includeSpamTrash: includeDeleted,
     }),
-    msgGet: (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
-      format: format || 'full',
-    }),
+    msgGet: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => {
+      const r = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
+        format: format || 'full'
+      }) as R.GmailMsgRaw;
+      if (typeof r.raw === 'string') {
+        (r as R.GmailMsg).rawBytes = Buf.fromBase64UrlStr(r.raw);
+        delete r.raw;
+      }
+      return r as R.GmailMsg;
+    },
     msgsGet: (acctEmail: string, msgIds: string[], format: GmailResponseFormat): Promise<R.GmailMsg[]> => {
       return Promise.all(msgIds.map(id => Google.gmail.msgGet(acctEmail, id, format)));
     },
     labelsGet: (acctEmail: string): Promise<R.GmailLabels> => Google.gmailCall(acctEmail, 'GET', `labels`, {}),
     attGet: async (acctEmail: string, msgId: string, attId: string, progressCb?: ProgressCb): Promise<R.GmailAtt> => {
-      const r = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb }) as R.GmailAtt;
-      r.data = Str.base64urlDecode(r.data);
-      return r;
+      type RawGmailAttRes = { attachmentId: string, size: number, data: string };
+      const { attachmentId, size, data } = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb }) as RawGmailAttRes;
+      return { attachmentId, size, data: Buf.fromBase64UrlStr(data) };
     },
-    attGetChunk: (acctEmail: string, messageId: string, attId: string): Promise<string> => new Promise(async (resolve, reject) => {
+    attGetChunk: (acctEmail: string, messageId: string, attId: string): Promise<Buf> => new Promise(async (resolve, reject) => {
       const minBytes = 1000;
       let processed = 0;
       const processChunkAndResolve = (chunk: string) => {
@@ -182,7 +190,7 @@ export class Google extends Api {
           }
           for (let i = 0; parsedJsonDataField && i < 50; i++) {
             try {
-              resolve(Str.base64urlDecode(parsedJsonDataField)); // tslint:disable-line:no-unsafe-any
+              resolve(Buf.fromBase64UrlStr(parsedJsonDataField)); // tslint:disable-line:no-unsafe-any
               return;
             } catch (e) {
               // the chunk of data may have been cut at an inconvenient index
@@ -326,11 +334,11 @@ export class Google extends Api {
       if (format === 'full') {
         const bodies = Google.gmail.findBodies(gmailMsg);
         const atts = Google.gmail.findAtts(gmailMsg);
-        const fromTextBody = Pgp.armor.clip(Str.base64urlDecode(bodies['text/plain'] || ''));
+        const fromTextBody = Pgp.armor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
         if (fromTextBody) {
           return fromTextBody;
         }
-        const fromHtmlBody = Pgp.armor.clip(Xss.htmlSanitizeAndStripAllTags(Str.base64urlDecode(bodies['text/plain'] || ''), '\n'));
+        const fromHtmlBody = Pgp.armor.clip(Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n'));
         if (fromHtmlBody) {
           return fromHtmlBody;
         }
@@ -338,9 +346,9 @@ export class Google extends Api {
           for (const att of atts) {
             if (att.treatAs() === 'message') {
               await Google.gmail.fetchAtts(acctEmail, [att]);
-              const armoredMsg = Pgp.armor.clip(att.asText());
+              const armoredMsg = Pgp.armor.clip(att.getData().toUtfStr());
               if (!armoredMsg) {
-                throw new FormatError('Problem extracting armored message', att.asText());
+                throw new FormatError('Problem extracting armored message', att.getData().toUtfStr());
               }
               return armoredMsg;
             }
@@ -350,16 +358,16 @@ export class Google extends Api {
           throw new FormatError('No attachments', JSON.stringify(gmailMsg.payload, undefined, 2));
         }
       } else { // format === raw
-        const mimeMsg = await Mime.decode(Str.base64urlDecode(gmailMsg.raw!));
+        const mimeMsg = await Mime.decode(gmailMsg.rawBytes!);
         if (mimeMsg.text !== undefined) {
           const armoredMsg = Pgp.armor.clip(mimeMsg.text); // todo - the message might be in attachments
           if (armoredMsg) {
             return armoredMsg;
           } else {
-            throw new FormatError('Could not find armored message in parsed raw mime', Str.base64urlDecode(gmailMsg.raw!));
+            throw new FormatError('Could not find armored message in parsed raw mime', gmailMsg.rawBytes!.toUtfStr());
           }
         } else {
-          throw new FormatError('No text in parsed raw mime', Str.base64urlDecode(gmailMsg.raw!));
+          throw new FormatError('No text in parsed raw mime', gmailMsg.rawBytes!.toUtfStr());
         }
       }
     },
@@ -382,7 +390,7 @@ export class Google extends Api {
       const keys: OpenPGP.key.Key[] = [];
       for (const att of atts) {
         try {
-          const { keys: [prv] } = await openpgp.key.readArmored(att.asText());
+          const { keys: [prv] } = await openpgp.key.readArmored(att.getData().toUtfStr());
           if (prv.isPrivate()) {
             keys.push(prv);
           }

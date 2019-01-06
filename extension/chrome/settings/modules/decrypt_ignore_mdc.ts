@@ -7,6 +7,7 @@ import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
+import { Buf } from '../../../js/common/core/buf.js';
 
 declare const openpgp: typeof OpenPGP;
 openpgp.config.ignore_mdc_error = true; // will only affect OpenPGP in local frame
@@ -33,9 +34,9 @@ Catch.try(async () => {
     }
     origContent = $(self).html();
     Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
-    const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted);
+    const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(acctEmail), Buf.fromUtfStr(encrypted));
     if (result.success) {
-      alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.text!}`);
+      alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.uint8!.toUtfStr()}`);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       $('.passphrase_dialog').html(factory.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
     } else {

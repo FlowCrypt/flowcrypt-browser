@@ -45,13 +45,13 @@ export class Browser {
   }
 
   public static objUrlConsume = async (url: string) => {
-    const uint8 = await Api.download(url);
+    const buf = await Api.download(url);
     window.URL.revokeObjectURL(url);
-    return uint8;
+    return buf;
   }
 
   public static saveToDownloads = (att: Att, renderIn?: JQuery<HTMLElement>) => {
-    const blob = new Blob([att.data()], { type: att.type });
+    const blob = new Blob([att.getData()], { type: att.type });
     if (window.navigator && window.navigator.msSaveOrOpenBlob) {
       window.navigator.msSaveBlob(blob, att.name);
     } else {
@@ -732,7 +732,7 @@ export class XssSafeFactory {
 
   srcPgpAttIframe = (a: Att) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
-      a.url = Browser.objUrlCreate(a.asBytes());
+      a.url = Browser.objUrlCreate(a.getData());
     }
     return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), { frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url });
   }
@@ -951,13 +951,14 @@ export class KeyImportUi {
     attach.initAttDialog('fineuploader', 'fineuploader_button');
     attach.setAttAddedCb(async file => {
       let prv: OpenPGP.key.Key | undefined;
-      if (Value.is(Pgp.armor.headers('privateKey').begin).in(file.asText())) {
-        const firstPrv = Pgp.armor.detectBlocks(file.asText()).blocks.filter(b => b.type === 'privateKey')[0];
+      const utf = file.getData().toUtfStr();
+      if (Value.is(Pgp.armor.headers('privateKey').begin).in(utf)) {
+        const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
         if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
           prv = (await openpgp.key.readArmored(firstPrv.content)).keys[0];
         }
       } else {
-        prv = (await openpgp.key.read(file.asBytes())).keys[0];
+        prv = (await openpgp.key.read(file.getData())).keys[0];
       }
       if (typeof prv !== 'undefined') {
         $('.input_private_key').val(prv.armor()).change().prop('disabled', true);

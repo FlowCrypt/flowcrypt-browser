@@ -95,7 +95,7 @@ Catch.try(async () => {
       Xss.sanitizeRender(S.cached('status'), 'Updating ' + Ui.spinner('green'));
       const update: Dict<Serializable> = { name: S.cached('input_name').val(), intro: S.cached('input_intro').val() };
       if (newPhotoFile) {
-        update.photo_content = btoa(newPhotoFile.asText());
+        update.photo_content = newPhotoFile.getData().toBase64Str();
       }
       try {
         await Api.fc.accountUpdate(update);

@@ -8,6 +8,7 @@ import { FlatTypes } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
+import { Buf } from './core/buf.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
@@ -322,8 +323,6 @@ export class BrowserMsg {
 
 export class BgExec {
 
-  private static MAX_MESSAGE_SIZE = 1024 * 1024;
-
   public static bgReqHandler: Bm.RespondingHandler = async (message: Bm.BgExec, sender, respond: (r: Bm.Res.BgExec) => void) => {
     try {
       const args = await Promise.all(BgExec.argObjUrlsConsume(message.args));
@@ -351,11 +350,11 @@ export class BgExec {
     }
   }
 
-  public static pgpMsgDiagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = (privateKis: KeyInfo[], message: string) => {
+  public static pgpMsgDiagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = (privateKis: KeyInfo[], message: Uint8Array) => {
     return BgExec.requestToProcessInBg('PgpMsg.diagnosePubkeys', [privateKis, message]) as Promise<DiagnoseMsgPubkeysResult>;
   }
 
-  public static pgpMsgType: PgpMsgMethod.Type = (fileChunk: string) => { // omitted "|Uint8Array" - in case there are special cases in BgExec
+  public static pgpMsgType: PgpMsgMethod.Type = (fileChunk: Uint8Array) => { // omitted "|Uint8Array" - in case there are special cases in BgExec
     return BgExec.requestToProcessInBg('PgpMsg.type', [fileChunk]) as Promise<PgpMsgTypeResult>;
   }
 
@@ -363,14 +362,10 @@ export class BgExec {
     return BgExec.requestToProcessInBg('Pgp.hash.challengeAnswer', [password]) as Promise<string>;
   }
 
-  public static pgpMsgDecrypt: PgpMsgMethod.Decrypt = async (kisWithPp, encryptedData, msgPwd, getUint8 = false) => {
-    const result = await BgExec.requestToProcessInBg('PgpMsg.decrypt', [kisWithPp, encryptedData, msgPwd, getUint8]) as DecryptResult;
+  public static pgpMsgDecrypt: PgpMsgMethod.Decrypt = async (kisWithPp, encryptedData, msgPwd) => {
+    const result = await BgExec.requestToProcessInBg('PgpMsg.decrypt', [kisWithPp, encryptedData, msgPwd]) as DecryptResult;
     if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
-      if (result.content.blob.blob_type === 'text') {
-        result.content.text = Str.fromUint8(await Browser.objUrlConsume(result.content.blob.blob_url));
-      } else {
-        result.content.uint8 = await Browser.objUrlConsume(result.content.blob.blob_url);
-      }
+      result.content.uint8 = await Browser.objUrlConsume(result.content.blob.blob_url);
       result.content.blob = undefined;
     }
     return result;
@@ -386,24 +381,19 @@ export class BgExec {
     if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
       const resolved = await returned;
       if (path === 'PgpMsg.decrypt') {
-        BgExec.pgpMsgDecryptResCreateBlobs(resolved as DecryptResult);
+        BgExec.pgpMsgDecryptResSerializeBeforeTrasferToFg(resolved as DecryptResult);
       }
       return resolved;
     }
     return returned as PossibleBgExecResults; // direct result
   }
 
-  private static pgpMsgDecryptResCreateBlobs = (decryptRes: DecryptResult) => {
+  private static pgpMsgDecryptResSerializeBeforeTrasferToFg = (decryptRes: DecryptResult) => {
     if (decryptRes) {
       if (decryptRes.success) {
         if (decryptRes.content) {
-          if (decryptRes.content.text && decryptRes.content.text.length >= BgExec.MAX_MESSAGE_SIZE) {
-            decryptRes.content.blob = { blob_type: 'text', blob_url: Browser.objUrlCreate(decryptRes.content.text) };
-            decryptRes.content.text = undefined; // replaced with a blob
-          } else if (decryptRes.content.uint8 && decryptRes.content.uint8 instanceof Uint8Array) {
-            decryptRes.content.blob = { blob_type: 'uint8', blob_url: Browser.objUrlCreate(decryptRes.content.uint8) };
-            decryptRes.content.uint8 = undefined; // replaced with a blob
-          }
+          decryptRes.content.blob = { blob_type: 'uint8', blob_url: Browser.objUrlCreate(decryptRes.content.uint8) };
+          decryptRes.content.uint8 = new Buf([]);
         }
       } else {
         if (decryptRes.message) {
@@ -416,11 +406,9 @@ export class BgExec {
 
   private static isObjUrl = (arg: any) => typeof arg === 'string' && arg.indexOf('blob:' + chrome.runtime.getURL('')) === 0;
 
-  private static shouldBeObjUrl = (arg: any) => (typeof arg === 'string' && arg.length > BrowserMsg.MAX_SIZE) || arg instanceof Uint8Array;
-
   private static argObjUrlsConsume = (args: any[]): Promise<any>[] => args.map((arg: any) => BgExec.isObjUrl(arg) ? Browser.objUrlConsume(arg) : arg); // tslint:disable-line:no-unsafe-any
 
-  private static argObjUrlsCreate = (args: any[]) => args.map(arg => BgExec.shouldBeObjUrl(arg) ? Browser.objUrlCreate(arg) : arg); // tslint:disable-line:no-unsafe-any
+  private static argObjUrlsCreate = (args: any[]) => args.map(arg => arg instanceof Uint8Array ? Browser.objUrlCreate(arg) : arg); // tslint:disable-line:no-unsafe-any
 
   private static resolvePathToCallableFunction = (path: string): Function => {  // tslint:disable-line:ban-types
     let f: Function | object | undefined; // tslint:disable-line:ban-types

@@ -372,12 +372,12 @@ Catch.try(async () => {
     const from = Google.gmail.findHeader(message, 'from') || 'unknown';
     try {
       const m = await Google.gmail.msgGet(acctEmail, message.id, 'raw');
-      const { blocks, headers } = await Mime.process(Str.base64urlDecode(m.raw!));
+      const { blocks, headers } = await Mime.process(m.rawBytes!);
       let r = '';
       for (const block of blocks) {
         r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
       }
-      const { atts } = await Mime.decode(Str.base64urlDecode(m.raw!));
+      const { atts } = await Mime.decode(m.rawBytes!);
       if (atts.length) {
         r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(factory.embeddedAtta).join('')}</div>`;
       }

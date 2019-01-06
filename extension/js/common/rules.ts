@@ -20,7 +20,7 @@ export class Rules {
   public static newInstance = async (email?: string) => {
     if (email && Str.isEmailValid(email)) {
       const domain = email.split('@')[1];
-      return new Rules(await Pgp.hash.sha1(domain));
+      return new Rules(await Pgp.hash.sha1UtfStr(domain));
     }
     return new Rules();
   }

@@ -11,6 +11,7 @@ import { BrowserMsg } from '../../js/common/extension.js';
 import { Att } from '../../js/common/core/att.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google } from '../../js/common/api/google.js';
+import { Buf } from '../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
@@ -22,9 +23,9 @@ Catch.try(async () => {
   const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   let size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
   const origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
-  const decrypted = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'decrypted');
+  const decryptedStr = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'decrypted');
   const type = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
-  const content = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'content');
+  const contentStr = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'content');
   const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   let attId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
   const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
@@ -35,10 +36,10 @@ Catch.try(async () => {
   let decryptedAtt: Att | undefined;
   let encryptedAtt: Att | undefined;
   try {
-    if (decrypted) {
-      decryptedAtt = new Att({ name: origNameBasedOnFilename, type, data: decrypted });
-    } else {
-      encryptedAtt = new Att({ name: origNameBasedOnFilename, type, data: content, msgId, id: attId, url });
+    if (typeof decryptedStr !== 'undefined') {
+      decryptedAtt = new Att({ name: origNameBasedOnFilename, type, data: Buf.fromRawBytesStr(decryptedStr) }); // todo - WRONG!! use b64
+    } else if (typeof contentStr !== 'undefined') {
+      encryptedAtt = new Att({ name: origNameBasedOnFilename, type, data: Buf.fromRawBytesStr(contentStr), msgId, id: attId, url }); // todo - WRONG!! use b64
     }
   } catch (e) {
     Catch.handleErr(e);
@@ -125,7 +126,7 @@ Catch.try(async () => {
   });
 
   const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    const result = await PgpMsg.decrypt(keyInfosWithPassphrases, encryptedAtt.data(), undefined, true);
+    const result = await PgpMsg.decrypt(keyInfosWithPassphrases, encryptedAtt.getData(), undefined);
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
       let fileName = result.content.filename;
@@ -141,7 +142,7 @@ Catch.try(async () => {
       delete result.message;
       console.info(result);
       $('body.attachment').text('Error opening file. Downloading original..');
-      Browser.saveToDownloads(new Att({ name, type, data: encryptedAtt.data() }));
+      Browser.saveToDownloads(new Att({ name, type, data: encryptedAtt.getData() }));
     }
   };
 
@@ -218,16 +219,16 @@ Catch.try(async () => {
   };
 
   const processAsPublicKeyAndHideAttIfAppropriate = async () => {
-    if (encryptedAtt && encryptedAtt.msgId && encryptedAtt.id && encryptedAtt.id && encryptedAtt.treatAs() === 'publicKey') {
+    if (encryptedAtt && encryptedAtt.msgId && encryptedAtt.id && encryptedAtt.treatAs() === 'publicKey') {
       // this is encrypted public key - download && decrypt & parse & render
-      const att = await Google.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id);
-      const result = await PgpMsg.decrypt(keyInfosWithPassphrases, att.data);
-      if (result.success && result.content.text) {
-        const openpgpType = await PgpMsg.type(result.content.text);
+      const gmailAtt = await Google.gmail.attGet(acctEmail, encryptedAtt.msgId, encryptedAtt.id);
+      const decrRes = await PgpMsg.decrypt(keyInfosWithPassphrases, gmailAtt.data);
+      if (decrRes.success && decrRes.content.uint8) {
+        const openpgpType = await PgpMsg.type(decrRes.content.uint8);
         if (openpgpType && openpgpType.type === 'publicKey') {
           if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
-            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [result.content.text] });
+            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [decrRes.content.uint8.toUtfStr()] });
             // hide attachment
             BrowserMsg.send.setCss(parentTabId, { selector: `#${frameId}`, traverseUp: 1, css: { display: 'none' } });
             $('body').text('');

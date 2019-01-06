@@ -9,6 +9,7 @@ import { Pgp, PgpMsg } from '../common/core/pgp.js';
 import { Bm } from '../common/extension.js';
 import { Catch } from '../common/platform/catch.js';
 import { Google, GoogleAuth, GoogleAcctNotConnected } from '../common/api/google.js';
+import { Buf } from '../common/core/buf.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -103,7 +104,7 @@ export class BgAttests {
           }
           for (const msg of msgs) {
             if (msg.payload.mimeType === 'text/plain' && msg.payload.body && msg.payload.body.size > 0 && msg.payload.body.data) {
-              await BgAttests.processAttestAndLogResult(acctEmail, Str.base64urlDecode(msg.payload.body.data), passphrase);
+              await BgAttests.processAttestAndLogResult(acctEmail, Buf.fromBase64UrlStr(msg.payload.body.data).toUtfStr(), passphrase);
             }
           }
         } else {

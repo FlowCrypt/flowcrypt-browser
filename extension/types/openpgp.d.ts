@@ -975,6 +975,9 @@ declare namespace OpenPGP {
     lookup(options: { keyid?: string, query?: string }): Promise<string | undefined>;
   }
 
+  /**
+   * todo - some of these are outdated - check OpenPGP.js api
+   */
   export namespace util {
     /** Convert an array of integers(0.255) to a string
         @param bin An array of (binary) integers to convert
@@ -1004,21 +1007,6 @@ declare namespace OpenPGP {
      */
     function getWebCrypto(): object;
 
-    /** Create binary string from a hex encoded string
-        @param str Hex string to convert
-    */
-    function hex2bin(str: string): string;
-
-    /** Creating a hex string from an binary array of integers (0..255)
-        @param str Array of bytes to convert
-    */
-    function hexidump(str: string): string;
-
-    /** Create hexstring from a binary
-        @param str string to convert
-    */
-    function hexstrdump(str: string): string;
-
     /** Helper function to print a debug message. Debug messages are only printed if
         @param str string of the debug message
     */
@@ -1035,20 +1023,47 @@ declare namespace OpenPGP {
     */
     function shiftRight(value: string, bitcount: number): string;
 
-    /** Convert a string to an array of integers(0.255)
-        @param str string to convert
-    */
-    function str2bin(str: string): Array<number>;
+    /**
+     * Convert a string to an array of 8-bit integers
+     * @param {String} str String to convert
+     * @returns {Uint8Array} An array of 8-bit integers
+     */
+    function str_to_Uint8Array(str: string): Uint8Array;
 
-    /** Convert a string to a Uint8Array
-        @param str string to convert
-    */
-    function str2Uint8Array(str: string): Uint8Array;
+    /**
+     * Convert an array of 8-bit integers to a string
+     * @param {Uint8Array} bytes An array of 8-bit integers to convert
+     * @returns {String} String representation of the array
+     */
+    function Uint8Array_to_str(bin: Uint8Array): string;
 
-    /** Convert a Uint8Array to a string. This currently functions the same as bin2str.
-        @param bin An array of (binary) integers to convert
-    */
-    function Uint8Array2str(bin: Uint8Array): string;
+    /**
+     * Convert an array of 8-bit integers to a hex string
+     * @param {Uint8Array} bytes Array of 8-bit integers to convert
+     * @returns {String} Hexadecimal representation of the array
+     */
+    function Uint8Array_to_hex(bytes: Uint8Array): string;
+
+    /**
+     * Convert a hex string to an array of 8-bit integers
+     * @param {String} hex  A hex string to convert
+     * @returns {Uint8Array} An array of 8-bit integers
+     */
+    function hex_to_Uint8Array(hex: string): Uint8Array;
+
+    /**
+     * Create hex string from a binary
+     * @param {String} str String to convert
+     * @returns {String} String containing the hexadecimal values
+     */
+    function str_to_hex(str: string): string;
+
+    /**
+     * Create binary string from a hex encoded string
+     * @param {String} str Hex string to convert
+     * @returns {String}
+     */
+    function hex_to_str(hex: string): string;
 
     function parseUserId(userid: string): UserId;
 

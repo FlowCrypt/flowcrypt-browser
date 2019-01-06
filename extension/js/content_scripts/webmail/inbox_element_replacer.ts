@@ -114,8 +114,9 @@ export class InboxElementReplacer implements WebmailElementReplacer {
           msgEl.append(this.factory.embeddedMsg('', msgId, false, senderEmail || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
           Google.gmail.attGet(this.acctEmail, msgId, a.id!).then(downloadedAtt => {
-            if (Value.is(Pgp.armor.headers('null').begin).in(downloadedAtt.data)) {
-              msgEl.append(this.factory.embeddedPubkey(downloadedAtt.data, isOutgoing)); // xss-safe-factory
+            const utf = downloadedAtt.data.toUtfStr();
+            if (Value.is(Pgp.armor.headers('null').begin).in(utf)) {
+              msgEl.append(this.factory.embeddedPubkey(utf, isOutgoing)); // xss-safe-factory
             } else {
               attSel.css('display', 'block');
               attSel.children('.attachment_loader').text('Unknown Public Key Format');
@@ -192,10 +193,26 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     return recipients;
   }
 
+  private intStrToHexStr = (intAsStr: string | number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)
+    let dec = intAsStr.toString().split(''), sum = [], hex = [], i, s; // tslint:disable-line:prefer-const
+    while (dec.length) {
+      s = Number(dec.shift());
+      for (i = 0; s || i < sum.length; i++) {
+        s += (sum[i] || 0) * 10;
+        sum[i] = s % 16;
+        s = (s - sum[i]) / 16;
+      }
+    }
+    while (sum.length) {
+      hex.push(sum.pop()!.toString(16));
+    }
+    return hex.join('');
+  }
+
   private domExtractMsgId = (baseEl: HTMLElement | JQuery<HTMLElement>) => {
     const inboxMsgIdMatch = ($(baseEl).parents('.ap').attr('data-msg-id') || '').match(/[0-9]{18,20}/g);
     if (inboxMsgIdMatch) {
-      return Str.intToHex(inboxMsgIdMatch[0]);
+      return this.intStrToHexStr(inboxMsgIdMatch[0]);
     }
     return undefined;
   }
@@ -207,7 +224,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   private domExtractThreadId = (convoRootEl: HTMLElement | JQuery<HTMLElement>): string | undefined => {
     const inboxThreadIdMatch = ($(convoRootEl).attr('data-item-id') || '').match(/[0-9]{18,20}/g);
     if (inboxThreadIdMatch) {
-      return Str.intToHex(inboxThreadIdMatch[0]);
+      return this.intStrToHexStr(inboxThreadIdMatch[0]);
     }
     return undefined;
   }

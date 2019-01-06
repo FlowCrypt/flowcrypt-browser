@@ -13,6 +13,7 @@ import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { Catch, UnreportableError } from './platform/catch.js';
 import { GoogleAuth } from './api/google.js';
+import { Buf } from './core/buf.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -199,7 +200,7 @@ export class Composer {
       };
     } else {
       const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && Value.is(await Pgp.hash.sha1(this.v.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
+      const sizeMb = (subscription.method !== 'trial' && Value.is(await Pgp.hash.sha1UtfStr(this.v.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,
@@ -354,7 +355,7 @@ export class Composer {
       if (!draftGetRes) {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
       }
-      const parsedMsg = await Mime.decode(Str.base64urlDecode(draftGetRes.message.raw!));
+      const parsedMsg = await Mime.decode(draftGetRes.message.rawBytes!);
       const armored = Pgp.armor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
       if (!armored) {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
@@ -477,13 +478,13 @@ export class Composer {
     }
   }
 
-  private decryptAndRenderDraft = async (encryptedDraft: string, headers: { from?: string; to: string[] }) => {
+  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { from?: string; to: string[] }) => {
     const passphrase = await this.app.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), encryptedDraft);
+      const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), Buf.fromUtfStr(encryptedArmoredDraft));
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
-        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.text!.replace(/\n/g, '<br>')));
+        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.uint8!.toUtfStr().replace(/\n/g, '<br>')));
         if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
@@ -512,7 +513,7 @@ export class Composer {
       }));
       this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
       await this.whenMasterPassphraseEntered();
-      await this.decryptAndRenderDraft(encryptedDraft, headers);
+      await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
     }
   }
 
@@ -1025,8 +1026,8 @@ export class Composer {
     }
   }
 
-  private appendForwardedMsg = (text: string) => {
-    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${text.replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
+  private appendForwardedMsg = (textBytes: Buf) => {
+    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${textBytes.toUtfStr().replace(/\n/g, '<br>').replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
     this.resizeReplyBox();
   }
 
@@ -1046,18 +1047,18 @@ export class Composer {
       }
       return;
     }
-    const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), armoredMsg);
+    const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), Buf.fromUtfStr(armoredMsg));
     if (result.success) {
-      if (!Mime.resemblesMsg(result.content.text!)) {
-        this.appendForwardedMsg(result.content.text!.replace(/\n/g, '<br>'));
+      if (!Mime.resemblesMsg(result.content.uint8!)) {
+        this.appendForwardedMsg(result.content.uint8!);
       } else {
-        const mimeDecoded = await Mime.decode(result.content.text!);
+        const mimeDecoded = await Mime.decode(result.content.uint8!);
         if (typeof mimeDecoded.text !== 'undefined') {
-          this.appendForwardedMsg(mimeDecoded.text.replace(/\n/g, '<br>'));
+          this.appendForwardedMsg(result.content.uint8!);
         } else if (typeof mimeDecoded.html !== 'undefined') {
-          this.appendForwardedMsg(Xss.htmlSanitizeAndStripAllTags(mimeDecoded.html!, '<br>'));
+          this.appendForwardedMsg(Buf.fromUtfStr(Xss.htmlSanitizeAndStripAllTags(mimeDecoded.html!, '\n')));
         } else {
-          this.appendForwardedMsg((result.content.text! || '').replace(/\n/g, '<br>')); // not sure about the replace, time will tell
+          this.appendForwardedMsg(result.content.uint8!);
         }
       }
     } else {
@@ -1492,7 +1493,7 @@ export class Composer {
     html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl) + '<br><br><br>');
     html.push('</div>');
     if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      atts.push(new Att({ data: encryptedBody['text/plain'], name: 'encrypted.asc' }));
+      atts.push(new Att({ data: Buf.fromUtfStr(encryptedBody['text/plain']!), name: 'encrypted.asc' }));
     }
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
   }

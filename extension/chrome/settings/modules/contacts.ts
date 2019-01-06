@@ -8,6 +8,7 @@ import { Xss, Ui, XssSafeFactory, Env, Browser } from '../../../js/common/browse
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Catch } from '../../../js/common/platform/catch.js';
+import { Buf } from '../../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
@@ -28,7 +29,7 @@ Catch.try(async () => {
     const exportAllHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;';
     Xss.sanitizeRender('.line.actions', exportAllHtml).find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       const allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
-      const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: allArmoredPublicKeys });
+      const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
       Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : undefined);
     }));
 

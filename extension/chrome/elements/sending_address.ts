@@ -3,12 +3,13 @@
 'use strict';
 
 import { Store } from '../../js/common/platform/store.js';
-import { Value, Str } from '../../js/common/core/common.js';
+import { Value } from '../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { Settings } from '../../js/common/settings.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Api } from '../../js/common/api/api.js';
+import { Buf } from '../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
@@ -22,7 +23,7 @@ Catch.try(async () => {
 
   const emailAddrToHtmlRadio = (a: string) => {
     a = Xss.escape(a);
-    const b64 = Str.base64urlEncode(a);
+    const b64 = Buf.fromUtfStr(a).toBase64Str();
     return `<input type="radio" name="a" value="${a}" id="${b64}"> <label data-test="action-choose-address" for="${b64}">${a}</label><br>`;
   };
 

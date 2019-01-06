@@ -10,6 +10,7 @@ import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
 import { PaymentMethod } from '../account.js';
 import { Catch } from '../platform/catch.js';
+import { Buf } from '../core/buf.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };
@@ -169,10 +170,12 @@ export namespace R { // responses
   export type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
   export type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
   export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
-  export type GmailMsg = {
-    id: string, historyId: string, threadId?: string | null, payload: GmailMsg$payload, raw?: string, internalDate?: number | string,
-    labelIds?: GmailMsg$labelId[], snippet?: string
-  };
+  interface GmailMsgBase {
+    id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
+    labelIds?: GmailMsg$labelId[]; snippet?: string;
+  }
+  export interface GmailMsgRaw extends GmailMsgBase { raw?: string; }
+  export interface GmailMsg extends GmailMsgBase { rawBytes?: Buf; }
   export type GmailMsgList$message = { id: string, threadId: string };
   export type GmailMsgList = { messages?: GmailMsgList$message[], resultSizeEstimate: number };
   export type GmailLabels$label = {
@@ -180,7 +183,7 @@ export namespace R { // responses
     messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: { textColor: string, backgroundColor: string }
   };
   export type GmailLabels = { labels: GmailLabels$label[] };
-  export type GmailAtt = { attachmentId: string, size: number, data: string };
+  export type GmailAtt = { attachmentId: string, size: number, data: Buf };
   export type GmailMsgSend = { id: string };
   export type GmailThread = { id: string, historyId: string, messages: GmailMsg[] };
   export type GmailThreadList = { threads: { historyId: string, id: string, snippet: string }[], nextPageToken: string, resultSizeEstimate: number };
@@ -465,7 +468,7 @@ export class Api {
     }),
     accountLogin: async (acctEmail: string, token?: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
       const authInfo = await Store.authInfo();
-      const uuid = authInfo.uuid || await Pgp.hash.sha1(Pgp.password.random());
+      const uuid = authInfo.uuid || await Pgp.hash.sha1UtfStr(Pgp.password.random());
       const account = authInfo.acctEmail || acctEmail;
       const response = await Api.internal.apiFcCall('account/login', {
         account,
@@ -492,7 +495,7 @@ export class Api {
           if (response.email !== authInfo.acctEmail) {
             // will fail auth when used on server, user will be prompted to verify this new device when that happens
             globalStoreUpdate.cryptup_account_email = response.email;
-            globalStoreUpdate.cryptup_account_uuid = await Pgp.hash.sha1(Pgp.password.random());
+            globalStoreUpdate.cryptup_account_uuid = await Pgp.hash.sha1UtfStr(Pgp.password.random());
           }
         } else {
           if (authInfo.acctEmail) {
@@ -575,7 +578,7 @@ export class Api {
       if (encryptedDataArmored.length > 100000) {
         throw new Error('Message text should not be more than 100 KB. You can send very long texts as attachments.');
       }
-      const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: encryptedDataArmored });
+      const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: Buf.fromUtfStr(encryptedDataArmored) });
       if (!authMethod) {
         return await Api.internal.apiFcCall('message/upload', { content }, 'FORM') as R.FcMsgUpload;
       } else {
@@ -627,7 +630,7 @@ export class Api {
       }
       for (const i of items.keys()) {
         const fields = items[i].fields;
-        fields.file = new Att({ name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].att.data() });
+        fields.file = new Att({ name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].att.getData() });
         promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
             progress[i] = singleFileProgress;
@@ -639,7 +642,7 @@ export class Api {
     },
   };
 
-  public static download = (url: string, progress?: ProgressCb): Promise<Uint8Array> => new Promise((resolve, reject) => {
+  public static download = (url: string, progress?: ProgressCb): Promise<Buf> => new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('GET', url, true);
     request.responseType = 'arraybuffer';
@@ -647,7 +650,7 @@ export class Api {
       request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
     }
     request.onerror = reject;
-    request.onload = e => resolve(new Uint8Array(request.response as ArrayBuffer));
+    request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
     request.send();
   })
 
@@ -716,7 +719,7 @@ export class Api {
         for (const formFieldName of Object.keys(fields)) {
           const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
           if (a instanceof Att) {
-            formattedData.append(formFieldName, new Blob([a.data()], { type: a.type }), a.name); // xss-none
+            formattedData.append(formFieldName, new Blob([a.getData()], { type: a.type }), a.name); // xss-none
           } else {
             formattedData.append(formFieldName, a); // xss-none
           }

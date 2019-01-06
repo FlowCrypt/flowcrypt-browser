@@ -7,6 +7,7 @@ import { Pgp, KeyDetails } from './pgp.js';
 import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
+import { Buf } from './buf.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -49,7 +50,7 @@ type MimeParseSignedRes = { full: string, signed?: string, signature?: string };
 
 export class Mime {
 
-  public static process = async (mimeMsg: string) => {
+  public static process = async (mimeMsg: Uint8Array) => {
     const decoded = await Mime.decode(mimeMsg);
     const blocks: MsgBlock[] = [];
     if (decoded.text) {  // may be undefined or empty
@@ -58,14 +59,14 @@ export class Mime {
     for (const file of decoded.atts) {
       const treatAs = file.treatAs();
       if (treatAs === 'message') {
-        const armored = Pgp.armor.clip(file.asText());
+        const armored = Pgp.armor.clip(file.getData().toUtfStr());
         if (armored) {
           blocks.push(Pgp.internal.msgBlockObj('message', armored));
         }
       } else if (treatAs === 'signature') {
-        decoded.signature = decoded.signature || file.asText();
+        decoded.signature = decoded.signature || file.getData().toUtfStr();
       } else if (treatAs === 'publicKey') {
-        blocks.push(...Pgp.armor.detectBlocks(file.asText()).blocks);
+        blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
       }
     }
     if (decoded.signature) {
@@ -101,24 +102,19 @@ export class Mime {
     return { 'in-reply-to': msgId, 'references': refs + ' ' + msgId };
   }
 
-  public static resemblesMsg = (msg: string | Uint8Array) => {
-    let m = msg.slice(0, 1000);
-    // noinspection SuspiciousInstanceOfGuard
-    if (m instanceof Uint8Array) {
-      m = Str.fromUint8(m);
-    }
-    m = m.toLowerCase();
-    const contentType = m.match(/content-type: +[0-9a-z\-\/]+/);
+  public static resemblesMsg = (msg: Uint8Array) => {
+    const utf8 = new Buf(msg.slice(0, 1000)).toUtfStr().toLowerCase();
+    const contentType = utf8.match(/content-type: +[0-9a-z\-\/]+/);
     if (!contentType) {
       return false;
     }
-    if (m.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || m.match(/content-disposition: +[0-9a-z\-\/]+/) || m.match(/; boundary=/) || m.match(/; charset=/)) {
+    if (utf8.match(/content-transfer-encoding: +[0-9a-z\-\/]+/) || utf8.match(/content-disposition: +[0-9a-z\-\/]+/) || utf8.match(/; boundary=/) || utf8.match(/; charset=/)) {
       return true;
     }
-    return Boolean(contentType.index === 0 && m.match(/boundary=/));
+    return Boolean(contentType.index === 0 && utf8.match(/boundary=/));
   }
 
-  public static decode = (mimeMsg: string): Promise<MimeContent> => {
+  public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
     return new Promise(async resolve => {
       const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
       try {
@@ -144,9 +140,9 @@ export class Mime {
             } else if (Mime.getNodeType(node) === 'text/html' && !Mime.getNodeFilename(node)) {
               // html content may be broken up into smaller pieces by attachments in between
               // AppleMail does this with inline attachments
-              mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsText(node);
+              mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
             } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
-              mimeContent.text = Mime.getNodeContentAsText(node);
+              mimeContent.text = Mime.getNodeContentAsUtfStr(node);
             } else {
               mimeContent.atts.push(new Att({
                 name: Mime.getNodeFilename(node),
@@ -191,12 +187,12 @@ export class Mime {
     for (const att of atts) {
       const type = `${att.type}; name="${att.name}"`;
       const header = { 'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.sloppyRandom(10)}`, 'Content-Transfer-Encoding': 'base64' };
-      rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.data())); // tslint:disable-line:no-unsafe-any
+      rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.getData())); // tslint:disable-line:no-unsafe-any
     }
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
-  public static signed = (mimeMsg: string) => {
+  public static signed = (mimeMsgBytes: Buf) => {
     /*
       Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
       Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
@@ -216,6 +212,7 @@ export class Mime {
 
       --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1--
       */
+    let mimeMsg = mimeMsgBytes.toUtfStr();
     const signedHeaderIndex = mimeMsg.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
     if (signedHeaderIndex !== -1) {
       mimeMsg = mimeMsg.substr(signedHeaderIndex);
@@ -291,12 +288,19 @@ export class Mime {
     return;
   }
 
-  private static getNodeContentAsText = (node: MimeParserNode): string => {
+  private static fromEqualSignNotationAsUtf = (str: string): string => {
+    return str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
+      const bytes = equalSignUtfPart.replace(/^=/, '').split('=').map(twoHexDigits => parseInt(twoHexDigits, 16));
+      return new Buf(bytes).toUtfStr();
+    });
+  }
+
+  private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
-      return Str.uint8AsUtf(node.content);
+      return new Buf(node.content).toUtfStr();
     }
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
-      return Str.fromEqualSignNotationAsUtf(node.rawContent);
+      return Mime.fromEqualSignNotationAsUtf(node.rawContent);
     }
     if (node.charset === 'iso-8859-2') { // todo - use iso88592.labels for detection
       return Iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any

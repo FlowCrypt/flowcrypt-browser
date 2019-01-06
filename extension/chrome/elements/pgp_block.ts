@@ -13,6 +13,7 @@ import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
+import { Buf } from '../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
@@ -29,11 +30,11 @@ Catch.try(async () => {
   const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const heightHistory: number[] = [];
   let signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
-  let msg: string | undefined = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'message'); // todo - could be changed to msg
-  let missingOrWrongPassprases: Dict<string | undefined> = {};
+  let encStr = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'message');
+  const encryptedMsgUrlParam: Buf | undefined = encStr ? Buf.fromUtfStr(encStr) : undefined; // todo - could be changed to msg
+  encStr = undefined;
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];
-  let passphraseInterval: number | undefined;
   let canReadEmails: undefined | boolean;
   let passwordMsgLinkRes: R.FcLinkMsg;
   let adminCodes: string[];
@@ -76,7 +77,7 @@ Catch.try(async () => {
       const contentId = a.href.replace(/^cid:/g, '');
       const content = includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
       if (content) {
-        img.src = `data:${a.type};base64,${btoa(content.asText())}`;
+        img.src = `data:${a.type};base64,${content.getData().toBase64Str()}`;
         a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
       } else {
         a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
@@ -123,10 +124,9 @@ Catch.try(async () => {
     return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
   };
 
-  const armoredMsgAsHtml = (rawMsgSubstitute?: string) => {
-    const m = rawMsgSubstitute || msg;
-    if (m && typeof m === 'string') {
-      return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(m).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
+  const armoredMsgAsHtml = (encrypted?: string) => {
+    if (encrypted && encrypted.length) {
+      return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(encrypted).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
     }
     return '';
   };
@@ -141,9 +141,9 @@ Catch.try(async () => {
     }
   };
 
-  const renderErr = async (errBoxContent: string, rawMsgSubstitute?: string) => {
+  const renderErr = async (errBoxContent: string, renderRawEncrypted: string | undefined) => {
     setFrameColor('red');
-    await renderContent('<div class="error">' + errBoxContent.replace(/\n/g, '<br>') + '</div>' + armoredMsgAsHtml(rawMsgSubstitute), true);
+    await renderContent('<div class="error">' + errBoxContent.replace(/\n/g, '<br>') + '</div>' + armoredMsgAsHtml(renderRawEncrypted), true);
     $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
     $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail })));
     $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
@@ -153,15 +153,15 @@ Catch.try(async () => {
     setTestState('ready');
   };
 
-  const handlePrivateKeyMismatch = async (acctEmail: string, message: string) => { // todo - make it work for multiple stored keys
+  const handlePrivateKeyMismatch = async (acctEmail: string, message: Uint8Array) => { // todo - make it work for multiple stored keys
     const msgDiagnosis = await BgExec.pgpMsgDiagnosePubkeys(await Store.keysGet(acctEmail), message);
     if (msgDiagnosis.found_match) {
-      await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug);
+      await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
     } else if (msgDiagnosis.receivers === 1) {
-      await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend + btnHtml('account settings', 'gray2 settings_keyserver'));
+      await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend + btnHtml('account settings', 'gray2 settings_keyserver'), undefined);
     } else {
       await renderErr(Lang.pgpBlock.yourKeyCantOpenImportIfHave + btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
-        + btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + btnHtml('settings', 'gray2 settings_keyserver'));
+        + btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + btnHtml('settings', 'gray2 settings_keyserver'), undefined);
     }
   };
 
@@ -174,7 +174,7 @@ Catch.try(async () => {
   };
 
   const decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const decrypted = await BgExec.pgpMsgDecrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted.data(), await decryptPwd(), true);
+    const decrypted = await BgExec.pgpMsgDecrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted.getData(), await decryptPwd());
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8! });
       Browser.saveToDownloads(att, renderIn);
@@ -301,21 +301,13 @@ Catch.try(async () => {
     }
   };
 
-  const attFromAttBlock = (attBlock: MsgBlock) => {
-    const attMeta = attBlock.attMeta!;
-    attMeta.data = attBlock.content || attMeta.data;
-    return new Att(attMeta);
-  };
-
-  const decideDecryptedContentFormattingAndRender = async (decryptedContent: Uint8Array | string, isEncrypted: boolean, sigResult: MsgVerifyResult | undefined) => {
+  const decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: MsgVerifyResult | undefined) => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
-    if (decryptedContent instanceof Uint8Array) {
-      decryptedContent = Str.fromUint8(decryptedContent); // functions below rely on this: resembles_message, extract_cryptup_attachments, strip_cryptup_reply_token, strip_public_keys
-    }
+    let decryptedContent = decryptedBytes.toUtfStr();
     // todo - replace with PgpMsg.fmtDecrypted
-    if (!Mime.resemblesMsg(decryptedContent)) {
+    if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttBlocks: MsgBlock[] = [];
       decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
       decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
@@ -325,14 +317,14 @@ Catch.try(async () => {
       }
       await renderContent(Xss.escape(decryptedContent).replace(/\n/g, '<br>'), false);
       if (fcAttBlocks.length) {
-        renderInnerAtts(fcAttBlocks.map(attFromAttBlock));
+        renderInnerAtts(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
       }
       if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
         renderFutureExpiration(passwordMsgLinkRes.expire);
       }
     } else {
       renderText('Formatting...');
-      const decoded = await Mime.decode(decryptedContent);
+      const decoded = await Mime.decode(decryptedBytes);
       if (typeof decoded.html !== 'undefined') {
         await renderContent(decoded.html, false);
       } else if (typeof decoded.text !== 'undefined') {
@@ -345,7 +337,7 @@ Catch.try(async () => {
         if (att.treatAs() !== 'publicKey') {
           renderableAtts.push(att);
         } else {
-          publicKeys.push(att.asText());
+          publicKeys.push(att.getData().toUtfStr());
         }
       }
       if (renderableAtts.length) {
@@ -358,14 +350,11 @@ Catch.try(async () => {
     setTestState('ready');
   };
 
-  const decryptAndRender = async (optionalPwd?: string) => {
-    if (typeof msg === 'undefined') {
-      throw new Error('msg is undefined');
-    }
+  const decryptAndRender = async (encrypted: Buf, optionalPwd?: string) => {
     if (typeof signature !== 'string') {
-      const result = await BgExec.pgpMsgDecrypt(await Store.keysGetAllWithPassphrases(acctEmail), msg, await decryptPwd(optionalPwd));
+      const result = await BgExec.pgpMsgDecrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted, await decryptPwd(optionalPwd));
       if (typeof result === 'undefined') {
-        await renderErr(Lang.general.restartBrowserAndTryAgain);
+        await renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
         if (hasChallengePassword && optionalPwd) {
           userEnteredMsgPassword = optionalPwd;
@@ -374,64 +363,73 @@ Catch.try(async () => {
           console.info(`re-fetching message ${msgId} from api because failed signature check: ${!msgFetchedFromApi ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await decideDecryptedContentFormattingAndRender(result.content.text!, Boolean(result.isEncrypted), result.signature); // text!: did not request uint8
+          await decideDecryptedContentFormattingAndRender(result.content.uint8!, Boolean(result.isEncrypted), result.signature); // text!: did not request uint8
         }
       } else if (result.error.type === DecryptErrTypes.format) {
         if (canReadEmails && msgFetchedFromApi !== 'raw') {
           console.info(`re-fetching message ${msgId} from api because looks like bad formatting: ${!msgFetchedFromApi ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.error);
+          await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.error, encrypted.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
-        await renderPassphrasePrompt(result.longids.needPassphrase);
+        await renderPassphrasePromptAndAwaitChange(result.longids.needPassphrase);
+        await decryptAndRender(encrypted, optionalPwd);
       } else {
         const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
         if (!result.longids.chosen && !primaryKi) {
-          await renderErr(Lang.pgpBlock.notProperlySetUp + btnHtml('FlowCrypt settings', 'green settings'));
+          await renderErr(Lang.pgpBlock.notProperlySetUp + btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (hasChallengePassword && !optionalPwd) {
-            await renderPasswordPrompt('first');
+            const pwd = await renderPasswordPromptAndWaitForEntry('first');
+            await decryptAndRender(encrypted, pwd);
           } else {
-            await handlePrivateKeyMismatch(acctEmail, msg);
+            await handlePrivateKeyMismatch(acctEmail, encrypted);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
-          await renderPasswordPrompt('retry');
+          const pwd = await renderPasswordPromptAndWaitForEntry('retry');
+          await decryptAndRender(encrypted, pwd);
         } else if (result.error.type === DecryptErrTypes.usePassword) {
-          await renderPasswordPrompt('first');
+          const pwd = await renderPasswordPromptAndWaitForEntry('first');
+          await decryptAndRender(encrypted, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
-          await renderErr('This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC');
+          const errMsg = `This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC`;
+          await renderErr(errMsg, encrypted.toUtfStr());
         } else if (result.error) {
-          await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.error}</em>`);
+          await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.error}</em>`, encrypted.toUtfStr());
         } else { // should generally not happen
           delete result.message;
-          await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"');
+          await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encrypted.toUtfStr());
         }
       }
     } else {
-      const signatureResult = await BgExec.pgpMsgVerifyDetached(msg, signature);
-      await decideDecryptedContentFormattingAndRender(msg, false, signatureResult);
+      const signatureResult = await BgExec.pgpMsgVerifyDetached(encrypted, Buf.fromUtfStr(signature));
+      await decideDecryptedContentFormattingAndRender(encrypted, false, signatureResult);
     }
   };
 
-  const renderPassphrasePrompt = async (missingOrWrongPpKeyLongids: string[]) => {
-    missingOrWrongPassprases = {};
+  const renderPassphrasePromptAndAwaitChange = async (missingOrWrongPpKeyLongids: string[]) => {
+    const missingOrWrongPassprases: Dict<string | undefined> = {};
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
     for (const i of missingOrWrongPpKeyLongids.keys()) {
       missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
-      await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
-      clearInterval(passphraseInterval);
-      passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 1000);
-      $('.enter_passphrase').click(Ui.event.handle(() => {
-        setTestState('waiting');
-        BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
-        clearInterval(passphraseInterval);
-        passphraseInterval = Catch.setHandledInterval(checkPassphraseChanged, 400);
-      }));
+    }
+    await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
+    let wasClicked = false;
+    $('.enter_passphrase').click(Ui.event.handle(() => {
+      setTestState('waiting');
+      BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
+      wasClicked = true;
+    }));
+    while (true) {
+      await Ui.time.sleep(wasClicked ? 400 : 2000);
+      if (await werePassphrasesUpdated(missingOrWrongPassprases)) {
+        return;
+      }
     }
   };
 
-  const renderPasswordPrompt = async (attempt: 'first' | 'retry') => {
+  const renderPasswordPromptAndWaitForEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
     let prompt = `<p>${attempt === 'first' ? '' : Lang.pgpBlock.wrongPassword}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
@@ -442,22 +440,20 @@ Catch.try(async () => {
     setTestState('working'); // so that test suite can wait until ready again
     $(self).text('Opening');
     await Ui.delay(50); // give browser time to render
-    await decryptAndRender(String($('#answer').val())); // text input
+    return String($('#answer').val());
   };
 
-  const checkPassphraseChanged = async () => {
+  const werePassphrasesUpdated = async (missingOrWrongPassprases: Dict<string | undefined>): Promise<boolean> => {
     const longidsMissingPp = Object.keys(missingOrWrongPassprases);
     const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => Store.passphraseGet(acctEmail, longid)));
     for (let i = 0; i < longidsMissingPp.length; i++) {
       const missingOrWrongPp = missingOrWrongPassprases[longidsMissingPp[i]];
       const updatedPp = updatedPpArr[i];
       if (updatedPp !== missingOrWrongPp) {
-        missingOrWrongPassprases = {};
-        clearInterval(passphraseInterval);
-        await decryptAndRender();
-        return;
+        return true;
       }
     }
+    return false;
   };
 
   const renderPasswordEncryptedMsgLoadFail = async (linkRes: R.FcLinkMsg) => {
@@ -471,53 +467,50 @@ Catch.try(async () => {
         expirationMsg += Lang.pgpBlock.askSenderRenew;
       }
       expirationMsg += '\n\n<div class="button gray2 action_security">security settings</div>';
-      await renderErr(expirationMsg);
+      await renderErr(expirationMsg, undefined);
       setFrameColor('gray');
       $('.action_security').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ page: '/chrome/settings/modules/security.htm', acctEmail })));
       $('.extend_expiration').click(Ui.event.handle(renderMsgExpirationRenewOptions));
     } else if (!linkRes.url) {
-      await renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink);
+      await renderErr(Lang.pgpBlock.cannotLocate + Lang.pgpBlock.brokenLink, undefined);
     } else {
-      await renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)));
+      await renderErr(Lang.pgpBlock.cannotLocate + Lang.general.writeMeToFixIt + ' Details:\n\n' + Xss.escape(JSON.stringify(linkRes)), undefined);
     }
   };
 
   const initialize = async (forcePullMsgFromApi = false) => {
     try {
-      if (canReadEmails && msg && signature === true && msgId) {
+      if (canReadEmails && encryptedMsgUrlParam && signature === true && msgId) {
         renderText('Loading signature...');
         const result = await Google.gmail.msgGet(acctEmail, msgId, 'raw');
-        if (!result.raw) {
-          await decryptAndRender();
+        if (!result.rawBytes || !result.rawBytes.length) {
+          await decryptAndRender(encryptedMsgUrlParam);
         } else {
           msgFetchedFromApi = 'raw';
-          const mimeMsg = Str.base64urlDecode(result.raw);
-          const parsed = Mime.signed(mimeMsg);
-          if (parsed) {
+          const parsed = Mime.signed(result.rawBytes);
+          if (parsed && typeof parsed.signed === 'string') {
             signature = parsed.signature || undefined;
-            msg = parsed.signed;
-            await decryptAndRender();
+            await decryptAndRender(encryptedMsgUrlParam);
           } else {
-            const decoded = await Mime.decode(mimeMsg);
+            const decoded = await Mime.decode(result.rawBytes);
             signature = decoded.signature || undefined;
             console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-            console.info(mimeMsg);
+            console.info(result.rawBytes.toUtfStr());
             console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-            await decryptAndRender();
+            await decryptAndRender(encryptedMsgUrlParam);
           }
         }
-      } else if (msg && !forcePullMsgFromApi) { // ascii armored message supplied
+      } else if (encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         renderText(signature ? 'Verifying..' : 'Decrypting...');
-        await decryptAndRender();
-      } else if (!msg && hasChallengePassword && short) { // need to fetch the message from FlowCrypt API
+        await decryptAndRender(encryptedMsgUrlParam);
+      } else if (!encryptedMsgUrlParam && hasChallengePassword && short) { // need to fetch the message from FlowCrypt API
         renderText('Loading message...');
         await recoverStoredAdminCodes();
         const msgLinkRes = await Api.fc.linkMessage(short);
         passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
-          const downloadUintResult = await Api.download(msgLinkRes.url);
-          msg = Str.fromUint8(downloadUintResult);
-          await decryptAndRender();
+          const downloaded = await Api.download(msgLinkRes.url);
+          await decryptAndRender(downloaded);
         } else {
           await renderPasswordEncryptedMsgLoadFail(passwordMsgLinkRes);
         }
@@ -528,10 +521,10 @@ Catch.try(async () => {
         } else if (canReadEmails) {
           renderText('Retrieving message...');
           const format: GmailResponseFormat = (!msgFetchedFromApi) ? 'full' : 'raw';
-          msg = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format);
+          const extracted = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format);
           renderText('Decrypting...');
           msgFetchedFromApi = format;
-          await decryptAndRender();
+          await decryptAndRender(Buf.fromUtfStr(extracted));
         } else { // gmail message read auth not allowed
           // tslint:disable-next-line:max-line-length
           const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
@@ -542,16 +535,16 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        await renderErr(`Could not load message due to network error. ${Ui.retryLink()}`);
+        await renderErr(`Could not load message due to network error. ${Ui.retryLink()}`, undefined);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-        await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`);
+        await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
       } else if (e instanceof FormatError) {
         console.log(e.data);
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else {
         Catch.handleErr(e);
-        await renderErr(String(e));
+        await renderErr(String(e), encryptedMsgUrlParam ? encryptedMsgUrlParam.toUtfStr() : undefined);
       }
     }
   };
@@ -561,7 +554,7 @@ Catch.try(async () => {
   if (storage.setup_done) {
     await initialize();
   } else {
-    await renderErr(Lang.pgpBlock.refreshWindow, msg || '');
+    await renderErr(Lang.pgpBlock.refreshWindow, encryptedMsgUrlParam ? encryptedMsgUrlParam.toUtfStr() : undefined);
   }
 
 })();

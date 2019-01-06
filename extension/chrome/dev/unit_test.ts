@@ -28,9 +28,9 @@ import { Env } from '../../js/common/browser.js';
   if (f === 'Pgp.armor.detectBlocks') {
     return await test(Pgp.armor.detectBlocks, args);
   } else if (f === 'Pgp.hash.sha1') {
-    return await test(Pgp.hash.sha1, args);
+    return await test(Pgp.hash.sha1UtfStr, args);
   } else if (f === 'Pgp.hash.sha256') {
-    return await test(Pgp.hash.sha256, args);
+    return await test(Pgp.hash.sha256UtfStr, args);
   } else if (f === 'Pgp.hash.doubleSha1Upper') {
     return await test(Pgp.hash.doubleSha1Upper, args);
   } else if (f === 'Pgp.hash.challengeAnswer') {

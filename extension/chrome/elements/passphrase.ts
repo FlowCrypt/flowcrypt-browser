@@ -79,13 +79,17 @@ Catch.try(async () => {
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
     for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save them all
+      console.log('-----------------');
       const { keys: [prv] } = await openpgp.key.readArmored(keyinfo.private);
+      console.log(keyinfo.private);
+      console.log(`pass: ${pass}`);
       try {
         if (await Pgp.key.decrypt(prv, [pass]) === true) {
           await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);
           atLeastOneMatched = true;
         }
       } catch (e) {
+        console.log(e);
         if (e instanceof Error && e.message === 'Unknown s2k type.') {
           alert(`One of your keys ${keyinfo.longid} is not supported yet (${String(e)}).\n\nPlease write human@flowcrypt.com with details about how was this key created.`);
         } else {

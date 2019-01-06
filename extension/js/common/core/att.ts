@@ -2,12 +2,13 @@
 
 'use strict';
 
-import { Str, Value } from './common.js';
+import { Value } from './common.js';
 import { KeyInfo } from '../core/pgp.js';
+import { Buf } from './buf.js';
 
 type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
 export type AttMeta = {
-  data?: string | Uint8Array; type?: string; name?: string; length?: number; url?: string;
+  data?: Uint8Array; type?: string; name?: string; length?: number; url?: string;
   inline?: boolean; id?: string; msgId?: string; treatAs?: Att$treatAs; cid?: string;
 };
 
@@ -15,11 +16,10 @@ export type FcAttLinkData = { name: string, type: string, size: number };
 
 export class Att {
 
-  private text: string | undefined = undefined;
-  private bytes: Uint8Array | undefined = undefined;
-  private treatAsValue: Att$treatAs | undefined = undefined;
+  private bytes: Uint8Array | undefined;
+  private treatAsValue: Att$treatAs | undefined;
 
-  public length: number;
+  public length: number = NaN;
   public type: string;
   public name: string;
   public url: string | undefined;
@@ -35,12 +35,14 @@ export class Att {
     if (id && !msgId) {
       throw new Error('Att: if id is set, msgId must be set too');
     }
-    if (typeof data !== null && typeof data !== 'undefined') {
-      this.setData(data);
+    if (data) {
+      this.bytes = data;
+      this.length = data.length;
+    } else {
+      this.length = Number(length);
     }
     this.name = name || '';
     this.type = type || 'application/octet-stream';
-    this.length = data ? data.length : (length || NaN);
     this.url = url || undefined;
     this.inline = inline !== true;
     this.id = id || undefined;
@@ -49,51 +51,21 @@ export class Att {
     this.cid = cid || undefined;
   }
 
-  public setData = (data: string | Uint8Array) => {
+  public hasData = () => this.bytes instanceof Uint8Array;
+
+  public setData = (bytes: Uint8Array) => {
     if (this.hasData()) {
-      throw new Error('Att: data already set');
+      throw new Error('Att bytes already set');
     }
-    if (data instanceof Uint8Array) {
-      this.bytes = data;
-    } else if (typeof data === 'string') {
-      this.text = data;
-    }
-    this.length = data.length;
+    this.bytes = bytes;
   }
 
-  public hasData = () => {
-    if (typeof this.bytes === 'undefined' && typeof this.text === 'undefined') {
-      return false;
-    }
-    return true;
-  }
-
-  public data = (): string | Uint8Array => {
-    if (typeof this.bytes !== 'undefined') {
+  public getData = (): Buf => {
+    if (this.bytes instanceof Buf) {
       return this.bytes;
     }
-    if (typeof this.text !== 'undefined') {
-      return this.text;
-    }
-    throw new Error('Att has no data set');
-  }
-
-  public asText = (): string => {
-    if (typeof this.text === 'undefined' && typeof this.bytes !== 'undefined') {
-      this.text = Str.fromUint8(this.bytes);
-    }
-    if (typeof this.text !== 'undefined') {
-      return this.text;
-    }
-    throw new Error('Att has no data set');
-  }
-
-  public asBytes = (): Uint8Array => {
-    if (typeof this.bytes === 'undefined' && typeof this.text !== 'undefined') {
-      this.bytes = Str.toUint8(this.text);
-    }
-    if (typeof this.bytes !== 'undefined') {
-      return this.bytes;
+    if (this.bytes instanceof Uint8Array) {
+      return new Buf(this.bytes);
     }
     throw new Error('Att has no data set');
   }
@@ -127,6 +99,6 @@ export class Att {
 
   public static pgpNamePatterns = () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''];
 
-  public static keyinfoAsPubkeyAtt = (ki: KeyInfo) => new Att({ data: ki.public, type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
+  public static keyinfoAsPubkeyAtt = (ki: KeyInfo) => new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
 
 }

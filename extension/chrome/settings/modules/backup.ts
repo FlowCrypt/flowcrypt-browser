@@ -14,6 +14,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Google, GoogleAuth } from '../../../js/common/api/google.js';
+import { Buf } from '../../../js/common/core/buf.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -210,7 +211,7 @@ Catch.try(async () => {
   };
 
   const asBackupFile = (acctEmail: string, armoredKey: string) => {
-    return new Att({ name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: armoredKey });
+    return new Att({ name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
   };
 
   const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {

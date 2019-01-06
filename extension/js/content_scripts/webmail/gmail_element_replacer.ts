@@ -295,7 +295,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     const openpgpType = await BgExec.pgpMsgType(downloadedAtt.data);
     if (openpgpType && openpgpType.type === 'publicKey') {
-      msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data, isOutgoing)); // xss-safe-factory
+      msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
     } else {
       attSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
       nRenderedAtts++;

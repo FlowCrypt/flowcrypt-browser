@@ -3,11 +3,11 @@
 'use strict';
 
 import { Store, SubscriptionAttempt } from './platform/store.js';
-import { Str } from './core/common.js';
 import { Api } from './api/api.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser.js';
 import { Google } from './api/google.js';
+import { Buf } from './core/buf.js';
 
 type AccountEventHandlersOptional = {
   renderStatusText?: (text: string, showSpinner?: boolean) => void;
@@ -137,7 +137,7 @@ export class FcAcct {
     const msgs = await Google.gmail.msgsGet(acctEmail, response.messages.map(m => m.id), 'full');
     for (const gmailMsg of msgs) {
       if (gmailMsg.payload.mimeType === 'text/plain' && gmailMsg.payload.body && gmailMsg.payload.body.size > 0 && gmailMsg.payload.body.data) {
-        const token = this.parseTokenEmailText(Str.base64urlDecode(gmailMsg.payload.body.data), uuid);
+        const token = this.parseTokenEmailText(Buf.fromBase64UrlStr(gmailMsg.payload.body.data).toUtfStr(), uuid);
         if (token && typeof token === 'string') {
           tokens.push(token);
         }

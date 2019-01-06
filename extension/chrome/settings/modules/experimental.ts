@@ -12,6 +12,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { GoogleAuth } from '../../../js/common/api/google.js';
+import { Buf } from '../../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
@@ -146,7 +147,7 @@ Catch.try(async () => {
     const collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
       const name = 'FlowCrypt_BACKUP_FILE_' + acctEmail.replace('[^a-z0-9]+', '') + '.txt';
       const backupText = await collectInfoForAccountBackup(acctEmail);
-      Browser.saveToDownloads(new Att({ name, type: 'text/plain', data: backupText }));
+      Browser.saveToDownloads(new Att({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
       await Ui.delay(1000);
     };
 
