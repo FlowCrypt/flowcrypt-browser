@@ -44,17 +44,20 @@ export class BgUtils {
     });
   })
 
-  public static handleStoreErr = async (e: any) => {
-    if (e instanceof StoreCorruptedError) {
-      await BgUtils.openSettingsPage('fatal.htm?reason=db_corrupted');
-    } else if (e instanceof StoreDeniedError) {
-      await BgUtils.openSettingsPage('fatal.htm?reason=db_denied');
-    } else if (e instanceof StoreFailedError) {
-      await BgUtils.openSettingsPage('fatal.htm?reason=db_failed');
-    } else {
-      await BgUtils.openSettingsPage('fatal.htm?reason=db_failed');
-      Catch.handleErr(e);
+  public static handleStoreErr = async (e: any, reason?: 'storage_undefined' | 'db_corrupted' | 'db_denied' | 'db_failed') => {
+    if (!reason) {
+      if (e instanceof StoreCorruptedError) {
+        reason = 'db_corrupted';
+      } else if (e instanceof StoreDeniedError) {
+        reason = 'db_denied';
+      } else if (e instanceof StoreFailedError) {
+        reason = 'db_failed';
+      } else {
+        Catch.handleErr(e);
+        reason = 'db_failed';
+      }
     }
+    await BgUtils.openSettingsPage(Env.urlCreate('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
     throw new UnreportableError();
   }
 

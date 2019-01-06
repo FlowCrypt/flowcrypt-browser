@@ -373,12 +373,17 @@ export class Store {
   }
 
   public static errCategorize = (err: any): Error => {
-    let exception: Error;
+    let message: string;
     if (err instanceof Error) {
-      exception = err;
+      message = err.message;
+    } else if (err instanceof DOMException) { // db errors
+      message = err.message;
+    } else if (err && typeof err === 'object' && typeof (err as { message: string }).message === 'string') { // chrome.runtime.lastError
+      message = (err as { message: string }).message;
     } else {
-      exception = new Error(String(err).replace('Error: ', ''));
+      message = String(err);
     }
+    const exception = err instanceof Error ? err : new Error(message);
     if (/Internal error opening backing store for indexedDB.open/.test(exception.message)) {
       return new StoreCorruptedError(`db: ${exception.message}`);
     } else if (/A mutation operation was attempted on a database that did not allow mutations/.test(exception.message)) {
