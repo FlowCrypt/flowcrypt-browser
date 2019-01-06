@@ -297,7 +297,7 @@ export class Mime {
 
   private static getNodeContentAsUtfStr = (node: MimeParserNode): string => {
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'base64') {
-      return new Buf(node.content).toUtfStr();
+      return Buf.fromUint8(node.content).toUtfStr();
     }
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
       return Mime.fromEqualSignNotationAsUtf(node.rawContent);
@@ -305,7 +305,7 @@ export class Mime {
     if (node.charset === 'iso-8859-2') { // todo - use iso88592.labels for detection
       return Iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any
     }
-    return node.rawContent;
+    return Buf.fromRawBytesStr(node.rawContent).toUtfStr();
   }
 
   // tslint:disable-next-line:variable-name
