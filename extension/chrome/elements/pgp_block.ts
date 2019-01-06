@@ -227,7 +227,7 @@ Catch.try(async () => {
       $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
         $('#pgp_signature').addClass('neutral');
-        $('#pgp_signature > .result').text('cannot verify signature');
+        $('#pgp_signature > .result').text(`missing pubkey ${signature.signer}`);
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
         $('#pgp_signature > .result').text('matching signature');
