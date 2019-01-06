@@ -383,22 +383,21 @@ export class Store {
     } else {
       message = String(err);
     }
-    const exception = err instanceof Error ? err : new Error(message);
-    if (/Internal error opening backing store for indexedDB.open/.test(exception.message)) {
-      return new StoreCorruptedError(`db: ${exception.message}`);
-    } else if (/A mutation operation was attempted on a database that did not allow mutations/.test(exception.message)) {
-      return new StoreDeniedError(`db: ${exception.message}`);
-    } else if (/The operation failed for reasons unrelated to the database itself and not covered by any other error code/.test(exception.message)) {
-      return new StoreFailedError(`db: ${exception.message}`);
-    } else if (/IO error: .+: Unable to create sequential file/.test(exception.message)) {
-      return new StoreCorruptedError(`storage.local: ${exception.message}`);
-    } else if (/IO error: .+LOCK: No further details/.test(exception.message)) {
-      return new StoreFailedError(`storage.local: ${exception.message}`);
-    } else if (/The browser is shutting down/.test(exception.message)) {
-      return new UnreportableError(exception.message);
+    if (/Internal error opening backing store for indexedDB.open/.test(message)) {
+      return new StoreCorruptedError(`db: ${message}`);
+    } else if (/A mutation operation was attempted on a database that did not allow mutations/.test(message)) {
+      return new StoreDeniedError(`db: ${message}`);
+    } else if (/The operation failed for reasons unrelated to the database itself and not covered by any other error code/.test(message)) {
+      return new StoreFailedError(`db: ${message}`);
+    } else if (/IO error: .+: Unable to create sequential file/.test(message)) {
+      return new StoreCorruptedError(`storage.local: ${message}`);
+    } else if (/IO error: .+LOCK: No further details/.test(message)) {
+      return new StoreFailedError(`storage.local: ${message}`);
+    } else if (/The browser is shutting down/.test(message)) {
+      return new UnreportableError(message);
     } else {
-      Catch.handleErr(exception);
-      return new StoreDeniedError(exception.message);
+      Catch.handleErr(err instanceof Error ? err : new Error(message));
+      return new StoreDeniedError(message);
     }
   }
 
