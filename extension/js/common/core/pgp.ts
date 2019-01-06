@@ -474,7 +474,7 @@ export class Pgp {
       if (!encrypted.length) {
         throw new Error('Encrypted message could not be parsed because no data was provided');
       }
-      const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr();
+      const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
       const isArmoredEncrypted = Value.is(Pgp.armor.headers('message').begin).in(utfChunk);
       const isArmoredSignedOnly = Value.is(Pgp.armor.headers('signedMsg').begin).in(utfChunk);
       const isArmored = isArmoredEncrypted || isArmoredSignedOnly;

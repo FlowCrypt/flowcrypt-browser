@@ -73,7 +73,7 @@ export class Buf extends Uint8Array {
     return Buf.fromBase64Str(b64UrlStr.replace(/-/g, '+').replace(/_/g, '/'));
   }
 
-  public toUtfStr = (): string => { // tom
+  public toUtfStr = (mode: 'strict' | 'inform' | 'ignore' = 'inform'): string => { // tom
     const length = this.length;
     let bytesLeftInChar = 0;
     let utf8string = '';
@@ -106,7 +106,13 @@ export class Buf extends Uint8Array {
             bytesLeftInChar = 5;
             binaryChar = this[i].toString(2).substr(7);
           } else {
-            console.info('Buf.toUtfStr: invalid utf-8 character beginning byte: ' + this[i]);
+            if (mode === 'strict' || mode === 'inform') {
+              const e = new Error('Buf.toUtfStr: invalid utf-8 character beginning byte: ' + this[i]);
+              if (mode === 'strict') {
+                throw e;
+              }
+              console.log(e);
+            }
           }
         } else { // continuation of a multi-byte character
           binaryChar += this[i].toString(2).substr(2);
