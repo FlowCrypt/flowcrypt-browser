@@ -29,7 +29,7 @@ Catch.try(async () => {
   const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
   const disableDraftSaving = false;
   let draftId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
-  let from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;
+  let from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
   let to = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
   let threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
   let subject = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
@@ -41,7 +41,7 @@ Catch.try(async () => {
   const canReadEmail = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
 
   await (async () => { // attempt to recover missing params
-    if (!isReplyBox || (threadId && threadId !== threadMsgId && to.length && from && subject)) {
+    if (!isReplyBox || (threadId && threadId !== threadMsgId && to.length && subject)) {
       return; // either not a reply box, or reply box & has all needed params
     }
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
@@ -65,15 +65,9 @@ Catch.try(async () => {
       threadId = gmailMsg.threadId;
     }
     const reply = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'), (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
-    if (!to.length) {
-      to = reply.to;
-    }
-    if (!from) {
-      from = reply.from;
-    }
-    if (!subject) {
-      subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
-    }
+    to = to.length ? to : reply.to;
+    from = from ? from : reply.from;
+    subject = subject ? subject : Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
   })();
 
@@ -229,7 +223,7 @@ Catch.try(async () => {
     // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),
     // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
     renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => {
-      BrowserMsg.send.reinsertReplyBox(parentTabId, { acctEmail, myEmail: from, subject, theirEmail: recipients, threadId, threadMsgId: lastMsgId });
+      BrowserMsg.send.reinsertReplyBox(parentTabId, { acctEmail, myEmail: from || acctEmail, subject, theirEmail: recipients, threadId, threadMsgId: lastMsgId });
     },
     renderFooterDialog: () => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
       iframe: factory.srcAddFooterDialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {

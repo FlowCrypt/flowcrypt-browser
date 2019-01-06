@@ -64,7 +64,7 @@ export type ComposerUrlParams = {
   threadId: string;
   draftId: string;
   subject: string;
-  from: string;
+  from: string | undefined;
   to: string[];
   frameId: string;
   parentTabId: string;
@@ -424,7 +424,7 @@ export class Composer {
       }
       const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
       const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-      const mimeMsg = await Mime.encode(body, { To: to, From: this.v.from || this.getSenderFromDom(), Subject: subject }, []);
+      const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
       try {
         if (!this.v.draftId) {
           const newDraft = await this.app.emailProviderDraftCreate(mimeMsg);
@@ -693,7 +693,7 @@ export class Composer {
         this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.handleErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
-        await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), recipients, subject, body, atts, this.v.threadId), plaintext);
+        await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.getSender(), recipients, subject, body, atts, this.v.threadId), plaintext);
       }
     } else {
       alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -759,8 +759,8 @@ export class Composer {
     }
     return plaintext + '\n\n' + Ui.e('div', {
       'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.htmlAttrEncode({
-        sender: this.v.from || this.getSenderFromDom(),
-        recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.v.from || this.getSenderFromDom()), this.v.acctEmail),
+        sender: this.getSender(),
+        recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.getSender()), this.v.acctEmail),
         subject,
         token: response.token,
       })
@@ -811,10 +811,10 @@ export class Composer {
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, encryptedBody, atts, this.v.threadId), text);
+      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.v.threadId), text);
     } else {
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
-      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.v.from || this.getSenderFromDom(), to, subj, encryptedBody, atts, this.v.threadId), text);
+      await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.v.threadId), text);
     }
   }
 
@@ -1256,7 +1256,7 @@ export class Composer {
   private updatePubkeyIcon = (include?: boolean) => {
     if (typeof include === 'undefined') { // decide if pubkey should be included
       if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
-        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.v.from || this.getSenderFromDom()).in(this.myAddrsOnPks));
+        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.getSender()).in(this.myAddrsOnPks));
       }
     } else { // set icon to specific state
       if (include) {
@@ -1309,8 +1309,8 @@ export class Composer {
   private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | "fail" | "wrong") => {
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnPks = Value.is(this.v.from || this.getSenderFromDom()).in(this.myAddrsOnPks);
-        const sendingAddrOnKeyserver = Value.is(this.v.from || this.getSenderFromDom()).in(this.myAddrsOnKeyserver);
+        const sendingAddrOnPks = Value.is(this.getSender()).in(this.myAddrsOnPks);
+        const sendingAddrOnKeyserver = Value.is(this.getSender()).in(this.myAddrsOnKeyserver);
         if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup' && !sendingAddrOnPks)) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
@@ -1370,12 +1370,14 @@ export class Composer {
     return recipients;
   }
 
-  private getSenderFromDom = (): string => {
+  private getSender = (): string => {
+    if (this.v.from) {
+      return this.v.from;
+    }
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
-    } else {
-      return this.v.acctEmail;
     }
+    return this.v.acctEmail;
   }
 
   private renderReplySuccess = (msg: SendableMsg, plaintext: string, msgId: string) => {
@@ -1386,7 +1388,7 @@ export class Composer {
     }
     this.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.S.cached('compose_table').css('display', 'none');
-    this.S.cached('reply_msg_successful').find('div.replied_from').text(this.v.from);
+    this.S.cached('reply_msg_successful').find('div.replied_from').text(this.getSender());
     this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.v.to.join(','));
     Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
