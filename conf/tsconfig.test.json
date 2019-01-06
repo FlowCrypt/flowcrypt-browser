@@ -15,6 +15,7 @@
   "files": [
     "../test/source/test.ts",
     "../test/source/patterns.ts",
-    "../test/source/async-stack.ts"
+    "../test/source/async-stack.ts",
+    "../test/source/buf.ts"
   ]
 }
