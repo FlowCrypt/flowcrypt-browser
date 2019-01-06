@@ -36,7 +36,7 @@ Catch.try(async () => {
     Xss.sanitizeRender(self, 'Decrypting.. ' + Ui.spinner('white'));
     const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(acctEmail), Buf.fromUtfStr(encrypted));
     if (result.success) {
-      alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.uint8!.toUtfStr()}`);
+      alert(`MESSAGE CONTENT BELOW\n---------------------------------------------------------\n${result.content.uint8.toUtfStr()}`);
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       $('.passphrase_dialog').html(factory.embeddedPassphrase(result.longids.needPassphrase)); // xss-safe-factory
     } else {

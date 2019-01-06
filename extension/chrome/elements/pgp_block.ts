@@ -176,7 +176,7 @@ Catch.try(async () => {
   const decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
     const decrypted = await BgExec.pgpMsgDecrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted.getData(), await decryptPwd());
     if (decrypted.success) {
-      const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8! });
+      const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8 });
       Browser.saveToDownloads(att, renderIn);
       sendResizeMsg();
     } else {
@@ -363,7 +363,7 @@ Catch.try(async () => {
           console.info(`re-fetching message ${msgId} from api because failed signature check: ${!msgFetchedFromApi ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await decideDecryptedContentFormattingAndRender(result.content.uint8!, Boolean(result.isEncrypted), result.signature); // text!: did not request uint8
+          await decideDecryptedContentFormattingAndRender(result.content.uint8, Boolean(result.isEncrypted), result.signature); // text!: did not request uint8
         }
       } else if (result.error.type === DecryptErrTypes.format) {
         if (canReadEmails && msgFetchedFromApi !== 'raw') {

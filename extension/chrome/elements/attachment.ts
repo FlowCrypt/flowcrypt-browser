@@ -133,7 +133,7 @@ Catch.try(async () => {
       if (!fileName || Value.is(fileName).in(['msg.txt', 'null'])) {
         fileName = encryptedAtt.name;
       }
-      Browser.saveToDownloads(new Att({ name: fileName, type: encryptedAtt.type, data: result.content.uint8! }), $('body')); // uint8!: requested uint8 above
+      Browser.saveToDownloads(new Att({ name: fileName, type: encryptedAtt.type, data: result.content.uint8 }), $('body')); // uint8!: requested uint8 above
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       clearInterval(passphraseInterval);

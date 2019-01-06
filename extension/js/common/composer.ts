@@ -484,7 +484,7 @@ export class Composer {
       const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), Buf.fromUtfStr(encryptedArmoredDraft));
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
-        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.uint8!.toUtfStr().replace(/\n/g, '<br>')));
+        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.uint8.toUtfStr().replace(/\n/g, '<br>')));
         if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
@@ -1049,16 +1049,16 @@ export class Composer {
     }
     const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), Buf.fromUtfStr(armoredMsg));
     if (result.success) {
-      if (!Mime.resemblesMsg(result.content.uint8!)) {
-        this.appendForwardedMsg(result.content.uint8!);
+      if (!Mime.resemblesMsg(result.content.uint8)) {
+        this.appendForwardedMsg(result.content.uint8);
       } else {
-        const mimeDecoded = await Mime.decode(result.content.uint8!);
+        const mimeDecoded = await Mime.decode(result.content.uint8);
         if (typeof mimeDecoded.text !== 'undefined') {
-          this.appendForwardedMsg(result.content.uint8!);
+          this.appendForwardedMsg(result.content.uint8);
         } else if (typeof mimeDecoded.html !== 'undefined') {
           this.appendForwardedMsg(Buf.fromUtfStr(Xss.htmlSanitizeAndStripAllTags(mimeDecoded.html!, '\n')));
         } else {
-          this.appendForwardedMsg(result.content.uint8!);
+          this.appendForwardedMsg(result.content.uint8);
         }
       }
     } else {
