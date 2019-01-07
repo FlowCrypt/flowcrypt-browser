@@ -397,7 +397,7 @@ export class Store {
       return new UnreportableError(message);
     } else {
       Catch.handleErr(err instanceof Error ? err : new Error(message));
-      return new StoreDeniedError(message);
+      return new StoreFailedError(message);
     }
   }
 

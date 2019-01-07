@@ -31,7 +31,7 @@ chrome.runtime.onInstalled.addListener(event => {
     await migrateGlobal();
     await Store.setGlobal({ version: Number(Catch.version('int')) });
   } catch (e) {
-    await BgUtils.handleStoreErr(e);
+    await BgUtils.handleStoreErr(Store.errCategorize(e));
   }
 
   const storage = await Store.getGlobal(['settings_seen', 'errors']);

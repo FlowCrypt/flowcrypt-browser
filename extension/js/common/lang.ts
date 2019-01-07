@@ -6,7 +6,7 @@
 
 export const Lang = { // tslint:disable-line:variable-name
   error: {
-    dbFailed: 'This will have something to do with your browser settings. Try to install FlowCrypt on a brand new browser profile (both Firefox and Chrome allow you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please contact us know at human@flowcrypt.com and we will include it below to help other users.',
+    dbFailed: 'Try restarting your browser first. If that doesn\'t help, this will have something to do with your browser settings. Try to install FlowCrypt on a brand new browser profile (both Firefox and Chrome allow you to have several different user profiles). If you leave the new profile on default settings, FlowCrypt should work without issues. Then you can compare your old profile settings to the new one to find out which settings are giving FlowCrypt trouble. Once you find out, please contact us know at human@flowcrypt.com and we will include it below to help other users.',
   },
   setup: {
     confirmResetAcct: (acctEmail: string) => `This will remove all your FlowCrypt settings for ${acctEmail} including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY IN A SAFE PLACE FIRST OR YOU MAY LOSE IT`,
