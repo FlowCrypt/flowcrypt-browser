@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store, GlobalStore } from '../common/platform/store.js';
-import { BgExec, BrowserMsg, Bm } from '../common/extension.js';
+import { BrowserMsg, Bm } from '../common/extension.js';
 import { BgAttests } from './attests.js';
 import { injectFcIntoWebmailIfNeeded } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
@@ -51,7 +51,10 @@ chrome.runtime.onInstalled.addListener(event => {
   }
 
   BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);
-  BrowserMsg.bgAddListener('bg_exec', BgExec.bgReqHandler);
+  BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
+  BrowserMsg.bgAddListener('pgpHashChallengeAnswer', BgHandlers.pgpHashChallengeAnswer);
+  BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
+  BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
   BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
   BrowserMsg.bgAddListener('session_set', (r: Bm.SessionSet) => Store.sessionSet(r.acctEmail, r.key, r.value));
   BrowserMsg.bgAddListener('session_get', (r: Bm.SessionGet) => Store.sessionGet(r.acctEmail, r.key));

@@ -6,7 +6,7 @@ import { Store } from '../../js/common/platform/store.js';
 import { Str, Dict } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
-import { BgExec, BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api, R } from '../../js/common/api/api.js';
 import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
@@ -154,7 +154,7 @@ Catch.try(async () => {
   };
 
   const handlePrivateKeyMismatch = async (acctEmail: string, message: Uint8Array) => { // todo - make it work for multiple stored keys
-    const msgDiagnosis = await BgExec.pgpMsgDiagnosePubkeys(await Store.keysGet(acctEmail), message);
+    const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnoseMsgPubkeys({ privateKis: await Store.keysGet(acctEmail), message });
     if (msgDiagnosis.found_match) {
       await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
     } else if (msgDiagnosis.receivers === 1) {
@@ -165,18 +165,20 @@ Catch.try(async () => {
     }
   };
 
-  const decryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
+  const getDecryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
     const pwd = suppliedPwd || userEnteredMsgPassword || undefined;
     if (pwd && hasChallengePassword) {
-      return await BgExec.cryptoHashChallengeAnswer(pwd);
+      const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
+      return hashed;
     }
     return pwd;
   };
 
   const decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const decrypted = await BgExec.pgpMsgDecrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted.getData(), await decryptPwd());
+    const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
+    const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await getDecryptPwd() });
     if (decrypted.success) {
-      const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content.uint8 });
+      const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content });
       Browser.saveToDownloads(att, renderIn);
       sendResizeMsg();
     } else {
@@ -350,9 +352,10 @@ Catch.try(async () => {
     setTestState('ready');
   };
 
-  const decryptAndRender = async (encrypted: Buf, optionalPwd?: string) => {
+  const decryptAndRender = async (encryptedData: Buf, optionalPwd?: string) => {
     if (typeof signature !== 'string') {
-      const result = await BgExec.pgpMsgDecrypt(await Store.keysGetAllWithPassphrases(acctEmail), encrypted, await decryptPwd(optionalPwd));
+      const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
+      const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await getDecryptPwd(optionalPwd) });
       if (typeof result === 'undefined') {
         await renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
       } else if (result.success) {
@@ -363,18 +366,18 @@ Catch.try(async () => {
           console.info(`re-fetching message ${msgId} from api because failed signature check: ${!msgFetchedFromApi ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await decideDecryptedContentFormattingAndRender(result.content.uint8, Boolean(result.isEncrypted), result.signature); // text!: did not request uint8
+          await decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature); // text!: did not request uint8
         }
       } else if (result.error.type === DecryptErrTypes.format) {
         if (canReadEmails && msgFetchedFromApi !== 'raw') {
           console.info(`re-fetching message ${msgId} from api because looks like bad formatting: ${!msgFetchedFromApi ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.error, encrypted.toUtfStr());
+          await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.error, encryptedData.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
         await renderPassphrasePromptAndAwaitChange(result.longids.needPassphrase);
-        await decryptAndRender(encrypted, optionalPwd);
+        await decryptAndRender(encryptedData, optionalPwd);
       } else {
         const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
         if (!result.longids.chosen && !primaryKi) {
@@ -382,29 +385,29 @@ Catch.try(async () => {
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (hasChallengePassword && !optionalPwd) {
             const pwd = await renderPasswordPromptAndWaitForEntry('first');
-            await decryptAndRender(encrypted, pwd);
+            await decryptAndRender(encryptedData, pwd);
           } else {
-            await handlePrivateKeyMismatch(acctEmail, encrypted);
+            await handlePrivateKeyMismatch(acctEmail, encryptedData);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
           const pwd = await renderPasswordPromptAndWaitForEntry('retry');
-          await decryptAndRender(encrypted, pwd);
+          await decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.usePassword) {
           const pwd = await renderPasswordPromptAndWaitForEntry('first');
-          await decryptAndRender(encrypted, pwd);
+          await decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           const errMsg = `This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC`;
-          await renderErr(errMsg, encrypted.toUtfStr());
+          await renderErr(errMsg, encryptedData.toUtfStr());
         } else if (result.error) {
-          await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.error}</em>`, encrypted.toUtfStr());
+          await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.error}</em>`, encryptedData.toUtfStr());
         } else { // should generally not happen
           delete result.message;
-          await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encrypted.toUtfStr());
+          await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());
         }
       }
     } else {
-      const signatureResult = await BgExec.pgpMsgVerifyDetached(encrypted, Buf.fromUtfStr(signature));
-      await decideDecryptedContentFormattingAndRender(encrypted, false, signatureResult);
+      const signatureResult = await BrowserMsg.send.bg.await.pgpMsgVerifyDetached({ plaintext: encryptedData, sigText: Buf.fromUtfStr(signature) });
+      await decideDecryptedContentFormattingAndRender(encryptedData, false, signatureResult);
     }
   };
 

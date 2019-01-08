@@ -6,7 +6,7 @@ import { Bm } from '../common/extension.js';
 import { Store } from '../common/platform/store.js';
 import { BgUtils } from './bgutils.js';
 import { Env } from '../common/browser.js';
-import { PgpMsgMethod, PgpMsg } from '../common/core/pgp.js';
+import { Pgp } from '../common/core/pgp.js';
 
 export class BgHandlers {
 
@@ -35,7 +35,7 @@ export class BgHandlers {
     }
   }
 
-  public static getActiveTabInfo = () => new Promise((resolve, reject) => {
+  public static getActiveTabInfo: Bm.AsyncRespondingHandler = () => new Promise((resolve, reject) => {
     chrome.tabs.query({ active: true, currentWindow: true, url: ["*://mail.google.com/*", "*://inbox.google.com/*"] }, (activeTabs) => {
       if (activeTabs.length) {
         if (activeTabs[0].id !== undefined) {
@@ -65,6 +65,8 @@ export class BgHandlers {
     }
   }
 
-  public static pgpMsgType: PgpMsgMethod.Type = PgpMsg.type;
+  public static pgpHashChallengeAnswer = async ({ answer }: Bm.PgpHashChallengeAnswer): Promise<Bm.Res.PgpHashChallengeAnswer> => {
+    return { hashed: await Pgp.hash.challengeAnswer(answer) };
+  }
 
 }

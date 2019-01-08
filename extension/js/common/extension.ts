@@ -3,16 +3,14 @@
 'use strict';
 
 import { Str, Value, Dict } from './core/common.js';
-import { Pgp, DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgMethod, PgpMsg, PgpMsgTypeResult, KeyInfo } from './core/pgp.js';
+import { DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgTypeResult, PgpMsgMethod } from './core/pgp.js';
 import { FlatTypes } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
-import { Buf } from './core/buf.js';
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
-export type PossibleBgExecResults = DecryptResult | DiagnoseMsgPubkeysResult | MsgVerifyResult | string;
 
 export type AnyThirdPartyLibrary = any;
 
@@ -41,32 +39,40 @@ export namespace Bm {
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
   export type StripeResult = { token: string };
   export type PassphraseEntry = { entered: boolean; };
-  export type BgExec = { path: string, args: any[] };
   export type Db = { f: string, args: any[] };
   export type SessionSet = { acctEmail: string, key: string, value: string | undefined };
   export type SessionGet = { acctEmail: string, key: string };
   export type AttestPacketReceived = { acctEmail: string, packet: string, passphrase: string };
   export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string };
-  export type PgpMsgType = { data: Uint8Array };
+  export type PgpMsgType = PgpMsgMethod.Arg.Type;
+  export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
+  export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnoseMsgPubkeys;
+  export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
+  export type PgpHashChallengeAnswer = { answer: string };
 
   export namespace Res {
-    export type BgExec = { result?: PossibleBgExecResults, exception?: { name: string, message: string, stack: string } };
     export type AttestPacketReceived = { success: boolean; result: string };
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
     export type SessionGet = string | null;
     export type SessionSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpMsgType = PgpMsgTypeResult;
+    export type PgpMsgDecrypt = DecryptResult;
+    export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
+    export type PgpMsgVerify = MsgVerifyResult;
+    export type PgpHashChallengeAnswer = { hashed: string };
     export type _tab_ = { tabId: string | null | undefined };
     export type Db = any; // not included in Any
-    export type Any = BgExec | AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ReconnectAcctAuthPopup | PgpMsgType;
+    export type Any = AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ReconnectAcctAuthPopup |
+      PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer;
   }
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | BgExec | Db | SessionSet | SetFooter |
-    SessionGet | AttestPacketReceived | ReconnectAcctAuthPopup | PgpMsgType;
+    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | Db | SessionSet | SetFooter |
+    SessionGet | AttestPacketReceived | ReconnectAcctAuthPopup |
+    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -163,13 +169,16 @@ export class BrowserMsg {
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(undefined, 'attest_packet_received', bm) as Promise<Bm.Res.AttestPacketReceived>,
-        bgExec: (bm: Bm.BgExec) => BrowserMsg.sendAwait(undefined, 'bg_exec', bm) as Promise<Bm.Res.BgExec>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info') as Promise<Bm.Res.GetActiveTabInfo>,
         sessionGet: (bm: Bm.SessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm) as Promise<Bm.Res.SessionGet>,
         sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm) as Promise<Bm.Res.SessionSet>,
         db: (bm: Bm.Db) => BrowserMsg.sendAwait(undefined, 'db', bm) as Promise<Bm.Res.Db>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm) as Promise<Bm.Res.PgpMsgType>,
-      }
+        pgpMsgDiagnoseMsgPubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnoseMsgPubkeys', bm) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+        pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm) as Promise<Bm.Res.PgpHashChallengeAnswer>,
+        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm) as Promise<Bm.Res.PgpMsgDecrypt>,
+        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm) as Promise<Bm.Res.PgpMsgVerify>,
+      },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
     stripeResult: (dest: Bm.Dest, bm: Bm.StripeResult) => BrowserMsg.sendCatch(dest, 'stripe_result', bm),
@@ -364,101 +373,6 @@ export class BrowserMsg {
       parsed.frame = !isNaN(parsedFrame) ? parsedFrame : undefined;
     }
     return parsed;
-  }
-
-}
-
-export class BgExec {
-
-  public static bgReqHandler: Bm.AsyncRespondingHandler = async (message: Bm.BgExec) => {
-    const args = await Promise.all(BgExec.argObjUrlsConsume(message.args));
-    const result = await BgExec.executeAndFormatResult(message.path, args);
-    return { result };
-  }
-
-  public static pgpMsgDiagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = (privateKis: KeyInfo[], message: Uint8Array) => {
-    return BgExec.requestToProcessInBg('PgpMsg.diagnosePubkeys', [privateKis, message]) as Promise<DiagnoseMsgPubkeysResult>;
-  }
-
-  public static cryptoHashChallengeAnswer = (password: string) => {
-    return BgExec.requestToProcessInBg('Pgp.hash.challengeAnswer', [password]) as Promise<string>;
-  }
-
-  public static pgpMsgDecrypt: PgpMsgMethod.Decrypt = async (kisWithPp, encryptedData, msgPwd) => {
-    const result = await BgExec.requestToProcessInBg('PgpMsg.decrypt', [kisWithPp, encryptedData, msgPwd]) as DecryptResult;
-    if (result.success && result.content && result.content.blob && result.content.blob.blob_url.indexOf(`blob:${chrome.runtime.getURL('')}`) === 0) {
-      result.content.uint8 = await Browser.objUrlConsume(result.content.blob.blob_url);
-      result.content.blob = undefined;
-    }
-    return result;
-  }
-
-  public static pgpMsgVerifyDetached: PgpMsgMethod.VerifyDetached = (message, signature) => {
-    return BgExec.requestToProcessInBg('PgpMsg.verifyDetached', [message, signature]) as Promise<MsgVerifyResult>;
-  }
-
-  private static executeAndFormatResult = async (path: string, resolvedArgs: any[]): Promise<PossibleBgExecResults> => {
-    const f = BgExec.resolvePathToCallableFunction(path);
-    const returned: Promise<PossibleBgExecResults> | PossibleBgExecResults = f.apply(undefined, resolvedArgs); // tslint:disable-line:no-unsafe-any
-    if (returned && typeof returned === 'object' && typeof (returned as Promise<PossibleBgExecResults>).then === 'function') { // got a promise
-      const resolved = await returned;
-      if (path === 'PgpMsg.decrypt') {
-        BgExec.pgpMsgDecryptResSerializeBeforeTrasferToFg(resolved as DecryptResult);
-      }
-      return resolved;
-    }
-    return returned as PossibleBgExecResults; // direct result
-  }
-
-  private static pgpMsgDecryptResSerializeBeforeTrasferToFg = (decryptRes: DecryptResult) => {
-    if (decryptRes) {
-      if (decryptRes.success) {
-        if (decryptRes.content) {
-          decryptRes.content.blob = { blob_type: 'uint8', blob_url: Browser.objUrlCreate(decryptRes.content.uint8) };
-          decryptRes.content.uint8 = new Buf([]);
-        }
-      } else {
-        if (decryptRes.message) {
-          // meant for debugging - could cause issues when trying to serialize
-          decryptRes.message = undefined;
-        }
-      }
-    }
-  }
-
-  private static isObjUrl = (arg: any) => typeof arg === 'string' && arg.indexOf('blob:' + chrome.runtime.getURL('')) === 0;
-
-  private static argObjUrlsConsume = (args: any[]): Promise<any>[] => args.map((arg: any) => BgExec.isObjUrl(arg) ? Browser.objUrlConsume(arg) : arg); // tslint:disable-line:no-unsafe-any
-
-  private static argObjUrlsCreate = (args: any[]) => args.map(arg => arg instanceof Uint8Array ? Browser.objUrlCreate(arg) : arg); // tslint:disable-line:no-unsafe-any
-
-  private static resolvePathToCallableFunction = (path: string): Function => {  // tslint:disable-line:ban-types
-    let f: Function | object | undefined; // tslint:disable-line:ban-types
-    for (const step of path.split('.')) {
-      if (typeof f === 'undefined') {
-        if (step === 'Pgp') {
-          f = Pgp;
-        } else if (step === 'PgpMsg') {
-          f = PgpMsg;
-        } else {
-          throw new Error(`BgExec: Not prepared for relaying class ${step}`);
-        }
-      } else {
-        // @ts-ignore
-        f = f[step]; // tslint:disable-line:no-unsafe-any
-      }
-    }
-    return f as Function; // tslint:disable-line:ban-types
-  }
-
-  private static requestToProcessInBg = async (path: string, args: any[]) => {
-    const response = await BrowserMsg.send.bg.await.bgExec({ path, args: BgExec.argObjUrlsCreate(args) });
-    if (response.exception) {
-      const e = new Error(`[BgExec] ${response.exception.name}: ${response.exception.message}`);
-      e.stack += `\n\nBgExec stack:\n${response.exception.stack}`;
-      throw e;
-    }
-    return response.result!;
   }
 
 }

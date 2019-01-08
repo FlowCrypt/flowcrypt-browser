@@ -1155,12 +1155,12 @@ export class AttUI {
     return atts;
   }
 
-  collectEncryptAtts = async (armoredPubkeys: string[], challenge?: Pwd): Promise<Att[]> => {
+  collectEncryptAtts = async (pubkeys: string[], pwd?: Pwd): Promise<Att[]> => {
     const atts: Att[] = [];
     for (const id of Object.keys(this.attachedFiles)) {
       const file = this.attachedFiles[id];
-      const fileData = await this.readAttDataAsUint8(id);
-      const encrypted = await PgpMsg.encrypt(armoredPubkeys, undefined, challenge, fileData, file.name, false) as OpenPGP.EncryptBinaryResult;
+      const data = await this.readAttDataAsUint8(id);
+      const encrypted = await PgpMsg.encrypt({ pubkeys, data, pwd, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
     return atts;

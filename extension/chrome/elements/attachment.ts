@@ -30,7 +30,7 @@ Catch.try(async () => {
   // either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
   const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
 
-  const keyInfosWithPassphrases = await Store.keysGetAllWithPassphrases(acctEmail);
+  const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
 
   let att: Att;
   try {
@@ -132,14 +132,13 @@ Catch.try(async () => {
   });
 
   const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    const result = await PgpMsg.decrypt(keyInfosWithPassphrases, encryptedAtt.getData(), undefined);
+    const result = await PgpMsg.decrypt({ kisWithPp, encryptedData: encryptedAtt.getData() });
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
-      let fileName = result.content.filename;
-      if (!fileName || Value.is(fileName).in(['msg.txt', 'null'])) {
-        fileName = encryptedAtt.name;
+      if (!result.filename || Value.is(result.filename).in(['msg.txt', 'null'])) {
+        result.filename = encryptedAtt.name;
       }
-      Browser.saveToDownloads(new Att({ name: fileName, type: encryptedAtt.type, data: result.content.uint8 }), $('body')); // uint8!: requested uint8 above
+      Browser.saveToDownloads(new Att({ name: result.filename, type: encryptedAtt.type, data: result.content }), $('body'));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
       clearInterval(passphraseInterval);
@@ -221,13 +220,13 @@ Catch.try(async () => {
     if (a.msgId && a.id && a.treatAs() === 'publicKey') {
       // this is encrypted public key - download && decrypt & parse & render
       const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id);
-      const decrRes = await PgpMsg.decrypt(keyInfosWithPassphrases, data);
-      if (decrRes.success && decrRes.content.uint8) {
-        const openpgpType = await PgpMsg.type({ data: decrRes.content.uint8 });
+      const decrRes = await PgpMsg.decrypt({ kisWithPp, encryptedData: data });
+      if (decrRes.success && decrRes.content) {
+        const openpgpType = await PgpMsg.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey') {
           if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
             // render pubkey
-            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [decrRes.content.uint8.toUtfStr()] });
+            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [decrRes.content.toUtfStr()] });
             // hide attachment
             BrowserMsg.send.setCss(parentTabId, { selector: `#${frameId}`, traverseUp: 1, css: { display: 'none' } });
             $('body').text('');

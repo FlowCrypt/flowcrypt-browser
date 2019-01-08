@@ -141,7 +141,7 @@ export class Composer {
   private v: ComposerUrlParams;
 
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
-    this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice(initSubs));
+    this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
     this.v = urlParams;
     if (!this.v.disableDraftSaving) {
@@ -165,7 +165,8 @@ export class Composer {
     this.initActions();
   }
 
-  private getMaxAttSizeAndOversizeNotice = async (subscription: Subscription) => {
+  private getMaxAttSizeAndOversizeNotice = async () => {
+    const subscription = await this.app.storageGetSubscription();
     if (!subscription.active) {
       return {
         sizeMb: 5,
@@ -396,7 +397,8 @@ export class Composer {
       this.currentlySavingDraft = true;
       this.S.cached('send_btn_note').text('Saving');
       const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
-      const encrypted = await PgpMsg.encrypt([primaryKi.public], undefined, undefined, this.extractAsText('input_text'), undefined, true) as OpenPGP.EncryptArmorResult;
+
+      const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(this.extractAsText('input_text')), armor: true }) as OpenPGP.EncryptArmorResult;
       let body: string;
       if (this.v.threadId) { // replied message
         body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
@@ -464,10 +466,10 @@ export class Composer {
   private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { from?: string; to: string[] }) => {
     const passphrase = await this.app.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), Buf.fromUtfStr(encryptedArmoredDraft));
+      const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(this.v.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
-        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.uint8.toUtfStr().replace(/\n/g, '<br>')));
+        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
         if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
@@ -782,7 +784,7 @@ export class Composer {
 
   private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
-    const encrypted = await PgpMsg.encrypt(pubkeys, undefined, pwd, text, undefined, true, encryptAsOfDate) as OpenPGP.EncryptArmorResult;
+    const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate(to, { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -1030,18 +1032,18 @@ export class Composer {
       }
       return;
     }
-    const result = await PgpMsg.decrypt(await Store.keysGetAllWithPassphrases(this.v.acctEmail), Buf.fromUtfStr(armoredMsg));
+    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(this.v.acctEmail), encryptedData: Buf.fromUtfStr(armoredMsg) });
     if (result.success) {
-      if (!Mime.resemblesMsg(result.content.uint8)) {
-        this.appendForwardedMsg(result.content.uint8);
+      if (!Mime.resemblesMsg(result.content)) {
+        this.appendForwardedMsg(result.content);
       } else {
-        const mimeDecoded = await Mime.decode(result.content.uint8);
+        const mimeDecoded = await Mime.decode(result.content);
         if (typeof mimeDecoded.text !== 'undefined') {
-          this.appendForwardedMsg(result.content.uint8);
+          this.appendForwardedMsg(result.content);
         } else if (typeof mimeDecoded.html !== 'undefined') {
           this.appendForwardedMsg(Buf.fromUtfStr(Xss.htmlSanitizeAndStripAllTags(mimeDecoded.html!, '\n')));
         } else {
-          this.appendForwardedMsg(result.content.uint8);
+          this.appendForwardedMsg(result.content);
         }
       }
     } else {
