@@ -225,9 +225,11 @@ Catch.try(async () => {
       BrowserMsg.send.reinsertReplyBox(parentTabId, { acctEmail, myEmail: from || acctEmail, subject, theirEmail: recipients, threadId, threadMsgId: lastMsgId });
     },
     renderFooterDialog: () => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
-      iframe: factory.srcAddFooterDialog('compose'), iframeWidth: 490, iframeHeight: 230, variant: 'noscroll', afterContent: () => {
-        $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no');
-      }
+      iframe: factory.srcAddFooterDialog('compose', parentTabId),
+      iframeWidth: 490,
+      iframeHeight: 230,
+      variant: 'noscroll',
+      afterContent: () => $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no'),
     }),
     renderAddPubkeyDialog: (emails: string[]) => {
       if (placement !== 'settings') {

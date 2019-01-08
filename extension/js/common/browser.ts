@@ -722,8 +722,8 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  srcAddFooterDialog = (placement: Placement) => {
-    return this.frameSrc(this.extUrl('chrome/elements/shared/footer.htm'), { placement });
+  srcAddFooterDialog = (placement: Placement, grandparentTabId: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/shared/footer.htm'), { placement, grandparentTabId });
   }
 
   srcSendingAddrDialog = (placement: Placement) => {
