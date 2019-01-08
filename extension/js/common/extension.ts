@@ -47,7 +47,7 @@ export namespace Bm {
   export type ReconnectAcctAuthPopup = { acctEmail: string };
   export type PgpMsgType = PgpMsgMethod.Arg.Type;
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
-  export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnoseMsgPubkeys;
+  export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpHashChallengeAnswer = { answer: string };
 
@@ -174,7 +174,7 @@ export class BrowserMsg {
         sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm) as Promise<Bm.Res.SessionSet>,
         db: (bm: Bm.Db) => BrowserMsg.sendAwait(undefined, 'db', bm) as Promise<Bm.Res.Db>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm) as Promise<Bm.Res.PgpMsgType>,
-        pgpMsgDiagnoseMsgPubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnoseMsgPubkeys', bm) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+        pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
         pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm) as Promise<Bm.Res.PgpMsgVerify>,
@@ -221,8 +221,8 @@ export class BrowserMsg {
         if (!r || typeof r !== 'object') {
           reject(new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`));
         } else if (r && typeof r === 'object' && r.exception) {
-          const e = new Error(`BrowserMsg(${destString}|${name}): ${r.exception.message}`);
-          e.stack += `[callerStack]\n${msg.stack}\n[/callerStack]\n[responderStack]\n${r.exception.stack}\n[/responderStack]\n`;
+          const e = new Error(`BrowserMsg(${name}) ${r.exception.message}`);
+          e.stack += `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${r.exception.stack}\n[/responderStack]\n`;
           reject(e);
         } else if (!r.result || typeof r.result !== 'object') {
           resolve(r.result);
@@ -290,10 +290,11 @@ export class BrowserMsg {
 
   private static sendRawResponse = (handlerRromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
     handlerRromise.then(result => {
-      const objUrls = BrowserMsg.replaceBufWithObjUrl(result);
+      const objUrls = BrowserMsg.replaceBufWithObjUrl(result); // this actually changes the result object
       rawRespond({ result, exception: undefined, objUrls });
     }).catch(e => {
-      rawRespond({ result: undefined, exception: Catch.rewrapErr(e, 'sendRawResponse'), objUrls: {} });
+      const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
+      rawRespond({ result: undefined, exception: { stack, message }, objUrls: {} });
     });
   }
 

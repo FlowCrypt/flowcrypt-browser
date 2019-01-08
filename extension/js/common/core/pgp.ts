@@ -26,10 +26,10 @@ export namespace PgpMsgMethod {
     export type Encrypt = { pubkeys: string[], signingPrv?: OpenPGP.key.Key, pwd?: Pwd, data: Uint8Array, filename?: string, armor: boolean, date?: Date };
     export type Type = { data: Uint8Array };
     export type Decrypt = { kisWithPp: KeyInfosWithPassphrases, encryptedData: Uint8Array, msgPwd?: string };
-    export type DiagnoseMsgPubkeys = { privateKis: KeyInfo[], message: Uint8Array };
+    export type DiagnosePubkeys = { privateKis: KeyInfo[], message: Uint8Array };
     export type VerifyDetached = { plaintext: Uint8Array, sigText: Uint8Array };
   }
-  export type DiagnoseMsgPubkeys = (arg: Arg.DiagnoseMsgPubkeys) => Promise<DiagnoseMsgPubkeysResult>;
+  export type DiagnosePubkeys = (arg: Arg.DiagnosePubkeys) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (arg: Arg.VerifyDetached) => Promise<MsgVerifyResult>;
   export type Decrypt = (arg: Arg.Decrypt) => Promise<DecryptSuccess | DecryptError>;
   export type Type = (arg: Arg.Type) => Promise<PgpMsgTypeResult>;
@@ -730,7 +730,7 @@ export class PgpMsg {
     return await openpgp.encrypt(options);
   }
 
-  static diagnosePubkeys: PgpMsgMethod.DiagnoseMsgPubkeys = async ({ privateKis, message }) => {
+  static diagnosePubkeys: PgpMsgMethod.DiagnosePubkeys = async ({ privateKis, message }) => {
     const m = await openpgp.message.readArmored(Buf.fromUint8(message).toUtfStr());
     const msgKeyIds = m.getEncryptionKeyIds ? m.getEncryptionKeyIds() : [];
     const localKeyIds: OpenPGP.Keyid[] = [];
