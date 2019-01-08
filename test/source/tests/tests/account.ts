@@ -29,14 +29,12 @@ export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSem
     await subscriptionNeededAlert.accept();
     // get a trial
     const subscribePage = await GmailPageRecipe.getSubscribeDialog(gmailPage, browser);
-    const subscribedAlert = await composePage.triggerAndWaitNewAlert(async () => await subscribePage.waitAndClick('@action-get-trial', { delay: 1 }));
-    expect(await subscribedAlert.message()).contains('now you can add your file again');
-    await subscribedAlert.accept();
-    await subscribePage.close();
-    // verify can add large file now
-    await gmailPage.waitTillGone('@dialog-subscribe');
+    await subscribePage.waitAndClick('@action-get-trial', { delay: 1 });
+    await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });
     await gmailPage.waitAll('@webmail-notification');
     expect(await gmailPage.read('@webmail-notification')).contains('Successfully upgraded to FlowCrypt Advanced');
+    await subscribePage.close();
+    // verify can add large file now
     await composePage.click('@input-body'); // focus on this tab before interacting with file upload
     fileInput = await composePage.target.$('input[type=file]');
     await fileInput!.uploadFile('test/samples/large.jpg');
