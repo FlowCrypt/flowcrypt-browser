@@ -16,10 +16,9 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'placement', 'isAuthErr', 'parentTabId', 'subscribeResultTabId']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'placement', 'isAuthErr', 'parentTabId']);
   let acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const subscribeResultTabId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subscribeResultTabId');
   const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'embedded', 'compose', undefined]);
   const isAuthErr = uncheckedUrlParams.isAuthErr === true;
 
@@ -51,7 +50,7 @@ Catch.try(async () => {
     }
   };
 
-  const stripeCcEnteredHandler: Bm.ResponselessHandler = async ({ token }: Bm.StripeResult) => {
+  const stripeCcEnteredHandler: Bm.AsyncResponselessHandler = async ({ token }: Bm.StripeResult) => {
     $('.stripe_checkout').text('').css('display', 'none');
     try {
       await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advancedMonthly, token);
@@ -77,9 +76,6 @@ Catch.try(async () => {
 
   const handleSuccessfulUpgrade = () => {
     BrowserMsg.send.notificationShow(parentTabId, { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
-    if (subscribeResultTabId) {
-      BrowserMsg.send.subscribeResult(subscribeResultTabId, { active: true });
-    }
     closeDialog();
   };
 
@@ -185,12 +181,7 @@ Catch.try(async () => {
         $('.action_show_stripe').removeClass('gray').addClass('green');
       } else {
         Xss.sanitizeRender('#content', `<div class="line">${Lang.account.alreadyUpgraded}</div><div class="line"><div class="button green long action_close">close</div></div>`);
-        $('.action_close').click(Ui.event.handle(() => {
-          if (subscribeResultTabId) {
-            BrowserMsg.send.subscribeResult(subscribeResultTabId, { active: true });
-          }
-          closeDialog();
-        }));
+        $('.action_close').click(Ui.event.handle(() => closeDialog()));
       }
     } else {
       $('h1').text('New Device');

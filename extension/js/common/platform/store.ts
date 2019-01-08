@@ -161,7 +161,7 @@ export class Store {
     if (Env.isBackgroundPage()) {
       return window.sessionStorage.getItem(Store.singleScopeRawIndex(acctEmail, key));
     }
-    return await BrowserMsg.send.await.bg.sessionGet({ acctEmail, key });
+    return await BrowserMsg.send.bg.await.sessionGet({ acctEmail, key });
   }
 
   static sessionSet = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
@@ -172,7 +172,7 @@ export class Store {
         sessionStorage.removeItem(Store.singleScopeRawIndex(acctEmail, key));
       }
     } else {
-      await BrowserMsg.send.await.bg.sessionSet({ acctEmail, key, value });
+      await BrowserMsg.send.bg.await.sessionSet({ acctEmail, key, value });
     }
   }
 
@@ -479,7 +479,7 @@ export class Store {
   static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {
     if (!db) { // relay op through background process
       // todo - currently will silently swallow errors
-      BrowserMsg.send.await.bg.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.handleErr);
+      BrowserMsg.send.bg.await.db({ f: 'dbContactSave', args: [contact] }).then(resolve).catch(Catch.handleErr);
     } else {
       if (Array.isArray(contact)) {
         for (const singleContact of contact) {
@@ -500,7 +500,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send.await.bg.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.handleErr);
+        BrowserMsg.send.bg.await.db({ f: 'dbContactUpdate', args: [email, update] }).then(resolve).catch(Catch.handleErr);
       } else {
         if (Array.isArray(email)) {
           for (const singleEmail of email) {
@@ -543,7 +543,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send.await.bg.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(Catch.handleErr);
+        BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(Catch.handleErr);
       } else {
         if (emailOrLongid.length === 1) {
           let tx: IDBRequest;
@@ -570,7 +570,7 @@ export class Store {
     return new Promise(async (resolve, reject) => {
       if (!db) { // relay op through background process
         // todo - currently will silently swallow errors
-        BrowserMsg.send.await.bg.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.handleErr);
+        BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.handleErr);
       } else {
         for (const key of Object.keys(query)) {
           if (!Value.is(key).in(Store.dbQueryKeys)) {

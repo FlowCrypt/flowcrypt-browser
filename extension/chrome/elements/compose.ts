@@ -34,7 +34,6 @@ Catch.try(async () => {
   let threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
   let subject = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
-  const subscriptionWhenPageWasOpened = await Store.subscription();
   const storage = await Store.getAcct(acctEmail, [
     'google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'
   ]);
@@ -241,24 +240,17 @@ Catch.try(async () => {
     renderSendingAddrDialog: () => ($ as JQS).featherlight({ iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500 }),
     closeMsg,
     factoryAtt: (att: Att, isEncrypted: boolean) => factory.embeddedAtta(att, isEncrypted),
-  }, processedUrlParams, subscriptionWhenPageWasOpened);
+  }, processedUrlParams, await Store.subscription());
 
-  BrowserMsg.addListener('close_dialog', () => {
+  BrowserMsg.addListener('close_dialog', async () => {
     $('.featherlight.featherlight-iframe').remove();
   });
-  BrowserMsg.addListener('set_footer', ({ footer }: Bm.SetFooter) => {
+  BrowserMsg.addListener('set_footer', async ({ footer }: Bm.SetFooter) => {
     storage.email_footer = footer;
     composer.updateFooterIcon();
     $('.featherlight.featherlight-iframe').remove();
   });
-  BrowserMsg.addListener('show_subscribe_dialog', composer.showSubscribeDialogAndWaitForRes);
-  BrowserMsg.addListener('subscribe_result', ({ active }: Bm.SubscribeResult) => {
-    if (active && !subscriptionWhenPageWasOpened.active) {
-      subscriptionWhenPageWasOpened.active = active;
-    }
-    composer.processSubscribeRes({ active });
-  });
-  BrowserMsg.addListener('passphrase_entry', ({ entered }: Bm.PassphraseEntry) => composer.passphraseEntry(!!entered));
+  BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => composer.passphraseEntry(!!entered));
   BrowserMsg.listen(tabId);
 
   if (!isReplyBox) { // don't want to deal with resizing the frame

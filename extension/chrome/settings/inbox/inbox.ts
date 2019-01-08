@@ -52,7 +52,7 @@ Catch.try(async () => {
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send.bg.settings({ acctEmail })));
   $('.action_choose_account').get(0).title = acctEmail;
 
-  const notificationShowHandler: Bm.ResponselessHandler = ({ notification, callbacks }: Bm.NotificationShow) => {
+  const notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {
     showNotification(notification, callbacks);
   };
 
@@ -67,38 +67,38 @@ Catch.try(async () => {
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
 
   BrowserMsg.addListener('notification_show', notificationShowHandler);
-  BrowserMsg.addListener('close_new_message', () => {
+  BrowserMsg.addListener('close_new_message', async () => {
     $('div.new_message').remove();
   });
-  BrowserMsg.addListener('close_reply_message', ({ frameId }: Bm.CloseReplyMessage) => {
+  BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
     $(`iframe#${frameId}`).remove();
   });
-  BrowserMsg.addListener('reinsert_reply_box', ({ threadId, threadMsgId }: Bm.ReinsertReplyBox) => {
+  BrowserMsg.addListener('reinsert_reply_box', async ({ threadId, threadMsgId }: Bm.ReinsertReplyBox) => {
     renderReplyBox(threadId, threadMsgId);
   });
-  BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
+  BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
       $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
     }
   });
-  BrowserMsg.addListener('subscribe_dialog', ({ isAuthErr, subscribeResultTabId }: Bm.SubscribeDialog) => {
+  BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
     if (!$('#cryptup_dialog').length) {
-      $('body').append(factory.dialogSubscribe(undefined, isAuthErr, subscribeResultTabId)); // xss-safe-factory
+      $('body').append(factory.dialogSubscribe(undefined, isAuthErr)); // xss-safe-factory
     }
   });
-  BrowserMsg.addListener('add_pubkey_dialog', ({ emails }: Bm.AddPubkeyDialog) => {
+  BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
     if (!$('#cryptup_dialog').length) {
       $('body').append(factory.dialogAddPubkey(emails)); // xss-safe-factory
     }
   });
-  BrowserMsg.addListener('close_dialog', () => {
+  BrowserMsg.addListener('close_dialog', async () => {
     $('#cryptup_dialog').remove();
   });
-  BrowserMsg.addListener('scroll_to_bottom_of_conversation', () => {
+  BrowserMsg.addListener('scroll_to_bottom_of_conversation', async () => {
     const scrollableEl = $('.thread').get(0);
     scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
   });
-  BrowserMsg.addListener('render_public_keys', ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+  BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
     const traverseUpLevels = traverseUp || 0;
     let appendAfter = $(`iframe#${afterFrameId}`);
     for (let i = 0; i < traverseUpLevels; i++) {
@@ -108,13 +108,13 @@ Catch.try(async () => {
       appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
     }
   });
-  BrowserMsg.addListener('reply_pubkey_mismatch', () => {
+  BrowserMsg.addListener('reply_pubkey_mismatch', async () => {
     const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
     if (replyIframe) {
       replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
     }
   });
-  BrowserMsg.addListener('notification_show_auth_popup_needed', ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+  BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
     notifications.showAuthPopupNeeded(acctEmail);
   });
   BrowserMsg.listen(tabId);

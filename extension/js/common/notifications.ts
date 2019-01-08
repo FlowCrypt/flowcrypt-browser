@@ -34,7 +34,7 @@ export class Notifications {
   showAuthPopupNeeded = (acctEmail: string) => {
     this.show(`${Lang.compose.pleaseReconnectAccount} <a href="#" class="auth_popup">Re-connect Account</a>`, {
       auth_popup: async () => {
-        const authRes = await BrowserMsg.send.await.bg.reconnectAcctAuthPopup({ acctEmail });
+        const authRes = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail });
         if (authRes.result === 'Success') {
           this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
         } else {

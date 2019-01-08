@@ -6,7 +6,7 @@ import { Store, Subscription, ContactUpdate, DbContactFilter } from './platform/
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
-import { BrowserMsg, Extension, Bm, BrowserWidnow } from './extension.js';
+import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
@@ -135,14 +135,13 @@ export class Composer {
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
-  private subscribeResListener: ((r: Bm.Res.ShowSubscribeDialog) => void) | undefined;
   private additionalMsgHeaders: { [key: string]: string } = {};
   private btnUpdateTimeout?: number;
   private refBodyHeight: number;
   private v: ComposerUrlParams;
 
-  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, subscription: Subscription) {
-    this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice(subscription));
+  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
+    this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice(initSubs));
     this.app = appFunctions;
     this.v = urlParams;
     if (!this.v.disableDraftSaving) {
@@ -151,7 +150,7 @@ export class Composer {
     this.myAddrsOnPks = this.app.storageGetAddressesPks() || [];
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
-    if (subscription.active) {
+    if (initSubs.active) {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
       this.app.storageEmailFooterSet(undefined).catch(Catch.handleErr);
@@ -189,11 +188,7 @@ export class Composer {
             alert(getAdvanced);
           } else {
             if (confirm(getAdvanced)) {
-              this.showSubscribeDialogAndWaitForRes({}, {}, ({ active }: Bm.Res.ShowSubscribeDialog) => {
-                if (active) {
-                  alert('You\'re all set, now you can add your file again.');
-                }
-              });
+              BrowserMsg.send.subscribeDialog(this.v.parentTabId, {});
             }
           }
         },
@@ -297,11 +292,6 @@ export class Composer {
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.handleErrs(`enable/disable signing`)));
   }
 
-  showSubscribeDialogAndWaitForRes: Bm.RespondingHandler = (data: Bm.ShowSubscribeDialog, sender, respond: (r: Bm.Res.ShowSubscribeDialog) => void) => {
-    this.subscribeResListener = respond;
-    BrowserMsg.send.subscribeDialog(this.v.parentTabId, { subscribeResultTabId: this.v.tabId });
-  }
-
   private initComposeBox = async () => {
     if (this.v.isReplyBox) {
       this.S.cached('header').remove();
@@ -378,13 +368,6 @@ export class Composer {
         Catch.handleErr(e);
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
       }
-    }
-  }
-
-  processSubscribeRes = ({ active }: Bm.Res.ShowSubscribeDialog) => {
-    if (typeof this.subscribeResListener === 'function') {
-      this.subscribeResListener({ active });
-      this.subscribeResListener = undefined;
     }
   }
 

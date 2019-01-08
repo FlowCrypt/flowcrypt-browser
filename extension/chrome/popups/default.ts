@@ -41,7 +41,7 @@ Catch.try(async () => {
     $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.handleErr)));
   };
 
-  const activeTab = await BrowserMsg.send.await.bg.getActiveTabInfo();
+  const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
   if (activeTab && activeTab.acctEmail) {
     const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
     if (setup_done) {

@@ -706,8 +706,8 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
   }
 
-  srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, isAuthErr?: boolean, subscribeResultTabId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, isAuthErr, subscribeResultTabId });
+  srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, isAuthErr?: boolean) => {
+    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, isAuthErr });
   }
 
   srcVerificationDialog = (verificationEmailText: string) => {
@@ -782,8 +782,8 @@ export class XssSafeFactory {
     return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
   }
 
-  dialogSubscribe = (verifEmailText?: string, isAuthErr?: boolean, subscribeResultTabId?: string) => {
-    const src = this.srcSubscribeDialog(verifEmailText, 'dialog', isAuthErr, subscribeResultTabId);
+  dialogSubscribe = (verifEmailText?: string, isAuthErr?: boolean) => {
+    const src = this.srcSubscribeDialog(verifEmailText, 'dialog', isAuthErr);
     return this.divDialog_DANGEROUS(this.iframe(src, ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
   }
 

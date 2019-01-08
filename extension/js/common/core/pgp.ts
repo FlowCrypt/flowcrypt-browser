@@ -25,7 +25,7 @@ export namespace PgpMsgMethod {
   export type DiagnosePubkeys = (privateKis: KeyInfo[], m: Uint8Array) => Promise<DiagnoseMsgPubkeysResult>;
   export type VerifyDetached = (plaintext: Uint8Array, sigText: Uint8Array) => Promise<MsgVerifyResult>;
   export type Decrypt = (kisWithPp: KeyInfosWithPassphrases, encryptedData: Uint8Array, msgPwd?: string) => Promise<DecryptSuccess | DecryptError>;
-  export type Type = (data: Uint8Array) => Promise<PgpMsgTypeResult>;
+  export type Type = (arg: { data: Uint8Array }) => Promise<PgpMsgTypeResult>;
 }
 
 export type Contact = {
@@ -591,7 +591,7 @@ export class Pgp {
 
 export class PgpMsg {
 
-  static type = async (data: Uint8Array): Promise<PgpMsgTypeResult> => { // promisified because used through BgExec
+  static type: PgpMsgMethod.Type = async ({ data }): Promise<PgpMsgTypeResult> => { // promisified because used through BgExec
     if (!data || !data.length) {
       return undefined;
     }

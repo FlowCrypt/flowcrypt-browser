@@ -26,7 +26,7 @@ Catch.try(async () => {
   const processAttest = async (passphrase: string | undefined) => {
     if (typeof passphrase !== 'undefined') {
       Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
-      const attestation = await BrowserMsg.send.await.bg.attestPacketReceived({ acctEmail, packet: attestPacket, passphrase });
+      const attestation = await BrowserMsg.send.bg.await.attestPacketReceived({ acctEmail, packet: attestPacket, passphrase });
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }
   };

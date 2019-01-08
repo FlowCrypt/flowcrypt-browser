@@ -45,17 +45,17 @@ export class BgAttests {
     }
   }
 
-  static attestRequestedHandler: Bm.ResponselessHandler = async ({ acctEmail }: Bm.AttestRequested) => {
+  static attestRequestedHandler: Bm.AsyncResponselessHandler = async ({ acctEmail }: Bm.AttestRequested) => {
     await BgAttests.getPendingAttestRequests();
     BgAttests.watchForAttestEmail(acctEmail);
   }
 
-  static attestPacketReceivedHandler = async ({ acctEmail, packet, passphrase }: Bm.AttestPacketReceived, sender: Bm.Sender, respond: (r: Bm.Res.AttestPacketReceived) => void) => {
+  static attestPacketReceivedHandler = async ({ acctEmail, packet, passphrase }: Bm.AttestPacketReceived): Promise<Bm.Res.AttestPacketReceived> => {
     try { // todo - could be refactored to pass AttestResult directly
-      const r = await BgAttests.processAttestAndLogResult(acctEmail, packet, passphrase);
-      respond({ success: true, result: r.message });
+      const { message } = await BgAttests.processAttestAndLogResult(acctEmail, packet, passphrase);
+      return { success: true, result: message };
     } catch (e) {
-      respond({ success: false, result: String(e) });
+      return { success: false, result: String(e) };
     }
   }
 

@@ -11,7 +11,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'verificationEmailText', 'parentTabId', 'subscribeResultTabId']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'verificationEmailText', 'parentTabId']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const verificationEmailText = Env.urlParamRequire.string(uncheckedUrlParams, 'verificationEmailText');
 

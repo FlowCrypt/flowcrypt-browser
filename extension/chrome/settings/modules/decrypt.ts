@@ -22,7 +22,7 @@ Catch.try(async () => {
   attUi.initAttDialog('fineuploader', 'fineuploader_button');
   const factory = new XssSafeFactory(acctEmail, tabId);
 
-  BrowserMsg.addListener('close_dialog', () => {
+  BrowserMsg.addListener('close_dialog', async () => {
     $('.passphrase_dialog').text('');
   });
   BrowserMsg.listen(tabId);

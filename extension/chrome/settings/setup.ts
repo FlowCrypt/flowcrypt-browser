@@ -73,10 +73,10 @@ Catch.try(async () => {
   keyImportUi.onBadPassphrase = () => $('#step_2b_manual_enter .input_passphrase').val('').focus();
 
   const tabId = await BrowserMsg.requiredTabId();
-  BrowserMsg.addListener('close_page', () => {
+  BrowserMsg.addListener('close_page', async () => {
     $('.featherlight-close').click();
   });
-  BrowserMsg.addListener('notification_show', ({ notification }: Bm.NotificationShow) => {
+  BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
     alert(notification);
   });
   BrowserMsg.listen(tabId);

@@ -43,31 +43,31 @@ Catch.try(async () => {
   const tabId = await BrowserMsg.requiredTabId();
   const notifications = new Notifications(tabId);
 
-  BrowserMsg.addListener('open_page', ({ page, addUrlText }: Bm.OpenPage) => {
+  BrowserMsg.addListener('open_page', async ({ page, addUrlText }: Bm.OpenPage) => {
     Settings.renderSubPage(acctEmail, tabId, page, addUrlText);
   });
-  BrowserMsg.addListener('redirect', ({ location }: Bm.Redirect) => {
+  BrowserMsg.addListener('redirect', async ({ location }: Bm.Redirect) => {
     window.location.href = location;
   });
-  BrowserMsg.addListener('close_page', () => {
+  BrowserMsg.addListener('close_page', async () => {
     $('.featherlight-close').click();
   });
-  BrowserMsg.addListener('reload', ({ advanced }: Bm.Reload) => {
+  BrowserMsg.addListener('reload', async ({ advanced }: Bm.Reload) => {
     $('.featherlight-close').click();
     reload(advanced);
   });
-  BrowserMsg.addListener('add_pubkey_dialog', ({ emails }: Bm.AddPubkeyDialog) => {
+  BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
     // todo: use #cryptup_dialog just like passphrase_dialog does
     const factory = new XssSafeFactory(acctEmail!, tabId);
     window.open(factory.srcAddPubkeyDialog(emails, 'settings'), '_blank', 'height=680,left=100,menubar=no,status=no,toolbar=no,top=30,width=660');
   });
-  BrowserMsg.addListener('subscribe_dialog', ({ }: Bm.SubscribeDialog) => {
+  BrowserMsg.addListener('subscribe_dialog', async ({ }: Bm.SubscribeDialog) => {
     // todo: use #cryptup_dialog just like passphrase_dialog does
     const factory = new XssSafeFactory(acctEmail!, tabId);
     const subscribeDialogSrc = factory.srcSubscribeDialog(undefined, 'settings_compose', undefined);
     window.open(subscribeDialogSrc, '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
   });
-  BrowserMsg.addListener('notification_show', ({ notification }: Bm.NotificationShow) => {
+  BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
     notifications.show(notification);
     let cleared = false;
     const clear = () => {
@@ -83,16 +83,16 @@ Catch.try(async () => {
     $('.featherlight-close').click();
     await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail, omitReadScope);
   });
-  BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
+  BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
       const factory = new XssSafeFactory(acctEmail!, tabId);
       $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
     }
   });
-  BrowserMsg.addListener('notification_show_auth_popup_needed', ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+  BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
     notifications.showAuthPopupNeeded(acctEmail);
   });
-  BrowserMsg.addListener('close_dialog', () => {
+  BrowserMsg.addListener('close_dialog', async () => {
     $('#cryptup_dialog').remove();
   });
   BrowserMsg.listen(tabId);

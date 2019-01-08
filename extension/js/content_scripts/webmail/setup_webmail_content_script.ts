@@ -97,17 +97,17 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
   };
 
   const browserMsgListen = (acctEmail: string, tabId: string, inject: Injector, factory: XssSafeFactory, notifications: Notifications) => {
-    BrowserMsg.addListener('open_new_message', inject.openComposeWin);
-    BrowserMsg.addListener('close_new_message', () => {
+    BrowserMsg.addListener('open_new_message', async () => inject.openComposeWin());
+    BrowserMsg.addListener('close_new_message', async () => {
       $('div.new_message').remove();
     });
-    BrowserMsg.addListener('close_reply_message', ({ frameId }: Bm.CloseReplyMessage) => {
+    BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
       $(`iframe#${frameId}`).remove();
     });
-    BrowserMsg.addListener('reinsert_reply_box', ({ subject, myEmail, theirEmail, threadId }: Bm.ReinsertReplyBox) => {
+    BrowserMsg.addListener('reinsert_reply_box', async ({ subject, myEmail, theirEmail, threadId }: Bm.ReinsertReplyBox) => {
       webmailSpecific.getReplacer().reinsertReplyBox(subject, myEmail, theirEmail, threadId);
     });
-    BrowserMsg.addListener('render_public_keys', ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
+    BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
       const traverseUpLevels = traverseUp as number || 0;
       let appendAfter = $(`iframe#${afterFrameId}`);
       for (let i = 0; i < traverseUpLevels; i++) {
@@ -117,35 +117,35 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         appendAfter.after(factory.embeddedPubkey(armoredPubkey, false));
       }
     });
-    BrowserMsg.addListener('close_dialog', () => {
+    BrowserMsg.addListener('close_dialog', async () => {
       $('#cryptup_dialog').remove();
     });
-    BrowserMsg.addListener('scroll_to_bottom_of_conversation', () => {
+    BrowserMsg.addListener('scroll_to_bottom_of_conversation', async () => {
       webmailSpecific.getReplacer().scrollToBottomOfConvo();
     });
-    BrowserMsg.addListener('passphrase_dialog', ({ longids, type }: Bm.PassphraseDialog) => {
+    BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
       if (!$('#cryptup_dialog').length) {
         $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
       }
     });
-    BrowserMsg.addListener('subscribe_dialog', ({ isAuthErr, subscribeResultTabId }: Bm.SubscribeDialog) => {
+    BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogSubscribe(undefined, isAuthErr, subscribeResultTabId)); // xss-safe-factory
+        $('body').append(factory.dialogSubscribe(undefined, isAuthErr)); // xss-safe-factory
       }
     });
-    BrowserMsg.addListener('add_pubkey_dialog', ({ emails }: Bm.AddPubkeyDialog) => {
+    BrowserMsg.addListener('add_pubkey_dialog', async ({ emails }: Bm.AddPubkeyDialog) => {
       if (!$('#cryptup_dialog').length) {
         $('body').append(factory.dialogAddPubkey(emails)); // xss-safe-factory
       }
     });
-    BrowserMsg.addListener('notification_show', ({ notification, callbacks }: Bm.NotificationShow) => {
+    BrowserMsg.addListener('notification_show', async ({ notification, callbacks }: Bm.NotificationShow) => {
       notifications.show(notification, callbacks);
       $('body').one('click', Catch.try(notifications.clear));
     });
-    BrowserMsg.addListener('notification_show_auth_popup_needed', ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
+    BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
       notifications.showAuthPopupNeeded(acctEmail);
     });
-    BrowserMsg.addListener('reply_pubkey_mismatch', () => {
+    BrowserMsg.addListener('reply_pubkey_mismatch', async () => {
       const replyIframe = $('iframe.reply_message').get(0) as HTMLIFrameElement | undefined;
       if (replyIframe) {
         replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
