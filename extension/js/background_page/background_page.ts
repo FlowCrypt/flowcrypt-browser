@@ -65,7 +65,7 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgAddListener('_tab_', BgHandlers.respondWithSenderTabId);
   BrowserMsg.bgListen();
 
-  BgHandlers.updateUninstallUrl({}, {});
+  await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmailIfNeeded();
   scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
   BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.handleErr);

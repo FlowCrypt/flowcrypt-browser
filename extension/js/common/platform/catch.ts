@@ -33,7 +33,7 @@ export class Catch {
   ];
 
   public static rewrapErr = (e: any, message: string) => {
-    const newErr = new Error(`${message}\n\nDetailed error: ${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
+    const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
   }

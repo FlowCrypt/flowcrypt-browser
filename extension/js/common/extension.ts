@@ -283,8 +283,8 @@ export class BrowserMsg {
     handlerRromise.then(result => {
       const objUrls = BrowserMsg.replaceBufWithObjUrl(result);
       rawRespond({ result, exception: undefined, objUrls });
-    }).catch(exception => {
-      rawRespond({ result: undefined, exception, objUrls: {} });
+    }).catch(e => {
+      rawRespond({ result: undefined, exception: Catch.rewrapErr(e, 'sendRawResponse'), objUrls: {} });
     });
   }
 
