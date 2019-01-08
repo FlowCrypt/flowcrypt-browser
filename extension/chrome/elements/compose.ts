@@ -80,7 +80,7 @@ Catch.try(async () => {
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving };
 
   const closeMsg = () => {
-    $('body').attr('data-test-state', 'closed');  // used by automated tests
+    $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (isReplyBox) {
       BrowserMsg.send.closeReplyMessage(parentTabId, { frameId, threadId: threadId! });
     } else if (placement === 'settings') {

@@ -80,7 +80,7 @@ Catch.try(async () => {
   };
 
   const closeDialog = () => {
-    console.info('closing subscribe dialog');
+    $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (placement === 'settings_compose') {
       window.close();
     } else if (placement === 'settings') {

@@ -102,23 +102,22 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'outgoing_language' | 'setup_date' | 'tmp_submit_main' | 'tmp_submit_all';
 
 export class Subscription implements SubscriptionInfo {
-  active: boolean | undefined;
+  active?: boolean;
   method?: PaymentMethod;
   level?: ProductLevel;
   expire?: string;
+  expired?: boolean;
 
-  constructor(storedSubscription: SubscriptionInfo | undefined) {
-    if (storedSubscription) {
-      this.active = storedSubscription.active || undefined;
-      this.method = storedSubscription.method || undefined;
-      this.level = storedSubscription.level;
-      this.expire = storedSubscription.expire || undefined;
+  constructor(storedSubscriptionInfo: SubscriptionInfo | undefined) {
+    if (storedSubscriptionInfo) {
+      this.active = storedSubscriptionInfo.active || undefined;
+      this.method = storedSubscriptionInfo.method || undefined;
+      this.level = storedSubscriptionInfo.level;
+      this.expire = storedSubscriptionInfo.expire || undefined;
+      this.expired = storedSubscriptionInfo.expired || undefined;
     }
   }
 
-  expired() {
-    return this.level && this.expire && !this.active;
-  }
 }
 
 export class StoreCorruptedError extends Error { }

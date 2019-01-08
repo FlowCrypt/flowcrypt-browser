@@ -8,7 +8,7 @@ import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
 import { Ui } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
-import { PaymentMethod } from '../account.js';
+import { PaymentMethod, FcAcct } from '../account.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
 
@@ -40,7 +40,7 @@ export type ProgressCb = (percent?: number, loaded?: number, total?: number) => 
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
-export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; };
+export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
 export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
@@ -143,7 +143,7 @@ export namespace R { // responses
   export type FcAccountUpdate$result = { alias: string, email: string, intro: string, name: string, photo: string, default_message_expire: number };
   export type FcAccountUpdate = { result: FcAccountUpdate$result, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
-  export type FcAccountCheck = { email: string | null, subscription: { level: SubscriptionLevel, expire: string, expired: boolean, method: PaymentMethod | null } | null };
+  export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
 
   export type FcMsgPresignFiles = { approvals: { base_url: string, fields: { key: string } }[] };
   export type FcMsgConfirmFiles = { confirmed: string[], admin_codes: string[] };
@@ -503,16 +503,7 @@ export class Api {
             globalStoreUpdate.cryptup_account_uuid = undefined;
           }
         }
-        if (response.subscription) {
-          const rs = response.subscription;
-          if (rs.level !== subscription.level || rs.method !== subscription.method || rs.expire !== subscription.expire || subscription.active !== !rs.expired) {
-            globalStoreUpdate.cryptup_account_subscription = { active: !rs.expired, method: rs.method, level: rs.level, expire: rs.expire };
-          }
-        } else {
-          if (subscription.level || subscription.expire || subscription.active || subscription.method) {
-            globalStoreUpdate.cryptup_account_subscription = undefined;
-          }
-        }
+        FcAcct.updateSubscriptionGlobalStore(globalStoreUpdate, subscription, response.subscription);
         if (Object.keys(globalStoreUpdate).length) {
           Catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : undefined), response);
           await Store.setGlobal(globalStoreUpdate);

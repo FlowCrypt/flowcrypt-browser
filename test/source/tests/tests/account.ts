@@ -33,6 +33,7 @@ export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSem
     await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });
     await gmailPage.waitAll('@webmail-notification');
     expect(await gmailPage.read('@webmail-notification')).contains('Successfully upgraded to FlowCrypt Advanced');
+    await subscribePage.waitForSelTestState('closed');
     await subscribePage.close();
     // verify can add large file now
     await composePage.click('@input-body'); // focus on this tab before interacting with file upload
