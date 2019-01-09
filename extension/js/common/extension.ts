@@ -212,7 +212,7 @@ export class BrowserMsg {
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
           resolve();
-        } else if (!r || typeof r !== 'object') {
+        } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
           reject(new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`));
         } else if (r && typeof r === 'object' && r.exception) {
           const e = new Error(`BrowserMsg(${name}) ${r.exception.message}`);
