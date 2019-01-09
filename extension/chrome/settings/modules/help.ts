@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { VERSION } from '../../../js/common/core/const.js'
+import { VERSION } from '../../../js/common/core/const.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';

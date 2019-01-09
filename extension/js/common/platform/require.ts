@@ -26,5 +26,5 @@ export const requireMimeBuilder = (): any => {
 };
 
 export const requireIso88592 = (): Codec => {
-  return (window as any).iso88592;
+  return (window as any).iso88592 as Codec;
 };
