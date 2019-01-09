@@ -170,12 +170,10 @@ export namespace R { // responses
   export type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
   export type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
   export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
-  interface GmailMsgBase {
+  export type GmailMsg = {
     id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
-    labelIds?: GmailMsg$labelId[]; snippet?: string;
-  }
-  export interface GmailMsgRaw extends GmailMsgBase { raw?: string; }
-  export interface GmailMsg extends GmailMsgBase { rawBytes?: Buf; }
+    labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
+  };
   export type GmailMsgList$message = { id: string, threadId: string };
   export type GmailMsgList = { messages?: GmailMsgList$message[], resultSizeEstimate: number };
   export type GmailLabels$label = {

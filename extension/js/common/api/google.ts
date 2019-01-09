@@ -144,16 +144,9 @@ export class Google extends Api {
       q,
       includeSpamTrash: includeDeleted,
     }),
-    msgGet: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => {
-      const r = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
-        format: format || 'full'
-      }) as R.GmailMsgRaw;
-      if (typeof r.raw === 'string') {
-        (r as R.GmailMsg).rawBytes = Buf.fromBase64UrlStr(r.raw);
-        delete r.raw;
-      }
-      return r as R.GmailMsg;
-    },
+    msgGet: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
+      format: format || 'full'
+    }),
     msgsGet: (acctEmail: string, msgIds: string[], format: GmailResponseFormat): Promise<R.GmailMsg[]> => {
       return Promise.all(msgIds.map(id => Google.gmail.msgGet(acctEmail, id, format)));
     },
@@ -358,16 +351,17 @@ export class Google extends Api {
           throw new FormatError('No attachments', JSON.stringify(gmailMsg.payload, undefined, 2));
         }
       } else { // format === raw
-        const mimeMsg = await Mime.decode(gmailMsg.rawBytes!);
-        if (mimeMsg.text !== undefined) {
-          const armoredMsg = Pgp.armor.clip(mimeMsg.text); // todo - the message might be in attachments
+        const mimeMsg = Buf.fromBase64UrlStr(gmailMsg.raw!);
+        const decoded = await Mime.decode(mimeMsg);
+        if (decoded.text !== undefined) {
+          const armoredMsg = Pgp.armor.clip(decoded.text); // todo - the message might be in attachments
           if (armoredMsg) {
             return armoredMsg;
           } else {
-            throw new FormatError('Could not find armored message in parsed raw mime', gmailMsg.rawBytes!.toUtfStr());
+            throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
           }
         } else {
-          throw new FormatError('No text in parsed raw mime', gmailMsg.rawBytes!.toUtfStr());
+          throw new FormatError('No text in parsed raw mime', mimeMsg.toUtfStr());
         }
       }
     },

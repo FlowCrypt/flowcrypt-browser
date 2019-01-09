@@ -485,20 +485,21 @@ Catch.try(async () => {
     try {
       if (canReadEmails && encryptedMsgUrlParam && signature === true && msgId) {
         renderText('Loading signature...');
-        const result = await Google.gmail.msgGet(acctEmail, msgId, 'raw');
-        if (!result.rawBytes || !result.rawBytes.length) {
+        const { raw } = await Google.gmail.msgGet(acctEmail, msgId, 'raw');
+        if (!raw) {
           await decryptAndRender(encryptedMsgUrlParam);
         } else {
           msgFetchedFromApi = 'raw';
-          const parsed = Mime.signed(result.rawBytes);
+          const mimeMsg = Buf.fromBase64UrlStr(raw);
+          const parsed = Mime.signed(mimeMsg);
           if (parsed && typeof parsed.signed === 'string') {
             signature = parsed.signature || undefined;
             await decryptAndRender(encryptedMsgUrlParam);
           } else {
-            const decoded = await Mime.decode(result.rawBytes);
+            const decoded = await Mime.decode(mimeMsg);
             signature = decoded.signature || undefined;
             console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-            console.info(result.rawBytes.toUtfStr());
+            console.info(mimeMsg.toUtfStr());
             console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
             await decryptAndRender(encryptedMsgUrlParam);
           }
@@ -543,7 +544,7 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
       } else if (e instanceof FormatError) {
-        console.log(e.data);
+        console.info(e.data);
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else {
         Catch.handleErr(e);

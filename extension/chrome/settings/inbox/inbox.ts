@@ -13,6 +13,7 @@ import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Google, GoogleAuth } from '../../../js/common/api/google.js';
+import { Buf } from '../../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
@@ -371,13 +372,14 @@ Catch.try(async () => {
     const htmlId = threadMsgId(message.id);
     const from = Google.gmail.findHeader(message, 'from') || 'unknown';
     try {
-      const m = await Google.gmail.msgGet(acctEmail, message.id, 'raw');
-      const { blocks, headers } = await Mime.process(m.rawBytes!);
+      const { raw } = await Google.gmail.msgGet(acctEmail, message.id, 'raw');
+      const mimeMsg = Buf.fromBase64UrlStr(raw!);
+      const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
       for (const block of blocks) {
         r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
       }
-      const { atts } = await Mime.decode(m.rawBytes!);
+      const { atts } = await Mime.decode(mimeMsg);
       if (atts.length) {
         r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(a => factory.embeddedAtta(a, true)).join('')}</div>`;
       }

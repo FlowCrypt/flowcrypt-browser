@@ -346,7 +346,7 @@ export class Composer {
       if (!draftGetRes) {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
       }
-      const parsedMsg = await Mime.decode(draftGetRes.message.rawBytes!);
+      const parsedMsg = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
       const armored = Pgp.armor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
       if (!armored) {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
