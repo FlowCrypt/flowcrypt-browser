@@ -210,6 +210,9 @@ export class Api {
       if (e instanceof AjaxError && (e.status === 0 && e.statusText === 'error' || e.statusText === 'timeout' || e.status === -1)) {
         return true;
       }
+      if (e instanceof AjaxError && e.status === 400 && typeof e.responseText === 'string' && e.responseText.indexOf('RequestTimeout') !== -1) {
+        return true; // AWS: Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.
+      }
       return false;
     },
     isAuthErr: (e: any) => {
