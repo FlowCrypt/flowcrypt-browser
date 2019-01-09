@@ -122,6 +122,8 @@ export class Env {
     return undefined;
   }
 
+  public static isContentScript = () => Env.isExtension() && window.location.href.indexOf(chrome.runtime.getURL('')) === -1; // extension but not on its own url
+
   public static isBackgroundPage = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
 
   public static isExtension = () => typeof Env.runtimeId() !== 'undefined';

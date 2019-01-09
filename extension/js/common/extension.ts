@@ -4,7 +4,7 @@
 
 import { Str, Value, Dict } from './core/common.js';
 import { DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgTypeResult, PgpMsgMethod } from './core/pgp.js';
-import { FlatTypes } from './platform/store.js';
+import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
@@ -39,8 +39,12 @@ export namespace Bm {
   export type StripeResult = { token: string };
   export type PassphraseEntry = { entered: boolean; };
   export type Db = { f: string, args: any[] };
-  export type SessionSet = { acctEmail: string, key: string, value: string | undefined };
-  export type SessionGet = { acctEmail: string, key: string };
+  export type StoreSessionSet = { acctEmail: string, key: string, value: string | undefined };
+  export type StoreSessionGet = { acctEmail: string, key: string };
+  export type StoreGlobalGet = { keys: GlobalIndex[]; };
+  export type StoreGlobalSet = { values: GlobalStore; };
+  export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
+  export type StoreAcctSet = { acctEmail: string, values: AccountStore; };
   export type AttestPacketReceived = { acctEmail: string, packet: string, passphrase: string };
   export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string };
@@ -53,8 +57,12 @@ export namespace Bm {
   export namespace Res {
     export type AttestPacketReceived = { success: boolean; result: string };
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
-    export type SessionGet = string | null;
-    export type SessionSet = void;
+    export type StoreSessionGet = string | null;
+    export type StoreSessionSet = void;
+    export type StoreGlobalGet = GlobalStore;
+    export type StoreGlobalSet = void;
+    export type StoreAcctGet = AccountStore;
+    export type StoreAcctSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
     export type PgpMsgType = PgpMsgTypeResult;
     export type PgpMsgDecrypt = DecryptResult;
@@ -63,14 +71,15 @@ export namespace Bm {
     export type PgpHashChallengeAnswer = { hashed: string };
     export type _tab_ = { tabId: string | null | undefined };
     export type Db = any; // not included in Any
-    export type Any = AttestPacketReceived | GetActiveTabInfo | SessionGet | SessionSet | _tab_ | ReconnectAcctAuthPopup |
-      PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer;
+    export type Any = AttestPacketReceived | GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
+      | PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
+      | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet;
   }
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | Db | SessionSet | SetFooter |
-    SessionGet | AttestPacketReceived | ReconnectAcctAuthPopup |
+    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | SetFooter | AttestPacketReceived | ReconnectAcctAuthPopup |
+    Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
@@ -162,8 +171,12 @@ export class BrowserMsg {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
         attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(undefined, 'attest_packet_received', bm, true) as Promise<Bm.Res.AttestPacketReceived>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
-        sessionGet: (bm: Bm.SessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm, true) as Promise<Bm.Res.SessionGet>,
-        sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm, true) as Promise<Bm.Res.SessionSet>,
+        storeSessionGet: (bm: Bm.StoreSessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm, true) as Promise<Bm.Res.StoreSessionGet>,
+        storeSessionSet: (bm: Bm.StoreSessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm, true) as Promise<Bm.Res.StoreSessionSet>,
+        storeGlobalGet: (bm: Bm.StoreGlobalGet) => BrowserMsg.sendAwait(undefined, 'storeGlobalGet', bm, true) as Promise<Bm.Res.StoreGlobalGet>,
+        storeGlobalSet: (bm: Bm.StoreGlobalSet) => BrowserMsg.sendAwait(undefined, 'storeGlobalSet', bm, true) as Promise<Bm.Res.StoreGlobalSet>,
+        storeAcctGet: (bm: Bm.StoreAcctGet) => BrowserMsg.sendAwait(undefined, 'storeAcctGet', bm, true) as Promise<Bm.Res.StoreAcctGet>,
+        storeAcctSet: (bm: Bm.StoreAcctSet) => BrowserMsg.sendAwait(undefined, 'storeAcctSet', bm, true) as Promise<Bm.Res.StoreAcctSet>,
         db: (bm: Bm.Db) => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
         pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', { rawBytesStr: bm.rawBytesStr.slice(0, 50) }, true) as Promise<Bm.Res.PgpMsgType>,
         pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,

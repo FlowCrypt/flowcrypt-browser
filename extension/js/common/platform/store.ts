@@ -170,21 +170,24 @@ export class Store {
   }
 
   static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {
-    if (Env.isBackgroundPage()) {
-      return window.sessionStorage.getItem(Store.singleScopeRawIndex(acctEmail, key));
+    if (!Env.isBackgroundPage()) {
+      // session in background page is separated from content script frames
+      // must always go through background page to be consistent
+      return await BrowserMsg.send.bg.await.storeSessionGet({ acctEmail, key });
     }
-    return await BrowserMsg.send.bg.await.sessionGet({ acctEmail, key });
+    return window.sessionStorage.getItem(Store.singleScopeRawIndex(acctEmail, key));
   }
 
   static sessionSet = async (acctEmail: string, key: string, value: string | undefined): Promise<void> => {
-    if (Env.isBackgroundPage()) {
-      if (typeof value !== 'undefined') {
-        sessionStorage.setItem(Store.singleScopeRawIndex(acctEmail, key), String(value));
-      } else {
-        sessionStorage.removeItem(Store.singleScopeRawIndex(acctEmail, key));
-      }
+    if (!Env.isBackgroundPage()) {
+      // session in background page is separated from content script frames
+      // must always go through background page to be consistent
+      return await BrowserMsg.send.bg.await.storeSessionSet({ acctEmail, key, value });
+    }
+    if (typeof value !== 'undefined') {
+      sessionStorage.setItem(Store.singleScopeRawIndex(acctEmail, key), String(value));
     } else {
-      await BrowserMsg.send.bg.await.sessionSet({ acctEmail, key, value });
+      sessionStorage.removeItem(Store.singleScopeRawIndex(acctEmail, key));
     }
   }
 
@@ -271,6 +274,11 @@ export class Store {
   }
 
   static setAcct = async (acctEmail: string, values: AccountStore): Promise<void> => {
+    if (Env.isContentScript()) {
+      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
+      // always go through bg script to avoid such errors
+      return await BrowserMsg.send.bg.await.storeAcctSet({ acctEmail, values });
+    }
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
       const index = Store.singleScopeRawIndex(acctEmail, key);
@@ -280,6 +288,11 @@ export class Store {
   }
 
   static setGlobal = async (values: GlobalStore): Promise<void> => {
+    if (Env.isContentScript()) {
+      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
+      // always go through bg script to avoid such errors
+      return await BrowserMsg.send.bg.await.storeGlobalSet({ values });
+    }
     const storageUpdate: RawStore = {};
     for (const key of Object.keys(values)) {
       const index = Store.singleScopeRawIndex(Store.globalStorageScope, key);
@@ -289,6 +302,11 @@ export class Store {
   }
 
   static getGlobal = async (keys: GlobalIndex[]): Promise<GlobalStore> => {
+    if (Env.isContentScript()) {
+      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
+      // always go through bg script to avoid such errors
+      return await BrowserMsg.send.bg.await.storeGlobalGet({ keys });
+    }
     const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(Store.globalStorageScope, keys)) as RawStore;
     return Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore;
   }
@@ -308,6 +326,11 @@ export class Store {
   }
 
   static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
+    if (Env.isContentScript()) {
+      // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
+      // always go through bg script to avoid such errors
+      return await BrowserMsg.send.bg.await.storeAcctGet({ acctEmail, keys });
+    }
     const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(acctEmail, keys)) as RawStore;
     return Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AccountStore;
   }

@@ -12,7 +12,8 @@ import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js
 import { GoogleAuth } from '../common/api/google.js';
 import { BgUtils } from './bgutils.js';
 import { BgHandlers } from './bg_handlers.js';
-import { PgpMsg } from '../common/core/pgp.js';
+import { PgpMsg, Pgp } from '../common/core/pgp.js';
+import { Buf } from '../common/core/buf.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -51,14 +52,22 @@ chrome.runtime.onInstalled.addListener(event => {
     return;
   }
 
-  BrowserMsg.bgAddListener('pgpMsgType', BgHandlers.pgpMsgType);
+  // storage related handlers
+  BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
+  BrowserMsg.bgAddListener('session_set', (r: Bm.StoreSessionSet) => Store.sessionSet(r.acctEmail, r.key, r.value));
+  BrowserMsg.bgAddListener('session_get', (r: Bm.StoreSessionGet) => Store.sessionGet(r.acctEmail, r.key));
+  BrowserMsg.bgAddListener('storeGlobalGet', (r: Bm.StoreGlobalGet) => Store.getGlobal(r.keys));
+  BrowserMsg.bgAddListener('storeGlobalSet', (r: Bm.StoreGlobalSet) => Store.setGlobal(r.values));
+  BrowserMsg.bgAddListener('storeAcctGet', (r: Bm.StoreAcctGet) => Store.getAcct(r.acctEmail, r.keys));
+  BrowserMsg.bgAddListener('storeAcctSet', (r: Bm.StoreAcctSet) => Store.setAcct(r.acctEmail, r.values));
+
+  // openpgp related handlers
+  BrowserMsg.bgAddListener('pgpMsgType', (r: Bm.PgpMsgType) => PgpMsg.type({ data: Buf.fromRawBytesStr(r.rawBytesStr) }));
   BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
-  BrowserMsg.bgAddListener('pgpHashChallengeAnswer', BgHandlers.pgpHashChallengeAnswer);
+  BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await Pgp.hash.challengeAnswer(r.answer) }));
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
   BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
-  BrowserMsg.bgAddListener('db', (r: Bm.Db) => BgHandlers.dbOperationHandler(db, r));
-  BrowserMsg.bgAddListener('session_set', (r: Bm.SessionSet) => Store.sessionSet(r.acctEmail, r.key, r.value));
-  BrowserMsg.bgAddListener('session_get', (r: Bm.SessionGet) => Store.sessionGet(r.acctEmail, r.key));
+
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('inbox', BgHandlers.openInboxPageHandler);
   BrowserMsg.bgAddListener('attest_requested', BgAttests.attestRequestedHandler);

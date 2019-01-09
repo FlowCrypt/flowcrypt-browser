@@ -6,8 +6,6 @@ import { Store } from '../common/platform/store.js';
 import { Bm } from '../common/extension.js';
 import { BgUtils } from './bgutils.js';
 import { Env } from '../common/browser.js';
-import { Pgp, PgpMsg } from '../common/core/pgp.js';
-import { Buf } from '../common/core/buf.js';
 
 export class BgHandlers {
 
@@ -64,14 +62,6 @@ export class BgHandlers {
       // MDN says the same - thus this is most likely a background script, through browser message passing
       return { tabId: null }; // tslint:disable-line:no-null-keyword
     }
-  }
-
-  public static pgpHashChallengeAnswer = async ({ answer }: Bm.PgpHashChallengeAnswer): Promise<Bm.Res.PgpHashChallengeAnswer> => {
-    return { hashed: await Pgp.hash.challengeAnswer(answer) };
-  }
-
-  public static pgpMsgType = async ({ rawBytesStr }: Bm.PgpMsgType): Promise<Bm.Res.PgpMsgType> => {
-    return await PgpMsg.type({ data: Buf.fromRawBytesStr(rawBytesStr) });
   }
 
 }
