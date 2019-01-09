@@ -400,21 +400,21 @@ export class Composer {
         const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(this.extractAsText('input_text')), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
-        if (this.v.threadId) { // replied message
-          body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
-        } else if (this.v.draftId) {
-          body = '[cryptup:link:draft_compose:' + this.v.draftId + ']\n\n' + encrypted.data;
-        } else {
+        if (this.v.threadId) { // reply draft
+          body = `[cryptup:link:draft_reply:${this.v.threadId}]\n\n${encrypted.data}`;
+        } else if (this.v.draftId) { // new message compose draft with known draftid
+          body = `[cryptup:link:draft_compose:${this.v.draftId}]\n\n${encrypted.data}`;
+        } else { // new message compose draft where draftId is not yet known
           body = encrypted.data;
         }
         const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
         const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
         if (!this.v.draftId) {
-          const newDraft = await this.app.emailProviderDraftCreate(mimeMsg);
+          const { id } = await this.app.emailProviderDraftCreate(mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
-          this.v.draftId = newDraft.id;
-          await this.app.storageSetDraftMeta(true, newDraft.id, this.v.threadId, to, String(this.S.cached('input_subject').val()));
+          this.v.draftId = id;
+          await this.app.storageSetDraftMeta(true, id, this.v.threadId, to, String(this.S.cached('input_subject').val()));
           // recursing one more time, because we need the draft_id we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
