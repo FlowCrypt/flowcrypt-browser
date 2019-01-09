@@ -30,7 +30,7 @@ type RawAjaxError = {
   // getAllResponseHeaders?: () => any,
   // getResponseHeader?: (e: string) => any,
   readyState: number,
-  responseText?: "",
+  responseText?: string,
   status?: number,
   statusText?: string,
 };
@@ -654,7 +654,14 @@ export class Api {
     if (typeof progress === 'function') {
       request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
     }
-    request.onerror = reject;
+    request.onerror = progressEvent => {
+      if (!progressEvent.target) {
+        reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
+      } else {
+        const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
+        reject(new AjaxError({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+      }
+    };
     request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
     request.send();
   })
