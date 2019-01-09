@@ -9,7 +9,7 @@ export const showFatalError = (reason: 'storage_undefined', error: Error) => {
   if (Env.isBackgroundPage()) {
     throw error;
   }
-  window.location.href = chrome.extension.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
+  window.location.href = chrome.runtime.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
 };
 
 export const tabsQuery = (q: chrome.tabs.QueryInfo): Promise<chrome.tabs.Tab[]> => new Promise(resolve => chrome.tabs.query(q, resolve));

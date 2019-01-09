@@ -10,7 +10,7 @@ import { Store, StoreCorruptedError, StoreDeniedError, StoreFailedError } from '
 export class BgUtils {
 
   public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
-    const basePath = chrome.extension.getURL(`chrome/settings/${path}`);
+    const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail) {
       await BgUtils.openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams }));
@@ -33,7 +33,7 @@ export class BgUtils {
 
   public static getFcSettingsTabIdIfOpen = (): Promise<number | undefined> => new Promise(resolve => {
     chrome.tabs.query({ currentWindow: true }, tabs => {
-      const extension = chrome.extension.getURL('/');
+      const extension = chrome.runtime.getURL('/');
       for (const tab of tabs) {
         if (Value.is(extension).in(tab.url || '')) {
           resolve(tab.id);

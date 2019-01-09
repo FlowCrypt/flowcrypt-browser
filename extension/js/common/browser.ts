@@ -223,7 +223,7 @@ export class Ui {
 
   public static spinner = (color: string, placeholderCls: "small_spinner" | "large_spinner" = 'small_spinner') => {
     const path = `/img/svgs/spinner-${color}-small.svg`;
-    const url = typeof chrome !== 'undefined' && chrome.extension && chrome.extension.getURL ? chrome.extension.getURL(path) : path;
+    const url = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL ? chrome.runtime.getURL(path) : path;
     return `<i class="${placeholderCls}" data-test="spinner"><img src="${url}" /></i>`;
   }
 
@@ -870,7 +870,7 @@ export class XssSafeFactory {
     }
   }
 
-  private extUrl = (s: string) => chrome.extension.getURL(s);
+  private extUrl = (s: string) => chrome.runtime.getURL(s);
 
   private newId = () => `frame_${Str.sloppyRandom(10)}`;
 

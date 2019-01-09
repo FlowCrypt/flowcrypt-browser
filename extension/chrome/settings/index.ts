@@ -311,7 +311,7 @@ Catch.try(async () => {
   };
 
   // tslint:disable-next-line:no-unsafe-any
-  $.get(chrome.extension.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
+  $.get(chrome.runtime.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
 
   $('.show_settings_page').click(Ui.event.handle(target => {
     Settings.renderSubPage(acctEmail!, tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr

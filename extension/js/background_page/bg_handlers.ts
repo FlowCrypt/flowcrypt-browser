@@ -16,7 +16,7 @@ export class BgHandlers {
   }
 
   public static openInboxPageHandler: Bm.AsyncResponselessHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }) => {
-    await BgUtils.openExtensionTab(Env.urlCreate(chrome.extension.getURL(`chrome/settings/inbox/inbox.htm`), message));
+    await BgUtils.openExtensionTab(Env.urlCreate(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
   }
 
   public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db) => {
