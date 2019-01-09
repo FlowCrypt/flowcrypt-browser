@@ -334,6 +334,9 @@ export class Pgp {
       return await Pgp.key.usableButExpired(pubkey);
     },
     usableButExpired: async (key: OpenPGP.key.Key): Promise<boolean> => {
+      if (!key) {
+        return false;
+      }
       if (await key.getEncryptionKey()) {
         return false; // good key - cannot be expired
       }
