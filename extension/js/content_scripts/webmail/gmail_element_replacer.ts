@@ -230,7 +230,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
           if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
             const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-            const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data });
+            const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
             if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
               nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
             } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
@@ -252,7 +252,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
         const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-        const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data });
+        const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
         if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
           nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           this.hideAtt(attSel, attsContainerInner);
@@ -293,8 +293,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAtts++;
       return nRenderedAtts;
     }
-    const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ data: downloadedAtt.data });
-    console.log(openpgpType);
+    const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: downloadedAtt.data.toRawBytesStr() });
     if (openpgpType && openpgpType.type === 'publicKey') {
       msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
     } else {

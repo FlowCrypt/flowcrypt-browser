@@ -6,7 +6,8 @@ import { Store } from '../common/platform/store.js';
 import { Bm } from '../common/extension.js';
 import { BgUtils } from './bgutils.js';
 import { Env } from '../common/browser.js';
-import { Pgp } from '../common/core/pgp.js';
+import { Pgp, PgpMsg } from '../common/core/pgp.js';
+import { Buf } from '../common/core/buf.js';
 
 export class BgHandlers {
 
@@ -67,6 +68,10 @@ export class BgHandlers {
 
   public static pgpHashChallengeAnswer = async ({ answer }: Bm.PgpHashChallengeAnswer): Promise<Bm.Res.PgpHashChallengeAnswer> => {
     return { hashed: await Pgp.hash.challengeAnswer(answer) };
+  }
+
+  public static pgpMsgType = async ({ rawBytesStr }: Bm.PgpMsgType): Promise<Bm.Res.PgpMsgType> => {
+    return await PgpMsg.type({ data: Buf.fromRawBytesStr(rawBytesStr) });
   }
 
 }

@@ -51,7 +51,7 @@ chrome.runtime.onInstalled.addListener(event => {
     return;
   }
 
-  BrowserMsg.bgAddListener('pgpMsgType', PgpMsg.type);
+  BrowserMsg.bgAddListener('pgpMsgType', BgHandlers.pgpMsgType);
   BrowserMsg.bgAddListener('pgpMsgDiagnosePubkeys', PgpMsg.diagnosePubkeys);
   BrowserMsg.bgAddListener('pgpHashChallengeAnswer', BgHandlers.pgpHashChallengeAnswer);
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
