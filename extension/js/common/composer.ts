@@ -395,22 +395,21 @@ export class Composer {
   private draftSave = async (forceSave: boolean = false): Promise<void> => {
     if (this.shouldSaveDraft(this.S.cached('input_text').text()) || forceSave) {
       this.currentlySavingDraft = true;
-      this.S.cached('send_btn_note').text('Saving');
-      const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
-
-      const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(this.extractAsText('input_text')), armor: true }) as OpenPGP.EncryptArmorResult;
-      let body: string;
-      if (this.v.threadId) { // replied message
-        body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
-      } else if (this.v.draftId) {
-        body = '[cryptup:link:draft_compose:' + this.v.draftId + ']\n\n' + encrypted.data;
-      } else {
-        body = encrypted.data;
-      }
-      const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
-      const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-      const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
       try {
+        this.S.cached('send_btn_note').text('Saving');
+        const primaryKi = await this.app.storageGetKey(this.v.acctEmail);
+        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(this.extractAsText('input_text')), armor: true }) as OpenPGP.EncryptArmorResult;
+        let body: string;
+        if (this.v.threadId) { // replied message
+          body = '[cryptup:link:draft_reply:' + this.v.threadId + ']\n\n' + encrypted.data;
+        } else if (this.v.draftId) {
+          body = '[cryptup:link:draft_compose:' + this.v.draftId + ']\n\n' + encrypted.data;
+        } else {
+          body = encrypted.data;
+        }
+        const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
+        const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
+        const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
         if (!this.v.draftId) {
           const newDraft = await this.app.emailProviderDraftCreate(mimeMsg);
           this.S.cached('send_btn_note').text('Saved');
@@ -439,7 +438,7 @@ export class Composer {
           await this.draftSave(true); // forceSave=true to not skips
         } else {
           Catch.handleErr(e);
-          this.S.cached('send_btn_note').text('Not saved');
+          this.S.cached('send_btn_note').text('Not saved (error)');
         }
       }
       this.currentlySavingDraft = false;
