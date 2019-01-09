@@ -2,17 +2,14 @@
 
 'use strict';
 
+import { VERSION } from '../core/const.js';
 import { Store } from './store.js';
-import { FcWindow } from '../extension.js';
-
-const VERSION = '[BUILD_REPLACEABLE_VERSION]';
 
 export class UnreportableError extends Error { }
 export type ObjWithStack = { stack: string };
 
 export class Catch {
 
-  public static RUNTIME_VERSION = VERSION;
   public static RUNTIME_ENVIRONMENT = 'undetermined';
   private static ORIG_ONERROR = window.onerror;
   private static CONSOLE_MSG = ' Please report errors above to human@flowcrypt.com. We fix errors VERY promptly.';
@@ -105,7 +102,7 @@ export class Catch {
           line: line || 0,
           col: col || 0,
           trace: exception.stack || '',
-          version: Catch.RUNTIME_VERSION,
+          version: VERSION,
           environment: Catch.RUNTIME_ENVIRONMENT,
         }),
         dataType: 'json',
@@ -169,14 +166,6 @@ export class Catch {
       Store.saveError(e, name);
     } catch (storageErr) {
       console.error(`failed to locally log "${String(name)}" because "${String(storageErr)}"`);
-    }
-  }
-
-  public static version = (format = 'original') => {
-    if (format === 'int') {
-      return Number(Catch.RUNTIME_VERSION.replace(/\./g, ''));
-    } else {
-      return Catch.RUNTIME_VERSION;
     }
   }
 
@@ -295,5 +284,5 @@ export class Catch {
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-(window as FcWindow).onerror = (Catch.onErrorInternalHandler as ErrorEventHandler);
-(window as FcWindow).onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;
+window.onerror = (Catch.onErrorInternalHandler as ErrorEventHandler);
+window.onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;

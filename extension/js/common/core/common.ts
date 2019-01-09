@@ -5,7 +5,6 @@
 import { base64encode, base64decode } from '../platform/util.js';
 
 export type Dict<T> = { [key: string]: T; };
-export type EmailProvider = 'gmail';
 
 export class Str {
 

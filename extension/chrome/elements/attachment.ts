@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Value } from '../../js/common/core/common.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
@@ -9,7 +10,6 @@ import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Att } from '../../js/common/core/att.js';
-import { Catch } from '../../js/common/platform/catch.js';
 import { Google } from '../../js/common/api/google.js';
 
 Catch.try(async () => {

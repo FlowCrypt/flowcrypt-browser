@@ -1,21 +1,9 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-import { readdirSync, statSync, readFileSync, writeFileSync } from 'fs';
-import * as path from 'path';
+'use strict';
 
-const getAllFilesInDir = (dir: string, filePattern: RegExp): string[] => {
-  const all: string[] = [];
-  const filesInDir = readdirSync(dir);
-  for (const fileInDir of filesInDir) {
-    const filePath = path.join(dir, fileInDir);
-    const stat = statSync(filePath);
-    if (stat.isDirectory()) {
-      all.push(...getAllFilesInDir(filePath, filePattern));
-    } else if (filePattern.test(filePath)) {
-      all.push(filePath);
-    }
-  }
-  return all;
-};
+import { readFileSync, writeFileSync } from 'fs';
+import { getFilesInDir } from './utils/tooling-utils';
 
 const { compilerOptions } = JSON.parse(readFileSync('../tsconfig.json').toString());
 const moduleMap: { [name: string]: string | null } = {};
@@ -63,7 +51,7 @@ const errIfRelativeSrcDoesNotBeginWithDot = (src: string, path: string) => {
   }
 };
 
-const srcFilePaths = getAllFilesInDir(`../${compilerOptions.outDir}`, /\.js$/);
+const srcFilePaths = getFilesInDir(`../${compilerOptions.outDir}`, /\.js$/);
 
 for (const srcFilePath of srcFilePaths) {
   const original = readFileSync(srcFilePath).toString();

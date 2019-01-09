@@ -6,16 +6,16 @@
 
 /// <reference path="../../../node_modules/@types/chrome/index.d.ts" />
 
-import { Str, Value } from '../../common/core/common.js';
+import { Catch } from '../../common/platform/catch.js';
 import { Store } from '../../common/platform/store.js';
+import { Str, Value } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { InboxElementReplacer } from './inbox_element_replacer.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
-import { ContentScriptWindow, FcWindow } from '../../common/extension.js';
+import { ContentScriptWindow } from '../../common/extension.js';
 import { XssSafeFactory, Env } from '../../common/browser.js';
-import { Catch } from '../../common/platform/catch.js';
 import { GoogleAuth } from '../../common/api/google.js';
 
 Catch.try(async () => {
@@ -92,7 +92,7 @@ Catch.try(async () => {
       await notifications.showInitial(acctEmail);
       replacer.everything();
       replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as FcWindow).$ === 'function') {
+        if (typeof (window as any).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replacePgpElsInterval);
@@ -140,7 +140,7 @@ Catch.try(async () => {
       await notifications.showInitial(acctEmail);
       replacer.everything();
       replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as FcWindow).$ === 'function') {
+        if (typeof (window as any).$ === 'function') {
           replacer.everything();
         } else { // firefox will unload jquery when extension is restarted or updated
           clearInterval(replacePgpElsInterval);
@@ -157,7 +157,7 @@ Catch.try(async () => {
         if (creds.length === 2 && creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
           const acctEmail = creds[1].innerText.toLowerCase();
           fullName = creds[0].innerText;
-          console.info('Loading for ' + acctEmail + ' (' + fullName + ')');
+          console.info(`Loading for ${acctEmail} (${fullName})`);
           return acctEmail;
         }
         return undefined;

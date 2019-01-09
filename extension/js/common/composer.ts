@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Catch, UnreportableError } from './platform/catch.js';
 import { Store, Subscription, ContactUpdate, DbContactFilter } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
@@ -11,7 +12,6 @@ import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
-import { Catch, UnreportableError } from './platform/catch.js';
 import { GoogleAuth } from './api/google.js';
 import { Buf } from './core/buf.js';
 

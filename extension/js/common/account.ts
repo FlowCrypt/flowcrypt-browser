@@ -2,9 +2,9 @@
 
 'use strict';
 
+import { Catch } from './platform/catch.js';
 import { Store, SubscriptionAttempt, GlobalStore, Subscription } from './platform/store.js';
 import { Api } from './api/api.js';
-import { Catch } from './platform/catch.js';
 import { Env } from './browser.js';
 import { Google } from './api/google.js';
 import { Buf } from './core/buf.js';

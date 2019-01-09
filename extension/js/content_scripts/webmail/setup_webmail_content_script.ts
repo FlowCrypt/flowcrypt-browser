@@ -2,13 +2,14 @@
 
 'use strict';
 
+import { VERSION } from '../../common/core/const.js';
+import { Catch } from '../../common/platform/catch.js';
 import { Store } from '../../common/platform/store.js';
 import { Value } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError, Bm } from '../../common/extension.js';
 import { Ui, XssSafeFactory, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
-import { Catch } from '../../common/platform/catch.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 type WebmailSpecificInfo = {
@@ -41,10 +42,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     const webmails = await Env.webmails();
     while (true) {
       const acctEmail = webmailSpecific.getUserAccountEmail();
-      if (typeof acctEmail !== 'undefined' && Catch.version()) {
+      if (typeof acctEmail !== 'undefined') {
         (window as ContentScriptWindow).account_email_global = acctEmail;
         if (Value.is(webmailSpecific.name).in(webmails)) {
-          console.info(`Loading FlowCrypt ${Catch.version()} for ${acctEmail}`);
+          console.info(`Loading FlowCrypt ${VERSION} for ${acctEmail}`);
           return acctEmail;
         } else {
           console.info(`FlowCrypt disabled: ${webmailSpecific.name} integration currently for development only`);

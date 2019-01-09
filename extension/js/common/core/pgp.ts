@@ -2,10 +2,11 @@
 
 'use strict';
 
+import { VERSION } from './const.js';
+import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Value, Str } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
-import { Catch } from '../platform/catch.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
 import { requireOpenpgp } from '../platform/require.js';
@@ -16,7 +17,7 @@ import { Buf } from './buf.js';
 const openpgp = requireOpenpgp();
 
 if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
-  openpgp.config.versionstring = `FlowCrypt ${Catch.version()} Gmail Encryption`;
+  openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
   openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   // openpgp.config.require_uid_self_cert = false;
 }

@@ -1,3 +1,6 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+
+'use strict';
 
 import { readFileSync, writeFileSync } from 'fs';
 
@@ -10,8 +13,8 @@ const replaceables = [
 ];
 
 const paths = [
-  `../${targetDirExtension}/js/common/platform/catch.js`,
-  `${targetDirContentScripts}/common/platform/catch.js`,
+  `../${targetDirExtension}/js/common/core/const.js`,
+  `${targetDirContentScripts}/common/core/const.js`,
 ];
 
 for (const path of paths) {

@@ -2,6 +2,7 @@
 
 'use strict';
 
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Store, Serializable } from '../../../js/common/platform/store.js';
 import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
@@ -10,7 +11,6 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api, R } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 
 Catch.try(async () => {
 

@@ -2,12 +2,13 @@
 
 'use strict';
 
+import { VERSION } from '../common/core/const.js';
+import { Catch } from '../common/platform/catch.js';
 import { Store, GlobalStore } from '../common/platform/store.js';
 import { BrowserMsg, Bm } from '../common/extension.js';
 import { BgAttests } from './attests.js';
 import { injectFcIntoWebmailIfNeeded } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
-import { Catch } from '../common/platform/catch.js';
 import { GoogleAuth } from '../common/api/google.js';
 import { BgUtils } from './bgutils.js';
 import { BgHandlers } from './bg_handlers.js';
@@ -31,7 +32,7 @@ chrome.runtime.onInstalled.addListener(event => {
 
   try {
     await migrateGlobal();
-    await Store.setGlobal({ version: Number(Catch.version('int')) });
+    await Store.setGlobal({ version: Number(VERSION.replace(/\./g, '')) });
     storage = await Store.getGlobal(['settings_seen', 'errors']);
   } catch (e) {
     await BgUtils.handleStoreErr(Store.errCategorize(e));

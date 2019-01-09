@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Value, Str } from '../common/core/common.js';
-import { Api } from '../common/api/api.js';
 import { Catch } from '../common/platform/catch.js';
 import { Store } from '../common/platform/store.js';
+import { Value, Str } from '../common/core/common.js';
+import { Api } from '../common/api/api.js';
 import { Pgp } from '../common/core/pgp.js';
 import { Rules } from '../common/rules.js';
 

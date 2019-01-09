@@ -2,11 +2,12 @@
 
 'use strict';
 
+import { VERSION } from '../../../js/common/core/const.js'
+import { Catch } from '../../../js/common/platform/catch.js';
 import { Str } from '../../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Catch } from '../../../js/common/platform/catch.js';
 
 Catch.try(async () => {
 
@@ -38,7 +39,7 @@ Catch.try(async () => {
     const origBtnText = $(target).text();
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
-    const msg = $('#input_text').val() + '\n\n\nFlowCrypt ' + Catch.browser().name + ' ' + Catch.version();
+    const msg = `${$('#input_text').val()}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`;
     try {
       const r = await Api.fc.helpFeedback(myEmail, msg);
       if (r.sent) {

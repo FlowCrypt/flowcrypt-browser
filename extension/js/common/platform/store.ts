@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Value, Str, Dict, EmailProvider } from '../core/common.js';
+import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, KeyInfosWithPassphrases, Contact } from '../core/pgp.js';
 import { SubscriptionInfo } from '../api/api.js';
@@ -18,6 +18,7 @@ type StoredReplyDraftMeta = string; // draft_id
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
 type StoredAttestLog = { attempt: number, packet?: string, success: boolean, result: string };
+export type EmailProvider = 'gmail';
 
 export type KeyBackupMethod = 'file' | 'inbox' | 'none' | 'print';
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };

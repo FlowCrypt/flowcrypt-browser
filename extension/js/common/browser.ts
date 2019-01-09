@@ -5,16 +5,16 @@
 'use strict';
 
 import * as DOMPurify from 'dompurify';
+import { Catch, UnreportableError } from './platform/catch.js';
+import { Store } from './platform/store.js';
 import { Str, Value, Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
-import { Store } from './platform/store.js';
 import { Api } from './api/api.js';
 import { Pgp, Pwd, PgpMsg, KeyInfo } from './core/pgp.js';
 import { mnemonic } from './core/mnemonic.js';
 import { Att } from './core/att.js';
 import { MsgBlock, KeyBlockType } from './core/mime.js';
 import { Settings } from './settings.js';
-import { Catch, UnreportableError } from './platform/catch.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;

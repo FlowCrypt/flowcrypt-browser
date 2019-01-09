@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api.js';
-import { Env, Ui, Xss } from '../browser.js';
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
+import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api.js';
+import { Env, Ui, Xss } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult } from '../extension.js';
 import { Mime, SendableMsgBody } from '../core/mime.js';

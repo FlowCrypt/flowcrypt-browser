@@ -9,7 +9,6 @@ import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js'
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
 
-type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
 export type AnyThirdPartyLibrary = any;
@@ -93,14 +92,7 @@ export interface BrowserWidnow extends Window {
     parse: (raw: string) => AddrParserResult[];
   };
 }
-export interface FcWindow extends BrowserWidnow {
-  $: JQuery;
-  iso88592: Codec;
-  // windows1252: Codec;
-  // koi8r: Codec;
-  is_bare_engine: boolean;
-}
-export interface ContentScriptWindow extends FcWindow {
+export interface ContentScriptWindow extends BrowserWidnow {
   TrySetDestroyableTimeout: (code: () => void, ms: number) => number;
   TrySetDestroyableInterval: (code: () => void, ms: number) => number;
   injected: true; // background script will use this to test if scripts were already injected, and inject if not

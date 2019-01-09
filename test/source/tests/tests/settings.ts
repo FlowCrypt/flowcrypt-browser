@@ -48,7 +48,7 @@ export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithS
   ava.test.todo('settings - verify 2pp1 key presense');
   // await tests.settings_my_key_tests(settingsPage, 'flowcrypt.compatibility.2pp1', 'link');
 
-  ava.test('settings[global] - feedback form', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
+  ava.test.only('settings[global] - feedback form', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
     const settingsPage = await browser.newPage(Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
     await settingsPage.waitAndClick('@action-open-modules-help');
     await settingsPage.waitAll('@dialog');

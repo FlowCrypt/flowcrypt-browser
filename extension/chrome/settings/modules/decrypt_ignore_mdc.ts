@@ -2,11 +2,11 @@
 
 'use strict';
 
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { Xss, Ui, XssSafeFactory, Env } from '../../../js/common/browser.js';
 import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
 import { Buf } from '../../../js/common/core/buf.js';
 
 declare const openpgp: typeof OpenPGP;

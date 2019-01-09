@@ -6,6 +6,8 @@
 
 declare const openpgp: typeof OpenPGP;
 
+type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
+
 export const requireOpenpgp = (): typeof OpenPGP => {
   try {
     return openpgp;
@@ -23,6 +25,6 @@ export const requireMimeBuilder = (): any => {
   return (window as any)['emailjs-mime-builder'];
 };
 
-export const requireIso88592 = (): any => {
+export const requireIso88592 = (): Codec => {
   return (window as any).iso88592;
 };

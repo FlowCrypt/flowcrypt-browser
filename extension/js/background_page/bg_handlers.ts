@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Bm } from '../common/extension.js';
 import { Store } from '../common/platform/store.js';
+import { Bm } from '../common/extension.js';
 import { BgUtils } from './bgutils.js';
 import { Env } from '../common/browser.js';
 import { Pgp } from '../common/core/pgp.js';

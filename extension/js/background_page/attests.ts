@@ -2,12 +2,12 @@
 
 'use strict';
 
+import { Catch } from '../common/platform/catch.js';
 import { Store } from '../common/platform/store.js';
 import { Value, Str, Dict } from '../common/core/common.js';
 import { Api, R } from '../common/api/api.js';
 import { Pgp, PgpMsg } from '../common/core/pgp.js';
 import { Bm } from '../common/extension.js';
-import { Catch } from '../common/platform/catch.js';
 import { Google, GoogleAuth, GoogleAcctNotConnected } from '../common/api/google.js';
 import { Buf } from '../common/core/buf.js';
 

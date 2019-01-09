@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Env } from '../browser.js';
 import { Store } from '../platform/store.js';
+import { Env } from '../browser.js';
 
 export const showFatalError = (reason: 'storage_undefined', error: Error) => {
   if (Env.isBackgroundPage()) {

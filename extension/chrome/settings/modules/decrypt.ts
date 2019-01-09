@@ -2,12 +2,12 @@
 
 'use strict';
 
+import { Catch } from '../../../js/common/platform/catch.js';
+import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, AttUI, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/pgp.js';
-import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
 
 Catch.try(async () => {
 

@@ -1,3 +1,6 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
+
+'use strict';
 
 import * as ts from 'typescript';
 import * as path from 'path';

@@ -1,23 +1,12 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-import { readdirSync, statSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
-import * as path from 'path';
+'use strict';
+
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { getFilesInDir } from './utils/tooling-utils';
 
 const OUT_DIR = `../build/chrome/js/content_scripts`;
 const { compilerOptions: { outDir: sourceDir } } = JSON.parse(readFileSync('./tsconfig.content_scripts.json').toString());
-
-const getFilesInDir = (dir: string, filePattern: RegExp, recursive = true): string[] => {
-  const all: string[] = [];
-  const filesInDir = readdirSync(dir);
-  for (const fileInDir of filesInDir) {
-    const filePath = path.join(dir, fileInDir);
-    if (statSync(filePath).isDirectory() && recursive) {
-      all.push(...getFilesInDir(filePath, filePattern, recursive));
-    } else if (filePattern.test(filePath)) {
-      all.push(filePath);
-    }
-  }
-  return all;
-};
 
 const processedSrc = (srcFilePath: string) => {
   let file = readFileSync(srcFilePath).toString();

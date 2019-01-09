@@ -2,10 +2,10 @@
 
 'use strict';
 
+import { Catch, UnreportableError } from '../common/platform/catch.js';
 import { Value, Dict } from '../common/core/common.js';
 import { Env, UrlParam } from '../common/browser.js';
 import { Store, StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../common/platform/store.js';
-import { Catch, UnreportableError } from '../common/platform/catch.js';
 
 export class BgUtils {
 

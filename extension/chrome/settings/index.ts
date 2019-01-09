@@ -2,6 +2,8 @@
 
 'use strict';
 
+import { VERSION } from '../../js/common/core/const.js';
+import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS, UrlParams } from '../../js/common/browser.js';
@@ -10,7 +12,6 @@ import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
-import { Catch } from '../../js/common/platform/catch.js';
 import { Lang } from '../../js/common/lang.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { KeyInfo } from '../../js/common/core/pgp.js';
@@ -28,7 +29,7 @@ Catch.try(async () => {
   const addNewAcct = uncheckedUrlParams.addNewAcct === true;
   const advanced = uncheckedUrlParams.advanced === true;
 
-  $('#status-row #status_v').text(`v:${String(Catch.version())}`);
+  $('#status-row #status_v').text(`v:${VERSION}`);
 
   const rules = await Rules.newInstance(acctEmail);
   if (!rules.canBackupKeys()) {
