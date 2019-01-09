@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Store, SubscriptionAttempt, GlobalStore } from './platform/store.js';
-import { Api, SubscriptionInfo } from './api/api.js';
+import { Store, SubscriptionAttempt, GlobalStore, Subscription } from './platform/store.js';
+import { Api } from './api/api.js';
 import { Catch } from './platform/catch.js';
 import { Env } from './browser.js';
 import { Google } from './api/google.js';
@@ -51,7 +51,7 @@ export class FcAcct {
     try {
       const newSubscriptionInfo = await this.doSubscribe(chosenProduct, source);
       const globalStoreUpdate: GlobalStore = {};
-      FcAcct.updateSubscriptionGlobalStore(globalStoreUpdate, await Store.subscription(), newSubscriptionInfo);
+      Subscription.updateSubscriptionGlobalStore(globalStoreUpdate, await Store.subscription(), newSubscriptionInfo);
       if (Object.keys(globalStoreUpdate).length) {
         await Store.setGlobal(globalStoreUpdate);
       }
@@ -122,18 +122,6 @@ export class FcAcct {
       }
     }
     return undefined;
-  }
-
-  static updateSubscriptionGlobalStore = (gs: GlobalStore, stored: SubscriptionInfo, newest: SubscriptionInfo | null) => {
-    if (newest) {
-      if (newest.level !== stored.level || newest.method !== stored.method || newest.expire !== stored.expire || newest.active !== stored.active) {
-        gs.cryptup_account_subscription = newest;
-      }
-    } else {
-      if (stored.level || stored.expire || stored.active || stored.method) {
-        gs.cryptup_account_subscription = undefined;
-      }
-    }
   }
 
   private doSubscribe = async (chosenProduct: Product, source?: string) => {

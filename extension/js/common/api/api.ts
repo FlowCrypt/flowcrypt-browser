@@ -2,13 +2,13 @@
 
 'use strict';
 
-import { Store, GlobalStore, Serializable } from '../platform/store.js';
+import { Store, GlobalStore, Serializable, Subscription } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
 import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
 import { Ui } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
-import { PaymentMethod, FcAcct } from '../account.js';
+import { PaymentMethod } from '../account.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
 
@@ -503,7 +503,7 @@ export class Api {
             globalStoreUpdate.cryptup_account_uuid = undefined;
           }
         }
-        FcAcct.updateSubscriptionGlobalStore(globalStoreUpdate, subscription, response.subscription);
+        Subscription.updateSubscriptionGlobalStore(globalStoreUpdate, subscription, response.subscription);
         if (Object.keys(globalStoreUpdate).length) {
           Catch.log('updating account subscription from ' + subscription.level + ' to ' + (response.subscription ? response.subscription.level : undefined), response);
           await Store.setGlobal(globalStoreUpdate);

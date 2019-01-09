@@ -118,6 +118,18 @@ export class Subscription implements SubscriptionInfo {
     }
   }
 
+  static updateSubscriptionGlobalStore = (gs: GlobalStore, stored: SubscriptionInfo, newest: SubscriptionInfo | null) => {
+    if (newest) {
+      if (newest.level !== stored.level || newest.method !== stored.method || newest.expire !== stored.expire || newest.active !== stored.active) {
+        gs.cryptup_account_subscription = newest;
+      }
+    } else {
+      if (stored.level || stored.expire || stored.active || stored.method) {
+        gs.cryptup_account_subscription = undefined;
+      }
+    }
+  }
+
 }
 
 export class StoreCorruptedError extends Error { }
