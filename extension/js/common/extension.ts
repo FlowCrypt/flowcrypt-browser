@@ -159,17 +159,17 @@ export class BrowserMsg {
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
       inbox: (bm: Bm.Inbox) => BrowserMsg.sendCatch(undefined, 'inbox', bm),
       await: {
-        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
-        attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(undefined, 'attest_packet_received', bm) as Promise<Bm.Res.AttestPacketReceived>,
-        getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info') as Promise<Bm.Res.GetActiveTabInfo>,
-        sessionGet: (bm: Bm.SessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm) as Promise<Bm.Res.SessionGet>,
-        sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm) as Promise<Bm.Res.SessionSet>,
-        db: (bm: Bm.Db) => BrowserMsg.sendAwait(undefined, 'db', bm) as Promise<Bm.Res.Db>,
-        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm) as Promise<Bm.Res.PgpMsgType>,
-        pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
-        pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm) as Promise<Bm.Res.PgpHashChallengeAnswer>,
-        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm) as Promise<Bm.Res.PgpMsgDecrypt>,
-        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm) as Promise<Bm.Res.PgpMsgVerify>,
+        reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
+        attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(undefined, 'attest_packet_received', bm, true) as Promise<Bm.Res.AttestPacketReceived>,
+        getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
+        sessionGet: (bm: Bm.SessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm, true) as Promise<Bm.Res.SessionGet>,
+        sessionSet: (bm: Bm.SessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm, true) as Promise<Bm.Res.SessionSet>,
+        db: (bm: Bm.Db) => BrowserMsg.sendAwait(undefined, 'db', bm, true) as Promise<Bm.Res.Db>,
+        pgpMsgType: (bm: Bm.PgpMsgType) => BrowserMsg.sendAwait(undefined, 'pgpMsgType', bm, true) as Promise<Bm.Res.PgpMsgType>,
+        pgpMsgDiagnosePubkeys: (bm: Bm.PgpMsgDiagnoseMsgPubkeys) => BrowserMsg.sendAwait(undefined, 'pgpMsgDiagnosePubkeys', bm, true) as Promise<Bm.Res.PgpMsgDiagnoseMsgPubkeys>,
+        pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
+        pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
+        pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
@@ -200,7 +200,7 @@ export class BrowserMsg {
     BrowserMsg.sendAwait(dest, name, bm).catch(Catch.handleErr);
   }
 
-  private static sendAwait = (destString: string | undefined, name: string, bm?: Dict<unknown>): Promise<Bm.Response> => new Promise((resolve, reject) => {
+  private static sendAwait = (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => new Promise((resolve, reject) => {
     bm = bm || {};
     const isBackgroundPage = Env.isBackgroundPage();
     if (isBackgroundPage && BrowserMsg.HANDLERS_REGISTERED_BACKGROUND && typeof destString === 'undefined') { // calling from bg script to bg script: skip messaging
@@ -210,7 +210,9 @@ export class BrowserMsg {
       const objUrls = BrowserMsg.replaceBufWithObjUrl(bm);
       const msg: Bm.Raw = { name, data: { bm, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
       const processRawMsgResponse = (r: Bm.RawResponse) => {
-        if (!r || typeof r !== 'object') {
+        if (!awaitRes) {
+          resolve();
+        } else if (!r || typeof r !== 'object') {
           reject(new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`));
         } else if (r && typeof r === 'object' && r.exception) {
           const e = new Error(`BrowserMsg(${name}) ${r.exception.message}`);
