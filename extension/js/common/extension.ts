@@ -233,7 +233,7 @@ export class BrowserMsg {
   })
 
   public static tabId = async (): Promise<string | null | undefined> => {
-    const r = await BrowserMsg.sendAwait(undefined, '_tab_', undefined) as Bm.Res._tab_;
+    const r = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
     return r.tabId;
   }
 
