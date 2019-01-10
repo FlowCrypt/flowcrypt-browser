@@ -101,7 +101,7 @@ export class AjaxError extends ApiCallError {
     this.stack += `\n\nprovided ajax call stack:\n${stack}`;
     if (this.status === 400 || this.status === 403 || (this.status === 200 && this.responseText && this.responseText[0] !== '{')) {
       // RawAjaxError with status 200 can happen when it fails to parse response - eg non-json result
-      this.stack += `\n\nstatus ${this.status} responseText:\n${this.responseText}\n\npayload:\n${Catch.stringify(req.data)}`;
+      this.stack += `\n\nresponseText(0, 1000):\n${this.responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
     }
   }
 
@@ -265,14 +265,13 @@ export class Api {
       if (!(e instanceof AjaxError)) {
         return false;
       }
-      if (e.status === 200 && e.responseText.indexOf('Access to this site is blocked') !== -1) {
-        return true;
-      }
-      if (e.status === 403 && e.responseText.indexOf('Your system policy has denied access to the requested site.') !== -1) {
-        return true; // Symantec proxy or firewall
-      }
-      if (e.status === 200 && e.responseText.indexOf('This content has been blocked') !== -1) {
-        return true;
+      if (e.status === 200 || e.status === 403) {
+        if (/(site|content|script) (is|has been|was) (restricted|blocked|disabled)/i.test(e.responseText)) {
+          return true;
+        }
+        if (/access to the requested site/.test(e.responseText)) {
+          return true;
+        }
       }
       return false;
     },
