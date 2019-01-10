@@ -5,11 +5,16 @@
 import { Store } from '../platform/store.js';
 import { Env } from '../browser.js';
 
-export const showFatalError = (reason: 'storage_undefined', error: Error) => {
+export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   if (Env.isBackgroundPage()) {
     throw error;
+  } else if (Env.isContentScript()) {
+    console.error('Incomplete extension environment in content script', error);
+  } else if (!chrome.runtime) {
+    console.error('Chrome.runtime missing, cannot continue', error);
+  } else { // extension pages
+    window.location.href = chrome.runtime.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
   }
-  window.location.href = chrome.runtime.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
 };
 
 export const tabsQuery = (q: chrome.tabs.QueryInfo): Promise<chrome.tabs.Tab[]> => new Promise(resolve => chrome.tabs.query(q, resolve));
@@ -24,7 +29,7 @@ export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.wind
 
 export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise((resolve, reject) => { // tslint:disable-line:ban-types
   if (typeof chrome.storage === 'undefined') {
-    showFatalError('storage_undefined', new Error('storage is undefined'));
+    handleFatalErr('storage_undefined', new Error('storage is undefined'));
   } else {
     chrome.storage.local.get(keys, result => {
       if (typeof result !== 'undefined') {
@@ -40,7 +45,7 @@ export const storageLocalGet = (keys: string[]): Promise<Object> => new Promise(
 
 export const storageLocalSet = (values: Object): Promise<void> => new Promise((resolve) => { // tslint:disable-line:ban-types
   if (typeof chrome.storage === 'undefined') {
-    showFatalError('storage_undefined', new Error('storage is undefined'));
+    handleFatalErr('storage_undefined', new Error('storage is undefined'));
   } else {
     chrome.storage.local.set(values, resolve);
   }
@@ -48,7 +53,7 @@ export const storageLocalSet = (values: Object): Promise<void> => new Promise((r
 
 export const storageLocalRemove = (keys: string[]): Promise<void> => new Promise((resolve) => { // tslint:disable-line:ban-types
   if (typeof chrome.storage === 'undefined') {
-    showFatalError('storage_undefined', new Error('storage is undefined'));
+    handleFatalErr('storage_undefined', new Error('storage is undefined'));
   } else {
     chrome.storage.local.remove(keys, resolve);
   }
