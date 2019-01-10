@@ -1,5 +1,7 @@
 <div>
 
+version 6.5.7 on January 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/309?closed=1" target="_blank">Fatal err handling</a>
+
 version 6.5.6 on January 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/308?closed=1" target="_blank">Bugfixes</a>
 
 version 6.5.5 on January 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/307?closed=1" target="_blank">Bugfixes</a>
