@@ -27,13 +27,18 @@ export const defineGmailTests = (testWithNewBrowser: TestWithBrowser, testWithSe
     const composePage = await GmailPageRecipe.openSecureCompose(gmailPage, browser);
   }));
 
-  ava.test.todo('inbox.google.com - compose window opens');
-
   ava.test('mail.google.com[global] - msg.asc message content renders', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
     const gmailPage = await openGmailPage(browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10 });
     expect(urls.length).to.equal(1);
     await BrowserRecipe.pgpBlockVerifyDecryptedContent(browser, urls[0], ['This is a test, as requested by the Flowcrypt team', 'mutt + gnupg']);
+    await pageHasReplyContainer(gmailPage);
+  }));
+
+  ava.test.only('mail.google.com[global] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
+    const gmailPage = await openGmailPage(browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
+    const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10 });
+    expect(urls.length).to.equal(1);
     await pageHasReplyContainer(gmailPage);
   }));
 
