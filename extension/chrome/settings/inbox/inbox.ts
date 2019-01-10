@@ -383,7 +383,7 @@ Catch.try(async () => {
       if (atts.length) {
         r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(a => factory.embeddedAtta(a, true)).join('')}</div>`;
       }
-      r = `<p class="message_header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
+      r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrapMsg(htmlId, r)); // xss-safe-factory
     } catch (e) {
       if (Api.err.isNetErr(e)) {
@@ -423,7 +423,13 @@ Catch.try(async () => {
   };
 
   const inboxThreadItemAdd = (threadId: string) => {
-    const content = `<span class="from_container"><span class="from"></span><span class="msg_count"></span></span><span class="subject"></span><span class="date"></span>`;
+    const content = `
+      <span class="from_container">
+        <span class="from"></span>
+        <span class="msg_count"></span></span>
+      <span class="subject" data-test="container-subject"></span>
+      <span class="date"></span>
+    `;
     Xss.sanitizeAppend(S.cached('threads'), Ui.e('div', {
       class: 'line',
       id: threadListItemId(threadId),

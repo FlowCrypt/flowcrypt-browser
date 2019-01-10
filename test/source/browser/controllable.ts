@@ -62,7 +62,7 @@ abstract class ControllableBase {
       this.log(`wait_all:2:${selector}`);
       if (this.isXpath(selector)) {
         this.log(`wait_all:3:${selector}`);
-        await (this.target as any).waitForXPath(selector, { timeout: timeout * 1000, visible });  // @types/puppeteer doesn't know about this.target.waitForXPath
+        await this.target.waitForXPath(selector, { timeout: timeout * 1000, visible });
         this.log(`wait_all:4:${selector}`);
       } else {
         this.log(`wait_all:5:${selector}`);

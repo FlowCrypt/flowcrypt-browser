@@ -230,11 +230,12 @@ export class SettingsPageRecipe extends PageRecipe {
 
 }
 
-type DecryptMsgCheckContent$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string };
+type CheckDecryptMsg$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string };
+type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: string, isEncrypted?: boolean, isSigned?: boolean, sender?: string };
 
 export class InboxPageRecipe extends PageRecipe {
 
-  public static checkDecryptMsg = async (browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent }: DecryptMsgCheckContent$opt) => {
+  public static checkDecryptMsg = async (browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent }: CheckDecryptMsg$opt) => {
     const inboxPage = await browser.newPage(Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
@@ -252,6 +253,24 @@ export class InboxPageRecipe extends PageRecipe {
     const content = await pgpBlockFrame.read('@pgp-block-content');
     if (content.indexOf(expectedContent) === -1) {
       throw new Error(`message did not decrypt`);
+    }
+    await inboxPage.close();
+  }
+
+  public static checkSentMsg = async (browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {
+    if (typeof isSigned !== 'undefined') {
+      throw new Error('checkSentMsg.isSigned not implemented');
+    }
+    if (typeof expectedContent !== 'undefined') {
+      throw new Error('checkSentMsg.expectedContent not implemented');
+    }
+    if (typeof isEncrypted !== 'undefined') {
+      throw new Error('checkSentMsg.isEncrypted not implemented');
+    }
+    const inboxPage = await browser.newPage(Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`));
+    await inboxPage.waitAndClick(`@container-subject(${subject})`, { delay: 1 });
+    if (sender) { // make sure it was sent from intended addr
+      await inboxPage.waitAll(`@container-msg-header(${sender})`);
     }
     await inboxPage.close();
   }
@@ -295,8 +314,11 @@ export class ComposePageRecipe extends PageRecipe {
       await composePageOrFrame.type('@input-to', to);
     }
     await composePageOrFrame.click('@input-subject');
-    await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
-    await composePageOrFrame.type('@input-body', `This is an automated puppeteer test: ${subject}`);
+    subject = `Automated puppeteer test: ${subject}`;
+    const body = `This is an automated puppeteer test: ${subject}`;
+    await composePageOrFrame.type('@input-subject', subject);
+    await composePageOrFrame.type('@input-body', body);
+    return { subject, body };
   }
 
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {

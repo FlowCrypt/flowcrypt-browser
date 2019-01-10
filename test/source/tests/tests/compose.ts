@@ -1,5 +1,5 @@
 import { TestWithBrowser, TestWithGlobalBrowser } from '..';
-import { ComposePageRecipe, SettingsPageRecipe } from '../page_recipe';
+import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import { Url } from '../../browser';
 import * as ava from 'ava';
@@ -155,5 +155,15 @@ export const defineComposeTests = (testWithNewBrowser: TestWithBrowser, testWith
   ava.test.todo('compose[global] - reply - new gmail threadId fmt');
 
   ava.test.todo('compose[global] - reply - skip click prompt');
+
+  ava.test('compose[global] - standalone - can send email from alias addr', testWithNewBrowser(async (browser, t) => {
+    const sender = 'flowcryptcompatibility@gmail.com';
+    await BrowserRecipe.setUpFcCompatAcct(browser);
+    const composePage = await ComposePageRecipe.openStandalone(browser);
+    await composePage.selectOption('@input-from', sender);
+    const { subject } = await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', `from alias address ${Util.lousyRandom()}`);
+    await ComposePageRecipe.sendAndClose(composePage);
+    await InboxPageRecipe.checkSentMsg(browser, { acctEmail: 'flowcrypt.compatibility@gmail.com', subject, sender });
+  }));
 
 };

@@ -22,7 +22,7 @@ const TEST_TIMEOUT = 3 * 60 * 1000;
 const POOL_SIZE = poolSizeOne ? 1 : 7;
 const POOL_SIZE_GLOBAL = poolSizeOne ? 1 : 3;
 const ATTEMPTS_PER_TEST = 3;
-console.log(`POOL_SIZE:${POOL_SIZE}, POOL_SIZE_GLOBAL:${POOL_SIZE_GLOBAL}\n`);
+console.log(`POOL_SIZE:${POOL_SIZE}, POOL_SIZE_GLOBAL:${POOL_SIZE_GLOBAL}, ATTEMPTS_PER_TEST:${ATTEMPTS_PER_TEST}\n`);
 
 const browserPool = new BrowserPool(POOL_SIZE, 'browserPool', false);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
