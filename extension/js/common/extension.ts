@@ -116,6 +116,7 @@ export interface ContentScriptWindow extends BrowserWidnow {
   vacant: () => boolean;
 }
 
+export class BgNotReadyError extends Error { }
 export class TabIdRequiredError extends Error { }
 
 export class Extension { // todo - move extension-specific common.js code here
@@ -226,7 +227,11 @@ export class BrowserMsg {
         if (!awaitRes) {
           resolve();
         } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
-          reject(new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`));
+          if (typeof destString === 'undefined' && typeof r === 'undefined') {
+            reject(new BgNotReadyError(`Bg not ready for call ${name}`));
+          } else {
+            reject(new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`));
+          }
         } else if (r && typeof r === 'object' && r.exception) {
           const e = new Error(`BrowserMsg(${name}) ${r.exception.message}`);
           e.stack += `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${r.exception.stack}\n[/responderStack]\n`;
@@ -246,20 +251,27 @@ export class BrowserMsg {
   })
 
   public static tabId = async (): Promise<string | null | undefined> => {
-    const r = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
-    return r.tabId;
+    try {
+      const { tabId } = await BrowserMsg.sendAwait(undefined, '_tab_', undefined, true) as Bm.Res._tab_;
+      return tabId;
+    } catch (e) {
+      if (e instanceof BgNotReadyError) {
+        return undefined;
+      }
+      throw e;
+    }
   }
 
   public static requiredTabId = async (attempts = 10, delay = 200): Promise<string> => {
     let tabId;
-    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start
+    for (let i = 0; i < attempts; i++) { // sometimes returns undefined right after browser start due to BgNotReadyError
       tabId = await BrowserMsg.tabId();
       if (tabId) {
         return tabId;
       }
       await Ui.time.sleep(delay);
     }
-    throw new TabIdRequiredError(`Tab id is required, but received '${String(tabId)}' after ${attempts} attempts`);
+    throw new TabIdRequiredError(`tabId is required, but received '${String(tabId)}' after ${attempts} attempts`);
   }
 
   public static addListener = (name: string, handler: Handler) => {

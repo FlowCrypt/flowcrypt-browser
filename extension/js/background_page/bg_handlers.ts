@@ -51,7 +51,7 @@ export class BgHandlers {
     });
   })
 
-  public static respondWithSenderTabId = async (r: any, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
+  public static respondWithSenderTabId = async (r: unknown, sender: Bm.Sender): Promise<Bm.Res._tab_> => {
     if (sender === 'background') {
       return { tabId: null };  // tslint:disable-line:no-null-keyword
     } else if (sender.tab) {
