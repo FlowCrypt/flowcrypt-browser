@@ -4,7 +4,7 @@
 
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
-import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults } from './api.js';
+import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
 import { Env, Ui, Xss } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult } from '../extension.js';
@@ -157,6 +157,7 @@ export class Google extends Api {
       return { attachmentId, size, data: Buf.fromBase64UrlStr(data) };
     },
     attGetChunk: (acctEmail: string, messageId: string, attId: string): Promise<Buf> => new Promise(async (resolve, reject) => {
+      const stack = Catch.stackTrace();
       const minBytes = 1000;
       let processed = 0;
       const processChunkAndResolve = (chunk: string) => {
@@ -196,7 +197,9 @@ export class Google extends Api {
       };
       GoogleAuth.googleApiAuthHeader(acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
-        r.open('GET', `https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attId}`, true);
+        const method = 'GET';
+        const url = `https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attId}`;
+        r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
         let status: number;
@@ -211,7 +214,7 @@ export class Google extends Api {
           if (r.readyState === 2 || r.readyState === 3) { // headers, loading
             status = r.status;
             if (status >= 300) {
-              reject({ code: status, message: `Fail status ${status} received when downloading a chunk` });
+              reject(new AjaxError({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
               r.abort();
             }
@@ -224,7 +227,7 @@ export class Google extends Api {
                 r.abort();
               }
             } else { // done as a fail - reject
-              reject({ message: 'Network connection error when downloading a chunk', internal: 'network' }); // todo - use a NetworkError of some sort
+              reject(new AjaxError({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
             }
           }
