@@ -132,7 +132,7 @@ export class Buf extends Uint8Array {
     const length = this.length;
     const chars = [];
     for (let i = 0; i < length; i += chunkSize) {
-      chars.push(String.fromCharCode.apply(undefined, this.subarray(i, i + chunkSize)));
+      chars.push(String.fromCharCode.apply(undefined, Array.from(this.subarray(i, i + chunkSize))));
     }
     return chars.join('');
   }

@@ -12,6 +12,7 @@
     "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,
+    "strict": true,
     "outDir": "build/chrome",
     "baseUrl": "./extension",
     "paths": {
