@@ -35,7 +35,7 @@ export const defineGmailTests = (testWithNewBrowser: TestWithBrowser, testWithSe
     await pageHasReplyContainer(gmailPage);
   }));
 
-  ava.test.only('mail.google.com[global] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
+  ava.test('mail.google.com[global] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
     const gmailPage = await openGmailPage(browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10 });
     expect(urls.length).to.equal(1);
