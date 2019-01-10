@@ -271,6 +271,9 @@ export class Api {
       if (e.status === 403 && e.responseText.indexOf('Your system policy has denied access to the requested site.') !== -1) {
         return true; // Symantec proxy or firewall
       }
+      if (e.status === 200 && e.responseText.indexOf('This content has been blocked') !== -1) {
+        return true;
+      }
       return false;
     },
     isSignificant: (e: any) => {
