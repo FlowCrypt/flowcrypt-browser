@@ -5,6 +5,7 @@ import { Util } from "../util";
 import * as ava from 'ava';
 
 class TimeoutError extends Error { }
+type AvaContext = ava.ExecutionContext<{}>;
 
 export class BrowserPool {
 
@@ -77,7 +78,7 @@ export class BrowserPool {
     }
   }
 
-  public getPooledBrowser = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>) => {
+  public getPooledBrowser = async (cb: (browser: BrowserHandle, t: AvaContext) => void, t: AvaContext) => {
     const browser = await this.openOrReuseBrowser();
     try {
       await cb(browser, t);
@@ -92,8 +93,8 @@ export class BrowserPool {
     cb().then(resolve, reject);
   })
 
-  private processTestError = (e: any, i: number, t: ava.ExecutionContext<{}>) => {
-    if (i < 3) {
+  private processTestError = (e: any, attemptNumber: number, t: AvaContext, totalAttempts: number) => {
+    if (attemptNumber < totalAttempts) {
       t.log(`Retrying: ${String(e)}`);
     } else {
       t.log(`Failed:   ${e instanceof Error ? e.stack : String(e)}`);
@@ -101,8 +102,8 @@ export class BrowserPool {
     }
   }
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
-    for (const i of [1, 2, 3]) {
+  public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: AvaContext) => void, t: AvaContext, timeout: number, attempts: number) => {
+    for (let attemptNumber = 1; attemptNumber <= attempts; attemptNumber++) {
       try {
         const browser = await this.newBrowserHandle();
         try {
@@ -112,16 +113,16 @@ export class BrowserPool {
           await browser.close();
         }
       } catch (e) {
-        this.processTestError(e, i, t);
+        this.processTestError(e, attemptNumber, t, attempts);
       }
     }
   }
 
   // tslint:disable-next-line:max-line-length
-  public withGlobalBrowserTimeoutAndRetry = async (beforeEachTest: () => Promise<void>, browser: BrowserHandle, cb: (b: BrowserHandle, t: ava.ExecutionContext<{}>) => void, t: ava.ExecutionContext<{}>, timeout: number) => {
-    for (const i of [1, 2, 3]) {
+  public withGlobalBrowserTimeoutAndRetry = async (before: () => Promise<void>, browser: BrowserHandle, cb: (b: BrowserHandle, t: AvaContext) => void, t: AvaContext, timeout: number, attempts: number) => {
+    for (let attemptNumber = 1; attemptNumber <= attempts; attemptNumber++) {
       try {
-        await beforeEachTest();
+        await before();
         await browser.closeAllPages();
         try {
           return await this.cbWithTimeout(async () => await cb(browser, t), timeout);
@@ -130,7 +131,7 @@ export class BrowserPool {
           await browser.closeAllPages();
         }
       } catch (e) {
-        this.processTestError(e, i, t);
+        this.processTestError(e, attemptNumber, t, attempts);
       }
     }
   }

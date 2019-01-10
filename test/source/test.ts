@@ -21,6 +21,7 @@ const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 const TEST_TIMEOUT = 3 * 60 * 1000;
 const POOL_SIZE = poolSizeOne ? 1 : 7;
 const POOL_SIZE_GLOBAL = poolSizeOne ? 1 : 3;
+const ATTEMPTS_PER_TEST = 3;
 console.log(`POOL_SIZE:${POOL_SIZE}, POOL_SIZE_GLOBAL:${POOL_SIZE_GLOBAL}\n`);
 
 const browserPool = new BrowserPool(POOL_SIZE, 'browserPool', false);
@@ -49,7 +50,7 @@ ava.before('set up global browsers and config', async t => {
 
 export const testWithNewBrowser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
   return async (t: ava.ExecutionContext<{}>) => {
-    await browserPool.withNewBrowserTimeoutAndRetry(cb, t, TEST_TIMEOUT);
+    await browserPool.withNewBrowserTimeoutAndRetry(cb, t, TEST_TIMEOUT, ATTEMPTS_PER_TEST);
     t.pass();
   };
 };
@@ -58,7 +59,7 @@ export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (
   return async (t: ava.ExecutionContext<{}>) => {
     const browser = await browserGlobal[group].browsers.openOrReuseBrowser();
     try {
-      await browserPool.withGlobalBrowserTimeoutAndRetry(browserGlobal[group].beforeEachTest, browser, cb, t, TEST_TIMEOUT);
+      await browserPool.withGlobalBrowserTimeoutAndRetry(browserGlobal[group].beforeEachTest, browser, cb, t, TEST_TIMEOUT, ATTEMPTS_PER_TEST);
       t.pass();
     } finally {
       browserGlobal[group].browsers.doneUsingBrowser(browser);
