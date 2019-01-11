@@ -12,9 +12,13 @@ import { defineSettingsTests } from './tests/tests/settings';
 import { defineElementTests } from './tests/tests/elements';
 import { defineAcctTests } from './tests/tests/account';
 import { Config } from './util';
+import { FlowCryptApi } from './tests/api';
 
 type GlobalBrowserGroup = 'compatibility' | 'trial';
 export type GlobalBrowser = { browsers: BrowserPool, beforeEachTest: () => Promise<void> };
+
+let debugHtml = '';
+export const addDebugHtml = (html: string) => { debugHtml += html; };
 
 const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 
@@ -67,9 +71,16 @@ export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (
   };
 };
 
-ava.after('close browsers', async t => {
+ava.after.always('close browsers', async t => {
   await browserPool.close();
   await browserGlobal.compatibility.browsers.close();
+  t.pass();
+});
+
+ava.after.always('send debug info if any', async t => {
+  if (debugHtml) {
+    await FlowCryptApi.hookCiDebugEmail('FlowCrypt Browser Extension', debugHtml);
+  }
   t.pass();
 });
 

@@ -40,4 +40,8 @@ export class FlowCryptApi {
     await FlowCryptApi.call('/hook/ci_subscription_reset', { email, ci_admin_token });
   }
 
+  public static hookCiDebugEmail = async (debug_title: string, debug_html_content: string) => { // tslint:disable-line:variable-name
+    await FlowCryptApi.call('/hook/ci_debug_email', { ci_admin_token, debug_title, debug_html_content });
+  }
+
 }

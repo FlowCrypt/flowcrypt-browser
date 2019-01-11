@@ -1,7 +1,7 @@
 import { Page, Browser } from 'puppeteer';
-import { Url } from './url';
-import { Semaphore } from './browser_pool';
+import { Semaphore, AvaContext } from './browser_pool';
 import { ControllablePage } from './controllable';
+import { Util } from '../util';
 
 export class BrowserHandle {
 
@@ -46,6 +46,21 @@ export class BrowserHandle {
 
   release = () => {
     this.semaphore.release();
+  }
+
+  screenshotsHtml = async () => {
+    let html = '';
+    const pages = await this.browser.pages();
+    for (let i = 0; i < pages.length; i++) {
+      const url = await pages[i].url();
+      html += '<div style="border:1px dashed #999;padding:5px;margin: 5px;">';
+      html += `<pre>Page ${i}: ${Util.htmlEscape(url)}</pre>`;
+      if (url !== 'about:blank') {
+        html += `<img style="margin:5px;" src="data:image/png;base64,${await pages[i].screenshot({ encoding: 'base64' })}"><br><br>`;
+      }
+      html += '</div>';
+    }
+    return html;
   }
 
   private doAwaitTriggeredPage = (triggeringAction: () => void): Promise<Page> => new Promise(resolve => {

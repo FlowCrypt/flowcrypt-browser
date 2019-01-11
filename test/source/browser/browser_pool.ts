@@ -3,9 +3,10 @@ import { launch } from "puppeteer";
 import { BrowserHandle } from './browser_handle';
 import { Util } from "../util";
 import * as ava from 'ava';
+import { addDebugHtml } from '../test';
 
 class TimeoutError extends Error { }
-type AvaContext = ava.ExecutionContext<{}>;
+export type AvaContext = ava.ExecutionContext<{}>;
 
 export class BrowserPool {
 
@@ -102,12 +103,25 @@ export class BrowserPool {
     }
   }
 
+  private addTestFailDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any) => {
+    let html = `<h3>Test: ${Util.htmlEscape(t.title)}</h3>`;
+    html += `<pre>${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>`;
+    html += await browser.screenshotsHtml();
+    html += `<br><br>`;
+    addDebugHtml(html);
+  }
+
   public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: AvaContext) => void, t: AvaContext, timeout: number, attempts: number) => {
     for (let attemptNumber = 1; attemptNumber <= attempts; attemptNumber++) {
       try {
         const browser = await this.newBrowserHandle();
         try {
           return await this.cbWithTimeout(async () => await cb(browser, t), timeout);
+        } catch (e) {
+          if (attemptNumber === attempts) {
+            await this.addTestFailDebugHtml(t, browser, e);
+          }
+          throw e;
         } finally {
           await Util.sleep(1);
           await browser.close();
@@ -126,6 +140,11 @@ export class BrowserPool {
         await browser.closeAllPages();
         try {
           return await this.cbWithTimeout(async () => await cb(browser, t), timeout);
+        } catch (e) {
+          if (attemptNumber === attempts) {
+            await this.addTestFailDebugHtml(t, browser, e);
+          }
+          throw e;
         } finally {
           await Util.sleep(1);
           await browser.closeAllPages();
