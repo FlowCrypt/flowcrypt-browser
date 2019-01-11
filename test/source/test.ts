@@ -13,34 +13,40 @@ import { defineElementTests } from './tests/tests/elements';
 import { defineAcctTests } from './tests/tests/account';
 import { Config } from './util';
 import { FlowCryptApi } from './tests/api';
+import { getDebugHtml, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 
 type GlobalBrowserGroup = 'compatibility' | 'trial';
-export type GlobalBrowser = { browsers: BrowserPool, beforeEachTest: () => Promise<void> };
-
-let debugHtml = '';
-export const addDebugHtml = (html: string) => { debugHtml += html; };
 
 const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 
-const TEST_TIMEOUT = 3 * 60 * 1000;
-const POOL_SIZE = poolSizeOne ? 1 : 7;
-const POOL_SIZE_GLOBAL = poolSizeOne ? 1 : 3;
-const ATTEMPTS_PER_TEST = 3;
-console.log(`POOL_SIZE:${POOL_SIZE}, POOL_SIZE_GLOBAL:${POOL_SIZE_GLOBAL}, ATTEMPTS_PER_TEST:${ATTEMPTS_PER_TEST}\n`);
+const consts = {
+  TIMEOUT_SHORT: minutes(1),
+  TIMEOUT_EACH_RETRY: minutes(3),
+  TIMEOUT_ALL_RETRIES: minutes(7),
+  TIMEOUT_OVERALL: minutes(13),
+  ATTEMPTS: 3,
+  POOL_SIZE: poolSizeOne ? 1 : 7,
+  POOL_SIZE_GLOBAL: poolSizeOne ? 1 : 3,
+  PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>,
+};
+console.info('consts: ', JSON.stringify(consts), '\n');
+consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
-const browserPool = new BrowserPool(POOL_SIZE, 'browserPool', false);
+export type Consts = typeof consts;
+
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
-    browsers: new BrowserPool(POOL_SIZE_GLOBAL, 'browserPoolGlobal', true),
-    beforeEachTest: async () => undefined,
+    browsers: new BrowserPool(consts.POOL_SIZE_GLOBAL, 'browserPoolGlobal', true),
   }
 };
 
 ava.before('set up global browsers and config', async t => {
+  standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY);
   Config.extensionId = await browserPool.getExtensionId();
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers = [];
-  for (let i = 0; i < POOL_SIZE_GLOBAL; i++) {
+  for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
     const b = await browserGlobal.compatibility.browsers.newBrowserHandle();
     setupPromises.push(BrowserRecipe.setUpFcCompatAcct(b));
     globalBrowsers.push(b);
@@ -52,18 +58,19 @@ ava.before('set up global browsers and config', async t => {
   t.pass();
 });
 
-export const testWithNewBrowser = (cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
-  return async (t: ava.ExecutionContext<{}>) => {
-    await browserPool.withNewBrowserTimeoutAndRetry(cb, t, TEST_TIMEOUT, ATTEMPTS_PER_TEST);
+export const testWithNewBrowser = (cb: (browser: BrowserHandle, t: AvaContext) => Promise<void>): ava.Implementation<{}> => {
+  return async (t: AvaContext) => {
+    await browserPool.withNewBrowserTimeoutAndRetry(cb, t, consts);
     t.pass();
   };
 };
 
-export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (browser: BrowserHandle, t: ava.ExecutionContext<{}>) => Promise<void>): ava.Implementation<{}> => {
-  return async (t: ava.ExecutionContext<{}>) => {
-    const browser = await browserGlobal[group].browsers.openOrReuseBrowser();
+export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (browser: BrowserHandle, t: AvaContext) => Promise<void>): ava.Implementation<{}> => {
+  return async (t: AvaContext) => {
+    const withTimeouts = newWithTimeoutsFunc(consts);
+    const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser());
     try {
-      await browserPool.withGlobalBrowserTimeoutAndRetry(browserGlobal[group].beforeEachTest, browser, cb, t, TEST_TIMEOUT, ATTEMPTS_PER_TEST);
+      await browserPool.withGlobalBrowserTimeoutAndRetry(browser, cb, t, consts);
       t.pass();
     } finally {
       browserGlobal[group].browsers.doneUsingBrowser(browser);
@@ -72,14 +79,16 @@ export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (
 };
 
 ava.after.always('close browsers', async t => {
+  standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
   await browserPool.close();
   await browserGlobal.compatibility.browsers.close();
   t.pass();
 });
 
 ava.after.always('send debug info if any', async t => {
-  if (debugHtml) {
-    await FlowCryptApi.hookCiDebugEmail('FlowCrypt Browser Extension', debugHtml);
+  standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
+  if (getDebugHtml()) {
+    await FlowCryptApi.hookCiDebugEmail('FlowCrypt Browser Extension', getDebugHtml());
   }
   t.pass();
 });

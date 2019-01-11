@@ -2,11 +2,10 @@
 import { launch } from "puppeteer";
 import { BrowserHandle } from './browser_handle';
 import { Util } from "../util";
-import * as ava from 'ava';
-import { addDebugHtml } from '../test';
+import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests';
+import { Consts } from '../test';
 
 class TimeoutError extends Error { }
-export type AvaContext = ava.ExecutionContext<{}>;
 
 export class BrowserPool {
 
@@ -94,63 +93,64 @@ export class BrowserPool {
     cb().then(resolve, reject);
   })
 
-  private processTestError = (e: any, attemptNumber: number, t: AvaContext, totalAttempts: number) => {
+  private processTestError = (err: any, attemptNumber: number, t: AvaContext, totalAttempts: number, attemptHtmls: string[]) => {
     if (attemptNumber < totalAttempts) {
-      t.log(`Retrying: ${String(e)}`);
+      t.log(`Retrying: ${String(err)}`);
     } else {
-      t.log(`Failed:   ${e instanceof Error ? e.stack : String(e)}`);
+      addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
+      t.log(`Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail('[ALL RETRIES FAILED]');
     }
   }
 
-  private addTestFailDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any) => {
-    let html = `<h3>Test: ${Util.htmlEscape(t.title)}</h3>`;
-    html += `<pre>${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>`;
-    html += await browser.debugPagesHtml();
-    html += `<br><br>`;
-    addDebugHtml(html);
-  }
+  private testFailSingleAttemptDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any): Promise<string> => `
+    <div class="attempt">
+      <div style="display:none;">
+        <pre title="err.stack">${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>
+        ${await browser.debugPagesHtml()}
+      </div>
+      <a href="#" onclick="this.style.display='none';this.parentNode.firstElementChild.style = '';">${String(err)}</a>
+    </div>
+    `
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: AvaContext) => void, t: AvaContext, timeout: number, attempts: number) => {
-    for (let attemptNumber = 1; attemptNumber <= attempts; attemptNumber++) {
+  public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: AvaContext) => void, t: AvaContext, consts: Consts) => {
+    const withTimeouts = newWithTimeoutsFunc(consts);
+    const attemptDebugHtmls: string[] = [];
+    for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
       try {
-        const browser = await this.newBrowserHandle();
+        const browser = await withTimeouts(this.newBrowserHandle());
         try {
-          return await this.cbWithTimeout(async () => await cb(browser, t), timeout);
-        } catch (e) {
-          if (attemptNumber === attempts) {
-            await this.addTestFailDebugHtml(t, browser, e);
-          }
-          throw e;
+          return await withTimeouts(this.cbWithTimeout(async () => await cb(browser, t), consts.TIMEOUT_EACH_RETRY));
+        } catch (err) {
+          attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
+          throw err;
         } finally {
           await Util.sleep(1);
           await browser.close();
         }
-      } catch (e) {
-        this.processTestError(e, attemptNumber, t, attempts);
+      } catch (err) {
+        this.processTestError(err, attemptNumber, t, consts.ATTEMPTS, attemptDebugHtmls);
       }
     }
   }
 
-  // tslint:disable-next-line:max-line-length
-  public withGlobalBrowserTimeoutAndRetry = async (before: () => Promise<void>, browser: BrowserHandle, cb: (b: BrowserHandle, t: AvaContext) => void, t: AvaContext, timeout: number, attempts: number) => {
-    for (let attemptNumber = 1; attemptNumber <= attempts; attemptNumber++) {
+  public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (b: BrowserHandle, t: AvaContext) => void, t: AvaContext, consts: Consts) => {
+    const withTimeouts = newWithTimeoutsFunc(consts);
+    const attemptDebugHtmls: string[] = [];
+    for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
       try {
-        await before();
         await browser.closeAllPages();
         try {
-          return await this.cbWithTimeout(async () => await cb(browser, t), timeout);
-        } catch (e) {
-          if (attemptNumber === attempts) {
-            await this.addTestFailDebugHtml(t, browser, e);
-          }
-          throw e;
+          return await withTimeouts(this.cbWithTimeout(async () => await cb(browser, t), consts.TIMEOUT_EACH_RETRY));
+        } catch (err) {
+          attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
+          throw err;
         } finally {
           await Util.sleep(1);
           await browser.closeAllPages();
         }
-      } catch (e) {
-        this.processTestError(e, attemptNumber, t, attempts);
+      } catch (err) {
+        this.processTestError(err, attemptNumber, t, consts.ATTEMPTS, attemptDebugHtmls);
       }
     }
   }

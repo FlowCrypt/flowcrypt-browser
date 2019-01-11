@@ -58,11 +58,12 @@ export class BrowserHandle {
     for (let i = 0; i < this.pages.length; i++) {
       const controllablePage = this.pages[i];
       const url = await controllablePage.page.url();
-      html += '<div style="border:1px dashed #999;padding:5px;margin: 5px;">';
+      const console = controllablePage.consoleMsgs.map(msg => `<font class="c-${msg.type()}">${msg.type()}: ${Util.htmlEscape(msg.text())}</font>`).join('\n');
+      html += '<div class="page">';
       html += `<pre>Page ${i} (${controllablePage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
-      html += `<pre>${controllablePage.consoleMsgs.map(msg => `${msg.type()}: ${Util.htmlEscape(msg.text())}`).join('\n')}</pre>`;
+      html += `<pre>${console || '(console empty)'}</pre>`;
       if (url !== 'about:blank' && !controllablePage.page.isClosed()) {
-        html += `<img style="margin:5px;" src="data:image/png;base64,${await controllablePage.page.screenshot({ encoding: 'base64' })}"><br><br>`;
+        html += `<img src="data:image/png;base64,${await controllablePage.page.screenshot({ encoding: 'base64' })}"><br><br>`;
       }
       html += '</div>';
     }
