@@ -129,6 +129,7 @@ export class ApiErrorResponse extends ApiCallError {
   constructor(res: StandardErrorRes, req: JQueryAjaxSettings) {
     super(`Api error response when ${ApiCallError.describeApiAction(req)}`);
     this.res = res;
+    this.url = req.url || '(unknown url)';
     this.stack += `\n\nresponse:\n${Catch.stringify(res)}`;
   }
 

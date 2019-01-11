@@ -18,7 +18,7 @@ type AttestResult = { message: string, acctEmail: string, attestPacketText: stri
 class AttestError extends Error implements AttestResult {
   attestPacketText: undefined | string;
   acctEmail: string;
-  success: false;
+  success: false = false;
   constructor(msg: string, attestPacketText: string | undefined, acctEmail: string) {
     super(msg);
     this.attestPacketText = attestPacketText;

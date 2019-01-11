@@ -126,10 +126,10 @@ export class Composer {
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private contactSearchInProgress = false;
-  private addedPubkeyDbLookupInterval: number;
-  private saveDraftInterval: number;
+  private addedPubkeyDbLookupInterval?: number;
+  private saveDraftInterval?: number;
   private currentlySavingDraft = false;
-  private passphraseInterval: number;
+  private passphraseInterval?: number;
   private includePubkeyToggledManually = false;
   private myAddrsOnPks: string[] = [];
   private myAddrsOnKeyserver: string[] = [];
@@ -137,7 +137,7 @@ export class Composer {
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
   private additionalMsgHeaders: { [key: string]: string } = {};
   private btnUpdateTimeout?: number;
-  private refBodyHeight: number;
+  private refBodyHeight?: number;
   private v: ComposerUrlParams;
 
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {

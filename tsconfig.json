@@ -8,7 +8,7 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noImplicitThis": true,
-    "strictPropertyInitialization": false,
+    "strictPropertyInitialization": true,
     "strictFunctionTypes": false,
     "sourceMap": false,
     "checkJs": false,

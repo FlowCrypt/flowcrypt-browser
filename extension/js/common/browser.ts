@@ -903,6 +903,10 @@ export class XssSafeFactory {
 
 export class KeyCanBeFixed extends Error {
   encrypted: OpenPGP.key.Key;
+  constructor(encrypted: OpenPGP.key.Key) {
+    super();
+    this.encrypted = encrypted;
+  }
 }
 
 export class UserAlert extends Error { }
@@ -1079,9 +1083,7 @@ export class KeyImportUi {
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if (this.checkEncryption && ! await k.getEncryptionKey()) {
       if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await Pgp.key.usableButExpired(k)) { // known issues - key can be fixed
-        const e = new KeyCanBeFixed('');
-        e.encrypted = encrypted;
-        throw e;
+        throw new KeyCanBeFixed(encrypted);
       } else {
         throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
       }
@@ -1107,7 +1109,7 @@ export class AttUI {
   private getLimits: () => Promise<AttLimits>;
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
-  private attAddedCb: (r: Att) => Promise<void>;
+  private attAddedCb?: (r: Att) => Promise<void>;
 
   constructor(getLimits: () => Promise<AttLimits>) {
     this.getLimits = getLimits;
