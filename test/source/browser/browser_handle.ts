@@ -1,10 +1,11 @@
 import { Page, Browser } from 'puppeteer';
-import { Semaphore, AvaContext } from './browser_pool';
+import { Semaphore } from './browser_pool';
 import { ControllablePage } from './controllable';
 import { Util } from '../util';
 
 export class BrowserHandle {
 
+  public pages: ControllablePage[] = [];
   public browser: Browser;
   private semaphore: Semaphore;
   private viewport: { height: number, width: number };
@@ -22,13 +23,16 @@ export class BrowserHandle {
     if (url) {
       await controllablePage.goto(url);
     }
+    this.pages.push(controllablePage);
     return controllablePage;
   }
 
   newPageTriggeredBy = async (triggeringAction: () => void): Promise<ControllablePage> => {
     const page = await this.doAwaitTriggeredPage(triggeringAction);
     await page.setViewport(this.viewport);
-    return new ControllablePage(page);
+    const controllablePage = new ControllablePage(page);
+    this.pages.push(controllablePage);
+    return controllablePage;
   }
 
   closeAllPages = async () => {
@@ -37,6 +41,7 @@ export class BrowserHandle {
         await page.close();
       }
     }
+    this.pages = [];
   }
 
   close = async () => {
@@ -48,15 +53,16 @@ export class BrowserHandle {
     this.semaphore.release();
   }
 
-  screenshotsHtml = async () => {
+  debugPagesHtml = async () => {
     let html = '';
-    const pages = await this.browser.pages();
-    for (let i = 0; i < pages.length; i++) {
-      const url = await pages[i].url();
+    for (let i = 0; i < this.pages.length; i++) {
+      const controllablePage = this.pages[i];
+      const url = await controllablePage.page.url();
       html += '<div style="border:1px dashed #999;padding:5px;margin: 5px;">';
-      html += `<pre>Page ${i}: ${Util.htmlEscape(url)}</pre>`;
-      if (url !== 'about:blank') {
-        html += `<img style="margin:5px;" src="data:image/png;base64,${await pages[i].screenshot({ encoding: 'base64' })}"><br><br>`;
+      html += `<pre>Page ${i} (${controllablePage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
+      html += `<pre>${controllablePage.consoleMsgs.map(msg => `${msg.type()}: ${Util.htmlEscape(msg.text())}`).join('\n')}</pre>`;
+      if (url !== 'about:blank' && !controllablePage.page.isClosed()) {
+        html += `<img style="margin:5px;" src="data:image/png;base64,${await controllablePage.page.screenshot({ encoding: 'base64' })}"><br><br>`;
       }
       html += '</div>';
     }

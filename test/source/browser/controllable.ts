@@ -1,5 +1,5 @@
 
-import { Page, ElementHandle, Frame, Dialog } from 'puppeteer';
+import { Page, ElementHandle, Frame, Dialog, ConsoleMessage } from 'puppeteer';
 import { Util } from '../util';
 import { Url } from './url';
 
@@ -251,10 +251,14 @@ abstract class ControllableBase {
 export class ControllablePage extends ControllableBase {
 
   public page: Page;
+  public consoleMsgs: ConsoleMessage[] = [];
 
   constructor(page: Page) {
     super(page);
     this.page = page;
+    page.on('console', msg => {
+      this.consoleMsgs.push(msg);
+    });
   }
 
   public triggerAndWaitNewAlert = async (triggeringAction: () => Promise<void>): Promise<Dialog> => {

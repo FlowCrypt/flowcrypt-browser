@@ -106,7 +106,7 @@ export class BrowserPool {
   private addTestFailDebugHtml = async (t: AvaContext, browser: BrowserHandle, err: any) => {
     let html = `<h3>Test: ${Util.htmlEscape(t.title)}</h3>`;
     html += `<pre>${Util.htmlEscape((err instanceof Error ? err.stack : String(err)) || String(err))}</pre>`;
-    html += await browser.screenshotsHtml();
+    html += await browser.debugPagesHtml();
     html += `<br><br>`;
     addDebugHtml(html);
   }
