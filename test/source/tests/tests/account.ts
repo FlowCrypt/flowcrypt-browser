@@ -25,7 +25,7 @@ export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSem
     // add a large file
     let fileInput = await composePage.target.$('input[type=file]');
     const subscriptionNeededAlert = await composePage.triggerAndWaitNewAlert(async () => await fileInput!.uploadFile('test/samples/large.jpg'));
-    expect(await subscriptionNeededAlert.message()).contains('The files are over 5 MB');
+    expect(await subscriptionNeededAlert.target.message()).contains('The files are over 5 MB');
     await subscriptionNeededAlert.accept();
     // get a trial
     const subscribePage = await GmailPageRecipe.getSubscribeDialog(gmailPage, browser);

@@ -56,14 +56,16 @@ export class BrowserHandle {
   debugPagesHtml = async () => {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
-      const controllablePage = this.pages[i];
-      const url = await controllablePage.page.url();
-      const console = controllablePage.consoleMsgs.map(msg => `<font class="c-${msg.type()}">${msg.type()}: ${Util.htmlEscape(msg.text())}</font>`).join('\n');
+      const cpage = this.pages[i];
+      const url = await cpage.page.url();
+      const consoleMsgs = cpage.consoleMsgs.map(msg => `<font class="c-${msg.type()}">${msg.type()}: ${Util.htmlEscape(msg.text())}</font>`).join('\n');
+      const alerts = cpage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
       html += '<div class="page">';
-      html += `<pre>Page ${i} (${controllablePage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
-      html += `<pre>${console || '(console empty)'}</pre>`;
-      if (url !== 'about:blank' && !controllablePage.page.isClosed()) {
-        html += `<img src="data:image/png;base64,${await controllablePage.page.screenshot({ encoding: 'base64' })}"><br><br>`;
+      html += `<pre title="url">Page ${i} (${cpage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
+      html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
+      html += `<pre title="alerts">${alerts || '(no alerts)'}</pre>`;
+      if (url !== 'about:blank' && !cpage.page.isClosed()) {
+        html += `<img src="data:image/png;base64,${await cpage.screenshot()}"><br><br>`;
       }
       html += '</div>';
     }

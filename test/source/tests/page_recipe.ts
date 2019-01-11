@@ -163,7 +163,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await securityFrame.waitAndClick('@action-show-confirm-new-pp', { delay: 1 });
     await securityFrame.waitAndType('@input-confirm-new-pp', newPp, { delay: 1 });
     const alert = await settingsPage.triggerAndWaitNewAlert(() => securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 }));
-    expect(await alert.message()).to.contain('Now that you changed your pass phrase, you should back up your key');
+    expect(await alert.target.message()).to.contain('Now that you changed your pass phrase, you should back up your key');
     await alert.accept();
     await securityFrame.waitAll('@container-backup-dialog'); // offers a new backup
     await Util.sleep(3);

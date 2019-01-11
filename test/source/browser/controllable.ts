@@ -248,10 +248,32 @@ abstract class ControllableBase {
 
 }
 
+export class ControllableAlert {
+
+  public target: Dialog;
+  public active = true;
+
+  constructor(alert: Dialog) {
+    this.target = alert;
+  }
+
+  accept = async () => {
+    await this.target.accept();
+    this.active = false;
+  }
+
+  dismiss = async () => {
+    await this.target.dismiss();
+    this.active = false;
+  }
+
+}
+
 export class ControllablePage extends ControllableBase {
 
   public page: Page;
   public consoleMsgs: ConsoleMessage[] = [];
+  public alerts: ControllableAlert[] = [];
 
   constructor(page: Page) {
     super(page);
@@ -259,11 +281,14 @@ export class ControllablePage extends ControllableBase {
     page.on('console', msg => {
       this.consoleMsgs.push(msg);
     });
+    page.on('dialog', alert => {
+      this.alerts.push(new ControllableAlert(alert));
+    });
   }
 
-  public triggerAndWaitNewAlert = async (triggeringAction: () => Promise<void>): Promise<Dialog> => {
-    const dialogPromise: Promise<Dialog> = new Promise((resolve, reject) => {
-      this.page.on('dialog', resolve);
+  public triggerAndWaitNewAlert = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
+    const dialogPromise: Promise<ControllableAlert> = new Promise((resolve, reject) => {
+      this.page.on('dialog', () => resolve(this.alerts[this.alerts.length - 1])); // we need it as a ControllableAlert so that we know if it was dismissed or not
       setTimeout(() => reject(new Error('triggerAndWaitNewAlert timout - no alert')), 60 * 1000);
     });
     triggeringAction(); // ignoring await
@@ -293,6 +318,13 @@ export class ControllablePage extends ControllableBase {
 
   public close = async () => await this.page.close();
 
+  public screenshot = async (): Promise<string> => {
+    const activeAlerts = this.alerts.filter(a => a.active);
+    for (const alert of activeAlerts) {
+      await alert.dismiss(); // active alert will cause screenshot to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
+    }
+    return await this.page.screenshot({ encoding: 'base64' });
+  }
 }
 
 export class ControllableFrame extends ControllableBase {

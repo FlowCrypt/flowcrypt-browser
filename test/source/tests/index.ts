@@ -19,8 +19,8 @@ const debugHtmlStyle = `
   div.attempt .page img { margin: 8px; margin-left: 0; }
   .c-error { color:red }
   .c-warning { color:orange }
-  .c-log { color:gray }
-  .c-info { color:lightgray }
+  .c-log { color:darkgray }
+  .c-info { color:gray }
 </style>
 `;
 
