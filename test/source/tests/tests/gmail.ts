@@ -3,7 +3,7 @@ import { Url, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
-import { ComposePageRecipe, GmailPageRecipe } from '../page_recipe';
+import { GmailPageRecipe } from '../page_recipe';
 
 export const defineGmailTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 

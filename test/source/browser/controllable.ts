@@ -1,6 +1,7 @@
 
 import { Page, ElementHandle, Frame, Dialog } from 'puppeteer';
 import { Util } from '../util';
+import { Url } from './url';
 
 declare const jQuery: any;
 
@@ -276,7 +277,15 @@ export class ControllablePage extends ControllableBase {
     }
   }
 
-  public goto = async (url: string) => await this.page.goto(url);
+  public goto = async (url: string) => {
+    url = url.indexOf('https://') === 0 || url.indexOf(Url.extension('')) === 0 ? url : Url.extension(url);
+    // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
+    this.page.goto(url).catch(e => console.log(`goto: ${e.message}: ${url}`));
+    await Promise.race([
+      this.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+      this.page.waitForNavigation({ waitUntil: 'load' })
+    ]);
+  }
 
   public close = async () => await this.page.close();
 

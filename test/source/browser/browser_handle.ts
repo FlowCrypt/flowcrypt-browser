@@ -18,10 +18,11 @@ export class BrowserHandle {
   newPage = async (url?: string): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
     await page.setViewport(this.viewport);
+    const controllablePage = new ControllablePage(page);
     if (url) {
-      await page.goto(url.indexOf('https://') === 0 || url.indexOf(Url.extension('')) === 0 ? url : Url.extension(url));
+      await controllablePage.goto(url);
     }
-    return new ControllablePage(page);
+    return controllablePage;
   }
 
   newPageTriggeredBy = async (triggeringAction: () => void): Promise<ControllablePage> => {
