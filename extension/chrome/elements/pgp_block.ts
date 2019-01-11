@@ -63,10 +63,6 @@ Catch.try(async () => {
     }
   };
 
-  const setTestState = (state: 'ready' | 'working' | 'waiting') => {
-    $('body').attr('data-test-state', state); // for automated tests
-  };
-
   const displayImageSrcLinkAsImg = (a: HTMLAnchorElement, event: JQuery.Event<HTMLAnchorElement, null>) => {
     const img = document.createElement('img');
     img.setAttribute('style', a.getAttribute('style') || '');
@@ -150,7 +146,7 @@ Catch.try(async () => {
     $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => {
       BrowserMsg.send.replyPubkeyMismatch(parentTabId);
     }));
-    setTestState('ready');
+    Ui.setTestState('ready');
   };
 
   const handlePrivateKeyMismatch = async (acctEmail: string, message: Uint8Array) => { // todo - make it work for multiple stored keys
@@ -349,7 +345,7 @@ Catch.try(async () => {
         BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
     }
-    setTestState('ready');
+    Ui.setTestState('ready');
   };
 
   const decryptAndRender = async (encryptedData: Buf, optionalPwd?: string) => {
@@ -420,7 +416,7 @@ Catch.try(async () => {
     await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
     let wasClicked = false;
     $('.enter_passphrase').click(Ui.event.handle(() => {
-      setTestState('waiting');
+      Ui.setTestState('waiting');
       BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
       wasClicked = true;
     }));
@@ -438,9 +434,9 @@ Catch.try(async () => {
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
     prompt += armoredMsgAsHtml();
     await renderContent(prompt, true);
-    setTestState('ready');
+    Ui.setTestState('ready');
     await Ui.event.clicked('.button.decrypt');
-    setTestState('working'); // so that test suite can wait until ready again
+    Ui.setTestState('working'); // so that test suite can wait until ready again
     $(self).text('Opening');
     await Ui.delay(50); // give browser time to render
     return String($('#answer').val());

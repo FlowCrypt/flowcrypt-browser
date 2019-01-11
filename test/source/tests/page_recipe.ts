@@ -47,6 +47,7 @@ export class SetupPageRecipe extends PageRecipe {
     }
     await settingsPage.waitAndClick('@action-backup-step3manual-continue');
     await settingsPage.waitAndClick('@action-step4done-account-settings');
+    await SettingsPageRecipe.ready(settingsPage);
   }
 
   // tslint:disable-next-line:max-line-length
@@ -89,6 +90,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAll('@action-step4done-account-settings', { timeout: 45 });
     }
     await settingsPage.waitAndClick('@action-step4done-account-settings');
+    await SettingsPageRecipe.ready(settingsPage);
   }
 
   // tslint:disable-next-line:max-line-length
@@ -112,6 +114,7 @@ export class SetupPageRecipe extends PageRecipe {
           await settingsPage.waitAndClick('@action-step4more-recover-remaining');
         } else {
           await settingsPage.waitAndClick('@action-step4more-account-settings');
+          await SettingsPageRecipe.ready(settingsPage);
         }
       } else {
         await settingsPage.waitAll('@action-step4done-account-settings');
@@ -119,6 +122,7 @@ export class SetupPageRecipe extends PageRecipe {
           throw new Error('Invalid options chosen: has_recover_more: false, click_recover_more: true');
         } else {
           await settingsPage.waitAndClick('@action-step4done-account-settings');
+          await SettingsPageRecipe.ready(settingsPage);
         }
       }
     }
@@ -128,7 +132,13 @@ export class SetupPageRecipe extends PageRecipe {
 
 export class SettingsPageRecipe extends PageRecipe {
 
+  public static ready = async (settingsPage: ControllablePage) => {
+    await settingsPage.waitAll('@page-settings');
+    await settingsPage.waitForSelTestState('ready');
+  }
+
   public static toggleScreen = async (settingsPage: ControllablePage, to: "basic" | "additional") => {
+    await SettingsPageRecipe.ready(settingsPage);
     await Util.sleep(0.5);
     await settingsPage.waitAndClick(to === 'basic' ? '@action-toggle-screen-basic' : '@action-toggle-screen-additional'); // switch
     await Util.sleep(0.5);
@@ -142,17 +152,20 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static awaitNewPageFrame = async (settingsPage: ControllablePage, actionBtnSel: string, frameUrlFilter: string[]): Promise<ControllableFrame> => {
+    await SettingsPageRecipe.ready(settingsPage);
     await settingsPage.waitAndClick(actionBtnSel);
     await settingsPage.waitAll('@dialog');
     return await settingsPage.getFrame(frameUrlFilter); // placement=settings to differentiate from mini-security frame in settings
   }
 
   public static swithAcct = async (settingsPage: ControllablePage, acctEmail: string) => {
+    await SettingsPageRecipe.ready(settingsPage);
     await settingsPage.waitAndClick('@action-toggle-accounts-menu');
     await settingsPage.waitAndClick(`@action-switch-to-account(${acctEmail})`);
   }
 
   public static changePassphrase = async (settingsPage: ControllablePage, currentPp: string | undefined, newPp: string) => {
+    await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAndClick('@action-change-passphrase-begin', { delay: 1 });
     if (currentPp) {
@@ -171,6 +184,7 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static changePassphraseRequirement = async (settingsPage: ControllablePage, passphrase: string, outcome: "session" | "storage") => {
+    await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAll('@input-toggle-require-pass-phrase');
     await Util.sleep(1); // wait for form to init / fill
@@ -198,6 +212,7 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static verifyMyKeyPage = async (settingsPage: ControllablePage, expectedKeyName: string, trigger: "button" | "link", linkIndex?: number) => {
+    await SettingsPageRecipe.ready(settingsPage);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
     const myKeyFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage,
       trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`, ['my_key.htm', 'placement=settings']);
@@ -213,6 +228,7 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static passphraseTest = async (settingsPage: ControllablePage, passphrase: string, expectMatch: boolean) => {
+    await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAndClick('@action-test-passphrase-begin');
     await securityFrame.waitAndType('@input-test-passphrase', passphrase);

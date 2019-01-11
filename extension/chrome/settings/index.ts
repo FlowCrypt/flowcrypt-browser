@@ -398,4 +398,6 @@ Catch.try(async () => {
     window.location.href = Env.urlCreate('index.htm', { acctEmail: $(target).find('.contains_email').text() });
   }));
 
+  Ui.setTestState('ready');
+
 })();

@@ -356,6 +356,10 @@ export class Ui {
     }
   }
 
+  public static setTestState = (state: 'ready' | 'working' | 'waiting') => {
+    $('body').attr('data-test-state', state); // for automated tests
+  }
+
   public static buildJquerySels = (sels: Dict<string>): SelCache => {
     const cache: NamedSels = {};
     return {
