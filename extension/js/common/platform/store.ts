@@ -6,9 +6,9 @@ import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, KeyInfosWithPassphrases, Contact } from '../core/pgp.js';
 import { SubscriptionInfo } from '../api/api.js';
-import { BrowserMsg } from '../extension.js';
+import { BrowserMsg, BgNotReadyError } from '../extension.js';
 import { Product, PaymentMethod, ProductLevel } from '../account.js';
-import { Env } from '../browser.js';
+import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 
@@ -328,8 +328,18 @@ export class Store {
   static getAcct = async (acctEmail: string, keys: AccountIndex[]): Promise<AccountStore> => {
     if (Env.isContentScript()) {
       // extension storage can be disallowed in rare cases for content scripts throwing 'Error: Access to extension API denied.'
-      // always go through bg script to avoid such errors
-      return await BrowserMsg.send.bg.await.storeAcctGet({ acctEmail, keys });
+      // go through bg script to avoid such errors
+      for (let i = 0; i < 10; i++) { // however backend may not be immediately ready to respond - retry
+        try {
+          return await BrowserMsg.send.bg.await.storeAcctGet({ acctEmail, keys });
+        } catch (e) {
+          if (!(e instanceof BgNotReadyError) || i === 9) {
+            throw e;
+          }
+          await Ui.time.sleep(300);
+        }
+      }
+      throw new BgNotReadyError('this should never happen');
     }
     const storageObj = await storageLocalGet(Store.singleScopeRawIndexArr(acctEmail, keys)) as RawStore;
     return Store.buildSingleAccountStoreFromRawResults(acctEmail, storageObj) as AccountStore;
