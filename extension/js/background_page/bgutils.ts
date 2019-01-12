@@ -12,7 +12,7 @@ export class BgUtils {
   public static openSettingsPage = async (path: string = 'index.htm', acctEmail?: string, page: string = '', rawPageUrlParams?: Dict<UrlParam>, addNewAcct = false) => {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
-    if (acctEmail) {
+    if (acctEmail || path === 'fatal.htm') {
       await BgUtils.openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams }));
     } else if (addNewAcct) {
       await BgUtils.openExtensionTab(Env.urlCreate(basePath, { addNewAcct }));
