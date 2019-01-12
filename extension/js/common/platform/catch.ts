@@ -27,6 +27,8 @@ export class Catch {
     'TypeError: window.opener is null',
     // errors on other domains: https://bugzilla.mozilla.org/show_bug.cgi?id=363897
     'Script error.',
+    // benign error https://github.com/WICG/ResizeObserver/issues/38#issuecomment-422126006 https://stackoverflow.com/questions/49384120/resizeobserver-loop-limit-exceeded
+    'ResizeObserver loop limit exceeded',
   ];
 
   public static rewrapErr = (e: any, message: string) => {
