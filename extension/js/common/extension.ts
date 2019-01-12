@@ -227,11 +227,14 @@ export class BrowserMsg {
         if (!awaitRes) {
           resolve();
         } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
+          let e: Error;
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
-            reject(new BgNotReadyError(`Bg not ready for call ${name}`));
+            e = new BgNotReadyError(`Bg not ready for call ${name}`);
           } else {
-            reject(new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`));
+            e = new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`);
           }
+          e.stack = `${msg.stack}\n\n${e.stack}`;
+          reject(e);
         } else if (r && typeof r === 'object' && r.exception) {
           const e = new Error(`BrowserMsg(${name}) ${r.exception.message}`);
           e.stack += `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${r.exception.stack}\n[/responderStack]\n`;
