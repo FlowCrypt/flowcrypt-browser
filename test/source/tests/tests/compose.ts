@@ -28,7 +28,7 @@ export const defineComposeTests = (testWithNewBrowser: TestWithBrowser, testWith
     await composePage.close();
   }));
 
-  ava.test.only('compose - standalone - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (browser, t) => {
+  ava.test('compose - standalone - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (browser, t) => {
     console.log(`ava.test.timeout.1`);
     const k = Config.key('flowcrypt.compatibility.1pp1');
     console.log(`ava.test.timeout.2`);
