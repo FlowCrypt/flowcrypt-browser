@@ -5,4 +5,5 @@ export { Url, gmailSeq } from './url';
 
 export const TIMEOUT_ELEMENT_GONE = 20;
 export const TIMEOUT_ELEMENT_APPEAR = 20;
+export const TIMEOUT_PAGE_LOAD = 40;
 export const TIMEOUT_TEST_STATE_SATISFY = 10;

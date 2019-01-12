@@ -2,7 +2,8 @@
 import { Page, ElementHandle, Frame, Dialog, ConsoleMessage } from 'puppeteer';
 import { Util } from '../util';
 import { Url } from './url';
-import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE } from '.';
+import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD } from '.';
+import { newTimeoutPromise } from '../tests';
 
 declare const jQuery: any;
 
@@ -312,8 +313,8 @@ export class ControllablePage extends ControllableBase {
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => console.log(`goto: ${e.message}: ${url}`));
     await Promise.race([
-      this.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
-      this.page.waitForNavigation({ waitUntil: 'load' })
+      this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
+      this.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })
     ]);
   }
 
@@ -322,9 +323,10 @@ export class ControllablePage extends ControllableBase {
   public screenshot = async (): Promise<string> => {
     const activeAlerts = this.alerts.filter(a => a.active);
     for (const alert of activeAlerts) {
-      await alert.dismiss(); // active alert will cause screenshot to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
+      // active alert will cause screenshot to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
+      await Promise.race([alert.dismiss(), newTimeoutPromise('alert dismiss', 10)]);
     }
-    return await this.page.screenshot({ encoding: 'base64' });
+    return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 10)]);
   }
 }
 

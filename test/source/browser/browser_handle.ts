@@ -58,7 +58,7 @@ export class BrowserHandle {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
       const cpage = this.pages[i];
-      const url = await cpage.page.url();
+      const url = await Promise.race([cpage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
       const consoleMsgs = cpage.consoleMsgs.map(msg => `<font class="c-${msg.type()}">${msg.type()}: ${Util.htmlEscape(msg.text())}</font>`).join('\n');
       const alerts = cpage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
       html += '<div class="page">';
@@ -66,7 +66,12 @@ export class BrowserHandle {
       html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
       html += `<pre title="alerts">${alerts || '(no alerts)'}</pre>`;
       if (url !== 'about:blank' && !cpage.page.isClosed()) {
-        html += `<img src="data:image/png;base64,${await cpage.screenshot()}"><br><br>`;
+        try {
+          html += `<img src="data:image/png;base64,${await cpage.screenshot()}"><br>`;
+        } catch (e) {
+          html += `<div style="border:1px solid white;">Could not get screen shot: ${e instanceof Error ? e.stack : String(e)}</div>`;
+        }
+
       }
       html += '</div>';
     }

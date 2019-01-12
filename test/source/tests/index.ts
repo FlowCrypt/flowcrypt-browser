@@ -16,7 +16,7 @@ const debugHtmlStyle = `
   div.attempt { padding: 20px; margin: 20px; border-left: 4px solid red; }
   div.attempt > a { text-decoration: none; font-size: 13px; color: black; }
   div.attempt .page { padding: 20px; margin: 20px; margin-left: 0px; background: #AAA; }
-  div.attempt .page img { margin: 8px; margin-left: 0; }
+  div.attempt .page img { margin: 8px; margin-left: 0; border: 1px solid white; }
   .c-error { color:red }
   .c-warning { color:orange }
   .c-log { color:darkgray }
@@ -44,6 +44,10 @@ export const newWithTimeoutsFunc = (consts: Consts): <T>(actionPromise: Promise<
     timeoutAllRetries, // timeout for all test retries
     consts.PROMISE_TIMEOUT_OVERALL, // overall timeout for the whole test process / sequence
   ]);
+};
+
+export const newTimeoutPromise = (name: string, seconds = 20): Promise<never> => {
+  return new Promise((resolve, reject) => setTimeout(() => reject(new Error(`Timeout: ${name}`)), seconds * 1000));
 };
 
 export const minutes = (count: number) => count * 60 * 1000;
