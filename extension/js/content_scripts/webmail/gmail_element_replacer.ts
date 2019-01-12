@@ -5,7 +5,7 @@
 import { Value, Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api, R } from '../../common/api/api.js';
+import { Api, R, AjaxError } from '../../common/api/api.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams, Browser } from '../../common/browser.js';
@@ -216,59 +216,76 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let nRenderedAtts = attMetas.length;
     for (const a of attMetas) {
-      // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       const treatAs = a.treatAs();
+      // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
-      if (treatAs !== 'standard') {
-        this.hideAtt(attSel, attsContainerInner);
-        nRenderedAtts--;
-        if (treatAs === 'encrypted') { // actual encrypted attachment - show it
-          attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
-          nRenderedAtts++;
-        } else if (treatAs === 'message') {
-          const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
-          const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
-          if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
-            const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-            const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
-            if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
-              nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
-            } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
-              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
-            } else {
-              attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
-              nRenderedAtts++;
-            }
-          } else {
-            msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
-          }
-        } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
-          nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
-        } else if (treatAs === 'signature') {
-          const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
-          const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
-          const replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
-          msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
-        }
-      } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
-        const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
-        const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
-        if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
-          nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+      try {
+        if (treatAs !== 'standard') {
           this.hideAtt(attSel, attsContainerInner);
           nRenderedAtts--;
-        } else {
+          if (treatAs === 'encrypted') { // actual encrypted attachment - show it
+            attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
+            nRenderedAtts++;
+          } else if (treatAs === 'message') {
+            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
+            const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
+            if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
+              const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+              const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
+              if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
+                nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+              } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
+                msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
+              } else {
+                attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
+                nRenderedAtts++;
+              }
+            } else {
+              msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
+            }
+          } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
+            nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+          } else if (treatAs === 'signature') {
+            const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
+            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
+            const replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
+            msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
+          }
+        } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
+          const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
+          const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
+          if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
+            nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+            this.hideAtt(attSel, attsContainerInner);
+            nRenderedAtts--;
+          } else {
+            attSel.addClass('attachment_processed').children('.attachment_loader').remove();
+          }
+        } else { // standard file
           attSel.addClass('attachment_processed').children('.attachment_loader').remove();
         }
-      } else { // standard file
-        attSel.addClass('attachment_processed').children('.attachment_loader').remove();
+      } catch (e) {
+        if (!Api.err.isSignificant(e) || (e instanceof AjaxError && e.status === 200)) {
+          attSel.show().children('.attachment_loader').text('Categorize: net err');
+          nRenderedAtts++;
+        } else {
+          Catch.handleErr(e);
+          attSel.show().children('.attachment_loader').text('Categorize: unknown err');
+          nRenderedAtts++;
+        }
       }
     }
     if (nRenderedAtts === 0) {
       attsContainerInner.parents(this.sel.attsContainerOuter).first().hide();
     }
+    if (!skipGoogleDrive) {
+      await this.processGoogleDriveAtts(msgId, msgEl, attsContainerInner);
+    }
+  }
+
+  private processGoogleDriveAtts = async (msgId: string, msgEl: JQueryEl, attsContainerInner: JQueryEl) => {
     const notProcessedAttsLoaders = attsContainerInner.find('.attachment_loader');
-    if (!skipGoogleDrive && notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
+    if (notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
       const googleDriveAtts: Att[] = [];
       notProcessedAttsLoaders.each((i, loaderEl) => {
