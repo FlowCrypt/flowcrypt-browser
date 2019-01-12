@@ -98,11 +98,11 @@ export class SetupPageRecipe extends PageRecipe {
     const k = Config.key(keyTitle);
     await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);
     if (wrongPp) {
-      const dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
+      const dialog = await settingsPage.newAlertTriggeredBy(() => settingsPage.waitAndClick('@action-recover-account'));
       // todo - read the contents - wrong pp
       await dialog.accept();
     } else if (alreadyRecovered) {
-      const dialog = await settingsPage.triggerAndWaitNewAlert(() => settingsPage.waitAndClick('@action-recover-account'));
+      const dialog = await settingsPage.newAlertTriggeredBy(() => settingsPage.waitAndClick('@action-recover-account'));
       // todo - read the contents - already recovered
       await dialog.accept();
     } else {
@@ -175,7 +175,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await securityFrame.waitAndType('@input-new-pp', newPp, { delay: 1 });
     await securityFrame.waitAndClick('@action-show-confirm-new-pp', { delay: 1 });
     await securityFrame.waitAndType('@input-confirm-new-pp', newPp, { delay: 1 });
-    const alert = await settingsPage.triggerAndWaitNewAlert(() => securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 }));
+    const alert = await settingsPage.newAlertTriggeredBy(() => securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 }));
     expect(await alert.target.message()).to.contain('Now that you changed your pass phrase, you should back up your key');
     await alert.accept();
     await securityFrame.waitAll('@container-backup-dialog'); // offers a new backup
@@ -232,12 +232,12 @@ export class SettingsPageRecipe extends PageRecipe {
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAndClick('@action-test-passphrase-begin');
     await securityFrame.waitAndType('@input-test-passphrase', passphrase);
-    const click = () => securityFrame.waitAndClick('@action-test-passphrase');
+    const clickTestPpButton = () => securityFrame.waitAndClick('@action-test-passphrase');
     if (expectMatch) {
-      await click();
+      await clickTestPpButton();
       await securityFrame.waitAndClick('@action-test-passphrase-successful-close');
     } else {
-      const dialog = await settingsPage.triggerAndWaitNewAlert(click);
+      const dialog = await settingsPage.newAlertTriggeredBy(clickTestPpButton);
       await dialog.accept();
       await SettingsPageRecipe.closeDialog(settingsPage);
     }

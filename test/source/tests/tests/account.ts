@@ -24,7 +24,7 @@ export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSem
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'a large file to trigger trial');
     // add a large file
     let fileInput = await composePage.target.$('input[type=file]');
-    const subscriptionNeededAlert = await composePage.triggerAndWaitNewAlert(async () => await fileInput!.uploadFile('test/samples/large.jpg'));
+    const subscriptionNeededAlert = await composePage.newAlertTriggeredBy(() => fileInput!.uploadFile('test/samples/large.jpg'));
     expect(await subscriptionNeededAlert.target.message()).contains('The files are over 5 MB');
     await subscriptionNeededAlert.accept();
     // get a trial

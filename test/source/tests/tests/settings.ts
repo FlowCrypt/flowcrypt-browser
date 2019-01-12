@@ -54,7 +54,7 @@ export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithS
     await settingsPage.waitAll('@dialog');
     const helpFrame = await settingsPage.getFrame(['help.htm']);
     await helpFrame.waitAndType('@input-feedback-message', 'automated puppeteer test: help form from settings footer');
-    const dialog = await settingsPage.triggerAndWaitNewAlert(() => helpFrame.waitAndClick('@action-feedback-send'));
+    const dialog = await settingsPage.newAlertTriggeredBy(() => helpFrame.waitAndClick('@action-feedback-send'));
     await dialog.accept();
   }));
 
