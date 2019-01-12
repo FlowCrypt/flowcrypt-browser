@@ -2,6 +2,7 @@
 import { Page, ElementHandle, Frame, Dialog, ConsoleMessage } from 'puppeteer';
 import { Util } from '../util';
 import { Url } from './url';
+import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE } from '.';
 
 declare const jQuery: any;
 
@@ -50,13 +51,13 @@ abstract class ControllableBase {
 
   protected selsAsProcessedArr = (selector: string | string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
 
-  public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = 10) => {
+  public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {
     await this.waitAll(`[data-test-state="${state}"]`, { timeout, visible: false });
   }
 
   public attr = async (elHandle: ElementHandle, name: string): Promise<string> => await (await elHandle.getProperty(name)).jsonValue();
 
-  public waitAll = async (selector: string | string[], { timeout = 20, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
+  public waitAll = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}) => {
     const selectors = this.selsAsProcessedArr(selector);
     this.log(`wait_all:1:${selectors.join(',')}`);
     for (const selector of selectors) {
@@ -74,7 +75,7 @@ abstract class ControllableBase {
     this.log(`wait_all:7:${selectors.join(',')}`);
   }
 
-  public waitAny = async (selector: string | string[], { timeout = 20, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
+  public waitAny = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_APPEAR, visible = true }: { timeout?: number, visible?: boolean } = {}): Promise<ElementHandle> => {
     timeout = Math.max(timeout, 1);
     const selectors = this.selsAsProcessedArr(selector);
     while (timeout-- > 0) {
@@ -97,8 +98,8 @@ abstract class ControllableBase {
     throw Error(`waiting failed: Elements did not appear: ${selectors.join(',')}`);
   }
 
-  public waitTillGone = async (selector: string | string[], { timeout = 5 }: { timeout?: number } = { timeout: 30 }) => {
-    let secondsLeft = timeout;
+  public waitTillGone = async (selector: string | string[], { timeout = TIMEOUT_ELEMENT_GONE }: { timeout?: number } = {}) => {
+    let secondsLeft = typeof timeout !== 'undefined' ? timeout : TIMEOUT_ELEMENT_GONE;
     const selectors = Array.isArray(selector) ? selector : [selector];
     while (secondsLeft-- >= 0) {
       try {

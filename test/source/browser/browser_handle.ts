@@ -2,6 +2,7 @@ import { Page, Browser } from 'puppeteer';
 import { Semaphore } from './browser_pool';
 import { ControllablePage } from './controllable';
 import { Util } from '../util';
+import { TIMEOUT_ELEMENT_APPEAR } from '.';
 
 export class BrowserHandle {
 
@@ -72,12 +73,13 @@ export class BrowserHandle {
     return html;
   }
 
-  private doAwaitTriggeredPage = (triggeringAction: () => void): Promise<Page> => new Promise(resolve => {
+  private doAwaitTriggeredPage = (triggeringAction: () => void): Promise<Page> => new Promise((resolve, reject) => {
+    setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
     let resolved = 0;
-    this.browser.on('targetcreated', async (target) => {
+    this.browser.on('targetcreated', async target => {
       if (target.type() === 'page') {
         if (!resolved++) {
-          target.page().then(resolve);
+          target.page().then(resolve, reject);
         }
       }
     });
