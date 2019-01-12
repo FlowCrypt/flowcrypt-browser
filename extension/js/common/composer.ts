@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch, UnreportableError } from './platform/catch.js';
-import { Store, Subscription, ContactUpdate, DbContactFilter } from './platform/store.js';
+import { Store, Subscription, ContactUpdate } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
@@ -37,7 +37,7 @@ interface ComposerAppFunctionsInterface {
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
   storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
   emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet | undefined>;
-  emailProviderDraftCreate: (mimeMsg: string) => Promise<R.GmailDraftCreate>;
+  emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<R.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
   emailProviderDraftDelete: (draftId: string) => Promise<R.GmailDraftDelete>;
   emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<R.GmailMsgSend>;
@@ -411,7 +411,7 @@ export class Composer {
         const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
         if (!this.v.draftId) {
-          const { id } = await this.app.emailProviderDraftCreate(mimeMsg);
+          const { id } = await this.app.emailProviderDraftCreate(this.v.acctEmail, mimeMsg, this.v.threadId);
           this.S.cached('send_btn_note').text('Saved');
           this.v.draftId = id;
           await this.app.storageSetDraftMeta(true, id, this.v.threadId, to, String(this.S.cached('input_subject').val()));
@@ -431,11 +431,15 @@ export class Composer {
           this.S.cached('send_btn_note').text('Not saved (reconnect)');
         } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
           this.S.cached('send_btn_note').text('Not saved (bad key)');
-        } else if (Api.err.isNotFound(e) || (e instanceof AjaxError && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1)) {
+        } else if (this.v.draftId && (Api.err.isNotFound(e) || (e instanceof AjaxError && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))) {
           // not found - updating draft that was since deleted
           // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
           this.v.draftId = ''; // forget there was a draftId - next step will create a new draftId
-          await this.draftSave(true); // forceSave=true to not skips
+          await this.draftSave(true); // forceSave=true to not skip
+        } else if (!this.v.draftId && Api.err.isNotFound(e)) {
+          // not found - creating draft on a thread that does not exist
+          this.v.threadId = ''; // forget there was a threadId
+          await this.draftSave(true); // forceSave=true to not skip
         } else {
           Catch.handleErr(e);
           this.S.cached('send_btn_note').text('Not saved (error)');
@@ -812,7 +816,17 @@ export class Composer {
     if (this.S.cached('icon_pubkey').is('.active')) {
       msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.v.acctEmail)));
     }
-    const msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+    let msgSentRes: R.GmailMsgSend;
+    try {
+      msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+    } catch (e) {
+      if (msg.thread && Api.err.isNotFound(e) && this.v.threadId) { // cannot send msg because threadId not found - eg user since deleted it
+        msg.thread = undefined;
+        msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+      } else {
+        throw e;
+      }
+    }
     const isSigned = this.S.cached('icon_sign').is('.active');
     BrowserMsg.send.notificationShow(this.v.parentTabId, { notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.v.isReplyBox ? 'reply' : 'message'} has been sent.` });
     await this.draftDelete();
@@ -1495,10 +1509,8 @@ export class Composer {
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
     return {
-      // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => null,
-      // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
       canReadEmails: () => false,
-      doesRecipientHaveMyPubkey: (theirEmail: string): Promise<boolean | undefined> => Promise.resolve(false),
+      doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
       storageGetAddresses: () => [],
       storageGetAddressesPks: () => [],
       storageGetAddressesKeyserver: () => [],
@@ -1509,27 +1521,27 @@ export class Composer {
       storageSetDraftMeta: () => Promise.resolve(),
       storageGetKey: () => { throw new Error('storage_get_key not implemented'); },
       storagePassphraseGet: () => Promise.resolve(undefined),
-      storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise.resolve(),
-      storageContactGet: (email: string[]) => Promise.resolve([]),
-      storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Promise.resolve(),
-      storageContactSave: (contact: Contact) => Promise.resolve(),
-      storageContactSearch: (query: DbContactFilter) => Promise.resolve([]),
+      storageAddAdminCodes: () => Promise.resolve(),
+      storageContactGet: () => Promise.resolve([]),
+      storageContactUpdate: () => Promise.resolve(),
+      storageContactSave: () => Promise.resolve(),
+      storageContactSearch: () => Promise.resolve([]),
       storageContactObj: Store.dbContactObj,
-      emailProviderDraftGet: (draftId: string) => Promise.resolve(undefined),
-      emailProviderDraftCreate: (mimeMsg: string) => Promise.reject(undefined),
-      emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise.resolve({}),
-      emailProviderDraftDelete: (draftId: string) => Promise.resolve({}),
-      emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise.reject({ message: 'not implemented' }),
-      emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => multiCb({ new: [], all: [] }),
+      emailProviderDraftGet: () => Promise.resolve(undefined),
+      emailProviderDraftCreate: () => Promise.reject(undefined),
+      emailProviderDraftUpdate: () => Promise.resolve({}),
+      emailProviderDraftDelete: () => Promise.resolve({}),
+      emailProviderMsgSend: () => Promise.reject({ message: 'not implemented' }),
+      emailEroviderSearchContacts: (query, knownContacts, multiCb) => multiCb({ new: [], all: [] }),
       emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
-      emailProviderExtractArmoredBlock: (msgId) => Promise.resolve(''),
-      renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => Promise.resolve(),
+      emailProviderExtractArmoredBlock: () => Promise.resolve(''),
+      renderReinsertReplyBox: () => Promise.resolve(),
       renderFooterDialog: () => undefined,
-      renderAddPubkeyDialog: (emails: string[]) => undefined,
+      renderAddPubkeyDialog: () => undefined,
       renderHelpDialog: () => undefined,
       renderSendingAddrDialog: () => undefined,
       closeMsg: () => undefined,
-      factoryAtt: (att: Att, isEncrypted: boolean) => `<div>${att.name}</div>`,
+      factoryAtt: (att) => `<div>${att.name}</div>`,
     };
   }
 

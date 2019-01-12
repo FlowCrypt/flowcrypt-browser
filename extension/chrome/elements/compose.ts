@@ -22,12 +22,12 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-  const threadMsgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
   const isReplyBox = uncheckedUrlParams.isReplyBox === true;
   const skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
   const ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
   const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
   const disableDraftSaving = false;
+  let threadMsgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
   let draftId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
   let from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
   let to = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
@@ -52,11 +52,11 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
       } else if (Api.err.isInsufficientPermission(e)) {
         // no permission - skip
+      } else if (Api.err.isNotFound(e)) {
+        threadMsgId = '';
       } else if (Api.err.isSignificant(e)) {
         Catch.handleErr(e);
       }
-      threadId = threadId || threadMsgId;
-      console.info('FlowCrypt: Substituting threadId: could cause issues. Value:' + String(threadId));
       $('#loader').remove();
       return;
     }
@@ -180,7 +180,7 @@ Catch.try(async () => {
     storageContactSearch: (query: DbContactFilter) => Store.dbContactSearch(undefined, query),
     storageContactObj: Store.dbContactObj,
     emailProviderDraftGet: (draftId: string) => Google.gmail.draftGet(acctEmail, draftId, 'raw'),
-    emailProviderDraftCreate: (mimeMsg: string) => Google.gmail.draftCreate(acctEmail, mimeMsg, threadId),
+    emailProviderDraftCreate: Google.gmail.draftCreate,
     emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(acctEmail, draftId, mimeMsg),
     emailProviderDraftDelete: (draftId: string) => Google.gmail.draftDelete(acctEmail, draftId),
     emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Google.gmail.msgSend(acctEmail, message, renderUploadProgress),
@@ -211,6 +211,8 @@ Catch.try(async () => {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else if (Api.err.isNetErr(e)) {
           // todo: render retry
+        } else if (Api.err.isNotFound(e)) {
+          // todo: render as new message compose?
         } else {
           Catch.handleErr(e);
           // todo: render error

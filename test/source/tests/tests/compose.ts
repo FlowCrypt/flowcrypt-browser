@@ -140,14 +140,24 @@ export const defineComposeTests = (testWithNewBrowser: TestWithBrowser, testWith
     await settingsPage.waitTillGone('@dialog');
   }));
 
-  ava.test.failing('compose[global] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
-    // todo - this is failing because the thread we are replying to is gone. This is an interesting test case of its own
+  ava.test('compose[global] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
+    const appendUrl = 'isReplyBox=___cu_true___&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
+      '&to=human%40flowcrypt.com&from=flowcrypt.compatibility%40gmail.com&subject=message%20for%20ci%20reply' +
+      '&threadId=16841ce0ce5cb74d&threadMsgId=16841ce0ce5cb74d';
+    const replyFrame = await ComposePageRecipe.openStandalone(browser, { appendUrl, hasReplyPrompt: true });
+    await replyFrame.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+    await replyFrame.waitAndType('@input-body', `This is an automated puppeteer test: old gmail threadId fmt reply`, { delay: 1 });
+    await Util.sleep(3); // todo: should wait until actually loaded
+    await ComposePageRecipe.sendAndClose(replyFrame);
+  }));
+
+  ava.test('compose[global] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
     const appendUrl = 'isReplyBox=___cu_true___&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
       '&to=human%40flowcrypt.com&from=flowcrypt.compatibility%40gmail.com&subject=Re%3A%20Automated%20puppeteer%20test%3A%20reply' +
       '&threadId=16804894591b3a4b&threadMsgId=16804894591b3a4b';
     const replyFrame = await ComposePageRecipe.openStandalone(browser, { appendUrl, hasReplyPrompt: true });
     await replyFrame.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-    await replyFrame.waitAndType('@input-body', `This is an automated puppeteer test: reply`, { delay: 1 });
+    await replyFrame.waitAndType('@input-body', `This is an automated puppeteer test: thread id does not exist reply`, { delay: 1 });
     await Util.sleep(3); // todo: should wait until actually loaded
     await ComposePageRecipe.sendAndClose(replyFrame);
   }));
