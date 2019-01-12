@@ -24,8 +24,7 @@
     "json-stable-stringify": "1.0.1",
     "puppeteer": "1.11.0",
     "tslint": "5.11.0",
-    "typescript": "3.2.2",
-    "buffer": "5.2.1"
+    "typescript": "3.2.2"
   },
   "scripts": {
     "test_0_tslint": "./node_modules/.bin/tslint --project ./tsconfig.json --config ./conf/tslint.yaml && ./node_modules/.bin/tslint --project ./conf/tsconfig.content_scripts.json --config ./conf/tslint.yaml",
