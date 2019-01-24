@@ -101,7 +101,7 @@ ava.after.always('close browsers', async t => {
 ava.after.always('send debug info if any', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
   if (getDebugHtml()) {
-    await FlowCryptApi.hookCiDebugEmail('FlowCrypt Browser Extension', getDebugHtml());
+    await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT})`, getDebugHtml());
   }
   t.pass();
 });
