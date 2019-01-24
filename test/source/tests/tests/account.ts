@@ -7,7 +7,7 @@ import { Config } from '../../util';
 import { expect } from 'chai';
 import { FlowCryptApi } from '../api';
 
-export const defineAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export const defineConsumerAcctTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   // todo - make a helper method that forces account tests to run in sequence with Semaphore
 

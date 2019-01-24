@@ -28,9 +28,9 @@ export const addDebugHtml = (html: string) => {
   debugHtml += html;
 };
 
-export const getDebugHtml = (): string => {
+export const getDebugHtml = (testVariant: string): string => {
   if (debugHtml) {
-    return debugHtmlStyle + debugHtml;
+    return debugHtmlStyle + `<h1>${testVariant}</h1><hr><br>` + debugHtml;
   }
   return '';
 };

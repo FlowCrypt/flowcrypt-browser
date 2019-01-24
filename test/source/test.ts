@@ -10,7 +10,7 @@ import { defineDecryptTests } from './tests/tests/decrypt';
 import { defineGmailTests } from './tests/tests/gmail';
 import { defineSettingsTests } from './tests/tests/settings';
 import { defineElementTests } from './tests/tests/elements';
-import { defineAcctTests } from './tests/tests/account';
+import { defineConsumerAcctTests } from './tests/tests/account';
 import { Config } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtml, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
@@ -25,8 +25,6 @@ if (process.argv.indexOf('CONSUMER') !== -1) {
 }
 const BUILD_DIR = `build/chrome-${TEST_VARIANT.toLowerCase()}`;
 console.info(`TEST_VARIANT: ${TEST_VARIANT}`);
-
-type GlobalBrowserGroup = 'compatibility' | 'trial';
 
 const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 
@@ -78,7 +76,7 @@ export const testWithNewBrowser = (cb: (browser: BrowserHandle, t: AvaContext) =
   };
 };
 
-export const testWithSemaphoredGlobalBrowser = (group: GlobalBrowserGroup, cb: (browser: BrowserHandle, t: AvaContext) => Promise<void>): ava.Implementation<{}> => {
+export const testWithSemaphoredGlobalBrowser = (group: 'compatibility', cb: (browser: BrowserHandle, t: AvaContext) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser());
@@ -100,8 +98,9 @@ ava.after.always('close browsers', async t => {
 
 ava.after.always('send debug info if any', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
-  if (getDebugHtml()) {
-    await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT})`, getDebugHtml());
+  const debugHtml = getDebugHtml(TEST_VARIANT);
+  if (debugHtml) {
+    await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT})`, debugHtml);
   }
   t.pass();
 });
@@ -113,4 +112,7 @@ defineDecryptTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
 defineGmailTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
 defineSettingsTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
 defineElementTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineAcctTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+
+if (TEST_VARIANT === 'CONSUMER') {
+  defineConsumerAcctTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+}
