@@ -368,9 +368,12 @@ export class ComposePageRecipe extends PageRecipe {
       await composePage.waitAndType('@input-password', 'test-pass');
       await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
+    const unexpectedAlertRejectingPromise = new Promise((resolve, reject) => {
+      composePage.page.on('dialog', alert => reject(`Received unexpected alert after pressing compose button: ${alert.message()}`));
+    });
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
     await Promise.race([
-      new Promise((resolve, reject) => composePage.page.on('dialog', alert => reject(`Received unexpected alert after pressing compose button: ${alert.message()}`))),
+      unexpectedAlertRejectingPromise,
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
     ]);
