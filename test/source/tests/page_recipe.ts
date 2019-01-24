@@ -89,30 +89,34 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@input-step2bmanualenter-submit-pubkey'); // uncheck
     }
     await settingsPage.waitAll('@input-step2bmanualenter-save');
-    if (simulateRetryOffline) {
-      await settingsPage.page.setOfflineMode(true); // offline mode
+    try {
+      if (simulateRetryOffline) {
+        await settingsPage.page.setOfflineMode(true); // offline mode
+      }
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
+      if (fixKey) {
+        await settingsPage.waitAll('@input-compatibility-fix-expire-years');
+        await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
+        await settingsPage.waitAndClick('@action-fix-and-import-key');
+      }
+      if (simulateRetryOffline) {
+        await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details'], { timeout: fixKey ? 45 : 20 });
+        await Util.sleep(0.5);
+        expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Network connection issue');
+        await settingsPage.click('@action-show-overlay-details');
+        await settingsPage.waitAll('@container-overlay-details');
+        await Util.sleep(0.5);
+        expect(await settingsPage.read('@container-overlay-details')).to.contain('Error stack');
+        await settingsPage.page.setOfflineMode(false); // back online
+        await settingsPage.click('@action-overlay-retry');
+        // after retry, the rest should continue as usual below
+      }
+      await settingsPage.waitAll('@action-step4done-account-settings', { timeout: fixKey ? 45 : 20 });
+      await settingsPage.waitAndClick('@action-step4done-account-settings');
+      await SettingsPageRecipe.ready(settingsPage);
+    } finally {
+      await settingsPage.page.setOfflineMode(false); // in case this tab is reused for other tests (which it shouldn't)
     }
-    await settingsPage.waitAndClick('@input-step2bmanualenter-save', { delay: 1 });
-    if (fixKey) {
-      await settingsPage.waitAll('@input-compatibility-fix-expire-years');
-      await settingsPage.selectOption('@input-compatibility-fix-expire-years', '1');
-      await settingsPage.waitAndClick('@action-fix-and-import-key');
-    }
-    if (simulateRetryOffline) {
-      await settingsPage.waitAll(['@action-overlay-retry', '@container-overlay-prompt-text', '@action-show-overlay-details'], { timeout: fixKey ? 45 : 20 });
-      await Util.sleep(0.5);
-      expect(await settingsPage.read('@container-overlay-prompt-text')).to.contain('Network connection issue');
-      await settingsPage.click('@action-show-overlay-details');
-      await settingsPage.waitAll('@container-overlay-details');
-      await Util.sleep(0.5);
-      expect(await settingsPage.read('@container-overlay-details')).to.contain('Error stack');
-      await settingsPage.page.setOfflineMode(false); // back online
-      await settingsPage.click('@action-overlay-retry');
-      // after retry, the rest should continue as usual below
-    }
-    await settingsPage.waitAll('@action-step4done-account-settings', { timeout: fixKey ? 45 : 20 });
-    await settingsPage.waitAndClick('@action-step4done-account-settings');
-    await SettingsPageRecipe.ready(settingsPage);
   }
 
   // tslint:disable-next-line:max-line-length
