@@ -1,4 +1,6 @@
 
+// @ts-check
+
 let gulp = require('gulp');
 let jeditor = require("gulp-json-editor");
 let fs = require('fs');
@@ -6,14 +8,16 @@ let exec = require('child_process').exec;
 let inquirer = require('inquirer');
 var replace = require('gulp-replace');
 
-let config = (path) => JSON.parse(fs.readFileSync(path));
+let config = (path) => JSON.parse(fs.readFileSync(path).toString());
 let source = (path) => Array.isArray(path) ? path.map(source) : `../extension/${path}`;
 let version = config('../package.json').version;
 
-let chromeTo = '../build/chrome';
-let chromeEnterpriseTo = '../build/chrome-enterprise';
-let ffTo = '../build/firefox';
-let chromeReleaseZipTo = `../release/flowcrypt-chrome-${version.replace(/\./g, '-')}.zip`;
+let CHROME_CONSUMER = 'chrome-consumer';
+let CHROME_ENTERPRISE = 'chrome-enterprise';
+let FIREFOX_CONSUMER = 'firefox-consumer';
+
+const buildDir = (buildType) => `../build/${buildType}`;
+const releaseZip = (buildType) => `../release/${buildType}/flowcrypt-${buildType}-${version.replace(/\./g, '-')}.zip`;
 
 let recipe = {
   crash: (reason = 'ending build process due to previous errors') => {
@@ -41,24 +45,24 @@ let recipe = {
 let subTask = {
   runTscExtension: () => recipe.exec('node ../build/tooling/tsc-compiler --project ../tsconfig.json'),
   runTscContentScripts: () => recipe.exec('node ../build/tooling/tsc-compiler --project tsconfig.content_scripts.json'),
-  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), chromeTo),
+  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), buildDir(CHROME_CONSUMER)),
   chromeFixOutputWhitespaces: () => Promise.all([
-    recipe.spacesToTabs(`${chromeTo}/js`),
-    recipe.spacesToTabs(`${chromeTo}/chrome`),
+    recipe.spacesToTabs(`${buildDir(CHROME_CONSUMER)}/js`),
+    recipe.spacesToTabs(`${buildDir(CHROME_CONSUMER)}/chrome`),
   ]),
-  copyVersionedManifest: () => recipe.copyEditJson(source('manifest.json'), chromeTo, manifest => {
+  copyVersionedManifest: () => recipe.copyEditJson(source('manifest.json'), buildDir(CHROME_CONSUMER), manifest => {
     manifest.version = version;
     return manifest;
   }),
-  copyChromeToFirefox: () => recipe.copy([`${chromeTo}/**`], ffTo),
-  copyChromeToFirefoxEditedManifest: () => recipe.copyEditJson(`${chromeTo}/manifest.json`, ffTo, manifest => {
+  copyChromeToFirefox: () => recipe.copy([`${buildDir(CHROME_CONSUMER)}/**`], buildDir(FIREFOX_CONSUMER)),
+  copyChromeToFirefoxEditedManifest: () => recipe.copyEditJson(`${buildDir(CHROME_CONSUMER)}/manifest.json`, buildDir(FIREFOX_CONSUMER), manifest => {
     manifest.applications = { gecko: { id: 'firefox@cryptup.io', update_url: 'https://flowcrypt.com/api/update/firefox', strict_min_version: '60.0' } };
     manifest.permissions = manifest.permissions.filter(p => p !== 'unlimitedStorage');
     delete manifest.minimum_chrome_version;
     return manifest;
   }),
-  copyChromeToChromeEnterprise: () => recipe.copy([`${chromeTo}/**`], chromeEnterpriseTo),
-  copyChromeToChromeEnterpriseEditedManifest: () => recipe.copyEditJson(`${chromeTo}/manifest.json`, chromeEnterpriseTo, manifest => {
+  copyChromeToChromeEnterprise: () => recipe.copy([`${buildDir(CHROME_CONSUMER)}/**`], buildDir(CHROME_ENTERPRISE)),
+  copyChromeToChromeEnterpriseEditedManifest: () => recipe.copyEditJson(`${buildDir(CHROME_CONSUMER)}/manifest.json`, buildDir(CHROME_ENTERPRISE), manifest => {
     manifest.name = 'FlowCrypt for Enterprise';
     manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
     // do not change!! or all user extensions will be disabled in their browser waiting for a new prompt
@@ -73,7 +77,8 @@ let subTask = {
     }
     return manifest;
   }),
-  releaseChrome: () => recipe.exec(`cd ../build; rm -f ${chromeReleaseZipTo}; zip -rq ${chromeReleaseZipTo} chrome/*`),
+  releaseChrome: () => recipe.exec(`cd ../build; rm -f ${releaseZip(CHROME_CONSUMER)}; zip -rq ${releaseZip(CHROME_CONSUMER)} ./${CHROME_CONSUMER}/*`),
+  releaseChromeEnterprise: () => recipe.exec(`cd ../build; rm -f ${releaseZip(CHROME_ENTERPRISE)}; zip -rq ${releaseZip(CHROME_ENTERPRISE)} ./${CHROME_ENTERPRISE}/*`),
   releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('../../flowcrypt-script/browser/firefox_release')),
   chromeResolveModules: () => recipe.exec(`node ../build/tooling/resolve-modules`),
   chromeBundleContentScripts: () => recipe.exec(`node ../build/tooling/bundle-content-scripts`),
@@ -103,6 +108,7 @@ let task = {
   ),
   release: gulp.series(
     subTask.releaseChrome,
+    subTask.releaseChromeEnterprise,
     subTask.releaseFirefox,
   ),
 }

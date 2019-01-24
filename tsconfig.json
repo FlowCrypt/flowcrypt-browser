@@ -13,7 +13,7 @@
     "sourceMap": false,
     "checkJs": false,
     "strict": true,
-    "outDir": "build/chrome",
+    "outDir": "build/chrome-consumer",
     "baseUrl": "./extension",
     "paths": {
       "jquery": [

@@ -27,15 +27,16 @@
     "typescript": "3.2.2"
   },
   "scripts": {
-    "test_0_tslint": "./node_modules/.bin/tslint --project ./tsconfig.json --config ./conf/tslint.yaml && ./node_modules/.bin/tslint --project ./conf/tsconfig.content_scripts.json --config ./conf/tslint.yaml",
-    "test_1_patterns": "node build/test/test/source/patterns.js",
-    "test_2_puppeteer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js",
-    "test_3_async_stack": "node build/test/test/source/async-stack.js",
-    "test_4_buf": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/buf.js",
+    "test_tslint": "./node_modules/.bin/tslint --project ./tsconfig.json --config ./conf/tslint.yaml && ./node_modules/.bin/tslint --project ./conf/tsconfig.content_scripts.json --config ./conf/tslint.yaml",
+    "test_patterns": "node build/test/test/source/patterns.js",
+    "test_async_stack": "node build/test/test/source/async-stack.js",
+    "test_buf": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/buf.js",
+    "test_chrome_consumer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER",
+    "test_chrome_enterprise": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE",
     "prebuild": "rm -rf ./build && ./node_modules/.bin/tsc --project conf/tsconfig.tooling.json",
     "build": "gulp --gulpfile ./conf/gulpfile.js",
     "pretest": "npm run-script build --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
-    "test": "npm run-script test_4_buf && npm run-script test_0_tslint && npm run-script test_1_patterns && npm run-script test_3_async_stack && npm run-script test_2_puppeteer -- -- --pool-size=1",
+    "test": "npm run-script test_buf && npm run-script test_tslint && npm run-script test_patterns && npm run-script test_async_stack && npm run-script test_chrome_consumer -- -- --pool-size=1 && npm run-script test_chrome_enterprise -- -- --pool-size=1",
     "release": "npm run-script prebuild && gulp --gulpfile ./conf/gulpfile.js release",
     "run_firefox": "npm run-script build && web-ext run --source-dir ./build/firefox/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes"
   },

@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { getFilesInDir } from './utils/tooling-utils';
 
-const OUT_DIR = `../build/chrome/js/content_scripts`;
+const OUT_DIR = `../build/chrome-consumer/js/content_scripts`;
 const { compilerOptions: { outDir: sourceDir } } = JSON.parse(readFileSync('./tsconfig.content_scripts.json').toString());
 
 const processedSrc = (srcFilePath: string) => {

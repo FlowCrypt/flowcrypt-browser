@@ -9,17 +9,18 @@ class TimeoutError extends Error { }
 
 export class BrowserPool {
 
-  private height: number;
-  private width: number;
   private semaphore: Semaphore;
-  private reuse: boolean;
   private browsersForReuse: BrowserHandle[] = [];
 
-  constructor(poolSize: number, name: string, reuse: boolean, width = 1280, height = 900) {
-    this.height = height;
-    this.width = width;
+  constructor(
+    poolSize: number,
+    name: string,
+    private reuse: boolean,
+    private extensionBuildDir: string,
+    private width = 1280,
+    private height = 900
+  ) {
     this.semaphore = new Semaphore(poolSize, name);
-    this.reuse = reuse;
   }
 
   public newBrowserHandle = async (closeInitialPage = true) => {
@@ -29,8 +30,8 @@ export class BrowserPool {
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
       '--disable-features=site-per-process',
-      '--disable-extensions-except=build/chrome',
-      '--load-extension=build/chrome',
+      `--disable-extensions-except=${this.extensionBuildDir}`,
+      `--load-extension=${this.extensionBuildDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
     ];
     // to run headless-like: "xvfb-run node test.js"

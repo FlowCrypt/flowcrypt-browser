@@ -15,6 +15,17 @@ import { Config } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtml, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 
+let TEST_VARIANT: 'CONSUMER' | 'ENTERPRISE';
+if (process.argv.indexOf('CONSUMER') !== -1) {
+  TEST_VARIANT = 'CONSUMER';
+} else if (process.argv.indexOf('ENTERPRISE') !== -1) {
+  TEST_VARIANT = 'ENTERPRISE';
+} else {
+  throw new Error('Unknown test type: specify CONSUMER or ENTERPRISE');
+}
+const BUILD_DIR = `build/chrome-${TEST_VARIANT.toLowerCase()}`;
+console.info(`TEST_VARIANT: ${TEST_VARIANT}`);
+
 type GlobalBrowserGroup = 'compatibility' | 'trial';
 
 const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
@@ -34,10 +45,10 @@ consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() 
 
 export type Consts = typeof consts;
 
-const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false);
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, BUILD_DIR);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
-    browsers: new BrowserPool(consts.POOL_SIZE_GLOBAL, 'browserPoolGlobal', true),
+    browsers: new BrowserPool(consts.POOL_SIZE_GLOBAL, 'browserPoolGlobal', true, BUILD_DIR),
   }
 };
 
