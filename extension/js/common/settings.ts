@@ -316,17 +316,13 @@ export class Settings {
     });
   }
 
-  static promptToRetry = async (type: 'REQUIRED', e: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
-    // todo - this needs to be refactored, hard to follow, hard to use
-    // |'OPTIONAL' - needs to be tested again
-    if (Api.err.isSignificant(e)) {
-      Catch.handleErr(e);
-    }
-    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, userMsg) === 'retry') {
+  static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
+    while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, `${userMsg} ${Api.err.eli5(lastErr)}`, Api.err.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {
         return await retryCb();
       } catch (e2) {
-        if (!Api.err.isNetErr(e2) && !Api.err.isServerErr(e)) {
+        lastErr = e2;
+        if (Api.err.isSignificant(e2)) {
           Catch.handleErr(e2);
         }
       }

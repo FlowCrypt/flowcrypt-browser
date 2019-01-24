@@ -368,7 +368,7 @@ Catch.try(async () => {
       try {
         await setupCreateSimpleAutomaticInboxBackup();
       } catch (e) {
-        return await Settings.promptToRetry('REQUIRED', e, 'Failed to back up your key, probably due to internet connection.', setupCreateSimpleAutomaticInboxBackup);
+        return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToBackUpKey, setupCreateSimpleAutomaticInboxBackup);
       }
     } else {
       displayBlock('step_3_manual');

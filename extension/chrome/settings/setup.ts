@@ -122,7 +122,7 @@ Catch.try(async () => {
       const r = await Api.attester.lookupEmail([acctEmail]);
       keyserverRes = r.results[0];
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.missingConnectionToCheckEncryption, () => renderSetupDialog());
+      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }
 
     if (keyserverRes.pubkey) {
@@ -136,7 +136,7 @@ Catch.try(async () => {
         try {
           fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
         } catch (e) {
-          return await Settings.promptToRetry('REQUIRED', e, 'Failed to check for account backups.\nThis is probably due to internet connection.', () => renderSetupDialog());
+          return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckAccountBackups, () => renderSetupDialog());
         }
         if (fetchedKeys.length) {
           recoveredKeys = fetchedKeys;
@@ -243,7 +243,7 @@ Catch.try(async () => {
     try {
       await submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
-      return await Settings.promptToRetry('REQUIRED', e, 'Failed to submit to Attester.\nThis may be due to internet connection issue.', () => finalizeSetup({ submit_main, submit_all }));
+      return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToSubmitToAttester, () => finalizeSetup({ submit_main, submit_all }));
     }
     await Store.setAcct(acctEmail, {
       setup_date: Date.now(),

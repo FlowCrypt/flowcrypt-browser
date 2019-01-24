@@ -5,7 +5,7 @@
 import { Store, GlobalStore, Serializable, Subscription } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
 import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
-import { Ui } from '../browser.js';
+import { Ui, Xss } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
 import { PaymentMethod } from '../account.js';
@@ -202,6 +202,42 @@ export namespace R { // responses
 export class Api {
 
   public static err = {
+    eli5: (e: any) => {
+      if (Api.err.isMailOrAcctDisabled(e)) {
+        return 'Email account is disabled';
+      } else if (Api.err.isAuthPopupNeeded(e)) {
+        return 'Browser needs to be re-connected to email account before proceeding.';
+      } else if (Api.err.isInsufficientPermission(e)) {
+        return 'Server says user has insufficient permissions for this action.';
+      } else if (Api.err.isBlockedByProxy(e)) {
+        return 'It seems that a company proxy or firewall is blocking internet traffic from this device.';
+      } else if (Api.err.isAuthErr(e)) {
+        return 'Server says this request was unauthorized, possibly caused by missing or wrong login.';
+      } else if (Api.err.isReqTooLarge(e)) {
+        return 'Server says this request is too large.';
+      } else if (Api.err.isNotFound(e)) {
+        return 'Server says this resource was not found';
+      } else if (Api.err.isBadReq(e)) {
+        return 'Server says this was a bad request (possibly a FlowCrypt bug)';
+      } else if (Api.err.isNetErr(e)) {
+        return 'Network connection issue.';
+      } else if (Api.err.isServerErr(e)) {
+        return 'Server responded with an unexpected error.';
+      } else if (e instanceof AjaxError) {
+        return 'AjaxError with unknown cause.';
+      } else {
+        return 'FlowCrypt encountered an error with unknown cause.';
+      }
+    },
+    detailsAsHtmlWithNewlines: (e: any) => {
+      let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
+      details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
+      details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
+      if (e instanceof AjaxError) {
+        details += `<b>Ajax response</b>:\n${Xss.escape(e.responseText)}\n<b>End of Ajax response</b>\n`;
+      }
+      return details;
+    },
     isNetErr: (e: any) => {
       if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
