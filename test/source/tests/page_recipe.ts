@@ -344,6 +344,7 @@ export class ComposePageRecipe extends PageRecipe {
     }
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
     await Promise.race([
+      new Promise((resolve, reject) => composePage.page.on('dialog', alert => reject(`Received unexpected alert after pressing compose button: ${alert.message()}`))),
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
     ]);
