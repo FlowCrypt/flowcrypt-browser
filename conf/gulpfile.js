@@ -11,6 +11,7 @@ let source = (path) => Array.isArray(path) ? path.map(source) : `../extension/${
 let version = config('../package.json').version;
 
 let chromeTo = '../build/chrome';
+let chromeEnterpriseTo = '../build/chrome-enterprise';
 let ffTo = '../build/firefox';
 let chromeReleaseZipTo = `../release/flowcrypt-chrome-${version.replace(/\./g, '-')}.zip`;
 
@@ -56,6 +57,22 @@ let subTask = {
     delete manifest.minimum_chrome_version;
     return manifest;
   }),
+  copyChromeToChromeEnterprise: () => recipe.copy([`${chromeTo}/**`], chromeEnterpriseTo),
+  copyChromeToChromeEnterpriseEditedManifest: () => recipe.copyEditJson(`${chromeTo}/manifest.json`, chromeEnterpriseTo, manifest => {
+    manifest.name = 'FlowCrypt for Enterprise';
+    manifest.description = 'FlowCrypt Chrome Extension for Enterprise clients (stable)';
+    // do not change!! or all user extensions will be disabled in their browser waiting for a new prompt
+    manifest.permissions = ["storage", "tabs", "https://*.google.com/*", "https://*.flowcrypt.com/*", "unlimitedStorage"];
+    for (const csDef of manifest.content_scripts) {
+      // do not change!!
+      csDef.matches = csDef.matches.filter(host => host === '*://mail.google.com/*' || host === '*://accounts.google.com/o/oauth2/approval*');
+    }
+    manifest.content_scripts = manifest.content_scripts.filter(csDef => csDef.matches.length); // remove empty defs
+    if (!manifest.content_scripts.length) {
+      throw new Error('Content script defs ended up empty in enterprise manifest');
+    }
+    return manifest;
+  }),
   releaseChrome: () => recipe.exec(`cd ../build; rm -f ${chromeReleaseZipTo}; zip -rq ${chromeReleaseZipTo} chrome/*`),
   releaseFirefox: () => recipe.confirm('firefox release').then(() => recipe.exec('../../flowcrypt-script/browser/firefox_release')),
   chromeResolveModules: () => recipe.exec(`node ../build/tooling/resolve-modules`),
@@ -75,8 +92,14 @@ let task = {
     subTask.chromeResolveModules,
     subTask.chromeFillValues,
     subTask.chromeBundleContentScripts,
-    subTask.copyChromeToFirefox,
-    subTask.copyChromeToFirefoxEditedManifest,
+    gulp.parallel(
+      subTask.copyChromeToFirefox,
+      subTask.copyChromeToChromeEnterprise,
+    ),
+    gulp.parallel(
+      subTask.copyChromeToFirefoxEditedManifest,
+      subTask.copyChromeToChromeEnterpriseEditedManifest,
+    ),
   ),
   release: gulp.series(
     subTask.releaseChrome,
