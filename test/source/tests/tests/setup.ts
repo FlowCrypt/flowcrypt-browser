@@ -167,4 +167,10 @@ export let defineSetupTests = (testWithBrowser: TestWithBrowser, testWithSemapho
     await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
   }));
 
+  ava.test('setup - import key - submit - offline - retry', testWithBrowser(async (browser, t) => {
+    let settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, 'flowcrypt.test.key.used.pgp@gmail.com');
+    await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
+    await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
+  }));
+
 };

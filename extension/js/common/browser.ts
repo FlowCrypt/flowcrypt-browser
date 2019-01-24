@@ -233,16 +233,18 @@ export class Ui {
     return new Promise(resolve => {
       const getEscapedColor = (id: string) => Xss.escape(btns[id].color || 'green');
       const getEscapedTitle = (id: string) => Xss.escape(btns[id].title || id.replace(/_/g, ' '));
-      const formatBtn = (id: string) => `<div class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}">${getEscapedTitle(id)}</div>`;
+      const formatBtn = (id: string) => {
+        return `<div class="button ${getEscapedColor(id)} overlay_action_${Xss.escape(id)}" data-test="action-overlay-${Xss.escape(id)}">${getEscapedTitle(id)}</div>`;
+      };
       const formattedBtns = Object.keys(btns).map(formatBtn).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
       if (details) {
-        const a = `<a href="#" class="action-show-overlay-details" style="display:block;text-align:center;">Show technical details</a>`;
-        details = `${a}<pre class="display_none">${details.replace(/\n/g, '<br>')}</pre>`;
+        const a = `<a href="#" class="action-show-overlay-details" data-test="action-show-overlay-details" style="display:block;text-align:center;">Show technical details</a>`;
+        details = `${a}<pre class="display_none" data-test="container-overlay-details">${details.replace(/\n/g, '<br>')}</pre>`;
       }
       Xss.sanitizeAppend('body', `
         <div class="featherlight white prompt_overlay" style="display: block;">
           <div class="featherlight-content" data-test="dialog">
-            <div class="line">${prompt.replace(/\n/g, '<br>')}</div>
+            <div class="line" data-test="container-overlay-prompt-text">${prompt.replace(/\n/g, '<br>')}</div>
             <div class="line">${formattedBtns}</div>
             <div class="line">&nbsp;</div>
             <div style="font-size:12px;">${details || ''}</div>
