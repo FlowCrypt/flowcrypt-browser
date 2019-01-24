@@ -27,6 +27,7 @@
     "typescript": "3.2.2"
   },
   "scripts": {
+    "test_ci_initialize": "node build/test/test/source/ci-initialize.js",
     "test_tslint": "./node_modules/.bin/tslint --project ./tsconfig.json --config ./conf/tslint.yaml && ./node_modules/.bin/tslint --project ./conf/tsconfig.content_scripts.json --config ./conf/tslint.yaml",
     "test_patterns": "node build/test/test/source/patterns.js",
     "test_async_stack": "node build/test/test/source/async-stack.js",

@@ -54,8 +54,6 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
 ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY);
   Config.extensionId = await browserPool.getExtensionId();
-  const { email, password, backup } = Config.secrets.auth.google.filter(a => a.email === 'flowcrypt.compatibility@gmail.com')[0];
-  await FlowCryptApi.ciInitialize(email, password, backup);
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers = [];
   for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
