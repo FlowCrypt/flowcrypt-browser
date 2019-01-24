@@ -1,12 +1,13 @@
 import { TestWithBrowser, TestWithGlobalBrowser } from '..';
-import { SettingsPageRecipe, SetupPageRecipe, InboxPageRecipe } from '../page_recipe';
+import { SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { Url } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
+import { TestVariant } from '../../test';
 
-export let defineSettingsTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test('settings[global] - my own emails show as contacts', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
     const settingsPage = await browser.newPage(Url.extensionSettings('flowcrypt.compatibility@gmail.com'));

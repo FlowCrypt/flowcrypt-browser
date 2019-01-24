@@ -4,8 +4,9 @@ import { BrowserRecipe } from '../browser_recipe';
 import { Url } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
+import { TestVariant } from '../../test';
 
-export const defineComposeTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test('compose - standalone - can set and remember default send address', testWithNewBrowser(async (browser, t) => {
     await BrowserRecipe.setUpFcCompatAcct(browser);

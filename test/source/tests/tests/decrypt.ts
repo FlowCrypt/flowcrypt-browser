@@ -1,11 +1,12 @@
 import { TestWithBrowser, TestWithGlobalBrowser } from '..';
 import * as ava from 'ava';
-import { Config, Util } from '../../util';
+import { Config } from '../../util';
 import { BrowserRecipe } from '../browser_recipe';
 import { Url } from '../../browser';
 import { SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
+import { TestVariant } from '../../test';
 
-export const defineDecryptTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredBrowser: TestWithGlobalBrowser) => {
+export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredBrowser: TestWithGlobalBrowser) => {
 
   for (const m of Config.tests.messages) {
     ava.test(`decrypt[global] - ${m.name}`, testWithSemaphoredBrowser('compatibility', async (browser, t) => {

@@ -4,8 +4,9 @@ import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
 import { GmailPageRecipe } from '../page_recipe';
+import { TestVariant } from '../../test';
 
-export const defineGmailTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   const pageHasReplyContainer = async (gmailPage: ControllablePage) => {
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });

@@ -1,8 +1,9 @@
 import { TestWithBrowser, TestWithGlobalBrowser } from '..';
 import * as ava from 'ava';
 import { expect } from 'chai';
+import { TestVariant } from '../../test';
 
-export let defineElementTests = (testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export let defineElementTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test('compose[global] - elements/pgp_pubkey renders', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
     // tslint:disable-next-line:max-line-length

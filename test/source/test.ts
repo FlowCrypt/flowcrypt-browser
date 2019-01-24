@@ -10,12 +10,13 @@ import { defineDecryptTests } from './tests/tests/decrypt';
 import { defineGmailTests } from './tests/tests/gmail';
 import { defineSettingsTests } from './tests/tests/settings';
 import { defineElementTests } from './tests/tests/elements';
-import { defineConsumerAcctTests } from './tests/tests/account';
+import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
 import { Config } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtml, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 
-let TEST_VARIANT: 'CONSUMER' | 'ENTERPRISE';
+export type TestVariant = 'CONSUMER' | 'ENTERPRISE';
+let TEST_VARIANT: TestVariant;
 if (process.argv.indexOf('CONSUMER') !== -1) {
   TEST_VARIANT = 'CONSUMER';
 } else if (process.argv.indexOf('ENTERPRISE') !== -1) {
@@ -105,14 +106,11 @@ ava.after.always('send debug info if any', async t => {
   t.pass();
 });
 
-defineSetupTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineUnitTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineComposeTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineDecryptTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineGmailTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineSettingsTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineElementTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-
-if (TEST_VARIANT === 'CONSUMER') {
-  defineConsumerAcctTests(testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-}
+defineSetupTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineUnitTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineComposeTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineDecryptTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineGmailTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineSettingsTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineElementTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineAcctTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
