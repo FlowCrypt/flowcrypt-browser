@@ -29,9 +29,7 @@
     "storage",
     "tabs",
     "*://*/*",
-    "unlimitedStorage",
-    "clipboardWrite",
-    "webRequest"
+    "unlimitedStorage"
   ],
   "content_scripts": [
     {
