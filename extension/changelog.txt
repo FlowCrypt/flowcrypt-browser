@@ -1,5 +1,7 @@
 <div>
 
+version 6.6.1 on January 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/312?closed=1" target="_blank">Reattest fix</a>
+
 version 6.6.0 on January 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/312?closed=1" target="_blank">Enterprise builds</a>
 
 version 6.5.9 on January 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/311?closed=1" target="_blank">Retriable errors</a>
