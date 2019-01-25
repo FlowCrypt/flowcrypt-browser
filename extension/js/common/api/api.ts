@@ -378,7 +378,7 @@ export class Api {
     }),
     replaceRequest: (email: string, signedAttestPacket: string, newPubkey: string): Promise<R.AttReplaceRequest> => Api.internal.apiAttesterCall('replace/request', {
       signed_message: signedAttestPacket,
-      newPubkey,
+      new_pubkey: newPubkey,
       email,
     }),
     replaceConfirm: (signedAttestPacket: string): Promise<R.AttReplaceConfirm> => Api.internal.apiAttesterCall('replace/confirm', {
