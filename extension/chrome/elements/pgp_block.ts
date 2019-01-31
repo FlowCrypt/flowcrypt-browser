@@ -369,7 +369,7 @@ Catch.try(async () => {
           console.info(`re-fetching message ${msgId} from api because looks like bad formatting: ${!msgFetchedFromApi ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.error, encryptedData.toUtfStr());
+          await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
         await renderPassphrasePromptAndAwaitChange(result.longids.needPassphrase);
@@ -395,7 +395,7 @@ Catch.try(async () => {
           const errMsg = `This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC`;
           await renderErr(errMsg, encryptedData.toUtfStr());
         } else if (result.error) {
-          await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.error}</em>`, encryptedData.toUtfStr());
+          await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, encryptedData.toUtfStr());
         } else { // should generally not happen
           delete result.message;
           await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.writeMe + '\n\nDiagnostic info: "' + JSON.stringify(result) + '"', encryptedData.toUtfStr());

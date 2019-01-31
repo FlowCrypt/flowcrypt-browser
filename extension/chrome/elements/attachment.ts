@@ -146,7 +146,7 @@ Catch.try(async () => {
     } else {
       delete result.message;
       console.info(result);
-      $('body.attachment').text(`Error decrypting file (${result.error.type}: ${result.error.error}). Downloading original..`);
+      $('body.attachment').text(`Error decrypting file (${result.error.type}: ${result.error.message}). Downloading original..`);
       Browser.saveToDownloads(new Att({ name, type, data: encryptedAtt.getData() }));
     }
   };

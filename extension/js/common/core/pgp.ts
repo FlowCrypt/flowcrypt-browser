@@ -92,7 +92,7 @@ type SortedKeysForDecrypt = {
 };
 
 type DecryptSuccess = { success: true; signature?: MsgVerifyResult; isEncrypted?: boolean, filename?: string, content: Buf };
-type DecryptError$error = { type: DecryptErrTypes; error?: string; };
+type DecryptError$error = { type: DecryptErrTypes; message: string; };
 type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; needPassphrase: string[]; };
 type DecryptError = {
   success: false; error: DecryptError$error; longids: DecryptError$longids;
@@ -547,15 +547,15 @@ export class Pgp {
       const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
         'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];
       if (Value.is(e).in(keyMismatchErrStrings) && !msgPwd) {
-        return { type: DecryptErrTypes.keyMismatch, error: e };
+        return { type: DecryptErrTypes.keyMismatch, message: e };
       } else if (msgPwd && Value.is(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
-        return { type: DecryptErrTypes.wrongPwd, error: e };
+        return { type: DecryptErrTypes.wrongPwd, message: e };
       } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
-        return { type: DecryptErrTypes.noMdc, error: e };
+        return { type: DecryptErrTypes.noMdc, message: e };
       } else if (e === 'Decryption error') {
-        return { type: DecryptErrTypes.format, error: e };
+        return { type: DecryptErrTypes.format, message: e };
       } else {
-        return { type: DecryptErrTypes.other, error: e };
+        return { type: DecryptErrTypes.other, message: e };
       }
     },
     readableCrackTime: (totalSeconds: number) => { // http://stackoverflow.com/questions/8211744/convert-time-interval-given-in-seconds-into-more-human-readable-form
@@ -676,7 +676,7 @@ export class PgpMsg {
     try {
       prepared = await Pgp.internal.cryptoMsgPrepareForDecrypt(encryptedData);
     } catch (formatErr) {
-      return { success: false, error: { type: DecryptErrTypes.format, error: String(formatErr) }, longids };
+      return { success: false, error: { type: DecryptErrTypes.format, message: String(formatErr) }, longids };
     }
     const keys = await Pgp.internal.cryptoMsgGetSortedKeys(kisWithPp, prepared.message);
     longids.message = keys.encryptedFor;
@@ -690,14 +690,14 @@ export class PgpMsg {
       return { success: true, content: Buf.fromUtfStr(text), isEncrypted, signature };
     }
     if (!keys.prvForDecryptDecrypted.length && !msgPwd) {
-      return { success: false, error: { type: DecryptErrTypes.needPassphrase }, message: prepared.message, longids, isEncrypted };
+      return { success: false, error: { type: DecryptErrTypes.needPassphrase, message: 'Missing pass phrase' }, message: prepared.message, longids, isEncrypted };
     }
     try {
       const packets = (prepared.message as OpenPGP.message.Message).packets;
       const isSymEncrypted = packets.filter(p => p.tag === openpgp.enums.packet.symEncryptedSessionKey).length > 0;
       const isPubEncrypted = packets.filter(p => p.tag === openpgp.enums.packet.publicKeyEncryptedSessionKey).length > 0;
       if (isSymEncrypted && !isPubEncrypted && !msgPwd) {
-        return { success: false, error: { type: DecryptErrTypes.usePassword }, longids, isEncrypted };
+        return { success: false, error: { type: DecryptErrTypes.usePassword, message: 'Use message password' }, longids, isEncrypted };
       }
       const passwords = msgPwd ? [msgPwd] : undefined;
       const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
