@@ -186,7 +186,8 @@ export class Mime {
     rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
     for (const att of atts) {
       const type = `${att.type}; name="${att.name}"`;
-      const header = { 'Content-Disposition': 'attachment', 'X-Att-Id': `f_${Str.sloppyRandom(10)}`, 'Content-Transfer-Encoding': 'base64' };
+      const id = `f_${Str.sloppyRandom(30)}@flowcrypt`;
+      const header = { 'Content-Disposition': 'attachment', 'X-Attachment-Id': id, 'Content-ID': `<${id}>`, 'Content-Transfer-Encoding': 'base64' };
       rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.getData())); // tslint:disable-line:no-unsafe-any
     }
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
