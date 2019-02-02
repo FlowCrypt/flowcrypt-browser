@@ -9,7 +9,15 @@ Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.
 
 ## Developers
 
-[![Build Status](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
+[![Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
+
+```js
+let you = new TeamMember();
+
+if(you.know(TS | SWIFT) && you.write(READABLE_CODE) && you.hate('9-5') && you.areFrom(EARTH)) {
+  await you.email('tom@flowcrypt.com');
+}
+```
 
 This project is written in TypeScript. Browsers only understand JavaScript, so the project needs to be transpiled. You need to build the project the first time you download it, and build it after each change you make to see the result in the browser. First, install tooling:
 
