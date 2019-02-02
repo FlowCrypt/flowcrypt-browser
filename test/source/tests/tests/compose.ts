@@ -30,42 +30,42 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
   }));
 
   ava.test('compose - standalone - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (browser, t) => {
-    // console.log(`ava.test.timeout.1`);
+    // console.info(`ava.test.timeout.1`);
     const k = Config.key('flowcrypt.compatibility.1pp1');
-    // console.log(`ava.test.timeout.2`);
+    // console.info(`ava.test.timeout.2`);
     await BrowserRecipe.setUpFcCompatAcct(browser);
-    // console.log(`ava.test.timeout.3`);
+    // console.info(`ava.test.timeout.3`);
     const settingsPage = await browser.newPage(Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
-    // console.log(`ava.test.timeout.4`);
+    // console.info(`ava.test.timeout.4`);
     await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
-    // console.log(`ava.test.timeout.5`);
+    // console.info(`ava.test.timeout.5`);
     const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
-    // console.log(`ava.test.timeout.6`);
+    // console.info(`ava.test.timeout.6`);
     await ComposePageRecipe.fillMsg(composeFrame, 'human@flowcrypt.com', 'sign with entered pass phrase');
-    // console.log(`ava.test.timeout.7`);
+    // console.info(`ava.test.timeout.7`);
     await composeFrame.waitAndClick('@action-switch-to-sign', { delay: 0.5 });
-    // console.log(`ava.test.timeout.8`);
+    // console.info(`ava.test.timeout.8`);
     await composeFrame.waitAndClick('@action-send');
-    // console.log(`ava.test.timeout.9`);
+    // console.info(`ava.test.timeout.9`);
     const passphraseDialog = await settingsPage.getFrame(['passphrase.htm']);
-    // console.log(`ava.test.timeout.10`);
+    // console.info(`ava.test.timeout.10`);
     await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
-    // console.log(`ava.test.timeout.11`);
+    // console.info(`ava.test.timeout.11`);
     await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry'); // confirming pass phrase will send the message
-    // console.log(`ava.test.timeout.12`);
+    // console.info(`ava.test.timeout.12`);
     await settingsPage.waitTillGone('@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
-    // console.log(`ava.test.timeout.13`);
+    // console.info(`ava.test.timeout.13`);
     // signed - done, now try to see if it remembered pp in session
     const composePage = await ComposePageRecipe.openStandalone(browser);
-    // console.log(`ava.test.timeout.14`);
+    // console.info(`ava.test.timeout.14`);
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'signed message pp in session');
-    // console.log(`ava.test.timeout.15`);
+    // console.info(`ava.test.timeout.15`);
     await composePage.click('@action-switch-to-sign'); // should remember pass phrase in session from previous entry
-    // console.log(`ava.test.timeout.16`);
+    // console.info(`ava.test.timeout.16`);
     await ComposePageRecipe.sendAndClose(composePage);
-    // console.log(`ava.test.timeout.17`);
+    // console.info(`ava.test.timeout.17`);
     await settingsPage.close();
-    // console.log(`ava.test.timeout.18`);
+    // console.info(`ava.test.timeout.18`);
   }));
 
   ava.test('compose - standalone - can load contact based on name', testWithNewBrowser(async (browser, t) => {

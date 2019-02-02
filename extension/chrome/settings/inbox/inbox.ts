@@ -303,8 +303,6 @@ Catch.try(async () => {
       } else if (Api.err.isInsufficientPermission(e)) {
         renderAndHandleAuthPopupNotification(true);
       } else {
-        console.log(e);
-        console.log(Api.err.isInsufficientPermission(e));
         Catch.handleErr(e);
         showNotification(`Error trying to get list of folders ${Ui.retryLink()}`);
       }

@@ -22,7 +22,7 @@ abstract class ControllableBase {
 
   protected log = (msg: string) => {
     if (this.debugNamespace) {
-      console.log(`[debug][controllable][${this.debugNamespace}] ${msg}`);
+      console.info(`[debug][controllable][${this.debugNamespace}] ${msg}`);
     }
   }
 
@@ -311,7 +311,7 @@ export class ControllablePage extends ControllableBase {
   public goto = async (url: string) => {
     url = url.indexOf('https://') === 0 || url.indexOf(Url.extension('')) === 0 ? url : Url.extension(url);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
-    this.page.goto(url).catch(e => console.log(`goto: ${e.message}: ${url}`));
+    this.page.goto(url).catch(e => console.info(`goto: ${e.message}: ${url}`));
     await Promise.race([
       this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: TIMEOUT_PAGE_LOAD * 1000 }),
       this.page.waitForNavigation({ waitUntil: 'load', timeout: TIMEOUT_PAGE_LOAD * 1000 })

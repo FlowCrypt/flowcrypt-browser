@@ -238,7 +238,7 @@ export class Catch {
   }
 
   public static promiseErrAlert = (note: string) => (error: Error) => { // returns a function
-    console.log(error);
+    console.error(error);
     alert(note);
   }
 

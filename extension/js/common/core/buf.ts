@@ -111,7 +111,7 @@ export class Buf extends Uint8Array {
               if (mode === 'strict') {
                 throw e;
               }
-              console.log(e);
+              console.info(e);
             }
           }
         } else { // continuation of a multi-byte character

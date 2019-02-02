@@ -30,7 +30,7 @@ const resolveLineImports = (line: string, path: string) => line.replace(namedImp
     return '';
   } else {
     const resolved = `${prefix}${moduleMap[libname]}${suffix}`;
-    // console.log(`${path}: ${found} -> ${resolved}`);
+    // console.info(`${path}: ${found} -> ${resolved}`);
     return resolved;
   }
 });

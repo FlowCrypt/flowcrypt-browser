@@ -292,7 +292,7 @@ export class Pgp {
           }
           return fp;
         } catch (e) {
-          console.log(e);
+          console.error(e);
           return undefined;
         }
       } else {
@@ -302,7 +302,7 @@ export class Pgp {
           if (e instanceof Error && e.message === 'openpgp is not defined') {
             Catch.handleErr(e);
           }
-          console.log(e);
+          console.error(e);
           return undefined;
         }
       }

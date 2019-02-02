@@ -180,26 +180,26 @@ export class Semaphore {
     let i = 0;
     while (this.availableLocks < 1) {
       if (this.debug) {
-        console.log(`[${this.name}] waiting for semaphore attempt ${i++}, now available: ${this.availableLocks}`);
+        console.info(`[${this.name}] waiting for semaphore attempt ${i++}, now available: ${this.availableLocks}`);
       }
       await this.wait();
     }
     if (this.debug) {
-      console.log(`[${this.name}] acquiring, semaphors available: ${this.availableLocks}`);
+      console.info(`[${this.name}] acquiring, semaphors available: ${this.availableLocks}`);
     }
     this.availableLocks--;
     if (this.debug) {
-      console.log(`[${this.name}] acquired, now avaialbe: ${this.availableLocks}`);
+      console.info(`[${this.name}] acquired, now avaialbe: ${this.availableLocks}`);
     }
   }
 
   release = () => {
     if (this.debug) {
-      console.log(`[${this.name}] releasing semaphore, previously available: ${this.availableLocks}`);
+      console.info(`[${this.name}] releasing semaphore, previously available: ${this.availableLocks}`);
     }
     this.availableLocks++;
     if (this.debug) {
-      console.log(`[${this.name}] released semaphore, now available: ${this.availableLocks}`);
+      console.info(`[${this.name}] released semaphore, now available: ${this.availableLocks}`);
     }
   }
 

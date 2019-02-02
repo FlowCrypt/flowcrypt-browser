@@ -237,7 +237,7 @@ export class BgAttests {
   }
 
   private static addAttestLog = async (success: boolean, ar: AttestResult) => {
-    console.log('attest result ' + success + ': ' + ar.message);
+    console.info('attest result ' + success + ': ' + ar.message);
     const storage = await Store.getAcct(ar.acctEmail, ['attest_log']);
     if (!storage.attest_log) {
       storage.attest_log = [];
