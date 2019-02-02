@@ -320,13 +320,22 @@ export class ControllablePage extends ControllableBase {
 
   public close = async () => await this.page.close();
 
-  public screenshot = async (): Promise<string> => {
+  private dismissActiveAlerts = async (): Promise<void> => {
     const activeAlerts = this.alerts.filter(a => a.active);
     for (const alert of activeAlerts) {
-      // active alert will cause screenshot to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
+      // active alert will cause screenshot and other ops to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
       await Promise.race([alert.dismiss(), newTimeoutPromise('alert dismiss', 10)]);
     }
+  }
+
+  public screenshot = async (): Promise<string> => {
+    await this.dismissActiveAlerts();
     return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 10)]);
+  }
+
+  public html = async (): Promise<string> => {
+    await this.dismissActiveAlerts();
+    return await Promise.race([this.page.content(), newTimeoutPromise('html content', 10)]);
   }
 }
 

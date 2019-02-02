@@ -72,7 +72,7 @@ export class BrowserHandle {
           html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</div>`;
         }
         try {
-          html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.page.content())}</pre>`;
+          html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.html())}</pre>`;
         } catch (e) {
           html += `<pre>Could not get page HTML: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</pre>`;
         }
