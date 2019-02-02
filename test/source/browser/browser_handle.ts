@@ -57,21 +57,25 @@ export class BrowserHandle {
   debugPagesHtml = async () => {
     let html = '';
     for (let i = 0; i < this.pages.length; i++) {
-      const cpage = this.pages[i];
-      const url = await Promise.race([cpage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
-      const consoleMsgs = cpage.consoleMsgs.map(msg => `<font class="c-${msg.type()}">${msg.type()}: ${Util.htmlEscape(msg.text())}</font>`).join('\n');
-      const alerts = cpage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
+      const cPage = this.pages[i];
+      const url = await Promise.race([cPage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
+      const consoleMsgs = cPage.consoleMsgs.map(msg => `<font class="c-${msg.type()}">${msg.type()}: ${Util.htmlEscape(msg.text())}</font>`).join('\n');
+      const alerts = cPage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
       html += '<div class="page">';
-      html += `<pre title="url">Page ${i} (${cpage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
+      html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;
       html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
       html += `<pre title="alerts">${alerts || '(no alerts)'}</pre>`;
-      if (url !== 'about:blank' && !cpage.page.isClosed()) {
+      if (url !== 'about:blank' && !cPage.page.isClosed()) {
         try {
-          html += `<img src="data:image/png;base64,${await cpage.screenshot()}"><br>`;
+          html += `<img src="data:image/png;base64,${await cPage.screenshot()}"><br>`;
         } catch (e) {
-          html += `<div style="border:1px solid white;">Could not get screen shot: ${e instanceof Error ? e.stack : String(e)}</div>`;
+          html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</div>`;
         }
-
+        try {
+          html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.page.content())}</pre>`;
+        } catch (e) {
+          html += `<pre>Could not get page HTML: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</pre>`;
+        }
       }
       html += '</div>';
     }
