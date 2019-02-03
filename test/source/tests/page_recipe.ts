@@ -354,8 +354,10 @@ export class ComposePageRecipe extends PageRecipe {
   public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
     if (to) {
       await composePageOrFrame.type('@input-to', to);
+      await Util.sleep(1);
     }
     await composePageOrFrame.click('@input-subject');
+    await Util.sleep(1);
     subject = `Automated puppeteer test: ${subject}`;
     const body = `This is an automated puppeteer test: ${subject}`;
     await composePageOrFrame.type('@input-subject', subject);
