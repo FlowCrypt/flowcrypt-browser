@@ -66,11 +66,11 @@ export class BrowserHandle {
       html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
       html += `<pre title="alerts">${alerts || '(no alerts)'}</pre>`;
       if (url !== 'about:blank' && !cPage.page.isClosed()) {
-        try {
-          html += `<img src="data:image/png;base64,${await cPage.screenshot()}"><br>`;
-        } catch (e) {
-          html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</div>`;
-        }
+        // try {
+        //   html += `<img src="data:image/png;base64,${await cPage.screenshot()}"><br>`;
+        // } catch (e) {
+        //   html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</div>`;
+        // }
         // try {
         //   html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.html())}</pre>`;
         // } catch (e) {
