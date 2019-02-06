@@ -70,7 +70,7 @@ const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any n
   // todo - deprecate in certain situations
   const keyinfos = await Store.keysGet(acctEmail);
   const myLongids = keyinfos.map(ki => ki.longid);
-  const hkp = new openpgp.HKP('https://pgp.key-server.io');
+  const hkp = new openpgp.HKP();
   const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
   const addressesPks = storage.addresses_pks || [];
   for (const email of storage.addresses || [acctEmail]) {
