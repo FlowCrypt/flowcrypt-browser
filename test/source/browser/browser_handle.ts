@@ -66,16 +66,24 @@ export class BrowserHandle {
       html += `<pre title="console">${consoleMsgs || '(no console messages)'}</pre>`;
       html += `<pre title="alerts">${alerts || '(no alerts)'}</pre>`;
       if (url !== 'about:blank' && !cPage.page.isClosed()) {
-        // try {
-        //   html += `<img src="data:image/png;base64,${await cPage.screenshot()}"><br>`;
-        // } catch (e) {
-        //   html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</div>`;
-        // }
-        // try {
-        //   html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.html())}</pre>`;
-        // } catch (e) {
-        //   html += `<pre>Could not get page HTML: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</pre>`;
-        // }
+        try {
+          console.log('debugPagesHtml 1');
+          html += `<img src="data:image/png;base64,${await cPage.screenshot()}"><br>`;
+          console.log('debugPagesHtml 2');
+        } catch (e) {
+          console.log('debugPagesHtml 3');
+          html += `<div style="border:1px solid white;">Could not get screen shot: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</div>`;
+          console.log('debugPagesHtml 4');
+        }
+        try {
+          console.log('debugPagesHtml 5');
+          html += `<pre style="height:300px;overflow:auto;">${Util.htmlEscape(await cPage.html())}</pre>`;
+          console.log('debugPagesHtml 6');
+        } catch (e) {
+          console.log('debugPagesHtml 7');
+          html += `<pre>Could not get page HTML: ${Util.htmlEscape(e instanceof Error ? e.stack || String(e) : String(e))}</pre>`;
+          console.log('debugPagesHtml 8');
+        }
       }
       html += '</div>';
     }

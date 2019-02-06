@@ -371,7 +371,13 @@ export class ComposePageRecipe extends PageRecipe {
       await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
     const unexpectedAlertRejectingPromise = new Promise((resolve, reject) => {
-      composePage.page.on('dialog', alert => reject(`Received unexpected alert after pressing compose button: ${alert.message()}`));
+      composePage.page.on('dialog', alert => {
+        // this can cause ava to fail with "unhandled rejection" even if all tests passed
+        // or at least it did before this was refactored to dismiss the alert as below
+        // if that won't help, will have to re-evaluate
+        const e = new Error(`Received unexpected alert after pressing compose button: ${alert.message()}`);
+        alert.dismiss().then(() => reject(e)).catch(reject);
+      });
     });
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
     await Promise.race([
