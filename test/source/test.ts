@@ -58,13 +58,14 @@ ava.before('set up global browsers and config', async t => {
   const globalBrowsers = [];
   for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
     const b = await browserGlobal.compatibility.browsers.newBrowserHandle();
-    setupPromises.push(BrowserRecipe.setUpFcCompatAcct(b));
+    setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, BrowserRecipe.setUpFcCompatAcct, t, consts));
     globalBrowsers.push(b);
   }
   await Promise.all(setupPromises);
   for (const b of globalBrowsers) {
     await browserGlobal.compatibility.browsers.doneUsingBrowser(b);
   }
+
   t.pass();
 });
 
