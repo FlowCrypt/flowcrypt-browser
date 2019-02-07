@@ -1,4 +1,4 @@
-import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { TestWithBrowser, TestWithGlobalBrowser, AvaContext } from '..';
 import { Url, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
@@ -13,9 +13,9 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
     expect(urls.length).to.equal(1);
   };
 
-  const openGmailPage = async (browser: BrowserHandle, path: string): Promise<ControllablePage> => {
+  const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
     const url = Url.gmail(0, path);
-    const gmialPage = await browser.newPage(url);
+    const gmialPage = await browser.newPage(t, url);
     await gmialPage.waitAll('@action-secure-compose');
     if (path) { // gmail does weird things with navigation sometimes, nudge it again
       await gmialPage.goto(url);
@@ -23,21 +23,21 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
     return gmialPage;
   };
 
-  ava.test('mail.google.com[global] - compose window opens', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
-    const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
-    const composePage = await GmailPageRecipe.openSecureCompose(gmailPage, browser);
+  ava.test('mail.google.com[global] - compose window opens', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
+    const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
   }));
 
-  ava.test('mail.google.com[global] - msg.asc message content renders', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
-    const gmailPage = await openGmailPage(browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
+  ava.test('mail.google.com[global] - msg.asc message content renders', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10 });
     expect(urls.length).to.equal(1);
-    await BrowserRecipe.pgpBlockVerifyDecryptedContent(browser, urls[0], ['This is a test, as requested by the Flowcrypt team', 'mutt + gnupg']);
+    await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, urls[0], ['This is a test, as requested by the Flowcrypt team', 'mutt + gnupg']);
     await pageHasReplyContainer(gmailPage);
   }));
 
-  ava.test('mail.google.com[global] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (browser, t) => {
-    const gmailPage = await openGmailPage(browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
+  ava.test('mail.google.com[global] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    const gmailPage = await openGmailPage(t, browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10 });
     expect(urls.length).to.equal(1);
     await pageHasReplyContainer(gmailPage);

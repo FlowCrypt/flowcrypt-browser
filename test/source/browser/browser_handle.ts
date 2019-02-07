@@ -3,6 +3,7 @@ import { Semaphore } from './browser_pool';
 import { ControllablePage } from './controllable';
 import { Util } from '../util';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
+import { AvaContext } from '../tests';
 
 export class BrowserHandle {
 
@@ -17,10 +18,10 @@ export class BrowserHandle {
     this.viewport = { height, width };
   }
 
-  newPage = async (url?: string): Promise<ControllablePage> => {
+  newPage = async (t: AvaContext, url?: string): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
     await page.setViewport(this.viewport);
-    const controllablePage = new ControllablePage(page);
+    const controllablePage = new ControllablePage(t, page);
     if (url) {
       await controllablePage.goto(url);
     }
@@ -28,10 +29,10 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  newPageTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
+  newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
     const page = await this.doAwaitTriggeredPage(triggeringAction);
     await page.setViewport(this.viewport);
-    const controllablePage = new ControllablePage(page);
+    const controllablePage = new ControllablePage(t, page);
     this.pages.push(controllablePage);
     return controllablePage;
   }
@@ -59,7 +60,7 @@ export class BrowserHandle {
     for (let i = 0; i < this.pages.length; i++) {
       const cPage = this.pages[i];
       const url = await Promise.race([cPage.page.url(), new Promise(resolve => setTimeout(() => resolve('(url get timeout)'), 10 * 1000)) as Promise<string>]);
-      const consoleMsgs = cPage.consoleMsgs.map(msg => `<font class="c-${msg.type()}">${msg.type()}: ${Util.htmlEscape(msg.text())}</font>`).join('\n');
+      const consoleMsgs = await cPage.console();
       const alerts = cPage.alerts.map(a => `${a.active ? `<b class="c-error">ACTIVE ${a.target.type()}</b>` : a.target.type()}: ${a.target.message()}`).join('\n');
       html += '<div class="page">';
       html += `<pre title="url">Page ${i} (${cPage.page.isClosed() ? 'closed' : 'active'}) ${Util.htmlEscape(url)}</pre>`;

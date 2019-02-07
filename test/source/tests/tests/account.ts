@@ -13,16 +13,16 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
   if (testVariant === 'CONSUMER') {
 
     // todo - make a helper method that forces account tests to run in sequence with Semaphore
-    ava.test('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (browser, t) => {
+    ava.test('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
       // delete account
       await FlowCryptApi.hookCiAcctDelete(Config.secrets.ci_dev_account);
       // set up acct and open compose page
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(browser, Config.secrets.ci_dev_account);
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, Config.secrets.ci_dev_account);
       await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.trial', { hasRecoverMore: false });
       await browser.closeAllPages();
-      const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(browser);
+      const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       await GmailPageRecipe.closeInitialSetupNotif(gmailPage);
-      const composePage = await GmailPageRecipe.openSecureCompose(gmailPage, browser);
+      const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
       await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'a large file to trigger trial');
       // add a large file
       let fileInput = await composePage.target.$('input[type=file]');
@@ -30,7 +30,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       expect(await subscriptionNeededAlert.target.message()).contains('The files are over 5 MB');
       await subscriptionNeededAlert.accept();
       // get a trial
-      const subscribePage = await GmailPageRecipe.getSubscribeDialog(gmailPage, browser);
+      const subscribePage = await GmailPageRecipe.getSubscribeDialog(t, gmailPage, browser);
       await subscribePage.waitAndClick('@action-get-trial', { delay: 1 });
       await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });
       await gmailPage.waitAll('@webmail-notification');

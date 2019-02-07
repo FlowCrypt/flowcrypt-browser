@@ -2,8 +2,8 @@
 import { Page, ElementHandle, Frame, Dialog, ConsoleMessage } from 'puppeteer';
 import { Util } from '../util';
 import { Url } from './url';
-import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD } from '.';
-import { newTimeoutPromise } from '../tests';
+import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
+import { newTimeoutPromise, AvaContext } from '../tests';
 
 declare const jQuery: any;
 
@@ -271,20 +271,51 @@ export class ControllableAlert {
 
 }
 
+class ConsoleEvent {
+  constructor(public type: string, public text: string) { }
+}
+
 export class ControllablePage extends ControllableBase {
 
-  public page: Page;
-  public consoleMsgs: ConsoleMessage[] = [];
+  public consoleMsgs: (ConsoleMessage | ConsoleEvent)[] = [];
   public alerts: ControllableAlert[] = [];
+  private preventclose = false;
 
-  constructor(page: Page) {
+  constructor(public t: AvaContext, public page: Page) {
     super(page);
-    this.page = page;
-    page.on('console', msg => {
-      this.consoleMsgs.push(msg);
+    page.on('console', console => {
+      this.consoleMsgs.push(console);
+    });
+    page.on('requestfinished', r => {
+      const response = r.response();
+      const fail = r.failure();
+      const url = r.url();
+      if (url.indexOf(Url.extension('')) !== 0 || fail) { // not an extension url, or a fail
+        this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
+      }
     });
     page.on('dialog', alert => {
-      this.alerts.push(new ControllableAlert(alert));
+      this.consoleMsgs.push(new ConsoleEvent('alert', alert.message()));
+    });
+    page.on('pageerror', error => {
+      this.consoleMsgs.push(new ConsoleEvent('error', error.stack || String(error)));
+    });
+    // page.on('error', e => this.consoleMsgs.push(`[error]${e.stack}[/error]`)); // this is Node event emitter error. Maybe just let it go crash the process / test
+    page.on('dialog', alert => {
+      const controllableAlert = new ControllableAlert(alert);
+      this.alerts.push(controllableAlert);
+      setTimeout(() => {
+        if (controllableAlert.active) {
+          t.retry = true;
+          this.preventclose = true;
+          t.log(`Dismissing unexpected alert: ${alert.message()}`);
+          try {
+            alert.dismiss().catch(e => t.log(`Err1 dismissing alert: ${String(e)}`));
+          } catch (e) {
+            t.log(`Err2 dismissing alert: ${String(e)}`);
+          }
+        }
+      }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);
     });
   }
 
@@ -318,13 +349,26 @@ export class ControllablePage extends ControllableBase {
     ]);
   }
 
-  public close = async () => await this.page.close();
+  public close = async () => {
+    if (this.preventclose) {
+      this.t.log('page.close() was called but closing was prevented because we want to evaluate earlier errors (cannot screenshot a closed page)');
+      this.preventclose = false;
+    } else {
+      await this.page.close();
+    }
+  }
 
   private dismissActiveAlerts = async (): Promise<void> => {
     const activeAlerts = this.alerts.filter(a => a.active);
     for (const alert of activeAlerts) {
       // active alert will cause screenshot and other ops to hang: https://github.com/GoogleChrome/puppeteer/issues/2481
-      await Promise.race([alert.dismiss(), newTimeoutPromise('alert dismiss', 10)]);
+      try {
+        await Promise.race([alert.dismiss(), newTimeoutPromise('alert dismiss', 10)]);
+      } catch (e) {
+        if (!(e instanceof Error && e.message === 'Cannot dismiss dialog which is already handled!')) {
+          throw e;
+        }
+      }
     }
   }
 
@@ -336,6 +380,34 @@ export class ControllablePage extends ControllableBase {
   public html = async (): Promise<string> => {
     await this.dismissActiveAlerts();
     return await Promise.race([this.page.content(), newTimeoutPromise('html content', 10)]);
+  }
+
+  public console = async (): Promise<string> => {
+    await this.dismissActiveAlerts();
+    let html = '';
+    for (const msg of this.consoleMsgs) {
+      if (msg instanceof ConsoleEvent) {
+        html += `<font class="c-${Util.htmlEscape(msg.type)}">${Util.htmlEscape(msg.type)}: ${Util.htmlEscape(msg.text)}</font>\n`;
+      } else {
+        html += `<font class="c-${Util.htmlEscape(msg.type())}">${Util.htmlEscape(msg.type())}: ${Util.htmlEscape(msg.text())}`;
+        const args: string[] = [];
+        for (const arg of msg.args()) {
+          try {
+            const r = JSON.stringify(await Promise.race([arg.jsonValue(), new Promise(resolve => setTimeout(() => resolve('test.ts: log fetch timeout'), 3000))]));
+            if (r !== '{}') {
+              args.push(r);
+            }
+          } catch (e) {
+            args.push(`test.ts: console msg arg err: ${String(e)}`);
+          }
+        }
+        if (args.length) {
+          html += `<ul>${args.map(arg => `<li>${Util.htmlEscape(arg)}</li>`)}</ul>`;
+        }
+        html += `</font>\n`;
+      }
+    }
+    return html;
   }
 }
 

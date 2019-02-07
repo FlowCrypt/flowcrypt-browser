@@ -33,8 +33,8 @@ const consts = {
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
   TIMEOUT_ALL_RETRIES: minutes(7),
-  TIMEOUT_OVERALL: minutes(13),
-  ATTEMPTS: 3,
+  TIMEOUT_OVERALL: minutes(poolSizeOne ? 5 : 13),
+  ATTEMPTS: poolSizeOne ? 1 : 3,
   POOL_SIZE: poolSizeOne ? 1 : 7,
   POOL_SIZE_GLOBAL: poolSizeOne ? 1 : 3,
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>,
@@ -53,11 +53,11 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
 
 ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY);
-  Config.extensionId = await browserPool.getExtensionId();
+  Config.extensionId = await browserPool.getExtensionId(t);
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers = [];
   for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
-    const b = await browserGlobal.compatibility.browsers.newBrowserHandle();
+    const b = await browserGlobal.compatibility.browsers.newBrowserHandle(t);
     setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, BrowserRecipe.setUpFcCompatAcct, t, consts));
     globalBrowsers.push(b);
   }
@@ -69,17 +69,17 @@ ava.before('set up global browsers and config', async t => {
   t.pass();
 });
 
-export const testWithNewBrowser = (cb: (browser: BrowserHandle, t: AvaContext) => Promise<void>): ava.Implementation<{}> => {
+export const testWithNewBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(cb, t, consts);
     t.pass();
   };
 };
 
-export const testWithSemaphoredGlobalBrowser = (group: 'compatibility', cb: (browser: BrowserHandle, t: AvaContext) => Promise<void>): ava.Implementation<{}> => {
+export const testWithSemaphoredGlobalBrowser = (group: 'compatibility', cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
-    const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser());
+    const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser(t));
     try {
       await browserPool.withGlobalBrowserTimeoutAndRetry(browser, cb, t, consts);
       t.pass();

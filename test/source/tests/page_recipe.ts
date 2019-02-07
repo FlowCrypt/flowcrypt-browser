@@ -2,6 +2,7 @@
 import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, gmailSeq } from '../browser';
 import { Util, Config } from '../util';
 import { expect } from 'chai';
+import { AvaContext } from '.';
 
 export class PageRecipe {
 
@@ -277,8 +278,8 @@ type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: 
 
 export class InboxPageRecipe extends PageRecipe {
 
-  public static checkDecryptMsg = async (browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent }: CheckDecryptMsg$opt) => {
-    const inboxPage = await browser.newPage(Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+  public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent }: CheckDecryptMsg$opt) => {
+    const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
@@ -299,7 +300,7 @@ export class InboxPageRecipe extends PageRecipe {
     await inboxPage.close();
   }
 
-  public static checkSentMsg = async (browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {
+  public static checkSentMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {
     if (typeof isSigned !== 'undefined') {
       throw new Error('checkSentMsg.isSigned not implemented');
     }
@@ -309,7 +310,7 @@ export class InboxPageRecipe extends PageRecipe {
     if (typeof isEncrypted !== 'undefined') {
       throw new Error('checkSentMsg.isEncrypted not implemented');
     }
-    const inboxPage = await browser.newPage(Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`));
+    const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`));
     await inboxPage.waitAndClick(`@container-subject(${subject})`, { delay: 1 });
     if (sender) { // make sure it was sent from intended addr
       await inboxPage.waitAll(`@container-msg-header(${sender})`);
@@ -321,8 +322,10 @@ export class InboxPageRecipe extends PageRecipe {
 
 export class ComposePageRecipe extends PageRecipe {
 
-  public static openStandalone = async (browser: BrowserHandle, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}): Promise<ControllablePage> => {
-    const composePage = await browser.newPage(`chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none&${appendUrl || ''}`);
+  public static openStandalone = async (
+    t: AvaContext, browser: BrowserHandle, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
+  ): Promise<ControllablePage> => {
+    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none&${appendUrl || ''}`);
     if (!hasReplyPrompt) {
       await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
     } else {
@@ -451,19 +454,19 @@ export class OauthPageRecipe extends PageRecipe {
 
 export class GmailPageRecipe extends PageRecipe {
 
-  public static openSecureCompose = async (gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
+  public static openSecureCompose = async (t: AvaContext, gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
     await gmailPage.waitAndClick('@action-secure-compose', { delay: 1 });
     await gmailPage.waitAll('@container-new-message');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
-    return await browser.newPage(urls[0]);
+    return await browser.newPage(t, urls[0]);
   }
 
-  public static getSubscribeDialog = async (gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
+  public static getSubscribeDialog = async (t: AvaContext, gmailPage: ControllablePage, browser: BrowserHandle): Promise<ControllablePage> => {
     await gmailPage.waitAll('@dialog-subscribe');
     const urls = await gmailPage.getFramesUrls(['/chrome/elements/subscribe.htm'], { sleep: 1 });
     expect(urls.length).to.equal(1);
-    return await browser.newPage(urls[0]);
+    return await browser.newPage(t, urls[0]);
   }
 
   public static closeInitialSetupNotif = async (gmailPage: ControllablePage) => {

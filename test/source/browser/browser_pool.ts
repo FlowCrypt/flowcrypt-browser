@@ -23,7 +23,7 @@ export class BrowserPool {
     this.semaphore = new Semaphore(poolSize, name);
   }
 
-  public newBrowserHandle = async (closeInitialPage = true) => {
+  public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
     const args = [
@@ -38,14 +38,14 @@ export class BrowserPool {
     const browser = await launch({ args, headless: false, slowMo: 50, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
-      await this.closeInitialExtensionPage(handle);
+      await this.closeInitialExtensionPage(t, handle);
     }
     return handle;
   }
 
-  public getExtensionId = async (): Promise<string> => {
-    const browser = await this.newBrowserHandle(false);
-    const initialPage = await browser.newPageTriggeredBy(() => Promise.resolve()); // the page triggered on its own
+  public getExtensionId = async (t: AvaContext): Promise<string> => {
+    const browser = await this.newBrowserHandle(t, false);
+    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
     const url = initialPage.page.url();
     const match = url.match(/[a-z]{32}/);
     if (match !== null) {
@@ -61,9 +61,9 @@ export class BrowserPool {
     }
   }
 
-  public openOrReuseBrowser = async (): Promise<BrowserHandle> => {
+  public openOrReuseBrowser = async (t: AvaContext): Promise<BrowserHandle> => {
     if (!this.reuse) {
-      return await this.newBrowserHandle();
+      return await this.newBrowserHandle(t);
     }
     await this.semaphore.acquire();
     return this.browsersForReuse.pop()!;
@@ -79,10 +79,10 @@ export class BrowserPool {
     }
   }
 
-  public getPooledBrowser = async (cb: (browser: BrowserHandle, t: AvaContext) => void, t: AvaContext) => {
-    const browser = await this.openOrReuseBrowser();
+  public getPooledBrowser = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext) => {
+    const browser = await this.openOrReuseBrowser(t);
     try {
-      await cb(browser, t);
+      await cb(t, browser);
     } finally {
       await Util.sleep(1);
       await this.doneUsingBrowser(browser);
@@ -114,14 +114,25 @@ export class BrowserPool {
     </div>
     `
 
-  public withNewBrowserTimeoutAndRetry = async (cb: (browser: BrowserHandle, t: AvaContext) => void, t: AvaContext, consts: Consts) => {
+  private throwOnRetryFlagAndReset = (t: AvaContext) => {
+    if (t.retry) {
+      t.retry = undefined;
+      const e = new Error('previous attempt marked for retry');
+      e.stack = e.message; // stack is not interesting here, too much clutter would be printed
+      throw e;
+    }
+  }
+
+  public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
       try {
-        const browser = await withTimeouts(this.newBrowserHandle());
+        const browser = await withTimeouts(this.newBrowserHandle(t));
         try {
-          return await withTimeouts(this.cbWithTimeout(async () => await cb(browser, t), consts.TIMEOUT_EACH_RETRY));
+          await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
+          this.throwOnRetryFlagAndReset(t);
+          return;
         } catch (err) {
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
           throw err;
@@ -135,14 +146,16 @@ export class BrowserPool {
     }
   }
 
-  public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (b: BrowserHandle, t: AvaContext) => void, t: AvaContext, consts: Consts) => {
+  public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
       try {
         await browser.closeAllPages();
         try {
-          return await withTimeouts(this.cbWithTimeout(async () => await cb(browser, t), consts.TIMEOUT_EACH_RETRY));
+          await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
+          this.throwOnRetryFlagAndReset(t);
+          return;
         } catch (err) {
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
           throw err;
@@ -156,8 +169,8 @@ export class BrowserPool {
     }
   }
 
-  private closeInitialExtensionPage = async (browser: BrowserHandle) => {
-    const initialPage = await browser.newPageTriggeredBy(() => Promise.resolve()); // the page triggered on its own
+  private closeInitialExtensionPage = async (t: AvaContext, browser: BrowserHandle) => {
+    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
     await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
     await initialPage.close();
   }
