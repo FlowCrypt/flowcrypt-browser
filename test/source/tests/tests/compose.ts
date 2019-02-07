@@ -103,7 +103,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test.only('compose[global] - standalone - nopgp', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+  ava.test('compose[global] - standalone - nopgp', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser);
     await ComposePageRecipe.fillMsg(composePage, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
     await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
