@@ -137,11 +137,32 @@ abstract class ControllableBase {
     if (letterByLetter || text.length < 20) {
       await e.type(text);
     } else {
-      await this.target.evaluate((s, t) => {
-        const e = document.querySelector(s);
-        e[e.tagName === 'DIV' ? 'innerText' : 'value'] = t;
-      }, this.selector(selector), text.substring(0, text.length - 10));
-      await e.type(text.substring(text.length - 10, text.length));
+      const typeLastTenChars = await this.target.evaluate((s, t) => {
+        const el = document.querySelector(s);
+        console.log(-1);
+        console.log(el);
+        console.log(String(el));
+        console.log(el.type);
+        if (el.contentEditable === 'true') {
+          console.log(-2);
+          el.innerText = t;
+          el.selectionEnd = el.innerText.length;
+          el.selectionStart = el.innerText.length;
+          return false;
+        }
+        el.value = t.substring(0, t.length - 10);
+        if (el.type !== 'email' && typeof el.value !== 'undefined') {
+          console.log(1);
+          el.selectionEnd = el.value.length;
+          console.log(1);
+          el.selectionStart = el.value.length;
+          console.log(1);
+        }
+        return true;
+      }, this.selector(selector), text);
+      if (typeLastTenChars) { // used to simulate typing events
+        await e.type(text.substring(text.length - 10, text.length));
+      }
     }
   }
 
