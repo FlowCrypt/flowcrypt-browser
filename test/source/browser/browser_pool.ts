@@ -96,11 +96,12 @@ export class BrowserPool {
 
   private processTestError = (err: any, attemptNumber: number, t: AvaContext, totalAttempts: number, attemptHtmls: string[]) => {
     if (attemptNumber < totalAttempts) {
+      t.retry = undefined;
       t.log(`Retrying: ${String(err)}`);
     } else {
       addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
       t.log(`Failed:   ${err instanceof Error ? err.stack : String(err)}`);
-      t.fail('[ALL RETRIES FAILED]');
+      t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
     }
   }
 
