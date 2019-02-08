@@ -9,7 +9,7 @@ import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
 import { Settings } from '../../js/common/settings.js';
-import { Api, R } from '../../js/common/api/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
@@ -17,7 +17,6 @@ import { Google, GoogleAuth } from '../../js/common/api/google.js';
 declare const openpgp: typeof OpenPGP;
 
 interface SetupOptions {
-  full_name: string;
   passphrase: string;
   passphrase_save: boolean;
   submit_main: boolean;
@@ -264,40 +263,25 @@ Catch.try(async () => {
       await Store.passphraseSave(options.passphrase_save ? 'local' : 'session', acctEmail, longid, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
-    for (const a of allAddrs) {
-      const attested = Boolean(a === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== await Pgp.key.fingerprint(prvs[0].toPublic().armor()));
-      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj(a, options.full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
+    const { full_name } = await Store.getAcct(acctEmail, ['full_name']);
+    for (const addr of allAddrs) {
+      const attested = Boolean(addr === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== await Pgp.key.fingerprint(prvs[0].toPublic().armor()));
+      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj(addr, full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   };
 
   const createSaveKeyPair = async (options: SetupOptions) => {
     Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
+    const { full_name } = await Store.getAcct(acctEmail, ['full_name']);
     try {
-      const key = await Pgp.key.create([{ name: options.full_name, email: acctEmail }], 4096, options.passphrase); // todo - add all addresses?
+      const key = await Pgp.key.create([{ name: full_name || '', email: acctEmail }], 4096, options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
       const { keys: [prv] } = await openpgp.key.readArmored(key.private);
       await saveKeys([prv], options);
     } catch (e) {
       Catch.handleErr(e);
       Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
-    }
-  };
-
-  const getAndSaveGoogleUserInfo = async (): Promise<{ full_name: string, locale?: string, picture?: string }> => {
-    if (storage.email_provider === 'gmail') { // todo - prompt user if cannot find his name. Maybe pull a few sent emails and const the user choose
-      let me: R.GooglePlusPeopleMe;
-      try {
-        me = await Google.google.plus.peopleMe(acctEmail);
-      } catch (e) {
-        Catch.handleErr(e);
-        return { full_name: '' };
-      }
-      const result = { full_name: me.displayName || '', locale: me.language, picture: me.image.url };
-      await Store.setAcct(acctEmail, result);
-      return result;
-    } else {
-      return { full_name: '' };
     }
   };
 
@@ -325,7 +309,6 @@ Catch.try(async () => {
       }
       if (matchingKeys.length) {
         const options: SetupOptions = {
-          full_name: '',
           submit_main: false, // todo - reevaluate submitting when recovering
           submit_all: false,
           passphrase,
@@ -416,7 +399,6 @@ Catch.try(async () => {
 
   $('#step_2b_manual_enter .action_save_private').click(Ui.event.handle(async () => {
     const options: SetupOptions = {
-      full_name: '',
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
       key_backup_prompt: false,
       submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked')),
@@ -494,9 +476,7 @@ Catch.try(async () => {
     try {
       $('#step_2a_manual_create input').prop('disabled', true);
       Xss.sanitizeRender('#step_2a_manual_create .action_create_private', Ui.spinner('white') + 'just a minute');
-      const userinfo = await getAndSaveGoogleUserInfo();
       const options: SetupOptions = {
-        full_name: userinfo.full_name,
         passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
         submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked')),

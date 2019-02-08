@@ -5,7 +5,7 @@
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, KeyInfosWithPassphrases, Contact } from '../core/pgp.js';
-import { SubscriptionInfo } from '../api/api.js';
+import { SubscriptionInfo, R } from '../api/api.js';
 import { BrowserMsg, BgNotReadyError } from '../extension.js';
 import { Product, PaymentMethod, ProductLevel } from '../account.js';
 import { Env, Ui } from '../browser.js';
@@ -31,7 +31,7 @@ export type ContactUpdate = {
   date?: number | null; /* todo - should be removed. email provider search seems to return this? */
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionAttempt | SubscriptionInfo | StoredAttestLog[];
+  | SubscriptionAttempt | SubscriptionInfo | StoredAttestLog[] | R.OpenId;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
@@ -91,6 +91,7 @@ export type AccountStore = {
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
+  openid?: R.OpenId;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
@@ -100,7 +101,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'addresses' | 'addresses_pks' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' | 'attests_requested' |
   'attests_processed' | 'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'attest_log' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'tmp_submit_main' | 'tmp_submit_all';
+  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all';
 
 export class Subscription implements SubscriptionInfo {
   active?: boolean;

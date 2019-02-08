@@ -15,7 +15,7 @@ import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
-type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string };
+type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
 export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, omitReadScope?: boolean };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 type AuthResultSuccess = { result: 'Success', acctEmail: string, error?: undefined };
@@ -60,12 +60,6 @@ export class Google extends Api {
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
-
-  public static google = {
-    plus: {
-      peopleMe: (acctEmail: string): Promise<R.GooglePlusPeopleMe> => Google.call(acctEmail, 'GET', 'https://www.googleapis.com/plus/v1/people/me', { alt: 'json' }),
-    },
-  };
 
   public static gmail = {
     buildSearchQuery: {
@@ -624,10 +618,15 @@ export class GoogleAuth {
   private static apiGoogleAuthStatePack = (authReq: AuthReq) => GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
+    const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
+    const { full_name, picture } = await Store.getAcct(acctEmail, ['full_name', 'picture']);
     const toSave: AccountStore = {
+      openid,
       google_token_access: tokensObj.access_token,
       google_token_expires: new Date().getTime() + (tokensObj.expires_in as number) * 1000,
       google_token_scopes: scopes,
+      full_name: full_name || openid.name,
+      picture: picture || openid.picture,
     };
     if (typeof tokensObj.refresh_token !== 'undefined') {
       toSave.google_token_refresh = tokensObj.refresh_token;
@@ -660,7 +659,7 @@ export class GoogleAuth {
    */
   private static googleApiIsAuthTokenValid = (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000));
 
-  // private static parseIdToken = (idToken: string) => JSON.parse(atob(idToken.split(/\./g)[1]));
+  private static parseIdToken = (idToken: string): R.OpenId => JSON.parse(Buf.fromBase64Str(idToken.split(/\./g)[1]).toUtfStr());
 
   private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<string> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);

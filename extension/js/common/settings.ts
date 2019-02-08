@@ -382,18 +382,4 @@ export class Settings {
     }
   }
 
-  static updateProfilePicIfMissing = async (acctEmail: string) => {
-    const storage = await Store.getAcct(acctEmail, ['setup_done', 'picture']);
-    if (storage.setup_done && !storage.picture) {
-      try {
-        const { image } = await Google.google.plus.peopleMe(acctEmail);
-        await Store.setAcct(acctEmail, { picture: image.url });
-      } catch (e) {
-        if (!Api.err.isAuthPopupNeeded(e) && !Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
-          Catch.handleErr(e);
-        }
-      }
-    }
-  }
-
 }

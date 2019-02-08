@@ -6,6 +6,7 @@ import { Dict } from '../../../js/common/core/common.js';
 import { Xss, Env } from '../../../js/common/browser.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Google } from '../../../js/common/api/google.js';
+import { Store } from '../../../js/common/platform/store.js';
 
 Catch.try(async () => {
 
@@ -19,19 +20,13 @@ Catch.try(async () => {
   };
 
   if (which === 'google_account') {
-    const variables = { acctEmail };
     try {
       const r = await Google.gmail.usersMeProfile(acctEmail);
-      renderCallRes('gmail.users_me_profile', variables, r);
+      renderCallRes('gmail.users_me_profile', { acctEmail }, r);
     } catch (e) {
-      renderCallRes('gmail.users_me_profile', variables, undefined, e);
+      renderCallRes('gmail.users_me_profile', { acctEmail }, undefined, e);
     }
-    try {
-      const r = await Google.google.plus.peopleMe(acctEmail);
-      renderCallRes('google.plus.people_me', variables, r);
-    } catch (e) {
-      renderCallRes('google.plus.people_me', variables, undefined, e);
-    }
+    renderCallRes('Store.getAcct.openid', { acctEmail }, await Store.getAcct(acctEmail, ['openid']));
   } else if (which === 'flowcrypt_account') {
     Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(which)} (not implemented)`);
   } else if (which === 'flowcrypt_subscription') {

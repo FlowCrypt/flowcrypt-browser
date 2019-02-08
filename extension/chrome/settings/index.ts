@@ -214,7 +214,6 @@ Catch.try(async () => {
   const checkGoogleAcct = async () => {
     try {
       const me = await Google.gmail.usersMeProfile(acctEmail!);
-      Settings.updateProfilePicIfMissing(acctEmail!).catch(Catch.handleErr);
       $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
       if (me.emailAddress !== acctEmail) {
         $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');

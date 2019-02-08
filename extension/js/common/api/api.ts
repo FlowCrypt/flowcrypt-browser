@@ -195,7 +195,10 @@ export namespace R { // responses
   export type GmailDraftGet = { id: string, message: GmailMsg };
   export type GmailDraftSend = {};
 
-  export type GooglePlusPeopleMe = { displayName: string, language: string, image: { url: string } };
+  export type OpenId = { // 'name' is the full name, picture is url
+    at_hash: string; exp: number; iat: number; sub: string; aud: string; azp: string; iss: "https://accounts.google.com";
+    name: string; picture: string; locale: 'en' | string; family_name: string; given_name: string;
+  };
 
 }
 
