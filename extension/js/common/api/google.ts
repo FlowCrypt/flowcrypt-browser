@@ -659,7 +659,9 @@ export class GoogleAuth {
    */
   private static googleApiIsAuthTokenValid = (s: AccountStore) => s.google_token_access && (!s.google_token_expires || s.google_token_expires > new Date().getTime() + (120 * 1000));
 
-  private static parseIdToken = (idToken: string): R.OpenId => JSON.parse(Buf.fromBase64Str(idToken.split(/\./g)[1]).toUtfStr());
+  // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
+  // check for things we actually use: photo/name/locale
+  private static parseIdToken = (idToken: string): R.OpenId => JSON.parse(Buf.fromBase64Str(idToken.split(/\./g)[1]).toUtfStr()) as R.OpenId;
 
   private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<string> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
