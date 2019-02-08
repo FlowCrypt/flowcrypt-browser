@@ -66,7 +66,7 @@ export type AccountStore = {
   email_provider?: EmailProvider;
   google_token_access?: string;
   google_token_expires?: number;
-  google_token_scopes?: string[];
+  google_token_scopes?: string[]; // these are actuall scope urls the way the provider expects them
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
   addresses?: string[];

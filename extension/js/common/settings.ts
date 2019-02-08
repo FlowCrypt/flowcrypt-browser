@@ -345,9 +345,9 @@ export class Settings {
     }
   }
 
-  static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, omitReadScope = false) => {
+  static newGoogleAcctAuthPromptThenAlertOrForward = async (settingsTabId: string | undefined, acctEmail?: string, scopes?: string[]) => {
     try {
-      const response = await GoogleAuth.newAuthPopup({ acctEmail, omitReadScope });
+      const response = await GoogleAuth.newAuthPopup({ acctEmail, scopes });
       if (response.result === 'Success' && response.acctEmail) {
         await Store.acctEmailsAdd(response.acctEmail);
         const storage = await Store.getAcct(response.acctEmail, ['setup_done']);

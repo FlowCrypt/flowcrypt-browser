@@ -80,9 +80,9 @@ Catch.try(async () => {
     Catch.setHandledTimeout(clear, 10000);
     $('.webmail_notifications').one('click', clear);
   });
-  BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, omitReadScope }: Bm.OpenGoogleAuthDialog) => {
+  BrowserMsg.addListener('open_google_auth_dialog', async ({ acctEmail, scopes }: Bm.OpenGoogleAuthDialog) => {
     $('.featherlight-close').click();
-    await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail, omitReadScope);
+    await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail, scopes);
   });
   BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
@@ -124,7 +124,7 @@ Catch.try(async () => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!GoogleAuth.hasScope(storage.google_token_scopes || [], 'read') && (storage.email_provider || 'gmail') === 'gmail') {
+        if (!GoogleAuth.hasReadScope(storage.google_token_scopes || []) && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         displayOrig('.hide_if_setup_not_done');

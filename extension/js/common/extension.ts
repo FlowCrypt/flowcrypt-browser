@@ -33,7 +33,7 @@ export namespace Bm {
   export type SetFooter = { footer: string | null };
   export type Reload = { advanced?: boolean };
   export type Redirect = { location: string };
-  export type OpenGoogleAuthDialog = { acctEmail?: string, omitReadScope?: boolean };
+  export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
   export type AttestRequested = { acctEmail: string };
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
   export type StripeResult = { token: string };

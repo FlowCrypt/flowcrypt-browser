@@ -550,7 +550,7 @@ Catch.try(async () => {
   };
 
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes']);
-  canReadEmails = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
+  canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
   if (storage.setup_done) {
     await initialize();
   } else {

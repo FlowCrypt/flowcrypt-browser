@@ -1142,7 +1142,7 @@ export class Composer {
     const lastRecipient = $('.recipients span').last();
     this.S.cached('input_to').val(lastRecipient.text());
     lastRecipient.last().remove();
-    const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.scope(['read']) });
+    const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
     if (authRes.result === 'Success') {
       this.canReadEmails = true;
       await this.searchContacts();

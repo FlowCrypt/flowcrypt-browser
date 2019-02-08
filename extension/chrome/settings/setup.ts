@@ -131,7 +131,7 @@ Catch.try(async () => {
       if (!rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         displayBlock('step_2b_manual_enter');
-      } else if (storage.email_provider === 'gmail' && GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
+      } else if (storage.email_provider === 'gmail' && GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
         try {
           fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
         } catch (e) {
@@ -521,11 +521,11 @@ Catch.try(async () => {
 
   // show alternative account addresses in setup form + save them for later
   if (storage.email_provider === 'gmail') {
-    if (!GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
+    if (!GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
       $('.auth_denied_warning').css('display', 'block');
     }
     if (typeof storage.addresses === 'undefined') {
-      if (GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
+      if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
         Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
       } else { // cannot read emails, don't fetch alternative addresses
         saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);

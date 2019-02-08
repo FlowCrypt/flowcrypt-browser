@@ -106,7 +106,7 @@ Catch.try(async () => {
 
   const subscription = await Store.subscription();
   const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
-  const canReadEmail = GoogleAuth.hasScope(google_token_scopes || [], 'read');
+  const canReadEmail = GoogleAuth.hasReadScope(google_token_scopes || []);
   const fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
 
   if (placement === 'settings') {

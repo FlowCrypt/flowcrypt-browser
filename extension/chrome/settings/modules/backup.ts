@@ -56,7 +56,7 @@ Catch.try(async () => {
     $('h1').text('Key Backups');
     displayBlock('loading');
     const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider']);
-    if (emailProvider === 'gmail' && GoogleAuth.hasScope(storage.google_token_scopes || [], 'read')) {
+    if (emailProvider === 'gmail' && GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
       let keys;
       try {
         keys = await Google.gmail.fetchKeyBackups(acctEmail);

@@ -158,8 +158,8 @@ Catch.try(async () => {
         await GoogleAuth.newAuthPopup({ acctEmail });
         window.location.reload();
       },
-      action_add_permission: async () => {
-        await GoogleAuth.newAuthPopup({ acctEmail, omitReadScope: false });
+      action_add_permission: async () => { // can just be unified with action_auth_popup
+        await GoogleAuth.newAuthPopup({ acctEmail });
         window.location.reload();
       },
     });

@@ -207,7 +207,7 @@ export class BgAttests {
     const storages = await Store.getAccounts(acctEmails, ['attests_requested', 'google_token_scopes']);
     const pending = [];
     for (const email of Object.keys(storages)) {
-      BgAttests.attestTsCanReadEmails[email] = GoogleAuth.hasScope(storages[email].google_token_scopes || [], 'read');
+      BgAttests.attestTsCanReadEmails[email] = GoogleAuth.hasReadScope(storages[email].google_token_scopes || []);
       pending.push({ email, attests_requested: storages[email].attests_requested || [] });
     }
     return pending;

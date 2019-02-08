@@ -37,7 +37,7 @@ Catch.try(async () => {
   const storage = await Store.getAcct(acctEmail, [
     'google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'
   ]);
-  const canReadEmail = GoogleAuth.hasScope(storage.google_token_scopes || [], 'read');
+  const canReadEmail = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
 
   await (async () => { // attempt to recover missing params
     if (!isReplyBox || (threadId && threadId !== threadMsgId && to.length && subject)) {

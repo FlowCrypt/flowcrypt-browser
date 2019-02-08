@@ -2,6 +2,8 @@
 
 'use strict';
 
+const BUILD = 'consumer'; // todo
+
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
 import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
@@ -16,7 +18,7 @@ import { Buf } from '../core/buf.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
-export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, omitReadScope?: boolean };
+export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 type AuthResultSuccess = { result: 'Success', acctEmail: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string };
@@ -483,23 +485,38 @@ export class GoogleAuth {
     url_tokens: "https://www.googleapis.com/oauth2/v4/token",
     url_redirect: "urn:ietf:wg:oauth:2.0:oob:auto",
     state_header: "CRYPTUP_STATE_",
-    scopes: [
-      "https://www.googleapis.com/auth/gmail.compose",
-      "https://www.googleapis.com/auth/gmail.readonly",
-      "https://www.googleapis.com/auth/userinfo.profile"
-    ]
+    scopes: {
+      profile: "https://www.googleapis.com/auth/userinfo.profile", // needed for openid
+      compose: "https://www.googleapis.com/auth/gmail.compose",
+      modify: 'https://www.googleapis.com/auth/gmail.modify',
+      contacts: 'https://www.google.com/m8/feeds/',
+    },
+    legacy_scopes: {
+      read: 'https://www.googleapis.com/auth/gmail.readonly', // deprecated in favor of modify, which also includes read
+      gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
+    }
   };
 
-  private static SCOPE_DICT: Dict<string> = { read: 'https://www.googleapis.com/auth/gmail.readonly', compose: 'https://www.googleapis.com/auth/gmail.compose' };
+  public static hasReadScope = (scopes: string[]) => scopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1 || scopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1;
 
-  public static scope = (scope: string[]): string[] => scope.map(s => {
-    if (!GoogleAuth.SCOPE_DICT[s]) {
-      throw new Error(`Unknown scope: ${s}`);
+  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' = 'default') => {
+    const { profile, contacts, compose, modify } = GoogleAuth.OAUTH.scopes;
+    if (group === 'default') {
+      if (BUILD === 'consumer') {
+        return [profile, compose, modify]; // consumer may freak out that extension asks for their contacts early on
+      } else if (BUILD === 'enterprise') {
+        return [profile, compose, modify, contacts]; // enterprise expects their contact search to work properly
+      } else {
+        throw new Error(`Unknown build ${BUILD}`);
+      }
+    } else if (group === 'contacts') {
+      return [profile, compose, modify, contacts];
+    } else if (group === 'compose_only') {
+      return [profile, compose]; // consumer may freak out that the extension asks for read email permission
+    } else {
+      throw new Error(`Unknown scope group ${group}`);
     }
-    return GoogleAuth.SCOPE_DICT[s];
-  })
-
-  public static hasScope = (scopes: string[], scope: string) => scopes && Value.is(GoogleAuth.SCOPE_DICT[scope]).in(scopes);
+  }
 
   public static googleApiAuthHeader = async (acctEmail: string, forceRefresh = false): Promise<string> => {
     if (!acctEmail) {
@@ -535,11 +552,11 @@ export class GoogleAuth {
     }
   }
 
-  public static newAuthPopup = async ({ acctEmail, omitReadScope, scopes }: { acctEmail?: string, omitReadScope?: boolean, scopes?: string[] }): Promise<AuthRes> => {
+  public static newAuthPopup = async ({ acctEmail, scopes }: { acctEmail?: string, scopes?: string[] }): Promise<AuthRes> => {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
-    scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || [], omitReadScope === true);
+    scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     const authRequest: AuthReq = { acctEmail, scopes };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
@@ -671,25 +688,15 @@ export class GoogleAuth {
     return emailAddress;
   }
 
-  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, requestedScopes: string[], omitReadScope: boolean): Promise<string[]> => {
-    let currentTokensScopes: string[] = [];
+  private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
     if (acctEmail) {
-      const storage = await Store.getAcct(acctEmail, ['google_token_scopes']);
-      currentTokensScopes = storage.google_token_scopes || [];
+      const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
+      addScopes.push(...(google_token_scopes || []));
     }
-    const authReqScopes = requestedScopes || [];
-    for (const scope of GoogleAuth.OAUTH.scopes) {
-      if (!Value.is(scope).in(requestedScopes)) {
-        if (scope !== GoogleAuth.scope(['read'])[0] || !omitReadScope) { // leave out read messages permission if user chose so
-          authReqScopes.push(scope);
-        }
-      }
+    addScopes = Value.arr.unique(addScopes);
+    if (addScopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1 && addScopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1) {
+      addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.legacy_scopes.read); // modify scope is a superset of read scope
     }
-    for (const scope of currentTokensScopes) {
-      if (!Value.is(scope).in(requestedScopes)) {
-        authReqScopes.push(scope);
-      }
-    }
-    return authReqScopes;
+    return addScopes;
   }
 }

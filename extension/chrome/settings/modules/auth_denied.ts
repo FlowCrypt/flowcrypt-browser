@@ -6,6 +6,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
+import { GoogleAuth } from '../../../js/common/api/google.js';
 
 Catch.try(async () => {
 
@@ -41,7 +42,7 @@ Catch.try(async () => {
 
   $('.action_auth_proceed').click(Ui.event.handle(() => BrowserMsg.send.openGoogleAuthDialog(parentTabId, { acctEmail })));
 
-  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send.openGoogleAuthDialog(parentTabId, { omitReadScope: true, acctEmail })));
+  $('.auth_action_limited').click(Ui.event.handle(() => BrowserMsg.send.openGoogleAuthDialog(parentTabId, { acctEmail, scopes: GoogleAuth.defaultScopes('compose_only') })));
 
   $('.close_page').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
 
