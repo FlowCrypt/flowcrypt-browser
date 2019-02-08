@@ -347,14 +347,16 @@ Catch.try(async () => {
     $(".add-account").toggleClass("hidden");
   }));
 
-  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/debug_api.htm', {
-    which: 'google_account'
-  })));
+  $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, 'modules/debug_api.htm', { which: 'google_account' })));
+
+  $('#status-row #status_local_store').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, 'modules/debug_api.htm', { which: 'local_store' })));
+
   // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {
-  //   which: 'flowcrypt_account'
+  //   which: 'flowcrypt_account' // not implemented in debug_api.ts yet
   // })));
+
   // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {
-  //   which: 'flowcrypt_subscription'
+  //   which: 'flowcrypt_subscription' // not implemented in debug_api.ts yet
   // })));
 
   const reload = (advanced = false) => {
