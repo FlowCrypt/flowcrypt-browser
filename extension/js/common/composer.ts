@@ -989,6 +989,7 @@ export class Composer {
     const keys = Env.keyCodes();
     if (!value && inputToKeydownEvent.which === keys.backspace) {
       $('.recipients span').last().remove();
+      this.showHidePwdOrPubkeyContainerAndColorSendBtn();
     } else if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
       this.S.cached('input_to').blur();
       if (this.S.cached('contacts').css('display') === 'block') {

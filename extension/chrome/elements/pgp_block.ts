@@ -429,7 +429,7 @@ Catch.try(async () => {
   };
 
   const renderPasswordPromptAndWaitForEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
-    let prompt = `<p>${attempt === 'first' ? '' : Lang.pgpBlock.wrongPassword}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
+    let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
     prompt += armoredMsgAsHtml();
