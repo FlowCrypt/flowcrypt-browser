@@ -20,7 +20,7 @@ export const GMAIL_RECOVERY_EMAIL_SUBJECTS = [
   'CryptUP Account Backup',
 ];
 
-export const getGmailRecoverySearchQuery = (acctEmail: string) => {
+export const gmailBackupSearchQuery = (acctEmail: string) => {
   return [
     'from:' + acctEmail,
     'to:' + acctEmail,

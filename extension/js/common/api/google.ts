@@ -15,7 +15,7 @@ import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
-import { getGmailRecoverySearchQuery } from '../core/const.js';
+import { gmailBackupSearchQuery } from '../core/const.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -360,7 +360,7 @@ export class Google extends Api {
       return await Google.extractHeadersFromMsgs(acctEmail, messages || [], headerNames, msgLimit);
     },
     fetchKeyBackups: async (acctEmail: string) => {
-      const res = await Google.gmail.msgList(acctEmail, getGmailRecoverySearchQuery(acctEmail), true);
+      const res = await Google.gmail.msgList(acctEmail, gmailBackupSearchQuery(acctEmail), true);
       if (!res.messages) {
         return [];
       }
