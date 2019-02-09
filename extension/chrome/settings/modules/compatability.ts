@@ -1,12 +1,8 @@
 "use strict";
 
 import { Catch } from "../../../js/common/platform/catch.js";
-import {
-  Xss,
-  Ui /*, XssSafeFactory, Env*/
-} from "../../../js/common/browser.js";
-import { Pgp } from "../../../js/common/core/pgp.js";
-import { Buf } from "../../../js/common/core/buf.js";
+import { Xss, Ui /*, XssSafeFactory, Env*/ } from "../../../js/common/browser.js";
+import { Pgp, PgpMsg } from "../../../js/common/core/pgp.js";
 
 declare const openpgp: typeof OpenPGP;
 
@@ -19,57 +15,77 @@ Catch.try(async () => {
 
   const encryptionText = "This is the text we are encrypting!";
   const encryptionPassphrase = "anEncryptionPassphrase";
-  let cipherText: string;
-  let decryptionResult: string;
 
-  $(".action_test_key").click(
-    Ui.event.prevent("double", async self => {
-      const keyString = String($(".input_key").val());
-      if (!keyString) {
-        alert("Please paste an OpenPGP in the input box");
-        return;
-      }
+  $(".action_test_key").click(Ui.event.prevent("double", async self => {
+    const keyString = String($(".input_key").val());
+    if (!keyString) {
+      alert("Please paste an OpenPGP in the input box");
+      return;
+    }
 
-      origContent = $(self).html();
-      Xss.sanitizeRender(self, "Evaluating.. " + Ui.spinner("white"));
+    origContent = $(self).html();
+    Xss.sanitizeRender(self, "Evaluating.. " + Ui.spinner("white"));
 
-      await performKeyCompatabilityTests(keyString);
+    await performKeyCompatabilityTests(keyString);
 
-      Xss.sanitizeRender(self, origContent);
-    })
-  );
+    Xss.sanitizeRender(self, origContent);
+  }));
 
-  const encryptWithKey = async (key: OpenPGP.key.Key) => {
-    const message = await openpgp.encrypt({
+  const testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
+    const output: string[] = [];
+    const eMessage = await openpgp.encrypt({
       message: openpgp.message.fromText(encryptionText),
       publicKeys: key.toPublic(),
       armor: true,
       passwords: [encryptionPassphrase]
     });
 
-    cipherText = (message as any).data;
-    console.log(message);
+    const cipherText = eMessage.data;
+    console.log(eMessage);
+
+    if (cipherText !== null && typeof cipherText !== 'undefined' && cipherText !== '') {
+      output.push("Encryption with key was successful");
+    } else {
+      output.push("Encryption with key failed");
+    }
+
+    if (key.isPrivate() && key.isDecrypted()) {
+      const dMessage = await openpgp.decrypt({
+        message: await openpgp.message.readArmored(cipherText),
+        privateKeys: key,
+        passwords: [encryptionPassphrase]
+      });
+
+      const decryptionResult = dMessage.data as string;
+      console.log(decryptionResult);
+
+      if (decryptionResult === encryptionText) {
+        output.push("Decryption with key was successful");
+      } else {
+        output.push("Decryption with key failed!");
+      }
+    }
+
+    return output;
   };
 
-  const decryptWithKey = async (key: OpenPGP.key.Key) => {
-    const message = await openpgp.decrypt({
-      message: await openpgp.message.readArmored(cipherText),
-      privateKeys: key,
-      passwords: [encryptionPassphrase]
-    });
+  const testSignVerify = async (key: OpenPGP.key.Key): Promise<string[]> => {
+    const output: string[] = [];
+    const signedMessage = await openpgp.message.fromText(encryptionText).sign([key]);
+    console.log(signedMessage);
 
-    decryptionResult = message.data as string;
-    console.log(decryptionResult);
-  };
+    output.push("Signing message was successful");
 
-  const signWithKey = async (key: OpenPGP.key.Key) => {
-    const result = await openpgp.message.fromText(encryptionText).sign([key]);
-    console.log(result);
-  };
+    const verifyResult = await PgpMsg.verify(signedMessage, [key]);
+    console.log(verifyResult);
 
-  const verifyWithKey = async (key: OpenPGP.key.Key) => {
-    const result = await openpgp.message.fromText(encryptionText).verify([key]);
-    console.log(result);
+    if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
+      output.push(`Verifying message failed with error: ${verifyResult.error}`);
+    } else {
+      output.push("Verifying message was successful");
+    }
+
+    return output;
   };
 
   // START: Code and helpers taken from the original private key test page
@@ -77,18 +93,14 @@ Catch.try(async () => {
 
   const test = async (f: () => any) => {
     try {
-      return "[-] " + (await f());
+      return `[-] ${(await f())}`;
     } catch (e) {
-      return "[" + e.message + "]";
+      return `[${e.message}]`;
     }
   };
 
   const appendResult = (str: string, err?: Error) => {
-    $("pre").append(
-      `(${testIndex++}) ${Xss.escape(str)} ${
-      err ? Xss.escape(` !! ${err.message}`) : ""
-      } \n`
-    );
+    $("pre").append(`(${testIndex++}) ${Xss.escape(str)} ${err ? Xss.escape(` !! ${err.message}`) : ""} \n`);
   };
   // END
 
@@ -103,7 +115,16 @@ Catch.try(async () => {
         return;
       }
 
+      if (key.isPrivate()) {
+        if (!(await Pgp.key.decrypt(key, [String($(".input_passphrase").val())]))) {
+          appendResult(`${kn} failed to decrypt private key`);
+          return;
+        }
+      }
+
       console.log(key);
+
+      // const keyData = await Pgp.key.serialize(key);
 
       appendResult(`${kn} Is Private? ${await test(async () => key.isPrivate())}`);
       appendResult(`${kn} Primary User: ${await test(async () => await key.getPrimaryUser().user.userId.userid)}`);
@@ -115,26 +136,26 @@ Catch.try(async () => {
       appendResult(`${kn} Primary key verify: ${await test(async () => await key.verifyPrimaryKey())}`);
       appendResult(`${kn} Primary key expiration? ${await test(async () => await key.getExpirationTime())}`);
 
+      const encryptResult = await testEncryptDecrypt(key);
+      encryptResult.map(msg => appendResult(`${kn} Encrypt/Decrypt test: ${msg}`));
+
+      if (key.isPrivate()) {
+        const signResult = await testSignVerify(key);
+        signResult.map(msg => appendResult(`${kn} Sign/Verify test: ${msg}`));
+      }
+
       key.subKeys.map(async (subkey, si) => {
         // the typings for SubKey are not entirely valid, might need an update
 
         // const skExpiration = await (subkey as OpenPGP.key.SubKey | any).getExpirationTime();
-        // Throwing an error "TypeError: Cannot read property 'algorithm' of undefined"
-        // Stack trace:
-        /*
-                at Signature.verify (openpgp.js:38060)
-                at getLatestValidSignature (openpgp.js:31279)
-                at SubKey.getExpirationTime (openpgp.js:32125)
-                at key.subKeys.map (compatability.js:148)
-                at Array.map (<anonymous>)
-                at keys.map (compatability.js:146)
-            */
+        // TODO:  Find out how to get expiration time of each subkey
 
         const skn = `${kn} SK ${si} >`;
         console.log(subkey);
+
         appendResult(`${skn} Algo: ${await test(async () => (subkey as OpenPGP.key.SubKey | any).keyPacket.algorithm)}`);
         // appendResult(`${skn} Valid encryption key?: ${await test(async () => {return subkey.isValidEncryptionKey();})}); // No longer exists on object
-        // appendResult(`${skn} Expiration time: ${await test(async () => {return skExpiration;})}`);                       // see error described above
+        // appendResult(`${skn} Expiration time: ${await test(async () => skExpiration)}`);                       // see error described above
         appendResult(`${skn} Verify: ${await test(async () => await subkey.verify(key.primaryKey))}`);
         appendResult(`${skn} Subkey tag: ${await test(async () => (subkey as OpenPGP.key.SubKey | any).keyPacket.tag)}`);
         // appendResult(`${skn} Subkey getBitSize: ${await test(async () => {return subkey.subKey.getBitSize();})}`);       // No longer exists on object
@@ -154,56 +175,17 @@ Catch.try(async () => {
           appendResult(`${sgn} Verified: ${await test(async () => sig.verified)}`);
         });
       });
-
-      // TODO: Add appendResult calls for each of the following functions
-      // possibly a simple success / error message depending on the result
-
-      if (key.isPublic()) {
-        await encryptWithKey(key);
-      }
-
-      if (key.isPrivate()) {
-        if (
-          !(await Pgp.key.decrypt(key, [String($(".input_passphrase").val())]))
-        ) {
-          return;
-        }
-        await encryptWithKey(key);
-        await decryptWithKey(key);
-        await signWithKey(key);
-        await verifyWithKey(key);
-      }
     });
   };
 
   const performKeyCompatabilityTests = async (keyString: string) => {
     $("pre").text("");
     try {
-      const keyBytes = Buf.fromUtfStr(keyString);
-      // let keyBytes = new TextEncoder().encode(keyString);
-      let openpgpKey = await openpgp.key.read(keyBytes);
-
-      // key is either armoured or not valid
-      if (openpgpKey.keys.length === 0) {
-        // read the key as armoured
-        const armoredOpenpgpKey = await openpgp.key.readArmored(keyString);
-        if (armoredOpenpgpKey.keys.length > 0) {
-          // use the armoured key
-          openpgpKey = armoredOpenpgpKey;
-        } else if (armoredOpenpgpKey.keys.length === 0) {
-          // move the errors in the armoured key request to the openpgpKey object
-          // consider a means to remove duplicate errors that isnt overly verbose
-          openpgpKey.err.push(...armoredOpenpgpKey.err);
-        }
-      }
+      const openpgpKey = await openpgp.key.readArmored(keyString);
 
       // check for errors in the response to read the key
-      if (
-        openpgpKey.err !== null &&
-        typeof openpgpKey.err !== "undefined" &&
-        openpgpKey.err.length !== 0
-      ) {
-        alert("The provided OpenPGP key has an error.");
+      if (openpgpKey.err !== null && typeof openpgpKey.err !== "undefined" && openpgpKey.err.length !== 0) {
+        appendResult(`The provided OpenPGP key has an error: ${JSON.stringify(openpgpKey)}`);
         openpgpKey.err.map(err => {
           console.error(err);
           appendResult(`Error parsing keys: `, err);
@@ -218,7 +200,7 @@ Catch.try(async () => {
       }
 
       if (openpgpKey.keys.length === 0) {
-        alert("No keys were parsed in request");
+        appendResult("No keys were parsed in request");
         return;
       }
 
