@@ -127,7 +127,7 @@ Catch.try(async () => {
       // const keyData = await Pgp.key.serialize(key);
 
       appendResult(`${kn} Is Private? ${await test(async () => key.isPrivate())}`);
-      appendResult(`${kn} Primary User: ${await test(async () => await key.getPrimaryUser().user.userId.userid)}`);
+      appendResult(`${kn} Primary User: ${await test(async () => (await key.getPrimaryUser()).user.userId.userid)}`);
       appendResult(`${kn} Fingerprint: ${await test(async () => key.getFingerprint())}`);
       // appendResult(`${kn} Has valid encryption packet? ${test(async () => {return;})}`);                                // No longer exists on object
       appendResult(`${kn} Subkeys: ${await test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
