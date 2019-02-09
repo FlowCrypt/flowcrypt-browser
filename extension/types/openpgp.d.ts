@@ -47,6 +47,8 @@ declare namespace OpenPGP {
     sessionKey?: SessionKey;
     /** (optional) which compression algorithm to compress the message with, defaults to what is specified in config */
     compression?: enums.compression;
+    /** (optional) if the return values should be ascii armored or the message/signature objects */
+    armor?: boolean;
     /** (optional) whether to return data as a stream. Defaults to the type of stream `message` was created from, if any. */
     streaming?: 'web' | 'node' | false;
     /** (optional) if the signature should be detached (if true, signature will be added to returned object) */
@@ -260,6 +262,8 @@ declare namespace OpenPGP {
     message: message.Message;
     signature?: signature.Signature;
   }
+
+  export type EncryptResult = EncryptArmorResult | EncryptBinaryResult;
 
   export interface SignArmorResult {
     data: string | Stream<string>;

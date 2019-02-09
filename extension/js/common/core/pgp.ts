@@ -712,7 +712,7 @@ export class PgpMsg {
 
   static encrypt: PgpMsgMethod.Encrypt = async ({ pubkeys, signingPrv, pwd, data, filename, armor, date }) => {
     const message = openpgp.message.fromBinary(data, filename, date);
-    const options: OpenPGP.EncryptOptions = { armor, message };
+    const options: OpenPGP.BaseEncryptOptions = { armor, message };
     let usedChallenge = false;
     if (pubkeys) {
       options.publicKeys = [];
