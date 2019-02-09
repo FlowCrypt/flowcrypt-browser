@@ -19,30 +19,19 @@ Catch.try(async () => {
   });
   BrowserMsg.listen(tabId);
 
-    let key: OpenPGP.key.Key;
-    let keyData: {
-        type: null | string;
-        alg: OpenPGP.key.AlgorithmInfo;
-        created: Date;
-        expiration: number | Date;
-        fingerprint: string;
-        key_id: OpenPGP.Keyid;
-        revoked: boolean;
-    };
+    const encryptionText = 'This is the text we are encrypting!';
+    const encryptionPassphrase = 'anEncryptionPassphrase';
+    let cipherText: string;
+    let decryptionResult: string;
 
-    $(".private_key").hide();
-
-  $(".action_test_key").click(
-    Ui.event.prevent("double", async self => {
+  $(".action_test_key").click(Ui.event.prevent("double", async self => {
       const keyString = String($(".input_key").val());
       if (!keyString) {
         alert("Please paste an OpenPGP in the input box");
         return;
       }
       if (!("TextEncoder" in window)) {
-        alert(
-          "Sorry, your browser does not support TextEncoder which is required for this feature"
-        );
+        alert("Sorry, your browser does not support TextEncoder which is required for this feature");
         return;
       }
 
@@ -52,165 +41,213 @@ Catch.try(async () => {
       await performKeyCompatabilityTests(keyString);
 
       Xss.sanitizeRender(self, origContent);
-    })
-  );
+    }));
+
+const decryptPrivateKey = async (key: OpenPGP.key.Key): Promise<boolean> => {
+    if (key.isDecrypted()) { return true; }
+    const privatePw = String($('.input_passphrase').val());
+    if (!privatePw) {
+        alert("Please provide a password when encrypting with your private key");
+        return false;
+    }
+
+    if (!await key.decrypt(privatePw)) {
+        alert("Sorry your private key was not decrypted with that password. Try again with a different password!");
+        return false;
+    }
+
+    return true;
+};
+
+const encryptWithKey = async (key: OpenPGP.key.Key) => {
+    let message = await openpgp.encrypt(<OpenPGP.EncryptOptions>{
+        message: openpgp.message.fromText(encryptionText),
+        privateKeys: (key.isPrivate() ? key : null),
+        publicKeys: (key.isPublic() ? key : null),
+        armor: true,
+        passwords: [encryptionPassphrase]
+    });
+
+    cipherText = (message as any).data;
+    console.log(message);
+};
+
+const decryptWithKey = async (key: OpenPGP.key.Key) => {
+    let message = await openpgp.decrypt(<OpenPGP.DecryptOptions>{
+        message: await openpgp.message.readArmored(cipherText),
+        privateKeys: key,
+        passwords: [encryptionPassphrase]
+    });
+
+    decryptionResult = (message.data as string);
+    console.log(decryptionResult);
+};
+
+const signWithKey = async (key: OpenPGP.key.Key) => {
+    let result = await openpgp.message.fromText(encryptionText).sign([key]);
+    console.log(result);
+};
+
+const verifyWithKey = async (key: OpenPGP.key.Key) => {
+    let result =  await openpgp.message.fromText(encryptionText).verify([key]);
+    console.log(result);
+};
+
+
+// START: Code and helpers taken from the original private key test page
+let _i = 0;
+const str_html_escape = (str: string) => { // http://stackoverflow.com/questions/1219860/html-encoding-lost-when-attribute-read-from-input-field
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
+
+const test = (f: () => any) => {
+    try {
+        return '[-] ' + f();
+    } catch(e) {
+        return '[' + e.message + ']';
+    }
+}
+
+const appendResult = (str: string, err?: Error) => {
+    $('pre').append(`(${_i++}) ${str_html_escape(str)} ${(err ? str_html_escape(` !! ${err.message}`) : '')} \n`);
+};
+// END
+
+const outputKeyResults = async (keys: OpenPGP.key.Key[]) => {
+    _i = 1
+    appendResult(`Primary keys found: ${keys.length}`);
+
+    keys.map(async (key, ki) => {
+        const kn = `PK ${ki} >`;
+        if (!key.isPrivate() && !key.isPublic()) {
+            appendResult(`${kn} key is neither public or private!!`);
+            return;
+        }
+
+        console.log(key);
+
+        const primaryUser = await key.getPrimaryUser();
+        const decrypted = await decryptPrivateKey(key);
+        const verified = await key.verifyPrimaryKey();
+        const expiration = await key.getExpirationTime();
+
+        console.log(primaryUser, decrypted, verified, expiration);
+
+        appendResult(`${kn} Is Private? ${test(() => {return key.isPrivate()})}`);
+        appendResult(`${kn} Primary User: ${test(() => {return primaryUser.user.userId.userid})}`);
+        appendResult(`${kn} Fingerprint: ${test(() => {return key.getFingerprint()})}`);
+        // appendResult(`${kn} Has valid encryption packet? ${test(async () => {return;})}`);                                // No longer exists on object
+        appendResult(`${kn} Subkeys: ${test(() => {return key.subKeys ? key.subKeys.length : key.subKeys})}`);
+        appendResult(`${kn} Primary key algo: ${test(() => {return key.primaryKey.algorithm})}`);
+        appendResult(`${kn} Primary key decrypt: ${test(() => {return decrypted;})}`);
+        appendResult(`${kn} Primary key verify: ${test(() => {return verified;})}`);
+        appendResult(`${kn} Primary key expiration? ${test(() => {return expiration;})}`);
+
+        key.subKeys.map(async (subkey, si) => {
+            // the typings for SubKey are not entirely valid, might need an update
+
+            // const skExpiration = await (subkey as OpenPGP.key.SubKey | any).getExpirationTime();
+            // Throwing an error "TypeError: Cannot read property 'algorithm' of undefined"
+            // Stack trace:
+            /*
+                at Signature.verify (openpgp.js:38060)
+                at getLatestValidSignature (openpgp.js:31279)
+                at SubKey.getExpirationTime (openpgp.js:32125)
+                at key.subKeys.map (compatability.js:148)
+                at Array.map (<anonymous>)
+                at keys.map (compatability.js:146)
+            */
+            const skVerified = await subkey.verify(key.primaryKey);
+
+            const skn = `${kn} SK ${si} >`;
+            console.log(subkey);
+            appendResult(`${skn} Algo: ${test(() => {return (subkey as OpenPGP.key.SubKey | any).keyPacket.algorithm;})}`);
+            // appendResult(`${skn} Valid encryption key?: ${test(() => {return subkey.isValidEncryptionKey();})}); // No longer exists on object
+            // appendResult(`${skn} Expiration time: ${test(() => {return skExpiration;})}`);                       // see error described above
+            appendResult(`${skn} Verify: ${test(() => {return skVerified;})}`);
+            appendResult(`${skn} Subkey tag: ${test(() => {return (subkey as OpenPGP.key.SubKey | any).keyPacket.tag;})}`);
+            // appendResult(`${skn} Subkey getBitSize: ${test(() => {return subkey.subKey.getBitSize();})}`);       // No longer exists on object
+            // appendResult(`${skn} Valid signing key: ${test(() => {return subkey.isValidSigningKey();})}`);       // No longer exists on object
+            // appendResult(`${skn} Decrypt attempt: ${test(() => {return subkey.subKey.decrypt(passphrase);})}`);  // No longer exists on object, seems to be decrypted when parent key is decrypted
+            appendResult(`${skn} Subkey decrypted: ${test(() => {return subkey.isDecrypted();})}`);
+            appendResult(`${skn} Binding signature length: ${test(() => {return subkey.bindingSignatures.length;})}`);
+
+            subkey.bindingSignatures.map(async (sig, sgi) => {
+                const sgn = `${skn} SIG ${sgi} >`;
+                appendResult(`${sgn} Key flags: ${test(() => {return sig.keyFlags;})}`);
+                appendResult(`${sgn} Tag: ${test(() => {return sig.tag;})}`);
+                appendResult(`${sgn} Version: ${test(() => {return sig.version;})}`);
+                appendResult(`${sgn} Public key algorithm: ${test(() => {return sig.publicKeyAlgorithm;})}`);
+                appendResult(`${sgn} Key expiration time: ${test(() => {return sig.keyExpirationTime;})}`);
+                appendResult(`${sgn} Verified: ${test(() => {return sig.verified;})}`);
+            })
+        });
+
+
+        // TODO: Add appendResult calls for each of the following functions
+        // possibly a simple success / error message depending on the result
+
+        if (key.isPublic()) {
+            await encryptWithKey(key);
+        }
+
+        if (key.isPrivate()) {
+            if (! await decryptPrivateKey(key)) {
+                return;
+            };
+            await encryptWithKey(key);
+            await decryptWithKey(key);
+            await signWithKey(key);
+            await verifyWithKey(key);
+        }
+    });
+};
 
   const performKeyCompatabilityTests = async (keyString: string) => {
-    let keyBytes = new TextEncoder().encode(keyString);
-    let openpgpKey = await openpgp.key.read(keyBytes);
+    $('pre').text('');
+    try {
+        let keyBytes = new TextEncoder().encode(keyString);
+        let openpgpKey = await openpgp.key.read(keyBytes);
 
-    // key is either armoured or not valid
-    if (openpgpKey.keys.length === 0) {
-        // read the key as armoured
-        let armoredOpenpgpKey = await openpgp.key.readArmored(keyString);
-        if (armoredOpenpgpKey.keys.length > 0) {
-            // use the armoured key
-            openpgpKey = armoredOpenpgpKey;
-        } else if (armoredOpenpgpKey.keys.length === 0) {
-            // move the errors in the armoured key request to the openpgpKey object
-            // consider a means to remove duplicate errors that isnt overly verbose
-            openpgpKey.err.push(...armoredOpenpgpKey.err);
+        // key is either armoured or not valid
+        if (openpgpKey.keys.length === 0) {
+            // read the key as armoured
+            let armoredOpenpgpKey = await openpgp.key.readArmored(keyString);
+            if (armoredOpenpgpKey.keys.length > 0) {
+                // use the armoured key
+                openpgpKey = armoredOpenpgpKey;
+            } else if (armoredOpenpgpKey.keys.length === 0) {
+                // move the errors in the armoured key request to the openpgpKey object
+                // consider a means to remove duplicate errors that isnt overly verbose
+                openpgpKey.err.push(...armoredOpenpgpKey.err);
+            }
         }
-    }
 
-    // check for errors in the response to read the key
-    if ( openpgpKey.err !== null && typeof openpgpKey.err !== "undefined" && openpgpKey.err.length !== 0) {
-      alert("The provided OpenPGP key has an error, check the console for more info.");
-      openpgpKey.err.map(err => {
-        console.error(err);
-      });
-      return;
-    }
+        // check for errors in the response to read the key
+        if ( openpgpKey.err !== null && typeof openpgpKey.err !== "undefined" && openpgpKey.err.length !== 0) {
+            alert("The provided OpenPGP key has an error.");
+            openpgpKey.err.map(err => {
+                console.error(err);
+                appendResult(`Error parsing keys: `, err);
+            });
+            return;
+        }
 
-    // check for keys, null or undefined array means OpenPGP.js is having a problem
-    if (openpgpKey.keys === null || typeof openpgpKey.keys === "undefined") {
-      alert("An error was encountered while processing your provided OpenPGP Key");
-      return;
-    }
+        // check for keys, null or undefined array means OpenPGP.js is having a problem
+        if (openpgpKey.keys === null || typeof openpgpKey.keys === "undefined") {
+            appendResult(`Key parse error: ${JSON.stringify(openpgpKey)}`);
+            return;
+        }
 
-    let ct = openpgpKey.keys.length;
-    if (ct === 0) {
-      alert("OpenPGP.js returned no keys from request.");
-      return;
-    }
+        if (openpgpKey.keys.length === 0) {
+            alert("No keys were parsed in request");
+            return;
+        }
 
-    key = openpgpKey.keys[0];
-
-    keyData = {
-        type: <null | string>null,
-        alg: key.getAlgorithmInfo(),
-        created: key.getCreationTime(),
-        expiration: await key.getExpirationTime(),
-        fingerprint: key.getFingerprint(),
-        key_id: key.getKeyId(),
-        revoked: await key.isRevoked()
-    };
-
-    if (key.isPrivate()) {
-        keyData.type = 'private';
-
-        // show the private key fields
-        $('.private_key').show();
-    } else if (key.isPublic()) {
-        keyData.type = 'public';
-        $(".private_key").hide();
-    } else {
-      alert("This OpenPGP key is neither public or private according to our libraries.");
-      return;
+        outputKeyResults(openpgpKey.keys);
+    } catch(err) {
+        appendResult('Exception parsing key', err);
+		return;
     }
   };
-
-  $('.action_private_password').click(
-      Ui.event.prevent('double', async self => {
-        const privatePw = String($('.key_password').val());
-        if (!privatePw && key.isPrivate()) {
-            alert("Please provide a password when encrypting with your private key");
-            return;
-        }
-
-        if (!await key.decrypt(privatePw)) {
-            alert("Sorry your private key was not decrypted with that password. Try again with a different password!");
-            return;
-        }
-      })
-  );
-
-  $('.action_encrypt').click(
-    Ui.event.prevent('double', async self => {
-        const inputString = String($(".text_input").val());
-        if (!inputString) {
-            alert("Please include a message to be encrypted in the textbox");
-            return;
-        }
-
-        const privatePw = String($('.key_password').val());
-        if (!privatePw && keyData.type === 'private') {
-            alert("Please provide a password when encrypting with your private key");
-            return;
-        }
-
-        let message = await openpgp.encrypt(<OpenPGP.EncryptOptions>{
-            message: openpgp.message.fromText(inputString),
-            privateKeys: (key.isPrivate() ? key : null),
-            publicKeys: (key.isPublic() ? key : null),
-            passwords: (key.isPrivate() ? [privatePw] : null)
-        });
-
-        console.log((message as any).data);
-        $('.text_input').val((message as any).data);
-    })
-  );
-
-  $('.action_decrypt').click(
-    Ui.event.prevent('double', async self => {
-        const inputString = String($(".text_input").val());
-        if (!inputString) {
-            alert("Please include a message to be decrypted in the textbox");
-            return;
-        }
-
-        const privatePw = String($('.key_password').val());
-        if (!privatePw && keyData.type === 'private') {
-            alert("Please provide a password when encrypting with your private key");
-            return;
-        }
-
-        // let inputBytes = new TextEncoder().encode(inputString);
-
-        let message = await openpgp.decrypt(<OpenPGP.DecryptOptions>{
-            message: await openpgp.message.readArmored(inputString),
-            privateKeys: key,
-            passwords: [privatePw]
-        });
-
-        console.log(JSON.stringify(message));
-        $('.text_input').val((message as any).data);
-    })
-  );
-
-  $('.action_sign').click(
-    Ui.event.prevent('double', async self => {
-        const inputString = String($(".text_input").val());
-        if (!inputString) {
-            alert("Please include a message to be signed in the textbox");
-            return;
-        }
-
-        let result = await openpgp.message.fromText(inputString).sign([key]);
-        console.log(JSON.stringify(result));
-    })
-  );
-
-  $('.action_verify').click(
-    Ui.event.prevent('double', async self => {
-        const inputString = String($(".text_input").val());
-        if (!inputString) {
-            alert("Please include a message to be verified in the textbox");
-            return;
-        }
-        
-        let result =  await openpgp.message.fromText(inputString).verify([key]);
-        console.log(JSON.stringify(result));
-    })
-  );
 })();
