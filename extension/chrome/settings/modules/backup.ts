@@ -15,6 +15,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -217,7 +218,7 @@ Catch.try(async () => {
   const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [asBackupFile(acctEmail, armoredKey)];
-    const msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], Google.GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    const msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
       return await Google.gmail.msgSend(acctEmail, msg);
     } else {

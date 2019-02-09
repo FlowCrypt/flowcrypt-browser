@@ -15,6 +15,7 @@ import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
+import { getGmailRecoverySearchQuery } from '../core/const.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -31,8 +32,6 @@ declare const openpgp: typeof OpenPGP;
 export class Google extends Api {
 
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
-  public static GMAIL_RECOVERY_EMAIL_SUBJECTS = ['Your FlowCrypt Backup',
-    'Your CryptUp Backup', 'All you need to know about CryptUP (contains a backup)', 'CryptUP Account Backup'];
   private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;
 
   private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {
@@ -71,14 +70,6 @@ export class Google extends Api {
         } else {
           return '(' + arr.join(') OR (') + ')';
         }
-      },
-      backups: (acctEmail: string) => {
-        return [
-          'from:' + acctEmail,
-          'to:' + acctEmail,
-          '(subject:"' + Google.GMAIL_RECOVERY_EMAIL_SUBJECTS.join('" OR subject: "') + '")',
-          '-is:spam',
-        ].join(' ');
       },
     },
     usersMeProfile: async (acctEmail: string | undefined, accessToken?: string): Promise<R.GmailUsersMeProfile> => {
@@ -369,7 +360,7 @@ export class Google extends Api {
       return await Google.extractHeadersFromMsgs(acctEmail, messages || [], headerNames, msgLimit);
     },
     fetchKeyBackups: async (acctEmail: string) => {
-      const res = await Google.gmail.msgList(acctEmail, Google.gmail.buildSearchQuery.backups(acctEmail), true);
+      const res = await Google.gmail.msgList(acctEmail, getGmailRecoverySearchQuery(acctEmail), true);
       if (!res.messages) {
         return [];
       }
