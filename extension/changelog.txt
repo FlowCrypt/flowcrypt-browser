@@ -1,8 +1,10 @@
 <div>
 
-version 6.6.2 on February 6, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/313?closed=1" target="_blank">Code maintenance</a>
+version 6.6.3 on February 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/315?closed=1" target="_blank">Deprecate Google+</a>
 
-version 6.6.1 on January 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/312?closed=1" target="_blank">Reattest fix</a>
+version 6.6.2 on February 6, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/314?closed=1" target="_blank">Code maintenance</a>
+
+version 6.6.1 on January 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/313?closed=1" target="_blank">Reattest fix</a>
 
 version 6.6.0 on January 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/312?closed=1" target="_blank">Enterprise builds</a>
 
