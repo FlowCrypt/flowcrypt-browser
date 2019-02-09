@@ -31,7 +31,10 @@ declare namespace OpenPGP {
   }
   type Stream<T extends Uint8Array | string> = WebStream<T> | NodeStream<T>;
 
-  export interface EncryptOptions {
+  /**
+   * EncryptArmorOptions or EncryptBinaryOptions will be used based on armor option (boolean), defaults to armoring
+   */
+  interface BaseEncryptOptions {
     /** message to be encrypted as created by openpgp.message.fromText or openpgp.message.fromBinary */
     message: message.Message;
     /** (optional) array of keys or single key, used to encrypt the message */
@@ -44,8 +47,6 @@ declare namespace OpenPGP {
     sessionKey?: SessionKey;
     /** (optional) which compression algorithm to compress the message with, defaults to what is specified in config */
     compression?: enums.compression;
-    /** (optional) if the return values should be ascii armored or the message/signature objects */
-    armor?: boolean;
     /** (optional) whether to return data as a stream. Defaults to the type of stream `message` was created from, if any. */
     streaming?: 'web' | 'node' | false;
     /** (optional) if the signature should be detached (if true, signature will be added to returned object) */
@@ -60,6 +61,16 @@ declare namespace OpenPGP {
     fromUserId?: UserId;
     /** (optional) user ID to encrypt for, e.g. { name:'Robert Receiver', email:'robert@openpgp.org' } */
     toUserId?: UserId;
+  }
+
+  export interface EncryptArmorOptions extends BaseEncryptOptions {
+    /** if the return values should be ascii armored or the message/signature objects */
+    armor: true;
+  }
+
+  export interface EncryptBinaryOptions extends BaseEncryptOptions {
+    /** if the return values should be ascii armored or the message/signature objects */
+    armor: false;
   }
 
   export namespace packet {
@@ -250,8 +261,6 @@ declare namespace OpenPGP {
     signature?: signature.Signature;
   }
 
-  export type EncryptResult = EncryptArmorResult | EncryptBinaryResult;
-
   export interface SignArmorResult {
     data: string | Stream<string>;
     signature: string | Stream<string>;
@@ -391,7 +400,9 @@ declare namespace OpenPGP {
    * @async
    * @static
    */
-  export function encrypt(options: EncryptOptions): Promise<EncryptResult>;
+  export function encrypt(options: EncryptArmorOptions | BaseEncryptOptions): Promise<EncryptArmorResult>;
+
+  export function encrypt(options: EncryptBinaryOptions): Promise<EncryptBinaryResult>;
 
   /**
    * Signs a cleartext message.
