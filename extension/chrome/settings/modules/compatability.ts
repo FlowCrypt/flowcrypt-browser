@@ -69,6 +69,9 @@ Catch.try(async () => {
     return output;
   };
 
+  // Figure out how to ensure the signing and verifying was actually successful,
+  // verifyResult has an error parameter. But sign doesn't seem to have an obvious error
+  // perhaps we can wrap in the try-catch block to see if it returns an error in that way.
   const testSignVerify = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
     const signedMessage = await openpgp.message.fromText(encryptionText).sign([key]);
