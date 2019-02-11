@@ -371,6 +371,7 @@ export class Api {
     lookupEmail: (emails: string[]): Promise<{ results: PubkeySearchResult[] }> => Api.internal.apiAttesterCall('lookup/email', {
       email: emails.map(e => Str.parseEmail(e).email),
     }),
+    lookupFingerprint: (fingerprint: string): Promise<{ results: PubkeySearchResult[] }> => Api.internal.apiAttesterCall('lookup/' + encodeURIComponent(fingerprint), {}),
     initialLegacySubmit: (email: string, pubkey: string, attest: boolean = false): Promise<R.AttInitialLegacySugmit> => Api.internal.apiAttesterCall('initial/legacy_submit', {
       email: Str.parseEmail(email).email,
       pubkey: pubkey.trim(),
