@@ -516,6 +516,8 @@ export class Ui {
       return factory.embeddedMsg(block.content, msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content, 'publicKey'), isOutgoing);
+    } else if (block.type === 'fingerprint') {
+      return factory.embeddedFingerprint(block.content, isOutgoing);
     } else if (block.type === 'passwordMsg') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content); // here block.content is message short id
     } else if (block.type === 'attestPacket') {
@@ -764,6 +766,10 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
   }
 
+  srcPgpFingerprintIframe = (fingerprint: string, isOutgoind?: boolean) => {
+    return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), fingerprint, minimized: Boolean(isOutgoind), });
+  }
+
   srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
     const params: UrlParams = {
       isReplyBox: true,
@@ -830,6 +836,10 @@ export class XssSafeFactory {
 
   embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
+  }
+
+  embeddedFingerprint = (fingerprint: string, isOutgoing?: boolean) => {
+    return this.iframe(this.srcPgpFingerprintIframe(fingerprint, isOutgoing), ['pgp_block']);
   }
 
   embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {

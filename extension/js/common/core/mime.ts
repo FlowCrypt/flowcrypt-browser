@@ -37,7 +37,7 @@ export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'message' | 'passwordMsg';
-export type MsgBlockType = 'text' | 'html' | 'attachment' | ReplaceableMsgBlockType;
+export type MsgBlockType = 'text' | 'html' | 'attachment' | 'fingerprint' | ReplaceableMsgBlockType;
 export type MsgBlock = {
   type: MsgBlockType;
   content: string;

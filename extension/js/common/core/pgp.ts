@@ -469,7 +469,31 @@ export class Pgp {
       if (origText && !result.found.length) { // didn't find any blocks, but input is non-empty
         const potentialText = origText.substr(startAt).trim();
         if (potentialText) {
-          result.found.push(Pgp.internal.msgBlockObj('text', potentialText));
+          //check to see if this could be one or more fingerprints
+          var fingerprints = new Array<string>();
+          var texts = new Array<string>();
+
+          const lines = potentialText.split('\n');
+          for (const line of lines) {
+            if (/^(PGP|pgp|0x)/.test(line)) {
+              // lines starting with PGP or 0x are probably fingerprints
+              fingerprints.push(line);
+            } else if (/[a-zA-Z0-9 ]{16,}/.test(line)) {
+              //nobody's going to use a fingerprint with less than 16 hex digits
+              fingerprints.push(line);
+            }
+            else {
+              texts.push(line);
+            }
+          }
+
+          for (const fingerprint of fingerprints) {
+            result.found.push(Pgp.internal.msgBlockObj('fingerprint', fingerprint));
+          }
+
+          for (const text of texts) {
+            result.found.push(Pgp.internal.msgBlockObj('text', text));
+          }
         }
       }
       return result;

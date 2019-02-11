@@ -9,7 +9,7 @@ import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
-import { Api, PubkeySearchResult } from '../../js/common/api/api.js';
+import { Api } from '../../js/common/api/api.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -38,7 +38,7 @@ Catch.try(async () => {
 
     //start by seperated out fingerprints from the public keys
     //any line of text that isn't within a PGP key is assumed to be a fingerprint
-    for (let line in rawLines) {
+    for (let line of rawLines) {
       if (!inKey) {
         //if we're not in a key, look for the beginning of a key
         //otherwise, just push the lines into the fingerprint array
@@ -62,7 +62,7 @@ Catch.try(async () => {
 
     // Now we assume that the lines in the fingerprints array are, in fact, fingerprints
     // So strip everything that isn't a valid hex digit and convert to uppercase
-    fingerprintLines = fingerprintLines.map((line: string) => line.replace(/[^a-fA-F0-9]/, '').toUpperCase());
+    fingerprintLines = fingerprintLines.map((line: string) => line.replace(/[^a-fA-F0-9]/g, '').toUpperCase());
 
     // Perform the lookups
     var keyResults = await Promise.all(fingerprintLines.map((fingerprint: string) => Api.attester.lookupFingerprint(fingerprint)));
