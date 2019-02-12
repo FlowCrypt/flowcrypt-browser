@@ -65,6 +65,8 @@ declare namespace OpenPGP {
     toUserId?: UserId;
   }
 
+  export type EncryptOptions = BaseEncryptOptions | EncryptArmorOptions | EncryptBinaryOptions;
+
   export interface EncryptArmorOptions extends BaseEncryptOptions {
     /** if the return values should be ascii armored or the message/signature objects */
     armor: true;
