@@ -1,0 +1,17 @@
+{
+  "settings": {
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "javascript.preferences.importModuleSpecifier": "relative",
+    "javascript.preferences.quoteStyle": "single",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.preferences.quoteStyle": "single",
+    "tslint.configFile": "conf/tslint.yaml",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+  },
+  "folders": [
+    {
+      "path": "."
+    }
+  ]
+}
