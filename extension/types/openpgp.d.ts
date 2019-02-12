@@ -804,7 +804,7 @@ declare namespace OpenPGP {
       encrypt(passphrase: string | string[]): Promise<void>;
       getExpirationTime(): Promise<Date | typeof Infinity>;
       getKeyIds(): Keyid[];
-      getPrimaryUser(): any;
+      getPrimaryUser(): Promise<PrimaryUser>;
       getUserIds(): string[];
       isPrivate(): boolean;
       isPublic(): boolean;
@@ -829,6 +829,7 @@ declare namespace OpenPGP {
     class SubKey {
       constructor(subKeyPacket: packet.SecretSubkey | packet.PublicSubkey);
       subKey: packet.SecretSubkey | packet.PublicSubkey;
+      keyPacket: packet.SecretKey;
       bindingSignatures: packet.Signature[];
       revocationSignatures: packet.Signature[];
       verify(primaryKey: packet.PublicKey | packet.SecretKey): Promise<enums.keyStatus>;
@@ -845,6 +846,11 @@ declare namespace OpenPGP {
       selfCertifications: packet.Signature[];
       otherCertifications: packet.Signature[];
       revocationSignatures: packet.Signature[];
+    }
+
+    export interface PrimaryUser {
+      index: number;
+      user: User;
     }
 
     interface KeyResult {

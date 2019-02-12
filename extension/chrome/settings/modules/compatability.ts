@@ -90,16 +90,16 @@ Catch.try(async () => {
   // START: Code and helpers taken from the original private key test page
   let testIndex = 0;
 
-  const test = async (f: () => any) => {
+  const test = async (f: () => Promise<string | number | number[] | Date | boolean | null | undefined>) => {
     try {
-      return `[-] ${await f()}`;
+      return `[-] ${String(await f())}`;
     } catch (e) {
       return `[${String(e)}]`;
     }
   };
 
   const appendResult = (str: string, err?: Error) => {
-    $("pre").append(`(${testIndex++}) ${Xss.escape(str)} ${err ? Xss.escape(` !! ${err.message}`) : ""} \n`);
+    Xss.sanitizeAppend('pre', `(${Xss.escape(`${testIndex++}`)}) ${Xss.escape(str)} ${err ? Xss.escape(` !! ${err.message}`) : Xss.escape("")} \n`);
   };
   // END
 
@@ -115,7 +115,13 @@ Catch.try(async () => {
       }
 
       appendResult(`${kn} Is Private? ${await test(async () => key.isPrivate())}`);
-      appendResult(`${kn} Primary User: ${await test(async () => (await key.getPrimaryUser()).user.userId.userid)}`);
+      appendResult(`${kn} Primary User: ${await test(async () => {
+        const user = await key.getPrimaryUser();
+        if (user.user.userId !== null && typeof user.user.userId !== 'undefined') {
+          return user.user.userId.userid;
+        }
+        return 'UserId is null';
+      })}`);
       appendResult(`${kn} Fingerprint: ${await test(async () => await Pgp.key.fingerprint(key, "spaced"))}`);
       // appendResult(`${kn} Has valid encryption packet? ${test(async () => {return;})}`);                                // No longer exists on object
       appendResult(`${kn} Subkeys: ${await test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
@@ -144,11 +150,11 @@ Catch.try(async () => {
 
         const skn = `${kn} SK ${si} >`;
 
-        appendResult(`${skn} Algo: ${await test(async () => (subkey as OpenPGP.key.SubKey | any).keyPacket.algorithm)}`);
+        appendResult(`${skn} Algo: ${await test(async () => subkey.keyPacket.algorithm)}`);
         // appendResult(`${skn} Valid encryption key?: ${await test(async () => {return subkey.isValidEncryptionKey();})}); // No longer exists on object
         // appendResult(`${skn} Expiration time: ${await test(async () => skExpiration)}`);                       // see error described above
         appendResult(`${skn} Verify: ${await test(async () => await subkey.verify(key.primaryKey))}`);
-        appendResult(`${skn} Subkey tag: ${await test(async () => (subkey as OpenPGP.key.SubKey | any).keyPacket.tag)}`);
+        appendResult(`${skn} Subkey tag: ${await test(async () => subkey.keyPacket.tag)}`);
         // appendResult(`${skn} Subkey getBitSize: ${await test(async () => {return subkey.subKey.getBitSize();})}`);       // No longer exists on object
         // appendResult(`${skn} Valid signing key: ${await test(async () => {return subkey.isValidSigningKey();})}`);       // No longer exists on object
         // appendResult(`${skn} Decrypt attempt: ${await test(async () => {return subkey.subKey.decrypt(passphrase);})}`);  // No longer exists on object,
@@ -196,9 +202,13 @@ Catch.try(async () => {
         return;
       }
 
-      outputKeyResults(openpgpKey.keys);
+      await outputKeyResults(openpgpKey.keys);
     } catch (err) {
-      appendResult("Exception parsing key", err);
+      if (err instanceof Error) {
+        appendResult("Exception parsing key", err);
+      } else {
+        appendResult(`Error parsing key: ${err}`);
+      }
       return;
     }
   };
