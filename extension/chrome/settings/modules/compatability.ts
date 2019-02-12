@@ -1,18 +1,13 @@
 "use strict";
 
 import { Catch } from "../../../js/common/platform/catch.js";
-import { Xss, Ui /*, XssSafeFactory, Env*/ } from "../../../js/common/browser.js";
+import { Xss, Ui } from "../../../js/common/browser.js";
 import { Pgp, PgpMsg } from "../../../js/common/core/pgp.js";
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
-  //   const uncheckedUrlParams = Env.urlParams(["acctEmail", "parentTabId"]);
-  //   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, "acctEmail");
-
   let origContent: string;
-  //   const factory = new XssSafeFactory(acctEmail, tabId);
-
   const encryptionText = "This is the text we are encrypting!";
   const encryptionPassphrase = "anEncryptionPassphrase";
 
@@ -22,12 +17,9 @@ Catch.try(async () => {
       alert("Please paste an OpenPGP in the input box");
       return;
     }
-
     origContent = $(self).html();
     Xss.sanitizeRender(self, "Evaluating.. " + Ui.spinner("white"));
-
     await performKeyCompatabilityTests(keyString);
-
     Xss.sanitizeRender(self, origContent);
   }));
 
@@ -87,7 +79,6 @@ Catch.try(async () => {
     return output;
   };
 
-  // START: Code and helpers taken from the original private key test page
   let testIndex = 0;
 
   const test = async (f: () => Promise<unknown>) => {
@@ -101,7 +92,6 @@ Catch.try(async () => {
   const appendResult = (str: string, err?: Error) => {
     Xss.sanitizeAppend('pre', `(${Xss.escape(`${testIndex++}`)}) ${Xss.escape(str)} ${err ? Xss.escape(` !! ${err.message}`) : Xss.escape("")} \n`);
   };
-  // END
 
   const outputKeyResults = async (keys: OpenPGP.key.Key[]) => {
     testIndex = 1;
@@ -180,7 +170,6 @@ Catch.try(async () => {
     $("pre").text("");
     try {
       const openpgpKey = await openpgp.key.readArmored(keyString);
-
       // check for errors in the response to read the key
       if (openpgpKey.err !== null && typeof openpgpKey.err !== "undefined" && openpgpKey.err.length !== 0) {
         appendResult(`The provided OpenPGP key has an error: ${JSON.stringify(openpgpKey)}`);
@@ -190,18 +179,15 @@ Catch.try(async () => {
         });
         return;
       }
-
       // check for keys, null or undefined array means OpenPGP.js is having a problem
       if (openpgpKey.keys === null || typeof openpgpKey.keys === "undefined") {
         appendResult(`Key parse error: ${JSON.stringify(openpgpKey)}`);
         return;
       }
-
       if (openpgpKey.keys.length === 0) {
         appendResult("No keys were parsed in request");
         return;
       }
-
       await outputKeyResults(openpgpKey.keys);
     } catch (err) {
       if (err instanceof Error) {
