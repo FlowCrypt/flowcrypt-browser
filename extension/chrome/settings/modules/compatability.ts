@@ -90,7 +90,7 @@ Catch.try(async () => {
   // START: Code and helpers taken from the original private key test page
   let testIndex = 0;
 
-  const test = async (f: () => Promise<string | number | number[] | Date | boolean | null | undefined>) => {
+  const test = async (f: () => Promise<unknown>) => {
     try {
       return `[-] ${String(await f())}`;
     } catch (e) {
