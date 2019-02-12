@@ -1,0 +1,45 @@
+<html>
+
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>FlowCrypt</title>
+  <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/open-sans.css" />
+  <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
+  <style>iframe { width: 100%; height: 270px; border: 1px dashed #999; }</style>
+  <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+  <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
+</head>
+
+<body id="settings">
+
+  <div id="content" class="campatability page">
+
+    <h1>OpenPGP key compatibility test</h1>
+
+    <div class="line">Locally test any public or private key.</div>
+
+    <div class="line">
+      <textarea placeholder="ASCII Armored Public or Private Key....." class="input_key" style="width: 100%;height: 200px;"></textarea>
+    </div>
+
+    <div class="line">
+      <input id="input_passphrase" class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
+      <div class="button green large action_test_key">test compatability</div>
+    </div>
+
+    <div class="line">
+      <pre style="display: none;width: 100%;overflow-y: scroll"></pre>
+    </div>
+  </div>
+
+  <script src="/lib/purify.min.js"></script>
+  <script src="/lib/jquery.min.js"></script>
+  <script src="/lib/openpgp.js"></script>
+  <script src="/lib/fine-uploader.js"></script>
+  <script src="compatability.js" type="module"></script>
+
+</body>
+
+</html>
