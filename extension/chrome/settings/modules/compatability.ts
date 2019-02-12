@@ -152,8 +152,7 @@ Catch.try(async () => {
   };
 
   const performKeyCompatabilityTests = async (keyString: string) => {
-    $('pre').css('display', 'block');
-    $('pre').text('');
+    $('pre').text('').css('display', 'block');
     try {
       const openpgpKey = await openpgp.key.readArmored(keyString);
       // check for errors in the response to read the key
