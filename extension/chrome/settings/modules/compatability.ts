@@ -7,7 +7,6 @@ import { Pgp, PgpMsg } from "../../../js/common/core/pgp.js";
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
-  let origContent: string;
   const encryptionText = "This is the text we are encrypting!";
   const encryptionPassphrase = "anEncryptionPassphrase";
 
@@ -17,10 +16,10 @@ Catch.try(async () => {
       alert("Please paste an OpenPGP in the input box");
       return;
     }
-    origContent = $(self).html();
+    const origBtnContent = $(self).html();
     Xss.sanitizeRender(self, "Evaluating.. " + Ui.spinner("white"));
     await performKeyCompatabilityTests(keyString);
-    Xss.sanitizeRender(self, origContent);
+    Xss.sanitizeRender(self, origBtnContent);
   }));
 
   const testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
