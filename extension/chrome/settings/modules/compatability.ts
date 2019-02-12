@@ -9,6 +9,7 @@ declare const openpgp: typeof OpenPGP;
 Catch.try(async () => {
   const encryptionText = 'This is the text we are encrypting!';
   const encryptionPassphrase = 'anEncryptionPassphrase';
+  let testIndex = 0;
 
   $('.action_test_key').click(Ui.event.prevent('double', async self => {
     const keyString = String($('.input_key').val());
@@ -24,35 +25,23 @@ Catch.try(async () => {
 
   const testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
-    const eMessage = await openpgp.encrypt({
+    const encryptedMsg = await openpgp.encrypt({
       message: openpgp.message.fromText(encryptionText),
       publicKeys: key.toPublic(),
       armor: true,
       passwords: [encryptionPassphrase]
     });
-
-    const cipherText = eMessage.data;
-    if (cipherText !== null && typeof cipherText !== 'undefined' && cipherText !== '') {
-      output.push('Encryption with key was successful');
-    } else {
-      output.push('Encryption with key failed');
-    }
-
+    output.push(`Encryption with key was successful`);
     if (key.isPrivate() && key.isDecrypted()) {
-      const dMessage = await openpgp.decrypt({
-        message: await openpgp.message.readArmored(cipherText),
+      const decryptedMsg = await openpgp.decrypt({
+        message: await openpgp.message.readArmored(encryptedMsg.data),
         privateKeys: key,
         passwords: [encryptionPassphrase]
       });
-
-      const decryptionResult = dMessage.data;
-      if (decryptionResult === encryptionText) {
-        output.push('Decryption with key was successful');
-      } else {
-        output.push('Decryption with key failed!');
-      }
+      output.push(`Decryption with key ${decryptedMsg.data === encryptionText ? 'succeeded' : 'failed!'}`);
+    } else {
+      output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isDecrypted:${key.isDecrypted()}`);
     }
-
     return output;
   };
 
@@ -77,8 +66,6 @@ Catch.try(async () => {
 
     return output;
   };
-
-  let testIndex = 0;
 
   const test = async (f: () => Promise<unknown>) => {
     try {
