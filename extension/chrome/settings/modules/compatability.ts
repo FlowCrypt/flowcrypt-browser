@@ -41,8 +41,6 @@ Catch.try(async () => {
     });
 
     const cipherText = eMessage.data;
-    console.log(eMessage);
-
     if (cipherText !== null && typeof cipherText !== 'undefined' && cipherText !== '') {
       output.push("Encryption with key was successful");
     } else {
@@ -56,9 +54,7 @@ Catch.try(async () => {
         passwords: [encryptionPassphrase]
       });
 
-      const decryptionResult = dMessage.data as string;
-      console.log(decryptionResult);
-
+      const decryptionResult = dMessage.data;
       if (decryptionResult === encryptionText) {
         output.push("Decryption with key was successful");
       } else {
@@ -75,17 +71,17 @@ Catch.try(async () => {
   const testSignVerify = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
     const signedMessage = await openpgp.message.fromText(encryptionText).sign([key]);
-    console.log(signedMessage);
-
     output.push("Signing message was successful");
 
     const verifyResult = await PgpMsg.verify(signedMessage, [key]);
-    console.log(verifyResult);
-
     if (verifyResult.error !== null && typeof verifyResult.error !== 'undefined') {
       output.push(`Verifying message failed with error: ${verifyResult.error}`);
     } else {
-      output.push("Verifying message was successful");
+      if (verifyResult.match && verifyResult.signer === (await Pgp.key.longid(key))) {
+        output.push("Verifying message was successful");
+      } else {
+        output.push(`Verifying message failed, match or signer wasn't valid: match [${verifyResult.match}] - signer [${verifyResult.signer}]`);
+      }
     }
 
     return output;
@@ -96,9 +92,9 @@ Catch.try(async () => {
 
   const test = async (f: () => any) => {
     try {
-      return `[-] ${(await f())}`;
+      return `[-] ${await f()}`;
     } catch (e) {
-      return `[${e.message}]`;
+      return `[${String(e)}]`;
     }
   };
 
@@ -118,24 +114,17 @@ Catch.try(async () => {
         return;
       }
 
-      if (key.isPrivate()) {
-        if (!(await Pgp.key.decrypt(key, [String($(".input_passphrase").val())]))) {
-          appendResult(`${kn} failed to decrypt private key`);
-          return;
-        }
-      }
-
-      console.log(key);
-
-      // const keyData = await Pgp.key.serialize(key);
-
       appendResult(`${kn} Is Private? ${await test(async () => key.isPrivate())}`);
       appendResult(`${kn} Primary User: ${await test(async () => (await key.getPrimaryUser()).user.userId.userid)}`);
       appendResult(`${kn} Fingerprint: ${await test(async () => await Pgp.key.fingerprint(key, "spaced"))}`);
       // appendResult(`${kn} Has valid encryption packet? ${test(async () => {return;})}`);                                // No longer exists on object
       appendResult(`${kn} Subkeys: ${await test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       appendResult(`${kn} Primary key algo: ${await test(async () => key.primaryKey.algorithm)}`);
-      appendResult(`${kn} Primary key decrypt: ${await test(async () => Pgp.key.decrypt(key, [String($(".input_passphrase").val())]))}`);
+
+      if (key.isPrivate()) {
+        appendResult(`${kn} Primary key decrypt: ${await test(async () => Pgp.key.decrypt(key, [String($(".input_passphrase").val())]))}`);
+      }
+
       appendResult(`${kn} Primary key verify: ${await test(async () => await key.verifyPrimaryKey())}`);
       appendResult(`${kn} Primary key expiration? ${await test(async () => await key.getExpirationTime())}`);
 
@@ -154,7 +143,6 @@ Catch.try(async () => {
         // TODO:  Find out how to get expiration time of each subkey
 
         const skn = `${kn} SK ${si} >`;
-        console.log(subkey);
 
         appendResult(`${skn} Algo: ${await test(async () => (subkey as OpenPGP.key.SubKey | any).keyPacket.algorithm)}`);
         // appendResult(`${skn} Valid encryption key?: ${await test(async () => {return subkey.isValidEncryptionKey();})}); // No longer exists on object
@@ -182,6 +170,7 @@ Catch.try(async () => {
   };
 
   const performKeyCompatabilityTests = async (keyString: string) => {
+    $("pre").css("display", "block");
     $("pre").text("");
     try {
       const openpgpKey = await openpgp.key.readArmored(keyString);
