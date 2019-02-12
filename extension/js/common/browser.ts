@@ -517,7 +517,7 @@ export class Ui {
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content, 'publicKey'), isOutgoing);
     } else if (block.type === 'fingerprint') {
-      return factory.embeddedFingerprint(block.content, isOutgoing);
+      return factory.embeddedFingerprint(block.content.replace(/[^a-fA-F0-9]/g, '').toUpperCase(), isOutgoing);
     } else if (block.type === 'passwordMsg') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content); // here block.content is message short id
     } else if (block.type === 'attestPacket') {

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Catch } from '../../js/common/platform/catch.js';
+import { Catch, UnreportableError } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
@@ -20,58 +20,47 @@ Catch.try(async () => {
   Ui.event.protect();
 
   // minimized means I have to click to see details. Compact means the details take up very little space.
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'fingerprint', 'parentTabId', 'minimized', 'compact', 'frameId']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const armoredPubkey = Env.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey');
   const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const compact = uncheckedUrlParams.compact === true;
   const minimized = uncheckedUrlParams.minimized === true;
 
-  // This function allows fingerprints to be imported by first looking up the correspanding public keys
-  async function lookupKeys(rawText: string): Promise<OpenPGP.key.KeyResult> {
-    var processedKeys = '';
-    var rawLines = rawText.split('\n');
-    var keyLines = new Array<string>();
-    var fingerprintLines = new Array<string>();
-    var inKey = false;
+  //if a fingerprint is given, lookup the associate key, otherwise just use the given key
+  async function lookupArmoredKey(): Promise<string> {
+    const armored = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'armoredPubkey');
+    const fingerprint = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'fingerprint');
 
-    //start by seperated out fingerprints from the public keys
-    //any line of text that isn't within a PGP key is assumed to be a fingerprint
-    for (let line of rawLines) {
-      if (!inKey) {
-        //if we're not in a key, look for the beginning of a key
-        //otherwise, just push the lines into the fingerprint array
-        if (line == "-----BEGIN PGP PUBLIC KEY BLOCK-----") {
-          inKey = true;
-          keyLines.push(line);
-        }
-        else {
-          fingerprintLines.push(line);
-        }
+    if (armored) {
+      return Promise.resolve(armored);
+    } else if (fingerprint) {
+      const { results: keyResult } = await Api.attester.lookupFingerprint(fingerprint);
+
+      if (keyResult.length == 0) {
+        const msg = `Cannot find key for fingerprint: ${fingerprint}`;
+        Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
+        throw new UnreportableError(msg);
       }
       else {
-        //if we're in a key, look for the end
-        //otherwise, push the lines to the keylines array
-        if (line == "-----END PGP PUBLIC KEY BLOCK-----") {
-          inKey = false;
+        //use the first key
+        let key = keyResult[0].pubkey;
+        if (key === null) {
+          const msg = `Cannot find key for fingerprint: ${fingerprint}`;
+          Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
+          throw new UnreportableError(msg);
         }
-        keyLines.push(line);
+        return Promise.resolve(key);
       }
+    } else {
+      const msg = `Was not given armored public key or fingerprint`;
+      Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
+      throw new UnreportableError(msg);
     }
+  };
+  const armoredPubkey = await lookupArmoredKey(); //attempted this as awaiting an async arrow function, but the compiler did not like it
 
-    // Now we assume that the lines in the fingerprints array are, in fact, fingerprints
-    // So strip everything that isn't a valid hex digit and convert to uppercase
-    fingerprintLines = fingerprintLines.map((line: string) => line.replace(/[^a-fA-F0-9]/g, '').toUpperCase());
-
-    // Perform the lookups
-    var keyResults = await Promise.all(fingerprintLines.map((fingerprint: string) => Api.attester.lookupFingerprint(fingerprint)));
-    console.log(keyResults);
-
-    return openpgp.key.readArmored(processedKeys);
-  }
-
-  const { keys: pubs } = await lookupKeys(armoredPubkey);
+  const { keys: pubs } = await openpgp.key.readArmored(armoredPubkey);
 
   const sendResizeMsg = () => {
     const desiredHeight = $('#pgp_block').height()! + (compact ? 10 : 30); // #pgp_block is defined in template
