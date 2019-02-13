@@ -11,7 +11,7 @@ import { defineGmailTests } from './tests/tests/gmail';
 import { defineSettingsTests } from './tests/tests/settings';
 import { defineElementTests } from './tests/tests/elements';
 import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
-import { Config } from './util';
+import { Config, Util } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtml, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 
@@ -97,10 +97,16 @@ ava.after.always('close browsers', async t => {
 });
 
 ava.after.always('send debug info if any', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
+  const failRnd = Util.lousyRandom();
+  console.info(`FAIL ID ${failRnd}`);
   const debugHtml = getDebugHtml(TEST_VARIANT);
+  console.info('send debug info - deciding');
   if (debugHtml) {
-    await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT})`, debugHtml);
+    console.info('send debug info - setting timeout');
+    standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
+    console.info('send debug info - sending');
+    await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT}) ${failRnd}`, debugHtml);
+    console.info('send debug info - sent');
   }
   t.pass();
 });
