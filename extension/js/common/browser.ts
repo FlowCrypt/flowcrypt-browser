@@ -585,7 +585,7 @@ export class Ui {
     },
     warning: async (text: string): Promise<void> => {
       await Swal.fire({
-        text,
+        html: `<span class="orange">${Xss.escape(text).replace(/\n/, '<br>')}</span>`,
         animation: false,
         allowOutsideClick: false,
         customClass: 'ui-modal-warning',
@@ -593,8 +593,8 @@ export class Ui {
       });
     },
     error: async (text: string): Promise<void> => {
-      const { } = await Swal.fire({
-        text,
+      await Swal.fire({
+        html: `<span class="red">${Xss.escape(text).replace(/\n/, '<br>')}</span>`,
         animation: false,
         allowOutsideClick: false,
         customClass: 'ui-modal-error',
