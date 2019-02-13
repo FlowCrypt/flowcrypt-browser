@@ -135,6 +135,7 @@ export class BrowserPool {
           this.throwOnRetryFlagAndReset(t);
           return;
         } catch (err) {
+          t.retry = undefined;
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
           throw err;
         } finally {
@@ -158,6 +159,7 @@ export class BrowserPool {
           this.throwOnRetryFlagAndReset(t);
           return;
         } catch (err) {
+          t.retry = undefined;
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
           throw err;
         } finally {
