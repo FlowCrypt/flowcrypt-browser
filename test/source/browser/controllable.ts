@@ -321,11 +321,11 @@ export class ControllablePage extends ControllableBase {
         if (controllableAlert.active) {
           t.retry = true;
           this.preventclose = true;
-          t.log(`Dismissing unexpected alert: ${alert.message()}`);
+          t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch(e => t.log(`Err1 dismissing alert: ${String(e)}`));
+            alert.dismiss().catch(e => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
-            t.log(`Err2 dismissing alert: ${String(e)}`);
+            t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
           }
         }
       }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);

@@ -94,13 +94,13 @@ export class BrowserPool {
     cb().then(resolve, reject);
   })
 
-  private processTestError = (err: any, attemptNumber: number, t: AvaContext, totalAttempts: number, attemptHtmls: string[]) => {
-    if (attemptNumber < totalAttempts) {
-      t.retry = undefined;
-      t.log(`Retrying: ${String(err)}`);
+  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
+    t.retry = undefined;
+    if (t.attemptNumber! < t.totalAttempts!) {
+      t.log(`${t.attemptText} Retrying: ${String(err)}`);
     } else {
       addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
-      t.log(`Failed:   ${err instanceof Error ? err.stack : String(err)}`);
+      t.log(`${t.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
     }
   }
@@ -127,7 +127,10 @@ export class BrowserPool {
   public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
+    t.totalAttempts = consts.ATTEMPTS;
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
+      t.attemptNumber = attemptNumber;
+      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts - 1})`;
       try {
         const browser = await withTimeouts(this.newBrowserHandle(t));
         try {
@@ -143,7 +146,7 @@ export class BrowserPool {
           await browser.close();
         }
       } catch (err) {
-        this.processTestError(err, attemptNumber, t, consts.ATTEMPTS, attemptDebugHtmls);
+        this.processTestError(err, t, attemptDebugHtmls);
       }
     }
   }
@@ -151,7 +154,10 @@ export class BrowserPool {
   public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
+    t.totalAttempts = consts.ATTEMPTS;
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
+      t.attemptNumber = attemptNumber;
+      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts - 1})`;
       try {
         await browser.closeAllPages();
         try {
@@ -167,7 +173,7 @@ export class BrowserPool {
           await browser.closeAllPages();
         }
       } catch (err) {
-        this.processTestError(err, attemptNumber, t, consts.ATTEMPTS, attemptDebugHtmls);
+        this.processTestError(err, t, attemptDebugHtmls);
       }
     }
   }

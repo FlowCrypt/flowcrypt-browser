@@ -11,7 +11,7 @@ import { defineGmailTests } from './tests/tests/gmail';
 import { defineSettingsTests } from './tests/tests/settings';
 import { defineElementTests } from './tests/tests/elements';
 import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
-import { Config } from './util';
+import { Config, Util } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtml, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 
@@ -53,7 +53,18 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
 
 ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY);
-  Config.extensionId = await browserPool.getExtensionId(t);
+  for (const i of [1, 2, 3]) {
+    try {
+      Config.extensionId = await browserPool.getExtensionId(t);
+      break;
+    } catch (e) {
+      t.log(`set up #${i} err: ${String(e)}`);
+      await Util.sleep(10);
+    }
+  }
+  if (!Config.extensionId) {
+    throw new Error('was not able to get extensionId');
+  }
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers = [];
   for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
