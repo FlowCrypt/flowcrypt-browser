@@ -367,8 +367,8 @@ Catch.try(async () => {
     }
   }));
 
-  $('.action_skip_recovery').click(Ui.event.handle(() => {
-    if (confirm(Lang.setup.confirmSkipRecovery)) {
+  $('.action_skip_recovery').click(Ui.event.handle(async target => {
+    if (await Ui.modal.confirm(Lang.setup.confirmSkipRecovery)) {
       recoveredKeys = [];
       recoveredKeysMatchingPassphrases = [];
       nRecoveredKeysLongid = 0;

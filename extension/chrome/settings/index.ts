@@ -218,7 +218,7 @@ Catch.try(async () => {
       if (me.emailAddress !== acctEmail) {
         $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
         if (me.emailAddress && acctEmail) {
-          if (confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
+          if (await Ui.modal.confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
             await resolveChangedGoogleAcct(me.emailAddress);
           }
         }

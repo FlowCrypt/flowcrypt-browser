@@ -576,7 +576,7 @@ export class Ui {
   public static modal = {
     info: async (text: string): Promise<void> => {
       await Swal.fire({
-        text,
+        html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
         allowOutsideClick: false,
         customClass: 'ui-modal-info',
@@ -585,7 +585,7 @@ export class Ui {
     },
     warning: async (text: string): Promise<void> => {
       await Swal.fire({
-        html: `<span class="orange">${Xss.escape(text).replace(/\n/, '<br>')}</span>`,
+        html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         animation: false,
         allowOutsideClick: false,
         customClass: 'ui-modal-warning',
@@ -594,7 +594,7 @@ export class Ui {
     },
     error: async (text: string): Promise<void> => {
       await Swal.fire({
-        html: `<span class="red">${Xss.escape(text).replace(/\n/, '<br>')}</span>`,
+        html: `<span class="red">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         animation: false,
         allowOutsideClick: false,
         customClass: 'ui-modal-error',
@@ -603,7 +603,7 @@ export class Ui {
     },
     confirm: async (text: string): Promise<boolean> => {
       const { dismiss } = await Swal.fire({
-        text,
+        html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
         allowOutsideClick: false,
         customClass: 'ui-modal-confirm',

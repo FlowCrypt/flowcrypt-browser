@@ -143,7 +143,7 @@ Catch.try(async () => {
       Xss.sanitizeRender(S.cached('status'), `${Lang.account.verifyToSetUpContactPage} <a href="#" class="action_subscribe">Get trial</a>`);
       S.now('subscribe').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', { isAuthErr: true })));
     } else {
-      S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
+      S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let us know at human@flowcrypt.com if this persists.');
     }
   }
 

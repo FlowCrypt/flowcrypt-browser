@@ -79,9 +79,9 @@ Catch.try(async () => {
     }));
 
     $('.action_reset_account').click(Ui.event.prevent('double', async () => {
-      if (confirm(Lang.setup.confirmResetAcct(acctEmail))) {
+      if (await Ui.modal.confirm(Lang.setup.confirmResetAcct(acctEmail))) {
         await collectInfoAndDownloadBackupFile(acctEmail);
-        if (confirm('Confirm? Don\'t come back telling me I didn\'t warn you.')) {
+        if (await Ui.modal.confirm('Proceed to reset? Don\'t come back telling me I didn\'t warn you.')) {
           await Settings.acctStorageReset(acctEmail);
           window.parent.location.reload();
         }
@@ -117,13 +117,13 @@ Catch.try(async () => {
     }));
 
     $('.action_account_email_changed').click(Ui.event.handle(async () => {
-      if (confirm(Lang.setup.confirmManualAcctEmailChange(acctEmail))) {
+      if (await Ui.modal.confirm(Lang.setup.confirmManualAcctEmailChange(acctEmail))) {
         const response = await GoogleAuth.newAuthPopup({ acctEmail });
         if (response.result === 'Success' && response.acctEmail) {
           if (response.acctEmail === acctEmail) {
             await Ui.modal.info(`Account email address seems to be the same, nothing to update: ${acctEmail}`);
           } else if (response.acctEmail) {
-            if (confirm(`Change your Google Account email from ${acctEmail} to ${response.acctEmail}?`)) {
+            if (await Ui.modal.confirm(`Change your Google Account email from ${acctEmail} to ${response.acctEmail}?`)) {
               try {
                 await Settings.acctStorageChangeEmail(acctEmail, response.acctEmail);
                 await Ui.modal.info(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);

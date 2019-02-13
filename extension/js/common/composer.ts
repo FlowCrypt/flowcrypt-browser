@@ -554,7 +554,7 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throwIfFormValsInvalid = (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
+  private throwIfFormValsInvalid = async (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
     const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -563,7 +563,7 @@ export class Composer {
       this.S.cached('input_password').focus();
       throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
     }
-    if (!((plaintext !== '' || window.confirm('Send empty message?')) && (subject !== '' || window.confirm('Send without a subject?')))) {
+    if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
       throw new ComposerResetBtnTrigger();
     }
   }
@@ -620,7 +620,7 @@ export class Composer {
       const subscription = await this.app.storageGetSubscription();
       const { armoredPubkeys, emailsWithoutPubkeys } = await this.collectAllAvailablePublicKeys(this.v.acctEmail, recipients);
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
-      this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
+      await this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
         await this.signSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
       } else {
@@ -743,7 +743,7 @@ export class Composer {
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
         return plaintext;
       } else {
-        throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let me know at human@flowcrypt.com if this happens repeatedly.');
+        throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
       }
     }
     return plaintext + '\n\n' + Ui.e('div', {

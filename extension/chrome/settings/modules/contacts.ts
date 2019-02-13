@@ -94,7 +94,7 @@ Catch.try(async () => {
         await Store.dbContactSave(undefined, await Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
         await renderContactList();
       } else {
-        await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let me know at human@flowcrypt.com if you need help.');
+        await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
         $('#edit_contact .input_pubkey').val('').focus();
       }
     }));
