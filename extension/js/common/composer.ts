@@ -993,12 +993,16 @@ export class Composer {
   }
 
   private respondToInputHotkeys = (inputToKeydownEvent: JQuery.Event<HTMLElement, null>) => {
+    console.log(`[${rnd}] respondToInputHotkeys`);
     const value = this.S.cached('input_to').val();
+    console.log(`[${rnd}] respondToInputHotkeys.value(${value})`);
     const keys = Env.keyCodes();
     if (!value && inputToKeydownEvent.which === keys.backspace) {
+      console.log(`[${rnd}] respondToInputHotkeys.value:del`);
       $('.recipients span').last().remove();
       this.showHidePwdOrPubkeyContainerAndColorSendBtn();
     } else if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
+      console.log(`[${rnd}] respondToInputHotkeys.value:enter|tab`);
       this.S.cached('input_to').blur();
       if (this.S.cached('contacts').css('display') === 'block') {
         if (this.S.cached('contacts').find('.select_contact.hover').length) {
@@ -1010,6 +1014,7 @@ export class Composer {
       this.S.cached('input_to').focus().blur();
       return false;
     }
+    console.log(`[${rnd}] respondToInputHotkeys.value:none`);
     return;
   }
 
@@ -1231,18 +1236,25 @@ export class Composer {
   }
 
   private searchContacts = async (dbOnly = false) => {
+    console.log(`[${rnd}] searchContacts`);
     const query = { substring: Str.parseEmail(String(this.S.cached('input_to').val())).email };
+    console.log(`[${rnd}] searchContacts.query(${JSON.stringify(query)})`);
     if (query.substring !== '') {
       const contacts = await this.app.storageContactSearch(query);
       if (dbOnly || !this.canReadEmails) {
+        console.log(`[${rnd}] searchContacts 1`);
         this.renderSearchRes(contacts, query);
       } else {
+        console.log(`[${rnd}] searchContacts 2`);
         this.contactSearchInProgress = true;
         this.renderSearchRes(contacts, query);
+        console.log(`[${rnd}] searchContacts 3`);
         this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
+          console.log(`[${rnd}] searchContacts 4`);
           if (searchContactsRes.new.length) {
             for (const contact of searchContactsRes.new) {
               const [inDb] = await this.app.storageContactGet([contact.email]);
+              console.log(`[${rnd}] searchContacts 5`);
               if (!inDb) {
                 await this.app.storageContactSave(await this.app.storageContactObj(
                   contact.email,
@@ -1256,10 +1268,14 @@ export class Composer {
               } else if (!inDb.name && contact.name) {
                 const toUpdate = { name: contact.name };
                 await this.app.storageContactUpdate(contact.email, toUpdate);
+                console.log(`[${rnd}] searchContacts 6`);
               }
             }
+            console.log(`[${rnd}] searchContacts 7`);
             await this.searchContacts(true);
+            console.log(`[${rnd}] searchContacts 8`);
           } else {
+            console.log(`[${rnd}] searchContacts 9`);
             this.renderSearchResultsLoadingDone();
             this.contactSearchInProgress = false;
           }
@@ -1267,6 +1283,7 @@ export class Composer {
       }
     } else {
       this.hideContacts(); // todo - show suggestions of most contacted ppl etc
+      console.log(`[${rnd}] searchContacts 10`);
     }
   }
 
@@ -1460,6 +1477,7 @@ export class Composer {
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.handleErrs(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
+        console.log(`[${rnd}] input_addresses_container_inner.clickk -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
         this.S.cached('input_to').focus();
       }
     }, this.handleErrs(`focus on recipient field`))).children().click(() => false);
@@ -1468,6 +1486,7 @@ export class Composer {
     if (!String(this.S.cached('input_to').val()).length) {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in
+      console.log(`[${rnd}] renderComposeTable -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
       this.S.cached('input_to').focus();
     }
     if (this.v.isReplyBox) {
