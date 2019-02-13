@@ -347,7 +347,7 @@ export class ControllablePage extends ControllableBase {
   public newAlertTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
     const dialogPromise: Promise<ControllableAlert> = new Promise((resolve, reject) => {
       this.page.on('dialog', () => resolve(this.alerts[this.alerts.length - 1])); // we need it as a ControllableAlert so that we know if it was dismissed or not
-      setTimeout(() => reject(new Error('newAlertTriggeredBy timout - no alert')), TIMEOUT_ELEMENT_APPEAR * 1000);
+      setTimeout(() => reject(new Error('new alert timout - no alert')), TIMEOUT_ELEMENT_APPEAR * 1000);
     });
     triggeringAction().catch(console.error);
     return await dialogPromise;

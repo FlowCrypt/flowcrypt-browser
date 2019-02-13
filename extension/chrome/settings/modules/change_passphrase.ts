@@ -77,7 +77,7 @@ Catch.try(async () => {
   $('#step_2_confirm_new .action_change').click(Ui.event.prevent('double', async self => {
     const newPp = String($('#password').val());
     if (newPp !== $('#password2').val()) {
-      await Ui.modal.error('The two pass phrases do not match, please try again.');
+      await Ui.modal.warning('The two pass phrases do not match, please try again.');
       $('#password2').val('');
       $('#password2').focus();
       return;
