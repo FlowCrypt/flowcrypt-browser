@@ -4,6 +4,7 @@ import { Util } from '../util';
 import { Url } from './url';
 import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { newTimeoutPromise, AvaContext } from '../tests';
+import { expect } from 'chai';
 
 declare const jQuery: any;
 
@@ -32,6 +33,10 @@ abstract class ControllableBase {
     let m;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
+    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
+      return `.${m[1]} #swal2-content`; // message inside the modal
+    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
+      return `.${m[1]}`; // represented as a class
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
@@ -139,12 +144,7 @@ abstract class ControllableBase {
     } else {
       const typeLastTenChars = await this.target.evaluate((s, t) => {
         const el = document.querySelector(s);
-        console.log(-1);
-        console.log(el);
-        console.log(String(el));
-        console.log(el.type);
         if (el.contentEditable === 'true') {
-          console.log(-2);
           el.innerText = t;
           el.selectionEnd = el.innerText.length;
           el.selectionStart = el.innerText.length;
@@ -152,11 +152,8 @@ abstract class ControllableBase {
         }
         el.value = t.substring(0, t.length - 10);
         if (el.type !== 'email' && typeof el.value !== 'undefined') {
-          console.log(1);
           el.selectionEnd = el.value.length;
-          console.log(1);
           el.selectionStart = el.value.length;
-          console.log(1);
         }
         return true;
       }, this.selector(selector), text);
@@ -193,6 +190,13 @@ abstract class ControllableBase {
     await this.waitAll(selector);
     await Util.sleep(delay);
     await this.type(selector, text);
+  }
+
+  public waitAndRespondToModal = async (type: 'alert' | 'error', clickBtn: 'confirm', message: string) => {
+    await this.waitAll([`@ui-modal-${type}`, `@ui-modal-${type}:message`]);
+    await Util.sleep(0.5);
+    expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
+    await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
 
   public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false }: { delay?: number, confirmGone?: boolean, retryErrs?: boolean } = {}) => {

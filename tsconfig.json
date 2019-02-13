@@ -20,6 +20,10 @@
         "lib/jquery.min.js",
         "COMMENT"
       ],
+      "sweetalert2": [
+        "lib/sweetalert2.js",
+        "COMMENT"
+      ],
       "openpgp": [
         "lib/openpgp.js",
         "COMMENT"

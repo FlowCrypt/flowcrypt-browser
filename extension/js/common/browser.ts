@@ -15,6 +15,10 @@ import { mnemonic } from './core/mnemonic.js';
 import { Att } from './core/att.js';
 import { MsgBlock, KeyBlockType } from './core/mime.js';
 import { Settings } from './settings.js';
+import Swal from 'sweetalert2';
+import { requireTag } from './platform/require.js';
+
+requireTag('sweetalert2.js', 'sweetalert2.css');
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
@@ -568,6 +572,15 @@ export class Ui {
   };
 
   public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+
+  public static modal = {
+    alert: async (text: string): Promise<void> => {
+      await Swal.fire({ text, animation: false, allowOutsideClick: false, customClass: 'ui-modal-alert', confirmButtonClass: 'ui-modal-alert-confirm' });
+    },
+    error: async (text: string): Promise<void> => {
+      await Swal.fire({ text, animation: false, allowOutsideClick: false, customClass: 'ui-modal-error', confirmButtonClass: 'ui-modal-error-confirm' });
+    },
+  };
 
 }
 
