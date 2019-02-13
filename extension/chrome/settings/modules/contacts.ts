@@ -89,12 +89,12 @@ Catch.try(async () => {
       const armoredPubkey = String($('#edit_contact .input_pubkey').val());
       const email = $('#edit_contact .input_pubkey').attr('email');
       if (!armoredPubkey || !email) {
-        alert('No public key entered');
+        await Ui.modal.warning('No public key entered');
       } else if (await Pgp.key.fingerprint(armoredPubkey)) {
         await Store.dbContactSave(undefined, await Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
         await renderContactList();
       } else {
-        alert('Cannot recognize a valid public key, please try again. Let me know at human@flowcrypt.com if you need help.');
+        await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let me know at human@flowcrypt.com if you need help.');
         $('#edit_contact .input_pubkey').val('').focus();
       }
     }));
@@ -109,10 +109,10 @@ Catch.try(async () => {
       $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
     }));
 
-    $('#bulk_import .action_process').off().click(Ui.event.prevent('double', self => {
+    $('#bulk_import .action_process').off().click(Ui.event.prevent('double', async target => {
       const replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, String($('#bulk_import .input_pubkey').val()));
       if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
-        alert('Could not find any new public keys');
+        await Ui.modal.warning('Could not find any new public keys');
       } else {
         $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
         $('#bulk_import .input_pubkey, #bulk_import .action_process').css('display', 'none');

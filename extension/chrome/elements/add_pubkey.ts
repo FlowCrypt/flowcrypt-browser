@@ -36,7 +36,7 @@ Catch.try(async () => {
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
-        alert('Contact not found.');
+        await Ui.modal.error('Contact not found.');
       }
     } else {
       $('.pubkey').val('').prop('disabled', false);
@@ -51,10 +51,10 @@ Catch.try(async () => {
       closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {
-        alert(e.message);
+        await Ui.modal.warning(e.message);
       } else {
         Catch.handleErr(e);
-        alert(`Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`);
+        await Ui.modal.error(`Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
   }));

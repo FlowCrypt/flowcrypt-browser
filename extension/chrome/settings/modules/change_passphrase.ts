@@ -51,18 +51,18 @@ Catch.try(async () => {
       primaryPrv = prv;
       displayBlock('step_1_enter_new');
     } else {
-      alert('Pass phrase did not match, please try again.');
+      await Ui.modal.error('Pass phrase did not match, please try again.');
       $('#original_password').val('').focus();
     }
   }));
 
   $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase')));
 
-  $('#step_1_enter_new .action_set_pass_phrase').click(Ui.event.handle(target => {
+  $('#step_1_enter_new .action_set_pass_phrase').click(Ui.event.handle(async target => {
     if ($(target).hasClass('green')) {
       displayBlock('step_2_confirm_new');
     } else {
-      alert('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
+      await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
   }));
 
@@ -77,7 +77,7 @@ Catch.try(async () => {
   $('#step_2_confirm_new .action_change').click(Ui.event.prevent('double', async self => {
     const newPp = String($('#password').val());
     if (newPp !== $('#password2').val()) {
-      alert('The two pass phrases do not match, please try again.');
+      await Ui.modal.error('The two pass phrases do not match, please try again.');
       $('#password2').val('');
       $('#password2').focus();
       return;
@@ -91,7 +91,7 @@ Catch.try(async () => {
     if (setup_simple) {
       Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm', '&action=passphrase_change_gmail_backup');
     } else {
-      alert('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
+      await Ui.modal.info('Now that you changed your pass phrase, you should back up your key. New backup will be protected with new passphrase.');
       Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/backup.htm', '&action=options');
     }
   }));

@@ -72,7 +72,7 @@ export class Browser {
         renderIn.append(a); // xss-escaped attachment name above
         renderIn.css('height', 'auto');
         renderIn.find('a').click(e => {
-          alert('Please use right-click and select Save Link As');
+          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.handleErr);
           e.preventDefault();
           e.stopPropagation();
           return false;
@@ -1034,7 +1034,7 @@ export class KeyImportUi {
         $('.source_paste_container').css('display', 'block');
       } else {
         $('.input_private_key').val('').change().prop('disabled', false);
-        alert('Not able to read this key. Is it a valid PGP private key?');
+        await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
         $('input[type=radio][name=source]').removeAttr('checked');
       }
     });
@@ -1238,7 +1238,7 @@ export class AttUI {
   private processNewAtt = async (id: string, name: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
-      alert('Amount of attached files is limited to ' + limits.count);
+      await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
       this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
     } else {
       const newFile: File = this.uploader.getFile(id); // tslint:disable-line:no-unsafe-any
@@ -1247,7 +1247,7 @@ export class AttUI {
         if (typeof limits.oversize === 'function') {
           await limits.oversize(this.getFileSizeSum() + newFile.size);
         } else {
-          alert('Combined file size is limited to ' + limits.sizeMb + 'MB');
+          await Ui.modal.warning('Combined file size is limited to ' + limits.sizeMb + 'MB');
         }
         return;
       }

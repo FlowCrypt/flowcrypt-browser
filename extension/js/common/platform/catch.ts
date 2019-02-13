@@ -85,7 +85,9 @@ export class Catch {
     }
     console.log(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as ErrorEventHandler)) {
-      Catch.ORIG_ONERROR.apply(undefined, Array.from(arguments)); // Call any previously assigned handler
+      // @ts-ignore
+      const args: any = Array.from(arguments);
+      Catch.ORIG_ONERROR.apply(undefined, args as any); // Call any previously assigned handler
     }
     if (exception instanceof UnreportableError) {
       return;
@@ -235,11 +237,6 @@ export class Catch {
     } else {
       throw { what: 'intentional thrown object for debugging' };
     }
-  }
-
-  public static promiseErrAlert = (note: string) => (error: Error) => { // returns a function
-    console.error(error);
-    alert(note);
   }
 
   public static stackTrace = (): string => {

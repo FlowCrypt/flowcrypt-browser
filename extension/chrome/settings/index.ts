@@ -195,18 +195,18 @@ Catch.try(async () => {
     try {
       await Settings.refreshAcctAliases(acctEmail!);
       await Settings.acctStorageChangeEmail(acctEmail!, newAcctEmail);
-      alert(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
+      await Ui.modal.info(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
       window.location.href = Env.urlCreate('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        alert('There was a network error, please try again.');
+        await Ui.modal.error('There was a network error, please try again.');
       } else if (Api.err.isMailOrAcctDisabled(e)) {
-        alert(Lang.account.googleAcctDisabled);
+        await Ui.modal.error(Lang.account.googleAcctDisabled);
       } else if (Api.err.isAuthPopupNeeded(e)) {
-        alert('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
+        await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
         Catch.handleErr(e);
-        alert(`There was an error changing google account, please write human@flowcrypt.com\n\n${String(e)}`);
+        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${String(e)}`);
       }
     }
   };
@@ -231,7 +231,7 @@ Catch.try(async () => {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
           .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail)));
       } else if (Api.err.isMailOrAcctDisabled(e)) {
-        alert(Lang.account.googleAcctDisabled);
+        await Ui.modal.error(Lang.account.googleAcctDisabled);
       } else if (Api.err.isNetErr(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {

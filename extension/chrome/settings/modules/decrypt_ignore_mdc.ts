@@ -29,7 +29,7 @@ Catch.try(async () => {
   $('.action_decrypt').click(Ui.event.prevent('double', async self => {
     const encrypted = String($('.input_message').val());
     if (!encrypted) {
-      alert('Please paste an encrypted message');
+      await Ui.modal.warning('Please paste an encrypted message');
       return;
     }
     origContent = $(self).html();
@@ -42,7 +42,7 @@ Catch.try(async () => {
     } else {
       delete result.message;
       console.info(result);
-      alert('These was a problem decrypting this file, details are in the console.');
+      await Ui.modal.error('These was a problem decrypting this file, details are in the console.');
     }
     Xss.sanitizeRender(self, origContent);
   }));

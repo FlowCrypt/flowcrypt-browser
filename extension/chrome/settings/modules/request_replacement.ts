@@ -42,23 +42,23 @@ Catch.try(async () => {
           signedPacket = await Api.attester.packet.createSign(reqDict, checkedOldKey.decrypted);
         } catch (e) {
           Catch.report(`Error signing REQUEST_REPLACEMENT: ${String(e)}`);
-          return alert(`Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n${String(e)}`);
+          return await Ui.modal.error(`Error signing request. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n${String(e)}`);
         }
         try {
           await Api.attester.replaceRequest(acctEmail, signedPacket, primaryPubkeyArmored);
         } catch (e) {
-          return alert(`Error requesting Re-Attestation. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n${String(e)}`);
+          return await Ui.modal.error(`Error requesting Re-Attestation. If this happens repeatedly, write us at human@flowcrypt.com. Error message:\n\n${String(e)}`);
         }
         await Settings.saveAttestReq(acctEmail, 'CRYPTUP'); // todo - should be the original attester
-        alert('Successfully requested Re-Attestation. It should get processed within a few minutes. You will also receive attestation email shortly. No further actions needed.');
+        await Ui.modal.info('Successfully requested Re-Attestation. It should get processed in a few minutes. You will receive attestation email shortly. No further actions needed.');
         Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/keyserver.htm');
       }
     } catch (e) {
       if (e instanceof UserAlert) {
-        return alert(e.message);
+        return await Ui.modal.warning(e.message);
       } else {
         Catch.handleErr(e);
-        return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
   };

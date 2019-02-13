@@ -180,7 +180,7 @@ Catch.try(async () => {
     } else {
       delete decrypted.message;
       console.info(decrypted);
-      alert('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
+      await Ui.modal.error('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
       Browser.saveToDownloads(encrypted, renderIn);
       sendResizeMsg();
     }
@@ -268,9 +268,9 @@ Catch.try(async () => {
       await handleExtendMsgExpirationClicked(element);
     } else {
       if (subscription.level && !subscription.active && subscription.method === 'trial') {
-        alert('Your trial has ended. Please renew your subscription to proceed.');
+        await Ui.modal.warning('Your trial has ended. Please renew your subscription to proceed.');
       } else {
-        alert('FlowCrypt Advanced users can choose expiration of password encrypted messages. Try it free.');
+        await Ui.modal.info('FlowCrypt Advanced users can choose expiration of password encrypted messages. Try it free.');
       }
       BrowserMsg.send.subscribeDialog(parentTabId, {});
     }
@@ -288,7 +288,7 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
-        alert('Your FlowCrypt account information is outdated, please review your account settings.');
+        await Ui.modal.warning('Your FlowCrypt account information is outdated, please review your account settings.');
         BrowserMsg.send.subscribeDialog(parentTabId, { isAuthErr: true });
       } else {
         Catch.report('error when extending message expiration', e);

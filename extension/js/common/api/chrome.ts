@@ -3,7 +3,8 @@
 'use strict';
 
 import { Store } from '../platform/store.js';
-import { Env } from '../browser.js';
+import { Env, Ui } from '../browser.js';
+import { Catch } from '../platform/catch.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   if (Env.isBackgroundPage()) {
@@ -23,7 +24,7 @@ export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.wind
   if (typeof chrome.windows !== 'undefined') {
     chrome.windows.create(q, resolve);
   } else {
-    alert('Your platform is not supported: browser does not support extension windows');
+    Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.handleErr);
   }
 });
 

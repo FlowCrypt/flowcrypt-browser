@@ -145,11 +145,11 @@ Catch.try(async () => {
     }
   };
 
-  $('.action_password').click(Ui.event.handle(target => {
+  $('.action_password').click(Ui.event.handle(async target => {
     if ($(target).hasClass('green')) {
       displayBlock('step_2_confirm');
     } else {
-      alert('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
+      await Ui.modal.warning('Please select a stronger pass phrase. Combinations of 4 to 5 uncommon words are the best.');
     }
   }));
 
@@ -164,7 +164,7 @@ Catch.try(async () => {
   $('.action_backup').click(Ui.event.prevent('double', async (target) => {
     const newPassphrase = String($('#password').val());
     if (newPassphrase !== $('#password2').val()) {
-      alert('The two pass phrases do not match, please try again.');
+      await Ui.modal.warning('The two pass phrases do not match, please try again.');
       $('#password2').val('');
       $('#password2').focus();
     } else {
@@ -180,13 +180,13 @@ Catch.try(async () => {
         await doBackupOnEmailProvider(acctEmail, prv.armor());
       } catch (e) {
         if (Api.err.isNetErr(e)) {
-          alert('Need internet connection to finish. Please click the button again to retry.');
+          await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
         } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-          alert('Account needs to be re-connected first. Please try later.');
+          await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
         } else {
           Catch.handleErr(e);
-          alert(`Error happened, please try again (${String(e)})`);
+          await Ui.modal.error(`Error happened, please try again (${String(e)})`);
         }
         $(target).text(btnText);
         return;
@@ -229,7 +229,7 @@ Catch.try(async () => {
   const backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
     const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
     if (!pp || !await isPassPhraseStrongEnough(primaryKi, pp)) {
-      alert('Your key is not protected with a strong pass phrase, skipping');
+      await Ui.modal.warning('Your key is not protected with a strong pass phrase, skipping');
       return;
     }
     const btn = $('.action_manual_backup');
@@ -239,13 +239,13 @@ Catch.try(async () => {
       await doBackupOnEmailProvider(acctEmail, primaryKi.private);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        return alert('Need internet connection to finish. Please click the button again to retry.');
+        return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
       } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-        return alert('Account needs to be re-connected first. Please try later.');
+        return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
         Catch.handleErr(e);
-        return alert(`Error happened: ${String(e)}`);
+        return await Ui.modal.error(`Error happened: ${String(e)}`);
       }
     } finally {
       btn.text(origBtnText);
@@ -285,7 +285,7 @@ Catch.try(async () => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     if (!await isMasterPrivateKeyEncrypted(primaryKi)) {
-      alert('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
+      await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
     }
     if (selected === 'inbox') {
@@ -310,7 +310,7 @@ Catch.try(async () => {
         return false;
       }
       if (await Pgp.key.decrypt(prv, [pp]) !== true) {
-        alert('Pass phrase did not match, please try again.');
+        await Ui.modal.warning('Pass phrase did not match, please try again.');
         return false;
       }
       passphrase = pp;
@@ -318,14 +318,14 @@ Catch.try(async () => {
     if (Settings.evalPasswordStrength(passphrase).word.pass === true) {
       return true;
     }
-    alert('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
+    await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
     return false;
   };
 
   const setupCreateSimpleAutomaticInboxBackup = async () => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     if ((await Pgp.key.read(primaryKi.private)).isDecrypted()) {
-      alert('Key not protected with a pass phrase, skipping');
+      await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
     Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);

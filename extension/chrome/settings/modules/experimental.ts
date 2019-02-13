@@ -51,16 +51,16 @@ Catch.try(async () => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
       try {
         const all = await Settings.refreshAcctAliases(acctEmail);
-        alert('Updated to: ' + all.join(', '));
+        await Ui.modal.info('Updated to: ' + all.join(', '));
       } catch (e) {
         if (Api.err.isNetErr(e)) {
-          alert('Network error, please try again');
+          await Ui.modal.error('Network error, please try again');
         } else if (Api.err.isAuthPopupNeeded(e)) {
-          alert('Error: account needs to be re-connected first.');
+          await Ui.modal.warning('Error: account needs to be re-connected first.');
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else {
           Catch.handleErr(e);
-          alert(`Error happened: ${String(e)}`);
+          await Ui.modal.error(`Error happened: ${String(e)}`);
         }
       }
       await Ui.time.sleep(100);
@@ -96,7 +96,7 @@ Catch.try(async () => {
 
     $('.action_flush_attest_info').click(Ui.event.handle(async () => {
       await Store.remove(acctEmail, ['attests_requested', 'attests_processed', 'attest_log']);
-      alert('Internal attest info flushed');
+      await Ui.modal.info('Internal attest info flushed');
       await Ui.time.sleep(100);
       window.location.reload();
     }));
@@ -121,26 +121,26 @@ Catch.try(async () => {
         const response = await GoogleAuth.newAuthPopup({ acctEmail });
         if (response.result === 'Success' && response.acctEmail) {
           if (response.acctEmail === acctEmail) {
-            alert(`Account email address seems to be the same, nothing to update: ${acctEmail}`);
+            await Ui.modal.info(`Account email address seems to be the same, nothing to update: ${acctEmail}`);
           } else if (response.acctEmail) {
             if (confirm(`Change your Google Account email from ${acctEmail} to ${response.acctEmail}?`)) {
               try {
                 await Settings.acctStorageChangeEmail(acctEmail, response.acctEmail);
-                alert(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
+                await Ui.modal.info(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
                 BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail });
               } catch (e) {
                 Catch.handleErr(e);
-                alert('There was an error changing google account, please write human@flowcrypt.com');
+                await Ui.modal.error('There was an error changing google account, please write human@flowcrypt.com');
               }
             }
           } else {
-            alert('Not able to retrieve new account email, please write at human@flowcrypt.com');
+            await Ui.modal.error('Not able to retrieve new account email, please write at human@flowcrypt.com');
           }
         } else if (response.result === 'Denied' || response.result === 'Closed') {
-          alert('Canceled by user, skipping.');
+          await Ui.modal.info('Canceled by user, skipping.');
         } else {
           Catch.report('failed to log into google in action_account_email_changed', response);
-          alert(`Failed to connect to Gmail (change). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
+          await Ui.modal.error(`Failed to connect to Gmail (change). If this happens again, please email human@flowcrypt.com to get it fixed.\n\n[${response.result}] ${response.error}`);
           window.location.reload();
         }
       }

@@ -106,13 +106,13 @@ Catch.try(async () => {
         await Store.setAcct(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
       } catch (e) {
         if (Api.err.isNetErr(e)) {
-          alert('Need internet connection to finish. Please click the button again to retry.');
+          await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
         } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-          alert('Account needs to be re-connected first. Please try later.');
+          await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
         } else {
           Catch.handleErr(e);
-          alert(`Error happened: ${String(e)}`);
+          await Ui.modal.error(`Error happened: ${String(e)}`);
         }
       }
       window.location.reload();

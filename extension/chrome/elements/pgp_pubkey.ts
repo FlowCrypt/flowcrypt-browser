@@ -109,7 +109,7 @@ Catch.try(async () => {
         Xss.sanitizeReplace(target, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
       } else {
-        alert('This email is invalid, please check for typos. Not added.');
+        await Ui.modal.error('This email is invalid, please check for typos. Not added.');
         $('.input_email').focus();
       }
     }
