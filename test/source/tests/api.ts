@@ -41,7 +41,7 @@ export class FlowCryptApi {
   }
 
   public static hookCiDebugEmail = async (debug_title: string, debug_html_content: string) => { // tslint:disable-line:variable-name
-    console.log('hookCiDebugEmail - calling');
+    console.log(`hookCiDebugEmail - calling with length: ${debug_html_content.length}`);
     const r = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_debug_email', { ci_admin_token, debug_title, debug_html_content });
     console.log('hookCiDebugEmail-response', r.body, r.statusCode);
   }
