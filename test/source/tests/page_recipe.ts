@@ -128,7 +128,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (wrongPp) {
       await settingsPage.waitAndRespondToModal('warning', 'confirm', 'not match');
     } else if (alreadyRecovered) {
-      await settingsPage.waitAndRespondToModal('info', 'confirm', 'already sucessfully used');
+      await settingsPage.waitAndRespondToModal('warning', 'confirm', 'matches a key that was already recovered');
     } else {
       await settingsPage.waitAny(['@action-step4more-account-settings', '@action-step4done-account-settings'], { timeout: 60 });
       if (hasRecoverMore) {

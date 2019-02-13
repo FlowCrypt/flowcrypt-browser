@@ -294,50 +294,57 @@ Catch.try(async () => {
 
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
     const passphrase = String($('#recovery_pasword').val());
-    const matchingKeys: OpenPGP.key.Key[] = [];
+    const newlyMatchingKeys: OpenPGP.key.Key[] = [];
     if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
-      await Ui.modal.info(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
-    } else if (passphrase) {
-      for (const revoveredKey of recoveredKeys) {
-        const longid = await Pgp.key.longid(revoveredKey);
-        const armored = revoveredKey.armor();
-        if (longid && !Value.is(longid).in(recoveredKeysSuccessfulLongids) && await Pgp.key.decrypt(revoveredKey, [passphrase]) === true) {
+      return await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
+    }
+    if (!passphrase) {
+      return await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+    }
+    let matchedPreviouslyRecoveredKey = false;
+    for (const recoveredKey of recoveredKeys) {
+      const longid = await Pgp.key.longid(recoveredKey);
+      const armored = recoveredKey.armor();
+      if (longid) {
+        if (Value.is(longid).in(recoveredKeysSuccessfulLongids)) {
+          matchedPreviouslyRecoveredKey = true;
+        } else if (await Pgp.key.decrypt(recoveredKey, [passphrase]) === true) {
           recoveredKeysSuccessfulLongids.push(longid);
           const { keys: [prv] } = await openpgp.key.readArmored(armored);
-          matchingKeys.push(prv);
+          newlyMatchingKeys.push(prv);
         }
       }
-      if (matchingKeys.length) {
-        const options: SetupOptions = {
-          submit_main: false, // todo - reevaluate submitting when recovering
-          submit_all: false,
-          passphrase,
-          passphrase_save: true, // todo - reevaluate saving passphrase when recovering
-          key_backup_prompt: false,
-          recovered: true,
-          setup_simple: true,
-          is_newly_created_key: false,
-        };
-        recoveredKeysMatchingPassphrases.push(passphrase);
-        await saveKeys(matchingKeys, options);
-        const storage = await Store.getAcct(acctEmail, ['setup_done']);
-        if (!storage.setup_done) { // normal situation - fresh setup
-          await preFinalizeSetup(options);
-          await finalizeSetup(options);
-          await renderSetupDone();
-        } else { // setup was finished before, just added more keys now
-          await renderSetupDone();
-        }
+    }
+    if (!newlyMatchingKeys.length) {
+      $('.line_skip_recovery').css('display', 'block');
+      if (matchedPreviouslyRecoveredKey) {
+        $('#recovery_pasword').val('');
+        return await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
+      } else if (recoveredKeys.length > 1) {
+        return await Ui.modal.warning(`This pass phrase did not match any of your ${recoveredKeys.length} backups. Please try again.`);
       } else {
-        if (recoveredKeys.length > 1) {
-          await Ui.modal.warning('This pass phrase did not match any of your ' + recoveredKeys.length + ' backups. Please try again.');
-        } else {
-          await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
-        }
-        $('.line_skip_recovery').css('display', 'block');
+        return await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
       }
-    } else {
-      await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+    }
+    const options: SetupOptions = {
+      submit_main: false, // todo - reevaluate submitting when recovering
+      submit_all: false,
+      passphrase,
+      passphrase_save: true, // todo - reevaluate saving passphrase when recovering
+      key_backup_prompt: false,
+      recovered: true,
+      setup_simple: true,
+      is_newly_created_key: false,
+    };
+    recoveredKeysMatchingPassphrases.push(passphrase);
+    await saveKeys(newlyMatchingKeys, options);
+    const storage = await Store.getAcct(acctEmail, ['setup_done']);
+    if (!storage.setup_done) { // normal situation - fresh setup
+      await preFinalizeSetup(options);
+      await finalizeSetup(options);
+      await renderSetupDone();
+    } else { // setup was finished before, just added more keys now
+      await renderSetupDone();
     }
   }));
 
