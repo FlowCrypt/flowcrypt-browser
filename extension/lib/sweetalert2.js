@@ -1247,6 +1247,8 @@ function getInput(inputType) {
 }
 
 var fixScrollbar = function fixScrollbar() {
+  return; // FLOWCRYPT-EDIT: we don't want any padding set
+
   // for queues, do not do this more than once
   if (states.previousBodyPadding !== null) {
     return;
