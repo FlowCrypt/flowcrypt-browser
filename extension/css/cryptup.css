@@ -106,7 +106,7 @@ body#settings > div#content.contacts #emails tr[email] { display: block; positio
 body#settings > div#content.contacts #emails tr[email] a { border-radius: 15px; display: block; font-size: 11px; font-weight: 500; margin: 0 5px; margin-right: 5%; padding: 10px 5px; position: relative; text-align: center; transition: 0.25s; width: 20px; }
 body#settings > div#content.contacts #emails tr[email] td:first-child { font-size: 16px; text-align: left; text-indent: 0; width: 65% !important;}
 body#settings > div#content.contacts #emails tr[email]:before { border-radius: 4px; content: ""; height: 90px; position: absolute; width: 100%; }
-body#settings > div#content.contacts table#emails td { font-size: 13px; height: auto; padding: 10px 0; display: inline-block; width: 15px; text-align: left; float: left; padding: 4px 15px; }
+body#settings > div#content.contacts table#emails td { font-size: 13px; height: auto; padding: 10px 0; display: block; width: 15px; text-align: left; float: left; padding: 4px 15px; }
 body#settings > div#content.contacts table#emails { margin: 50px auto; color: #666; }
 body#settings > div#content.contacts table#emails tr { height: 32px; }
 body#settings > div#content textarea { width: 100%; }
