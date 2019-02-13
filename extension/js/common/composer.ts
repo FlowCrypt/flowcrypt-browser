@@ -15,6 +15,8 @@ import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth } from './api/google.js';
 import { Buf } from './core/buf.js';
 
+const rnd = Str.sloppyRandom();
+
 declare const openpgp: typeof OpenPGP;
 
 interface ComposerAppFunctionsInterface {
@@ -838,12 +840,15 @@ export class Composer {
   }
 
   private lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
+    console.log(`[${rnd}] lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.0`);
     const [dbContact] = await this.app.storageContactGet([email]);
     if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
       return dbContact;
     } else {
       try {
+        console.log(`[${rnd}] lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
         const { results: [lookupResult] } = await Api.attester.lookupEmail([email]);
+        console.log(`[${rnd}] lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
         if (lookupResult && lookupResult.email) {
           if (lookupResult.pubkey) {
             const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
@@ -880,8 +885,11 @@ export class Composer {
   }
 
   private evaluateRenderedRecipients = async () => {
+    console.log(`[${rnd}] evaluateRenderedRecipients`);
     for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
+      console.log('evaluateRenderedRecipients.emailEl', String(emailEl));
       const email = Str.parseEmail($(emailEl).text()).email;
+      console.log(`evaluateRenderedRecipients.email(${email})`);
       if (Str.isEmailValid(email)) {
         this.S.now('send_btn_span').text(this.BTN_LOADING);
         this.setInputTextHeightManuallyIfNeeded();
@@ -1094,34 +1102,48 @@ export class Composer {
   }
 
   private parseRenderRecipients = async () => {
+    console.log(`[${rnd}] parseRenderRecipients`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
+    console.log(`parseRenderRecipients.inputTo(${String(inputTo)})`);
     if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
+      console.log(`[${rnd}] parseRenderRecipients.2`);
       for (const rawRecipientAddrInput of inputTo.split(',')) {
+        console.log(`[${rnd}] parseRenderRecipients.3`);
         if (!rawRecipientAddrInput) {
+          console.log(`[${rnd}] parseRenderRecipients.4`);
           continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
         }
+        console.log(`[${rnd}] parseRenderRecipients.5`);
         const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
       }
     } else {
       return;
     }
+    console.log(`[${rnd}] parseRenderRecipients.4`);
     this.S.cached('input_to').val('');
+    console.log(`[${rnd}] parseRenderRecipients.5`);
     this.resizeInputTo();
+    console.log(`[${rnd}] parseRenderRecipients.6`);
     await this.evaluateRenderedRecipients();
+    console.log(`[${rnd}] parseRenderRecipients.7`);
     this.setInputTextHeightManuallyIfNeeded();
   }
 
   private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
+    console.log(`[${rnd}] selectContact 1`);
     const possiblyBogusRecipient = $('.recipients span.wrong').last();
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
+    console.log(`[${rnd}] selectContact 2`);
     const q = Str.parseEmail(fromQuery.substring).email;
     if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
       possiblyBogusRecipient.remove();
     }
     if (!Value.is(email).in(this.getRecipientsFromDom())) {
       this.S.cached('input_to').val(Str.parseEmail(email).email);
+      console.log(`[${rnd}] selectContact -> parseRenderRecipients start`);
       await this.parseRenderRecipients();
+      console.log(`[${rnd}] selectContact -> parseRenderRecipients done`);
     }
     this.hideContacts();
   }
@@ -1306,6 +1328,9 @@ export class Composer {
   }
 
   private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | "fail" | "wrong") => {
+    console.log('renderPubkeyResult.emailEl', String(emailEl));
+    console.log(`renderPubkeyResult.email(${email})`);
+    console.log('renderPubkeyResult.contact', JSON.stringify(contact));
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         const sendingAddrOnPks = Value.is(this.getSender()).in(this.myAddrsOnPks);
@@ -1426,7 +1451,11 @@ export class Composer {
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
-    this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parseRenderRecipients().catch(Catch.handleErr)));
+    this.S.cached('input_to').blur(Ui.event.prevent('double', async () => {
+      console.log(`input_to.blur -> parseRenderRecipients start`);
+      await this.parseRenderRecipients();
+      console.log(`input_to.blur -> parseRenderRecipients done`);
+    }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.handleErrs(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {

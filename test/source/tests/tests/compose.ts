@@ -89,12 +89,27 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test('compose - standalone - freshly loaded pubkey', testWithNewBrowser(async (t, browser) => {
-    await BrowserRecipe.setUpFcCompatAcct(t, browser);
-    const composePage = await ComposePageRecipe.openStandalone(t, browser);
-    await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'freshly loaded pubkey');
-    await ComposePageRecipe.sendAndClose(composePage);
-  }));
+  for (let i = 0; i < 5; i++) {
+    let stop = false;
+    ava.test(`compose - standalone - freshly loaded pubkey - ${i}`, testWithNewBrowser(async (t, browser) => {
+      if (stop) {
+        t.log('skipped');
+        return;
+      }
+      try {
+        console.log(`----------------------- begin ${i} ---------------------------`);
+        await BrowserRecipe.setUpFcCompatAcct(t, browser);
+        const composePage = await ComposePageRecipe.openStandalone(t, browser);
+        await composePage.page.on('console', msg => console.log(`log-${i}: ${msg.text()}`));
+        await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'freshly loaded pubkey');
+        await ComposePageRecipe.sendAndClose(composePage);
+        console.log(`----------------------- end ${i} ---------------------------`);
+      } catch (e) {
+        stop = true;
+        throw e;
+      }
+    }));
+  }
 
   ava.test('compose - standalone - recipient pasted including name', testWithNewBrowser(async (t, browser) => {
     await BrowserRecipe.setUpFcCompatAcct(t, browser);
