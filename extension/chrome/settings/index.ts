@@ -66,7 +66,7 @@ Catch.try(async () => {
     // todo: use #cryptup_dialog just like passphrase_dialog does
     const factory = new XssSafeFactory(acctEmail!, tabId);
     const subscribeDialogSrc = factory.srcSubscribeDialog(undefined, 'settings_compose', undefined);
-    window.open(subscribeDialogSrc, '_blank', 'height=300,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
+    window.open(subscribeDialogSrc, '_blank', 'height=650,left=100,menubar=no,status=no,toolbar=no,top=30,width=640,scrollbars=no');
   });
   BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
     notifications.show(notification);
