@@ -10,7 +10,7 @@ import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env, AttLimits } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth } from './api/google.js';
 import { Buf } from './core/buf.js';
@@ -165,14 +165,14 @@ export class Composer {
     this.initActions();
   }
 
-  private getMaxAttSizeAndOversizeNotice = async () => {
+  private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await this.app.storageGetSubscription();
     if (!subscription.active) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,
         count: 10,
-        oversize: () => {
+        oversize: async () => {
           let getAdvanced = 'The files are over 5 MB. Advanced users can send files up to 25 MB.';
           if (!subscription.method) {
             getAdvanced += '\n\nTry it free for 30 days.';
@@ -186,12 +186,13 @@ export class Composer {
             getAdvanced += '\n\nClick ok to see subscribe options.';
           }
           if (subscription.method === 'group') {
-            alert(getAdvanced);
+            await Ui.modal.info(getAdvanced);
           } else {
-            if (confirm(getAdvanced)) {
+            if (await Ui.modal.confirm(getAdvanced)) {
               BrowserMsg.send.subscribeDialog(this.v.parentTabId, {});
             }
           }
+          return;
         },
       };
     } else {
@@ -201,23 +202,23 @@ export class Composer {
         sizeMb,
         size: sizeMb * 1024 * 1024,
         count: 10,
-        oversize: (combinedSize: number) => {
-          alert('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.');
+        oversize: async (combinedSize: number) => {
+          await Ui.modal.warning('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.');
         },
       };
     }
   }
 
-  private handleErrs = (couldNotDoWhat: string): BrowserEventErrorHandler => {
+  private getErrHandlers = (couldNotDoWhat: string): BrowserEventErrorHandler => {
     return {
-      network: () => alert(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      authPopup: () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail }),
-      auth: () => {
-        if (confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
+      network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
+      authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail }),
+      auth: async () => {
+        if (await Ui.modal.confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
           BrowserMsg.send.subscribeDialog(this.v.parentTabId, { isAuthErr: true });
         }
       },
-      other: (e: any) => {
+      other: async (e: any) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
         } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
@@ -228,7 +229,7 @@ export class Composer {
           }
         }
         Catch.handleErr(e);
-        alert(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
+        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
       },
     };
   }
@@ -253,14 +254,14 @@ export class Composer {
           }
         }
       }, 1000);
-    }, this.handleErrs('add recipient public key')));
+    }, this.getErrHandlers('add recipient public key')));
     this.S.cached('add_intro').click(Ui.event.handle(target => {
       $(target).css('display', 'none');
       this.S.cached('intro_container').css('display', 'table-row');
       this.S.cached('input_intro').focus();
       this.setInputTextHeightManuallyIfNeeded();
-    }, this.handleErrs(`add intro`)));
-    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.handleErrs(`render help dialog`)));
+    }, this.getErrHandlers(`add intro`)));
+    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.getErrHandlers(`render help dialog`)));
     this.S.now('input_from').change(() => {
       // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
       // because they might not have a pubkey for the alternative address, and might get confused
@@ -277,20 +278,20 @@ export class Composer {
     this.S.cached('icon_pubkey').click(Ui.event.handle(target => {
       this.includePubkeyToggledManually = true;
       this.updatePubkeyIcon(!$(target).is('.active'));
-    }, this.handleErrs(`set/unset pubkey attachment`)));
+    }, this.getErrHandlers(`set/unset pubkey attachment`)));
     this.S.cached('icon_footer').click(Ui.event.handle(target => {
       if (!$(target).is('.active')) {
         this.app.renderFooterDialog();
       } else {
         this.updateFooterIcon(!$(target).is('.active'));
       }
-    }, this.handleErrs(`change footer`)));
+    }, this.getErrHandlers(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
       await this.draftDelete();
       this.app.closeMsg();
-    }, this.handleErrs('delete draft')));
+    }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
-    this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.handleErrs(`enable/disable signing`)));
+    this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
   }
 
   private initComposeBox = async () => {
@@ -315,7 +316,7 @@ export class Composer {
               this.v.to = [];
             }
             await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
-          }, this.handleErrs(`activate repply box`)));
+          }, this.getErrHandlers(`activate repply box`)));
         }
       }
     }
@@ -567,35 +568,35 @@ export class Composer {
     }
   }
 
-  private handleSendErr(e: any) {
+  private handleSendErr = async (e: any) => {
     if (Api.err.isNetErr(e)) {
-      alert('Could not send message due to network error. Please check your internet connection and try again.');
+      await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
-      alert('Could not send message because FlowCrypt needs to be re-connected to google account.');
+      await Ui.modal.error('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.err.isAuthErr(e)) {
-      if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+      if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
         BrowserMsg.send.subscribeDialog(this.v.parentTabId, { isAuthErr: true });
       }
     } else if (Api.err.isReqTooLarge(e)) {
-      alert(`Could not send: message or attachments too large.`);
+      await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (Api.err.isBadReq(e)) {
       const errMsg = e.parseErrResMsg('google');
       if (errMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || errMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
-        alert('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
+        await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
       } else {
-        if (confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
+        if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
           const page = '/chrome/settings/modules/help.htm';
           const pageUrlParams = { bugReport: Extension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
           BrowserMsg.send.bg.settings({ acctEmail: this.v.acctEmail, page, pageUrlParams });
         }
       }
     } else if (e instanceof ComposerUserError) {
-      alert(`Could not send message: ${String(e)}`);
+      await Ui.modal.error(`Could not send message: ${String(e)}`);
     } else {
       if (!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
         Catch.handleErr(e);
-        alert(`Failed to send message due to: ${String(e)}`);
+        await Ui.modal.error(`Failed to send message due to: ${String(e)}`);
       }
     }
     if (!(e instanceof ComposerNotReadyError)) {
@@ -626,7 +627,7 @@ export class Composer {
         await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
       }
     } catch (e) {
-      this.handleSendErr(e);
+      await this.handleSendErr(e);
     }
   }
 
@@ -684,7 +685,7 @@ export class Composer {
         await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.getSender(), recipients, subject, body, atts, this.v.threadId), plaintext);
       }
     } else {
-      alert('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
+      await Ui.modal.error('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
       this.resetSendBtn();
     }
   }
@@ -735,7 +736,7 @@ export class Composer {
       response = await Api.fc.messageToken();
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
-        if (confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
+        if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
           BrowserMsg.send.subscribeDialog(this.v.parentTabId, { isAuthErr: true });
         }
         throw new ComposerResetBtnTrigger();
@@ -776,10 +777,10 @@ export class Composer {
     const usableTimeFrom = Math.max(...usableFrom);
     const usableTimeUntil = Math.min(...usableUntil);
     if (usableTimeFrom > usableTimeUntil) { // used public keys have no intersection of usable dates
-      alert('The public key of one of your recipients has been expired for too long.\n\nPlease ask the recipient to send you an updated Public Key.');
+      await Ui.modal.error('The public key of one of your recipients has been expired for too long.\n\nPlease ask the recipient to send you an updated Public Key.');
       throw new ComposerResetBtnTrigger();
     }
-    if (!confirm(Lang.compose.pubkeyExpiredConfirmCompose)) {
+    if (! await Ui.modal.confirm(Lang.compose.pubkeyExpiredConfirmCompose)) {
       throw new ComposerResetBtnTrigger();
     }
     return new Date(usableTimeUntil); // latest date none of the keys were expired
@@ -1147,9 +1148,9 @@ export class Composer {
       this.canReadEmails = true;
       await this.searchContacts();
     } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
-      alert('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
+      await Ui.modal.error('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
     } else {
-      alert(Lang.general.somethingWentWrongTryAgain);
+      await Ui.modal.error(Lang.general.somethingWentWrongTryAgain);
     }
   }
 
@@ -1196,9 +1197,9 @@ export class Composer {
         if (email) {
           await this.selectContact(Str.parseEmail(email).email, query);
         }
-      }, this.handleErrs(`select contact`)));
+      }, this.getErrHandlers(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
-      this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.v.acctEmail), this.handleErrs(`authorize contact search`)));
+      this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.v.acctEmail), this.getErrHandlers(`authorize contact search`)));
       this.S.cached('contacts').css({
         display: 'block',
         top: `${$('#compose > tbody > tr:first').height()! + this.S.cached('input_addresses_container_inner').height()! + 10}px`, // both are in the template
@@ -1326,12 +1327,12 @@ export class Composer {
     $(emailEl).children('img, i').remove();
     // tslint:disable-next-line:max-line-length
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-    Xss.sanitizeAppend(emailEl, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
+    Xss.sanitizeAppend(emailEl, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.getErrHandlers('remove recipient')));
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
       $(emailEl).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(emailEl).addClass("failed");
       Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
-      $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.removeReceiver(target), this.handleErrs('remove recipient')));
+      $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.removeReceiver(target), this.getErrHandlers('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
       $(emailEl).addClass("wrong");
@@ -1428,12 +1429,12 @@ export class Composer {
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
     this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parseRenderRecipients().catch(Catch.handleErr)));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
-    this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.handleErrs(`hide contact box`)));
+    this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.getErrHandlers(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
         this.S.cached('input_to').focus();
       }
-    }, this.handleErrs(`focus on recipient field`))).children().click(() => false);
+    }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.S.cached('input_to').focus();
@@ -1450,14 +1451,14 @@ export class Composer {
         this.S.cached('input_text').keyup(() => this.resizeReplyBox());
       }, 1000);
     } else {
-      $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.handleErrs(`close message`)));
+      $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
       const addresses = this.app.storageGetAddresses();
       if (addresses.length > 1) {
         const inputAddrContainer = $('#input_addresses_container');
         inputAddrContainer.addClass('show_send_from');
         const cogIcon = `<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">`;
         Xss.sanitizeAppend(inputAddrContainer, `<select id="input_from" tabindex="-1" data-test="input-from"></select>${cogIcon}`);
-        inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.handleErrs(`open sending address dialog`)));
+        inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
         const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}">${Xss.escape(addr)}</option>`;
         Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
         if (Catch.browser().name === 'firefox') {

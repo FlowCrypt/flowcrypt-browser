@@ -24,7 +24,6 @@ declare const openpgp: typeof OpenPGP;
 declare const qq: any;
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
-type AttLimits = { count?: number, size?: number, size_mb?: number, oversize?: (newFileSize: number) => void };
 type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type KeyImportUiCheckResult = {
@@ -32,10 +31,11 @@ type KeyImportUiCheckResult = {
   encrypted: OpenPGP.key.Key;
 };
 
+export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
 export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
-export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
+export type BrowserEventErrorHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
@@ -431,28 +431,28 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrorHandler) => {
       return function (this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
           r = cb(this, event);
           if (typeof r === 'object' && typeof r.catch === 'function') {
-            r.catch(e => Ui.event._dispatchErr(e, errHandler));
+            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
-          Ui.event._dispatchErr(e, errHandler);
+          Ui.event._dispatchErr(e, errHandlers);
         }
       };
     },
-    _dispatchErr: (e: any, errHandler?: BrowserEventErrorHandler) => {
-      if (Api.err.isNetErr(e) && errHandler && errHandler.network) {
-        errHandler.network();
-      } else if (Api.err.isAuthErr(e) && errHandler && errHandler.auth) {
-        errHandler.auth();
-      } else if (Api.err.isAuthPopupNeeded(e) && errHandler && errHandler.authPopup) {
-        errHandler.authPopup();
-      } else if (errHandler && errHandler.other) {
-        errHandler.other(e);
+    _dispatchErr: (e: any, errHandlers?: BrowserEventErrorHandler) => {
+      if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
+        errHandlers.network().catch(Catch.handleErr);
+      } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {
+        errHandlers.auth().catch(Catch.handleErr);
+      } else if (Api.err.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
+        errHandlers.authPopup().catch(Catch.handleErr);
+      } else if (errHandlers && errHandlers.other) {
+        errHandlers.other(e).catch(Catch.handleErr);
       } else {
         Catch.handleErr(e);
       }
@@ -574,11 +574,44 @@ export class Ui {
   public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
 
   public static modal = {
-    alert: async (text: string): Promise<void> => {
-      await Swal.fire({ text, animation: false, allowOutsideClick: false, customClass: 'ui-modal-alert', confirmButtonClass: 'ui-modal-alert-confirm' });
+    info: async (text: string): Promise<void> => {
+      await Swal.fire({
+        text,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-info',
+        confirmButtonClass: 'ui-modal-info-confirm',
+      });
+    },
+    warning: async (text: string): Promise<void> => {
+      await Swal.fire({
+        text,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-warning',
+        confirmButtonClass: 'ui-modal-warning-confirm',
+      });
     },
     error: async (text: string): Promise<void> => {
-      await Swal.fire({ text, animation: false, allowOutsideClick: false, customClass: 'ui-modal-error', confirmButtonClass: 'ui-modal-error-confirm' });
+      const { } = await Swal.fire({
+        text,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-error',
+        confirmButtonClass: 'ui-modal-error-confirm',
+      });
+    },
+    confirm: async (text: string): Promise<boolean> => {
+      const { dismiss } = await Swal.fire({
+        text,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-confirm',
+        confirmButtonClass: 'ui-modal-confirm-confirm',
+        showCancelButton: true,
+        cancelButtonClass: 'ui-modal-confirm-cancel',
+      });
+      return typeof dismiss === 'undefined';
     },
   };
 
@@ -1212,9 +1245,9 @@ export class AttUI {
       if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
         this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
         if (typeof limits.oversize === 'function') {
-          limits.oversize(this.getFileSizeSum() + newFile.size);
+          await limits.oversize(this.getFileSizeSum() + newFile.size);
         } else {
-          alert('Combined file size is limited to ' + limits.size_mb + 'MB');
+          alert('Combined file size is limited to ' + limits.sizeMb + 'MB');
         }
         return;
       }

@@ -46,7 +46,7 @@ Catch.try(async () => {
       const r = await Api.fc.helpFeedback(myEmail, msg);
       if (r.sent) {
         $(target).text('sent!');
-        await Ui.modal.alert(`Message sent! You will find your response in ${myEmail}, check your email later.`);
+        await Ui.modal.info(`Message sent! You will find your response in ${myEmail}, check your email later.`);
         BrowserMsg.send.closePage(parentTabId);
       } else {
         $(target).text(origBtnText);

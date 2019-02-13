@@ -89,7 +89,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test('compose - standalone - freshly loaded pubkey', testWithNewBrowser(async (t, browser) => {
+  ava.test.only('compose - standalone - freshly loaded pubkey', testWithNewBrowser(async (t, browser) => {
     await BrowserRecipe.setUpFcCompatAcct(t, browser);
     const composePage = await ComposePageRecipe.openStandalone(t, browser);
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'freshly loaded pubkey');
