@@ -139,12 +139,7 @@ abstract class ControllableBase {
     } else {
       const typeLastTenChars = await this.target.evaluate((s, t) => {
         const el = document.querySelector(s);
-        console.log(-1);
-        console.log(el);
-        console.log(String(el));
-        console.log(el.type);
         if (el.contentEditable === 'true') {
-          console.log(-2);
           el.innerText = t;
           el.selectionEnd = el.innerText.length;
           el.selectionStart = el.innerText.length;
@@ -152,11 +147,8 @@ abstract class ControllableBase {
         }
         el.value = t.substring(0, t.length - 10);
         if (el.type !== 'email' && typeof el.value !== 'undefined') {
-          console.log(1);
           el.selectionEnd = el.value.length;
-          console.log(1);
           el.selectionStart = el.value.length;
-          console.log(1);
         }
         return true;
       }, this.selector(selector), text);

@@ -887,9 +887,9 @@ export class Composer {
   private evaluateRenderedRecipients = async () => {
     console.log(`[${rnd}] evaluateRenderedRecipients`);
     for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
-      console.log('evaluateRenderedRecipients.emailEl', String(emailEl));
+      console.log(`[${rnd}] evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
-      console.log(`evaluateRenderedRecipients.email(${email})`);
+      console.log(`[${rnd}] evaluateRenderedRecipients.email(${email})`);
       if (Str.isEmailValid(email)) {
         this.S.now('send_btn_span').text(this.BTN_LOADING);
         this.setInputTextHeightManuallyIfNeeded();
@@ -1104,7 +1104,7 @@ export class Composer {
   private parseRenderRecipients = async () => {
     console.log(`[${rnd}] parseRenderRecipients`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
-    console.log(`parseRenderRecipients.inputTo(${String(inputTo)})`);
+    console.log(`[${rnd}] parseRenderRecipients.inputTo(${String(inputTo)})`);
     if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
       console.log(`[${rnd}] parseRenderRecipients.2`);
       for (const rawRecipientAddrInput of inputTo.split(',')) {
@@ -1328,9 +1328,9 @@ export class Composer {
   }
 
   private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | "fail" | "wrong") => {
-    console.log('renderPubkeyResult.emailEl', String(emailEl));
-    console.log(`renderPubkeyResult.email(${email})`);
-    console.log('renderPubkeyResult.contact', JSON.stringify(contact));
+    console.log(`[${rnd}] renderPubkeyResult.emailEl(${String(emailEl)})`);
+    console.log(`[${rnd}] renderPubkeyResult.email(${email})`);
+    console.log(`[${rnd}] renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         const sendingAddrOnPks = Value.is(this.getSender()).in(this.myAddrsOnPks);
@@ -1452,9 +1452,9 @@ export class Composer {
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
     this.S.cached('input_to').blur(Ui.event.prevent('double', async () => {
-      console.log(`input_to.blur -> parseRenderRecipients start`);
+      console.log(`[${rnd}] input_to.blur -> parseRenderRecipients start`);
       await this.parseRenderRecipients();
-      console.log(`input_to.blur -> parseRenderRecipients done`);
+      console.log(`[${rnd}] input_to.blur -> parseRenderRecipients done`);
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.handleErrs(`hide contact box`)));
