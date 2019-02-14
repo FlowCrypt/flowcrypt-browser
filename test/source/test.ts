@@ -29,14 +29,15 @@ console.info(`TEST_VARIANT: ${TEST_VARIANT}`);
 
 const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 
-const consts = {
+const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
   TIMEOUT_ALL_RETRIES: minutes(12), // this has to suffer waiting for semaphore on each retry, thus almost the same as below
   TIMEOUT_OVERALL: minutes(poolSizeOne ? 5 : 13),
   ATTEMPTS: poolSizeOne ? 1 : 3,
-  POOL_SIZE: poolSizeOne ? 1 : 6, // higher concurrency can cause 429 google errs
-  POOL_SIZE_GLOBAL: poolSizeOne ? 1 : 1, // higher concurrency can cause 429 google errs
+  POOL_SIZE: poolSizeOne ? 1 : 6,
+  POOL_SIZE_COMPATIBILITY: poolSizeOne ? 1 : 2,
+  POOL_SIZE_COMPOSE: poolSizeOne ? 1 : 1,
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>,
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
@@ -48,10 +49,10 @@ export type CommonBrowserGroup = 'compatibility' | 'compose';
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, BUILD_DIR);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
-    browsers: new BrowserPool(consts.POOL_SIZE_GLOBAL, 'browserPoolGlobal', true, BUILD_DIR),
+    browsers: new BrowserPool(consts.POOL_SIZE_COMPATIBILITY, 'browserPoolGlobal', true, BUILD_DIR),
   },
   compose: {
-    browsers: new BrowserPool(consts.POOL_SIZE_GLOBAL, 'browserPoolGlobal', true, BUILD_DIR),
+    browsers: new BrowserPool(consts.POOL_SIZE_COMPOSE, 'browserPoolGlobal', true, BUILD_DIR),
   },
 };
 
@@ -72,7 +73,7 @@ ava.before('set up global browsers and config', async t => {
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
   for (const group of Object.keys(browserGlobal)) {
-    for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
+    for (let i = 0; i < browserGlobal[group].browsers.poolSize; i++) {
       const b = await browserGlobal[group].browsers.newBrowserHandle(t);
       setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
       globalBrowsers[group].push(b);
@@ -116,17 +117,18 @@ ava.after.always('close browsers', async t => {
 
 ava.after.always('send debug info if any', async t => {
   const failRnd = Util.lousyRandom();
-  console.info(`FAIL ID ${failRnd}`);
   const debugHtml = getDebugHtml(TEST_VARIANT);
   console.log(`debugging:1`);
   if (debugHtml) {
+    console.info(`FAIL ID ${failRnd}`);
     console.log(`debugging:2`);
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
     console.log(`debugging:3`);
     await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT}) ${failRnd}`, debugHtml);
     console.log(`debugging:4`);
+  } else {
+    console.info(`no fails to debug`);
   }
-  console.log(`debugging:5`);
   t.pass();
 });
 

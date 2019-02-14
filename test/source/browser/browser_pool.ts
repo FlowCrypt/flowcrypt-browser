@@ -14,8 +14,8 @@ export class BrowserPool {
   private browsersForReuse: BrowserHandle[] = [];
 
   constructor(
-    poolSize: number,
-    name: string,
+    public poolSize: number,
+    public name: string,
     private reuse: boolean,
     private extensionBuildDir: string,
     private width = 1280,
