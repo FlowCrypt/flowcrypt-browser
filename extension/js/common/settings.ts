@@ -18,16 +18,11 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
-  private static ignoreEmailAliases = ['nobody@google.com'];
-
   static fetchAcctAliasesFromGmail = async (acctEmail: string) => {
     const response = await Google.gmail.fetchAcctAliases(acctEmail);
-
-    const aliases = response.sendAs.map(alias => {
-      return alias.sendAsEmail;
-    });
-
-    return aliases.filter(email => !Value.is(email).in(Settings.ignoreEmailAliases));
+    return response.sendAs
+      .filter(alias => alias.isDefault || alias.verificationStatus === 'accepted')
+      .map(alias => alias.sendAsEmail);
   }
 
   static evalPasswordStrength = (passphrase: string) => {

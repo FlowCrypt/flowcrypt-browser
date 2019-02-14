@@ -194,8 +194,8 @@ export namespace R { // responses
   export type GmailDraftUpdate = {};
   export type GmailDraftGet = { id: string, message: GmailMsg };
   export type GmailDraftSend = {};
-  export type GmailAliases = { sendAs: GmailAlias[] };
-  export type GmailAlias = { sendAsEmail: string, displayName: string, replyToAddress: string, signature: string, isDefault: boolean, treatAsAlias: boolean, verificationStatus: string };
+  export type GmailAliases = { sendAs: GmailAliases$sendAs[] };
+  type GmailAliases$sendAs = { sendAsEmail: string, displayName: string, replyToAddress: string, signature: string, isDefault: boolean, treatAsAlias: boolean, verificationStatus: string };
 
   export type OpenId = { // 'name' is the full name, picture is url
     at_hash: string; exp: number; iat: number; sub: string; aud: string; azp: string; iss: "https://accounts.google.com";
