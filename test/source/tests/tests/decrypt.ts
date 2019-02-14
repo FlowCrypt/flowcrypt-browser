@@ -9,12 +9,12 @@ import { TestVariant } from '../../test';
 export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredBrowser: TestWithGlobalBrowser) => {
 
   for (const m of Config.tests.messages) {
-    ava.test(`decrypt[global] - ${m.name}`, testWithSemaphoredBrowser('compatibility', async (t, browser) => {
+    ava.test(`decrypt[global:compatibility] - ${m.name}`, testWithSemaphoredBrowser('compatibility', async (t, browser) => {
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password);
     }));
   }
 
-  ava.test('decrypt[global] - by entering pass phrase + remember in session', testWithNewBrowser(async (t, browser) => {
+  ava.test('decrypt[global:compatibility] - by entering pass phrase + remember in session', testWithNewBrowser(async (t, browser) => {
     const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
     const threadId = '15f7f5630573be2d';
     const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
@@ -28,6 +28,6 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
     await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
   }));
 
-  ava.test.todo('decrypt[global] - by entering secondary pass phrase');
+  ava.test.todo('decrypt[global:compatibility] - by entering secondary pass phrase');
 
 };

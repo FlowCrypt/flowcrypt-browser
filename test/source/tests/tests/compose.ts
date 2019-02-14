@@ -103,20 +103,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test('compose[global] - standalone - nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+  ava.test('compose[global:compose] - standalone - nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
     await ComposePageRecipe.fillMsg(composePage, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
     await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
   }));
 
-  ava.test('compose[global] - standalone - from alias', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+  ava.test('compose[global:compatibility] - standalone - from alias', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
     await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'from alias');
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test('compose[global] - standalone - with attachments', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+  ava.test('compose[global:compose] - standalone - with attachments', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'with files');
     const fileInput = await composePage.target.$('input[type=file]');
@@ -124,7 +124,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test('compose[global] - standalone - with attachments + nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+  ava.test('compose[global:compose] - standalone - with attachments + nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
     await ComposePageRecipe.fillMsg(composePage, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
     const fileInput = await composePage.target.$('input[type=file]');
@@ -132,14 +132,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(composePage, 'test-pass', 90);
   }));
 
-  ava.test('compose[global] - signed message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+  ava.test('compose[global:compose] - signed message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'signed message');
     await composePage.click('@action-switch-to-sign');
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test('compose[global] - settings - manually copied pubkey', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+  ava.test('compose[global:compose] - settings - manually copied pubkey', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
     let settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
     let composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
     await ComposePageRecipe.fillMsg(composeFrame, 'human@flowcrypt.com', 'just to load - will close this page');
@@ -159,7 +159,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await settingsPage.waitTillGone('@dialog');
   }));
 
-  ava.test('compose[global] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+  ava.test('compose[global:compatibility] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
     const appendUrl = 'isReplyBox=___cu_true___&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
       '&to=human%40flowcrypt.com&from=flowcrypt.compatibility%40gmail.com&subject=message%20for%20ci%20reply' +
       '&threadId=16841ce0ce5cb74d&threadMsgId=16841ce0ce5cb74d';
@@ -170,7 +170,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(replyFrame);
   }));
 
-  ava.test('compose[global] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+  ava.test('compose[global:compatibility] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
     const appendUrl = 'isReplyBox=___cu_true___&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
       '&to=human%40flowcrypt.com&from=flowcrypt.compatibility%40gmail.com&subject=Re%3A%20Automated%20puppeteer%20test%3A%20reply' +
       '&threadId=16804894591b3a4b&threadMsgId=16804894591b3a4b';
@@ -181,8 +181,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(replyFrame);
   }));
 
-  ava.test.todo('compose[global] - reply - new gmail threadId fmt');
+  ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
-  ava.test.todo('compose[global] - reply - skip click prompt');
+  ava.test.todo('compose[global:compose] - reply - skip click prompt');
 
 };
