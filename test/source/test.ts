@@ -117,6 +117,7 @@ ava.after.always('close browsers', async t => {
 
 ava.after.always('send debug info if any', async t => {
   const debugHtml = getDebugHtml(TEST_VARIANT);
+  console.info('send debug info - deciding');
   if (debugHtml) {
     const failRnd = Util.lousyRandom();
     console.info(`FAIL ID ${failRnd}`);
