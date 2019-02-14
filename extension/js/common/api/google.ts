@@ -355,6 +355,7 @@ export class Google extends Api {
         }
       }
     },
+    fetchAcctAliases: async (acctEmail: string): Promise<R.GmailAliases> => Google.gmailCall(acctEmail, 'GET', 'settings/sendAs', {}),
     fetchMsgsHeadersBasedOnQuery: async (acctEmail: string, q: string, headerNames: string[], msgLimit: number) => {
       const { messages } = await Google.gmail.msgList(acctEmail, q, false);
       return await Google.extractHeadersFromMsgs(acctEmail, messages || [], headerNames, msgLimit);
