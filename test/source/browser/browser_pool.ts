@@ -138,6 +138,9 @@ export class BrowserPool {
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
           await this.throwOnRetryFlagAndReset(t);
+          if (attemptDebugHtmls.length) {
+            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
+          }
           return;
         } catch (err) {
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
@@ -164,6 +167,9 @@ export class BrowserPool {
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
           await this.throwOnRetryFlagAndReset(t);
+          if (attemptDebugHtmls.length) {
+            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
+          }
           return;
         } catch (err) {
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
