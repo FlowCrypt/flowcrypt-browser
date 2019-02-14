@@ -18,7 +18,7 @@ Catch.try(async () => {
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
-    'skipClickPrompt', 'ignoreDraft']);
+    'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -27,6 +27,7 @@ Catch.try(async () => {
   const ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
   const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
   const disableDraftSaving = false;
+  const debug = uncheckedUrlParams.debug === true;
   let threadMsgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
   let draftId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
   let from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
@@ -77,7 +78,7 @@ Catch.try(async () => {
     draftId = storage.drafts_reply[threadId];
   }
 
-  const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving };
+  const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
 
   const closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests

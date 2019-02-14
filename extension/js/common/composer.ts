@@ -15,8 +15,6 @@ import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth } from './api/google.js';
 import { Buf } from './core/buf.js';
 
-const rnd = Str.sloppyRandom();
-
 declare const openpgp: typeof OpenPGP;
 
 interface ComposerAppFunctionsInterface {
@@ -71,9 +69,12 @@ export type ComposerUrlParams = {
   frameId: string;
   parentTabId: string;
   skipClickPrompt: boolean;
+  debug: boolean;
 };
 
 export class Composer {
+
+  private debugId = Str.sloppyRandom();
 
   private S = Ui.buildJquerySels({
     body: 'body',
@@ -165,6 +166,12 @@ export class Composer {
     }
     this.initComposeBox().catch(Catch.handleErr);
     this.initActions();
+  }
+
+  private debug = (msg: string) => {
+    if (this.v.debug) {
+      console.log(`[${this.debugId}] ${msg}`);
+    }
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
@@ -843,15 +850,15 @@ export class Composer {
   }
 
   private lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
-    console.log(`[${rnd}] lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.0`);
+    this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.0`);
     const [dbContact] = await this.app.storageContactGet([email]);
     if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
       return dbContact;
     } else {
       try {
-        console.log(`[${rnd}] lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
+        this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
         const { results: [lookupResult] } = await Api.attester.lookupEmail([email]);
-        console.log(`[${rnd}] lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
+        this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
         if (lookupResult && lookupResult.email) {
           if (lookupResult.pubkey) {
             const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
@@ -888,11 +895,11 @@ export class Composer {
   }
 
   private evaluateRenderedRecipients = async () => {
-    console.log(`[${rnd}] evaluateRenderedRecipients`);
+    this.debug(`evaluateRenderedRecipients`);
     for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
-      console.log(`[${rnd}] evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
+      this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
-      console.log(`[${rnd}] evaluateRenderedRecipients.email(${email})`);
+      this.debug(`evaluateRenderedRecipients.email(${email})`);
       if (Str.isEmailValid(email)) {
         this.S.now('send_btn_span').text(this.BTN_LOADING);
         this.setInputTextHeightManuallyIfNeeded();
@@ -996,18 +1003,18 @@ export class Composer {
   }
 
   private respondToInputHotkeys = (inputToKeydownEvent: JQuery.Event<HTMLElement, null>) => {
-    console.log(`[${rnd}] respondToInputHotkeys`);
+    this.debug(`respondToInputHotkeys`);
     const value = this.S.cached('input_to').val();
-    console.log(`[${rnd}] respondToInputHotkeys.value(${value})`);
+    this.debug(`respondToInputHotkeys.value(${value})`);
     const keys = Env.keyCodes();
     if (!value && inputToKeydownEvent.which === keys.backspace) {
-      console.log(`[${rnd}] respondToInputHotkeys.value:del`);
+      this.debug(`respondToInputHotkeys.value:del`);
       $('.recipients span').last().remove();
       this.showHidePwdOrPubkeyContainerAndColorSendBtn();
       return;
     }
     if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
-      console.log(`[${rnd}] respondToInputHotkeys.value:enter|tab`);
+      this.debug(`respondToInputHotkeys.value:enter|tab`);
       this.S.cached('input_to').blur();
       if (this.S.cached('contacts').css('display') === 'block') {
         if (this.S.cached('contacts').find('.select_contact.hover').length) {
@@ -1019,7 +1026,7 @@ export class Composer {
       this.S.cached('input_to').focus().blur();
       return false;
     }
-    console.log(`[${rnd}] respondToInputHotkeys.value:none`);
+    this.debug(`respondToInputHotkeys.value:none`);
     return;
   }
 
@@ -1112,50 +1119,50 @@ export class Composer {
   }
 
   private parseRenderRecipients = async () => {
-    console.log(`[${rnd}] parseRenderRecipients`);
+    this.debug(`parseRenderRecipients`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
-    console.log(`[${rnd}] parseRenderRecipients.inputTo(${String(inputTo)})`);
+    this.debug(`parseRenderRecipients.inputTo(${String(inputTo)})`);
     if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
-      console.log(`[${rnd}] parseRenderRecipients.2`);
+      this.debug(`parseRenderRecipients.2`);
       for (const rawRecipientAddrInput of inputTo.split(',')) {
-        console.log(`[${rnd}] parseRenderRecipients.3 (${rawRecipientAddrInput})`);
+        this.debug(`parseRenderRecipients.3 (${rawRecipientAddrInput})`);
         if (!rawRecipientAddrInput) {
-          console.log(`[${rnd}] parseRenderRecipients.4`);
+          this.debug(`parseRenderRecipients.4`);
           continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
         }
-        console.log(`[${rnd}] parseRenderRecipients.5`);
+        this.debug(`parseRenderRecipients.5`);
         const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
-        console.log(`[${rnd}] parseRenderRecipients.6 (${email})`);
+        this.debug(`parseRenderRecipients.6 (${email})`);
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
       }
     } else {
       return;
     }
-    console.log(`[${rnd}] parseRenderRecipients.7`);
+    this.debug(`parseRenderRecipients.7`);
     this.S.cached('input_to').val('');
-    console.log(`[${rnd}] parseRenderRecipients.8`);
+    this.debug(`parseRenderRecipients.8`);
     this.resizeInputTo();
-    console.log(`[${rnd}] parseRenderRecipients.9`);
+    this.debug(`parseRenderRecipients.9`);
     await this.evaluateRenderedRecipients();
-    console.log(`[${rnd}] parseRenderRecipients.10`);
+    this.debug(`parseRenderRecipients.10`);
     this.setInputTextHeightManuallyIfNeeded();
-    console.log(`[${rnd}] parseRenderRecipients.11`);
+    this.debug(`parseRenderRecipients.11`);
   }
 
   private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
-    console.log(`[${rnd}] selectContact 1`);
+    this.debug(`selectContact 1`);
     const possiblyBogusRecipient = $('.recipients span.wrong').last();
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
-    console.log(`[${rnd}] selectContact 2`);
+    this.debug(`selectContact 2`);
     const q = Str.parseEmail(fromQuery.substring).email;
     if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
       possiblyBogusRecipient.remove();
     }
     if (!Value.is(email).in(this.getRecipientsFromDom())) {
       this.S.cached('input_to').val(Str.parseEmail(email).email);
-      console.log(`[${rnd}] selectContact -> parseRenderRecipients start`);
+      this.debug(`selectContact -> parseRenderRecipients start`);
       await this.parseRenderRecipients();
-      console.log(`[${rnd}] selectContact -> parseRenderRecipients done`);
+      this.debug(`selectContact -> parseRenderRecipients done`);
     }
     this.hideContacts();
   }
@@ -1243,25 +1250,25 @@ export class Composer {
   }
 
   private searchContacts = async (dbOnly = false) => {
-    console.log(`[${rnd}] searchContacts`);
+    this.debug(`searchContacts`);
     const query = { substring: Str.parseEmail(String(this.S.cached('input_to').val())).email };
-    console.log(`[${rnd}] searchContacts.query(${JSON.stringify(query)})`);
+    this.debug(`searchContacts.query(${JSON.stringify(query)})`);
     if (query.substring !== '') {
       const contacts = await this.app.storageContactSearch(query);
       if (dbOnly || !this.canReadEmails) {
-        console.log(`[${rnd}] searchContacts 1`);
+        this.debug(`searchContacts 1`);
         this.renderSearchRes(contacts, query);
       } else {
-        console.log(`[${rnd}] searchContacts 2`);
+        this.debug(`searchContacts 2`);
         this.contactSearchInProgress = true;
         this.renderSearchRes(contacts, query);
-        console.log(`[${rnd}] searchContacts 3`);
+        this.debug(`searchContacts 3`);
         this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
-          console.log(`[${rnd}] searchContacts 4`);
+          this.debug(`searchContacts 4`);
           if (searchContactsRes.new.length) {
             for (const contact of searchContactsRes.new) {
               const [inDb] = await this.app.storageContactGet([contact.email]);
-              console.log(`[${rnd}] searchContacts 5`);
+              this.debug(`searchContacts 5`);
               if (!inDb) {
                 await this.app.storageContactSave(await this.app.storageContactObj(
                   contact.email,
@@ -1275,14 +1282,14 @@ export class Composer {
               } else if (!inDb.name && contact.name) {
                 const toUpdate = { name: contact.name };
                 await this.app.storageContactUpdate(contact.email, toUpdate);
-                console.log(`[${rnd}] searchContacts 6`);
+                this.debug(`searchContacts 6`);
               }
             }
-            console.log(`[${rnd}] searchContacts 7`);
+            this.debug(`searchContacts 7`);
             await this.searchContacts(true);
-            console.log(`[${rnd}] searchContacts 8`);
+            this.debug(`searchContacts 8`);
           } else {
-            console.log(`[${rnd}] searchContacts 9`);
+            this.debug(`searchContacts 9`);
             this.renderSearchResultsLoadingDone();
             this.contactSearchInProgress = false;
           }
@@ -1290,7 +1297,7 @@ export class Composer {
       }
     } else {
       this.hideContacts(); // todo - show suggestions of most contacted ppl etc
-      console.log(`[${rnd}] searchContacts 10`);
+      this.debug(`searchContacts 10`);
     }
   }
 
@@ -1352,9 +1359,9 @@ export class Composer {
   }
 
   private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | "fail" | "wrong") => {
-    console.log(`[${rnd}] renderPubkeyResult.emailEl(${String(emailEl)})`);
-    console.log(`[${rnd}] renderPubkeyResult.email(${email})`);
-    console.log(`[${rnd}] renderPubkeyResult.contact(${JSON.stringify(contact)})`);
+    this.debug(`renderPubkeyResult.emailEl(${String(emailEl)})`);
+    this.debug(`renderPubkeyResult.email(${email})`);
+    this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         const sendingAddrOnPks = Value.is(this.getSender()).in(this.myAddrsOnPks);
@@ -1476,15 +1483,15 @@ export class Composer {
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
     this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
-      console.log(`[${rnd}] input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+      this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
       await this.parseRenderRecipients();
-      console.log(`[${rnd}] input_to.blur -> parseRenderRecipients done`);
+      this.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.getErrHandlers(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
-        console.log(`[${rnd}] input_addresses_container_inner.clickk -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
+        this.debug(`input_addresses_container_inner.clickk -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
@@ -1493,7 +1500,7 @@ export class Composer {
     if (!String(this.S.cached('input_to').val()).length) {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in
-      console.log(`[${rnd}] renderComposeTable -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
+      this.debug(`renderComposeTable -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
       this.S.cached('input_to').focus();
     }
     if (this.v.isReplyBox) {
