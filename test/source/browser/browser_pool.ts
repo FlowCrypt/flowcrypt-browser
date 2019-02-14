@@ -4,6 +4,7 @@ import { BrowserHandle } from './browser_handle';
 import { Util } from "../util";
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests';
 import { Consts } from '../test';
+import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 
 class TimeoutError extends Error { }
 
@@ -115,10 +116,11 @@ export class BrowserPool {
     </div>
     `
 
-  private throwOnRetryFlagAndReset = (t: AvaContext) => {
+  private throwOnRetryFlagAndReset = async (t: AvaContext) => {
+    await Util.sleep(TIMEOUT_DESTROY_UNEXPECTED_ALERT + 1); // in case there was an unexpected alert, don't let that affect next round
     if (t.retry) {
       t.retry = undefined;
-      const e = new Error('previous attempt marked for retry');
+      const e = new Error(`last attempt marked for retry`);
       e.stack = e.message; // stack is not interesting here, too much clutter would be printed
       throw e;
     }
@@ -135,10 +137,9 @@ export class BrowserPool {
         const browser = await withTimeouts(this.newBrowserHandle(t));
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
-          this.throwOnRetryFlagAndReset(t);
+          await this.throwOnRetryFlagAndReset(t);
           return;
         } catch (err) {
-          t.retry = undefined;
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
           throw err;
         } finally {
@@ -162,10 +163,9 @@ export class BrowserPool {
         await browser.closeAllPages();
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
-          this.throwOnRetryFlagAndReset(t);
+          await this.throwOnRetryFlagAndReset(t);
           return;
         } catch (err) {
-          t.retry = undefined;
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
           throw err;
         } finally {
