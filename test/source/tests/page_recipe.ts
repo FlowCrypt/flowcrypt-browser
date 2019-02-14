@@ -124,6 +124,7 @@ export class SetupPageRecipe extends PageRecipe {
   // tslint:disable-next-line:max-line-length
   public static recover = async (settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) => {
     const k = Config.key(keyTitle);
+    await settingsPage.waitAll('@input-recovery-pass-phrase', { timeout: 40 }); // can sometimes be slow
     await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);
     await settingsPage.waitAndClick('@action-recover-account');
     if (wrongPp) {
@@ -351,9 +352,12 @@ export class ComposePageRecipe extends PageRecipe {
   }
 
   public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
+    await Util.sleep(0.5);
     if (to) {
+      await composePageOrFrame.click('@input-to');
+      await Util.sleep(0.5);
       await composePageOrFrame.type('@input-to', to);
-      await Util.sleep(1);
+      await Util.sleep(0.5);
     }
     await composePageOrFrame.click('@input-subject');
     await Util.sleep(1);
