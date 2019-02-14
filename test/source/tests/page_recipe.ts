@@ -172,7 +172,7 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static closeDialog = async (settingsPage: ControllablePage) => {
-    await settingsPage.waitAndClick('@dialog-close');
+    await settingsPage.waitAndClick('@dialog-close', { delay: 3 });
     await settingsPage.waitTillGone('@dialog');
   }
 
