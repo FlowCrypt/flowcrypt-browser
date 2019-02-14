@@ -1002,7 +1002,9 @@ export class Composer {
       console.log(`[${rnd}] respondToInputHotkeys.value:del`);
       $('.recipients span').last().remove();
       this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-    } else if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
+      return;
+    }
+    if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
       console.log(`[${rnd}] respondToInputHotkeys.value:enter|tab`);
       this.S.cached('input_to').blur();
       if (this.S.cached('contacts').css('display') === 'block') {
@@ -1114,26 +1116,28 @@ export class Composer {
     if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
       console.log(`[${rnd}] parseRenderRecipients.2`);
       for (const rawRecipientAddrInput of inputTo.split(',')) {
-        console.log(`[${rnd}] parseRenderRecipients.3`);
+        console.log(`[${rnd}] parseRenderRecipients.3 (${rawRecipientAddrInput})`);
         if (!rawRecipientAddrInput) {
           console.log(`[${rnd}] parseRenderRecipients.4`);
           continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
         }
         console.log(`[${rnd}] parseRenderRecipients.5`);
         const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
+        console.log(`[${rnd}] parseRenderRecipients.6 (${email})`);
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
       }
     } else {
       return;
     }
-    console.log(`[${rnd}] parseRenderRecipients.4`);
-    this.S.cached('input_to').val('');
-    console.log(`[${rnd}] parseRenderRecipients.5`);
-    this.resizeInputTo();
-    console.log(`[${rnd}] parseRenderRecipients.6`);
-    await this.evaluateRenderedRecipients();
     console.log(`[${rnd}] parseRenderRecipients.7`);
+    this.S.cached('input_to').val('');
+    console.log(`[${rnd}] parseRenderRecipients.8`);
+    this.resizeInputTo();
+    console.log(`[${rnd}] parseRenderRecipients.9`);
+    await this.evaluateRenderedRecipients();
+    console.log(`[${rnd}] parseRenderRecipients.10`);
     this.setInputTextHeightManuallyIfNeeded();
+    console.log(`[${rnd}] parseRenderRecipients.11`);
   }
 
   private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
@@ -1469,8 +1473,8 @@ export class Composer {
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
-    this.S.cached('input_to').blur(Ui.event.prevent('double', async () => {
-      console.log(`[${rnd}] input_to.blur -> parseRenderRecipients start`);
+    this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
+      console.log(`[${rnd}] input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
       await this.parseRenderRecipients();
       console.log(`[${rnd}] input_to.blur -> parseRenderRecipients done`);
     }));
