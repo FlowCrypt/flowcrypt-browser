@@ -232,11 +232,8 @@ abstract class ControllableBase {
     this.log(`wait_and_click:8:${selector}`);
   }
 
-  public getFramesUrls = async (urlMatchables: string[], { sleep } = { sleep: 3 }): Promise<string[]> => {
-    if (sleep) {
-      await Util.sleep(sleep);
-    }
-    const matchingLinks = [];
+  private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
+    const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {
       const srcHandle = await iframe.getProperty('src');
       const src = await srcHandle.jsonValue() as string;
@@ -245,6 +242,23 @@ abstract class ControllableBase {
       }
     }
     return matchingLinks;
+  }
+
+  public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number, appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
+    if (sleep) {
+      await Util.sleep(sleep);
+    }
+    if (!appearIn) {
+      return await this.getFramesUrlsInThisMoment(urlMatchables);
+    }
+    for (let second = 0; second < appearIn; second++) {
+      const matched = await this.getFramesUrlsInThisMoment(urlMatchables);
+      if (matched.length) {
+        return matched;
+      }
+      await Util.sleep(1);
+    }
+    throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   }
 
   public getFrame = async (urlMatchables: string[], { sleep = 1 } = { sleep: 1 }): Promise<ControllableFrame> => {
