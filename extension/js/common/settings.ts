@@ -288,7 +288,7 @@ export class Settings {
       container.find('.action_fix_compatibility').click(Ui.event.handle(async target => {
         const expireYears = String($(target).parents(container as string).find('select.input_fix_expire_years').val()); // JQuery quirk
         if (!expireYears) {
-          alert('Please select key expiration');
+          await Ui.modal.warning('Please select key expiration');
         } else {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
@@ -308,7 +308,7 @@ export class Settings {
           if (await reformatted.key.getEncryptionKey()) {
             resolve(reformatted.key);
           } else {
-            alert('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com. We are VERY prompt to respond.');
+            await Ui.modal.error('Key update: Key still cannot be used for encryption. This looks like a compatibility issue.\n\nPlease write us at human@flowcrypt.com.');
             Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
           }
         }
@@ -333,13 +333,13 @@ export class Settings {
     return await retryCb();
   }
 
-  static forbidAndRefreshPageIfCannot = (action: 'CREATE_KEYS' | 'BACKUP_KEYS', rules: Rules) => {
+  static forbidAndRefreshPageIfCannot = async (action: 'CREATE_KEYS' | 'BACKUP_KEYS', rules: Rules) => {
     if (action === 'CREATE_KEYS' && !rules.canCreateKeys()) {
-      alert(Lang.setup.creatingKeysNotAllowedPleaseImport);
+      await Ui.modal.error(Lang.setup.creatingKeysNotAllowedPleaseImport);
       window.location.reload();
       throw new Error('creating_keys_not_allowed_please_import');
     } else if (action === 'BACKUP_KEYS' && !rules.canBackupKeys()) {
-      alert(Lang.setup.keyBackupsNotAllowed);
+      await Ui.modal.error(Lang.setup.keyBackupsNotAllowed);
       window.location.reload();
       throw new Error('key_backups_not_allowed');
     }
@@ -352,7 +352,7 @@ export class Settings {
         await Store.acctEmailsAdd(response.acctEmail);
         const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
         if (storage.setup_done) { // this was just an additional permission
-          alert('You\'re all set.');
+          await Ui.modal.info('You\'re all set.');
           window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
           await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
@@ -364,18 +364,18 @@ export class Settings {
         }
       } else {
         Catch.report('failed to log into google in newGoogleAcctAuthPromptThenAlertOrForward', response);
-        alert(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
+        await Ui.modal.error(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${response.result}] ${response.error}`);
         await Ui.time.sleep(1000);
         window.location.reload();
       }
     } catch (e) {
       if (Api.err.isNetErr(e)) {
-        alert('Could not complete due to network error. Please try again.');
+        await Ui.modal.error('Could not complete due to network error. Please try again.');
       } else if (Api.err.isMailOrAcctDisabled(e)) {
-        alert('Your Google account or Gmail service is disabled. Please check your Google account settings.');
+        await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
       } else {
         Catch.handleErr(e);
-        alert(`Unknown error happened when connecting to Google: ${String(e)}`);
+        await Ui.modal.error(`Unknown error happened when connecting to Google: ${String(e)}`);
       }
       await Ui.time.sleep(1000);
       window.location.reload();

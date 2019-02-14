@@ -42,7 +42,7 @@ Catch.try(async () => {
     const subscription = await Store.subscription();
     if (doRemember && !subscription.active) {
       $('.input_remember').prop('checked', false);
-      if (confirm(`FlowCrypt Advanced is needed to save custom footers. Show more info?`)) {
+      if (await Ui.modal.confirm(`FlowCrypt Advanced is needed to save custom footers. Show more info?`)) {
         BrowserMsg.send.subscribeDialog(grandparentTabId, {}); // grandparent is the email provider tab
       }
     }

@@ -15,12 +15,15 @@ import { mnemonic } from './core/mnemonic.js';
 import { Att } from './core/att.js';
 import { MsgBlock, KeyBlockType } from './core/mime.js';
 import { Settings } from './settings.js';
+import Swal from 'sweetalert2';
+import { requireTag } from './platform/require.js';
+
+requireTag('sweetalert2.js', 'sweetalert2.css');
 
 declare const openpgp: typeof OpenPGP;
 declare const qq: any;
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
-type AttLimits = { count?: number, size?: number, size_mb?: number, oversize?: (newFileSize: number) => void };
 type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 type NamedSels = Dict<JQuery<HTMLElement>>;
 type KeyImportUiCheckResult = {
@@ -28,10 +31,11 @@ type KeyImportUiCheckResult = {
   encrypted: OpenPGP.key.Key;
 };
 
+export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
 export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
-export type BrowserEventErrorHandler = { auth?: () => void, authPopup?: () => void, network?: () => void, other?: (e: any) => void };
+export type BrowserEventErrorHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
@@ -68,7 +72,7 @@ export class Browser {
         renderIn.append(a); // xss-escaped attachment name above
         renderIn.css('height', 'auto');
         renderIn.find('a').click(e => {
-          alert('Please use right-click and select Save Link As');
+          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.handleErr);
           e.preventDefault();
           e.stopPropagation();
           return false;
@@ -427,28 +431,28 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrorHandler) => {
       return function (this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
           r = cb(this, event);
           if (typeof r === 'object' && typeof r.catch === 'function') {
-            r.catch(e => Ui.event._dispatchErr(e, errHandler));
+            r.catch(e => Ui.event._dispatchErr(e, errHandlers));
           }
         } catch (e) {
-          Ui.event._dispatchErr(e, errHandler);
+          Ui.event._dispatchErr(e, errHandlers);
         }
       };
     },
-    _dispatchErr: (e: any, errHandler?: BrowserEventErrorHandler) => {
-      if (Api.err.isNetErr(e) && errHandler && errHandler.network) {
-        errHandler.network();
-      } else if (Api.err.isAuthErr(e) && errHandler && errHandler.auth) {
-        errHandler.auth();
-      } else if (Api.err.isAuthPopupNeeded(e) && errHandler && errHandler.authPopup) {
-        errHandler.authPopup();
-      } else if (errHandler && errHandler.other) {
-        errHandler.other(e);
+    _dispatchErr: (e: any, errHandlers?: BrowserEventErrorHandler) => {
+      if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
+        errHandlers.network().catch(Catch.handleErr);
+      } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {
+        errHandlers.auth().catch(Catch.handleErr);
+      } else if (Api.err.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
+        errHandlers.authPopup().catch(Catch.handleErr);
+      } else if (errHandlers && errHandlers.other) {
+        errHandlers.other(e).catch(Catch.handleErr);
       } else {
         Catch.handleErr(e);
       }
@@ -568,6 +572,48 @@ export class Ui {
   };
 
   public static e = (name: string, attrs: Dict<string>) => $(`<${name}/>`, attrs)[0].outerHTML; // xss-tested: jquery escapes attributes
+
+  public static modal = {
+    info: async (text: string): Promise<void> => {
+      await Swal.fire({
+        html: Xss.escape(text).replace(/\n/g, '<br>'),
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-info',
+        confirmButtonClass: 'ui-modal-info-confirm',
+      });
+    },
+    warning: async (text: string): Promise<void> => {
+      await Swal.fire({
+        html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-warning',
+        confirmButtonClass: 'ui-modal-warning-confirm',
+      });
+    },
+    error: async (text: string): Promise<void> => {
+      await Swal.fire({
+        html: `<span class="red">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-error',
+        confirmButtonClass: 'ui-modal-error-confirm',
+      });
+    },
+    confirm: async (text: string): Promise<boolean> => {
+      const { dismiss } = await Swal.fire({
+        html: Xss.escape(text).replace(/\n/g, '<br>'),
+        animation: false,
+        allowOutsideClick: false,
+        customClass: 'ui-modal-confirm',
+        confirmButtonClass: 'ui-modal-confirm-confirm',
+        showCancelButton: true,
+        cancelButtonClass: 'ui-modal-confirm-cancel',
+      });
+      return typeof dismiss === 'undefined';
+    },
+  };
 
 }
 
@@ -988,7 +1034,7 @@ export class KeyImportUi {
         $('.source_paste_container').css('display', 'block');
       } else {
         $('.input_private_key').val('').change().prop('disabled', false);
-        alert('Not able to read this key. Is it a valid PGP private key?');
+        await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
         $('input[type=radio][name=source]').removeAttr('checked');
       }
     });
@@ -1192,16 +1238,16 @@ export class AttUI {
   private processNewAtt = async (id: string, name: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
-      alert('Amount of attached files is limited to ' + limits.count);
+      await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
       this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
     } else {
       const newFile: File = this.uploader.getFile(id); // tslint:disable-line:no-unsafe-any
       if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
         this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
         if (typeof limits.oversize === 'function') {
-          limits.oversize(this.getFileSizeSum() + newFile.size);
+          await limits.oversize(this.getFileSizeSum() + newFile.size);
         } else {
-          alert('Combined file size is limited to ' + limits.size_mb + 'MB');
+          await Ui.modal.warning('Combined file size is limited to ' + limits.sizeMb + 'MB');
         }
         return;
       }

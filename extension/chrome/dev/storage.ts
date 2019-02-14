@@ -71,7 +71,7 @@ Catch.try(async () => {
         const namespaceSel = $('.namespace');
         const keySelVal = String($('.key').val());
         if (namespaceSel.val() === '-- namespace --' || $('.type').val() === '-- type --' || !keySelVal) {
-          alert('Namespace, key and type need to be filled');
+          await Ui.modal.info('Namespace, key and type need to be filled');
         } else {
           const acctEmail = namespaceSel.val() === 'global' ? undefined : decodeURIComponent(String(namespaceSel.val())); // it's a text input
           const newValue: Storable = JSON.parse(String($('.value').val())) as Storable; // tslint:disable:no-unsafe-any

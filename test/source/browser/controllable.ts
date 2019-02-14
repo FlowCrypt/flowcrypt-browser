@@ -4,6 +4,7 @@ import { Util } from '../util';
 import { Url } from './url';
 import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { newTimeoutPromise, AvaContext } from '../tests';
+import { expect } from 'chai';
 
 declare const jQuery: any;
 
@@ -32,6 +33,10 @@ abstract class ControllableBase {
     let m;
     if (this.isXpath(customSelLanguageQuery)) {
       return customSelLanguageQuery;
+    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)\:message/)) { // tslint:disable-line:no-conditional-assignment
+      return `.${m[1]} #swal2-content`; // message inside the modal
+    } else if (m = customSelLanguageQuery.match(/@(ui-modal-[a-z\-]+)/)) { // tslint:disable-line:no-conditional-assignment
+      return `.${m[1]}`; // represented as a class
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)$/)) { // tslint:disable-line:no-conditional-assignment
       return `[data-test="${m[1]}"]`;
     } else if (m = customSelLanguageQuery.match(/^@([a-z0-9\-]+)\(([^()]*)\)$/)) { // tslint:disable-line:no-conditional-assignment
@@ -187,6 +192,13 @@ abstract class ControllableBase {
     await this.type(selector, text);
   }
 
+  public waitAndRespondToModal = async (type: 'info' | 'warning' | 'error' | 'confirm', clickBtn: 'confirm' | 'cancel', message: string) => {
+    await this.waitAll([`@ui-modal-${type}`, `@ui-modal-${type}:message`]);
+    await Util.sleep(0.5);
+    expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
+    await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
+  }
+
   public waitAndClick = async (selector: string, { delay = 0.1, confirmGone = false, retryErrs = false }: { delay?: number, confirmGone?: boolean, retryErrs?: boolean } = {}) => {
     for (const i of [1, 2, 3]) {
       this.log(`wait_and_click(i${i}):1:${selector}`);
@@ -335,7 +347,7 @@ export class ControllablePage extends ControllableBase {
   public newAlertTriggeredBy = async (triggeringAction: () => Promise<void>): Promise<ControllableAlert> => {
     const dialogPromise: Promise<ControllableAlert> = new Promise((resolve, reject) => {
       this.page.on('dialog', () => resolve(this.alerts[this.alerts.length - 1])); // we need it as a ControllableAlert so that we know if it was dismissed or not
-      setTimeout(() => reject(new Error('newAlertTriggeredBy timout - no alert')), TIMEOUT_ELEMENT_APPEAR * 1000);
+      setTimeout(() => reject(new Error('new alert timout - no alert')), TIMEOUT_ELEMENT_APPEAR * 1000);
     });
     triggeringAction().catch(console.error);
     return await dialogPromise;

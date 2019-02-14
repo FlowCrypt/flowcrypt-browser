@@ -87,7 +87,7 @@ Catch.try(async () => {
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Unknown s2k type.') {
-          alert(`One of your keys ${keyinfo.longid} is not supported yet (${String(e)}).\n\nPlease write human@flowcrypt.com with details about how was this key created.`);
+          await Ui.modal.error(`One of your keys ${keyinfo.longid} is not supported yet (${String(e)}).\n\nPlease write human@flowcrypt.com with details about how was this key created.`);
         } else {
           throw e;
         }

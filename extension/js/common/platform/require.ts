@@ -23,6 +23,8 @@
 
 /// <reference path="../../../types/openpgp.d.ts" />
 
+const loadedTags: string[] = [];
+
 declare const openpgp: typeof OpenPGP;
 
 type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode: (text: string) => string, labels: string[], version: string };
@@ -46,4 +48,24 @@ export const requireMimeBuilder = (): any => {
 
 export const requireIso88592 = (): Codec => {
   return (window as any).iso88592 as Codec;
+};
+
+export const requireTag = (...add: string[]) => {
+  for (const dep of add) {
+    if (loadedTags.indexOf(dep) === -1) {
+      if (/\.js/.test(dep)) {
+        const swalScript = window.document.createElement('script');
+        swalScript.src = `/lib/${dep}`;
+        window.document.body.appendChild(swalScript);
+      } else if (/.css/.test(dep)) {
+        const swalStyle = window.document.createElement('link');
+        swalStyle.rel = 'stylesheet';
+        swalStyle.href = `/css/${dep}`;
+        window.document.head.appendChild(swalStyle);
+      } else {
+        throw new Error(`Unknown dep type: ${dep}`);
+      }
+      loadedTags.push(dep);
+    }
+  }
 };

@@ -76,7 +76,7 @@ Catch.try(async () => {
     $('.featherlight-close').click();
   });
   BrowserMsg.addListener('notification_show', async ({ notification }: Bm.NotificationShow) => {
-    alert(notification);
+    await Ui.modal.info(notification);
   });
   BrowserMsg.listen(tabId);
 
@@ -256,7 +256,7 @@ Catch.try(async () => {
     for (const prv of prvs) {
       const longid = await Pgp.key.longid(prv);
       if (!longid) {
-        alert('Cannot save keys to storage because at least one of them is not valid.');
+        await Ui.modal.error('Cannot save keys to storage because at least one of them is not valid.');
         return;
       }
       await Store.keysAdd(acctEmail, prv.armor());
@@ -272,7 +272,7 @@ Catch.try(async () => {
   };
 
   const createSaveKeyPair = async (options: SetupOptions) => {
-    Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
     const { full_name } = await Store.getAcct(acctEmail, ['full_name']);
     try {
       const key = await Pgp.key.create([{ name: full_name || '', email: acctEmail }], 4096, options.passphrase); // todo - add all addresses?
@@ -294,50 +294,57 @@ Catch.try(async () => {
 
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
     const passphrase = String($('#recovery_pasword').val());
-    const matchingKeys: OpenPGP.key.Key[] = [];
+    const newlyMatchingKeys: OpenPGP.key.Key[] = [];
     if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
-      alert(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
-    } else if (passphrase) {
-      for (const revoveredKey of recoveredKeys) {
-        const longid = await Pgp.key.longid(revoveredKey);
-        const armored = revoveredKey.armor();
-        if (longid && !Value.is(longid).in(recoveredKeysSuccessfulLongids) && await Pgp.key.decrypt(revoveredKey, [passphrase]) === true) {
+      return await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
+    }
+    if (!passphrase) {
+      return await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+    }
+    let matchedPreviouslyRecoveredKey = false;
+    for (const recoveredKey of recoveredKeys) {
+      const longid = await Pgp.key.longid(recoveredKey);
+      const armored = recoveredKey.armor();
+      if (longid) {
+        if (Value.is(longid).in(recoveredKeysSuccessfulLongids)) {
+          matchedPreviouslyRecoveredKey = true;
+        } else if (await Pgp.key.decrypt(recoveredKey, [passphrase]) === true) {
           recoveredKeysSuccessfulLongids.push(longid);
           const { keys: [prv] } = await openpgp.key.readArmored(armored);
-          matchingKeys.push(prv);
+          newlyMatchingKeys.push(prv);
         }
       }
-      if (matchingKeys.length) {
-        const options: SetupOptions = {
-          submit_main: false, // todo - reevaluate submitting when recovering
-          submit_all: false,
-          passphrase,
-          passphrase_save: true, // todo - reevaluate saving passphrase when recovering
-          key_backup_prompt: false,
-          recovered: true,
-          setup_simple: true,
-          is_newly_created_key: false,
-        };
-        recoveredKeysMatchingPassphrases.push(passphrase);
-        await saveKeys(matchingKeys, options);
-        const storage = await Store.getAcct(acctEmail, ['setup_done']);
-        if (!storage.setup_done) { // normal situation - fresh setup
-          await preFinalizeSetup(options);
-          await finalizeSetup(options);
-          await renderSetupDone();
-        } else { // setup was finished before, just added more keys now
-          await renderSetupDone();
-        }
+    }
+    if (!newlyMatchingKeys.length) {
+      $('.line_skip_recovery').css('display', 'block');
+      if (matchedPreviouslyRecoveredKey) {
+        $('#recovery_pasword').val('');
+        return await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
+      } else if (recoveredKeys.length > 1) {
+        return await Ui.modal.warning(`This pass phrase did not match any of your ${recoveredKeys.length} backups. Please try again.`);
       } else {
-        if (recoveredKeys.length > 1) {
-          alert('This pass phrase did not match any of your ' + recoveredKeys.length + ' backups. Please try again.');
-        } else {
-          alert('This pass phrase did not match your original setup. Please try again.');
-        }
-        $('.line_skip_recovery').css('display', 'block');
+        return await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
       }
-    } else {
-      alert('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+    }
+    const options: SetupOptions = {
+      submit_main: false, // todo - reevaluate submitting when recovering
+      submit_all: false,
+      passphrase,
+      passphrase_save: true, // todo - reevaluate saving passphrase when recovering
+      key_backup_prompt: false,
+      recovered: true,
+      setup_simple: true,
+      is_newly_created_key: false,
+    };
+    recoveredKeysMatchingPassphrases.push(passphrase);
+    await saveKeys(newlyMatchingKeys, options);
+    const storage = await Store.getAcct(acctEmail, ['setup_done']);
+    if (!storage.setup_done) { // normal situation - fresh setup
+      await preFinalizeSetup(options);
+      await finalizeSetup(options);
+      await renderSetupDone();
+    } else { // setup was finished before, just added more keys now
+      await renderSetupDone();
     }
   }));
 
@@ -360,8 +367,8 @@ Catch.try(async () => {
     }
   }));
 
-  $('.action_skip_recovery').click(Ui.event.handle(() => {
-    if (confirm(Lang.setup.confirmSkipRecovery)) {
+  $('.action_skip_recovery').click(Ui.event.handle(async target => {
+    if (await Ui.modal.confirm(Lang.setup.confirmSkipRecovery)) {
       recoveredKeys = [];
       recoveredKeysMatchingPassphrases = [];
       nRecoveredKeysLongid = 0;
@@ -417,12 +424,12 @@ Catch.try(async () => {
       await renderSetupDone();
     } catch (e) {
       if (e instanceof UserAlert) {
-        return alert(e.message);
+        return await Ui.modal.warning(e.message);
       } else if (e instanceof KeyCanBeFixed) {
         return await renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
       } else {
         Catch.handleErr(e);
-        return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
   }));
@@ -434,7 +441,7 @@ Catch.try(async () => {
       fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
       Catch.handleErr(e);
-      alert(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
+      await Ui.modal.error(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
       displayBlock('step_2b_manual_enter');
       return;
     }
@@ -448,19 +455,19 @@ Catch.try(async () => {
     Settings.renderPasswordStrength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
 
-  const isActionCreatePrivateFormInputCorrect = () => {
+  const isActionCreatePrivateFormInputCorrect = async () => {
     if (!$('#step_2a_manual_create .input_password').val()) {
-      alert('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
+      await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
       $('#step_2a_manual_create .input_password').focus();
       return false;
     }
     if ($('#step_2a_manual_create .action_create_private').hasClass('gray')) {
-      alert('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
+      await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
       $('#step_2a_manual_create .input_password').focus();
       return false;
     }
     if ($('#step_2a_manual_create .input_password').val() !== $('#step_2a_manual_create .input_password2').val()) {
-      alert('The pass phrases do not match. Please try again.');
+      await Ui.modal.warning('The pass phrases do not match. Please try again.');
       $('#step_2a_manual_create .input_password2').val('');
       $('#step_2a_manual_create .input_password2').focus();
       return false;
@@ -469,8 +476,8 @@ Catch.try(async () => {
   };
 
   $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent('double', async () => {
-    Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
-    if (!isActionCreatePrivateFormInputCorrect()) {
+    await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
+    if (! await isActionCreatePrivateFormInputCorrect()) {
       return;
     }
     try {
@@ -492,7 +499,7 @@ Catch.try(async () => {
       window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
     } catch (e) {
       Catch.handleErr(e);
-      alert(`There was an error, please try again.\n\n(${String(e)})`);
+      await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
       $('#step_2a_manual_create .action_create_private').text('CREATE AND SAVE');
     }
   }));
@@ -548,7 +555,7 @@ Catch.try(async () => {
       return;
     }
     if (typeof key_backup_method !== 'string') {
-      alert('Backup has not successfully finished, will retry');
+      await Ui.modal.error('Backup has not successfully finished, will retry');
       window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
       return;
     }

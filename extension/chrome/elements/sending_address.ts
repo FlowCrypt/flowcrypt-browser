@@ -50,7 +50,7 @@ Catch.try(async () => {
         if (Api.err.isSignificant(e)) {
           Catch.handleErr(e);
         }
-        alert(`There was an error refreshing aliases, please try again\n\n${String(e)}`);
+        await Ui.modal.error(`There was an error refreshing aliases, please try again\n\n${String(e)}`);
         await Ui.time.sleep(1000);
       }
     }

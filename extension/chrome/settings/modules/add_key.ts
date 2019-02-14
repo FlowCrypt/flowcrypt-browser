@@ -67,12 +67,12 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (e instanceof UserAlert) {
-        return alert(e.message);
+        return await Ui.modal.warning(e.message);
       } else if (e instanceof KeyCanBeFixed) {
-        return alert(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
+        return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
       } else {
         Catch.handleErr(e);
-        return alert(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
+        return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
   }));

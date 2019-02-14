@@ -55,8 +55,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     await settingsPage.waitAll('@dialog');
     const helpFrame = await settingsPage.getFrame(['help.htm']);
     await helpFrame.waitAndType('@input-feedback-message', 'automated puppeteer test: help form from settings footer');
-    const dialog = await settingsPage.newAlertTriggeredBy(() => helpFrame.waitAndClick('@action-feedback-send'));
-    await dialog.accept();
+    await helpFrame.waitAndClick('@action-feedback-send');
+    await helpFrame.waitAndRespondToModal('info', 'confirm', 'Message sent!');
   }));
 
   ava.test('settings[global] - view contact public key', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

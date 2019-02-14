@@ -73,13 +73,13 @@ Catch.try(async () => {
       const initial = { alias, name: storage.full_name || Str.capitalize(authInfo.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
       const response = await Api.fc.accountUpdate(initial);
       if (!response.updated) {
-        alert('Failed to enable your Contact Page. Please try again');
+        await Ui.modal.error('Failed to enable your Contact Page. Please try again');
       }
       await Ui.time.sleep(100);
       window.location.reload();
     } catch (e) {
       Catch.handleErr(e);
-      alert(`Failed to create account, possibly a network issue. Please try again.\n\n${String(e)}`);
+      await Ui.modal.error(`Failed to create account, possibly a network issue. Please try again.\n\n${String(e)}`);
       await Ui.time.sleep(100);
       window.location.reload();
     }
@@ -87,9 +87,9 @@ Catch.try(async () => {
 
   S.cached('action_update').click(Ui.event.prevent('double', async () => {
     if (!S.cached('input_name').val()) {
-      alert('Please add your name');
+      await Ui.modal.warning('Please add your name');
     } else if (!S.cached('input_intro').val()) {
-      alert('Please add intro text');
+      await Ui.modal.warning('Please add intro text');
     } else {
       S.cached('show_if_active').css('display', 'none');
       Xss.sanitizeRender(S.cached('status'), 'Updating ' + Ui.spinner('green'));
@@ -101,14 +101,14 @@ Catch.try(async () => {
         await Api.fc.accountUpdate(update);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
-          alert('No internet connection, please try again');
+          await Ui.modal.error('No internet connection, please try again');
         } else if (Api.err.isReqTooLarge(e)) {
-          alert('Error: the image is too large, please choose a smaller one');
+          await Ui.modal.warning('Error: the image is too large, please choose a smaller one');
         } else {
           if (!Api.err.isServerErr(e) && !Api.err.isAuthErr(e)) {
             Catch.handleErr(e);
           }
-          alert('Error happened, please try again');
+          await Ui.modal.error('Error happened, please try again');
         }
       }
       await Ui.time.sleep(100);
@@ -143,7 +143,7 @@ Catch.try(async () => {
       Xss.sanitizeRender(S.cached('status'), `${Lang.account.verifyToSetUpContactPage} <a href="#" class="action_subscribe">Get trial</a>`);
       S.now('subscribe').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', { isAuthErr: true })));
     } else {
-      S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let me know at human@flowcrypt.com if this persists.');
+      S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let us know at human@flowcrypt.com if this persists.');
     }
   }
 

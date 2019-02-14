@@ -35,13 +35,13 @@ Catch.try(async () => {
     const { keys: [uddatedKeyEncrypted] } = await openpgp.key.readArmored(String(inputPrivateKey.val()));
     const uddatedKeyPassphrase = String($('.input_passphrase').val());
     if (typeof uddatedKey === 'undefined') {
-      alert(Lang.setup.keyFormattedWell(prvHeaders.begin, String(prvHeaders.end)));
+      await Ui.modal.warning(Lang.setup.keyFormattedWell(prvHeaders.begin, String(prvHeaders.end)));
     } else if (uddatedKey.isPublic()) {
-      alert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prvHeaders.begin + '"');
+      await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prvHeaders.begin + '"');
     } else if (await Pgp.key.fingerprint(uddatedKey) !== await Pgp.key.fingerprint(primaryKi.public)) {
-      alert(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${primaryKi.longid}`);
+      await Ui.modal.warning(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${primaryKi.longid}`);
     } else if (await Pgp.key.decrypt(uddatedKey, [uddatedKeyPassphrase]) !== true) {
-      alert('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
+      await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (await uddatedKey.getEncryptionKey()) {
         await storeUpdatedKeyAndPassphrase(uddatedKeyEncrypted, uddatedKeyPassphrase);
@@ -52,7 +52,7 @@ Catch.try(async () => {
           );
           await storeUpdatedKeyAndPassphrase(fixedEncryptedPrv, uddatedKeyPassphrase);
         } else {
-          alert('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');
+          await Ui.modal.warning('Key update: This looks like a valid key but it cannot be used for encryption. Email human@flowcrypt.com to see why is that. We\'re prompt to respond.');
           window.location.href = showKeyUrl;
         }
       }
@@ -64,7 +64,7 @@ Catch.try(async () => {
     await Store.keysAdd(acctEmail, updatedPrv.armor());
     await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
     await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
-    alert('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
+    await Ui.modal.info('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
     window.location.href = showKeyUrl;
   };
 

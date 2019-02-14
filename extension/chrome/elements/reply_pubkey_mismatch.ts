@@ -85,14 +85,14 @@ Catch.try(async () => {
       if (Api.err.isAuthPopupNeeded(e)) {
         $(target).text(sendBtnText);
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-        alert('Google account permission needed, please re-connect account and try again.');
+        await Ui.modal.warning('Google account permission needed, please re-connect account and try again.');
       } else if (Api.err.isNetErr(e)) {
         $(target).text(sendBtnText);
-        alert('No internet connection, please try again.');
+        await Ui.modal.error('No internet connection, please try again.');
       } else {
         Catch.handleErr(e);
         $(target).text(sendBtnText);
-        alert('There was an error sending, please try again.');
+        await Ui.modal.error('There was an error sending, please try again.');
       }
     }
   }));

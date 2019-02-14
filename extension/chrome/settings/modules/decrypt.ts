@@ -35,7 +35,7 @@ Catch.try(async () => {
       const collected = await attUi.collectAtt(ids[0]);
       await decryptAndDownload(collected);
     } else {
-      alert('Please add a file to decrypt');
+      await Ui.modal.warning('Please add a file to decrypt');
     }
   }));
 
@@ -49,7 +49,7 @@ Catch.try(async () => {
     } else {
       delete result.message;
       console.info(result);
-      alert('These was a problem decrypting this file, details are in the console.');
+      await Ui.modal.error('These was a problem decrypting this file, details are in the console.');
     }
     Xss.sanitizeRender('.action_decrypt_and_download', origContent);
   };

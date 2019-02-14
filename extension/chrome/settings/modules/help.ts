@@ -32,9 +32,11 @@ Catch.try(async () => {
       if (Str.isEmailValid(String($('#input_email').val()))) {
         myEmail = String($('#input_email').val());
       } else {
-        alert('Please enter valid email - so that we can get back to you.');
-        return;
+        return await Ui.modal.error('Please enter valid email - so that we can get back to you.');
       }
+    }
+    if (!$('#input_text').val()) {
+      return await Ui.modal.error('Message should not be empty.');
     }
     const origBtnText = $(target).text();
     Xss.sanitizeRender(target, Ui.spinner('white'));
@@ -44,18 +46,18 @@ Catch.try(async () => {
       const r = await Api.fc.helpFeedback(myEmail, msg);
       if (r.sent) {
         $(target).text('sent!');
-        alert(`Message sent! You will find your response in ${myEmail}, check your email later. Thanks!`);
+        await Ui.modal.info(`Message sent! You will find your response in ${myEmail}, check your email later.`);
         BrowserMsg.send.closePage(parentTabId);
       } else {
         $(target).text(origBtnText);
-        alert('There was an error sending message. Our direct email is human@flowcrypt.com');
+        await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
         Catch.handleErr(e);
       }
       $(target).text(origBtnText);
-      alert('There was an error sending message. Our direct email is human@flowcrypt.com');
+      await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
     }
   }));
 

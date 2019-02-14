@@ -124,16 +124,12 @@ export class SetupPageRecipe extends PageRecipe {
   public static recover = async (settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) => {
     const k = Config.key(keyTitle);
     await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);
+    await settingsPage.waitAndClick('@action-recover-account');
     if (wrongPp) {
-      const dialog = await settingsPage.newAlertTriggeredBy(() => settingsPage.waitAndClick('@action-recover-account'));
-      // todo - read the contents - wrong pp
-      await dialog.accept();
+      await settingsPage.waitAndRespondToModal('warning', 'confirm', 'not match');
     } else if (alreadyRecovered) {
-      const dialog = await settingsPage.newAlertTriggeredBy(() => settingsPage.waitAndClick('@action-recover-account'));
-      // todo - read the contents - already recovered
-      await dialog.accept();
+      await settingsPage.waitAndRespondToModal('warning', 'confirm', 'matches a key that was already recovered');
     } else {
-      await settingsPage.waitAndClick('@action-recover-account');
       await settingsPage.waitAny(['@action-step4more-account-settings', '@action-step4done-account-settings'], { timeout: 60 });
       if (hasRecoverMore) {
         await settingsPage.waitAll(['@action-step4more-account-settings', '@action-step4more-recover-remaining']);
@@ -202,9 +198,8 @@ export class SettingsPageRecipe extends PageRecipe {
     await securityFrame.waitAndType('@input-new-pp', newPp, { delay: 1 });
     await securityFrame.waitAndClick('@action-show-confirm-new-pp', { delay: 1 });
     await securityFrame.waitAndType('@input-confirm-new-pp', newPp, { delay: 1 });
-    const alert = await settingsPage.newAlertTriggeredBy(() => securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 }));
-    expect(await alert.target.message()).to.contain('Now that you changed your pass phrase, you should back up your key');
-    await alert.accept();
+    await securityFrame.waitAndClick('@action-confirm-new-pp', { delay: 1 });
+    await securityFrame.waitAndRespondToModal('info', 'confirm', 'Now that you changed your pass phrase, you should back up your key');
     await securityFrame.waitAll('@container-backup-dialog'); // offers a new backup
     await Util.sleep(3);
     await SettingsPageRecipe.closeDialog(settingsPage);
@@ -259,13 +254,11 @@ export class SettingsPageRecipe extends PageRecipe {
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAndClick('@action-test-passphrase-begin');
     await securityFrame.waitAndType('@input-test-passphrase', passphrase);
-    const clickTestPpButton = () => securityFrame.waitAndClick('@action-test-passphrase');
+    await securityFrame.waitAndClick('@action-test-passphrase');
     if (expectMatch) {
-      await clickTestPpButton();
       await securityFrame.waitAndClick('@action-test-passphrase-successful-close');
     } else {
-      const dialog = await settingsPage.newAlertTriggeredBy(clickTestPpButton);
-      await dialog.accept();
+      await securityFrame.waitAndRespondToModal('warning', 'confirm', 'not match');
       await SettingsPageRecipe.closeDialog(settingsPage);
     }
     await settingsPage.waitTillGone('@dialog');
@@ -373,18 +366,8 @@ export class ComposePageRecipe extends PageRecipe {
       await composePage.waitAndType('@input-password', 'test-pass');
       await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
-    const unexpectedAlertRejectingPromise = new Promise((resolve, reject) => {
-      composePage.page.on('dialog', alert => {
-        // this can cause ava to fail with "unhandled rejection" even if all tests passed
-        // or at least it did before this was refactored to dismiss the alert as below
-        // if that won't help, will have to re-evaluate
-        const e = new Error(`Received unexpected alert after pressing compose button: ${alert.message()}`);
-        alert.dismiss().then(() => reject(e)).catch(reject);
-      });
-    });
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
     await Promise.race([
-      unexpectedAlertRejectingPromise,
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
     ]);

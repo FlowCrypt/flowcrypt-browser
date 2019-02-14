@@ -14,7 +14,7 @@ Catch.try(async () => {
   $('.action_test_key').click(Ui.event.prevent('double', async self => {
     const keyString = String($('.input_key').val());
     if (!keyString) {
-      alert('Please paste an OpenPGP in the input box');
+      await Ui.modal.warning('Please paste an OpenPGP in the input box');
       return;
     }
     const origBtnContent = $(self).html();

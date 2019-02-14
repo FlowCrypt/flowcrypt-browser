@@ -70,7 +70,7 @@ Catch.try(async () => {
         await Store.passphraseSave('session', acctEmail, primaryKi.longid, undefined);
         window.location.reload();
       } else {
-        alert('Pass phrase did not match, please try again.');
+        await Ui.modal.warning('Pass phrase did not match, please try again.');
         $('input#passphrase_entry').val('').focus();
       }
     } else { // save pass phrase
@@ -79,7 +79,7 @@ Catch.try(async () => {
         await Store.passphraseSave('local', acctEmail, primaryKi.longid, String($('input#passphrase_entry').val()));
         window.location.reload();
       } else {
-        alert('Pass phrase did not match, please try again.');
+        await Ui.modal.warning('Pass phrase did not match, please try again.');
         $('input#passphrase_entry').val('').focus();
       }
     }
