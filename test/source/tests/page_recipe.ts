@@ -319,6 +319,7 @@ export class ComposePageRecipe extends PageRecipe {
     t: AvaContext, browser: BrowserHandle, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
   ): Promise<ControllablePage> => {
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none&${appendUrl || ''}`);
+    await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!hasReplyPrompt) {
       await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
     } else {

@@ -111,13 +111,9 @@ ava.after.always('send debug info if any', async t => {
   const failRnd = Util.lousyRandom();
   console.info(`FAIL ID ${failRnd}`);
   const debugHtml = getDebugHtml(TEST_VARIANT);
-  console.info('send debug info - deciding');
   if (debugHtml) {
-    console.info('send debug info - setting timeout');
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
-    console.info('send debug info - sending');
     await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT}) ${failRnd}`, debugHtml);
-    console.info('send debug info - sent');
   }
   t.pass();
 });
