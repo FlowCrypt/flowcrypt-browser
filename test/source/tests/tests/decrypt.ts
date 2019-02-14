@@ -19,7 +19,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
     const threadId = '15f7f5630573be2d';
     const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
     const acctEmail = 'flowcrypt.compatibility@gmail.com';
-    await BrowserRecipe.setUpFcCompatAcct(t, browser);
+    await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
     const settingsPage = await browser.newPage(t, Url.extensionSettings());
     await SettingsPageRecipe.changePassphraseRequirement(settingsPage, pp, 'session');
     // requires pp entry

@@ -36,19 +36,23 @@ const consts = {
   TIMEOUT_OVERALL: minutes(poolSizeOne ? 5 : 13),
   ATTEMPTS: poolSizeOne ? 1 : 3,
   POOL_SIZE: poolSizeOne ? 1 : 5, // higher concurrency can cause 429 google errs
-  POOL_SIZE_GLOBAL: poolSizeOne ? 1 : 2, // higher concurrency can cause 429 google errs
+  POOL_SIZE_GLOBAL: poolSizeOne ? 1 : 1, // higher concurrency can cause 429 google errs
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>,
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
 
 export type Consts = typeof consts;
+export type CommonBrowserGroup = 'compatibility' | 'compose';
 
 const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, BUILD_DIR);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
     browsers: new BrowserPool(consts.POOL_SIZE_GLOBAL, 'browserPoolGlobal', true, BUILD_DIR),
-  }
+  },
+  compose: {
+    browsers: new BrowserPool(consts.POOL_SIZE_GLOBAL, 'browserPoolGlobal', true, BUILD_DIR),
+  },
 };
 
 ava.before('set up global browsers and config', async t => {
@@ -66,17 +70,20 @@ ava.before('set up global browsers and config', async t => {
     throw new Error('was not able to get extensionId');
   }
   const setupPromises: Promise<void>[] = [];
-  const globalBrowsers = [];
-  for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
-    const b = await browserGlobal.compatibility.browsers.newBrowserHandle(t);
-    setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, BrowserRecipe.setUpFcCompatAcct, t, consts));
-    globalBrowsers.push(b);
+  const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
+  for (const group of Object.keys(browserGlobal)) {
+    for (let i = 0; i < consts.POOL_SIZE_GLOBAL; i++) {
+      const b = await browserGlobal[group].browsers.newBrowserHandle(t);
+      setupPromises.push(browserPool.withGlobalBrowserTimeoutAndRetry(b, (t, b) => BrowserRecipe.setUpCommonAcct(t, b, group as CommonBrowserGroup), t, consts));
+      globalBrowsers[group].push(b);
+    }
   }
   await Promise.all(setupPromises);
-  for (const b of globalBrowsers) {
-    await browserGlobal.compatibility.browsers.doneUsingBrowser(b);
+  for (const group of Object.keys(browserGlobal)) {
+    for (const b of globalBrowsers[group]) {
+      await browserGlobal[group].browsers.doneUsingBrowser(b);
+    }
   }
-
   t.pass();
 });
 
@@ -87,7 +94,7 @@ export const testWithNewBrowser = (cb: (t: AvaContext, browser: BrowserHandle) =
   };
 };
 
-export const testWithSemaphoredGlobalBrowser = (group: 'compatibility', cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
+export const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser(t));

@@ -3,6 +3,7 @@ import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, 
 import { Util, Config } from '../util';
 import { expect } from 'chai';
 import { AvaContext } from '.';
+import { CommonBrowserGroup } from '../test';
 
 export class PageRecipe {
 
@@ -316,9 +317,10 @@ export class InboxPageRecipe extends PageRecipe {
 export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (
-    t: AvaContext, browser: BrowserHandle, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
+    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
   ): Promise<ControllablePage> => {
-    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none&${appendUrl || ''}`);
+    const email = (group === 'compose') ? 'test.ci.compose%40org.flowcrypt.com' : 'flowcrypt.compatibility%40gmail.com';
+    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&frameId=none&${appendUrl || ''}`);
     await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!hasReplyPrompt) {
       await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
