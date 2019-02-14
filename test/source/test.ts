@@ -35,8 +35,8 @@ const consts = {
   TIMEOUT_ALL_RETRIES: minutes(7),
   TIMEOUT_OVERALL: minutes(poolSizeOne ? 5 : 13),
   ATTEMPTS: poolSizeOne ? 1 : 3,
-  POOL_SIZE: poolSizeOne ? 1 : 7,
-  POOL_SIZE_GLOBAL: poolSizeOne ? 1 : 3,
+  POOL_SIZE: poolSizeOne ? 1 : 5, // higher concurrency can cause 429 google errs
+  POOL_SIZE_GLOBAL: poolSizeOne ? 1 : 2, // higher concurrency can cause 429 google errs
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>,
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
