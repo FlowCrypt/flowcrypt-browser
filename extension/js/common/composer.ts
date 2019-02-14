@@ -71,6 +71,7 @@ export type ComposerUrlParams = {
   skipClickPrompt: boolean;
   debug: boolean;
 };
+type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
 
 export class Composer {
 
@@ -552,9 +553,12 @@ export class Composer {
     return { armoredPubkeys, emailsWithoutPubkeys };
   }
 
-  private throwIfFormNotReady = (recipients: string[]): void => {
+  private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
     if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients && recipients.length) {
       return; // all good
+    }
+    if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
+      await this.parseRenderRecipients('harshRecipientErrs');
     }
     if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
       throw new ComposerUserError('Please re-enter recipients marked in red color.');
@@ -624,7 +628,7 @@ export class Composer {
       const recipients = this.getRecipientsFromDom();
       const subject = this.v.subject || String($('#input_subject').val()); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
-      this.throwIfFormNotReady(recipients);
+      await this.throwIfFormNotReady(recipients);
       this.S.now('send_btn_span').text('Loading');
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
@@ -1118,35 +1122,40 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.v.parentTabId), 300);
   }
 
-  private parseRenderRecipients = async () => {
-    this.debug(`parseRenderRecipients`);
+  private parseRenderRecipients = async (errsMode: RecipientErrsMode) => {
+    this.debug(`parseRenderRecipients(${errsMode})`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
-    this.debug(`parseRenderRecipients.inputTo(${String(inputTo)})`);
-    if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
-      this.debug(`parseRenderRecipients.2`);
-      for (const rawRecipientAddrInput of inputTo.split(',')) {
-        this.debug(`parseRenderRecipients.3 (${rawRecipientAddrInput})`);
-        if (!rawRecipientAddrInput) {
-          this.debug(`parseRenderRecipients.4`);
-          continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
-        }
-        this.debug(`parseRenderRecipients.5`);
-        const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
-        this.debug(`parseRenderRecipients.6 (${email})`);
-        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
-      }
-    } else {
+    this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
+    let gentleErrInvalidEmails = '';
+    if (!(Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo))) {
+      this.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
       return;
     }
-    this.debug(`parseRenderRecipients.7`);
-    this.S.cached('input_to').val('');
-    this.debug(`parseRenderRecipients.8`);
+    this.debug(`parseRenderRecipients(${errsMode}).2`);
+    for (const rawRecipientAddrInput of inputTo.split(',')) {
+      this.debug(`parseRenderRecipients(${errsMode}).3 (${rawRecipientAddrInput})`);
+      if (!rawRecipientAddrInput) {
+        this.debug(`parseRenderRecipients(${errsMode}).4`);
+        continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
+      }
+      this.debug(`parseRenderRecipients(${errsMode}).5`);
+      const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
+      this.debug(`parseRenderRecipients(${errsMode}).6 (${email})`);
+      if (errsMode === 'gentleRecipientErrs' && !Str.isEmailValid(email)) {
+        gentleErrInvalidEmails += email;
+      } else {
+        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
+      }
+    }
+    this.debug(`parseRenderRecipients(${errsMode}).7.gentleErrs(${gentleErrInvalidEmails})`);
+    this.S.cached('input_to').val(gentleErrInvalidEmails);
+    this.debug(`parseRenderRecipients(${errsMode}).8`);
     this.resizeInputTo();
-    this.debug(`parseRenderRecipients.9`);
+    this.debug(`parseRenderRecipients(${errsMode}).9`);
     await this.evaluateRenderedRecipients();
-    this.debug(`parseRenderRecipients.10`);
+    this.debug(`parseRenderRecipients(${errsMode}).10`);
     this.setInputTextHeightManuallyIfNeeded();
-    this.debug(`parseRenderRecipients.11`);
+    this.debug(`parseRenderRecipients(${errsMode}).11`);
   }
 
   private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
@@ -1161,7 +1170,7 @@ export class Composer {
     if (!Value.is(email).in(this.getRecipientsFromDom())) {
       this.S.cached('input_to').val(Str.parseEmail(email).email);
       this.debug(`selectContact -> parseRenderRecipients start`);
-      await this.parseRenderRecipients();
+      await this.parseRenderRecipients('harshRecipientErrs');
       this.debug(`selectContact -> parseRenderRecipients done`);
     }
     this.hideContacts();
@@ -1358,7 +1367,7 @@ export class Composer {
     }
   }
 
-  private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | "fail" | "wrong") => {
+  private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | 'fail' | 'wrong') => {
     this.debug(`renderPubkeyResult.emailEl(${String(emailEl)})`);
     this.debug(`renderPubkeyResult.email(${email})`);
     this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
@@ -1389,6 +1398,7 @@ export class Composer {
       Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
       $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.removeReceiver(target), this.getErrHandlers('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
+      this.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
       $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
       $(emailEl).addClass("wrong");
     } else if (contact.pubkey && await Pgp.key.usableButExpired((await openpgp.key.readArmored(contact.pubkey)).keys[0])) {
@@ -1484,7 +1494,7 @@ export class Composer {
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
     this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
       this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-      await this.parseRenderRecipients();
+      await this.parseRenderRecipients('gentleRecipientErrs'); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
       this.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
@@ -1509,7 +1519,7 @@ export class Composer {
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.parseRenderRecipients(); // this will force firefox to render them on load
+        await this.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
       }
       Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
         $(window).resize(Ui.event.prevent('veryslowspree', () => this.resizeReplyBox()));
