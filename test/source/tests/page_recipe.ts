@@ -42,7 +42,7 @@ export class SetupPageRecipe extends PageRecipe {
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     if (backup === 'none') {
-      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 40 });
+      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 60 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
     } else if (backup === 'email') {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
