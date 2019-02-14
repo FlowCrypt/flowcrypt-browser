@@ -109,14 +109,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
   }));
 
-  ava.test.only('compose[global] - standalone - from alias', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+  ava.test('compose[global] - standalone - from alias', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
     await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'from alias');
     await ComposePageRecipe.sendAndClose(composePage);
   }));
 
-  ava.test.only('compose[global] - standalone - with attachments', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+  ava.test('compose[global] - standalone - with attachments', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
     const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
     await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'with files');
     const fileInput = await composePage.target.$('input[type=file]');
