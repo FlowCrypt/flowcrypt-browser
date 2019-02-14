@@ -32,7 +32,7 @@ const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 const consts = {
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
-  TIMEOUT_ALL_RETRIES: minutes(7),
+  TIMEOUT_ALL_RETRIES: minutes(12), // this has to suffer waiting for semaphore on each retry, thus almost the same as below
   TIMEOUT_OVERALL: minutes(poolSizeOne ? 5 : 13),
   ATTEMPTS: poolSizeOne ? 1 : 3,
   POOL_SIZE: poolSizeOne ? 1 : 5, // higher concurrency can cause 429 google errs
