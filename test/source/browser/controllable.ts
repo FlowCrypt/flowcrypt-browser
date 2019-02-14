@@ -419,7 +419,7 @@ export class ControllablePage extends ControllableBase {
         for (const arg of msg.args()) {
           try {
             const r = JSON.stringify(await Promise.race([arg.jsonValue(), new Promise(resolve => setTimeout(() => resolve('test.ts: log fetch timeout'), 3000))]));
-            if (r !== '{}' && r && String(r) !== msg.text()) {
+            if (r !== '{}' && r && r !== JSON.stringify(msg.text())) {
               args.push(r);
             }
           } catch (e) {

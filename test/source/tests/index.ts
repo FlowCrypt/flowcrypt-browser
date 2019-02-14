@@ -21,7 +21,7 @@ const debugHtmlStyle = `
   .c-warning { color:orange }
   .c-log { color:darkgray }
   .c-info { color:gray }
-  ul { margin: 0; padding-left: 20px; }
+  ul { margin: 0; padding-left: 20px; display: inline-block; }
 </style>
 `;
 
