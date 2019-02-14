@@ -21,18 +21,13 @@ export class Settings {
   private static ignoreEmailAliases = ['nobody@google.com'];
 
   static fetchAcctAliasesFromGmail = async (acctEmail: string) => {
-    let query = 'newer_than:1y in:sent -from:"calendar-notification@google.com" -from:"drive-shares-noreply@google.com"';
-    const results = [];
-    while (true) {
-      const headers = await Google.gmail.fetchMsgsHeadersBasedOnQuery(acctEmail, query, ['from'], 1);
-      if (!headers.from.length) {
-        return results.filter(email => !Value.is(email).in(Settings.ignoreEmailAliases));
-      }
-      for (const from of headers.from) {
-        results.push(Str.parseEmail(from).email);
-        query += ' -from:"' + Str.parseEmail(from).email + '"';
-      }
-    }
+    const response = await Google.gmail.fetchAcctAliases(acctEmail);
+
+    const aliases = response.sendAs.map(alias => {
+      return alias.sendAsEmail;
+    });
+
+    return aliases.filter(email => !Value.is(email).in(Settings.ignoreEmailAliases));
   }
 
   static evalPasswordStrength = (passphrase: string) => {
