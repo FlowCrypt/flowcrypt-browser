@@ -354,7 +354,9 @@ export class Composer {
       if (!armored) {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
       }
-      this.S.cached('input_subject').val(String(parsedMsg.headers.subject) || '');
+      if (String(parsedMsg.headers.subject)) {
+        this.S.cached('input_subject').val(String(parsedMsg.headers.subject));
+      }
       await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
@@ -418,7 +420,7 @@ export class Composer {
           this.S.cached('send_btn_note').text('Saved');
           this.v.draftId = id;
           await this.app.storageSetDraftMeta(true, id, this.v.threadId, to, String(this.S.cached('input_subject').val()));
-          // recursing one more time, because we need the draft_id we get from this reply in the message itself
+          // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
           await this.draftSave(true); // forceSave = true
