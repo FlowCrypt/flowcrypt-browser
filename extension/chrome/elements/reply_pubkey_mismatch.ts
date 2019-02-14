@@ -16,7 +16,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;
@@ -24,6 +24,7 @@ Catch.try(async () => {
   const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
   const to = uncheckedUrlParams.to ? String(uncheckedUrlParams.to).split(',') : [];
+  const debug = uncheckedUrlParams.debug === true;
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 
@@ -33,9 +34,9 @@ Catch.try(async () => {
   const appFunctions = Composer.defaultAppFunctions();
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
-    acctEmail, draftId: '', threadId, subject, from, to, frameId, tabId,
+    acctEmail, draftId: '', threadId, subject, from, to, frameId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
-    parentTabId, disableDraftSaving: true,
+    parentTabId, disableDraftSaving: true
   };
   const composer = new Composer(appFunctions, processedUrlParams, new Subscription(undefined));
 

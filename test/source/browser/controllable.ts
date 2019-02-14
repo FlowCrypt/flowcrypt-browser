@@ -216,6 +216,7 @@ abstract class ControllableBase {
         if (e.message === 'Node is either not visible or not an HTMLElement' || e.message === 'Node is detached from document') {
           // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
+            e.stack = `[clicking(${selector}) failed because element quickly disappeared, consider adding retryErrss]\n` + e.stack;
             throw e;
           }
           this.log(`wait_and_click(i${i}):retrying`);
@@ -232,11 +233,8 @@ abstract class ControllableBase {
     this.log(`wait_and_click:8:${selector}`);
   }
 
-  public getFramesUrls = async (urlMatchables: string[], { sleep } = { sleep: 3 }): Promise<string[]> => {
-    if (sleep) {
-      await Util.sleep(sleep);
-    }
-    const matchingLinks = [];
+  private getFramesUrlsInThisMoment = async (urlMatchables: string[]) => {
+    const matchingLinks: string[] = [];
     for (const iframe of await this.target.$$('iframe')) {
       const srcHandle = await iframe.getProperty('src');
       const src = await srcHandle.jsonValue() as string;
@@ -245,6 +243,23 @@ abstract class ControllableBase {
       }
     }
     return matchingLinks;
+  }
+
+  public getFramesUrls = async (urlMatchables: string[], { sleep, appearIn }: { sleep?: number, appearIn?: number } = { sleep: 3 }): Promise<string[]> => {
+    if (sleep) {
+      await Util.sleep(sleep);
+    }
+    if (!appearIn) {
+      return await this.getFramesUrlsInThisMoment(urlMatchables);
+    }
+    for (let second = 0; second < appearIn; second++) {
+      const matched = await this.getFramesUrlsInThisMoment(urlMatchables);
+      if (matched.length) {
+        return matched;
+      }
+      await Util.sleep(1);
+    }
+    throw new Error(`Could not find any frame in ${appearIn}s that matches ${urlMatchables.join(' ')}`);
   }
 
   public getFrame = async (urlMatchables: string[], { sleep = 1 } = { sleep: 1 }): Promise<ControllableFrame> => {
@@ -333,11 +348,11 @@ export class ControllablePage extends ControllableBase {
         if (controllableAlert.active) {
           t.retry = true;
           this.preventclose = true;
-          t.log(`Dismissing unexpected alert: ${alert.message()}`);
+          t.log(`${t.attemptText} Dismissing unexpected alert ${alert.message()}`);
           try {
-            alert.dismiss().catch(e => t.log(`Err1 dismissing alert: ${String(e)}`));
+            alert.dismiss().catch(e => t.log(`${t.attemptText} Err1 dismissing alert ${String(e)}`));
           } catch (e) {
-            t.log(`Err2 dismissing alert: ${String(e)}`);
+            t.log(`${t.attemptText} Err2 dismissing alert ${String(e)}`);
           }
         }
       }, TIMEOUT_DESTROY_UNEXPECTED_ALERT * 1000);
@@ -399,7 +414,7 @@ export class ControllablePage extends ControllableBase {
 
   public screenshot = async (): Promise<string> => {
     await this.dismissActiveAlerts();
-    return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 10)]);
+    return await Promise.race([this.page.screenshot({ encoding: 'base64' }), newTimeoutPromise('screenshot', 20)]);
   }
 
   public html = async (): Promise<string> => {
@@ -419,7 +434,7 @@ export class ControllablePage extends ControllableBase {
         for (const arg of msg.args()) {
           try {
             const r = JSON.stringify(await Promise.race([arg.jsonValue(), new Promise(resolve => setTimeout(() => resolve('test.ts: log fetch timeout'), 3000))]));
-            if (r !== '{}' && r) {
+            if (r !== '{}' && r && r !== JSON.stringify(msg.text())) {
               args.push(r);
             }
           } catch (e) {
