@@ -1483,7 +1483,16 @@ export class Composer {
     r.insertNode(r.createContextualFragment(toPaste));
   }
 
+  private debugFocusEvents = (...selNames: string[]) => {
+    for (const selName of selNames) {
+      this.S.cached(selName)
+        .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
+        .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
+    }
+  }
+
   private renderComposeTable = async () => {
+    this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
     if (Catch.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({ 'padding-top': 0, 'padding-bottom': 0 });
@@ -1501,7 +1510,7 @@ export class Composer {
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.getErrHandlers(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
-        this.debug(`input_addresses_container_inner.clickk -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
+        this.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
