@@ -4,6 +4,7 @@ import { BrowserHandle } from './browser_handle';
 import { Util } from "../util";
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests';
 import { Consts } from '../test';
+import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 
 class TimeoutError extends Error { }
 
@@ -13,8 +14,8 @@ export class BrowserPool {
   private browsersForReuse: BrowserHandle[] = [];
 
   constructor(
-    poolSize: number,
-    name: string,
+    public poolSize: number,
+    public name: string,
     private reuse: boolean,
     private extensionBuildDir: string,
     private width = 1280,
@@ -94,13 +95,13 @@ export class BrowserPool {
     cb().then(resolve, reject);
   })
 
-  private processTestError = (err: any, attemptNumber: number, t: AvaContext, totalAttempts: number, attemptHtmls: string[]) => {
-    if (attemptNumber < totalAttempts) {
-      t.retry = undefined;
-      t.log(`Retrying: ${String(err)}`);
+  private processTestError = (err: any, t: AvaContext, attemptHtmls: string[]) => {
+    t.retry = undefined;
+    if (t.attemptNumber! < t.totalAttempts!) {
+      t.log(`${t.attemptText} Retrying: ${String(err)}`);
     } else {
       addDebugHtml(`<h1>Test: ${Util.htmlEscape(t.title)}</h1>${attemptHtmls.join('')}`);
-      t.log(`Failed:   ${err instanceof Error ? err.stack : String(err)}`);
+      t.log(`${t.attemptText} Failed:   ${err instanceof Error ? err.stack : String(err)}`);
       t.fail(`[ALL RETRIES FAILED for ${t.title}]`);
     }
   }
@@ -115,10 +116,11 @@ export class BrowserPool {
     </div>
     `
 
-  private throwOnRetryFlagAndReset = (t: AvaContext) => {
+  private throwOnRetryFlagAndReset = async (t: AvaContext) => {
+    await Util.sleep(TIMEOUT_DESTROY_UNEXPECTED_ALERT + 1); // in case there was an unexpected alert, don't let that affect next round
     if (t.retry) {
       t.retry = undefined;
-      const e = new Error('previous attempt marked for retry');
+      const e = new Error(`last attempt marked for retry`);
       e.stack = e.message; // stack is not interesting here, too much clutter would be printed
       throw e;
     }
@@ -127,12 +129,18 @@ export class BrowserPool {
   public withNewBrowserTimeoutAndRetry = async (cb: (t: AvaContext, browser: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
+    t.totalAttempts = consts.ATTEMPTS;
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
+      t.attemptNumber = attemptNumber;
+      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
       try {
         const browser = await withTimeouts(this.newBrowserHandle(t));
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
-          this.throwOnRetryFlagAndReset(t);
+          await this.throwOnRetryFlagAndReset(t);
+          if (attemptDebugHtmls.length) {
+            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
+          }
           return;
         } catch (err) {
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
@@ -142,7 +150,7 @@ export class BrowserPool {
           await browser.close();
         }
       } catch (err) {
-        this.processTestError(err, attemptNumber, t, consts.ATTEMPTS, attemptDebugHtmls);
+        this.processTestError(err, t, attemptDebugHtmls);
       }
     }
   }
@@ -150,12 +158,18 @@ export class BrowserPool {
   public withGlobalBrowserTimeoutAndRetry = async (browser: BrowserHandle, cb: (t: AvaContext, b: BrowserHandle) => void, t: AvaContext, consts: Consts) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const attemptDebugHtmls: string[] = [];
+    t.totalAttempts = consts.ATTEMPTS;
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
+      t.attemptNumber = attemptNumber;
+      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts - 1})`;
       try {
         await browser.closeAllPages();
         try {
           await withTimeouts(this.cbWithTimeout(async () => await cb(t, browser), consts.TIMEOUT_EACH_RETRY));
-          this.throwOnRetryFlagAndReset(t);
+          await this.throwOnRetryFlagAndReset(t);
+          if (attemptDebugHtmls.length) {
+            addDebugHtml(`<h1>Test (later succeeded): ${Util.htmlEscape(t.title)}</h1>${attemptDebugHtmls.join('')}`);
+          }
           return;
         } catch (err) {
           attemptDebugHtmls.push(await this.testFailSingleAttemptDebugHtml(t, browser, err));
@@ -165,7 +179,7 @@ export class BrowserPool {
           await browser.closeAllPages();
         }
       } catch (err) {
-        this.processTestError(err, attemptNumber, t, consts.ATTEMPTS, attemptDebugHtmls);
+        this.processTestError(err, t, attemptDebugHtmls);
       }
     }
   }

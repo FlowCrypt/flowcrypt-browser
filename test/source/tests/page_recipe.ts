@@ -3,6 +3,7 @@ import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, 
 import { Util, Config } from '../util';
 import { expect } from 'chai';
 import { AvaContext } from '.';
+import { CommonBrowserGroup } from '../test';
 
 export class PageRecipe {
 
@@ -41,7 +42,7 @@ export class SetupPageRecipe extends PageRecipe {
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
     if (backup === 'none') {
-      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 40 });
+      await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 60 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
     } else if (backup === 'email') {
       throw new Error('tests.setup_manual_create options.backup=email not implemented');
@@ -123,6 +124,7 @@ export class SetupPageRecipe extends PageRecipe {
   // tslint:disable-next-line:max-line-length
   public static recover = async (settingsPage: ControllablePage, keyTitle: string, { wrongPp = false, clickRecoverMore = false, hasRecoverMore = false, alreadyRecovered = false }: { wrongPp?: boolean, clickRecoverMore?: boolean, hasRecoverMore?: boolean, alreadyRecovered?: boolean } = {}) => {
     const k = Config.key(keyTitle);
+    await settingsPage.waitAll('@input-recovery-pass-phrase', { timeout: 40 }); // can sometimes be slow
     await settingsPage.waitAndType('@input-recovery-pass-phrase', k.passphrase);
     await settingsPage.waitAndClick('@action-recover-account');
     if (wrongPp) {
@@ -170,7 +172,7 @@ export class SettingsPageRecipe extends PageRecipe {
   }
 
   public static closeDialog = async (settingsPage: ControllablePage) => {
-    await settingsPage.waitAndClick('@dialog-close');
+    await settingsPage.waitAndClick('@dialog-close', { delay: 3 });
     await settingsPage.waitTillGone('@dialog');
   }
 
@@ -316,9 +318,11 @@ export class InboxPageRecipe extends PageRecipe {
 export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (
-    t: AvaContext, browser: BrowserHandle, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
+    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
   ): Promise<ControllablePage> => {
-    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=flowcrypt.compatibility%40gmail.com&parent_tab_id=0&frameId=none&${appendUrl || ''}`);
+    const email = (group === 'compose') ? 'test.ci.compose%40org.flowcrypt.com' : 'flowcrypt.compatibility%40gmail.com';
+    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
+    await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!hasReplyPrompt) {
       await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
     } else {
@@ -348,9 +352,12 @@ export class ComposePageRecipe extends PageRecipe {
   }
 
   public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
+    await Util.sleep(0.5);
     if (to) {
+      await composePageOrFrame.click('@input-to');
+      await Util.sleep(0.5);
       await composePageOrFrame.type('@input-to', to);
-      await Util.sleep(1);
+      await Util.sleep(0.5);
     }
     await composePageOrFrame.click('@input-subject');
     await Util.sleep(1);

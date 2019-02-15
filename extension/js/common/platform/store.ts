@@ -14,7 +14,7 @@ import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chr
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
-type StoredReplyDraftMeta = string; // draft_id
+type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
 type StoredAttestLog = { attempt: number, packet?: string, success: boolean, result: string };
