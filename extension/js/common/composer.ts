@@ -554,11 +554,11 @@ export class Composer {
   }
 
   private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
-    if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients && recipients.length) {
-      return; // all good
-    }
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       await this.parseRenderRecipients('harshRecipientErrs');
+    }
+    if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients.length) {
+      return; // all good
     }
     if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
       throw new ComposerUserError('Please re-enter recipients marked in red color.');
