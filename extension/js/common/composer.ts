@@ -69,9 +69,13 @@ export type ComposerUrlParams = {
   frameId: string;
   parentTabId: string;
   skipClickPrompt: boolean;
+  debug: boolean;
 };
+type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
 
 export class Composer {
+
+  private debugId = Str.sloppyRandom();
 
   private S = Ui.buildJquerySels({
     body: 'body',
@@ -164,6 +168,12 @@ export class Composer {
     }
     this.initComposeBox().catch(Catch.handleErr);
     this.initActions();
+  }
+
+  private debug = (msg: string) => {
+    if (this.v.debug) {
+      console.log(`[${this.debugId}] ${msg}`);
+    }
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
@@ -353,7 +363,9 @@ export class Composer {
       if (!armored) {
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
       }
-      this.S.cached('input_subject').val(String(parsedMsg.headers.subject) || '');
+      if (String(parsedMsg.headers.subject)) {
+        this.S.cached('input_subject').val(String(parsedMsg.headers.subject));
+      }
       await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
@@ -417,7 +429,7 @@ export class Composer {
           this.S.cached('send_btn_note').text('Saved');
           this.v.draftId = id;
           await this.app.storageSetDraftMeta(true, id, this.v.threadId, to, String(this.S.cached('input_subject').val()));
-          // recursing one more time, because we need the draft_id we get from this reply in the message itself
+          // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
           await this.draftSave(true); // forceSave = true
@@ -542,8 +554,11 @@ export class Composer {
     return { armoredPubkeys, emailsWithoutPubkeys };
   }
 
-  private throwIfFormNotReady = (recipients: string[]): void => {
-    if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients && recipients.length) {
+  private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
+    if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
+      await this.parseRenderRecipients('harshRecipientErrs');
+    }
+    if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients.length) {
       return; // all good
     }
     if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
@@ -614,7 +629,7 @@ export class Composer {
       const recipients = this.getRecipientsFromDom();
       const subject = this.v.subject || String($('#input_subject').val()); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
-      this.throwIfFormNotReady(recipients);
+      await this.throwIfFormNotReady(recipients);
       this.S.now('send_btn_span').text('Loading');
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
@@ -840,12 +855,15 @@ export class Composer {
   }
 
   private lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
+    this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.0`);
     const [dbContact] = await this.app.storageContactGet([email]);
     if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
       return dbContact;
     } else {
       try {
+        this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
         const { results: [lookupResult] } = await Api.attester.lookupEmail([email]);
+        this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
         if (lookupResult && lookupResult.email) {
           if (lookupResult.pubkey) {
             const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
@@ -882,8 +900,11 @@ export class Composer {
   }
 
   private evaluateRenderedRecipients = async () => {
+    this.debug(`evaluateRenderedRecipients`);
     for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
+      this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
+      this.debug(`evaluateRenderedRecipients.email(${email})`);
       if (Str.isEmailValid(email)) {
         this.S.now('send_btn_span').text(this.BTN_LOADING);
         this.setInputTextHeightManuallyIfNeeded();
@@ -987,12 +1008,18 @@ export class Composer {
   }
 
   private respondToInputHotkeys = (inputToKeydownEvent: JQuery.Event<HTMLElement, null>) => {
+    this.debug(`respondToInputHotkeys`);
     const value = this.S.cached('input_to').val();
+    this.debug(`respondToInputHotkeys.value(${value})`);
     const keys = Env.keyCodes();
     if (!value && inputToKeydownEvent.which === keys.backspace) {
+      this.debug(`respondToInputHotkeys.value:del`);
       $('.recipients span').last().remove();
       this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-    } else if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
+      return;
+    }
+    if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
+      this.debug(`respondToInputHotkeys.value:enter|tab`);
       this.S.cached('input_to').blur();
       if (this.S.cached('contacts').css('display') === 'block') {
         if (this.S.cached('contacts').find('.select_contact.hover').length) {
@@ -1004,6 +1031,7 @@ export class Composer {
       this.S.cached('input_to').focus().blur();
       return false;
     }
+    this.debug(`respondToInputHotkeys.value:none`);
     return;
   }
 
@@ -1095,35 +1123,56 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.v.parentTabId), 300);
   }
 
-  private parseRenderRecipients = async () => {
+  private parseRenderRecipients = async (errsMode: RecipientErrsMode) => {
+    this.debug(`parseRenderRecipients(${errsMode})`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
-    if (Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo)) {
-      for (const rawRecipientAddrInput of inputTo.split(',')) {
-        if (!rawRecipientAddrInput) {
-          continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
-        }
-        const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
-        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
-      }
-    } else {
+    this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
+    let gentleErrInvalidEmails = '';
+    if (!(Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo))) {
+      this.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
       return;
     }
-    this.S.cached('input_to').val('');
+    this.debug(`parseRenderRecipients(${errsMode}).2`);
+    for (const rawRecipientAddrInput of inputTo.split(',')) {
+      this.debug(`parseRenderRecipients(${errsMode}).3 (${rawRecipientAddrInput})`);
+      if (!rawRecipientAddrInput) {
+        this.debug(`parseRenderRecipients(${errsMode}).4`);
+        continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
+      }
+      this.debug(`parseRenderRecipients(${errsMode}).5`);
+      const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
+      this.debug(`parseRenderRecipients(${errsMode}).6 (${email})`);
+      if (errsMode === 'gentleRecipientErrs' && !Str.isEmailValid(email)) {
+        gentleErrInvalidEmails += email;
+      } else {
+        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
+      }
+    }
+    this.debug(`parseRenderRecipients(${errsMode}).7.gentleErrs(${gentleErrInvalidEmails})`);
+    this.S.cached('input_to').val(gentleErrInvalidEmails);
+    this.debug(`parseRenderRecipients(${errsMode}).8`);
     this.resizeInputTo();
+    this.debug(`parseRenderRecipients(${errsMode}).9`);
     await this.evaluateRenderedRecipients();
+    this.debug(`parseRenderRecipients(${errsMode}).10`);
     this.setInputTextHeightManuallyIfNeeded();
+    this.debug(`parseRenderRecipients(${errsMode}).11`);
   }
 
   private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
+    this.debug(`selectContact 1`);
     const possiblyBogusRecipient = $('.recipients span.wrong').last();
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
+    this.debug(`selectContact 2`);
     const q = Str.parseEmail(fromQuery.substring).email;
     if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
       possiblyBogusRecipient.remove();
     }
     if (!Value.is(email).in(this.getRecipientsFromDom())) {
       this.S.cached('input_to').val(Str.parseEmail(email).email);
-      await this.parseRenderRecipients();
+      this.debug(`selectContact -> parseRenderRecipients start`);
+      await this.parseRenderRecipients('harshRecipientErrs');
+      this.debug(`selectContact -> parseRenderRecipients done`);
     }
     this.hideContacts();
   }
@@ -1211,18 +1260,25 @@ export class Composer {
   }
 
   private searchContacts = async (dbOnly = false) => {
+    this.debug(`searchContacts`);
     const query = { substring: Str.parseEmail(String(this.S.cached('input_to').val())).email };
+    this.debug(`searchContacts.query(${JSON.stringify(query)})`);
     if (query.substring !== '') {
       const contacts = await this.app.storageContactSearch(query);
       if (dbOnly || !this.canReadEmails) {
+        this.debug(`searchContacts 1`);
         this.renderSearchRes(contacts, query);
       } else {
+        this.debug(`searchContacts 2`);
         this.contactSearchInProgress = true;
         this.renderSearchRes(contacts, query);
+        this.debug(`searchContacts 3`);
         this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
+          this.debug(`searchContacts 4`);
           if (searchContactsRes.new.length) {
             for (const contact of searchContactsRes.new) {
               const [inDb] = await this.app.storageContactGet([contact.email]);
+              this.debug(`searchContacts 5`);
               if (!inDb) {
                 await this.app.storageContactSave(await this.app.storageContactObj(
                   contact.email,
@@ -1236,10 +1292,14 @@ export class Composer {
               } else if (!inDb.name && contact.name) {
                 const toUpdate = { name: contact.name };
                 await this.app.storageContactUpdate(contact.email, toUpdate);
+                this.debug(`searchContacts 6`);
               }
             }
+            this.debug(`searchContacts 7`);
             await this.searchContacts(true);
+            this.debug(`searchContacts 8`);
           } else {
+            this.debug(`searchContacts 9`);
             this.renderSearchResultsLoadingDone();
             this.contactSearchInProgress = false;
           }
@@ -1247,6 +1307,7 @@ export class Composer {
       }
     } else {
       this.hideContacts(); // todo - show suggestions of most contacted ppl etc
+      this.debug(`searchContacts 10`);
     }
   }
 
@@ -1307,7 +1368,10 @@ export class Composer {
     }
   }
 
-  private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | "fail" | "wrong") => {
+  private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | 'fail' | 'wrong') => {
+    this.debug(`renderPubkeyResult.emailEl(${String(emailEl)})`);
+    this.debug(`renderPubkeyResult.email(${email})`);
+    this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
         const sendingAddrOnPks = Value.is(this.getSender()).in(this.myAddrsOnPks);
@@ -1335,6 +1399,7 @@ export class Composer {
       Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">');
       $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(target => this.removeReceiver(target), this.getErrHandlers('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
+      this.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
       $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
       $(emailEl).addClass("wrong");
     } else if (contact.pubkey && await Pgp.key.usableButExpired((await openpgp.key.readArmored(contact.pubkey)).keys[0])) {
@@ -1419,7 +1484,16 @@ export class Composer {
     r.insertNode(r.createContextualFragment(toPaste));
   }
 
+  private debugFocusEvents = (...selNames: string[]) => {
+    for (const selName of selNames) {
+      this.S.cached(selName)
+        .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
+        .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
+    }
+  }
+
   private renderComposeTable = async () => {
+    this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
     if (Catch.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({ 'padding-top': 0, 'padding-bottom': 0 });
@@ -1428,24 +1502,34 @@ export class Composer {
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
-    this.S.cached('input_to').blur(Ui.event.prevent('double', () => this.parseRenderRecipients().catch(Catch.handleErr)));
+    this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
+      this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+      await this.parseRenderRecipients('gentleRecipientErrs'); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
+      this.debug(`input_to.blur -> parseRenderRecipients done`);
+    }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.getErrHandlers(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
+        this.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
-    this.S.cached('input_to').focus();
+    if (!String(this.S.cached('input_to').val()).length) {
+      // focus on recipients, but only if empty (user has not started typing yet)
+      // this is particularly important to skip if CI tests are already typing the recipient in
+      this.debug(`renderComposeTable -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
+      this.S.cached('input_to').focus();
+    }
     if (this.v.isReplyBox) {
       if (this.v.to.length) {
         this.S.cached('input_text').focus();
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.parseRenderRecipients(); // this will force firefox to render them on load
+        await this.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptions();
       Catch.setHandledTimeout(() => { // delay automatic resizing until a second later

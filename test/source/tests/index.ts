@@ -5,7 +5,7 @@ import * as ava from 'ava';
 
 export type TestWithBrowser = typeof testWithNewBrowser;
 export type TestWithGlobalBrowser = typeof testWithSemaphoredGlobalBrowser;
-export type AvaContext = ava.ExecutionContext<{}> & { retry?: true };
+export type AvaContext = ava.ExecutionContext<{}> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
 export type GlobalBrowser = { browsers: BrowserPool };
 
 let debugHtml = '';
@@ -21,7 +21,7 @@ const debugHtmlStyle = `
   .c-warning { color:orange }
   .c-log { color:darkgray }
   .c-info { color:gray }
-  ul { margin: 0; padding-left: 20px; }
+  ul { margin: 0; padding-left: 20px; display: inline-block; }
 </style>
 `;
 

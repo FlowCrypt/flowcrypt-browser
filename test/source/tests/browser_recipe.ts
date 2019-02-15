@@ -41,11 +41,17 @@ export class BrowserRecipe {
     return gmailPage;
   }
 
-  public static setUpFcCompatAcct = async (t: AvaContext, browser: BrowserHandle) => {
-    const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
-    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
-    await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
-    await settingsPage.close();
+  public static setUpCommonAcct = async (t: AvaContext, browser: BrowserHandle, group: 'compatibility' | 'compose') => {
+    if (group === 'compatibility') {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
+      await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: true });
+      await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.2pp1');
+      await settingsPage.close();
+    } else {
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'test.ci.compose@org.flowcrypt.com');
+      await SetupPageRecipe.recover(settingsPage, 'test.ci.compose');
+      await settingsPage.close();
+    }
   }
 
   public static setUpFcPpChangeAcct = async (t: AvaContext, browser: BrowserHandle) => {

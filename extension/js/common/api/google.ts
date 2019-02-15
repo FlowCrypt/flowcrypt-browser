@@ -670,7 +670,7 @@ export class GoogleAuth {
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
-  private static parseIdToken = (idToken: string): R.OpenId => JSON.parse(Buf.fromBase64Str(idToken.split(/\./g)[1]).toUtfStr()) as R.OpenId;
+  private static parseIdToken = (idToken: string): R.OpenId => JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as R.OpenId;
 
   private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<string> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
