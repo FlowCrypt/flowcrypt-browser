@@ -79,6 +79,7 @@ export class Composer {
     header: '#section_header',
     subject: '#section_subject',
     title: 'table#compose th h1',
+    select_from: '#select_from',
     input_text: 'div#input_text',
     input_to: '#input_to',
     input_from: '#input_from',
@@ -1446,26 +1447,35 @@ export class Composer {
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.parseRenderRecipients(); // this will force firefox to render them on load
       }
+      this.renderSenderAliasesOptions();
       Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
         $(window).resize(Ui.event.prevent('veryslowspree', () => this.resizeReplyBox()));
         this.S.cached('input_text').keyup(() => this.resizeReplyBox());
       }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
-      const addresses = this.app.storageGetAddresses();
-      if (addresses.length > 1) {
-        const inputAddrContainer = $('#input_addresses_container');
-        inputAddrContainer.addClass('show_send_from');
-        const cogIcon = `<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">`;
-        Xss.sanitizeAppend(inputAddrContainer, `<select id="input_from" tabindex="-1" data-test="input-from"></select>${cogIcon}`);
-        inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
-        const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}">${Xss.escape(addr)}</option>`;
-        Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
-        if (Catch.browser().name === 'firefox') {
-          inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
-        }
-      }
+      this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
+    }
+  }
+
+  private renderSenderAliasesOptions() {
+    const addresses = this.app.storageGetAddresses();
+    if (addresses.length > 1) {
+      const inputAddrContainer = $('#input_addresses_container');
+      inputAddrContainer.addClass('show_send_from');
+      const cogIcon = `<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">`;
+      Xss.sanitizePrepend(inputAddrContainer, `<select id="input_from" tabindex="-1" data-test="input-from"></select>${cogIcon}`);
+      inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
+      const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}">${Xss.escape(addr)}</option>`;
+      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
+      if (Catch.browser().name === 'firefox') {
+        inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
+      }
+      const fromLabel = $('<span></span>').addClass('label').text('From:');
+      const toLabel = $('<span></span>').addClass('label').text('To:');
+      inputAddrContainer.find('#input_from').before(fromLabel);
+      inputAddrContainer.find('.recipients').before(toLabel);
     }
   }
 

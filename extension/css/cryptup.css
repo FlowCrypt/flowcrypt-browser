@@ -348,12 +348,13 @@ table#compose th .action_feedback:hover { opacity: 0.9; cursor: pointer; }
 
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none;}
-table#compose td.input.show_send_from { height: 84px; }
+table#compose td.input.show_send_from { height: 65px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
 table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px; outline: none;
-  margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
+  margin-right: 36px; -moz-appearance:none; }
 table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 13px; color: red; opacity: 0.4; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; cursor: pointer; }
+table#compose td.input.show_send_from span.label { display: inline-block; margin: 0 5px; }
 table#compose tr.bottom { background-color: #f5f5f5; }
 table#compose td.bottom { padding: 7px 12px 1px 12px; height: 47px; border-top: 1px solid #cfcfcf;}
 table#compose td.bottom div#send_btn { text-transform: initial; white-space: nowrap; min-width: 120px;
