@@ -25,22 +25,26 @@ Catch.try(async () => {
 
   const testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
-    const encryptedMsg = await openpgp.encrypt({
-      message: openpgp.message.fromText(encryptionText),
-      publicKeys: key.toPublic(),
-      armor: true,
-      passwords: [encryptionPassphrase]
-    });
-    output.push(`Encryption with key was successful`);
-    if (key.isPrivate() && key.isDecrypted()) {
-      const decryptedMsg = await openpgp.decrypt({
-        message: await openpgp.message.readArmored(encryptedMsg.data),
-        privateKeys: key,
+    try {
+      const encryptedMsg = await openpgp.encrypt({
+        message: openpgp.message.fromText(encryptionText),
+        publicKeys: key.toPublic(),
+        armor: true,
         passwords: [encryptionPassphrase]
       });
-      output.push(`Decryption with key ${decryptedMsg.data === encryptionText ? 'succeeded' : 'failed!'}`);
-    } else {
-      output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isDecrypted:${key.isDecrypted()}`);
+      output.push(`Encryption with key was successful`);
+      if (key.isPrivate() && key.isDecrypted()) {
+        const decryptedMsg = await openpgp.decrypt({
+          message: await openpgp.message.readArmored(encryptedMsg.data),
+          privateKeys: key,
+          passwords: [encryptionPassphrase]
+        });
+        output.push(`Decryption with key ${decryptedMsg.data === encryptionText ? 'succeeded' : 'failed!'}`);
+      } else {
+        output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isDecrypted:${key.isDecrypted()}`);
+      }
+    } catch (err) {
+      output.push(`Got error performing encryption/decryption test: ${err}`);
     }
     return output;
   };
@@ -50,6 +54,11 @@ Catch.try(async () => {
   // perhaps we can wrap in the try-catch block to see if it returns an error in that way.
   const testSignVerify = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
+    if (!key.isDecrypted()) {
+      output.push('Skipped test because private key is not decrypted');
+      return output;
+    }
+
     const signedMessage = await openpgp.message.fromText(encryptionText).sign([key]);
     output.push('Signing message was successful');
 
@@ -80,7 +89,6 @@ Catch.try(async () => {
   };
 
   const outputKeyResults = async (keys: OpenPGP.key.Key[]) => {
-    testIndex = 1;
     appendResult(`Primary keys found: ${keys.length}`);
 
     for (let keyIndex = 0; keyIndex < keys.length; keyIndex++) {
@@ -93,10 +101,12 @@ Catch.try(async () => {
       appendResult(`${kn} Is Private? ${await test(async () => key.isPrivate())}`);
       appendResult(`${kn} Primary User: ${await test(async () => {
         const user = await key.getPrimaryUser();
-        if (user.user.userId !== null && typeof user.user.userId !== 'undefined') {
+        if (user !== null && typeof user !== 'undefined' && user.user !== null &&
+          typeof user.user !== 'undefined' && user.user.userId !== null &&
+          typeof user.user.userId !== 'undefined') {
           return user.user.userId.userid;
         }
-        return 'UserId is null';
+        return 'Primary user is not accessible';
       })}`);
       appendResult(`${kn} Fingerprint: ${await test(async () => await Pgp.key.fingerprint(key, 'spaced'))}`);
       // appendResult(`${kn} Has valid encryption packet? ${test(async () => {return;})}`);                                // No longer exists on object
@@ -153,6 +163,7 @@ Catch.try(async () => {
 
   const performKeyCompatabilityTests = async (keyString: string) => {
     $('pre').text('').css('display', 'block');
+    testIndex = 1;
     try {
       const openpgpKey = await openpgp.key.readArmored(keyString);
       // check for errors in the response to read the key
