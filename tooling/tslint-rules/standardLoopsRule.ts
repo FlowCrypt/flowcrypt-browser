@@ -1,12 +1,12 @@
 import * as ts from "typescript";
 import * as tslint from "tslint";
 
-const FAILURE_STRING_EACH = `Using .each for looping is heavily discouraged.
+const DO_USE_LOOPS = `
 
 There should be only one obvious way to do a thing.
 - JS already has good tooling for loops
-- It's hard to return a value from inside .each()
-- breaking from inside .each loop uses non-obvious semantics
+- It's hard to return a value from inside .each/map and friends
+- breaking from inside .each/map loop uses non-obvious semantics
 - consistency matters
 
 // Allowed array loops:
@@ -18,8 +18,10 @@ for (const element of $('selector')) { } // selector results are iterable
 
 // Allowed Object loops:
 for (const v of Object.values(obj)) { } // get values, no need obj.hasOwnProperty
-for (const v of Object.keys(obj)) { } // get keys, no need obj.hasOwnProperty
-`;
+for (const v of Object.keys(obj)) { } // get keys, no need obj.hasOwnProperty`;
+
+const DO_NOT_USE_EACH = `Using .each for looping is heavily discouraged. ${DO_USE_LOOPS}`;
+const DO_NOT_USE_MAP_EXPR_STMT = `Use .map() when you want to transform an array, not as a substitute for loops. ${DO_USE_LOOPS}`;
 
 export class Rule extends tslint.Rules.AbstractRule {
 
@@ -33,7 +35,9 @@ class StandardLoopsWalker extends tslint.RuleWalker {
   public visitCallExpression(node: ts.CallExpression) {
     if (ts.isPropertyAccessExpression(node.expression)) {
       if (node.expression.name.escapedText === 'each') {
-        this.addFailure(this.createFailure(node.getStart(), node.getWidth(), FAILURE_STRING_EACH));
+        this.addFailure(this.createFailure(node.getStart(), node.getWidth(), DO_NOT_USE_EACH));
+      } else if (node.expression.name.escapedText === 'map' && ts.isExpressionStatement(node.parent)) {
+        this.addFailure(this.createFailure(node.getStart(), node.getWidth(), DO_NOT_USE_MAP_EXPR_STMT));
       }
     }
   }
