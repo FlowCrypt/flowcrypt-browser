@@ -115,14 +115,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced');
         const hasVisibleReplacements = visibleReplyBtns.filter('.replaced').length > 0;
         const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
-        // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
-        if (!hasVisibleReplacements) {
-          const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop());
+        if (!hasVisibleReplacements && convoReplyBtnsToReplaceArr.length) {
+          // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
+          const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
           $(lastReplyBtn).addClass('replaced').html(this.factory.btnReply()); // xss-safe-factory
           $(lastReplyBtn).click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
         }
-        // all other non-last reply buttons to be hidden
-        for (const replyBtn of convoReplyBtnsToReplaceArr) {
+        for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
           $(replyBtn).addClass('replaced').text(''); // hide all except last
         }
       }
