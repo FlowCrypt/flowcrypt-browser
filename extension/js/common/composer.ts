@@ -900,7 +900,7 @@ export class Composer {
 
   private evaluateRenderedRecipients = async () => {
     this.debug(`evaluateRenderedRecipients`);
-    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
+    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired')) {
       this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
       this.debug(`evaluateRenderedRecipients.email(${email})`);
@@ -956,10 +956,9 @@ export class Composer {
   private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.v.isReplyBox && Catch.browser().name === 'firefox') {
       let cellHeightExceptText = 0;
-      this.S.cached('all_cells_except_text').each(function () {
-        const cell = $(this);
-        cellHeightExceptText += cell.is(':visible') ? (cell.parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
-      });
+      for (const cell of this.S.cached('all_cells_except_text')) {
+        cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
+      }
       if (updateRefBodyHeight || !this.refBodyHeight) {
         this.refBodyHeight = this.S.cached('body').height() || 605;
       }
@@ -1429,7 +1428,7 @@ export class Composer {
       selector = '.recipients span';
     }
     const recipients: string[] = [];
-    for (const recipientEl of $(selector).get()) {
+    for (const recipientEl of $(selector)) {
       recipients.push($(recipientEl).text().trim());
     }
     return recipients;

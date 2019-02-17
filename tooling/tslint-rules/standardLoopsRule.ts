@@ -14,7 +14,7 @@ for (const v of arr) { } // loop through values
 for (let i = 0; i < arr.length; i++) { } // loop through indexes
 
 // Allowed jQuery selector loops:
-for (const element of $('selector').get()) { } // .get() returns an array of HTMLElement
+for (const element of $('selector')) { } // selector results are iterable
 
 // Allowed Object loops:
 for (const v of Object.values(obj)) { } // get values, no need obj.hasOwnProperty
