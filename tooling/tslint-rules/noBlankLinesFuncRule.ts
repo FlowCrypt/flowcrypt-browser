@@ -11,11 +11,11 @@ Function too dense? If it's really that dense, consider explaining what is going
 export class Rule extends tslint.Rules.AbstractRule {
 
   public apply(sourceFile: ts.SourceFile): tslint.RuleFailure[] {
-    return this.applyWithWalker(new StandardLoopsWalker(sourceFile, this.getOptions()));
+    return this.applyWithWalker(new Walker(sourceFile, this.getOptions()));
   }
 }
 
-class StandardLoopsWalker extends tslint.RuleWalker {
+class Walker extends tslint.RuleWalker {
 
   public visitFunctionDeclaration(node: ts.FunctionDeclaration) {
     this.lintFunctionBodyEmptyLines(node.body);
@@ -39,9 +39,9 @@ class StandardLoopsWalker extends tslint.RuleWalker {
       if (ts.isArrowFunction(body.parent) && (ts.isCallExpression(body.parent.parent) || ts.isCallExpression(body.parent.parent.parent))) {
         return; // does not apply to root async function, this should be good enough approximation
       }
-      const text = body.getText().replace(/\/\*[\s\S]*?\*\/\n/g, ''); // remove multiline comments first
+      const text = body.getText(this.getSourceFile()).replace(/\/\*[\s\S]*?\*\/\n/g, ''); // remove multiline comments first
       if (/\n *\n/.test(text)) { // check for double lines
-        this.addFailure(this.createFailure(body.getStart(), body.getWidth(), DO_NOT_USE_EMPTY_LINES_IN_FUNC));
+        this.addFailure(this.createFailure(body.getStart(this.getSourceFile()), body.getWidth(this.getSourceFile()), DO_NOT_USE_EMPTY_LINES_IN_FUNC));
       }
     }
   }

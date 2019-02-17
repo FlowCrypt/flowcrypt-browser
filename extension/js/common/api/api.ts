@@ -83,7 +83,7 @@ abstract class ApiCallError extends Error {
 
 export class AjaxError extends ApiCallError {
 
-  public STD_ERR_MSGS = {
+  public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
     GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };

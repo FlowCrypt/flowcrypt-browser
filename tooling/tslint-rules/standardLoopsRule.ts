@@ -26,18 +26,18 @@ const DO_NOT_USE_MAP_EXPR_STMT = `Use .map() when you want to transform an array
 export class Rule extends tslint.Rules.AbstractRule {
 
   public apply(sourceFile: ts.SourceFile): tslint.RuleFailure[] {
-    return this.applyWithWalker(new StandardLoopsWalker(sourceFile, this.getOptions()));
+    return this.applyWithWalker(new Walker(sourceFile, this.getOptions()));
   }
 }
 
-class StandardLoopsWalker extends tslint.RuleWalker {
+class Walker extends tslint.RuleWalker {
 
   public visitCallExpression(node: ts.CallExpression) {
     if (ts.isPropertyAccessExpression(node.expression)) {
       if (node.expression.name.escapedText === 'each') {
-        this.addFailure(this.createFailure(node.getStart(), node.getWidth(), DO_NOT_USE_EACH));
+        this.addFailure(this.createFailure(node.getStart(this.getSourceFile()), node.getWidth(this.getSourceFile()), DO_NOT_USE_EACH));
       } else if (node.expression.name.escapedText === 'map' && ts.isExpressionStatement(node.parent)) {
-        this.addFailure(this.createFailure(node.getStart(), node.getWidth(), DO_NOT_USE_MAP_EXPR_STMT));
+        this.addFailure(this.createFailure(node.getStart(this.getSourceFile()), node.getWidth(this.getSourceFile()), DO_NOT_USE_MAP_EXPR_STMT));
       }
     }
   }

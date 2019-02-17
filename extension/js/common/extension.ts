@@ -122,10 +122,7 @@ export class TabIdRequiredError extends Error { }
 export class Extension { // todo - move extension-specific common.js code here
 
   public static prepareBugReport = (name: string, details?: Dict<FlatTypes>, error?: Error | any): string => {
-    const bugReport: Dict<string> = {
-      name,
-      stack: Catch.stackTrace(),
-    };
+    const bugReport: Dict<string> = { name, stack: Catch.stackTrace() };
     try {
       bugReport.error = JSON.stringify(error, undefined, 2);
     } catch (e) {

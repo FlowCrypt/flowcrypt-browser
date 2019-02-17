@@ -632,8 +632,8 @@ export class Xss {
 
   public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static htmlSanitize = (dirtyHtml: string): string => { // originaly text_or_html
-    return DOMPurify.sanitize(dirtyHtml, {
+  public static htmlSanitize = (dirtyHtml: string): string => {
+    return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),

@@ -55,4 +55,5 @@ rules: #
     no-null-keyword: true
     standard-loops: true
     no-blank-lines-func: true
+    oneliner-object-literal: true
 ...

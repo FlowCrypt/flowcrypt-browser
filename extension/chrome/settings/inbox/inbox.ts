@@ -28,7 +28,7 @@ Catch.try(async () => {
   let notifications: Notifications;
   let allLabels: R.GmailLabels$label[];
 
-  const S = Ui.buildJquerySels({
+  const S = Ui.buildJquerySels({ // tslint:disable-line:oneliner-object-literal
     threads: '.threads',
     thread: '.thread',
     body: 'body',
