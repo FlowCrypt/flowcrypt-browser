@@ -18,8 +18,7 @@
     "../tooling/fill-values.ts",
     "../tooling/tsc-compiler.ts"
   ],
-  "exclude": [
-    "**/build/**",
-    "**/node_modules/**"
+  "include": [
+    "../tooling/tslint-rules/*.ts"
   ]
 }

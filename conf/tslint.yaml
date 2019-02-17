@@ -1,5 +1,6 @@
 ---
 extends: "tslint:recommended"
+rulesDirectory: ../build/tooling/tslint-rules
 linterOptions:
   exclude:
     - node_modules
@@ -52,4 +53,5 @@ rules: #
     no-namespace: false
     jsdoc-format: false  # add back later
     no-null-keyword: true
+    standard-loops: true
 ...
