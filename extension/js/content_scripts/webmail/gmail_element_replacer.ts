@@ -133,7 +133,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
             convoUpperIcons.find('.gZ').click();
           });
-
         }
       } else {
         if (!convoUpperIcons.is('.appended')) {

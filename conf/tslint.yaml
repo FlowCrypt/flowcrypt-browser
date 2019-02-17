@@ -54,4 +54,5 @@ rules: #
     jsdoc-format: false  # add back later
     no-null-keyword: true
     standard-loops: true
+    no-blank-lines-func: true
 ...

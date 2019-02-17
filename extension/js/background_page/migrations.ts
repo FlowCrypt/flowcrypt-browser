@@ -12,21 +12,18 @@ import { Rules } from '../common/rules.js';
 declare const openpgp: typeof OpenPGP;
 
 export const migrateGlobal = async () => {
-
   if (window.localStorage && window.localStorage.length > 0) { // window.localStorage may be null on Firefox, likely disabled in settings?
     // a very long time ago, this extension used to store values in localStorage
     // for a very long time, there used to be a procedure to migrate this localStorage into current form of storage
     // not anymore. users who had this extension disabled the whole time and now re-enabled will have to set it up again
     window.localStorage.clear();
   }
-
   // some emails in storage were not lowercased due to a bug around Oct 2018, this should be kept here until Feb 2019
   const acctEmails = await Store.acctEmailsGet();
   const lowerCasedAcctEmails = acctEmails.map(e => e.toLowerCase());
   if (acctEmails.join() !== lowerCasedAcctEmails.join()) {
     await Store.setGlobal({ account_emails: JSON.stringify(lowerCasedAcctEmails) });
   }
-
   // update local info about keyserver status of user keys
   updateAcctInfo(acctEmails).catch(reportSignificantErrs);
 };
