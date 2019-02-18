@@ -150,6 +150,13 @@ Catch.try(async () => {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     }
+
+    Api.retreiveBlogPosts().then(blogs => {
+      for (const post of blogs) {
+        $('.blog_post_list').append(
+          `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> (${Xss.escape(post.date.trim())})</div> \n`);
+      }
+    }).catch(e => Api.err.isSignificant(e) ? Catch.handleErr(e) : undefined);
   };
 
   const checkFcAcctAndSubscriptionAndContactPage = async () => {

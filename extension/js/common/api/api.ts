@@ -150,6 +150,7 @@ export namespace R { // responses
   export type FcAccountUpdate = { result: FcAccountUpdate$result, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
+  export type FcBlogPost = { title: string, date: string, url: string };
 
   export type FcMsgPresignFiles = { approvals: { base_url: string, fields: { key: string } }[] };
   export type FcMsgConfirmFiles = { confirmed: string[], admin_codes: string[] };
@@ -807,5 +808,9 @@ export class Api {
     apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', undefined, { 'api-version': '3' }),
     apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
   };
+
+  public static retreiveBlogPosts = async (): Promise<R.FcBlogPost[]> => {
+    return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace());
+  }
 
 }
