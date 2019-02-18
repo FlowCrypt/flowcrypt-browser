@@ -10,7 +10,7 @@ import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env, AttLimits } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrHandler, Env, AttLimits } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth } from './api/google.js';
 import { Buf } from './core/buf.js';
@@ -219,7 +219,7 @@ export class Composer {
     }
   }
 
-  private getErrHandlers = (couldNotDoWhat: string): BrowserEventErrorHandler => {
+  private getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail }),

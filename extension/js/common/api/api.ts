@@ -681,7 +681,7 @@ export class Api {
         promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
             progress[i] = singleFileProgress;
-            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress))).bind(undefined)(); // tslint:disable-line:no-unsafe-any
+            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress)))();
           }
         }));
       }
