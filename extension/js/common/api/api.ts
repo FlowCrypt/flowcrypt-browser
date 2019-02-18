@@ -2,6 +2,8 @@
 
 'use strict';
 
+// tslint:disable:no-direct-ajax
+
 import { Store, GlobalStore, Serializable, Subscription } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
 import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';

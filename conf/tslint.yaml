@@ -53,7 +53,9 @@ rules: #
     no-namespace: false
     jsdoc-format: false  # add back later
     no-null-keyword: true
+    # custom rules below
     standard-loops: true
     no-blank-lines-func: true
     oneliner-object-literal: true
+    no-direct-ajax: true
 ...

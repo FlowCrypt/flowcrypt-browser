@@ -2,6 +2,8 @@
 
 'use strict';
 
+// tslint:disable:no-direct-ajax
+
 const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
