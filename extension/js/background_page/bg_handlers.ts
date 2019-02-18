@@ -17,12 +17,12 @@ export class BgHandlers {
     await BgUtils.openExtensionTab(Env.urlCreate(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
   }
 
-  public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db) => {
+  public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db): Promise<Bm.Res.Db> => {
     if (!db) {
       console.info(`db corrupted, skipping: ${request.f}`);
       return await new Promise(resolve => undefined); // never resolve, error was already shown
     }
-    const dbFunc = (Store as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<any>; // due to https://github.com/Microsoft/TypeScript/issues/6480
+    const dbFunc = (Store as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
     return await dbFunc(db, ...request.args);
   }
 

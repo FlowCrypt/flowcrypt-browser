@@ -519,7 +519,7 @@ export class Api {
       email: acctEmail,
       message,
     }),
-    helpUninstall: (email: string, client: string) => Api.internal.apiFcCall('help/uninstall', {
+    helpUninstall: (email: string, client: string): Promise<unknown> => Api.internal.apiFcCall('help/uninstall', {
       email,
       client,
       metrics: null, // tslint:disable-line:no-null-keyword
@@ -648,7 +648,7 @@ export class Api {
         add_days: addDays || null, // tslint:disable-line:no-null-keyword
       }) as R.ApirFcMsgExpiration;
     },
-    messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.apiFcCall('message/reply', {
+    messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => Api.internal.apiFcCall('message/reply', {
       short,
       token,
       from,
@@ -656,7 +656,7 @@ export class Api {
       subject,
       message,
     }),
-    messageContact: (sender: string, message: string, messageToken: FcAuthToken) => Api.internal.apiFcCall('message/contact', {
+    messageContact: (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => Api.internal.apiFcCall('message/contact', {
       message_token_account: messageToken.account,
       message_token: messageToken.token,
       sender,
@@ -804,8 +804,8 @@ export class Api {
       return res;
     },
     apiAttesterPacketArmor: (contentText: string) => `${Pgp.armor.headers('attestPacket').begin}\n${contentText}\n${Pgp.armor.headers('attestPacket').end}`,
-    apiAttesterCall: (path: string, values: Dict<any>) => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', undefined, { 'api-version': '3' }),
-    apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON') => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
+    apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', undefined, { 'api-version': '3' }),
+    apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
   };
 
 }
