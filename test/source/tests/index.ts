@@ -46,7 +46,7 @@ export const getDebugHtmlAtts = (testId: string): string[] => {
   }
   const formattedDebugAtts: string[] = [];
   for (let i = 0; i < debugAtts.length; i++) {
-    formattedDebugAtts[i] = `${debugHtmlStyle}<h1>${testId} ${i + 1}/${debugAtts.length}</h1><hr><br>${debugHtmls}`;
+    formattedDebugAtts[i] = `${debugHtmlStyle}<h1>${testId} ${i + 1}/${debugAtts.length}</h1><hr><br>${debugAtts[i]}`;
   }
   return formattedDebugAtts;
 };
