@@ -40,7 +40,7 @@ export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (na
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 
-export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
+export interface JQS extends JQueryStatic { featherlight: (contentOrSettings: string | Object) => void; } // tslint:disable-line:ban-types
 
 export class Browser {
 
