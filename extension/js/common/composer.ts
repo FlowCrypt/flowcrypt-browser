@@ -127,6 +127,7 @@ export class Composer {
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
 
   private lastDraft = '';
+  private lastSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private contactSearchInProgress = false;
@@ -406,7 +407,7 @@ export class Composer {
   }
 
   private draftSave = async (forceSave: boolean = false): Promise<void> => {
-    if (this.shouldSaveDraft(this.S.cached('input_text').text()) || forceSave) {
+    if (this.hasBodyChanged(this.S.cached('input_text').text()) || this.hasSubjectChanged(String(this.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
         this.S.cached('send_btn_note').text('Saving');
@@ -1550,13 +1551,20 @@ export class Composer {
     }
   }
 
-  private shouldSaveDraft = (msgBody: string) => {
+  private hasBodyChanged = (msgBody: string) => {
     if (msgBody && msgBody !== this.lastDraft) {
       this.lastDraft = msgBody;
       return true;
-    } else {
-      return false;
     }
+    return false;
+  }
+
+  private hasSubjectChanged = (subject: string) => {
+    if (subject && subject !== this.lastSubject) {
+      this.lastSubject = subject;
+      return true;
+    }
+    return false;
   }
 
   private fmtPwdProtectedEmail = (shortId: string, encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], lang: 'DE' | 'EN') => {
