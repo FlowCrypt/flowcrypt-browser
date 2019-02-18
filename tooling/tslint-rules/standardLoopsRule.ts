@@ -5,8 +5,8 @@ const DO_USE_LOOPS = `
 
 There should be only one obvious way to do a thing.
 - JS already has good tooling for loops
-- It's hard to return a value from inside .each/map and friends
-- breaking from inside .each/map loop uses non-obvious semantics
+- It's hard to return a value from inside .each/map/forEach and friends
+- breaking from inside .each/map/forEach loop uses non-obvious semantics
 - consistency matters
 
 // Allowed array loops:
@@ -34,7 +34,7 @@ class Walker extends tslint.RuleWalker {
 
   public visitCallExpression(node: ts.CallExpression) {
     if (ts.isPropertyAccessExpression(node.expression)) {
-      if (node.expression.name.escapedText === 'each') {
+      if (node.expression.name.escapedText === 'each' || node.expression.name.escapedText === 'forEach') {
         this.addFailure(this.createFailure(node.getStart(this.getSourceFile()), node.getWidth(this.getSourceFile()), DO_NOT_USE_EACH));
       } else if (node.expression.name.escapedText === 'map' && ts.isExpressionStatement(node.parent)) {
         this.addFailure(this.createFailure(node.getStart(this.getSourceFile()), node.getWidth(this.getSourceFile()), DO_NOT_USE_MAP_EXPR_STMT));
