@@ -8,6 +8,8 @@ import { expect } from 'chai';
 import { FlowCryptApi } from '../api';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   if (testVariant === 'CONSUMER') {

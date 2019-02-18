@@ -6,6 +6,8 @@ import { Url } from '../../browser';
 import { SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredBrowser: TestWithGlobalBrowser) => {
 
   for (const m of Config.tests.messages) {
