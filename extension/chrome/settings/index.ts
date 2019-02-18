@@ -151,7 +151,12 @@ Catch.try(async () => {
       }
     }
 
-    await renderBlogPostList();
+    Api.retreiveBlogPosts().then((res: { url: string, date: string, title: string }[]) => {
+      for (const post of res) {
+        $('.blog_post_list').append(
+          `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> (${Xss.escape(post.date.trim())})</div> \n`);
+      }
+    }).catch((e: Error) => Api.err.isSignificant(e) ? Catch.handleErr(e) : undefined);
   };
 
   const checkFcAcctAndSubscriptionAndContactPage = async () => {
@@ -309,38 +314,6 @@ Catch.try(async () => {
       await Store.passphraseSave('session', acctEmail!, $(target).attr('longid')!, undefined);
       reload(true);
     }));
-  };
-
-  const renderBlogPostList = async () => {
-    const errorRetrievingPosts = () => {
-      Xss.sanitizeAppend('.blog_post_list', `<div class="line>Error retrieving blog posts...try again later.</div>\n`);
-    };
-    try {
-      const res = await Api.ajax({
-        url: 'https://flowcrypt.com/feed',
-        method: 'GET',
-        dataType: 'json',
-        async: true
-      }, Catch.stackTrace());
-
-      interface BlogPostData {
-        url: string;
-        title: string;
-        date: string;
-      }
-      if (res instanceof Array) {
-        (res as BlogPostData[]).map(post => {
-          $('.blog_post_list').append(
-            `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> (${Xss.escape(post.date.trim())})</div> \n`);
-        });
-      } else {
-        errorRetrievingPosts();
-      }
-    } catch (err) {
-      console.error(err);
-      errorRetrievingPosts();
-      return;
-    }
   };
 
   // tslint:disable-next-line:no-unsafe-any

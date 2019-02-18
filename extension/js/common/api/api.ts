@@ -806,4 +806,8 @@ export class Api {
     apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON') => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
   };
 
+  public static retreiveBlogPosts = async () => {
+    return await Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace());
+  }
+
 }
