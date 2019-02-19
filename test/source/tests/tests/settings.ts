@@ -7,6 +7,8 @@ import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test('settings[global:compatibility] - my own emails show as contacts', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

@@ -48,31 +48,32 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceArmoredBlocks = () => {
-    const self = this;
-    $(this.msgTextElSel).not('.evaluated').addClass('evaluated').filter(":contains('" + Pgp.armor.headers('null').begin + "')").each((i, msgEl) => { // for each email that contains PGP block
-      const msgId = self.domExtractMsgId(msgEl);
-      const senderEmail = self.domExtractSenderEmail(msgEl);
+    for (const msgEl of $(this.msgTextElSel).not('.evaluated').addClass('evaluated').filter(`:contains('${Pgp.armor.headers('null').begin}')`)) {
+      // for each email that contains PGP block
+      const msgId = this.domExtractMsgId(msgEl);
+      const senderEmail = this.domExtractSenderEmail(msgEl);
       const isOutgoing = Value.is(senderEmail).in(this.addresses);
-      const replacementXssSafe = Ui.replaceRenderableMsgBlocks(self.factory, msgEl.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
+      const replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, msgEl.innerText, msgId || '', senderEmail || '', isOutgoing);  // xss-safe-factory
       if (typeof replacementXssSafe !== 'undefined') {
         $(msgEl).parents('.ap').addClass('pgp_message_container');
         $(msgEl).html(replacementXssSafe.replace(/^…|…$/g, '').trim()); // xss-safe-factory
       }
-    });
+    }
   }
 
   private replaceStandardReplyBox = (editable = false, forceReplaceEvenIfPgpBlockIsNotPresent = false) => {
-    $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().each((i, replyBox) => {
+    const replyBox = $('div.f2FE1c').not('.reply_message_iframe_container').filter(':visible').first().get(0);
+    if (replyBox) {
       const rootEl = this.domGetConversationRootEl(replyBox);
       if (rootEl.find('iframe.pgp_block').filter(':visible').length || (rootEl.is(':visible') && forceReplaceEvenIfPgpBlockIsNotPresent)) {
         const iframeXssSafe = this.factory.embeddedReply(this.getReplyParams(rootEl), editable);
         $(replyBox).addClass('reply_message_iframe_container').html(iframeXssSafe).children(':not(iframe)').css('display', 'none'); // xss-safe-factory
       }
-    });
+    }
   }
 
   private replaceAtts = () => {
-    for (const attsContainerEl of $('div.OW').get()) {
+    for (const attsContainerEl of $('div.OW')) {
       const attsContainer = $(attsContainerEl);
       const newPgpMsgs = attsContainer.children(Att.pgpNamePatterns().map(this.getAttSel).join(',')).not('.evaluated').addClass('evaluated');
       if (newPgpMsgs.length) {
@@ -137,14 +138,14 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     if (!skipGoogleDrive && notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
       const googleDriveAtts: Att[] = [];
-      notProcessedAttsLoaders.each((i, loaderEl) => {
+      for (const loaderEl of notProcessedAttsLoaders) {
         try {
           const meta = $(loaderEl).parent().attr('download_url')!.split(':');
           googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted' }));
         } catch (e) {
           Catch.handleErr(e);
         }
-      });
+      }
       this.processAtts(msgId, msgEl, googleDriveAtts, attsContainer, true);
     }
   }
@@ -177,20 +178,8 @@ export class InboxElementReplacer implements WebmailElementReplacer {
   }
 
   private domExtractRecipients = (baseEl: HTMLElement | JQuery<HTMLElement>) => {
-    let m;
-    if ($(baseEl).is('.top-level-item')) {
-      m = $(baseEl).find('.ap').last();
-    } else {
-      m = $(baseEl).parents('.ap');
-    }
-    const recipients: string[] = [];
-    m.find('.fX').siblings('span[email]').each((i, recipientEl) => {
-      const email = $(recipientEl).attr('email');
-      if (email) {
-        recipients.push(email);
-      }
-    });
-    return recipients;
+    const msg = $(baseEl).is('.top-level-item') ? $(baseEl).find('.ap').last() : $(baseEl).parents('.ap');
+    return msg.find('.fX').siblings('span[email]').get().map(el => $(el).attr('email')).filter(Boolean).map(String);
   }
 
   private intStrToHexStr = (intAsStr: string | number): string => { // http://stackoverflow.com/questions/18626844/convert-a-large-integer-to-a-hex-string-in-javascript (Collin Anderson)

@@ -6,6 +6,8 @@ import { BrowserRecipe } from '../browser_recipe';
 import { GmailPageRecipe } from '../page_recipe';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   const pageHasReplyContainer = async (gmailPage: ControllablePage) => {

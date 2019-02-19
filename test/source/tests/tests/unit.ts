@@ -5,6 +5,8 @@ const ordered_stringify = require('json-stable-stringify'); // tslint:disable-li
 import * as ava from 'ava';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export let defineUnitTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   for (const ut of Config.tests.unit_tests) {

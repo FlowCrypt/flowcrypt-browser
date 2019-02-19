@@ -244,11 +244,7 @@ Catch.try(async () => {
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToSubmitToAttester, () => finalizeSetup({ submit_main, submit_all }));
     }
-    await Store.setAcct(acctEmail, {
-      setup_date: Date.now(),
-      setup_done: true,
-      cryptup_enabled: true,
-    });
+    await Store.setAcct(acctEmail, { setup_date: Date.now(), setup_done: true, cryptup_enabled: true });
     await Store.remove(acctEmail, ['tmp_submit_main', 'tmp_submit_all']);
   };
 

@@ -35,12 +35,12 @@ export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversi
 export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
-export type BrowserEventErrorHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
+export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
 
-export interface JQS extends JQueryStatic { featherlight: Function; } // tslint:disable-line:ban-types
+export interface JQS extends JQueryStatic { featherlight: (contentOrSettings: string | Object) => void; } // tslint:disable-line:ban-types
 
 export class Browser {
 
@@ -431,7 +431,7 @@ export class Ui {
         e.stopPropagation();
       });
     },
-    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrorHandler) => {
+    handle: (cb: (e: HTMLElement, event: JQuery.Event<HTMLElement, null>) => void | Promise<void>, errHandlers?: BrowserEventErrHandler) => {
       return function (this: HTMLElement, event: JQuery.Event<HTMLElement, null>) {
         let r;
         try {
@@ -444,7 +444,7 @@ export class Ui {
         }
       };
     },
-    _dispatchErr: (e: any, errHandlers?: BrowserEventErrorHandler) => {
+    _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
       if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
         errHandlers.network().catch(Catch.handleErr);
       } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {
@@ -457,17 +457,17 @@ export class Ui {
         Catch.handleErr(e);
       }
     },
-    prevent: (preventableEvent: PreventableEventName, cb: (e: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrorHandler) => {
+    prevent: <THIS extends HTMLElement | void>(evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler) => {
       let eventTimer: number | undefined;
       let eventFiredOn: number | undefined;
       const cbResetTimer = () => {
         eventTimer = undefined;
         eventFiredOn = undefined;
       };
-      const cbWithErrsHandled = (e: HTMLElement) => {
+      const cbWithErrsHandled = (el: HTMLElement) => {
         let r;
         try {
-          r = cb(e, cbResetTimer);
+          r = cb(el, cbResetTimer);
           if (typeof r === 'object' && typeof r.catch === 'function') {
             r.catch(e => Ui.event._dispatchErr(e, errHandler));
           }
@@ -475,29 +475,29 @@ export class Ui {
           Ui.event._dispatchErr(e, errHandler);
         }
       };
-      return function (this: HTMLElement) {
-        if (preventableEvent === 'spree') {
+      return function (this: THIS) {
+        if (evName === 'spree') {
           clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_SPREE_MS);
-        } else if (preventableEvent === 'slowspree') {
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SPREE_MS);
+        } else if (evName === 'slowspree') {
           clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_SLOW_SPREE_MS);
-        } else if (preventableEvent === 'veryslowspree') {
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_SLOW_SPREE_MS);
+        } else if (evName === 'veryslowspree') {
           clearTimeout(eventTimer);
-          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this), Ui.EVENT_VERY_SLOW_SPREE_MS);
+          eventTimer = Catch.setHandledTimeout(() => cbWithErrsHandled(this as HTMLElement), Ui.EVENT_VERY_SLOW_SPREE_MS);
         } else {
           if (eventFiredOn) {
-            if (preventableEvent === 'parallel') {
+            if (evName === 'parallel') {
               // event handling is still being processed. Do not call back
-            } else if (preventableEvent === 'double') {
+            } else if (evName === 'double') {
               if (Date.now() - eventFiredOn > Ui.EVENT_DOUBLE_MS) {
                 eventFiredOn = Date.now();
-                cbWithErrsHandled(this);
+                cbWithErrsHandled(this as HTMLElement);
               }
             }
           } else {
             eventFiredOn = Date.now();
-            cbWithErrsHandled(this);
+            cbWithErrsHandled(this as HTMLElement);
           }
         }
       };
@@ -632,8 +632,8 @@ export class Xss {
 
   public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
 
-  public static htmlSanitize = (dirtyHtml: string): string => { // originaly text_or_html
-    return DOMPurify.sanitize(dirtyHtml, {
+  public static htmlSanitize = (dirtyHtml: string): string => {
+    return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
       SAFE_FOR_JQUERY: true,
       ADD_ATTR: Xss.ADD_ATTR,
       ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),

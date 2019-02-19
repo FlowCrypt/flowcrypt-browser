@@ -52,6 +52,11 @@
       "type": "npm",
       "script": "test_1_patterns",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "internal_tslint_dev_run",
+      "problemMatcher": []
     }
   ]
 }

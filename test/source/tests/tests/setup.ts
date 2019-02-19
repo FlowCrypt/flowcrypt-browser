@@ -4,6 +4,8 @@ import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test.todo('setup - no connection when pulling backup - retry prompt shows and works');

@@ -2,6 +2,8 @@
 
 'use strict';
 
+// tslint:disable:no-direct-ajax
+
 import { Store, GlobalStore, Serializable, Subscription } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
 import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
@@ -83,7 +85,7 @@ abstract class ApiCallError extends Error {
 
 export class AjaxError extends ApiCallError {
 
-  public STD_ERR_MSGS = {
+  public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
     GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };
@@ -148,6 +150,7 @@ export namespace R { // responses
   export type FcAccountUpdate = { result: FcAccountUpdate$result, updated: boolean };
   export type FcAccountSubscribe = { subscription: SubscriptionInfo };
   export type FcAccountCheck = { email: string | null, subscription: SubscriptionInfo | null };
+  export type FcBlogPost = { title: string, date: string, url: string };
 
   export type FcMsgPresignFiles = { approvals: { base_url: string, fields: { key: string } }[] };
   export type FcMsgConfirmFiles = { confirmed: string[], admin_codes: string[] };
@@ -517,7 +520,7 @@ export class Api {
       email: acctEmail,
       message,
     }),
-    helpUninstall: (email: string, client: string) => Api.internal.apiFcCall('help/uninstall', {
+    helpUninstall: (email: string, client: string): Promise<unknown> => Api.internal.apiFcCall('help/uninstall', {
       email,
       client,
       metrics: null, // tslint:disable-line:no-null-keyword
@@ -646,7 +649,7 @@ export class Api {
         add_days: addDays || null, // tslint:disable-line:no-null-keyword
       }) as R.ApirFcMsgExpiration;
     },
-    messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string) => Api.internal.apiFcCall('message/reply', {
+    messageReply: (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => Api.internal.apiFcCall('message/reply', {
       short,
       token,
       from,
@@ -654,7 +657,7 @@ export class Api {
       subject,
       message,
     }),
-    messageContact: (sender: string, message: string, messageToken: FcAuthToken) => Api.internal.apiFcCall('message/contact', {
+    messageContact: (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => Api.internal.apiFcCall('message/contact', {
       message_token_account: messageToken.account,
       message_token: messageToken.token,
       sender,
@@ -681,7 +684,7 @@ export class Api {
         promises.push(Api.internal.apiCall(items[i].baseUrl, '', fields, 'FORM', {
           upload: (singleFileProgress: number) => {
             progress[i] = singleFileProgress;
-            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress))).bind(undefined)(); // tslint:disable-line:no-unsafe-any
+            Ui.event.prevent('spree', () => progressCb(Value.arr.average(progress)))();
           }
         }));
       }
@@ -802,8 +805,12 @@ export class Api {
       return res;
     },
     apiAttesterPacketArmor: (contentText: string) => `${Pgp.armor.headers('attestPacket').begin}\n${contentText}\n${Pgp.armor.headers('attestPacket').end}`,
-    apiAttesterCall: (path: string, values: Dict<any>) => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', undefined, { 'api-version': '3' }),
-    apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON') => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
+    apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', undefined, { 'api-version': '3' }),
+    apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
   };
+
+  public static retreiveBlogPosts = async (): Promise<R.FcBlogPost[]> => {
+    return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace());
+  }
 
 }

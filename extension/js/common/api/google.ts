@@ -2,6 +2,8 @@
 
 'use strict';
 
+// tslint:disable:no-direct-ajax
+
 const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
@@ -34,7 +36,7 @@ export class Google extends Api {
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
   private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;
 
-  private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string) => {
+  private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string): Promise<any> => {
     const data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
     const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
     const request = { url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true };
@@ -532,7 +534,7 @@ export class GoogleAuth {
     }
   }
 
-  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings) => {
+  public static apiGoogleCallRetryAuthErrorOneTime = async (acctEmail: string, request: JQuery.AjaxSettings): Promise<any> => {
     try {
       return await Api.ajax(request, Catch.stackTrace());
     } catch (firstAttemptErr) {

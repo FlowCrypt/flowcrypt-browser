@@ -8,7 +8,9 @@ export type TestWithGlobalBrowser = typeof testWithSemaphoredGlobalBrowser;
 export type AvaContext = ava.ExecutionContext<{}> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
 export type GlobalBrowser = { browsers: BrowserPool };
 
-let debugHtml = '';
+const MAX_ATT_SIZE = 5 * 1024 * 1024;
+
+const debugHtmls: string[] = [];
 const debugHtmlStyle = `
 <style>
   h1 { margin-top: 50px; margin-left: 20px; }
@@ -26,14 +28,27 @@ const debugHtmlStyle = `
 `;
 
 export const addDebugHtml = (html: string) => {
-  debugHtml += html;
+  debugHtmls.push(html);
 };
 
-export const getDebugHtml = (testVariant: string): string => {
-  if (debugHtml) {
-    return debugHtmlStyle + `<h1>${testVariant}</h1><hr><br>` + debugHtml;
+export const getDebugHtmlAtts = (testId: string): string[] => {
+  const debugAtts: string[] = [];
+  let currentDebugAtt = '';
+  for (const debugHtml of debugHtmls) {
+    currentDebugAtt += debugHtml;
+    if (currentDebugAtt.length > MAX_ATT_SIZE) {
+      debugAtts.push(currentDebugAtt);
+      currentDebugAtt = '';
+    }
   }
-  return '';
+  if (currentDebugAtt.length) {
+    debugAtts.push(currentDebugAtt);
+  }
+  const formattedDebugAtts: string[] = [];
+  for (let i = 0; i < debugAtts.length; i++) {
+    formattedDebugAtts[i] = `${debugHtmlStyle}<h1>${testId} ${i + 1}/${debugAtts.length}</h1><hr><br>${debugAtts[i]}`;
+  }
+  return formattedDebugAtts;
 };
 
 export const standaloneTestTimeout = (t: AvaContext, ms: number) => setTimeout(() => { t.fail(`Standalone timeout exceeded`); }, ms);

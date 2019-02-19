@@ -96,7 +96,7 @@ export class Catch {
       exception.stack = '~censored:PRIVATE';
     }
     try {
-      $.ajax({
+      $.ajax({ // tslint:disable-line:no-direct-ajax
         url: 'https://flowcrypt.com/api/help/error',
         method: 'POST',
         data: JSON.stringify({

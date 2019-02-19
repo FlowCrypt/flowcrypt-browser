@@ -150,6 +150,13 @@ Catch.try(async () => {
         $('.hide_if_setup_not_done').css('display', 'none');
       }
     }
+
+    Api.retreiveBlogPosts().then(posts => {
+      for (const post of posts) {
+        const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
+        Xss.sanitizeAppend('.blog_post_list', html);
+      }
+    }).catch(e => Api.err.isSignificant(e) ? Catch.handleErr(e) : undefined);
   };
 
   const checkFcAcctAndSubscriptionAndContactPage = async () => {
@@ -309,8 +316,7 @@ Catch.try(async () => {
     }));
   };
 
-  // tslint:disable-next-line:no-unsafe-any
-  $.get(chrome.runtime.getURL('/changelog.txt'), data => ($('#status-row #status_v') as any as JQS).featherlight(data.replace(/\n/g, '<br>')), 'html');
+  $.get('/changelog.txt', data => ($('#status-row #status_v') as any as JQS).featherlight(String(data).replace(/\n/g, '<br>')), 'html');
 
   $('.show_settings_page').click(Ui.event.handle(target => {
     Settings.renderSubPage(acctEmail!, tabId, $(target).attr('page')!, $(target).attr('addurltext') || ''); // all such elements do have page attr

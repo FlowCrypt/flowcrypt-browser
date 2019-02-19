@@ -133,6 +133,24 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
 #settings-row .my-keys-row .key_words, #settings-row .my-keys-row .key_id {
   text-align: left;
 }
+
+#settings-row .blog_post_list .line { 
+  padding: 6px 0;
+  color: #646464;
+  opacity: 0.9;
+}
+
+#settings-row .blog_post_list .line a {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 450px;
+  vertical-align: bottom;
+  display: inline-block;
+  text-decoration: none;
+  white-space: nowrap;
+  padding-right: 6px;
+}
+
 .profile-row #toggle-accounts-profile-img {
   padding-left: 5px;
   position: relative;

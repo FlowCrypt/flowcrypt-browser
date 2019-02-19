@@ -3,6 +3,8 @@ import * as ava from 'ava';
 import { expect } from 'chai';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export let defineElementTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test('compose[global:compatibility] - elements/pgp_pubkey renders', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

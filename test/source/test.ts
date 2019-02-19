@@ -13,7 +13,7 @@ import { defineElementTests } from './tests/tests/elements';
 import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
 import { Config, Util } from './util';
 import { FlowCryptApi } from './tests/api';
-import { getDebugHtml, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
+import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 
 export type TestVariant = 'CONSUMER' | 'ENTERPRISE';
 let TEST_VARIANT: TestVariant;
@@ -116,13 +116,17 @@ ava.after.always('close browsers', async t => {
 });
 
 ava.after.always('send debug info if any', async t => {
-  const debugHtml = getDebugHtml(TEST_VARIANT);
   console.info('send debug info - deciding');
-  if (debugHtml) {
-    const failRnd = Util.lousyRandom();
-    console.info(`FAIL ID ${failRnd}`);
+  const failRnd = Util.lousyRandom();
+  const testId = `FlowCrypt Browser Extension ${TEST_VARIANT} ${failRnd}`;
+  const debugHtmlAttachments = getDebugHtmlAtts(testId);
+  if (debugHtmlAttachments.length) {
+    console.info(`FAIL ID ${testId}`);
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
-    await FlowCryptApi.hookCiDebugEmail(`FlowCrypt Browser Extension (${TEST_VARIANT}) ${failRnd}`, debugHtml);
+    for (let i = 0; i < debugHtmlAttachments.length; i++) {
+      const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
+      await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);
+    }
   } else {
     console.info(`no fails to debug`);
   }
