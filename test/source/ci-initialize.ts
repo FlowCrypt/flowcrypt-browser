@@ -6,7 +6,7 @@ import { FlowCryptApi } from './tests/api';
 (async () => {
 
   for (const { email, password, backup } of Config.secrets.auth.google) {
-    const e = email.replace(/gmail|flowcrypt|test|com|@|\./, '');
+    const e = email.replace(/gmail|flowcrypt|test|com|@|\./g, '');
     try {
       console.info(`[${e}] Initializing CI`);
       await FlowCryptApi.ciInitialize(email, password, backup);
