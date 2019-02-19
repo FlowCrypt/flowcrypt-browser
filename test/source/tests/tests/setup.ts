@@ -98,7 +98,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
 
   ava.test.todo('setup - create key simple');
 
-  ava.test('setup - create key advanced - no backup', testWithBrowser(async (t, browser) => {
+  ava.test.skip('setup - create key advanced - no backup', testWithBrowser(async (t, browser) => {
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
     await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: false });
     await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
