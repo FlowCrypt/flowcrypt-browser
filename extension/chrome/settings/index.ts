@@ -154,7 +154,7 @@ Catch.try(async () => {
     Api.retreiveBlogPosts().then(posts => {
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
-        $('.blog_post_list').append(html);
+        Xss.sanitizeAppend('.blog_post_list', html);
       }
     }).catch(e => Api.err.isSignificant(e) ? Catch.handleErr(e) : undefined);
   };
