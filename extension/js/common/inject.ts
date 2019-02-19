@@ -12,7 +12,7 @@ export class Injector {
   private webmailName: WebMailName;
   private webmailVariant: WebmailVariantString;
   private S: SelCache;
-  private composeBtnContainerSel = {
+  private composeBtnContainerSel = { // tslint:disable-line:oneliner-object-literal
     'gmail': 'div.aic',
     'inbox': 'div.jp',
     'outlook': 'div._fce_b',

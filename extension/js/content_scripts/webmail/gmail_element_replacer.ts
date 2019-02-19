@@ -88,7 +88,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private replaceArmoredBlocks = () => {
     const emailsEontainingPgpBlock = $(this.sel.msgOuter).find(this.sel.msgInnerContainingPgp).not('.evaluated');
-    for (const emailContainer of emailsEontainingPgpBlock.get()) {
+    for (const emailContainer of emailsEontainingPgpBlock) {
       $(emailContainer).addClass('evaluated');
       const senderEmail = this.getSenderEmail(emailContainer);
       const isOutgoing = Value.is(senderEmail).in(this.addresses);
@@ -114,14 +114,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (visibleReplyBtns.not('.replaced').length) { // last reply button in convo gets replaced
         const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced');
         const hasVisibleReplacements = visibleReplyBtns.filter('.replaced').length > 0;
-        convoReplyBtnsToReplace.addClass('replaced').each((i, replyBtn) => {
-          if (i + 1 < convoReplyBtnsToReplace.length || hasVisibleReplacements) {
-            $(replyBtn).addClass('replaced').text(''); // hide all except last
-          } else {
-            $(replyBtn).html(this.factory.btnReply()); // replace last,  // xss-safe-factory
-            $(replyBtn).click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
-          }
-        });
+        const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
+        if (!hasVisibleReplacements && convoReplyBtnsToReplaceArr.length) {
+          // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
+          const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
+          $(lastReplyBtn).addClass('replaced').html(this.factory.btnReply()); // xss-safe-factory
+          $(lastReplyBtn).click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
+        }
+        for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
+          $(replyBtn).addClass('replaced').text(''); // hide all except last
+        }
       }
     }
     // conversation top-right icon buttons
@@ -131,7 +133,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
             convoUpperIcons.find('.gZ').click();
           });
-
         }
       } else {
         if (!convoUpperIcons.is('.appended')) {
@@ -147,7 +148,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private replaceFcTags = () => {
     const allContenteditableEls = $("div[contenteditable='true']").not('.evaluated').addClass('evaluated');
-    for (const contenteditableEl of allContenteditableEls.get()) {
+    for (const contenteditableEl of allContenteditableEls) {
       const contenteditable = $(contenteditableEl);
       const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
       if (fcLinkMatch) {
@@ -170,7 +171,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private replaceAtts = async () => {
-    for (const attsContainerEl of $(this.sel.attsContainerInner).get()) {
+    for (const attsContainerEl of $(this.sel.attsContainerInner)) {
       const attsContainer = $(attsContainerEl);
       const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
       const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
@@ -288,15 +289,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (notProcessedAttsLoaders.length && msgEl.find('.gmail_drive_chip, a[href^="https://drive.google.com/file"]').length) {
       // replace google drive attachments - they do not get returned by Gmail API thus did not get replaced above
       const googleDriveAtts: Att[] = [];
-      notProcessedAttsLoaders.each((i, loaderEl) => {
-        const downloadUrl = $(loaderEl).parent().attr('download_url');
+      for (const attLoaderEl of notProcessedAttsLoaders) {
+        const downloadUrl = $(attLoaderEl).parent().attr('download_url');
         if (downloadUrl) {
           const meta = downloadUrl.split(':');
           googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted' }));
         } else {
           console.info('Missing Google Drive attachments download_url');
         }
-      });
+      }
       await this.processAtts(msgId, googleDriveAtts, attsContainerInner, true);
     }
   }
@@ -466,7 +467,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private evaluateStandardComposeReceivers = async () => {
     if (!this.currentlyEvaluatingStandardComposeBoxRecipients) {
       this.currentlyEvaluatingStandardComposeBoxRecipients = true;
-      for (const standardComposeWinEl of $(this.sel.standardComposeWin).get()) {
+      for (const standardComposeWinEl of $(this.sel.standardComposeWin)) {
         const standardComposeWin = $(standardComposeWinEl);
         const recipients = standardComposeWin.find('div.az9 span[email]').get().map(e => $(e).attr('email')!).filter(e => !!e);
         if (!recipients.length) {

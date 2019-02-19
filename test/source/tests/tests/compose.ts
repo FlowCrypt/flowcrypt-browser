@@ -6,6 +6,8 @@ import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { TestVariant } from '../../test';
 
+// tslint:disable:no-blank-lines-func
+
 export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   ava.test('compose - standalone - can set and remember default send address', testWithNewBrowser(async (t, browser) => {

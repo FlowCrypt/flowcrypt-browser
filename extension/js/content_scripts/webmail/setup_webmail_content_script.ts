@@ -27,6 +27,7 @@ export interface WebmailElementReplacer {
   scrollToBottomOfConvo: () => void;
 }
 
+// tslint:disable:no-blank-lines-func
 export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecificInfo) => {
 
   const setUpNotification = `

@@ -10,7 +10,7 @@ import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
-import { Ui, Xss, AttUI, BrowserEventErrorHandler, Env, AttLimits } from './browser.js';
+import { Ui, Xss, AttUI, BrowserEventErrHandler, Env, AttLimits } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth } from './api/google.js';
 import { Buf } from './core/buf.js';
@@ -127,6 +127,7 @@ export class Composer {
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
 
   private lastDraft = '';
+  private lastSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private contactSearchInProgress = false;
@@ -219,7 +220,7 @@ export class Composer {
     }
   }
 
-  private getErrHandlers = (couldNotDoWhat: string): BrowserEventErrorHandler => {
+  private getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail }),
@@ -406,7 +407,7 @@ export class Composer {
   }
 
   private draftSave = async (forceSave: boolean = false): Promise<void> => {
-    if (this.shouldSaveDraft(this.S.cached('input_text').text()) || forceSave) {
+    if (this.hasBodyChanged(this.S.cached('input_text').text()) || this.hasSubjectChanged(String(this.S.cached('input_subject').val())) || forceSave) {
       this.currentlySavingDraft = true;
       try {
         this.S.cached('send_btn_note').text('Saving');
@@ -684,11 +685,9 @@ export class Composer {
         //  - don't require all other clients to support PGP/MIME
         // then please const me know. Eagerly waiting! In the meanwhile..
         plaintext = (window as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
-
         // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
-
         if (!prv.isDecrypted()) {
           await Pgp.key.decrypt(prv, [passphrase!]); // checked !== undefined above
         }
@@ -900,7 +899,7 @@ export class Composer {
 
   private evaluateRenderedRecipients = async () => {
     this.debug(`evaluateRenderedRecipients`);
-    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired').get()) {
+    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired')) {
       this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
       this.debug(`evaluateRenderedRecipients.email(${email})`);
@@ -956,10 +955,9 @@ export class Composer {
   private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.v.isReplyBox && Catch.browser().name === 'firefox') {
       let cellHeightExceptText = 0;
-      this.S.cached('all_cells_except_text').each(function () {
-        const cell = $(this);
-        cellHeightExceptText += cell.is(':visible') ? (cell.parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
-      });
+      for (const cell of this.S.cached('all_cells_except_text')) {
+        cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
+      }
       if (updateRefBodyHeight || !this.refBodyHeight) {
         this.refBodyHeight = this.S.cached('body').height() || 605;
       }
@@ -1429,7 +1427,7 @@ export class Composer {
       selector = '.recipients span';
     }
     const recipients: string[] = [];
-    for (const recipientEl of $(selector).get()) {
+    for (const recipientEl of $(selector)) {
       recipients.push($(recipientEl).text().trim());
     }
     return recipients;
@@ -1553,13 +1551,20 @@ export class Composer {
     }
   }
 
-  private shouldSaveDraft = (msgBody: string) => {
+  private hasBodyChanged = (msgBody: string) => {
     if (msgBody && msgBody !== this.lastDraft) {
       this.lastDraft = msgBody;
       return true;
-    } else {
-      return false;
     }
+    return false;
+  }
+
+  private hasSubjectChanged = (subject: string) => {
+    if (subject && subject !== this.lastSubject) {
+      this.lastSubject = subject;
+      return true;
+    }
+    return false;
   }
 
   private fmtPwdProtectedEmail = (shortId: string, encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], lang: 'DE' | 'EN') => {

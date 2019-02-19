@@ -8,19 +8,13 @@ export type Dict<T> = { [key: string]: T; };
 
 export class Str {
 
-  public static parseEmail = (emailStr: string) => {
-    if (Value.is('<').in(emailStr) && Value.is('>').in(emailStr)) {
-      return {
-        email: emailStr.substr(emailStr.indexOf('<') + 1, emailStr.indexOf('>') - emailStr.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase(),
-        name: emailStr.substr(0, emailStr.indexOf('<')).replace(/["']/g, '').trim(),
-        full: emailStr,
-      };
+  public static parseEmail = (full: string) => {
+    if (Value.is('<').in(full) && Value.is('>').in(full)) {
+      const email = full.substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase();
+      const name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
+      return { email, name, full };
     }
-    return {
-      email: emailStr.replace(/["']/g, '').trim().toLowerCase(),
-      name: undefined,
-      full: emailStr,
-    };
+    return { email: full.replace(/["']/g, '').trim().toLowerCase(), name: undefined, full };
   }
 
   public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);

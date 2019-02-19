@@ -131,9 +131,9 @@ export class Settings {
       newLocation += `&frameId=${Str.sloppyRandom(5)}`; // does not get added to <iframe>
     }
     ($ as JQS).featherlight({ closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant });
-    // todo - deprecate this
+    // todo - deprecate this - because we don't want to use this compose module this way, only on webmail or in settings/inbox
+    // for now some tests rely on it, so cannot be removed yet
     Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
-
   }
 
   static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {

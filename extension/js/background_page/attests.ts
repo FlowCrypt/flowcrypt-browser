@@ -30,9 +30,7 @@ export class BgAttests {
 
   private static CHECK_TIMEOUT = 5 * 1000; // first check in 5 seconds
   private static CHECK_INTERVAL = 5 * 60 * 1000; // subsequent checks every five minutes. Progressive increments would be better
-  private static ATTESTERS = {
-    CRYPTUP: { email: 'attest@cryptup.org' }
-  };
+  private static ATTESTERS = { CRYPTUP: { email: 'attest@cryptup.org' } };
   private static currentlyWatching: Dict<number> = {};
   private static attestTsCanReadEmails: Dict<boolean> = {};
   private static packetHeaders = Pgp.armor.headers('attestPacket');

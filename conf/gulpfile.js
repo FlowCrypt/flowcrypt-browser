@@ -45,7 +45,7 @@ let recipe = {
 let subTask = {
   runTscExtension: () => recipe.exec('node ../build/tooling/tsc-compiler --project ../tsconfig.json'),
   runTscContentScripts: () => recipe.exec('node ../build/tooling/tsc-compiler --project tsconfig.content_scripts.json'),
-  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), buildDir(CHROME_CONSUMER)),
+  copySourceFiles: () => recipe.copy(source(['**/*.js', '**/*.htm', '**/*.css', '**/*.ttf', '**/*.woff2', '**/*.png', '**/*.svg', '**/*.txt', '.web-extension-id']), buildDir(CHROME_CONSUMER)),
   chromeFixOutputWhitespaces: () => Promise.all([
     recipe.spacesToTabs(`${buildDir(CHROME_CONSUMER)}/js`),
     recipe.spacesToTabs(`${buildDir(CHROME_CONSUMER)}/chrome`),

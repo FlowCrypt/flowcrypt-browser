@@ -240,14 +240,7 @@ export class Store {
     }
     const prv = await Pgp.key.read(armoredPrv);
     const fingerprint = await Pgp.key.fingerprint(armoredPrv);
-    return {
-      private: armoredPrv,
-      public: prv.toPublic().armor(),
-      primary,
-      longid,
-      fingerprint: fingerprint!,
-      keywords: mnemonic(longid)!,
-    };
+    return { private: armoredPrv, public: prv.toPublic().armor(), primary, longid, fingerprint: fingerprint!, keywords: mnemonic(longid)! };
   }
 
   static keysAdd = async (acctEmail: string, newKeyArmored: string) => { // todo: refactor setup.js -> backup.js flow so that keys are never saved naked, then re-enable naked key check
