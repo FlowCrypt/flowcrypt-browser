@@ -7,7 +7,7 @@ export class BrowserRecipe {
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, Url.extensionSettings());
-    const oauthPopup0 = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    const oauthPopup0 = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'), acctEmail);
     await OauthPageRecipe.google(oauthPopup0, acctEmail, 'close');
     // dialog shows up with permission explanation
     await SettingsPageRecipe.closeDialog(settingsPage);
@@ -16,7 +16,7 @@ export class BrowserRecipe {
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
     const settingsPage = await browser.newPage(t, Url.extensionSettings());
-    const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'));
+    const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'), acctEmail);
     await OauthPageRecipe.google(oauthPopup, acctEmail, 'approve');
     return settingsPage;
   }

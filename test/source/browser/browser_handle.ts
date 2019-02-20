@@ -1,9 +1,10 @@
 import { Page, Browser } from 'puppeteer';
 import { Semaphore } from './browser_pool';
 import { ControllablePage } from './controllable';
-import { Util } from '../util';
+import { Util, Config } from '../util';
 import { TIMEOUT_ELEMENT_APPEAR } from '.';
 import { AvaContext } from '../tests';
+import { FlowCryptApi } from '../tests/api';
 
 export class BrowserHandle {
 
@@ -20,6 +21,7 @@ export class BrowserHandle {
 
   newPage = async (t: AvaContext, url?: string): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
+    await page.authenticate(Config.secrets.proxy.auth);
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     if (url) {
@@ -29,8 +31,16 @@ export class BrowserHandle {
     return controllablePage;
   }
 
-  newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>): Promise<ControllablePage> => {
+  newPageTriggeredBy = async (t: AvaContext, triggeringAction: () => Promise<void>, cookieAcct?: string): Promise<ControllablePage> => {
+    const cookies = cookieAcct ? await FlowCryptApi.hookCiCookiesGet(cookieAcct) : undefined;
     const page = await this.doAwaitTriggeredPage(triggeringAction);
+    if (cookies) {
+      await page.setCookie(...cookies);
+      // we don't have a reliable way to set cookies before previous url starts loading
+      // reloading the page after setting cookies fixes it
+      await page.reload();
+    }
+    await page.authenticate(Config.secrets.proxy.auth);
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     this.pages.push(controllablePage);

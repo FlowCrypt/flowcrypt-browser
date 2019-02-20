@@ -1,7 +1,7 @@
 
 import { launch } from "puppeteer";
 import { BrowserHandle } from './browser_handle';
-import { Util } from "../util";
+import { Util, Config } from "../util";
 import { addDebugHtml, AvaContext, newWithTimeoutsFunc } from '../tests';
 import { Consts } from '../test';
 import { TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
@@ -34,6 +34,7 @@ export class BrowserPool {
       `--disable-extensions-except=${this.extensionBuildDir}`,
       `--load-extension=${this.extensionBuildDir}`,
       `--window-size=${this.width + 10},${this.height + 132}`,
+      `--proxy-server=${Config.secrets.proxy.server}`,
     ];
     // to run headless-like: "xvfb-run node test.js"
     const browser = await launch({ args, headless: false, slowMo: 50, devtools: false });

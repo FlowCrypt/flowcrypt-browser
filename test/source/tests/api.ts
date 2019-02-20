@@ -1,6 +1,7 @@
 import * as request from 'fc-node-requests';
 import { Response } from 'request';
 import { Config } from '../util';
+import { Cookie } from 'puppeteer';
 
 const ci_admin_token = Config.secrets.ci_admin_token;
 
@@ -44,6 +45,15 @@ export class FlowCryptApi {
     console.info(`hookCiDebugEmail - calling with length: ${debug_html_content.length}`);
     const r = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_debug_email', { ci_admin_token, debug_title, debug_html_content });
     console.info('hookCiDebugEmail-response', r.body, r.statusCode);
+  }
+
+  public static hookCiCookiesGet = async (acct: string): Promise<Cookie[] | undefined> => {
+    const { body: { cookies } } = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_get', { ci_admin_token, acct });
+    return cookies ? JSON.parse(cookies) : undefined;
+  }
+
+  public static hookCiCookiesSet = async (acct: string, cookies: Cookie[]) => {
+    await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_set', { ci_admin_token, acct, cookies: JSON.stringify(cookies) });
   }
 
   public static ciInitialize = async (acct: string, pwd: string, backup: string) => {
