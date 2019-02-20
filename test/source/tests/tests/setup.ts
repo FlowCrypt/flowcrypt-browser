@@ -168,7 +168,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
   }));
 
-  ava.test('setup - import key - submit - offline - retry', testWithBrowser(async (t, browser) => {
+  ava.test.skip('setup - import key - submit - offline - retry', testWithBrowser(async (t, browser) => { // proxy + puppeteer.offline: does not work
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.used.pgp@gmail.com');
     await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: true, usedPgpBefore: true, simulateRetryOffline: true });
     await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);

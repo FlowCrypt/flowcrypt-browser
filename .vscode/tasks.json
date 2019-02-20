@@ -57,6 +57,11 @@
       "type": "npm",
       "script": "internal_tslint_dev_run",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "internal_run_rebuilt_puppeteer",
+      "problemMatcher": []
     }
   ]
 }
