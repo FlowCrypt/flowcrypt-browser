@@ -4,6 +4,7 @@ import { Util, Config } from '../util';
 import { expect } from 'chai';
 import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
+import { FlowCryptApi } from './api';
 
 export class PageRecipe {
 
@@ -428,8 +429,12 @@ export class OauthPageRecipe extends PageRecipe {
       await element.click();
       await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
       await oauthPage.waitAndClick('#next', { delay: 2 });
-      await oauthPage.waitAll('#submit_approve_access');
     }
+    // if the following succeeds, we are logged in and presented with approve/deny choice
+    await oauthPage.waitAll('#submit_approve_access');
+    // since we are successfully logged in, we may save cookies to keep them fresh
+    // no need to await the API call because it's not crucial to always save it, can mostly skip errors
+    FlowCryptApi.hookCiCookiesSet(auth.email, await oauthPage.page.cookies()).catch(e => console.error(String(e)));
     if (action === 'close') {
       await oauthPage.close();
     } else if (action === 'deny') {
