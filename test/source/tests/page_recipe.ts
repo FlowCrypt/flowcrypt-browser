@@ -414,8 +414,8 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAndType('.zHQkBf', auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
       await oauthPage.waitAndClick('.CwaK9', { delay: 1 });  // confirm password
       await oauthPage.waitForNavigationIfAny();
-    } else if (await oauthPage.target.$('#profileIdentifier[data-email="flowcrypt.compatibility@gmail.com"]') !== null) { // already logged in - just choose an account
-      await oauthPage.waitAndClick('#profileIdentifier[data-email="flowcrypt.compatibility@gmail.com"]', { delay: 1 });
+    } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
+      await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
     } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
       await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
       await Util.sleep(2);
