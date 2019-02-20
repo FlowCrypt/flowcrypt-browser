@@ -1,5 +1,5 @@
 
-import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url, gmailSeq } from '../browser';
+import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url } from '../browser';
 import { Util, Config } from '../util';
 import { expect } from 'chai';
 import { AvaContext } from '.';
@@ -429,9 +429,6 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
       await oauthPage.waitAndClick('#next', { delay: 2 });
       await oauthPage.waitAll('#submit_approve_access');
-    }
-    if (gmailSeq.indexOf(acctEmail) === -1) {
-      gmailSeq.push(acctEmail);
     }
     if (action === 'close') {
       await oauthPage.close();

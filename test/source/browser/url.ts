@@ -1,8 +1,6 @@
 
 import { Config } from '../util';
 
-export let gmailSeq: string[] = [];
-
 export class Url {
 
   public static extension = (path: string) => `chrome-extension://${Config.extensionId}/${path}`;
