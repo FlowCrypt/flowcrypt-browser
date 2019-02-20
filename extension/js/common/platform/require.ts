@@ -33,7 +33,7 @@ export const requireOpenpgp = (): typeof OpenPGP => {
   try {
     return openpgp;
   } catch (e) {
-    // a hack for the content scripts, which may not need openpgp, until I come up with something better
+    // a hack for content scripts, which do not currently need openpgp, until I come up with something better
     return undefined as any as typeof OpenPGP;
   }
 };
@@ -51,6 +51,10 @@ export const requireIso88592 = (): Codec => {
 };
 
 export const requireTag = (...add: string[]) => {
+  // this would not work for content scripts, where tags added to main body live in a different world than content script code
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && window.location.href.indexOf(chrome.runtime.getURL('')) === -1) {
+    return; // skip in content scripts
+  }
   for (const dep of add) {
     if (loadedTags.indexOf(dep) === -1) {
       if (/\.js/.test(dep)) {
