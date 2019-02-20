@@ -216,7 +216,7 @@ abstract class ControllableBase {
         if (e.message === 'Node is either not visible or not an HTMLElement' || e.message === 'Node is detached from document') {
           // maybe the node just re-rendered?
           if (!retryErrs || i === 3) {
-            e.stack = `[clicking(${selector}) failed because element quickly disappeared, consider adding retryErrss]\n` + e.stack;
+            e.stack = `[clicking(${selector}) failed because element quickly disappeared, consider adding retryErrs]\n` + e.stack;
             throw e;
           }
           this.log(`wait_and_click(i${i}):retrying`);
