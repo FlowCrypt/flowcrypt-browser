@@ -150,7 +150,7 @@ Catch.try(async () => {
           displayBlock('step_2b_manual_enter');
           Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
         } else if (rules.canCreateKeys()) {
-          // has a key registered, key creating allowed on the domain. This may be old key from PKS, const them choose
+          // has a key registered, key creating allowed on the domain. This may be old key from PKS, let them choose
           displayBlock('step_1_easy_or_manual');
         } else {
           // has a key registered, no key creating allowed on the domain
