@@ -3,7 +3,7 @@
 import { Config } from './util';
 import { FlowCryptApi } from './tests/api';
 
-(async () => {
+(async () => { // disabled in ci settings
 
   for (const { email, password, backup } of Config.secrets.auth.google) {
     const e = email.replace(/gmail|flowcrypt|test|com|@|\.|org/g, '');
