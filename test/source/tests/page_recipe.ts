@@ -64,7 +64,7 @@ export class SetupPageRecipe extends PageRecipe {
     if (usedPgpBefore) {
       await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter');
     } else {
-      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter');
+      await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
     }
     await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste');
     await settingsPage.waitAndType('@input-step2bmanualenter-ascii-key', k.armored || '');
