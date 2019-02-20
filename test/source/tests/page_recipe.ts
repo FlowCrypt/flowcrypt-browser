@@ -63,7 +63,7 @@ export class SetupPageRecipe extends PageRecipe {
   ) => {
     const k = Config.key(keyTitle);
     if (usedPgpBefore) {
-      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter');
+      await settingsPage.waitAndClick('@action-step0foundkey-choose-manual-enter', { retryErrs: true });
     } else {
       await settingsPage.waitAndClick('@action-step1easyormanual-choose-manual-enter', { retryErrs: true });
     }
