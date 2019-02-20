@@ -15,6 +15,8 @@ class ApiErrorResponse extends Error {
 
 export class FlowCryptApi {
 
+  private static COOKIE_CACHE: { [acct: string]: Cookie[] } = {};
+
   private static call = async (url: string, values: { [k: string]: any }) => {
     const r = await request.post({ url, json: values, headers: { 'api-version': 3 } });
     if (r.body.error) {
@@ -48,11 +50,15 @@ export class FlowCryptApi {
   }
 
   public static hookCiCookiesGet = async (acct: string): Promise<Cookie[] | undefined> => {
-    const { body: { cookies } } = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_get', { ci_admin_token, acct });
-    return cookies ? JSON.parse(cookies) : undefined;
+    if (!FlowCryptApi.COOKIE_CACHE[acct]) {
+      const { body: { cookies } } = await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_get', { ci_admin_token, acct });
+      FlowCryptApi.COOKIE_CACHE[acct] = cookies ? JSON.parse(cookies) : undefined;
+    }
+    return FlowCryptApi.COOKIE_CACHE[acct];
   }
 
   public static hookCiCookiesSet = async (acct: string, cookies: Cookie[]) => {
+    FlowCryptApi.COOKIE_CACHE[acct] = cookies;
     await FlowCryptApi.call('https://flowcrypt.com/api/hook/ci_cookies_set', { ci_admin_token, acct, cookies: JSON.stringify(cookies) });
   }
 
