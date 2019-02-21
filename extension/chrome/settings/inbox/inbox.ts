@@ -21,7 +21,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
   const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
-  const showOriginal = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'showOriginal') === 'true' ? true : false;
+  const showOriginal = uncheckedUrlParams.showOriginal === true;
   let threadHasPGPMessage = false;
 
   let emailProvider;
@@ -350,15 +350,9 @@ Catch.try(async () => {
 
       if (threadHasPGPMessage) {
         $(".action_see_original_message").css('display', 'inline-block');
+        $(".action_see_original_message").click(Ui.event.handle(() => loadUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
         if (showOriginal) {
           $(".action_see_original_message").text('See Decrypted');
-          $(".action_see_original_message").click(Ui.event.prevent('double', async (self) => {
-            loadUrl({ "acctEmail": acctEmail, "threadId": threadId });
-          }));
-        } else {
-          $(".action_see_original_message").click(Ui.event.prevent('double', async (self) => {
-            loadUrl({ "acctEmail": acctEmail, "threadId": threadId, "showOriginal": "true" });
-          }));
         }
       }
 
