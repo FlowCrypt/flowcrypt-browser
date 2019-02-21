@@ -1434,11 +1434,11 @@ export class Composer {
   }
 
   private getSender = (): string => {
-    if (this.v.from) {
-      return this.v.from;
-    }
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
+    }
+    if (this.v.from) {
+      return this.v.from;
     }
     return this.v.acctEmail;
   }
@@ -1528,26 +1528,47 @@ export class Composer {
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
       }
+      this.renderSenderAliasesOptionsToggle();
       Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
         $(window).resize(Ui.event.prevent('veryslowspree', () => this.resizeReplyBox()));
         this.S.cached('input_text').keyup(() => this.resizeReplyBox());
       }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
-      const addresses = this.app.storageGetAddresses();
-      if (addresses.length > 1) {
-        const inputAddrContainer = $('#input_addresses_container');
-        inputAddrContainer.addClass('show_send_from');
-        const cogIcon = `<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">`;
-        Xss.sanitizeAppend(inputAddrContainer, `<select id="input_from" tabindex="-1" data-test="input-from"></select>${cogIcon}`);
-        inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
-        const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}">${Xss.escape(addr)}</option>`;
-        Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
-        if (Catch.browser().name === 'firefox') {
-          inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
-        }
-      }
+      this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
+    }
+  }
+
+  private renderSenderAliasesOptionsToggle() {
+    const addresses = this.app.storageGetAddresses();
+    if (addresses.length > 1) {
+      const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
+      const inputAddrContainer = $('#input_addresses_container');
+      Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
+      inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle(() => this.renderSenderAliasesOptions(), this.getErrHandlers(`show sending address options`)));
+    }
+  }
+
+  private renderSenderAliasesOptions() {
+    const addresses = this.app.storageGetAddresses();
+    if (addresses.length > 1) {
+      const inputAddrContainer = $('#input_addresses_container');
+      inputAddrContainer.addClass('show_send_from');
+      let selectElHtml = '<select id="input_from" tabindex="-1" data-test="input-from"></select>';
+      if (!this.v.isReplyBox) {
+        selectElHtml += '<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">';
+      }      
+      Xss.sanitizeAppend(inputAddrContainer, selectElHtml);
+      inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
+      const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
+      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
+      if (this.v.isReplyBox) {
+        this.resizeReplyBox();
+      }
+      if (Catch.browser().name === 'firefox') {
+        inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
+      }
     }
   }
 
