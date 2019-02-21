@@ -352,9 +352,9 @@ table#compose td.input.show_send_from { height: 84px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
 table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px; outline: none;
   margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
-table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 13px; color: red; opacity: 0.4; }
+table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 13px; opacity: 0.4; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; cursor: pointer; }
-table#compose td.input #show_sender_aliases_options { position: absolute; top: 0; right: 10px; width: 10px; margin-top: 13px; color: red; opacity: 0.4; -webkit-transform: rotate(-90deg); transform: rotate(-90deg); cursor: pointer; }
+table#compose td.input #show_sender_aliases_options { position: absolute; top: 16px; right: 16px; width: 6px; opacity: 0.4; transform: rotate(-90deg); cursor: pointer; }
 table#compose td.input.show_send_from #show_sender_aliases_options { display: none; }
 table#compose tr.bottom { background-color: #f5f5f5; }
 table#compose td.bottom { padding: 7px 12px 1px 12px; height: 47px; border-top: 1px solid #cfcfcf;}
