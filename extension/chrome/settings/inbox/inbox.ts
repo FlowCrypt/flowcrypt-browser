@@ -21,7 +21,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
   const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
-  let showOriginal = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'showOriginal') === 'true' ? true : false;
+  const showOriginal = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'showOriginal') === 'true' ? true : false;
   let threadHasPGPMessage = false;
 
   let emailProvider;
@@ -361,7 +361,6 @@ Catch.try(async () => {
           }));
         }
       }
-
 
       renderReplyBox(threadId, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
       // await Google.gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
