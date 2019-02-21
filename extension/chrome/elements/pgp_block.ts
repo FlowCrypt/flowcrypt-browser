@@ -45,7 +45,7 @@ Catch.try(async () => {
   };
 
   const sendResizeMsg = () => {
-    let height = $('#pgp_block').height()! + 40; // pgp_block.htm
+    let height = Math.max($('#pgp_block').height()!, 20) + 40; // pgp_block.htm
     const isInfiniteResizeLoop = () => {
       heightHistory.push(height);
       const len = heightHistory.length;
