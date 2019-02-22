@@ -22,8 +22,8 @@ Catch.try(async () => {
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
   const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
   const showOriginal = uncheckedUrlParams.showOriginal === true;
-  let threadHasPGPMessage = false;
 
+  let threadHasPgpBlock = false;
   let emailProvider;
   let factory: XssSafeFactory;
   let injector: Injector;
@@ -347,15 +347,13 @@ Catch.try(async () => {
       for (const m of thread.messages) {
         await renderMsg(m);
       }
-
-      if (threadHasPGPMessage) {
+      if (threadHasPgpBlock) {
         $(".action_see_original_message").css('display', 'inline-block');
         $(".action_see_original_message").click(Ui.event.handle(() => loadUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
         if (showOriginal) {
           $(".action_see_original_message").text('See Decrypted');
         }
       }
-
       renderReplyBox(threadId, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
       // await Google.gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
@@ -385,16 +383,17 @@ Catch.try(async () => {
       const mimeMsg = Buf.fromBase64UrlStr(raw!);
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
-
       for (const block of blocks) {
-        if (block.type === 'message') {
-          threadHasPGPMessage = true;
+        if (block.type === 'message' || block.type === 'publicKey' || block.type === 'signedMsg' || block.type === 'passwordMsg') {
+          threadHasPgpBlock = true;
         }
-
+        if (r) {
+          r += '<br><br>';
+        }
         if (showOriginal) {
-          r += (r ? '\n\n' : '') + `<pre>${Xss.escape(block.content)}</pre>`;
+          r += Xss.escape(block.content).replace(/\n/g, '<br>');
         } else {
-          r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+          r += Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
         }
       }
       const { atts } = await Mime.decode(mimeMsg);
