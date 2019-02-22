@@ -17,10 +17,12 @@ import { Buf } from '../../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
   const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
+  const showOriginal = uncheckedUrlParams.showOriginal === true;
+  let threadHasPGPMessage = false;
 
   let emailProvider;
   let factory: XssSafeFactory;
@@ -345,6 +347,15 @@ Catch.try(async () => {
       for (const m of thread.messages) {
         await renderMsg(m);
       }
+
+      if (threadHasPGPMessage) {
+        $(".action_see_original_message").css('display', 'inline-block');
+        $(".action_see_original_message").click(Ui.event.handle(() => loadUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
+        if (showOriginal) {
+          $(".action_see_original_message").text('See Decrypted');
+        }
+      }
+
       renderReplyBox(threadId, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
       // await Google.gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
@@ -374,8 +385,17 @@ Catch.try(async () => {
       const mimeMsg = Buf.fromBase64UrlStr(raw!);
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
+
       for (const block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+        if (block.type === 'message') {
+          threadHasPGPMessage = true;
+        }
+
+        if (showOriginal) {
+          r += (r ? '\n\n' : '') + `<pre>${Xss.escape(block.content)}</pre>`;
+        } else {
+          r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+        }
       }
       const { atts } = await Mime.decode(mimeMsg);
       if (atts.length) {
