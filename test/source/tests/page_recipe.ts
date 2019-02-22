@@ -444,10 +444,11 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
       }
     } catch (e) {
-      if (String(e).indexOf('Execution context was destroyed') === -1) {
+      const eStr = String(e);
+      if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
       }
-      t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${String(e)}`);
+      t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   }
