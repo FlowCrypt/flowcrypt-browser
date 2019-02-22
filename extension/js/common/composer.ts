@@ -299,7 +299,9 @@ export class Composer {
     }, this.getErrHandlers(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
       await this.draftDelete();
-      this.app.closeMsg();
+
+      // Reload iframe so we don't leave users without a reply UI.
+      window.location.reload();
     }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
