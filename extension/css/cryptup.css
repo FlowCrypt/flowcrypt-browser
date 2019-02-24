@@ -16,7 +16,7 @@
 a { color: #337AB7; }
 a:focus { outline: none !important; }
 .line.red, td.red, b.red, span.red { color: #d14836; }
-.line.prange, td.orange, b.orange, span.orange { color: #d18826; }
+.line.prange, td.orange, b.orange, span.orange { color: #c27e23; }
 .line.green, td.green, b.green, span.green { color: #31A217; }
 .line.gray, td.gray, b.gray, span.gray { color: #B7B7B7; }
 .line.pad_links a { padding-right: 20px; }
@@ -523,3 +523,13 @@ body#settings div.webmail_notifications div.webmail_notification { background-co
 body#settings div.webmail_notifications div.webmail_notification a { color: blue !important; opacity: inherit; padding-left: 6px;
   padding-right: 2px; float: inherit; font-size: inherit; line-height: inherit; }
 body#settings div.webmail_notifications div.webmail_notification a:hover { text-decoration: none; }
+
+/* small frames */
+@media (max-width: 400px) {
+  .swal2-container { padding: 6px !important; font-size: 12px !important; }
+  .swal2-container .swal2-content { font-size: 12px !important; }
+	.swal2-container .swal2-popup { padding: 4px !important; }
+	.swal2-container .swal2-popup .swal2-header { display: none !important; }
+	.swal2-container .swal2-popup .swal2-actions { margin: initial !important; }
+	.swal2-container .swal2-popup .swal2-actions button { padding: 4px 16px !important; font-size: 12px; font-weight: bold; }
+}
