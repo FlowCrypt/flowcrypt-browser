@@ -1052,7 +1052,7 @@ export class Composer {
   }
 
   private appendForwardedMsg = (textBytes: Buf) => {
-    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${textBytes.toUtfStr().replace(/\n/g, '<br>').replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
+    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${Xss.escape(textBytes.toUtfStr()).replace(/\r?\n/g, '<br>&gt; ')}`);
     this.resizeReplyBox();
   }
 
@@ -1079,7 +1079,7 @@ export class Composer {
       } else {
         const mimeDecoded = await Mime.decode(result.content);
         if (typeof mimeDecoded.text !== 'undefined') {
-          this.appendForwardedMsg(result.content);
+          this.appendForwardedMsg(Buf.fromUtfStr(mimeDecoded.text));
         } else if (typeof mimeDecoded.html !== 'undefined') {
           this.appendForwardedMsg(Buf.fromUtfStr(Xss.htmlSanitizeAndStripAllTags(mimeDecoded.html!, '\n')));
         } else {
@@ -1091,7 +1091,7 @@ export class Composer {
     }
   }
 
-  private renderReplyMsgComposeTable = async (method: "forward" | "reply" = "reply") => {
+  private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply') => {
     this.S.cached('prompt').css({ display: 'none' });
     this.S.cached('input_to').val(this.v.to.join(',') + (this.v.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
