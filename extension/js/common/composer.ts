@@ -126,8 +126,8 @@ export class Composer {
   private BTN_SENDING = 'Sending..';
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
 
-  private lastDraft = '';
-  private lastSubject = '';
+  private lastDraftBody = '';
+  private lastDraftSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private contactSearchInProgress = false;
@@ -159,9 +159,8 @@ export class Composer {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
       this.app.storageEmailFooterSet(undefined).catch(Catch.handleErr);
-      BrowserMsg.send.notificationShow(this.v.parentTabId, {
-        notification: `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`,
-      });
+      const notification = `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`;
+      BrowserMsg.send.notificationShow(this.v.parentTabId, { notification });
     }
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
@@ -1573,16 +1572,16 @@ export class Composer {
   }
 
   private hasBodyChanged = (msgBody: string) => {
-    if (msgBody && msgBody !== this.lastDraft) {
-      this.lastDraft = msgBody;
+    if (msgBody && msgBody !== this.lastDraftBody) {
+      this.lastDraftBody = msgBody;
       return true;
     }
     return false;
   }
 
   private hasSubjectChanged = (subject: string) => {
-    if (subject && subject !== this.lastSubject) {
-      this.lastSubject = subject;
+    if (subject && subject !== this.lastDraftSubject) {
+      this.lastDraftSubject = subject;
       return true;
     }
     return false;
