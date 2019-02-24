@@ -1580,6 +1580,9 @@ export class Composer {
   }
 
   private hasSubjectChanged = (subject: string) => {
+    if (this.v.isReplyBox) { // user cannot change reply subject
+      return false; // this helps prevent unwanted empty drafts
+    }
     if (subject && subject !== this.lastDraftSubject) {
       this.lastDraftSubject = subject;
       return true;
