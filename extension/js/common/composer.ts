@@ -299,7 +299,6 @@ export class Composer {
     }, this.getErrHandlers(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
       await this.draftDelete();
-
       // Reload iframe so we don't leave users without a reply UI.
       window.location.reload();
     }, this.getErrHandlers('delete draft')));
