@@ -75,61 +75,47 @@
     <div id="step_3_manual">
       <div class="line">Your key is stored in the browser. Backups are useful if you ever lose your device.</div>
       <div class="line">
-        <table class="backup_options">
-          <div class="details text-left">
-            <div class="row">
-              <div class="col-xs-3 backup_options_details_option">
-                <input type="radio" name="input_backup_choice" value="inbox" id="input_backup_inbox" checked="checked" />
-                <label for="input_backup_inbox">Email Inbox</label>
-              </div>
-              <div class="col-sm-3">
-                <span class="green_label colored_label short">easy recovery</span>
-                <span class="orange_label colored_label short">reasonable security</span>
-              </div>
-              <div class="text-left">
-                <p>Back up private key in your Gmail Inbox. The security depends on the strength of your pass phrase,
-                  which should be very long and hard to guess. Best option for most users.</p>
-              </div>
+        <div class="details text-left mt-40">
+          <div class="row">
+            <div class="col-xs-3 backup_options_details_option">
+              <input type="radio" name="input_backup_choice" value="inbox" id="input_backup_inbox" checked="checked" />
+              <label for="input_backup_inbox">Email Inbox</label>
+              <span class="green_label colored_label short">easy recovery</span>
+              <span class="orange_label colored_label short">reasonable security</span>
+            </div>
+            <div class="text-left">
+              <p>Back up private key in your Gmail Inbox. The security depends on the strength of your pass phrase,
+                which should be very long and hard to guess. Best option for most users.</p>
             </div>
           </div>
-          <div class="details text-left mt-40">
-            <div class="row">
-              <div class="col-sm-3 backup_options_details_option">
-                <input type="radio" name="input_backup_choice" value="file" id="input_backup_download" />
-                <label for="input_backup_download">Download</label>
-              </div>
-              <div class="col-sm-3">
-                <span class="orange_label colored_label short">medium recovery</span>
-                <span class="green_label colored_label short">great security</span>
-              </div>
-              <div class="text-left">
-                <p>Save your PGP Private Key as a file, protected with your pass phrase. You will also need to note down your pass phrase to prevent
-                  data loss. If you lose your device or it stops working, you will need this file and your pass phrase when setting up FlowCrypt on another
-                  device.</p>
-              </div>
+        </div>
+        <div class="details text-left mt-40">
+          <div class="row">
+            <div class="col-sm-3 backup_options_details_option">
+              <input type="radio" name="input_backup_choice" value="file" id="input_backup_download" />
+              <label for="input_backup_download">Save protected Private Key</label>
+              <span class="orange_label colored_label short">medium recovery</span>
+              <span class="green_label colored_label short">great security</span>
+            </div>
+            <div class="text-left">
+              <p>Manage the backup file yourself. To prevent data loss, you will need this file and your pass phrase if you ever lose your device or it stops
+                working.
+              </p>
             </div>
           </div>
-          <!-- <tr class="details">
-            <td><input type="radio" name="input_backup_choice" value="print" id="input_backup_print" /> <label for="input_backup_print">Print</label></td>
-            <td><span class="orange_label">effortful recovery</span></td>
-            <td><span class="green_label">best security</span></td>
-          </tr>
-          <tr class="text">
-            <td colspan="3">Print your key on a paper. Most secure option because a printed document cannot be stolen by a hacker. If you lose your device, scanning the document will be required to open your encrypted emails. Regular emails will not be affected.</td>
-          </tr> -->
-          <tr class="details hide_if_backup_done">
-            <td>
+        </div>
+        <div class="details text-left mt-40 hide_if_backup_done">
+          <div class="row">
+            <div class="col-sm-3 backup_options_details_option">
               <input type="radio" name="input_backup_choice" value="none" id="input_backup_none" />
-              <label for="input_backup_none" data-test="input-backup-step3manual-no-backup">no backup</label>
-            </td>
-            <td><span class="red_label">no recovery</span></td>
-            <td></td>
-          </tr>
-          <tr class="text hide_if_backup_done">
-            <td colspan="3">Encrypted email you send or receive will become unreadable if you lose your device. Regular
-              emails will not be affected.</td>
-          </tr>
-        </table>
+              <label for="input_backup_none" data-test="input-backup-step3manual-no-backup">No backup</label>
+              <span class="red_label colored_label short">no recovery</span>
+            </div>
+            <div class="text-left">
+              <p>Encrypted email you send or receive will become unreadable if you lose your device. Regular emails will not be affected.</p>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="line">
       </div>
