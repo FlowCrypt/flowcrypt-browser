@@ -8,6 +8,7 @@ import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Api, R } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
@@ -54,6 +55,11 @@ Catch.try(async () => {
 
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send.bg.settings({ acctEmail })));
   $('.action_choose_account').get(0).title = acctEmail;
+  $(".action-toggle-accounts-menu").click(Ui.event.handle((target, event) => {
+    event.stopPropagation();
+    $("#alt-accounts").toggleClass("active");
+  }));
+  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId)));
 
   const notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {
     showNotification(notification, callbacks);
@@ -454,6 +460,17 @@ Catch.try(async () => {
     }));
   };
 
+  const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg') => {
+    return [
+      '<div id="header-row" class="row alt-accounts action_select_account">',
+      '  <div class="col-sm-10">',
+      `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
+      '  </div>',
+      `  <div><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
+      '</div>',
+    ].join('');
+  };
+
   if (emailProvider !== 'gmail') {
     $('body').text('Not supported for ' + emailProvider);
   } else {
@@ -464,4 +481,16 @@ Catch.try(async () => {
       await renderInbox(labelId);
     }
   }
+
+  const acctEmails = await Store.acctEmailsGet();
+  const acctStorages = await Store.getAccounts(acctEmails, ['picture']);
+  for (const email of acctEmails) {
+    Xss.sanitizePrepend('#alt-accounts', menuAcctHtml(email, acctStorages[email].picture));
+  }
+  $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
+    $(self).off().attr('src', '/img/svgs/profile-icon.svg');
+  }));
+  $('.action_select_account').click(Ui.event.handle(target => {
+    window.location.href = Env.urlCreate('inbox.htm', { acctEmail: $(target).find('.contains_email').text() });
+  }));
 })();
