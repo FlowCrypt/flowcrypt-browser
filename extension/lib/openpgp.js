@@ -10020,16 +10020,7 @@ KeyPair.prototype._importPublic = function _importPublic(key, enc) {
 
 // ECDH
 KeyPair.prototype.derive = function derive(pub) {
-  var x = pub.mul(this.priv).getX();
-  var len = x.byteLength();
-
-  // Note: this is not ideal, but the RFC's are unclear
-  // https://tools.ietf.org/html/draft-ietf-openpgp-rfc4880bis-02#appendix-B
-  if (this.ec.curve.type === 'mont') {
-    return x.toArray('le', len);
-  } else {
-    return x.toArray('be', len);
-  }
+  return pub.mul(this.priv).getX();
 };
 
 // ECDSA
@@ -11407,33 +11398,43 @@ utils.intFromLE = intFromLE;
 module.exports={
   "_args": [
     [
-      "github:openpgpjs/elliptic",
-      "/Users/sunny/Desktop/Protonmail/openpgpjs"
+      "elliptic@github:openpgpjs/elliptic#ad81845",
+      "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a"
     ]
   ],
-  "_from": "github:openpgpjs/elliptic",
-  "_id": "elliptic@github:openpgpjs/elliptic#e187e706e11fa51bcd20e46e5119054be4e2a4a6",
-  "_inBundle": false,
-  "_integrity": "",
+  "_from": "github:openpgpjs/elliptic#ad81845",
+  "_id": "elliptic@6.4.0",
+  "_inCache": true,
   "_location": "/elliptic",
   "_phantomChildren": {},
   "_requested": {
-    "type": "git",
-    "raw": "github:openpgpjs/elliptic",
-    "rawSpec": "github:openpgpjs/elliptic",
-    "saveSpec": "github:openpgpjs/elliptic",
-    "fetchSpec": null,
-    "gitCommittish": null
+    "hosted": {
+      "directUrl": "https://raw.githubusercontent.com/openpgpjs/elliptic/ad81845/package.json",
+      "gitUrl": "git://github.com/openpgpjs/elliptic.git#ad81845",
+      "httpsUrl": "git+https://github.com/openpgpjs/elliptic.git#ad81845",
+      "shortcut": "github:openpgpjs/elliptic#ad81845",
+      "ssh": "git@github.com:openpgpjs/elliptic.git#ad81845",
+      "sshUrl": "git+ssh://git@github.com/openpgpjs/elliptic.git#ad81845",
+      "type": "github"
+    },
+    "name": "elliptic",
+    "raw": "elliptic@github:openpgpjs/elliptic#ad81845",
+    "rawSpec": "github:openpgpjs/elliptic#ad81845",
+    "scope": null,
+    "spec": "github:openpgpjs/elliptic#ad81845",
+    "type": "hosted"
   },
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "github:openpgpjs/elliptic#e187e706e11fa51bcd20e46e5119054be4e2a4a6",
-  "_spec": "github:openpgpjs/elliptic",
-  "_where": "/Users/sunny/Desktop/Protonmail/openpgpjs",
+  "_resolved": "git://github.com/openpgpjs/elliptic.git#ad81845f693effa5b4b6d07db2e82112de222f48",
+  "_shasum": "b3ec9e89968fcf936840cf1439e5caa6ff7dca97",
+  "_shrinkwrap": null,
+  "_spec": "elliptic@github:openpgpjs/elliptic#ad81845",
+  "_where": "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a",
   "author": {
-    "name": "Fedor Indutny",
-    "email": "fedor@indutny.com"
+    "email": "fedor@indutny.com",
+    "name": "Fedor Indutny"
   },
   "bugs": {
     "url": "https://github.com/indutny/elliptic/issues"
@@ -11467,16 +11468,20 @@ module.exports={
   "files": [
     "lib"
   ],
+  "gitHead": "ad81845f693effa5b4b6d07db2e82112de222f48",
   "homepage": "https://github.com/indutny/elliptic",
   "keywords": [
+    "Cryptography",
     "EC",
     "Elliptic",
-    "curve",
-    "Cryptography"
+    "curve"
   ],
   "license": "MIT",
   "main": "lib/elliptic.js",
   "name": "elliptic",
+  "optionalDependencies": {},
+  "readme": "# Elliptic [![Build Status](https://secure.travis-ci.org/indutny/elliptic.png)](http://travis-ci.org/indutny/elliptic) [![Coverage Status](https://coveralls.io/repos/indutny/elliptic/badge.svg?branch=master&service=github)](https://coveralls.io/github/indutny/elliptic?branch=master) [![Code Climate](https://codeclimate.com/github/indutny/elliptic/badges/gpa.svg)](https://codeclimate.com/github/indutny/elliptic)\n\n[![Saucelabs Test Status](https://saucelabs.com/browser-matrix/gh-indutny-elliptic.svg)](https://saucelabs.com/u/gh-indutny-elliptic)\n\nFast elliptic-curve cryptography in a plain javascript implementation.\n\nNOTE: Please take a look at http://safecurves.cr.yp.to/ before choosing a curve\nfor your cryptography operations.\n\n## Incentive\n\nECC is much slower than regular RSA cryptography, the JS implementations are\neven more slower.\n\n## Benchmarks\n\n```bash\n$ node benchmarks/index.js\nBenchmarking: sign\nelliptic#sign x 262 ops/sec ±0.51% (177 runs sampled)\neccjs#sign x 55.91 ops/sec ±0.90% (144 runs sampled)\n------------------------\nFastest is elliptic#sign\n========================\nBenchmarking: verify\nelliptic#verify x 113 ops/sec ±0.50% (166 runs sampled)\neccjs#verify x 48.56 ops/sec ±0.36% (125 runs sampled)\n------------------------\nFastest is elliptic#verify\n========================\nBenchmarking: gen\nelliptic#gen x 294 ops/sec ±0.43% (176 runs sampled)\neccjs#gen x 62.25 ops/sec ±0.63% (129 runs sampled)\n------------------------\nFastest is elliptic#gen\n========================\nBenchmarking: ecdh\nelliptic#ecdh x 136 ops/sec ±0.85% (156 runs sampled)\n------------------------\nFastest is elliptic#ecdh\n========================\n```\n\n## API\n\n### ECDSA\n\n```javascript\nvar EC = require('elliptic').ec;\n\n// Create and initialize EC context\n// (better do it once and reuse it)\nvar ec = new EC('secp256k1');\n\n// Generate keys\nvar key = ec.genKeyPair();\n\n// Sign the message's hash (input must be an array, or a hex-string)\nvar msgHash = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];\nvar signature = key.sign(msgHash);\n\n// Export DER encoded signature in Array\nvar derSign = signature.toDER();\n\n// Verify signature\nconsole.log(key.verify(msgHash, derSign));\n\n// CHECK WITH NO PRIVATE KEY\n\nvar pubPoint = key.getPublic();\nvar x = pubPoint.getX();\nvar y = pubPoint.getY();\n\n// Public Key MUST be either:\n// 1) '04' + hex string of x + hex string of y; or\n// 2) object with two hex string properties (x and y); or\n// 3) object with two buffer properties (x and y)\nvar pub = pubPoint.encode('hex');                                 // case 1\nvar pub = { x: x.toString('hex'), y: y.toString('hex') };         // case 2\nvar pub = { x: x.toBuffer(), y: y.toBuffer() };                   // case 3\nvar pub = { x: x.toArrayLike(Buffer), y: y.toArrayLike(Buffer) }; // case 3\n\n// Import public key\nvar key = ec.keyFromPublic(pub, 'hex');\n\n// Signature MUST be either:\n// 1) DER-encoded signature as hex-string; or\n// 2) DER-encoded signature as buffer; or\n// 3) object with two hex-string properties (r and s); or\n// 4) object with two buffer properties (r and s)\n\nvar signature = '3046022100...'; // case 1\nvar signature = new Buffer('...'); // case 2\nvar signature = { r: 'b1fc...', s: '9c42...' }; // case 3\n\n// Verify signature\nconsole.log(key.verify(msgHash, signature));\n```\n\n### EdDSA\n\n```javascript\nvar EdDSA = require('elliptic').eddsa;\n\n// Create and initialize EdDSA context\n// (better do it once and reuse it)\nvar ec = new EdDSA('ed25519');\n\n// Create key pair from secret\nvar key = ec.keyFromSecret('693e3c...'); // hex string, array or Buffer\n\n// Sign the message's hash (input must be an array, or a hex-string)\nvar msgHash = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];\nvar signature = key.sign(msgHash).toHex();\n\n// Verify signature\nconsole.log(key.verify(msgHash, signature));\n\n// CHECK WITH NO PRIVATE KEY\n\n// Import public key\nvar pub = '0a1af638...';\nvar key = ec.keyFromPublic(pub, 'hex');\n\n// Verify signature\nvar signature = '70bed1...';\nconsole.log(key.verify(msgHash, signature));\n```\n\n### ECDH\n\n```javascript\nvar EC = require('elliptic').ec;\nvar ec = new EC('curve25519');\n\n// Generate keys\nvar key1 = ec.genKeyPair();\nvar key2 = ec.genKeyPair();\n\nvar shared1 = key1.derive(key2.getPublic());\nvar shared2 = key2.derive(key1.getPublic());\n\nconsole.log('Both shared secrets are BN instances');\nconsole.log(shared1.toString(16));\nconsole.log(shared2.toString(16));\n```\n\nthree and more members:\n```javascript\nvar EC = require('elliptic').ec;\nvar ec = new EC('curve25519');\n\nvar A = ec.genKeyPair();\nvar B = ec.genKeyPair();\nvar C = ec.genKeyPair();\n\nvar AB = A.getPublic().mul(B.getPrivate())\nvar BC = B.getPublic().mul(C.getPrivate())\nvar CA = C.getPublic().mul(A.getPrivate())\n\nvar ABC = AB.mul(C.getPrivate())\nvar BCA = BC.mul(A.getPrivate())\nvar CAB = CA.mul(B.getPrivate())\n\nconsole.log(ABC.getX().toString(16))\nconsole.log(BCA.getX().toString(16))\nconsole.log(CAB.getX().toString(16))\n```\n\nNOTE: `.derive()` returns a [BN][1] instance.\n\n## Supported curves\n\nElliptic.js support following curve types:\n\n* Short Weierstrass\n* Montgomery\n* Edwards\n* Twisted Edwards\n\nFollowing curve 'presets' are embedded into the library:\n\n* `secp256k1`\n* `p192`\n* `p224`\n* `p256`\n* `p384`\n* `p521`\n* `curve25519`\n* `ed25519`\n\nNOTE: That `curve25519` could not be used for ECDSA, use `ed25519` instead.\n\n### Implementation details\n\nECDSA is using deterministic `k` value generation as per [RFC6979][0]. Most of\nthe curve operations are performed on non-affine coordinates (either projective\nor extended), various windowing techniques are used for different cases.\n\nAll operations are performed in reduction context using [bn.js][1], hashing is\nprovided by [hash.js][2]\n\n### Related projects\n\n* [eccrypto][3]: isomorphic implementation of ECDSA, ECDH and ECIES for both\n  browserify and node (uses `elliptic` for browser and [secp256k1-node][4] for\n  node)\n\n#### LICENSE\n\nThis software is licensed under the MIT License.\n\nCopyright Fedor Indutny, 2014.\n\nPermission is hereby granted, free of charge, to any person obtaining a\ncopy of this software and associated documentation files (the\n\"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the Software, and to permit\npersons to whom the Software is furnished to do so, subject to the\nfollowing conditions:\n\nThe above copyright notice and this permission notice shall be included\nin all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS\nOR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN\nNO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\nDAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR\nOTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE\nUSE OR OTHER DEALINGS IN THE SOFTWARE.\n\n[0]: http://tools.ietf.org/html/rfc6979\n[1]: https://github.com/indutny/bn.js\n[2]: https://github.com/indutny/hash.js\n[3]: https://github.com/bitchan/eccrypto\n[4]: https://github.com/wanderer/secp256k1-node\n",
+  "readmeFilename": "README.md",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/indutny/elliptic.git"
@@ -21802,32 +21807,42 @@ module.exports = Stream;
 module.exports={
   "_args": [
     [
-      "github:openpgpjs/seek-bzip",
-      "/Users/sunny/Desktop/Protonmail/openpgpjs"
+      "seek-bzip@github:openpgpjs/seek-bzip#3aca608",
+      "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a"
     ]
   ],
-  "_from": "github:openpgpjs/seek-bzip",
-  "_id": "seek-bzip@github:openpgpjs/seek-bzip#3aca608ffedc055a1da1d898ecb244804ef32209",
-  "_inBundle": false,
-  "_integrity": "",
+  "_from": "github:openpgpjs/seek-bzip#3aca608",
+  "_id": "seek-bzip@1.0.5-git",
+  "_inCache": true,
   "_location": "/seek-bzip",
   "_phantomChildren": {
     "graceful-readlink": "1.0.1"
   },
   "_requested": {
-    "type": "git",
-    "raw": "github:openpgpjs/seek-bzip",
-    "rawSpec": "github:openpgpjs/seek-bzip",
-    "saveSpec": "github:openpgpjs/seek-bzip",
-    "fetchSpec": null,
-    "gitCommittish": null
+    "hosted": {
+      "directUrl": "https://raw.githubusercontent.com/openpgpjs/seek-bzip/3aca608/package.json",
+      "gitUrl": "git://github.com/openpgpjs/seek-bzip.git#3aca608",
+      "httpsUrl": "git+https://github.com/openpgpjs/seek-bzip.git#3aca608",
+      "shortcut": "github:openpgpjs/seek-bzip#3aca608",
+      "ssh": "git@github.com:openpgpjs/seek-bzip.git#3aca608",
+      "sshUrl": "git+ssh://git@github.com/openpgpjs/seek-bzip.git#3aca608",
+      "type": "github"
+    },
+    "name": "seek-bzip",
+    "raw": "seek-bzip@github:openpgpjs/seek-bzip#3aca608",
+    "rawSpec": "github:openpgpjs/seek-bzip#3aca608",
+    "scope": null,
+    "spec": "github:openpgpjs/seek-bzip#3aca608",
+    "type": "hosted"
   },
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "github:openpgpjs/seek-bzip#3aca608ffedc055a1da1d898ecb244804ef32209",
-  "_spec": "github:openpgpjs/seek-bzip",
-  "_where": "/Users/sunny/Desktop/Protonmail/openpgpjs",
+  "_resolved": "git://github.com/openpgpjs/seek-bzip.git#3aca608ffedc055a1da1d898ecb244804ef32209",
+  "_shasum": "27346aff9be494bed122a1f71fccf20885fca40e",
+  "_shrinkwrap": null,
+  "_spec": "seek-bzip@github:openpgpjs/seek-bzip#3aca608",
+  "_where": "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a",
   "bin": {
     "seek-bunzip": "./bin/seek-bunzip",
     "seek-table": "./bin/seek-bzip-table"
@@ -21862,10 +21877,14 @@ module.exports={
   "directories": {
     "test": "test"
   },
+  "gitHead": "3aca608ffedc055a1da1d898ecb244804ef32209",
   "homepage": "https://github.com/cscott/seek-bzip#readme",
   "license": "MIT",
   "main": "./lib/index.js",
   "name": "seek-bzip",
+  "optionalDependencies": {},
+  "readme": "# seek-bzip\n\n[![Build Status][1]][2] [![dependency status][3]][4] [![dev dependency status][5]][6]\n\n`seek-bzip` is a pure-javascript Node.JS module adapted from [node-bzip](https://github.com/skeggse/node-bzip) and before that [antimatter15's pure-javascript bzip2 decoder](https://github.com/antimatter15/bzip2.js).  Like these projects, `seek-bzip` only does decompression (see [compressjs](https://github.com/cscott/compressjs) if you need compression code).  Unlike those other projects, `seek-bzip` can seek to and decode single blocks from the bzip2 file.\n\n`seek-bzip` primarily decodes buffers into other buffers, synchronously.\nWith the help of the [fibers](https://github.com/laverdet/node-fibers)\npackage, it can operate on node streams; see `test/stream.js` for an\nexample.\n\n## How to Install\n\n```\nnpm install seek-bzip\n```\n\nThis package uses\n[Typed Arrays](https://developer.mozilla.org/en-US/docs/JavaScript/Typed_arrays), which are present in node.js >= 0.5.5.\n\n## Usage\n\nAfter compressing some example data into `example.bz2`, the following will recreate that original data and save it to `example`:\n\n```\nvar Bunzip = require('seek-bzip');\nvar fs = require('fs');\n\nvar compressedData = fs.readFileSync('example.bz2');\nvar data = Bunzip.decode(compressedData);\n\nfs.writeFileSync('example', data);\n```\n\nSee the tests in the `tests/` directory for further usage examples.\n\nFor uncompressing single blocks of bzip2-compressed data, you will need\nan out-of-band index listing the start of each bzip2 block.  (Presumably\nyou generate this at the same time as you index the start of the information\nyou wish to seek to inside the compressed file.)  The `seek-bzip` module\nhas been designed to be compatible with the C implementation `seek-bzip2`\navailable from https://bitbucket.org/james_taylor/seek-bzip2.  That codebase\ncontains a `bzip-table` tool which will generate bzip2 block start indices.\nThere is also a pure-JavaScript `seek-bzip-table` tool in this package's\n`bin` directory.\n\n## Documentation\n\n`require('seek-bzip')` returns a `Bunzip` object.  It contains three static\nmethods.  The first is a function accepting one or two parameters:\n\n`Bunzip.decode = function(input, [Number expectedSize] or [output], [boolean multistream])`\n\nThe `input` argument can be a \"stream\" object (which must implement the\n`readByte` method), or a `Buffer`.\n\nIf `expectedSize` is not present, `decodeBzip` simply decodes `input` and\nreturns the resulting `Buffer`.\n\nIf `expectedSize` is present (and numeric), `decodeBzip` will store\nthe results in a `Buffer` of length `expectedSize`, and throw an error\nin the case that the size of the decoded data does not match\n`expectedSize`.\n\nIf you pass a non-numeric second parameter, it can either be a `Buffer`\nobject (which must be of the correct length; an error will be thrown if\nthe size of the decoded data does not match the buffer length) or\na \"stream\" object (which must implement a `writeByte` method).\n\nThe optional third `multistream` parameter, if true, attempts to continue\nreading past the end of the bzip2 file.  This supports \"multistream\"\nbzip2 files, which are simply multiple bzip2 files concatenated together.\nIf this argument is true, the input stream must have an `eof` method\nwhich returns true when the end of the input has been reached.\n\nThe second exported method is a function accepting two or three parameters:\n\n`Bunzip.decodeBlock = function(input, Number blockStartBits, [Number expectedSize] or [output])`\n\nThe `input` and `expectedSize`/`output` parameters are as above.\nThe `blockStartBits` parameter gives the start of the desired block, in bits.\n\nIf passing a stream as the `input` parameter, it must implement the\n`seek` method.\n\nThe final exported method is a function accepting two or three parameters:\n\n`Bunzip.table = function(input, Function callback, [boolean multistream])`\n\nThe `input` and `multistream` parameters are identical to those for the\n`decode` method.\n\nThis function will invoke `callback(position, size)` once per bzip2 block,\nwhere `position` gives the starting position of the block (in *bits*), and\n`size` gives the uncompressed size of the block (in bytes).\n\nThis can be used to construct an index allowing direct access to a particular\nblock inside a bzip2 file, using the `decodeBlock` method.\n\n## Command-line\nThere are binaries available in bin.  The first generates an index of all\nthe blocks in a bzip2-compressed file:\n```\n$ bin/seek-bzip-table test/sample4.bz2\n32\t99981\n320555\t99981\n606348\t99981\n847568\t99981\n1089094\t99981\n1343625\t99981\n1596228\t99981\n1843336\t99981\n2090919\t99981\n2342106\t39019\n$\n```\nThe first field is the starting position of the block, in bits, and the\nsecond field is the length of the block, in bytes.\n\nThe second binary decodes an arbitrary block of a bzip2 file:\n```\n$ bin/seek-bunzip -d -b 2342106 test/sample4.bz2 | tail\nélan's\némigré\némigré's\némigrés\népée\népée's\népées\nétude\nétude's\nétudes\n$\n```\n\nUse `--help` to see other options.\n\n## Help wanted\n\nImprovements to this module would be generally useful.\nFeel free to fork on github and submit pull requests!\n\n## Related projects\n\n* https://github.com/skeggse/node-bzip node-bzip (original upstream source)\n* https://github.com/cscott/compressjs\n  Lots of compression/decompression algorithms from the same author as this\n  module, including bzip2 compression code.\n* https://github.com/cscott/lzjb fast LZJB compression/decompression\n\n## License\n\n#### MIT License\n\n> Copyright &copy; 2013-2015 C. Scott Ananian\n>\n> Copyright &copy; 2012-2015 Eli Skeggs\n>\n> Copyright &copy; 2011 Kevin Kwok\n>\n> Permission is hereby granted, free of charge, to any person obtaining\n> a copy of this software and associated documentation files (the\n> \"Software\"), to deal in the Software without restriction, including\n> without limitation the rights to use, copy, modify, merge, publish,\n> distribute, sublicense, and/or sell copies of the Software, and to\n> permit persons to whom the Software is furnished to do so, subject to\n> the following conditions:\n>\n> The above copyright notice and this permission notice shall be\n> included in all copies or substantial portions of the Software.\n>\n> THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\n> EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\n> MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\n> NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE\n> LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION\n> OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION\n> WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n[1]: https://travis-ci.org/cscott/seek-bzip.png\n[2]: https://travis-ci.org/cscott/seek-bzip\n[3]: https://david-dm.org/cscott/seek-bzip.png\n[4]: https://david-dm.org/cscott/seek-bzip\n[5]: https://david-dm.org/cscott/seek-bzip/dev-status.png\n[6]: https://david-dm.org/cscott/seek-bzip#info=devDependencies\n",
+  "readmeFilename": "README.md",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cscott/seek-bzip.git"
@@ -22669,7 +22688,10 @@ function Reader(input) {
   if (streamType) {
     const reader = input.getReader();
     this._read = reader.read.bind(reader);
-    this._releaseLock = reader.releaseLock.bind(reader);
+    this._releaseLock = () => {
+      reader.closed.catch(function () {});
+      reader.releaseLock();
+    };
     return;
   }
   let doneReading = false;
@@ -22924,7 +22946,13 @@ function getReader(input) {
  * @returns {WritableStreamDefaultWriter}
  */
 function getWriter(input) {
-  return input.getWriter();
+  const writer = input.getWriter();
+  const releaseLock = writer.releaseLock;
+  writer.releaseLock = () => {
+    writer.closed.catch(function () {});
+    releaseLock.call(writer);
+  };
+  return writer;
 }
 
 /**
@@ -22939,7 +22967,7 @@ async function pipe(input, target, options) {
   input = toStream(input);
   try {
     if (input[_reader.externalBuffer]) {
-      const writer = target.getWriter();
+      const writer = getWriter(target);
       for (let i = 0; i < input[_reader.externalBuffer].length; i++) {
         await writer.ready;
         await writer.write(input[_reader.externalBuffer][i]);
@@ -23235,8 +23263,8 @@ function slice(input, begin = 0, end = Infinity) {
   if (input[_reader.externalBuffer]) {
     input = concat(input[_reader.externalBuffer].concat([input]));
   }
-  if ((0, _util.isUint8Array)(input) && !(NodeBuffer && NodeBuffer.isBuffer(input)) && !_util.isIE11) {
-    // IE11 subarray is buggy
+  if ((0, _util.isUint8Array)(input) && !(NodeBuffer && NodeBuffer.isBuffer(input))) {
+    if (end === Infinity) end = input.length;
     return input.subarray(begin, end);
   }
   return input.slice(begin, end);
@@ -23296,8 +23324,6 @@ exports.default = { isStream: _util.isStream, isUint8Array: _util.isUint8Array, 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const isIE11 = typeof navigator !== 'undefined' && !!navigator.userAgent.match(/Trident\/7\.0.*rv:([0-9.]+).*\).*Gecko$/);
-
 const NodeReadableStream = typeof window === 'undefined' && require('stream').Readable;
 
 /**
@@ -23351,7 +23377,6 @@ function concatUint8Array(arrays) {
   return result;
 }
 
-exports.isIE11 = isIE11;
 exports.isStream = isStream;
 exports.isUint8Array = isUint8Array;
 exports.concatUint8Array = concatUint8Array;
@@ -23755,7 +23780,7 @@ exports.default = {
    * @memberof module:config
    * @property {String} versionstring A version string to be included in armored messages
    */
-  versionstring: "OpenPGP.js v4.4.1",
+  versionstring: "OpenPGP.js v4.4.7",
   /**
    * @memberof module:config
    * @property {String} commentstring A comment string to be included in armored messages
@@ -23995,284 +24020,27 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _cfb = require('asmcrypto.js/dist_es5/aes/cfb');
+
+var _webStreamTools = require('web-stream-tools');
+
+var _webStreamTools2 = _interopRequireDefault(_webStreamTools);
+
 var _cipher = require('./cipher');
 
 var _cipher2 = _interopRequireDefault(_cipher);
 
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
+var _util = require('../util');
+
+var _util2 = _interopRequireDefault(_util);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = {
-
-  /**
-   * This function encrypts a given plaintext with the specified prefixrandom
-   * using the specified blockcipher
-   * @param {Uint8Array} prefixrandom random bytes of block_size length
-   *  to be used in prefixing the data
-   * @param {String} cipherfn the algorithm cipher class to encrypt
-   *  data in one block_size encryption, {@link module:crypto/cipher}.
-   * @param {Uint8Array} plaintext data to be encrypted
-   * @param {Uint8Array} key key to be used to encrypt the plaintext.
-   * This will be passed to the cipherfn
-   * @param {Boolean} resync a boolean value specifying if a resync of the
-   *  IV should be used or not. The encrypteddatapacket uses the
-   *  "old" style with a resync. Encryption within an
-   *  encryptedintegrityprotecteddata packet is not resyncing the IV.
-   * @returns {Uint8Array} encrypted data
-   */
-  encrypt: function encrypt(prefixrandom, cipherfn, plaintext, key, resync) {
-    cipherfn = new _cipher2.default[cipherfn](key);
-    const block_size = cipherfn.blockSize;
-
-    const FR = new Uint8Array(block_size);
-    let FRE = new Uint8Array(block_size);
-
-    const new_prefix = new Uint8Array(prefixrandom.length + 2);
-    new_prefix.set(prefixrandom);
-    new_prefix[prefixrandom.length] = prefixrandom[block_size - 2];
-    new_prefix[prefixrandom.length + 1] = prefixrandom[block_size - 1];
-    prefixrandom = new_prefix;
-
-    let ciphertext = new Uint8Array(plaintext.length + 2 + block_size * 2);
-    let i;
-    let n;
-    let begin;
-    const offset = resync ? 0 : 2;
-
-    // 1.  The feedback register (FR) is set to the IV, which is all zeros.
-    for (i = 0; i < block_size; i++) {
-      FR[i] = 0;
-    }
-
-    // 2.  FR is encrypted to produce FRE (FR Encrypted).  This is the
-    //     encryption of an all-zero value.
-    FRE = cipherfn.encrypt(FR);
-    // 3.  FRE is xored with the first BS octets of random data prefixed to
-    //     the plaintext to produce C[1] through C[BS], the first BS octets
-    //     of ciphertext.
-    for (i = 0; i < block_size; i++) {
-      ciphertext[i] = FRE[i] ^ prefixrandom[i];
-    }
-
-    // 4.  FR is loaded with C[1] through C[BS].
-    FR.set(ciphertext.subarray(0, block_size));
-
-    // 5.  FR is encrypted to produce FRE, the encryption of the first BS
-    //     octets of ciphertext.
-    FRE = cipherfn.encrypt(FR);
-
-    // 6.  The left two octets of FRE get xored with the next two octets of
-    //     data that were prefixed to the plaintext.  This produces C[BS+1]
-    //     and C[BS+2], the next two octets of ciphertext.
-    ciphertext[block_size] = FRE[0] ^ prefixrandom[block_size];
-    ciphertext[block_size + 1] = FRE[1] ^ prefixrandom[block_size + 1];
-
-    if (resync) {
-      // 7.  (The resync step) FR is loaded with C[3] through C[BS+2].
-      FR.set(ciphertext.subarray(2, block_size + 2));
-    } else {
-      FR.set(ciphertext.subarray(0, block_size));
-    }
-    // 8.  FR is encrypted to produce FRE.
-    FRE = cipherfn.encrypt(FR);
-
-    // 9.  FRE is xored with the first BS octets of the given plaintext, now
-    //     that we have finished encrypting the BS+2 octets of prefixed
-    //     data.  This produces C[BS+3] through C[BS+(BS+2)], the next BS
-    //     octets of ciphertext.
-    for (i = 0; i < block_size; i++) {
-      ciphertext[block_size + 2 + i] = FRE[i + offset] ^ plaintext[i];
-    }
-    for (n = block_size; n < plaintext.length + offset; n += block_size) {
-      // 10. FR is loaded with C[BS+3] to C[BS + (BS+2)] (which is C11-C18 for
-      // an 8-octet block).
-      begin = n + 2 - offset;
-      FR.set(ciphertext.subarray(begin, begin + block_size));
-
-      // 11. FR is encrypted to produce FRE.
-      FRE = cipherfn.encrypt(FR);
-
-      // 12. FRE is xored with the next BS octets of plaintext, to produce
-      // the next BS octets of ciphertext.  These are loaded into FR, and
-      // the process is repeated until the plaintext is used up.
-      for (i = 0; i < block_size; i++) {
-        ciphertext[block_size + begin + i] = FRE[i] ^ plaintext[n + i - offset];
-      }
-    }
-
-    ciphertext = ciphertext.subarray(0, plaintext.length + 2 + block_size);
-    return ciphertext;
-  },
-
-  /**
-   * Decrypts the prefixed data for the Modification Detection Code (MDC) computation
-   * @param {String} cipherfn.encrypt Cipher function to use,
-   *  @see module:crypto/cipher.
-   * @param {Uint8Array} key Uint8Array representation of key to be used to check the mdc
-   * This will be passed to the cipherfn
-   * @param {Uint8Array} ciphertext The encrypted data
-   * @returns {Uint8Array} plaintext Data of D(ciphertext) with blocksize length +2
-   */
-  mdc: function mdc(cipherfn, key, ciphertext) {
-    cipherfn = new _cipher2.default[cipherfn](key);
-    const block_size = cipherfn.blockSize;
-
-    let iblock = new Uint8Array(block_size);
-    let ablock = new Uint8Array(block_size);
-    let i;
-
-    // initialisation vector
-    for (i = 0; i < block_size; i++) {
-      iblock[i] = 0;
-    }
-
-    iblock = cipherfn.encrypt(iblock);
-    for (i = 0; i < block_size; i++) {
-      ablock[i] = ciphertext[i];
-      iblock[i] ^= ablock[i];
-    }
-
-    ablock = cipherfn.encrypt(ablock);
-
-    const result = new Uint8Array(iblock.length + 2);
-    result.set(iblock);
-    result[iblock.length] = ablock[0] ^ ciphertext[block_size];
-    result[iblock.length + 1] = ablock[1] ^ ciphertext[block_size + 1];
-    return result;
-  },
-
-  /**
-   * This function decrypts a given ciphertext using the specified blockcipher
-   * @param {String} cipherfn the algorithm cipher class to decrypt
-   *  data in one block_size encryption, {@link module:crypto/cipher}.
-   * @param {Uint8Array} key Uint8Array representation of key to be used to decrypt the ciphertext.
-   * This will be passed to the cipherfn
-   * @param {Uint8Array} ciphertext to be decrypted
-   * @param {Boolean} resync a boolean value specifying if a resync of the
-   *  IV should be used or not. The encrypteddatapacket uses the
-   *  "old" style with a resync. Decryption within an
-   *  encryptedintegrityprotecteddata packet is not resyncing the IV.
-   * @returns {Uint8Array} the plaintext data
-   */
-  decrypt: function decrypt(cipherfn, key, ciphertext, resync) {
-    cipherfn = new _cipher2.default[cipherfn](key);
-    const block_size = cipherfn.blockSize;
-
-    const iblock = new Uint8Array(block_size);
-    let ablock = new Uint8Array(block_size);
-
-    let i;
-    let j;
-    let n;
-    let text = new Uint8Array(ciphertext.length - block_size);
-
-    /*  RFC4880: Tag 18 and Resync:
-     *  [...] Unlike the Symmetrically Encrypted Data Packet, no
-     *  special CFB resynchronization is done after encrypting this prefix
-     *  data.  See "OpenPGP CFB Mode" below for more details.
-     */
-
-    j = 0;
-    if (resync) {
-      for (i = 0; i < block_size; i++) {
-        iblock[i] = ciphertext[i + 2];
-      }
-      for (n = block_size + 2; n < ciphertext.length; n += block_size) {
-        ablock = cipherfn.encrypt(iblock);
-
-        for (i = 0; i < block_size && i + n < ciphertext.length; i++) {
-          iblock[i] = ciphertext[n + i];
-          if (j < text.length) {
-            text[j] = ablock[i] ^ iblock[i];
-            j++;
-          }
-        }
-      }
-    } else {
-      for (i = 0; i < block_size; i++) {
-        iblock[i] = ciphertext[i];
-      }
-      for (n = block_size; n < ciphertext.length; n += block_size) {
-        ablock = cipherfn.encrypt(iblock);
-        for (i = 0; i < block_size && i + n < ciphertext.length; i++) {
-          iblock[i] = ciphertext[n + i];
-          if (j < text.length) {
-            text[j] = ablock[i] ^ iblock[i];
-            j++;
-          }
-        }
-      }
-    }
-
-    n = resync ? 0 : 2;
-
-    text = text.subarray(n, ciphertext.length - block_size - 2 + n);
-
-    return text;
-  },
-
-  normalEncrypt: function normalEncrypt(cipherfn, key, plaintext, iv) {
-    cipherfn = new _cipher2.default[cipherfn](key);
-    const block_size = cipherfn.blockSize;
-
-    let blocki = new Uint8Array(block_size);
-    const blockc = new Uint8Array(block_size);
-    let pos = 0;
-    const cyphertext = new Uint8Array(plaintext.length);
-    let i;
-    let j = 0;
-
-    if (iv === null) {
-      for (i = 0; i < block_size; i++) {
-        blockc[i] = 0;
-      }
-    } else {
-      for (i = 0; i < block_size; i++) {
-        blockc[i] = iv[i];
-      }
-    }
-    while (plaintext.length > block_size * pos) {
-      const encblock = cipherfn.encrypt(blockc);
-      blocki = plaintext.subarray(pos * block_size, pos * block_size + block_size);
-      for (i = 0; i < blocki.length; i++) {
-        blockc[i] = blocki[i] ^ encblock[i];
-        cyphertext[j++] = blockc[i];
-      }
-      pos++;
-    }
-    return cyphertext;
-  },
-
-  normalDecrypt: function normalDecrypt(cipherfn, key, ciphertext, iv) {
-    cipherfn = new _cipher2.default[cipherfn](key);
-    const block_size = cipherfn.blockSize;
-
-    let blockp;
-    let pos = 0;
-    const plaintext = new Uint8Array(ciphertext.length);
-    const offset = 0;
-    let i;
-    let j = 0;
-
-    if (iv === null) {
-      blockp = new Uint8Array(block_size);
-      for (i = 0; i < block_size; i++) {
-        blockp[i] = 0;
-      }
-    } else {
-      blockp = iv.subarray(0, block_size);
-    }
-    while (ciphertext.length > block_size * pos) {
-      const decblock = cipherfn.encrypt(blockp);
-      blockp = ciphertext.subarray(pos * block_size + offset, pos * block_size + block_size + offset);
-      for (i = 0; i < blockp.length; i++) {
-        plaintext[j++] = blockp[i] ^ decblock[i];
-      }
-      pos++;
-    }
-
-    return plaintext;
-  }
-}; // Modified by ProtonTech AG
+const webCrypto = _util2.default.getWebCrypto(); // Modified by ProtonTech AG
 
 // Modified by Recurity Labs GmbH
 
@@ -24292,11 +24060,133 @@ exports.default = {
  */
 
 /**
+ * @requires web-stream-tools
  * @requires crypto/cipher
+ * @requires util
  * @module crypto/cfb
  */
 
-},{"./cipher":88}],84:[function(require,module,exports){
+const nodeCrypto = _util2.default.getNodeCrypto();
+const Buffer = _util2.default.getNodeBuffer();
+
+exports.default = {
+  encrypt: function encrypt(algo, key, plaintext, iv) {
+    if (algo.substr(0, 3) === 'aes') {
+      return aesEncrypt(algo, key, plaintext, iv);
+    }
+
+    const cipherfn = new _cipher2.default[algo](key);
+    const block_size = cipherfn.blockSize;
+
+    let blocki = new Uint8Array(block_size);
+    const blockc = iv;
+    let pos = 0;
+    const ciphertext = new Uint8Array(plaintext.length);
+    let i;
+    let j = 0;
+
+    while (plaintext.length > block_size * pos) {
+      const encblock = cipherfn.encrypt(blockc);
+      blocki = plaintext.subarray(pos * block_size, pos * block_size + block_size);
+      for (i = 0; i < blocki.length; i++) {
+        blockc[i] = blocki[i] ^ encblock[i];
+        ciphertext[j++] = blockc[i];
+      }
+      pos++;
+    }
+    return ciphertext;
+  },
+
+  decrypt: async function decrypt(algo, key, ciphertext, iv) {
+    if (algo.substr(0, 3) === 'aes') {
+      return aesDecrypt(algo, key, ciphertext, iv);
+    }
+
+    ciphertext = await _webStreamTools2.default.readToEnd(ciphertext);
+
+    const cipherfn = new _cipher2.default[algo](key);
+    const block_size = cipherfn.blockSize;
+
+    let blockp = iv;
+    let pos = 0;
+    const plaintext = new Uint8Array(ciphertext.length);
+    const offset = 0;
+    let i;
+    let j = 0;
+
+    while (ciphertext.length > block_size * pos) {
+      const decblock = cipherfn.encrypt(blockp);
+      blockp = ciphertext.subarray(pos * block_size + offset, pos * block_size + block_size + offset);
+      for (i = 0; i < blockp.length; i++) {
+        plaintext[j++] = blockp[i] ^ decblock[i];
+      }
+      pos++;
+    }
+
+    return plaintext;
+  }
+};
+
+
+function aesEncrypt(algo, key, pt, iv) {
+  if (_util2.default.getWebCrypto() && key.length !== 24 && // Chrome doesn't support 192 bit keys, see https://www.chromium.org/blink/webcrypto#TOC-AES-support
+  !_util2.default.isStream(pt) && pt.length >= 3000 * _config2.default.min_bytes_for_web_crypto // Default to a 3MB minimum. Chrome is pretty slow for small messages, see: https://bugs.chromium.org/p/chromium/issues/detail?id=701188#c2
+  ) {
+      // Web Crypto
+      return webEncrypt(algo, key, pt, iv);
+    }
+  if (nodeCrypto) {
+    // Node crypto library.
+    return nodeEncrypt(algo, key, pt, iv);
+  } // asm.js fallback
+  const cfb = new _cfb.AES_CFB(key, iv);
+  return _webStreamTools2.default.transform(pt, value => cfb.AES_Encrypt_process(value), () => cfb.AES_Encrypt_finish());
+}
+
+function aesDecrypt(algo, key, ct, iv) {
+  if (nodeCrypto) {
+    // Node crypto library.
+    return nodeDecrypt(algo, key, ct, iv);
+  }
+  if (_util2.default.isStream(ct)) {
+    const cfb = new _cfb.AES_CFB(key, iv);
+    return _webStreamTools2.default.transform(ct, value => cfb.AES_Decrypt_process(value), () => cfb.AES_Decrypt_finish());
+  }
+  return _cfb.AES_CFB.decrypt(ct, key, iv);
+}
+
+function xorMut(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    a[i] = a[i] ^ b[i];
+  }
+}
+
+async function webEncrypt(algo, key, pt, iv) {
+  const ALGO = 'AES-CBC';
+  const _key = await webCrypto.importKey('raw', key, { name: ALGO }, false, ['encrypt']);
+  const blockSize = _cipher2.default[algo].blockSize;
+
+  const cbc_pt = _util2.default.concatUint8Array([new Uint8Array(blockSize), pt]);
+  const ct = new Uint8Array((await webCrypto.encrypt({ name: ALGO, iv }, _key, cbc_pt))).subarray(0, pt.length);
+  xorMut(ct, pt);
+  return ct;
+}
+
+function nodeEncrypt(algo, key, pt, iv) {
+  key = new Buffer(key);
+  iv = new Buffer(iv);
+  const cipherObj = new nodeCrypto.createCipheriv('aes-' + algo.substr(3, 3) + '-cfb', key, iv);
+  return _webStreamTools2.default.transform(pt, value => new Uint8Array(cipherObj.update(new Buffer(value))));
+}
+
+function nodeDecrypt(algo, key, ct, iv) {
+  key = new Buffer(key);
+  iv = new Buffer(iv);
+  const decipherObj = new nodeCrypto.createDecipheriv('aes-' + algo.substr(3, 3) + '-cfb', key, iv);
+  return _webStreamTools2.default.transform(ct, value => new Uint8Array(decipherObj.update(new Buffer(value))));
+}
+
+},{"../config":81,"../util":154,"./cipher":88,"asmcrypto.js/dist_es5/aes/cfb":6,"web-stream-tools":77}],84:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -25826,6 +25716,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _bn = require('bn.js');
+
+var _bn2 = _interopRequireDefault(_bn);
+
 var _public_key = require('./public_key');
 
 var _public_key2 = _interopRequireDefault(_public_key);
@@ -25858,6 +25752,10 @@ var _enums = require('../enums');
 
 var _enums2 = _interopRequireDefault(_enums);
 
+var _util = require('../util');
+
+var _util2 = _interopRequireDefault(_util);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // GPG4Browsers - An OpenPGP implementation in javascript
@@ -25882,6 +25780,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 /**
  * @fileoverview Provides functions for asymmetric encryption and decryption as
  * well as key generation and parameter handling for all public-key cryptosystems.
+ * @requires bn.js
  * @requires crypto/public_key
  * @requires crypto/cipher
  * @requires crypto/random
@@ -25890,6 +25789,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @requires type/mpi
  * @requires type/oid
  * @requires enums
+ * @requires util
  * @module crypto/crypto
  */
 
@@ -25943,8 +25843,13 @@ exports.default = {
             const oid = pub_params[0];
             const Q = pub_params[1].toUint8Array();
             const kdf_params = pub_params[2];
-            const res = await _public_key2.default.elliptic.ecdh.encrypt(oid, kdf_params.cipher, kdf_params.hash, data, Q, fingerprint);
-            return constructParams(types, [res.V, res.C]);
+
+            var _ref = await _public_key2.default.elliptic.ecdh.encrypt(oid, kdf_params.cipher, kdf_params.hash, data, Q, fingerprint);
+
+            const V = _ref.V,
+                  C = _ref.C;
+
+            return constructParams(types, [new _bn2.default(V), C]);
           }
         default:
           return [];
@@ -26147,11 +26052,13 @@ exports.default = {
    * Generates a random byte prefix for the specified algorithm
    * See {@link https://tools.ietf.org/html/rfc4880#section-9.2|RFC 4880 9.2} for algorithms.
    * @param {module:enums.symmetric} algo Symmetric encryption algorithm
-   * @returns {Uint8Array}                Random bytes with length equal to the block size of the cipher
+   * @returns {Uint8Array}                Random bytes with length equal to the block size of the cipher, plus the last two bytes repeated.
    * @async
    */
-  getPrefixRandom: function getPrefixRandom(algo) {
-    return _random2.default.getRandomBytes(_cipher2.default[algo].blockSize);
+  getPrefixRandom: async function getPrefixRandom(algo) {
+    const prefixrandom = await _random2.default.getRandomBytes(_cipher2.default[algo].blockSize);
+    const repeat = new Uint8Array([prefixrandom[prefixrandom.length - 2], prefixrandom[prefixrandom.length - 1]]);
+    return _util2.default.concat([prefixrandom, repeat]);
   },
 
   /**
@@ -26168,7 +26075,7 @@ exports.default = {
   constructParams: constructParams
 };
 
-},{"../enums":115,"../type/ecdh_symkey":148,"../type/kdf_params":149,"../type/mpi":151,"../type/oid":152,"./cipher":88,"./public_key":108,"./random":111}],92:[function(require,module,exports){
+},{"../enums":115,"../type/ecdh_symkey":148,"../type/kdf_params":149,"../type/mpi":151,"../type/oid":152,"../util":154,"./cipher":88,"./public_key":108,"./random":111,"bn.js":17}],92:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -26643,7 +26550,7 @@ exports.default = {
    * Create a hash on the specified data using the specified algorithm
    * @param {module:enums.hash} algo Hash algorithm type (see {@link https://tools.ietf.org/html/rfc4880#section-9.4|RFC 4880 9.4})
    * @param {Uint8Array} data Data to be hashed
-   * @returns {Uint8Array} hash value
+   * @returns {Promise<Uint8Array>} hash value
    */
   digest: function digest(algo, data) {
     switch (algo) {
@@ -28126,6 +28033,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 /**
  * @fileoverview Key encryption and decryption for RFC 6637 ECDH
+ * @requires bn.js
  * @requires crypto/public_key/elliptic/curve
  * @requires crypto/aes_kw
  * @requires crypto/cipher
@@ -28142,9 +28050,29 @@ function buildEcdhParam(public_algo, oid, cipher_algo, hash_algo, fingerprint) {
 }
 
 // Key Derivation Function (RFC 6637)
-async function kdf(hash_algo, X, length, param) {
-  const digest = await _hash2.default.digest(hash_algo, _util2.default.concatUint8Array([new Uint8Array([0, 0, 0, 1]), new Uint8Array(X), param]));
+async function kdf(hash_algo, S, length, param, curve, compat) {
+  const len = compat ? S.byteLength() : curve.curve.curve.p.byteLength();
+  // Note: this is not ideal, but the RFC's are unclear
+  // https://tools.ietf.org/html/draft-ietf-openpgp-rfc4880bis-02#appendix-B
+  const X = curve.curve.curve.type === 'mont' ? S.toArrayLike(Uint8Array, 'le', len) : S.toArrayLike(Uint8Array, 'be', len);
+  const digest = await _hash2.default.digest(hash_algo, _util2.default.concatUint8Array([new Uint8Array([0, 0, 0, 1]), X, param]));
   return digest.subarray(0, length);
+}
+
+/**
+ * Generate ECDHE ephemeral key and secret from public key
+ *
+ * @param  {Curve}                  curve        Elliptic curve object
+ * @param  {Uint8Array}             Q                   Recipient public key
+ * @returns {Promise<{V: Uint8Array, S: BN}>}   Returns public part of ephemeral key and generated ephemeral secret
+ * @async
+ */
+async function genPublicEphemeralKey(curve, Q) {
+  const v = await curve.genKeyPair();
+  Q = curve.keyFromPublic(Q);
+  const V = new Uint8Array(v.getPublic());
+  const S = v.derive(Q);
+  return { V, S };
 }
 
 /**
@@ -28156,22 +28084,37 @@ async function kdf(hash_algo, X, length, param) {
  * @param  {module:type/mpi}        m            Value derived from session key (RFC 6637)
  * @param  {Uint8Array}             Q            Recipient public key
  * @param  {String}                 fingerprint  Recipient fingerprint
- * @returns {Promise<{V: BN, C: BN}>}            Returns ephemeral key and encoded session key
+ * @returns {Promise<{V: BN, C: BN}>}            Returns public part of ephemeral key and encoded session key
  * @async
  */
 async function encrypt(oid, cipher_algo, hash_algo, m, Q, fingerprint) {
   const curve = new _curves2.default(oid);
+
+  var _ref = await genPublicEphemeralKey(curve, Q);
+
+  const V = _ref.V,
+        S = _ref.S;
+
   const param = buildEcdhParam(_enums2.default.publicKey.ecdh, oid, cipher_algo, hash_algo, fingerprint);
   cipher_algo = _enums2.default.read(_enums2.default.symmetric, cipher_algo);
-  const v = await curve.genKeyPair();
-  Q = curve.keyFromPublic(Q);
-  const S = v.derive(Q);
-  const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param);
+  const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param, curve, false);
   const C = _aes_kw2.default.wrap(Z, m.toString());
-  return {
-    V: new _bn2.default(v.getPublic()),
-    C: C
-  };
+  return { V, C };
+}
+
+/**
+ * Generate ECDHE secret from private key and public part of ephemeral key
+ *
+ * @param  {Curve}                  curve        Elliptic curve object
+ * @param  {Uint8Array}             V            Public part of ephemeral key
+ * @param  {Uint8Array}             d            Recipient private key
+ * @returns {Promise<BN>}                        Generated ephemeral secret
+ * @async
+ */
+async function genPrivateEphemeralKey(curve, V, d) {
+  V = curve.keyFromPublic(V);
+  d = curve.keyFromPrivate(d);
+  return d.derive(V);
 }
 
 /**
@@ -28180,25 +28123,28 @@ async function encrypt(oid, cipher_algo, hash_algo, m, Q, fingerprint) {
  * @param  {module:type/oid}        oid          Elliptic curve object identifier
  * @param  {module:enums.symmetric} cipher_algo  Symmetric cipher to use
  * @param  {module:enums.hash}      hash_algo    Hash algorithm to use
- * @param  {BN}                     V            Public part of ephemeral key
+ * @param  {Uint8Array}             V            Public part of ephemeral key
  * @param  {Uint8Array}             C            Encrypted and wrapped value derived from session key
  * @param  {Uint8Array}             d            Recipient private key
  * @param  {String}                 fingerprint  Recipient fingerprint
- * @returns {Promise<Uint8Array>}                Value derived from session
+ * @returns {Promise<BN>}                        Value derived from session
  * @async
  */
 async function decrypt(oid, cipher_algo, hash_algo, V, C, d, fingerprint) {
   const curve = new _curves2.default(oid);
+  const S = await genPrivateEphemeralKey(curve, V, d);
   const param = buildEcdhParam(_enums2.default.publicKey.ecdh, oid, cipher_algo, hash_algo, fingerprint);
   cipher_algo = _enums2.default.read(_enums2.default.symmetric, cipher_algo);
-  V = curve.keyFromPublic(V);
-  d = curve.keyFromPrivate(d);
-  const S = d.derive(V);
-  const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param);
+  try {
+    const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param, curve, false);
+    return new _bn2.default(_aes_kw2.default.unwrap(Z, C));
+  } catch (e) {}
+  // Work around old OpenPGP.js bug.
+  const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param, curve, true);
   return new _bn2.default(_aes_kw2.default.unwrap(Z, C));
 }
 
-exports.default = { encrypt, decrypt };
+exports.default = { encrypt, decrypt, genPublicEphemeralKey, genPrivateEphemeralKey, buildEcdhParam, kdf };
 
 },{"../../../enums":115,"../../../type/kdf_params":149,"../../../util":154,"../../aes_kw":82,"../../cipher":88,"../../hash":94,"./curves":102,"bn.js":17}],104:[function(require,module,exports){
 'use strict';
@@ -29728,7 +29674,7 @@ function dearmor(input) {
               throw new Error('Misformed armored text');
             }
             // remove trailing whitespace at end of lines
-            line = line.replace(/[\t\r\n ]+$/, '');
+            line = _util2.default.removeTrailingSpaces(line.replace(/[\r\n]/g, ''));
             if (!type) {
               if (reSplit.test(line)) {
                 type = getType(line);
@@ -29784,7 +29730,7 @@ function dearmor(input) {
               let remainder = await reader.readToEnd();
               if (!remainder.length) remainder = '';
               remainder = line + remainder;
-              remainder = remainder.replace(/[\t\r ]+$/mg, '');
+              remainder = _util2.default.removeTrailingSpaces(remainder.replace(/\r/g, ''));
               const parts = remainder.split(reSplit);
               if (parts.length === 1) {
                 throw new Error('Misformed armored text');
@@ -29941,6 +29887,13 @@ const b64s = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 const b64u = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'; // URL-safe radix-64
 
+const b64toByte = [];
+for (let i = 0; i < b64s.length; i++) {
+  b64toByte[b64s.charCodeAt(i)] = i;
+}
+b64toByte[b64u.charCodeAt(62)] = 62;
+b64toByte[b64u.charCodeAt(63)] = 63;
+
 /**
  * Convert binary array to radix-64
  * @param {Uint8Array | ReadableStream<Uint8Array>} t Uint8Array to convert
@@ -30018,7 +29971,6 @@ function s2r(t, u = false) {
  */
 function r2s(t, u) {
   // TODO check atob alternative
-  const b64 = u ? b64u : b64s;
   let c;
 
   let s = 0;
@@ -30029,7 +29981,7 @@ function r2s(t, u) {
     const r = new Uint8Array(Math.ceil(0.75 * tl));
     let index = 0;
     for (let n = 0; n < tl; n++) {
-      c = b64.indexOf(value.charAt(n));
+      c = b64toByte[value.charCodeAt(n)];
       if (c >= 0) {
         if (s) {
           r[index++] = a | c >> 6 - s & 255;
@@ -30563,7 +30515,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * Initialize the HKP client and configure it with the key server url and fetch function.
  * @constructor
  * @param {String}    keyServerBaseUrl  (optional) The HKP key server base url including
- *   the protocol to use e.g. https://pgp.mit.edu
+ *   the protocol to use, e.g. 'https://pgp.mit.edu'; defaults to
+ *   openpgp.config.keyserver (https://keyserver.ubuntu.com)
  */
 function HKP(keyServerBaseUrl) {
   this._baseUrl = keyServerBaseUrl || _config2.default.keyserver;
@@ -33918,7 +33871,7 @@ async function read(input, fromStream = _util2.default.isStream(input)) {
     input = _webStreamTools2.default.nodeToWeb(input);
   }
   const packetlist = new _packet2.default.List();
-  await packetlist.read(input);
+  await packetlist.read(input, fromStream);
   const message = new Message(packetlist);
   message.fromStream = fromStream;
   return message;
@@ -34705,7 +34658,13 @@ function linkStreams(result, message, erroringStream) {
 async function prepareSignatures(signatures) {
   await Promise.all(signatures.map(async signature => {
     signature.signature = await signature.signature;
-    signature.valid = await signature.verified;
+    try {
+      signature.valid = await signature.verified;
+    } catch (e) {
+      signature.valid = null;
+      signature.error = e;
+      _util2.default.print_debug_error(e);
+    }
   }));
 }
 
@@ -35242,7 +35201,7 @@ function Compressed() {
  * Parsing function for the packet.
  * @param {Uint8Array | ReadableStream<Uint8Array>} bytes Payload of a tag 8 packet
  */
-Compressed.prototype.read = async function (bytes) {
+Compressed.prototype.read = async function (bytes, streaming) {
   await _webStreamTools2.default.parse(bytes, async reader => {
 
     // One octet that gives the algorithm used to compress the packet.
@@ -35251,7 +35210,7 @@ Compressed.prototype.read = async function (bytes) {
     // Compressed data, which makes up the remainder of the packet.
     this.compressed = reader.remainder();
 
-    await this.decompress();
+    await this.decompress(streaming);
   });
 };
 
@@ -35271,13 +35230,13 @@ Compressed.prototype.write = function () {
  * Decompression method for decompressing the compressed data
  * read by read_packet
  */
-Compressed.prototype.decompress = async function () {
+Compressed.prototype.decompress = async function (streaming) {
 
   if (!decompress_fns[this.algorithm]) {
     throw new Error(this.algorithm + ' decompression not supported');
   }
 
-  await this.packets.read(decompress_fns[this.algorithm](this.compressed));
+  await this.packets.read(decompress_fns[this.algorithm](this.compressed), streaming);
 };
 
 /**
@@ -35318,8 +35277,10 @@ function pako_zlib(constructor, options = {}) {
         return obj.result;
       }
     }, () => {
-      obj.push([], _pako2.default.Z_FINISH);
-      return obj.result;
+      if (constructor === _pako2.default.Deflate) {
+        obj.push([], _pako2.default.Z_FINISH);
+        return obj.result;
+      }
     });
   };
 }
@@ -35969,7 +35930,7 @@ exports.default = {
    * @param {Function} callback Function to call with the parsed packet
    * @returns {Boolean} Returns false if the stream was empty and parsing is done, and true otherwise.
    */
-  read: async function read(input, callback) {
+  read: async function read(input, streaming, callback) {
     const reader = _webStreamTools2.default.getReader(input);
     let writer;
     try {
@@ -35998,14 +35959,16 @@ exports.default = {
         packet_length_type = headerByte & 0x03; // bit 1-0
       }
 
-      const streaming = this.supportsStreaming(tag);
+      const supportsStreaming = this.supportsStreaming(tag);
       let packet = null;
       let callbackReturned;
-      if (streaming) {
+      if (streaming && supportsStreaming) {
         const transform = new TransformStream();
         writer = _webStreamTools2.default.getWriter(transform.writable);
         packet = transform.readable;
         callbackReturned = callback({ tag, packet });
+      } else {
+        packet = [];
       }
 
       let wasPartialLength;
@@ -36056,7 +36019,7 @@ exports.default = {
           } else if (lengthByte > 223 && lengthByte < 255) {
             packet_length = 1 << (lengthByte & 0x1F);
             wasPartialLength = true;
-            if (!streaming) {
+            if (!supportsStreaming) {
               throw new TypeError('This packet type does not support partial lengths.');
             }
             // 4.2.2.3. Five-Octet Lengths
@@ -36064,10 +36027,10 @@ exports.default = {
             packet_length = (await reader.readByte()) << 24 | (await reader.readByte()) << 16 | (await reader.readByte()) << 8 | (await reader.readByte());
           }
         }
-        if (writer && packet_length > 0) {
+        if (packet_length >= 0) {
           let bytesRead = 0;
           while (true) {
-            await writer.ready;
+            if (writer) await writer.ready;
 
             var _ref = await reader.read();
 
@@ -36078,26 +36041,27 @@ exports.default = {
               if (packet_length === Infinity) break;
               throw new Error('Unexpected end of packet');
             }
-            await writer.write(value.slice(0, packet_length - bytesRead));
+            const chunk = value.subarray(0, packet_length - bytesRead);
+            if (writer) await writer.write(chunk);else packet.push(chunk);
             bytesRead += value.length;
             if (bytesRead >= packet_length) {
-              reader.unshift(value.slice(packet_length - bytesRead + value.length));
+              reader.unshift(value.subarray(packet_length - bytesRead + value.length));
               break;
             }
           }
         }
       } while (wasPartialLength);
 
-      if (!streaming) {
-        packet = await reader.readBytes(packet_length);
+      if (!writer) {
+        packet = _util2.default.concatUint8Array(packet);
         await callback({ tag, packet });
       }
       const nextPacket = await reader.peekBytes(2);
       if (writer) {
         await writer.ready;
         await writer.close();
+        await callbackReturned;
       }
-      if (streaming) await callbackReturned;
       return !nextPacket || !nextPacket.length;
     } catch (e) {
       if (writer) {
@@ -36180,19 +36144,19 @@ List.prototype = [];
  * Reads a stream of binary data and interprents it as a list of packets.
  * @param {Uint8Array | ReadableStream<Uint8Array>} A Uint8Array of bytes.
  */
-List.prototype.read = async function (bytes) {
+List.prototype.read = async function (bytes, streaming) {
   this.stream = _webStreamTools2.default.transformPair(bytes, async (readable, writable) => {
     const writer = _webStreamTools2.default.getWriter(writable);
     try {
       while (true) {
         await writer.ready;
-        const done = await _packet2.default.read(readable, async parsed => {
+        const done = await _packet2.default.read(readable, streaming, async parsed => {
           try {
             const tag = _enums2.default.read(_enums2.default.packet, parsed.tag);
             const packet = packets.newPacketFromTag(tag);
             packet.packets = new List();
             packet.fromStream = _util2.default.isStream(parsed.packet);
-            await packet.read(parsed.packet);
+            await packet.read(parsed.packet, streaming);
             await writer.write(packet);
           } catch (e) {
             if (!_config2.default.tolerant || _packet2.default.supportsStreaming(parsed.tag)) {
@@ -36228,7 +36192,7 @@ List.prototype.read = async function (bytes) {
     } else {
       this.stream = null;
     }
-    if (done || value.fromStream) {
+    if (done || _packet2.default.supportsStreaming(value.tag)) {
       break;
     }
   }
@@ -37160,7 +37124,7 @@ SecretKey.prototype.encrypt = async function (passphrase) {
     arr = [new Uint8Array([254, _enums2.default.write(_enums2.default.symmetric, symmetric)])];
     arr.push(s2k.write());
     arr.push(iv);
-    arr.push(_crypto2.default.cfb.normalEncrypt(symmetric, key, _util2.default.concatUint8Array([cleartext, await _crypto2.default.hash.sha1(cleartext)]), iv));
+    arr.push(_crypto2.default.cfb.encrypt(symmetric, key, _util2.default.concatUint8Array([cleartext, await _crypto2.default.hash.sha1(cleartext)]), iv));
   }
 
   this.encrypted = _util2.default.concatUint8Array(arr);
@@ -37216,6 +37180,9 @@ SecretKey.prototype.decrypt = async function (passphrase) {
     const s2k = new _s2k2.default();
     i += s2k.read(this.encrypted.subarray(i, this.encrypted.length));
 
+    if (s2k.type === 'gnu-dummy') {
+      return true;
+    }
     key = await produceEncryptionKey(s2k, passphrase, symmetric);
   } else {
     symmetric = s2k_usage;
@@ -37249,7 +37216,7 @@ SecretKey.prototype.decrypt = async function (passphrase) {
       }
     }
   } else {
-    const cleartextWithHash = _crypto2.default.cfb.normalDecrypt(symmetric, key, ciphertext, iv);
+    const cleartextWithHash = await _crypto2.default.cfb.decrypt(symmetric, key, ciphertext, iv);
 
     let hash;
     let hashlen;
@@ -38260,7 +38227,7 @@ SymEncryptedAEADProtected.prototype.decrypt = async function (sessionKeyAlgorith
   if (_config2.default.aead_protect_version !== 4) {
     this.cipherAlgo = _enums2.default.write(_enums2.default.symmetric, sessionKeyAlgorithm);
   }
-  await this.packets.read((await this.crypt('decrypt', key, _webStreamTools2.default.clone(this.encrypted), streaming)));
+  await this.packets.read((await this.crypt('decrypt', key, _webStreamTools2.default.clone(this.encrypted), streaming)), streaming);
   return true;
 };
 
@@ -38368,8 +38335,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _cfb = require('asmcrypto.js/dist_es5/aes/cfb');
-
 var _webStreamTools = require('web-stream-tools');
 
 var _webStreamTools2 = _interopRequireDefault(_webStreamTools);
@@ -38392,6 +38357,20 @@ var _util2 = _interopRequireDefault(_util);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const VERSION = 1; // A one-octet version number of the data packet.
+
+/**
+ * Implementation of the Sym. Encrypted Integrity Protected Data Packet (Tag 18)
+ *
+ * {@link https://tools.ietf.org/html/rfc4880#section-5.13|RFC4880 5.13}:
+ * The Symmetrically Encrypted Integrity Protected Data packet is
+ * a variant of the Symmetrically Encrypted Data packet. It is a new feature
+ * created for OpenPGP that addresses the problem of detecting a modification to
+ * encrypted data. It is used in combination with a Modification Detection Code
+ * packet.
+ * @memberof module:packet
+ * @constructor
+ */
 // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -38418,23 +38397,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @requires util
  */
 
-const nodeCrypto = _util2.default.getNodeCrypto();
-const Buffer = _util2.default.getNodeBuffer();
-
-const VERSION = 1; // A one-octet version number of the data packet.
-
-/**
- * Implementation of the Sym. Encrypted Integrity Protected Data Packet (Tag 18)
- *
- * {@link https://tools.ietf.org/html/rfc4880#section-5.13|RFC4880 5.13}:
- * The Symmetrically Encrypted Integrity Protected Data packet is
- * a variant of the Symmetrically Encrypted Data packet. It is a new feature
- * created for OpenPGP that addresses the problem of detecting a modification to
- * encrypted data. It is used in combination with a Modification Detection Code
- * packet.
- * @memberof module:packet
- * @constructor
- */
 function SymEncryptedIntegrityProtected() {
   this.tag = _enums2.default.packet.symEncryptedIntegrityProtected;
   this.version = VERSION;
@@ -38480,23 +38442,14 @@ SymEncryptedIntegrityProtected.prototype.write = function () {
 SymEncryptedIntegrityProtected.prototype.encrypt = async function (sessionKeyAlgorithm, key, streaming) {
   let bytes = this.packets.write();
   if (!streaming) bytes = await _webStreamTools2.default.readToEnd(bytes);
-  const prefixrandom = await _crypto2.default.getPrefixRandom(sessionKeyAlgorithm);
-  const repeat = new Uint8Array([prefixrandom[prefixrandom.length - 2], prefixrandom[prefixrandom.length - 1]]);
-  const prefix = _util2.default.concat([prefixrandom, repeat]);
+  const prefix = await _crypto2.default.getPrefixRandom(sessionKeyAlgorithm);
   const mdc = new Uint8Array([0xD3, 0x14]); // modification detection code packet
 
-  let tohash = _util2.default.concat([bytes, mdc]);
-  const hash = await _crypto2.default.hash.sha1(_util2.default.concat([prefix, _webStreamTools2.default.passiveClone(tohash)]));
-  tohash = _util2.default.concat([tohash, hash]);
+  const tohash = _util2.default.concat([prefix, bytes, mdc]);
+  const hash = await _crypto2.default.hash.sha1(_webStreamTools2.default.passiveClone(tohash));
+  const plaintext = _util2.default.concat([tohash, hash]);
 
-  if (sessionKeyAlgorithm.substr(0, 3) === 'aes') {
-    // AES optimizations. Native code for node, asmCrypto for browser.
-    this.encrypted = aesEncrypt(sessionKeyAlgorithm, _util2.default.concat([prefix, tohash]), key);
-  } else {
-    tohash = await _webStreamTools2.default.readToEnd(tohash);
-    this.encrypted = _crypto2.default.cfb.encrypt(prefixrandom, sessionKeyAlgorithm, tohash, key, false);
-    this.encrypted = _webStreamTools2.default.slice(this.encrypted, 0, prefix.length + tohash.length);
-  }
+  this.encrypted = await _crypto2.default.cfb.encrypt(sessionKeyAlgorithm, key, plaintext, new Uint8Array(_crypto2.default.cipher[sessionKeyAlgorithm].blockSize));
   return true;
 };
 
@@ -38511,87 +38464,31 @@ SymEncryptedIntegrityProtected.prototype.encrypt = async function (sessionKeyAlg
 SymEncryptedIntegrityProtected.prototype.decrypt = async function (sessionKeyAlgorithm, key, streaming) {
   if (!streaming) this.encrypted = await _webStreamTools2.default.readToEnd(this.encrypted);
   const encrypted = _webStreamTools2.default.clone(this.encrypted);
-  const encryptedClone = _webStreamTools2.default.passiveClone(encrypted);
-  let decrypted;
-  if (sessionKeyAlgorithm.substr(0, 3) === 'aes') {
-    // AES optimizations. Native code for node, asmCrypto for browser.
-    decrypted = aesDecrypt(sessionKeyAlgorithm, encrypted, key, streaming);
-  } else {
-    decrypted = _crypto2.default.cfb.decrypt(sessionKeyAlgorithm, key, (await _webStreamTools2.default.readToEnd(encrypted)), false);
-  }
+  const decrypted = await _crypto2.default.cfb.decrypt(sessionKeyAlgorithm, key, encrypted, new Uint8Array(_crypto2.default.cipher[sessionKeyAlgorithm].blockSize));
 
   // there must be a modification detection code packet as the
   // last packet and everything gets hashed except the hash itself
-  const encryptedPrefix = await _webStreamTools2.default.readToEnd(_webStreamTools2.default.slice(encryptedClone, 0, _crypto2.default.cipher[sessionKeyAlgorithm].blockSize + 2));
-  const prefix = _crypto2.default.cfb.mdc(sessionKeyAlgorithm, key, encryptedPrefix);
   const realHash = _webStreamTools2.default.slice(_webStreamTools2.default.passiveClone(decrypted), -20);
-  const bytes = _webStreamTools2.default.slice(decrypted, 0, -20);
-  const tohash = _util2.default.concat([prefix, _webStreamTools2.default.passiveClone(bytes)]);
-  const verifyHash = Promise.all([_webStreamTools2.default.readToEnd((await _crypto2.default.hash.sha1(tohash))), _webStreamTools2.default.readToEnd(realHash)]).then(([hash, mdc]) => {
+  const tohash = _webStreamTools2.default.slice(decrypted, 0, -20);
+  const verifyHash = Promise.all([_webStreamTools2.default.readToEnd((await _crypto2.default.hash.sha1(_webStreamTools2.default.passiveClone(tohash)))), _webStreamTools2.default.readToEnd(realHash)]).then(([hash, mdc]) => {
     if (!_util2.default.equalsUint8Array(hash, mdc)) {
       throw new Error('Modification detected.');
     }
     return new Uint8Array();
   });
-  let packetbytes = _webStreamTools2.default.slice(bytes, 0, -2);
+  const bytes = _webStreamTools2.default.slice(tohash, _crypto2.default.cipher[sessionKeyAlgorithm].blockSize + 2); // Remove random prefix
+  let packetbytes = _webStreamTools2.default.slice(bytes, 0, -2); // Remove MDC packet
   packetbytes = _webStreamTools2.default.concat([packetbytes, _webStreamTools2.default.fromAsync(() => verifyHash)]);
   if (!_util2.default.isStream(encrypted) || !_config2.default.allow_unauthenticated_stream) {
     packetbytes = await _webStreamTools2.default.readToEnd(packetbytes);
   }
-  await this.packets.read(packetbytes);
+  await this.packets.read(packetbytes, streaming);
   return true;
 };
 
 exports.default = SymEncryptedIntegrityProtected;
 
-//////////////////////////
-//                      //
-//   Helper functions   //
-//                      //
-//////////////////////////
-
-
-function aesEncrypt(algo, pt, key) {
-  if (nodeCrypto) {
-    // Node crypto library.
-    return nodeEncrypt(algo, pt, key);
-  } // asm.js fallback
-  const cfb = new _cfb.AES_CFB(key);
-  return _webStreamTools2.default.transform(pt, value => cfb.AES_Encrypt_process(value), () => cfb.AES_Encrypt_finish());
-}
-
-function aesDecrypt(algo, ct, key) {
-  let pt;
-  if (nodeCrypto) {
-    // Node crypto library.
-    pt = nodeDecrypt(algo, ct, key);
-  } else {
-    // asm.js fallback
-    if (_util2.default.isStream(ct)) {
-      const cfb = new _cfb.AES_CFB(key);
-      pt = _webStreamTools2.default.transform(ct, value => cfb.AES_Decrypt_process(value), () => cfb.AES_Decrypt_finish());
-    } else {
-      pt = _cfb.AES_CFB.decrypt(ct, key);
-    }
-  }
-  return _webStreamTools2.default.slice(pt, _crypto2.default.cipher[algo].blockSize + 2); // Remove random prefix
-}
-
-function nodeEncrypt(algo, pt, key) {
-  key = new Buffer(key);
-  const iv = new Buffer(new Uint8Array(_crypto2.default.cipher[algo].blockSize));
-  const cipherObj = new nodeCrypto.createCipheriv('aes-' + algo.substr(3, 3) + '-cfb', key, iv);
-  return _webStreamTools2.default.transform(pt, value => new Uint8Array(cipherObj.update(new Buffer(value))));
-}
-
-function nodeDecrypt(algo, ct, key) {
-  key = new Buffer(key);
-  const iv = new Buffer(new Uint8Array(_crypto2.default.cipher[algo].blockSize));
-  const decipherObj = new nodeCrypto.createDecipheriv('aes-' + algo.substr(3, 3) + '-cfb', key, iv);
-  return _webStreamTools2.default.transform(ct, value => new Uint8Array(decipherObj.update(new Buffer(value))));
-}
-
-},{"../config":81,"../crypto":96,"../enums":115,"../util":154,"asmcrypto.js/dist_es5/aes/cfb":6,"web-stream-tools":77}],141:[function(require,module,exports){
+},{"../config":81,"../crypto":96,"../enums":115,"../util":154,"web-stream-tools":77}],141:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38757,7 +38654,7 @@ SymEncryptedSessionKey.prototype.decrypt = async function (passphrase) {
     const modeInstance = await mode(algo, key);
     this.sessionKey = await modeInstance.decrypt(this.encrypted, this.iv, adata);
   } else if (this.encrypted !== null) {
-    const decrypted = _crypto2.default.cfb.normalDecrypt(algo, key, this.encrypted, null);
+    const decrypted = await _crypto2.default.cfb.decrypt(algo, key, this.encrypted, new Uint8Array(_crypto2.default.cipher[algo].blockSize));
 
     this.sessionKeyAlgorithm = _enums2.default.read(_enums2.default.symmetric, decrypted[0]);
     this.sessionKey = decrypted.subarray(1, decrypted.length);
@@ -38798,7 +38695,7 @@ SymEncryptedSessionKey.prototype.encrypt = async function (passphrase) {
   } else {
     const algo_enum = new Uint8Array([_enums2.default.write(_enums2.default.symmetric, this.sessionKeyAlgorithm)]);
     const private_key = _util2.default.concatUint8Array([algo_enum, this.sessionKey]);
-    this.encrypted = _crypto2.default.cfb.normalEncrypt(algo, key, private_key, null);
+    this.encrypted = await _crypto2.default.cfb.encrypt(algo, key, private_key, new Uint8Array(_crypto2.default.cipher[algo].blockSize));
   }
 
   return true;
@@ -38836,6 +38733,10 @@ var _enums = require('../enums');
 
 var _enums2 = _interopRequireDefault(_enums);
 
+var _util = require('../util');
+
+var _util2 = _interopRequireDefault(_util);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -38850,7 +38751,27 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @memberof module:packet
  * @constructor
  */
-// GPG4Browsers - An OpenPGP implementation in javascript
+function SymmetricallyEncrypted() {
+  /**
+   * Packet type
+   * @type {module:enums.packet}
+   */
+  this.tag = _enums2.default.packet.symmetricallyEncrypted;
+  /**
+   * Encrypted secret-key data
+   */
+  this.encrypted = null;
+  /**
+   * Decrypted packets contained within.
+   * @type {module:packet.List}
+   */
+  this.packets = null;
+  /**
+   * When true, decrypt fails if message is not integrity protected
+   * @see module:config.ignore_mdc_error
+   */
+  this.ignore_mdc_error = _config2.default.ignore_mdc_error;
+} // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
 // This library is free software; you can redistribute it and/or
@@ -38872,29 +38793,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @requires config
  * @requires crypto
  * @requires enums
+ * @requires util
  */
-
-function SymmetricallyEncrypted() {
-  /**
-   * Packet type
-   * @type {module:enums.packet}
-   */
-  this.tag = _enums2.default.packet.symmetricallyEncrypted;
-  /**
-   * Encrypted secret-key data
-   */
-  this.encrypted = null;
-  /**
-   * Decrypted packets contained within.
-   * @type {module:packet.List}
-   */
-  this.packets = null;
-  /**
-   * When true, decrypt fails if message is not integrity protected
-   * @see module:config.ignore_mdc_error
-   */
-  this.ignore_mdc_error = _config2.default.ignore_mdc_error;
-}
 
 SymmetricallyEncrypted.prototype.read = function (bytes) {
   this.encrypted = bytes;
@@ -38913,12 +38813,14 @@ SymmetricallyEncrypted.prototype.write = function () {
  * @async
  */
 SymmetricallyEncrypted.prototype.decrypt = async function (sessionKeyAlgorithm, key) {
-  this.encrypted = await _webStreamTools2.default.readToEnd(this.encrypted);
-  const decrypted = _crypto2.default.cfb.decrypt(sessionKeyAlgorithm, key, this.encrypted, true);
   // If MDC errors are not being ignored, all missing MDC packets in symmetrically encrypted data should throw an error
   if (!this.ignore_mdc_error) {
     throw new Error('Decryption failed due to missing MDC.');
   }
+
+  this.encrypted = await _webStreamTools2.default.readToEnd(this.encrypted);
+  const decrypted = await _crypto2.default.cfb.decrypt(sessionKeyAlgorithm, key, this.encrypted.subarray(_crypto2.default.cipher[sessionKeyAlgorithm].blockSize + 2), this.encrypted.subarray(2, _crypto2.default.cipher[sessionKeyAlgorithm].blockSize + 2));
+
   await this.packets.read(decrypted);
 
   return true;
@@ -38935,14 +38837,17 @@ SymmetricallyEncrypted.prototype.decrypt = async function (sessionKeyAlgorithm, 
 SymmetricallyEncrypted.prototype.encrypt = async function (algo, key) {
   const data = this.packets.write();
 
-  this.encrypted = _crypto2.default.cfb.encrypt((await _crypto2.default.getPrefixRandom(algo)), algo, (await _webStreamTools2.default.readToEnd(data)), key, true);
+  const prefix = await _crypto2.default.getPrefixRandom(algo);
+  const FRE = await _crypto2.default.cfb.encrypt(algo, key, prefix, new Uint8Array(_crypto2.default.cipher[algo].blockSize));
+  const ciphertext = await _crypto2.default.cfb.encrypt(algo, key, data, FRE.subarray(2));
+  this.encrypted = _util2.default.concat([FRE, ciphertext]);
 
   return true;
 };
 
 exports.default = SymmetricallyEncrypted;
 
-},{"../config":81,"../crypto":96,"../enums":115,"web-stream-tools":77}],143:[function(require,module,exports){
+},{"../config":81,"../crypto":96,"../enums":115,"../util":154,"web-stream-tools":77}],143:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40015,7 +39920,10 @@ S2K.prototype.get_count = function () {
 S2K.prototype.read = function (bytes) {
   let i = 0;
   this.type = _enums2.default.read(_enums2.default.s2k, bytes[i++]);
-  this.algorithm = _enums2.default.read(_enums2.default.hash, bytes[i++]);
+  this.algorithm = bytes[i++];
+  if (this.type !== 'gnu') {
+    this.algorithm = _enums2.default.read(_enums2.default.hash, this.algorithm);
+  }
 
   switch (this.type) {
     case 'simple':
@@ -40035,11 +39943,11 @@ S2K.prototype.read = function (bytes) {
       break;
 
     case 'gnu':
-      if (_util2.default.Uint8Array_to_str(bytes.subarray(i, 3)) === "GNU") {
+      if (_util2.default.Uint8Array_to_str(bytes.subarray(i, i + 3)) === "GNU") {
         i += 3; // GNU
         const gnuExtType = 1000 + bytes[i++];
         if (gnuExtType === 1001) {
-          this.type = gnuExtType;
+          this.type = 'gnu-dummy';
           // GnuPG extension mode 1001 -- don't write secret key at all
         } else {
           throw new Error("Unknown s2k gnu protection mode.");
@@ -40232,19 +40140,21 @@ exports.default = {
    * @param  {Object} obj           the options object to be passed to the web worker
    * @returns {Array<ArrayBuffer>}   an array of binary data to be passed
    */
-  getTransferables: function getTransferables(obj) {
+  getTransferables: function getTransferables(obj, zero_copy) {
     const transferables = [];
-    _util2.default.collectTransferables(obj, transferables);
+    _util2.default.collectTransferables(obj, transferables, zero_copy);
     return transferables.length ? transferables : undefined;
   },
 
-  collectTransferables: function collectTransferables(obj, collection) {
+  collectTransferables: function collectTransferables(obj, collection, zero_copy) {
     if (!obj) {
       return;
     }
 
-    if (_util2.default.isUint8Array(obj) && collection.indexOf(obj.buffer) === -1) {
-      if (_config2.default.zero_copy) {
+    if (_util2.default.isUint8Array(obj)) {
+      if (zero_copy && collection.indexOf(obj.buffer) === -1 && !(navigator.userAgent.indexOf('Version/11.1') !== -1 || // Safari 11.1
+      (navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] < 56 && navigator.userAgent.indexOf('Edge') === -1 // Chrome < 56
+      )) {
         collection.push(obj.buffer);
       }
       return;
@@ -40265,7 +40175,12 @@ exports.default = {
                     port2 = _ref.port2;
 
               port1.onmessage = async function ({ data: { action } }) {
-                if (action === 'read') port1.postMessage((await reader.read()));else if (action === 'cancel') port1.postMessage((await transformed.cancel()));
+                if (action === 'read') {
+                  const result = await reader.read();
+                  port1.postMessage(result, _util2.default.getTransferables(result, true));
+                } else if (action === 'cancel') {
+                  port1.postMessage((await transformed.cancel()));
+                }
               };
               obj[key] = port2;
               collection.push(port2);
@@ -40273,10 +40188,10 @@ exports.default = {
           }
           return;
         }
-        if (typeof MessagePort !== 'undefined' && MessagePort.prototype.isPrototypeOf(value)) {
+        if (Object.prototype.toString.call(value) === '[object MessagePort]') {
           throw new Error("Can't transfer the same stream twice.");
         }
-        _util2.default.collectTransferables(value, collection);
+        _util2.default.collectTransferables(value, collection, zero_copy);
       });
     }
   },
@@ -40290,7 +40205,7 @@ exports.default = {
     if (Object.prototype.isPrototypeOf(obj) && !Uint8Array.prototype.isPrototypeOf(obj)) {
       Object.entries(obj).forEach(([key, value]) => {
         // recursively search all children
-        if (MessagePort.prototype.isPrototypeOf(value)) {
+        if (Object.prototype.toString.call(value) === '[object MessagePort]') {
           obj[key] = new ReadableStream({
             pull(controller) {
               return new Promise(resolve => {
@@ -40528,15 +40443,15 @@ exports.default = {
   /**
    * Concat a list of Uint8Arrays, Strings or Streams
    * The caller must not mix Uint8Arrays with Strings, but may mix Streams with non-Streams.
-   * @param {Array<Uint8array|String|ReadableStream>} Array of Uint8Arrays/Strings/Streams to concatenate
-   * @returns {Uint8array|String|ReadableStream} Concatenated array
+   * @param {Array<Uint8Array|String|ReadableStream>} Array of Uint8Arrays/Strings/Streams to concatenate
+   * @returns {Uint8Array|String|ReadableStream} Concatenated array
    */
   concat: _webStreamTools2.default.concat,
 
   /**
    * Concat Uint8Arrays
-   * @param {Array<Uint8array>} Array of Uint8Arrays to concatenate
-   * @returns {Uint8array} Concatenated array
+   * @param {Array<Uint8Array>} Array of Uint8Arrays to concatenate
+   * @returns {Uint8Array} Concatenated array
    */
   concatUint8Array: _webStreamTools2.default.concatUint8Array,
 
@@ -40692,13 +40607,13 @@ exports.default = {
    * @param {Uint8Array} data
    */
   double: function double(data) {
-    const double = new Uint8Array(data.length);
+    const double_var = new Uint8Array(data.length);
     const last = data.length - 1;
     for (let i = 0; i < last; i++) {
-      double[i] = data[i] << 1 ^ data[i + 1] >> 7;
+      double_var[i] = data[i] << 1 ^ data[i + 1] >> 7;
     }
-    double[last] = data[last] << 1 ^ (data[0] >> 7) * 0x87;
-    return double;
+    double_var[last] = data[last] << 1 ^ (data[0] >> 7) * 0x87;
+    return double_var;
   },
 
   /**
@@ -40891,7 +40806,11 @@ exports.default = {
    * Remove trailing spaces and tabs from each line
    */
   removeTrailingSpaces: function removeTrailingSpaces(text) {
-    return text.replace(/[ \t]+$/mg, "");
+    return text.split('\n').map(line => {
+      let i = line.length - 1;
+      for (; i >= 0 && (line[i] === ' ' || line[i] === '\t'); i--);
+      return line.substr(0, i + 1);
+    }).join('\n');
   },
 
   /**
@@ -41044,6 +40963,10 @@ var _util = require('../util.js');
 
 var _util2 = _interopRequireDefault(_util);
 
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
 var _crypto = require('../crypto');
 
 var _crypto2 = _interopRequireDefault(_crypto);
@@ -41062,6 +40985,36 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param {Array<Object>} worker   alternative to path parameter: web worker initialized with 'openpgp.worker.js'
  * @constructor
  */
+// GPG4Browsers - An OpenPGP implementation in javascript
+// Copyright (C) 2011 Recurity Labs GmbH
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/**
+ * @fileoverview Provides functions for maintaining browser workers
+ * @see module:openpgp.initWorker
+ * @see module:openpgp.getWorker
+ * @see module:openpgp.destroyWorker
+ * @see module:worker/worker
+ * @requires util
+ * @requires config
+ * @requires crypto
+ * @requires packet
+ * @module worker/async_proxy
+ */
+
 function AsyncProxy({ path = 'openpgp.worker.js', n = 1, workers = [], config } = {}) {
   /**
    * Message handling
@@ -41122,35 +41075,6 @@ function AsyncProxy({ path = 'openpgp.worker.js', n = 1, workers = [], config } 
  * Get new request ID
  * @returns {integer}          New unique request ID
 */
-// GPG4Browsers - An OpenPGP implementation in javascript
-// Copyright (C) 2011 Recurity Labs GmbH
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3.0 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
-/**
- * @fileoverview Provides functions for maintaining browser workers
- * @see module:openpgp.initWorker
- * @see module:openpgp.getWorker
- * @see module:openpgp.destroyWorker
- * @see module:worker/worker
- * @requires util
- * @requires crypto
- * @requires packet
- * @module worker/async_proxy
- */
-
 AsyncProxy.prototype.getID = function () {
   return this.currentID++;
 };
@@ -41162,7 +41086,7 @@ AsyncProxy.prototype.getID = function () {
  */
 AsyncProxy.prototype.seedRandom = async function (workerId, size) {
   const buf = await _crypto2.default.random.getRandomBytes(size);
-  this.workers[workerId].postMessage({ event: 'seed-random', buf }, _util2.default.getTransferables(buf));
+  this.workers[workerId].postMessage({ event: 'seed-random', buf }, _util2.default.getTransferables(buf, true));
 };
 
 /**
@@ -41193,9 +41117,9 @@ AsyncProxy.prototype.delegate = function (method, options) {
     }
   }
 
-  return new Promise(async (_resolve, reject) => {
+  return new Promise((_resolve, reject) => {
     // clone packets (for web worker structured cloning algorithm)
-    this.workers[workerId].postMessage({ id: id, event: method, options: _packet2.default.clone.clonePackets(options) }, _util2.default.getTransferables(options));
+    this.workers[workerId].postMessage({ id: id, event: method, options: _packet2.default.clone.clonePackets(options) }, _util2.default.getTransferables(options, _config2.default.zero_copy));
     this.workers[workerId].requests++;
 
     // remember to handle parsing cloned packets from worker
@@ -41205,5 +41129,5 @@ AsyncProxy.prototype.delegate = function (method, options) {
 
 exports.default = AsyncProxy;
 
-},{"../crypto":96,"../packet":127,"../util.js":154}]},{},[117])(117)
+},{"../config":81,"../crypto":96,"../packet":127,"../util.js":154}]},{},[117])(117)
 });
