@@ -214,6 +214,14 @@ export class Env {
     return ['gmail', 'inbox']; // async because storage may be involved in the future
   }
 
+  public static getBaseUrl = () => {
+    return window.location.protocol + '//' + window.location.hostname;
+  }
+
+  public static getUrlNoParams = () => {
+    return window.location.protocol + '//' + window.location.hostname + window.location.pathname;
+  }
+
 }
 
 export class Ui {

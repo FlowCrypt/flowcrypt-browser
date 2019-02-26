@@ -8,6 +8,7 @@ import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Api, R } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
@@ -54,6 +55,11 @@ Catch.try(async () => {
 
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send.bg.settings({ acctEmail })));
   $('.action_choose_account').get(0).title = acctEmail;
+  $(".action-toggle-accounts-menu").click(Ui.event.handle((target, event) => {
+    event.stopPropagation();
+    $("#alt-accounts").toggleClass("active");
+  }));
+  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId)));
 
   const notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {
     showNotification(notification, callbacks);
@@ -464,4 +470,6 @@ Catch.try(async () => {
       await renderInbox(labelId);
     }
   }
+
+  await Settings.populateAccountsMenu('inbox.htm');
 })();
