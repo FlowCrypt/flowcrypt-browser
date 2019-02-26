@@ -460,17 +460,6 @@ Catch.try(async () => {
     }));
   };
 
-  const menuAcctHtml = (email: string, picture = '/img/svgs/profile-icon.svg') => {
-    return [
-      '<div id="header-row" class="row alt-accounts action_select_account">',
-      '  <div class="col-sm-10">',
-      `    <div class="row contains_email" data-test="action-switch-to-account">${Xss.escape(email)}</div>`,
-      '  </div>',
-      `  <div><img class="profile-img" src="${Xss.escape(picture)}" alt=""></div>`,
-      '</div>',
-    ].join('');
-  };
-
   if (emailProvider !== 'gmail') {
     $('body').text('Not supported for ' + emailProvider);
   } else {
@@ -482,15 +471,5 @@ Catch.try(async () => {
     }
   }
 
-  const acctEmails = await Store.acctEmailsGet();
-  const acctStorages = await Store.getAccounts(acctEmails, ['picture']);
-  for (const email of acctEmails) {
-    Xss.sanitizePrepend('#alt-accounts', menuAcctHtml(email, acctStorages[email].picture));
-  }
-  $('#alt-accounts img.profile-img').on('error', Ui.event.handle(self => {
-    $(self).off().attr('src', '/img/svgs/profile-icon.svg');
-  }));
-  $('.action_select_account').click(Ui.event.handle(target => {
-    window.location.href = Env.urlCreate('inbox.htm', { acctEmail: $(target).find('.contains_email').text() });
-  }));
+  await Settings.populateAccountsMenu('inbox.htm');
 })();
