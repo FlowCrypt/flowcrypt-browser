@@ -384,7 +384,7 @@ export class Settings {
       ].join('');
     };
     const acctEmails = await Store.acctEmailsGet();
-    const acctStorages = await Store.getAccounts(acctEmails, ['picture']);
+    const acctStorages = await Store.getAccounts(acctEmails, ['picture', 'setup_done']);
     for (const email of acctEmails) {
       Xss.sanitizePrepend('#alt-accounts', menuAcctHtml(email, acctStorages[email].picture, page === 'inbox.htm'));
     }
@@ -392,7 +392,11 @@ export class Settings {
       $(self).off().attr('src', '/img/svgs/profile-icon.svg');
     }));
     $('.action_select_account').click(Ui.event.handle(target => {
-      window.location.href = Env.urlCreate(page, { acctEmail: $(target).find('.contains_email').text() });
+      const acctEmail = $(target).find('.contains_email').text();
+      const acctStorage = acctStorages[acctEmail];
+      window.location.href = acctStorage.setup_done
+        ? Env.urlCreate(page, { acctEmail })
+        : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
   }
 }
