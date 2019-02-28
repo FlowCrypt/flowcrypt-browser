@@ -10,7 +10,7 @@ import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api } from './api/api.js';
-import { Pgp } from './core/pgp.js';
+import { Pgp, PasswordStrengthResult } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
 
 declare const openpgp: typeof OpenPGP;
@@ -29,7 +29,7 @@ export class Settings {
     return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses); // tslint:disable-line:no-unsafe-any
   }
 
-  static renderPasswordStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
+  static renderPasswordStrength = (parentSel: string, inputSel: string, buttonSel: string, cb?: (res: PasswordStrengthResult) => void) => {
     parentSel += ' ';
     const password = $(parentSel + inputSel).val();
     if (typeof password !== 'string') {
@@ -37,6 +37,10 @@ export class Settings {
       return;
     }
     const result = Settings.evalPasswordStrength(password);
+    if (cb !== null && typeof cb === 'function') {
+      cb(result);
+      return;
+    }
     $(parentSel + '.password_feedback').css('display', 'block');
     $(parentSel + '.password_bar > div').css('width', result.word.bar + '%');
     $(parentSel + '.password_bar > div').css('background-color', result.word.color);
