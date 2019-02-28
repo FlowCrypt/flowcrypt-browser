@@ -120,6 +120,18 @@ export enum DecryptErrTypes {
   other = 'other',
 }
 
+export interface PasswordStrengthResult {
+  word: {
+    match: string;
+    word: string;
+    bar: number;
+    color: string;
+    pass: boolean;
+  };
+  seconds: number;
+  time: string;
+}
+
 export class FormatError extends Error {
   public data: string;
   constructor(message: string, data: string) {
@@ -389,7 +401,7 @@ export class Pgp {
   };
 
   public static password = {
-    estimateStrength: (zxcvbnResultGuesses: number) => {
+    estimateStrength: (zxcvbnResultGuesses: number): PasswordStrengthResult => {
       const timeToCrack = zxcvbnResultGuesses / Pgp.PASSWORD_GUESSES_PER_SECOND;
       for (const word of Pgp.PASSWORD_CRACK_TIME_WORDS) {
         const readableTime = Pgp.internal.readableCrackTime(timeToCrack);
