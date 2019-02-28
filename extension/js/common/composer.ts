@@ -88,6 +88,7 @@ export class Composer {
     input_from: '#input_from',
     input_subject: '#input_subject',
     input_password: '#input_password',
+    input_hint: '#input_hint',
     input_intro: '.input_intro',
     all_cells_except_text: 'table#compose > tbody > tr > :not(.text)',
     add_intro: '.action_add_intro',
@@ -811,7 +812,8 @@ export class Composer {
       // admin_code stays locally and helps the sender extend life of the message or delete it
       const { short, admin_code } = await Api.fc.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
       const storage = await Store.getAcct(this.v.acctEmail, ['outgoing_language']);
-      encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
+      const hint = await this.pwdProtectedEmailHint(pwd.answer);
+      encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, hint, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
       await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.v.threadId), text);
@@ -1558,7 +1560,7 @@ export class Composer {
       let selectElHtml = '<select id="input_from" tabindex="-1" data-test="input-from"></select>';
       if (!this.v.isReplyBox) {
         selectElHtml += '<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">';
-      }      
+      }
       Xss.sanitizeAppend(inputAddrContainer, selectElHtml);
       inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
@@ -1588,7 +1590,7 @@ export class Composer {
     return false;
   }
 
-  private fmtPwdProtectedEmail = (shortId: string, encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], lang: 'DE' | 'EN') => {
+  private fmtPwdProtectedEmail = (shortId: string, encryptedBody: SendableMsgBody, hint: string, armoredPubkeys: string[], atts: Att[], lang: 'DE' | 'EN') => {
     const msgUrl = `${this.FC_WEB_URL}/${shortId}`;
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">${Lang.compose.openMsg[lang]}</a>`;
     const intro = this.S.cached('input_intro').length ? this.extractAsText('input_intro') : '';
@@ -1596,18 +1598,34 @@ export class Composer {
     const html = [];
     if (intro) {
       text.push(intro + '\n');
-      html.push(intro.replace(/\n/, '<br>') + '<br><br>');
+      html.push(intro.replace(/\n/g, '<br>') + '<br><br>');
     }
     text.push(Lang.compose.msgEncryptedText[lang] + msgUrl + '\n');
+    text.push(Lang.compose.pwdHintProvided[lang] + Xss.escape(hint) + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
     html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
     html.push(Lang.compose.msgEncryptedHtml[lang] + a + '<br><br>');
     html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl) + '<br><br><br>');
+    html.push(Lang.compose.pwdHintProvided[lang] + Xss.escape(hint) + '<br><br>');
     html.push('</div>');
     if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       atts.push(new Att({ data: Buf.fromUtfStr(encryptedBody['text/plain']!), name: 'encrypted.asc' }));
     }
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
+  }
+
+  private pwdProtectedEmailHint = async (pwd: string): Promise<string> => {
+    const keysAndPass = await Store.keysGetAllWithPassphrases(this.v.acctEmail);
+    for (const pass of keysAndPass.passphrases) {
+      if (typeof pass !== 'undefined' && pwd === pass) {
+        throw new ComposerUserError('Please do not use your private key passphrase as a password for this message.');
+      }
+    }
+    const hint = this.S.cached('input_hint').val() ? String(this.S.cached('input_hint').val()) : '';
+    if (hint.indexOf(pwd) !== -1) {
+      throw new ComposerUserError('Please do not include the password in the hint.');
+    }
+    return hint;
   }
 
   private formatEmailTextFooter = (origBody: SendableMsgBody): SendableMsgBody => {
