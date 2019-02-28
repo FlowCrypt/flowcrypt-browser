@@ -12,6 +12,7 @@ import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { KeyInfo, Contact } from '../../js/common/core/pgp.js';
+import { Settings } from '../../js/common/settings.js';
 
 Catch.try(async () => {
 
@@ -246,6 +247,17 @@ Catch.try(async () => {
     closeMsg,
     factoryAtt: (att: Att, isEncrypted: boolean) => factory.embeddedAtta(att, isEncrypted),
   }, processedUrlParams, await Store.subscription());
+
+  $('#input_password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#password_or_pubkey_container', '#input_password', '.none',
+    (result) => {
+      const parentSel = '#password_or_pubkey_container ';
+      $(parentSel + '.password_feedback').css('display', 'inline-block');
+      $(parentSel + '.password_bar > div').css('width', result.word.bar + '%');
+      $(parentSel + '.password_bar > div').css('background-color', result.word.color);
+      $(parentSel + '.password_result, .password_time').css('color', result.word.color);
+      $(parentSel + '.password_result').text(result.word.word);
+      $(parentSel + '.password_time').text(result.time);
+    })));
 
   BrowserMsg.addListener('close_dialog', async () => {
     $('.featherlight.featherlight-iframe').remove();
