@@ -68,7 +68,6 @@ export const Lang = { // tslint:disable-line:variable-name
     msgEncryptedHtml: { EN: 'This&nbsp;message&nbsp;is&nbsp;encrypted: ', DE: 'Diese&nbsp;Nachricht&nbsp;ist&nbsp;verschlüsselt: ' },
     msgEncryptedText: { EN: 'This message is encrypted. Follow this link to open it: ', DE: 'Diese Nachricht ist verschlüsselt. Nachricht öffnen: ' },
     alternativelyCopyPaste: { EN: 'Alternatively copy and paste the following link: ', DE: 'Alternativ kopieren Sie folgenden Link und fügen ihn in die Adresszeile Ihres Browsers ein: ' },
-    pwdHintProvided: { EN: 'The following hint was provided for this password: ', DE: '' },
     openMsg: { EN: 'Open Message', DE: 'Nachricht öffnen' },
     includePubkeyIconTitle: 'Include your Public Key with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     includePubkeyIconTitleActive: 'Your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',

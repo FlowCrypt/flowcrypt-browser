@@ -71,17 +71,19 @@
         Emails <span class="grey">in grey</span> don't seem to use encryption. Add a password to encrypt this message.
         <div class="line">
           <!-- Add a <span class="label_password" style="display: block;">password protection</span> -->
-          <input id="input_password" style="margin-bottom: 0px; display: inline-block;" placeholder="" data-test="input-password">
-          <div class="password_feedback" style="display: inline-block;"><span class="password_result"></span> (time to crack: <span class="password_time"></span>)
-            <ul></ul>
+          <div style=" display: inline-block;">
+            <input id="input_password" style="margin-bottom: 0px;" placeholder="" data-test="input-password">
+            <div class="password_bar">
+              <div style="height: 3px"></div>
+            </div>
           </div>
-          <br />
-          <div class="password_bar">
-            <div style="height: 3px"></div>
+          <div style="display: inline-block;">
+            <div class="password_feedback"><span class="password_result"></span> (time to crack: <span class="password_time"></span>)
+              <ul></ul>
+            </div>
           </div>
         </div>
 
-        Add an optional hint to include for the recipient<input id="input_hint" style="width: 200px" placeholder="">
         <div class="question_copy">If they do use encryption, <a href="#" class="add_pubkey" data-test="action-open-add-pubkey-dialog">add
             their public key</a> instead. Else ask them to get FlowCrypt!</div>
       </td>
