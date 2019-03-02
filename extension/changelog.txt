@@ -1,5 +1,7 @@
 <div>
 
+version 6.6.7 on March 2, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/319?closed=1" target="_blank">Bugfixes</a>
+
 version 6.6.6 on February 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/318?closed=1" target="_blank">Bugfixes</a>
 
 version 6.6.5 on February 20, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/317?closed=1" target="_blank">Code maintenance</a>
