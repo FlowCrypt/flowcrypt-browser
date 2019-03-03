@@ -55,6 +55,8 @@ abstract class ControllableBase {
     }
   }
 
+  public isElementPresent = async (selector: string) => Boolean(await this.element(selector));
+
   protected selsAsProcessedArr = (selector: string | string[]): string[] => (Array.isArray(selector) ? selector : [selector]).map(this.selector);
 
   public waitForSelTestState = async (state: 'ready' | 'working' | 'waiting' | 'closed', timeout = TIMEOUT_TEST_STATE_SATISFY) => {

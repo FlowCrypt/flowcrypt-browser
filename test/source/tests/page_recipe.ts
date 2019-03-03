@@ -390,11 +390,20 @@ export class OauthPageRecipe extends PageRecipe {
   private static longTimeout = 40;
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
+    const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
     const selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
+      // pwd_input: '.zHQkBf',
+      pwd_input: 'input[type="password"]',
+      pwd_confirm_btn: '.CwaK9',
     };
-    const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
+    const enterPwdAndConfirm = async () => {
+      await Util.sleep(OauthPageRecipe.oauthPwdDelay);
+      await oauthPage.waitAndType(selectors.pwd_input, auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
+      await oauthPage.waitAndClick(selectors.pwd_confirm_btn, { delay: 1 });  // confirm password
+      await oauthPage.waitForNavigationIfAny();
+    };
     try {
       await oauthPage.waitAny('#Email, #submit_approve_access, #identifierId, .w6VTHd, #profileIdentifier', { timeout: 45 });
       if (await oauthPage.target.$('#Email') !== null) { // 2016-style login
@@ -412,10 +421,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndType('#identifierId', auth.email, { delay: 2 });
         await oauthPage.waitAndClick('.zZhnYe', { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
-        await Util.sleep(OauthPageRecipe.oauthPwdDelay);
-        await oauthPage.waitAndType('.zHQkBf', auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
-        await oauthPage.waitAndClick('.CwaK9', { delay: 1 });  // confirm password
-        await oauthPage.waitForNavigationIfAny();
+        await enterPwdAndConfirm();
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
@@ -424,12 +430,14 @@ export class OauthPageRecipe extends PageRecipe {
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       }
       await Util.sleep(5);
-      const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice]); // , {timeout: 60}
+      const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice, selectors.pwd_input]);
       await Util.sleep(1);
-      if ((await oauthPage.target.$x(selectors.backup_email_verification_choice)).length) { // asks for registered backup email
+      if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email
         await element.click();
         await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
         await oauthPage.waitAndClick('#next', { delay: 2 });
+      } else if (await oauthPage.isElementPresent(selectors.pwd_input)) {
+        await enterPwdAndConfirm();
       }
       // if the following succeeds, we are logged in and presented with approve/deny choice
       await oauthPage.waitAll('#submit_approve_access');
@@ -444,10 +452,11 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('#submit_approve_access', { delay: 1 });
       }
     } catch (e) {
-      if (String(e).indexOf('Execution context was destroyed') === -1) {
+      const eStr = String(e);
+      if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
       }
-      t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${String(e)}`);
+      t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   }

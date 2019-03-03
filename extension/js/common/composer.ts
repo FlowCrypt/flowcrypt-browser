@@ -126,8 +126,8 @@ export class Composer {
   private BTN_SENDING = 'Sending..';
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
 
-  private lastDraft = '';
-  private lastSubject = '';
+  private lastDraftBody = '';
+  private lastDraftSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private contactSearchInProgress = false;
@@ -159,9 +159,8 @@ export class Composer {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
       this.app.storageEmailFooterSet(undefined).catch(Catch.handleErr);
-      BrowserMsg.send.notificationShow(this.v.parentTabId, {
-        notification: `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`,
-      });
+      const notification = `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`;
+      BrowserMsg.send.notificationShow(this.v.parentTabId, { notification });
     }
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
@@ -299,7 +298,9 @@ export class Composer {
     }, this.getErrHandlers(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
       await this.draftDelete();
-      this.app.closeMsg();
+      // Reload iframe so we don't leave users without a reply UI.
+      this.v.skipClickPrompt = false;
+      window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.v);
     }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
@@ -1054,7 +1055,7 @@ export class Composer {
   }
 
   private appendForwardedMsg = (textBytes: Buf) => {
-    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${textBytes.toUtfStr().replace(/\n/g, '<br>').replace(/(?:\r\n|\r|\n)/g, '&gt; ')}`);
+    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${Xss.escape(textBytes.toUtfStr()).replace(/\r?\n/g, '<br>&gt; ')}`);
     this.resizeReplyBox();
   }
 
@@ -1081,7 +1082,7 @@ export class Composer {
       } else {
         const mimeDecoded = await Mime.decode(result.content);
         if (typeof mimeDecoded.text !== 'undefined') {
-          this.appendForwardedMsg(result.content);
+          this.appendForwardedMsg(Buf.fromUtfStr(mimeDecoded.text));
         } else if (typeof mimeDecoded.html !== 'undefined') {
           this.appendForwardedMsg(Buf.fromUtfStr(Xss.htmlSanitizeAndStripAllTags(mimeDecoded.html!, '\n')));
         } else {
@@ -1093,7 +1094,7 @@ export class Composer {
     }
   }
 
-  private renderReplyMsgComposeTable = async (method: "forward" | "reply" = "reply") => {
+  private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply') => {
     this.S.cached('prompt').css({ display: 'none' });
     this.S.cached('input_to').val(this.v.to.join(',') + (this.v.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
@@ -1574,16 +1575,19 @@ export class Composer {
   }
 
   private hasBodyChanged = (msgBody: string) => {
-    if (msgBody && msgBody !== this.lastDraft) {
-      this.lastDraft = msgBody;
+    if (msgBody && msgBody !== this.lastDraftBody) {
+      this.lastDraftBody = msgBody;
       return true;
     }
     return false;
   }
 
   private hasSubjectChanged = (subject: string) => {
-    if (subject && subject !== this.lastSubject) {
-      this.lastSubject = subject;
+    if (this.v.isReplyBox) { // user cannot change reply subject
+      return false; // this helps prevent unwanted empty drafts
+    }
+    if (subject && subject !== this.lastDraftSubject) {
+      this.lastDraftSubject = subject;
       return true;
     }
     return false;

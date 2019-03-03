@@ -8,6 +8,7 @@ import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
+import { Settings } from '../../../js/common/settings.js';
 import { Api, R } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
@@ -17,11 +18,13 @@ import { Buf } from '../../../js/common/core/buf.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
   const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
+  const showOriginal = uncheckedUrlParams.showOriginal === true;
 
+  let threadHasPgpBlock = false;
   let emailProvider;
   let factory: XssSafeFactory;
   let injector: Injector;
@@ -52,6 +55,11 @@ Catch.try(async () => {
 
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send.bg.settings({ acctEmail })));
   $('.action_choose_account').get(0).title = acctEmail;
+  $(".action-toggle-accounts-menu").click(Ui.event.handle((target, event) => {
+    event.stopPropagation();
+    $("#alt-accounts").toggleClass("active");
+  }));
+  $('.action_add_account').click(Ui.event.prevent('double', async () => await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId)));
 
   const notificationShowHandler: Bm.AsyncResponselessHandler = async ({ notification, callbacks }: Bm.NotificationShow) => {
     showNotification(notification, callbacks);
@@ -345,6 +353,13 @@ Catch.try(async () => {
       for (const m of thread.messages) {
         await renderMsg(m);
       }
+      if (threadHasPgpBlock) {
+        $(".action_see_original_message").css('display', 'inline-block');
+        $(".action_see_original_message").click(Ui.event.handle(() => loadUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
+        if (showOriginal) {
+          $(".action_see_original_message").text('See Decrypted');
+        }
+      }
       renderReplyBox(threadId, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
       // await Google.gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
@@ -375,7 +390,17 @@ Catch.try(async () => {
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
       for (const block of blocks) {
-        r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+        if (block.type === 'message' || block.type === 'publicKey' || block.type === 'signedMsg' || block.type === 'passwordMsg') {
+          threadHasPgpBlock = true;
+        }
+        if (r) {
+          r += '<br><br>';
+        }
+        if (showOriginal) {
+          r += Xss.escape(block.content).replace(/\n/g, '<br>');
+        } else {
+          r += Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+        }
       }
       const { atts } = await Mime.decode(mimeMsg);
       if (atts.length) {
@@ -445,4 +470,6 @@ Catch.try(async () => {
       await renderInbox(labelId);
     }
   }
+
+  await Settings.populateAccountsMenu('inbox.htm');
 })();

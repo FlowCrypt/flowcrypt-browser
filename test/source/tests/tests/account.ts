@@ -3,7 +3,7 @@ import { TestWithBrowser, TestWithGlobalBrowser } from '..';
 import { ComposePageRecipe, SetupPageRecipe, GmailPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
-import { Config } from '../../util';
+import { Config, Util } from '../../util';
 import { expect } from 'chai';
 import { FlowCryptApi } from '../api';
 import { TestVariant } from '../../test';
@@ -42,6 +42,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       await composePage.click('@input-body'); // focus on this tab before interacting with file upload
       fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/large.jpg');
+      await Util.sleep(2); // give it a little time to make tests less brittle
       await ComposePageRecipe.sendAndClose(composePage);
       await gmailPage.waitTillGone('@container-new-message');
     }));
