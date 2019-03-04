@@ -628,7 +628,7 @@ export class Composer {
   private extractProcessSendMsg = async () => {
     try {
       const recipients = this.getRecipientsFromDom();
-      const subject = this.v.subject || String($('#input_subject').val()); // replies have subject in url params
+      const subject = this.v.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
       await this.throwIfFormNotReady(recipients);
       this.S.now('send_btn_span').text('Loading');
