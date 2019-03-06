@@ -812,7 +812,7 @@ export class Composer {
       // admin_code stays locally and helps the sender extend life of the message or delete it
       const { short, admin_code } = await Api.fc.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
       const storage = await Store.getAcct(this.v.acctEmail, ['outgoing_language']);
-      await this.pwdProtectedEmailIntro(pwd, subj);
+      await this.throwIfPwdNotAcceptable(pwd, subj);
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
@@ -1615,12 +1615,10 @@ export class Composer {
     return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
   }
 
-  private pwdProtectedEmailIntro = async (pwd: Pwd, subj: string) => {
-    const keysAndPass = await Store.keysGetAllWithPassphrases(this.v.acctEmail);
-    for (const pass of keysAndPass.passphrases) {
-      if (typeof pass !== 'undefined' && pwd.answer === pass) {
-        throw new ComposerUserError('Please do not use your private key passphrase as a password for this message.');
-      }
+  private throwIfPwdNotAcceptable = async (pwd: Pwd, subj: string) => {
+    const { passphrases } = await Store.keysGetAllWithPassphrases(this.v.acctEmail);
+    if (passphrases.indexOf(pwd.answer) !== -1) {
+      throw new ComposerUserError('Please do not use your private key passphrase as a password for this message.');
     }
     if (subj.indexOf(pwd.answer) !== -1) {
       throw new ComposerUserError('Please do not include the password in the subject line.');
