@@ -17,7 +17,7 @@ Catch.try(async () => {
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const grandparentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'grandparentTabId');  // grandparent is the email provider tab
 
-  const initialRender = async () => {
+  const renderInitial = async () => {
     const subscription = await Store.subscription();
     const storage = await Store.getAcct(acctEmail, ['email_footer']);
     if (!subscription.active && storage.email_footer) {
@@ -56,6 +56,6 @@ Catch.try(async () => {
 
   $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send.closeDialog(parentTabId)));
 
-  await initialRender();
+  await renderInitial();
 
 })();

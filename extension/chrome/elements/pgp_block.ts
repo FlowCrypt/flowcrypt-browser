@@ -29,10 +29,8 @@ Catch.try(async () => {
   const senderEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
   const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const heightHistory: number[] = [];
+  const encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Env.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
   let signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
-  let encStr = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'message');
-  const encryptedMsgUrlParam: Buf | undefined = encStr ? Buf.fromUtfStr(encStr) : undefined; // todo - could be changed to msg
-  encStr = undefined;
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];
   let canReadEmails: undefined | boolean;
@@ -41,11 +39,11 @@ Catch.try(async () => {
   let userEnteredMsgPassword: string | undefined;
 
   const renderText = (text: string) => {
-    document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
+    document.getElementById('pgp_block')!.innerText = text;
   };
 
-  const sendResizeMsg = () => {
-    let height = Math.max($('#pgp_block').height()!, 20) + 40; // pgp_block.htm
+  const sendResizeBrowserMsg = () => {
+    let height = Math.max($('#pgp_block').height()!, 20) + 40;
     const isInfiniteResizeLoop = () => {
       heightHistory.push(height);
       const len = heightHistory.length;
@@ -68,7 +66,7 @@ Catch.try(async () => {
     img.setAttribute('style', a.getAttribute('style') || '');
     img.style.background = 'none';
     img.style.border = 'none';
-    img.addEventListener('load', () => sendResizeMsg());
+    img.addEventListener('load', () => sendResizeBrowserMsg());
     if (a.href.indexOf('cid:') === 0) { // image included in the email
       const contentId = a.href.replace(/^cid:/g, '');
       const content = includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
@@ -78,7 +76,7 @@ Catch.try(async () => {
       } else {
         a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
       }
-    } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
+    } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) { // image referenced as url
       img.src = a.href;
       a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
     } else {
@@ -107,13 +105,11 @@ Catch.try(async () => {
       $('.action_show_raw_pgp_block').click(Ui.event.handle(target => {
         $('.raw_pgp_block').css('display', 'block');
         $(target).css('display', 'none');
-        sendResizeMsg();
+        sendResizeBrowserMsg();
       }));
     }
-    // resize window now
-    sendResizeMsg();
-    // start auto-resizing the window after 1s
-    Catch.setHandledTimeout(() => $(window).resize(Ui.event.prevent('spree', sendResizeMsg)), 1000);
+    sendResizeBrowserMsg(); // resize window now
+    Catch.setHandledTimeout(() => $(window).resize(Ui.event.prevent('spree', sendResizeBrowserMsg)), 1000); // start auto-resizing the window after 1s
   };
 
   const btnHtml = (text: string, addClasses: string) => {
@@ -121,10 +117,10 @@ Catch.try(async () => {
   };
 
   const armoredMsgAsHtml = (encrypted?: string) => {
-    if (encrypted && encrypted.length) {
-      return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(encrypted).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
+    if (!encrypted || !encrypted.length) {
+      return '';
     }
-    return '';
+    return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(encrypted).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
   };
 
   const setFrameColor = (color: 'red' | 'green' | 'gray') => {
@@ -139,13 +135,11 @@ Catch.try(async () => {
 
   const renderErr = async (errBoxContent: string, renderRawEncrypted: string | undefined) => {
     setFrameColor('red');
-    await renderContent('<div class="error">' + errBoxContent.replace(/\n/g, '<br>') + '</div>' + armoredMsgAsHtml(renderRawEncrypted), true);
+    await renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${armoredMsgAsHtml(renderRawEncrypted)}`, true);
     $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
     $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail })));
     $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
-    $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => {
-      BrowserMsg.send.replyPubkeyMismatch(parentTabId);
-    }));
+    $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => BrowserMsg.send.replyPubkeyMismatch(parentTabId)));
     Ui.setTestState('ready');
   };
 
@@ -162,7 +156,7 @@ Catch.try(async () => {
   };
 
   const getDecryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
-    const pwd = suppliedPwd || userEnteredMsgPassword || undefined;
+    const pwd = suppliedPwd || userEnteredMsgPassword;
     if (pwd && hasChallengePassword) {
       const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
       return hashed;
@@ -176,13 +170,13 @@ Catch.try(async () => {
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content });
       Browser.saveToDownloads(att, renderIn);
-      sendResizeMsg();
+      sendResizeBrowserMsg();
     } else {
       delete decrypted.message;
       console.info(decrypted);
-      await Ui.modal.error('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
+      await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
       Browser.saveToDownloads(encrypted, renderIn);
-      sendResizeMsg();
+      sendResizeBrowserMsg();
     }
   };
 
@@ -203,12 +197,12 @@ Catch.try(async () => {
       const htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
     }
-    sendResizeMsg();
+    sendResizeBrowserMsg();
     $('div.attachment').click(Ui.event.prevent('double', async target => {
       const att = includedAtts[Number($(target).attr('index'))];
       if (att.hasData()) {
         Browser.saveToDownloads(att, $(target));
-        sendResizeMsg();
+        sendResizeBrowserMsg();
       } else {
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
         att.setData(await Api.download(att.url!, (perc, load, total) => renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));
@@ -278,10 +272,10 @@ Catch.try(async () => {
 
   const handleExtendMsgExpirationClicked = async (self: HTMLElement) => {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
-    Xss.sanitizeRender($(self).parent(), 'Updating..' + Ui.spinner('green'));
+    Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
       const r = await Api.fc.messageExpiration(adminCodes, nDays);
-      if (r.updated) {
+      if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
         window.location.reload();
       } else {
         throw r;
@@ -380,16 +374,16 @@ Catch.try(async () => {
           await renderErr(Lang.pgpBlock.notProperlySetUp + btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (hasChallengePassword && !optionalPwd) {
-            const pwd = await renderPasswordPromptAndWaitForEntry('first');
+            const pwd = await renderPasswordPromptAndAwaitEntry('first');
             await decryptAndRender(encryptedData, pwd);
           } else {
             await handlePrivateKeyMismatch(acctEmail, encryptedData);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
-          const pwd = await renderPasswordPromptAndWaitForEntry('retry');
+          const pwd = await renderPasswordPromptAndAwaitEntry('retry');
           await decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.usePassword) {
-          const pwd = await renderPasswordPromptAndWaitForEntry('first');
+          const pwd = await renderPasswordPromptAndAwaitEntry('first');
           await decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
           const errMsg = `This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC`;
@@ -428,7 +422,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderPasswordPromptAndWaitForEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
+  const renderPasswordPromptAndAwaitEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
     let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
@@ -517,7 +511,7 @@ Catch.try(async () => {
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!msgId) {
           Xss.sanitizeRender('#pgp_block', `Missing msgId to fetch message in pgp_block. If this happens repeatedly, please report the issue to human@flowcrypt.com`);
-          sendResizeMsg();
+          sendResizeBrowserMsg();
         } else if (canReadEmails) {
           renderText('Retrieving message...');
           const format: GmailResponseFormat = (!msgFetchedFromApi) ? 'full' : 'raw';
@@ -529,7 +523,7 @@ Catch.try(async () => {
           // tslint:disable-next-line:max-line-length
           const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
           Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
-          sendResizeMsg();
+          sendResizeBrowserMsg();
           $('.auth_settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }

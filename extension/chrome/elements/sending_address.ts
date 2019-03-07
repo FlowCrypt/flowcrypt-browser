@@ -21,22 +21,24 @@ Catch.try(async () => {
   const storage = await Store.getAcct(acctEmail, ['addresses']);
   const addresses = storage.addresses || [acctEmail];
 
-  const emailAddrToHtmlRadio = (a: string) => {
-    a = Xss.escape(a);
-    const b64 = Buf.fromUtfStr(a).toBase64Str();
-    return `<input type="radio" name="a" value="${a}" id="${b64}"> <label data-test="action-choose-address" for="${b64}">${a}</label><br>`;
-  };
+  const renderInitial = () => {
+    const emailAddrToHtmlRadio = (a: string) => {
+      a = Xss.escape(a);
+      const b64 = Buf.fromUtfStr(a).toBase64Str();
+      return `<input type="radio" name="a" value="${a}" id="${b64}"> <label data-test="action-choose-address" for="${b64}">${a}</label><br>`;
+    };
 
-  Xss.sanitizeRender(container, addresses.map(emailAddrToHtmlRadio).join(''));
-  container.find('input').first().prop('checked', true);
-  container.find('input').click(Ui.event.handle(async target => {
-    const chosenSendingAddr = String($(target).val());
-    if (chosenSendingAddr !== addresses[0]) {
-      const orderedAddrs = Value.arr.unique([chosenSendingAddr].concat(storage.addresses || []));
-      await Store.setAcct(acctEmail, { addresses: orderedAddrs });
-      window.location.reload();
-    }
-  }));
+    Xss.sanitizeRender(container, addresses.map(emailAddrToHtmlRadio).join(''));
+    container.find('input').first().prop('checked', true);
+    container.find('input').click(Ui.event.handle(async target => {
+      const chosenSendingAddr = String($(target).val());
+      if (chosenSendingAddr !== addresses[0]) {
+        const orderedAddrs = Value.arr.unique([chosenSendingAddr].concat(storage.addresses || []));
+        await Store.setAcct(acctEmail, { addresses: orderedAddrs });
+        window.location.reload();
+      }
+    }));
+  };
 
   $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (target, done) => {
     try {
@@ -59,5 +61,7 @@ Catch.try(async () => {
   }));
 
   $('.action_close').click(Ui.event.handle(() => BrowserMsg.send.closeDialog(parentTabId)));
+
+  await renderInitial();
 
 })();

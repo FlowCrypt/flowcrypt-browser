@@ -9,7 +9,6 @@ import { Composer } from '../../js/common/composer.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Dict } from '../../js/common/core/common.js';
 import { Google } from '../../js/common/api/google.js';
 
 Catch.try(async () => {
@@ -29,8 +28,6 @@ Catch.try(async () => {
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
-  let additionalMsgHeaders: Dict<string>;
-
   const appFunctions = Composer.defaultAppFunctions();
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
@@ -42,45 +39,36 @@ Catch.try(async () => {
 
   const sendBtnText = 'Send Response';
 
-  for (const recipient of to) {
-    Xss.sanitizeAppend('.recipients', Ui.e('span', { text: recipient }));
-  }
+  const renderInitial = async () => {
+    for (const recipient of to) {
+      Xss.sanitizeAppend('.recipients', Ui.e('span', { text: recipient }));
+    }
+    $('.pubkey_file_name').text(att.name);
+    composer.resizeReplyBox();
+    BrowserMsg.send.scrollToBottomOfConversation(parentTabId);
+    $('#input_text').focus();
+  };
 
-  // render
-  $('.pubkey_file_name').text(att.name);
-  composer.resizeReplyBox();
-  BrowserMsg.send.scrollToBottomOfConversation(parentTabId);
-  $('#input_text').focus();
-
-  // determine reply headers
-  try {
+  const determineReplyHeaders = async () => {
     const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full');
     if (thread.messages && thread.messages.length > 0) {
       const threadMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
       const threadMsgRefsLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
-      additionalMsgHeaders = { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast };
+      return { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast };
     }
-  } catch (e) {
-    if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-    } else if (Api.err.isNetErr(e)) {
-      // todo - render retry button
-    } else {
-      Catch.handleErr(e);
-      // todo - render error
-    }
-  }
+    return { 'In-Reply-To': '', 'References': '' };
+  };
 
   $('#send_btn').off().click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
     const body = { 'text/plain': $('#input_text').get(0).innerText };
     const message = await Api.common.msg(acctEmail, from, to, subject, body, [att], threadId);
-    for (const k of Object.keys(additionalMsgHeaders)) {
-      message.headers[k] = additionalMsgHeaders[k];
-    }
+    const replyHeaders = await determineReplyHeaders();
+    message.headers['In-Reply-To'] = replyHeaders['In-Reply-To'];
+    message.headers.References = replyHeaders.References;
     try {
       await Google.gmail.msgSend(acctEmail, message);
-      BrowserMsg.send.notificationShow(parentTabId, { notification: 'Message sent.' });
+      BrowserMsg.send.notificationShow(parentTabId, { notification: 'Message sent' });
       Xss.sanitizeReplace('#compose', 'Message sent. The other person should use this information to send a new message.');
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
@@ -93,9 +81,11 @@ Catch.try(async () => {
       } else {
         Catch.handleErr(e);
         $(target).text(sendBtnText);
-        await Ui.modal.error('There was an error sending, please try again.');
+        await Ui.modal.error(`${Api.err.eli5(e)}\n\nPlease try again.`);
       }
     }
   }));
+
+  await renderInitial();
 
 })();
