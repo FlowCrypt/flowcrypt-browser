@@ -130,6 +130,7 @@ export class Composer {
   private lastDraftSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
+  private composeWindowIsMinimized = false;
   private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
   private saveDraftInterval?: number;
@@ -1536,6 +1537,15 @@ export class Composer {
       }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
+      $('.minimize_new_message').click(Ui.event.handle(() => {
+        let height = '36px';
+        if (this.composeWindowIsMinimized) {
+          height = '605px';
+        }
+        BrowserMsg.send.setCss(this.v.parentTabId, { selector: `div#new_message`, css: { height } });
+        BrowserMsg.send.setCss(this.v.parentTabId, { selector: `iframe#${this.v.frameId}`, css: { height } });
+        this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
+      }));
       this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
     }
