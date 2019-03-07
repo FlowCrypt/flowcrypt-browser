@@ -12,11 +12,7 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['action']);
   const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
 
-  if (action === 'inbox') {
-    $('#title').text('Choose inbox account');
-  } else {
-    $('#title').text('Select an account to open settings');
-  }
+  $('#title').text(action === 'inbox' ? 'Choose inbox account' : 'Select an account to open settings');
 
   const acctStorages = await Store.getAccounts(await Store.acctEmailsGet(), ['setup_done', 'picture']);
   let emailsUlHtml = '';
