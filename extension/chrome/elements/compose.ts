@@ -35,10 +35,11 @@ Catch.try(async () => {
   let threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
   let subject = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
-  const storage = await Store.getAcct(acctEmail, [
-    'google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider', 'hide_message_password', 'drafts_reply'
-  ]);
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider',
+    'hide_message_password', 'drafts_reply']);
   const canReadEmail = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
+  const tabId = await BrowserMsg.requiredTabId();
+  const factory = new XssSafeFactory(acctEmail, tabId);
 
   await (async () => { // attempt to recover missing params
     if (!isReplyBox || (threadId && threadId !== threadMsgId && to.length && subject)) {
@@ -52,7 +53,7 @@ Catch.try(async () => {
       if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
       } else if (Api.err.isInsufficientPermission(e)) {
-        // no permission - skip
+        console.info(`skipping attempt to recover missing params due to insufficient permission`);
       } else if (Api.err.isNotFound(e)) {
         threadMsgId = '';
       } else if (Api.err.isSignificant(e)) {
@@ -71,11 +72,8 @@ Catch.try(async () => {
     $('#loader').remove();
   })();
 
-  const tabId = await BrowserMsg.requiredTabId();
-  const factory = new XssSafeFactory(acctEmail, tabId);
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
-    // there may be a draft we want to load
-    draftId = storage.drafts_reply[threadId];
+    draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
 
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
