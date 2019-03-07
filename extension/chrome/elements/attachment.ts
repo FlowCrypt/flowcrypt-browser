@@ -27,10 +27,15 @@ Catch.try(async () => {
   const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const id = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
   const name = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
-  // either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
+  // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
   const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
 
   const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
+  const button = $('#download');
+  let origHtmlContent: string;
+  let progressEl: JQuery<HTMLElement>;
+  let passphraseInterval: number | undefined; // todo - could be refactored with chrome.storage.onChange or localSession.onChange (if there is such a thing)
+  let missingPasspraseLongids: string[] = [];
 
   let att: Att;
   try {
@@ -41,36 +46,22 @@ Catch.try(async () => {
     return;
   }
 
-  let origHtmlContent: string;
-  const button = $('#download');
-  let progressEl: JQuery<HTMLElement>;
-
-  let passphraseInterval: number | undefined;
-  let missingPasspraseLongids: string[] = [];
-
-  $('#type').text(type || 'unknown type');
-  $('#name').text(name || 'noname');
-
-  $('img#file-format').attr('src', (() => {
+  const getFileIconSrc = () => {
     const icon = (name: string) => `/img/fileformat/${name}.png`;
     const nameSplit = origNameBasedOnFilename.split('.');
     const extension = nameSplit[nameSplit.length - 1].toLowerCase();
-    switch (extension) {
-      case 'jpg':
-      case 'jpeg':
-        return icon('jpg');
-      case 'xls':
-      case 'xlsx':
-        return icon('excel');
-      case 'doc':
-      case 'docx':
-        return icon('word');
-      case 'png':
-        return icon('png');
-      default:
-        return icon('generic');
+    if (extension === 'jpg' || extension === 'jpeg') {
+      return icon('jpg');
+    } else if (extension === 'xls' || extension === 'xlsx') {
+      return icon('excel');
+    } else if (extension === 'doc' || extension === 'docx') {
+      return icon('word');
+    } else if (extension === 'png') {
+      return icon('png');
+    } else {
+      return icon('generic');
     }
-  })());
+  };
 
   const renderErr = (e: any) => {
     if (Api.err.isAuthPopupNeeded(e)) {
@@ -90,6 +81,7 @@ Catch.try(async () => {
       // todo - copy/pasted - unify
       // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
       // see pgp_block.js for proper common implmenetation
+      // nother note - even better if this could be implemented with localSession.onChange / storage.onChange
       if (passphrases.filter(passphrase => typeof passphrase !== 'undefined').length) {
         missingPasspraseLongids = [];
         clearInterval(passphraseInterval);
@@ -98,17 +90,13 @@ Catch.try(async () => {
     }
   };
 
-  const getUrlFileSize = (origUrl: string): Promise<number | undefined> => new Promise((resolve, reject) => {
+  const getUrlFileSize = (origUrl: string): Promise<number | undefined> => new Promise(resolve => {
     console.info('trying to figure out figetUrlFileSizee size');
     let realUrl;
-    if (Value.is('docs.googleusercontent.getUrlFileSizeom/docs/securesc').in(origUrl)) {
+    if (origUrl.indexOf('docs.googleusercontent.getUrlFileSizeom/docs/securesc') !== -1) {
       try {
-        const googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // we catch any errors below
-        if (googleDriveFileId) {
-          realUrl = 'https://drive.google.com/uc?export=download&id=' + googleDriveFileId; // this one can actually give us headers properly
-        } else {
-          realUrl = origUrl;
-        }
+        const googleDriveFileId = origUrl.split('/').pop()!.split('?').shift(); // try and catch any errors below if structure is not as expected
+        realUrl = googleDriveFileId ? `https://drive.google.com/uc?export=download&id=${googleDriveFileId}` : origUrl; // attempt to get length headers from Google Drive file if available
       } catch (e) {
         realUrl = origUrl;
       }
@@ -116,10 +104,10 @@ Catch.try(async () => {
       realUrl = origUrl;
     }
     const xhr = new XMLHttpRequest();
-    xhr.open("HEAD", realUrl, true);
+    xhr.open('HEAD', realUrl, true);
     xhr.onreadystatechange = function () {
       if (this.readyState === this.DONE) {
-        const contentLength = xhr.getResponseHeader("Content-Length");
+        const contentLength = xhr.getResponseHeader('Content-Length');
         if (contentLength !== null) {
           resolve(parseInt(contentLength));
         } else {
@@ -151,20 +139,12 @@ Catch.try(async () => {
     }
   };
 
-  if (!size && url) { // download url of an unknown size
-    getUrlFileSize(url).then(fileSize => {
-      if (typeof fileSize !== 'undefined') {
-        size = fileSize;
-      }
-    }).catch(Catch.handleErr);
-  }
-
   const renderProgress = (percent: number, received: number, fileSize: number) => {
     size = fileSize || size;
     if (percent) {
-      progressEl.text(percent + '%');
+      progressEl.text(`${percent}%`);
     } else if (size) {
-      progressEl.text(Math.floor(((received * 0.75) / size) * 100) + '%');
+      progressEl.text(`${Math.floor(((received * 0.75) / size) * 100)}%`);
     }
   };
 
@@ -172,13 +152,13 @@ Catch.try(async () => {
     if (a.hasData()) {
       return;
     }
-    if (a.url!) { // when content was downloaded and decrypted
-      a.setData(await Api.download(a.url!, renderProgress));
+    if (a.url) { // when content was downloaded and decrypted
+      a.setData(await Api.download(a.url, renderProgress));
     } else if (a.id && a.msgId) { // gmail attId
       const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id, renderProgress);
       a.setData(data);
     } else {
-      throw new Error('Missing both id and url');
+      throw new Error('File is missing both id and url - this should be fixed');
     }
   };
 
@@ -186,7 +166,7 @@ Catch.try(async () => {
     try {
       origHtmlContent = button.html();
       button.addClass('visible');
-      Xss.sanitizeRender(button, Ui.spinner('green', 'large_spinner') + '<span class="download_progress"></span>');
+      Xss.sanitizeRender(button, `${Ui.spinner('green', 'large_spinner')}<span class="download_progress"></span>`);
       progressEl = $('.download_progress');
       await recoverMissingAttIdIfNeeded(att);
       await downloadDataIfNeeded(att);
@@ -217,18 +197,15 @@ Catch.try(async () => {
   };
 
   const processAsPublicKeyAndHideAttIfAppropriate = async (a: Att) => {
-    if (a.msgId && a.id && a.treatAs() === 'publicKey') {
-      // this is encrypted public key - download && decrypt & parse & render
+    if (a.msgId && a.id && a.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id);
       const decrRes = await PgpMsg.decrypt({ kisWithPp, encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await PgpMsg.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey') {
           if (openpgpType.armored) { // could potentially process unarmored pubkey files, maybe later
-            // render pubkey
-            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [decrRes.content.toUtfStr()] });
-            // hide attachment
-            BrowserMsg.send.setCss(parentTabId, { selector: `#${frameId}`, traverseUp: 1, css: { display: 'none' } });
+            BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, traverseUp: 2, publicKeys: [decrRes.content.toUtfStr()] }); // render pubkey
+            BrowserMsg.send.setCss(parentTabId, { selector: `#${frameId}`, traverseUp: 1, css: { display: 'none' } }); // hide attachment
             $('body').text('');
             return true;
           }
@@ -238,9 +215,21 @@ Catch.try(async () => {
     return false;
   };
 
+  $('#type').text(type || 'unknown type');
+  $('#name').text(name || 'noname');
+  $('img#file-format').attr('src', getFileIconSrc());
+
+  if (!size && url) { // download url of an unknown size
+    getUrlFileSize(url).then(fileSize => {
+      if (typeof fileSize !== 'undefined') {
+        size = fileSize;
+      }
+    }).catch(Catch.handleErr);
+  }
+
   try {
     if (! await processAsPublicKeyAndHideAttIfAppropriate(att)) {
-      // normal attachment, const user download it by clickings
+      // normal attachment, let user download it by clickings
       $('#download').click(Ui.event.prevent('double', handleDownloadButtonClicked));
     }
   } catch (e) {
