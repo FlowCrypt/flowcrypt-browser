@@ -14,21 +14,17 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const emails = Env.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
+  const missingPubkeyEmails = Env.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
   const placement = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'placement');
 
-  const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
-
-  for (const email of emails) {
-    Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
+  for (const missingPubkeyEmail of missingPubkeyEmails) {
+    Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
   }
-
-  const contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
-
-  Xss.sanitizeAppend('select.copy_from_email', '<option value=""></option>');
-  for (const contact of contacts) {
+  for (const contact of await Store.dbContactSearch(undefined, { has_pgp: true })) {
     Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
   }
+
+  const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {
@@ -36,6 +32,7 @@ Catch.try(async () => {
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
+        Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
         await Ui.modal.error('Contact not found.');
       }
     } else {
