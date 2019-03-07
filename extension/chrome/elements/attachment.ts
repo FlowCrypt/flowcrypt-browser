@@ -30,12 +30,9 @@ Catch.try(async () => {
   // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
   const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
 
-  const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
   const button = $('#download');
   let origHtmlContent: string;
   let progressEl: JQuery<HTMLElement>;
-  let passphraseInterval: number | undefined; // todo - could be refactored with chrome.storage.onChange or localSession.onChange (if there is such a thing)
-  let missingPasspraseLongids: string[] = [];
 
   let att: Att;
   try {
@@ -75,21 +72,6 @@ Catch.try(async () => {
     }
   };
 
-  const checkPassphraseEntered = async () => { // todo - more or less copy-pasted from pgp_block.js, should use a common one. Also similar one in compose.js
-    if (missingPasspraseLongids) {
-      const passphrases = await Promise.all(missingPasspraseLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
-      // todo - copy/pasted - unify
-      // further - this approach is outdated and will not properly deal with WRONG passphrases that changed (as opposed to missing)
-      // see pgp_block.js for proper common implmenetation
-      // nother note - even better if this could be implemented with localSession.onChange / storage.onChange
-      if (passphrases.filter(passphrase => typeof passphrase !== 'undefined').length) {
-        missingPasspraseLongids = [];
-        clearInterval(passphraseInterval);
-        $('#download').click();
-      }
-    }
-  };
-
   const getUrlFileSize = (origUrl: string): Promise<number | undefined> => new Promise(resolve => {
     console.info('trying to figure out figetUrlFileSizee size');
     let realUrl;
@@ -120,7 +102,7 @@ Catch.try(async () => {
   });
 
   const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    const result = await PgpMsg.decrypt({ kisWithPp, encryptedData: encryptedAtt.getData() });
+    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(acctEmail), encryptedData: encryptedAtt.getData() });
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
       if (!result.filename || Value.is(result.filename).in(['msg.txt', 'null'])) {
@@ -129,8 +111,8 @@ Catch.try(async () => {
       Browser.saveToDownloads(new Att({ name: result.filename, type: encryptedAtt.type, data: result.content }), $('body'));
     } else if (result.error.type === DecryptErrTypes.needPassphrase) {
       BrowserMsg.send.passphraseDialog(parentTabId, { type: 'attachment', longids: result.longids.needPassphrase });
-      clearInterval(passphraseInterval);
-      passphraseInterval = Catch.setHandledInterval(checkPassphraseEntered, 1000);
+      await Store.waitUntilPassphraseChanged(acctEmail, result.longids.needPassphrase);
+      await decryptAndSaveAttToDownloads(encryptedAtt);
     } else {
       delete result.message;
       console.info(result);
@@ -199,7 +181,7 @@ Catch.try(async () => {
   const processAsPublicKeyAndHideAttIfAppropriate = async (a: Att) => {
     if (a.msgId && a.id && a.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id);
-      const decrRes = await PgpMsg.decrypt({ kisWithPp, encryptedData: data });
+      const decrRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await PgpMsg.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey') {

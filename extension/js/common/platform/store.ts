@@ -218,6 +218,26 @@ export class Store {
     return fromSession && !ignoreSession ? fromSession : undefined;
   }
 
+  static waitUntilPassphraseChanged = async (acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000) => {
+    const missingOrWrongPassprases: Dict<string | undefined> = {};
+    const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
+    for (const i of missingOrWrongPpKeyLongids.keys()) {
+      missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
+    }
+    while (true) {
+      await Ui.time.sleep(interval);
+      const longidsMissingPp = Object.keys(missingOrWrongPassprases);
+      const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => Store.passphraseGet(acctEmail, longid)));
+      for (let i = 0; i < longidsMissingPp.length; i++) {
+        const missingOrWrongPp = missingOrWrongPassprases[longidsMissingPp[i]];
+        const updatedPp = updatedPpArr[i];
+        if (updatedPp !== missingOrWrongPp) {
+          return;
+        }
+      }
+    }
+  }
+
   static keysGet = async (acctEmail: string, longids?: string[]) => {
     const stored = await Store.getAcct(acctEmail, ['keys']);
     const keys: KeyInfo[] = stored.keys || [];

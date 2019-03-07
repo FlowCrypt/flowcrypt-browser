@@ -4,7 +4,7 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Str, Dict } from '../../js/common/core/common.js';
+import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -366,7 +366,12 @@ Catch.try(async () => {
           await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
-        await renderPassphrasePromptAndAwaitChange(result.longids.needPassphrase);
+        await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
+        $('.enter_passphrase').click(Ui.event.handle(() => {
+          Ui.setTestState('waiting');
+          BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: result.longids.needPassphrase });
+        }));
+        await Store.waitUntilPassphraseChanged(acctEmail, result.longids.needPassphrase);
         await decryptAndRender(encryptedData, optionalPwd);
       } else {
         const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
@@ -401,27 +406,6 @@ Catch.try(async () => {
     }
   };
 
-  const renderPassphrasePromptAndAwaitChange = async (missingOrWrongPpKeyLongids: string[]) => {
-    const missingOrWrongPassprases: Dict<string | undefined> = {};
-    const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
-    for (const i of missingOrWrongPpKeyLongids.keys()) {
-      missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
-    }
-    await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
-    let wasClicked = false;
-    $('.enter_passphrase').click(Ui.event.handle(() => {
-      Ui.setTestState('waiting');
-      BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
-      wasClicked = true;
-    }));
-    while (true) {
-      await Ui.time.sleep(wasClicked ? 400 : 2000);
-      if (await werePassphrasesUpdated(missingOrWrongPassprases)) {
-        return;
-      }
-    }
-  };
-
   const renderPasswordPromptAndAwaitEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
     let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
@@ -434,19 +418,6 @@ Catch.try(async () => {
     $(self).text('Opening');
     await Ui.delay(50); // give browser time to render
     return String($('#answer').val());
-  };
-
-  const werePassphrasesUpdated = async (missingOrWrongPassprases: Dict<string | undefined>): Promise<boolean> => {
-    const longidsMissingPp = Object.keys(missingOrWrongPassprases);
-    const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => Store.passphraseGet(acctEmail, longid)));
-    for (let i = 0; i < longidsMissingPp.length; i++) {
-      const missingOrWrongPp = missingOrWrongPassprases[longidsMissingPp[i]];
-      const updatedPp = updatedPpArr[i];
-      if (updatedPp !== missingOrWrongPp) {
-        return true;
-      }
-    }
-    return false;
   };
 
   const renderPasswordEncryptedMsgLoadFail = async (linkRes: R.FcLinkMsg) => {
