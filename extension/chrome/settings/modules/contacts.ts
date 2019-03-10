@@ -41,6 +41,7 @@ Catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
+      $('#file_import .action_binary_keyfile').css('display', 'inline-block');
       $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
     }));
 
@@ -106,6 +107,7 @@ Catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
+      $('#file_import .action_binary_keyfile').css('display', 'inline-block');
       $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
     }));
 
@@ -115,7 +117,27 @@ Catch.try(async () => {
         await Ui.modal.warning('Could not find any new public keys');
       } else {
         $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-        $('#bulk_import .input_pubkey, #bulk_import .action_process').css('display', 'none');
+        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import .action_binary_keyfile').css('display', 'none');
+      }
+    }));
+
+    $('#file_import .action_binary_keyfile').off().click(Ui.event.prevent('double', async target => {
+      $('#binary_file').click();
+    }));
+
+    $('#binary_file').change(Ui.event.handle(async (self, event: JQuery.Event<HTMLInputElement, null>) => {
+      if (event !== null && typeof event !== 'undefined') {
+        if (event.target.files !== null && typeof event.target.files !== 'undefined' && event.target.files.length > 0) {
+          const fileReader = new FileReader();
+          fileReader.onload = async () => {
+            if (fileReader.result instanceof ArrayBuffer) {
+              const binaryKey = new Uint8Array(fileReader.result);
+              const key = await Pgp.key.readBinary(binaryKey);
+              $('#bulk_import .input_pubkey').val(key.armor());
+            }
+          };
+          fileReader.readAsArrayBuffer(event.target.files[0]);
+        }
       }
     }));
 
