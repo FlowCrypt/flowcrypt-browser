@@ -1538,12 +1538,7 @@ export class Composer {
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
       $('.minimize_new_message').click(Ui.event.handle(() => {
-        let height = '36px';
-        if (this.composeWindowIsMinimized) {
-          height = '605px';
-        }
-        BrowserMsg.send.setCss(this.v.parentTabId, { selector: `div#new_message`, css: { height } });
-        BrowserMsg.send.setCss(this.v.parentTabId, { selector: `iframe#${this.v.frameId}`, css: { height } });
+        BrowserMsg.send.setCss(this.v.parentTabId, { selector: `iframe#${this.v.frameId}, div#new_message`, css: { height: this.composeWindowIsMinimized ? '605px' : '36px' } });
         this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
       }));
       this.renderSenderAliasesOptions();
