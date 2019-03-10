@@ -426,7 +426,6 @@ table#compose tr#password_or_pubkey_container td input { padding-left: 3px; padd
 table#compose tr#password_or_pubkey_container td input#input_password { width: 150px; color: #31A217; padding: 3px 12px; height: 20px; text-align: center; }
 table#compose tr#password_or_pubkey_container td .label_password { position: absolute; margin-left: 10px; margin-top: 22px; font-size: 10px; text-transform: uppercase;
   color: #777; display: none; -webkit-animation: fadeInDown 0.5s; animation: fadeInDown 0.5s; }
-/* table#compose tr#password_or_pubkey_container td .question_copy { margin-top: 20px; } */
 table#compose tr#password_or_pubkey_container td .grey { padding: 1px 5px; background: #B7B7B7; color: white; display: inline-block; border-radius: 5px; }
 table#compose span.start, table#compose span.end { font-weight: 900; position: absolute; font-size: 16px; font-family: 'Open Sans', Arial; }
 table#compose span.end { margin-left: -8px; }
