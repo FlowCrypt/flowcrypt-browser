@@ -343,7 +343,11 @@ table#compose th span.close_new_message { display: inline-block; position: absol
   font-weight: bold; opacity: .7; height: 15px; width: 15px; text-align: center; padding: 5px; }
 table#compose th span.close_new_message img { width: 15px; height: 15px; }
 table#compose th span.close_new_message:hover { cursor: pointer; opacity: 1; }
-table#compose th .action_feedback { position: absolute; right: 35px; top: 8px; opacity: 0.5; }
+table#compose th span.minimize_new_message { display: inline-block; position: absolute; right: 35px; margin-right: 1px; margin-top: 4px; color: white;
+  font-weight: bold; opacity: .7; height: 15px; width: 15px; text-align: center; padding: 5px; }
+table#compose th span.minimize_new_message:hover { cursor: pointer; opacity: 1; }
+@media (max-height:36px) { table#compose tbody tr:not(:first-of-type) { display: none; } }
+table#compose th .action_feedback { position: absolute; right: 70px; top: 8px; opacity: 0.5; }
 table#compose th .action_feedback img { width: 20px; }
 table#compose th .action_feedback:hover { opacity: 0.9; cursor: pointer; }
 

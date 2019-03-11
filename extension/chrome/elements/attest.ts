@@ -23,9 +23,9 @@ Catch.try(async () => {
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
   const passphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
 
-  const processAttest = async (passphrase: string | undefined) => {
+  const processAttest = async (passphrase?: string) => {
     if (typeof passphrase !== 'undefined') {
-      Xss.sanitizeRender('.status', 'Verifying..' + Ui.spinner('green'));
+      Xss.sanitizeRender('.status', `Verifying..${Ui.spinner('green')}`);
       const attestation = await BrowserMsg.send.bg.await.attestPacketReceived({ acctEmail, packet: attestPacket, passphrase });
       $('.status').addClass(attestation.success ? 'good' : 'bad')[0].innerText = attestation.result;
     }

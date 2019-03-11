@@ -130,6 +130,7 @@ export class Composer {
   private lastDraftSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
+  private composeWindowIsMinimized = false;
   private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
   private saveDraftInterval?: number;
@@ -298,9 +299,12 @@ export class Composer {
     }, this.getErrHandlers(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
       await this.draftDelete();
-      // Reload iframe so we don't leave users without a reply UI.
-      this.v.skipClickPrompt = false;
-      window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.v);
+      if (this.v.isReplyBox) { // reload iframe so we don't leave users without a reply UI
+        this.v.skipClickPrompt = false;
+        window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.v);
+      } else { // close new msg
+        this.app.closeMsg();
+      }
     }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
@@ -1536,6 +1540,10 @@ export class Composer {
       }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
+      $('.minimize_new_message').click(Ui.event.handle(() => {
+        BrowserMsg.send.setCss(this.v.parentTabId, { selector: `iframe#${this.v.frameId}, div#new_message`, css: { height: this.composeWindowIsMinimized ? '605px' : '36px' } });
+        this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
+      }));
       this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
     }

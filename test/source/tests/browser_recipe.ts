@@ -71,7 +71,7 @@ export class BrowserRecipe {
       await pgpBlockPage.waitAndType('@input-message-password', password);
       await pgpBlockPage.waitAndClick('@action-decrypt-with-password');
       await Util.sleep(1);
-      await pgpBlockPage.waitForSelTestState('ready', 10);
+      await pgpBlockPage.waitForSelTestState('ready', 15);
     }
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of expectedContents) {

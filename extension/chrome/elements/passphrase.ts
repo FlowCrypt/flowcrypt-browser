@@ -22,48 +22,51 @@ Catch.try(async () => {
   const longids = Env.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
   const type = Env.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'attest', 'message', 'draft', 'attachment']);
 
-  if (type === 'embedded') {
-    $('h1').parent().css('display', 'none');
-    $('div.separator').css('display', 'none');
-    $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
-    $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
-  } else if (type === 'sign') {
-    $('h1').text('Enter your pass phrase to sign email');
-  } else if (type === 'draft') {
-    $('h1').text('Enter your pass phrase to load a draft');
-  } else if (type === 'attest') {
-    $('h1').text('Enter your pass phrase to confirm attestation');
-  } else if (type === 'attachment') {
-    $('h1').text('Enter your pass phrase to decrypt a file');
-  }
-  await Ui.passphraseToggle(['passphrase']);
-  $('#passphrase').focus();
-
   const allPrivateKeys = await Store.keysGet(acctEmail);
   const selectedPrivateKeys = allPrivateKeys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
 
-  if (allPrivateKeys.length > 1) {
-    let html: string;
-    if (selectedPrivateKeys.length === 1) {
-      html = `For key: <span class="good">${Xss.escape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
-    } else {
-      html = 'Pass phrase needed for any of the following keys:';
-      for (const i of selectedPrivateKeys.keys()) {
-        html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
-      }
-    }
-    Xss.sanitizeRender('.which_key', html);
-    $('.which_key').css('display', 'block');
-  }
+  await Ui.passphraseToggle(['passphrase']);
 
-  const renderErr = () => {
+  const renderInitial = () => {
+    $('#passphrase').keyup(renderNormalPpPrompt);
+    if (type === 'embedded') {
+      $('h1').parent().css('display', 'none');
+      $('div.separator').css('display', 'none');
+      $('body#settings > div#content.dialog').css({ width: 'inherit', background: '#fafafa', });
+      $('.line.which_key').css({ display: 'none', position: 'absolute', visibility: 'hidden', left: '5000px', });
+    } else if (type === 'sign') {
+      $('h1').text('Enter your pass phrase to sign email');
+    } else if (type === 'draft') {
+      $('h1').text('Enter your pass phrase to load a draft');
+    } else if (type === 'attest') {
+      $('h1').text('Enter your pass phrase to confirm attestation');
+    } else if (type === 'attachment') {
+      $('h1').text('Enter your pass phrase to decrypt a file');
+    }
+    $('#passphrase').focus();
+    if (allPrivateKeys.length > 1) {
+      let html: string;
+      if (selectedPrivateKeys.length === 1) {
+        html = `For key: <span class="good">${Xss.escape(mnemonic(selectedPrivateKeys[0].longid) || '')}</span> (KeyWords)`;
+      } else {
+        html = 'Pass phrase needed for any of the following keys:';
+        for (const i of selectedPrivateKeys.keys()) {
+          html += `KeyWords ${String(i + 1)}: <div class="good">${Xss.escape(mnemonic(selectedPrivateKeys[i].longid) || '')}</div>`;
+        }
+      }
+      Xss.sanitizeRender('.which_key', html);
+      $('.which_key').css('display', 'block');
+    }
+  };
+
+  const renderFailedEntryPpPrompt = () => {
     $('#passphrase').val('');
     $('#passphrase').css('border-color', 'red');
     $('#passphrase').css('color', 'red');
     $('#passphrase').attr('placeholder', 'Please try again');
   };
 
-  const renderNormal = () => {
+  const renderNormalPpPrompt = () => {
     $('#passphrase').css('border-color', '');
     $('#passphrase').css('color', 'black');
     $('#passphrase').focus();
@@ -78,7 +81,7 @@ Catch.try(async () => {
     const pass = String($('#passphrase').val());
     const storageType: StorageType = $('.forget').prop('checked') ? 'session' : 'local';
     let atLeastOneMatched = false;
-    for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save them all
+    for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const { keys: [prv] } = await openpgp.key.readArmored(keyinfo.private);
       try {
         if (await Pgp.key.decrypt(prv, [pass]) === true) {
@@ -97,11 +100,11 @@ Catch.try(async () => {
       BrowserMsg.send.passphraseEntry('broadcast', { entered: true });
       BrowserMsg.send.closeDialog(parentTabId);
     } else {
-      renderErr();
-      Catch.setHandledTimeout(renderNormal, 1500);
+      renderFailedEntryPpPrompt();
+      Catch.setHandledTimeout(renderNormalPpPrompt, 1500);
     }
   }));
 
-  $('#passphrase').keyup(renderNormal);
+  renderInitial();
 
 })();
