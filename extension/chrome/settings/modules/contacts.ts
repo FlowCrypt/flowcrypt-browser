@@ -2,13 +2,23 @@
 
 'use strict';
 
+import { VERSION } from '../../../js/common/core/const.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
+import { requireOpenpgp } from '../../../js/common/platform/require.js';
 import { Buf } from '../../../js/common/core/buf.js';
+
+const openpgp = requireOpenpgp();
+
+if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
+  openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
+  openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+  // openpgp.config.require_uid_self_cert = false;
+}
 
 Catch.try(async () => {
 
@@ -41,7 +51,7 @@ Catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
-      $('#file_import .action_binary_keyfile').css('display', 'inline-block');
+      $('#file_import .action_upload_keyfile').css('display', 'inline-block');
       $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
     }));
 
@@ -107,7 +117,7 @@ Catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
-      $('#file_import .action_binary_keyfile').css('display', 'inline-block');
+      $('#file_import .action_upload_keyfile').css('display', 'inline-block');
       $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
     }));
 
@@ -117,26 +127,29 @@ Catch.try(async () => {
         await Ui.modal.warning('Could not find any new public keys');
       } else {
         $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import .action_binary_keyfile').css('display', 'none');
+        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import .action_upload_keyfile').css('display', 'none');
       }
     }));
 
-    $('#file_import .action_binary_keyfile').off().click(Ui.event.prevent('double', async target => {
-      $('#binary_file').click();
+    $('#file_import div.action_open_keyfile').click(Ui.event.prevent('double', async (self) => {
+      $('#file_import  #keyfile_input').trigger('click');
     }));
 
-    $('#binary_file').change(Ui.event.handle(async (self, event: JQuery.Event<HTMLInputElement, null>) => {
+    $('#file_import #keyfile_input').change(Ui.event.handle(async (self, event: JQuery.Event<HTMLInputElement, null>) => {
       if (event !== null && typeof event !== 'undefined') {
         if (event.target.files !== null && typeof event.target.files !== 'undefined' && event.target.files.length > 0) {
-          const fileReader = new FileReader();
-          fileReader.onload = async () => {
-            if (fileReader.result instanceof ArrayBuffer) {
-              const binaryKey = new Uint8Array(fileReader.result);
-              const key = await Pgp.key.readBinary(binaryKey);
-              $('#bulk_import .input_pubkey').val(key.armor());
-            }
-          };
-          fileReader.readAsArrayBuffer(event.target.files[0]);
+          try {
+            const fileReader = new FileReader();
+            fileReader.onload = async () => {
+              const binaryKey = new Uint8Array(fileReader.result as ArrayBuffer);
+              const key = await openpgp.key.read(binaryKey);
+              console.log(key);
+              // $('#bulk_import .input_pubkey').val(key.armor());
+            };
+            fileReader.readAsArrayBuffer(event.target.files[0]);
+          } catch (err) {
+            Catch.handleErr(err);
+          }
         }
       }
     }));

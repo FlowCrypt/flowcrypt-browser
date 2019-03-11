@@ -246,10 +246,6 @@ export class Pgp {
       const { keys: [key] } = await openpgp.key.readArmored(armoredKey);
       return key;
     },
-    readBinary: async (binaryKey: Uint8Array) => {
-      const { keys: [key] } = await openpgp.key.read(binaryKey);
-      return key;
-    },
     decrypt: async (key: OpenPGP.key.Key, passphrases: string[]): Promise<boolean> => {
       try {
         return await key.decrypt(passphrases);
