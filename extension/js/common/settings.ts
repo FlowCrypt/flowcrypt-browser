@@ -29,7 +29,7 @@ export class Settings {
     return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses); // tslint:disable-line:no-unsafe-any
   }
 
-  static renderPasswordStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
+  static renderPwdStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
     parentSel += ' ';
     const password = $(parentSel + inputSel).val();
     if (typeof password !== 'string') {
