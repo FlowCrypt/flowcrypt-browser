@@ -128,14 +128,14 @@ Catch.try(async () => {
   });
   BrowserMsg.listen(tabId);
 
-  const updateUrl = (title: string, params: UrlParams) => {
+  const updateUrlWithoutRedirecting = (title: string, params: UrlParams) => {
     const newUrlSearch = Env.urlCreate('', params);
     if (newUrlSearch !== window.location.search) {
       window.history.pushState({}, title, newUrlSearch);
     }
   };
 
-  const loadUrl = (params: UrlParams) => {
+  const redirectToUrl = (params: UrlParams) => {
     const newUrlSearch = Env.urlCreate('', params);
     if (newUrlSearch !== window.location.search) {
       window.location.search = newUrlSearch;
@@ -215,7 +215,6 @@ Catch.try(async () => {
       const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
       const firstMsg = thread.messages[0];
       const lastMsg = thread.messages[thread.messages.length - 1];
-
       threadItem.find('.subject').text(Google.gmail.findHeader(firstMsg, 'subject') || '(no subject)');
       Xss.sanitizeAppend(threadItem.find('.subject'), renderableLabels(firstMsg.labelIds || [], 'messages'));
       const fromHeaderVal = Google.gmail.findHeader(firstMsg, 'from');
@@ -263,11 +262,11 @@ Catch.try(async () => {
     for (const cls of labelEl.classList) {
       const labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
       if (labelId) {
-        loadUrl({ acctEmail, labelId });
+        redirectToUrl({ acctEmail, labelId });
         return;
       }
     }
-    loadUrl({ acctEmail });
+    redirectToUrl({ acctEmail });
   };
 
   const getLabelName = (labelId: string) => {
@@ -348,14 +347,14 @@ Catch.try(async () => {
     try {
       thread = thread || await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
       const subject = Google.gmail.findHeader(thread.messages[0], 'subject') || '(no subject)';
-      updateUrl(`${subject} - FlowCrypt Inbox`, { acctEmail, threadId });
+      updateUrlWithoutRedirecting(`${subject} - FlowCrypt Inbox`, { acctEmail, threadId });
       displayBlock('thread', subject);
       for (const m of thread.messages) {
         await renderMsg(m);
       }
       if (threadHasPgpBlock) {
         $(".action_see_original_message").css('display', 'inline-block');
-        $(".action_see_original_message").click(Ui.event.handle(() => loadUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
+        $(".action_see_original_message").click(Ui.event.handle(() => redirectToUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
         if (showOriginal) {
           $(".action_see_original_message").text('See Decrypted');
         }
