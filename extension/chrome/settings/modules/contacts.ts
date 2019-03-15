@@ -6,7 +6,7 @@ import { VERSION } from '../../../js/common/core/const.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, XssSafeFactory, Env, Browser } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, AttUI, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { requireOpenpgp } from '../../../js/common/platform/require.js';
@@ -33,6 +33,48 @@ Catch.try(async () => {
 
   BrowserMsg.listen(tabId); // set_css
 
+  const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  attUI.initAttDialog('fineuploader', 'fineuploader_button');
+  attUI.setAttAddedCb(async (file: Att) => {
+    (file !== null && typeof file !== 'undefined' && typeof file.id !== 'undefined' && file.id !== '') ? attUI.clearAtt(file.id) : attUI.clearAtts();
+    await handleKeyfileSelected(file);
+  });
+
+  const handleKeyfileSelected = async (file: Att) => {
+    try {
+      const rawFile = file.getData();
+      const stringFile = new TextDecoder("utf-8").decode(rawFile);
+      const { blocks } = await Pgp.armor.detectBlocks(stringFile);
+
+      const keys: OpenPGP.key.Key[] = [];
+      if (blocks !== null && blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
+        for (const block of blocks) {
+          if (block.type === "publicKey") {
+            const result = await openpgp.key.readArmored(block.content);
+            if (result.err !== null && typeof result.err !== 'undefined') {
+              throw result.err;
+            }
+            keys.push(...result.keys);
+          }
+        }
+      } else {
+        const result = await openpgp.key.read(rawFile);
+        if (result.err !== null && typeof result.err !== 'undefined') {
+          throw result.err;
+        }
+        keys.push(...result.keys);
+      }
+      const input = $('#bulk_import .input_pubkey');
+      for (const key of keys) {
+        input.val(`${input.val()}\n\n${key.armor()}`);
+      }
+
+      $('#bulk_import .action_process').trigger('click');
+    } catch (err) {
+      Catch.handleErr(err);
+    }
+  };
+
   const renderContactList = async () => {
     const contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
 
@@ -51,7 +93,7 @@ Catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
-      $('#file_import .action_upload_keyfile').css('display', 'inline-block');
+      $('#file_import #fineuploader_button').css('display', 'inline-block');
       $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
     }));
 
@@ -117,7 +159,7 @@ Catch.try(async () => {
       $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
       $('#bulk_import .action_process').css('display', 'inline-block');
       $('#bulk_import #processed').text('').css('display', 'none');
-      $('#file_import .action_upload_keyfile').css('display', 'inline-block');
+      $('#file_import #fineuploader_button').css('display', 'inline-block');
       $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
     }));
 
@@ -127,30 +169,7 @@ Catch.try(async () => {
         await Ui.modal.warning('Could not find any new public keys');
       } else {
         $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import .action_upload_keyfile').css('display', 'none');
-      }
-    }));
-
-    $('#file_import div.action_open_keyfile').click(Ui.event.prevent('double', async (self) => {
-      $('#file_import  #keyfile_input').trigger('click');
-    }));
-
-    $('#file_import #keyfile_input').change(Ui.event.handle(async (self, event: JQuery.Event<HTMLInputElement, null>) => {
-      if (event !== null && typeof event !== 'undefined') {
-        if (event.target.files !== null && typeof event.target.files !== 'undefined' && event.target.files.length > 0) {
-          try {
-            const fileReader = new FileReader();
-            fileReader.onload = async () => {
-              const binaryKey = new Uint8Array(fileReader.result as ArrayBuffer);
-              const key = await openpgp.key.read(binaryKey);
-              console.log(key);
-              // $('#bulk_import .input_pubkey').val(key.armor());
-            };
-            fileReader.readAsArrayBuffer(event.target.files[0]);
-          } catch (err) {
-            Catch.handleErr(err);
-          }
-        }
+        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
       }
     }));
 
