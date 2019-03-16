@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { VERSION } from '../../../js/common/core/const.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
@@ -13,12 +12,6 @@ import { requireOpenpgp } from '../../../js/common/platform/require.js';
 import { Buf } from '../../../js/common/core/buf.js';
 
 const openpgp = requireOpenpgp();
-
-if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
-  openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
-  openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
-  // openpgp.config.require_uid_self_cert = false;
-}
 
 Catch.try(async () => {
 
@@ -36,7 +29,7 @@ Catch.try(async () => {
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
   attUI.setAttAddedCb(async (file: Att) => {
-    (file !== null && typeof file !== 'undefined' && typeof file.id !== 'undefined' && file.id !== '') ? attUI.clearAtt(file.id) : attUI.clearAtts();
+    attUI.clearAtts();
     await handleKeyfileSelected(file);
   });
 
@@ -47,11 +40,14 @@ Catch.try(async () => {
       const { blocks } = await Pgp.armor.detectBlocks(stringFile);
 
       const keys: OpenPGP.key.Key[] = [];
-      if (blocks !== null && blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
+      if (blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
         for (const block of blocks) {
           if (block.type === "publicKey") {
             const result = await openpgp.key.readArmored(block.content);
-            if (result.err !== null && typeof result.err !== 'undefined') {
+            if (result.err) {
+              let e = `Got error processing armored key:\n`;
+              result.err.map(v => e += `-> ${v.message}\n`);
+              await Ui.modal.error(e);
               throw result.err;
             }
             keys.push(...result.keys);
@@ -59,7 +55,10 @@ Catch.try(async () => {
         }
       } else {
         const result = await openpgp.key.read(rawFile);
-        if (result.err !== null && typeof result.err !== 'undefined') {
+        if (result.err) {
+          let e = `Got error processing binary key:\n`;
+          result.err.map(v => e += `-> ${v.message}\n`);
+          await Ui.modal.error(e);
           throw result.err;
         }
         keys.push(...result.keys);
