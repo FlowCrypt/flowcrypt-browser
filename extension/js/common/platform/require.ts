@@ -33,11 +33,10 @@ type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode:
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   try {
-    if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
-      openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
-      openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
-      // openpgp.config.require_uid_self_cert = false;
-    }
+    // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
+    openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
+    openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+    // openpgp.config.require_uid_self_cert = false;
     return openpgp;
   } catch (e) {
     // a hack for content scripts, which do not currently need openpgp, until I come up with something better

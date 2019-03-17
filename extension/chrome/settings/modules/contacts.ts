@@ -29,7 +29,7 @@ Catch.try(async () => {
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
   attUI.setAttAddedCb(async (file: Att) => {
-    attUI.clearAtts();
+    attUI.clearAllAtts();
     await handleKeyfileSelected(file);
   });
 
@@ -40,29 +40,34 @@ Catch.try(async () => {
       const { blocks } = await Pgp.armor.detectBlocks(stringFile);
 
       const keys: OpenPGP.key.Key[] = [];
+      const errs: Error[] = [];
       if (blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
         for (const block of blocks) {
           if (block.type === "publicKey") {
             const result = await openpgp.key.readArmored(block.content);
             if (result.err) {
-              let e = `Got error processing armored key:\n`;
-              result.err.map(v => e += `-> ${v.message}\n`);
-              await Ui.modal.error(e);
-              throw result.err;
+              errs.push(...result.err);
+            } else {
+              keys.push(...result.keys);
             }
-            keys.push(...result.keys);
           }
         }
       } else {
         const result = await openpgp.key.read(rawFile);
         if (result.err) {
-          let e = `Got error processing binary key:\n`;
-          result.err.map(v => e += `-> ${v.message}\n`);
-          await Ui.modal.error(e);
-          throw result.err;
+          errs.push(...result.err);
+        } else {
+          keys.push(...result.keys);
         }
-        keys.push(...result.keys);
       }
+
+      if (errs.length > 0 && keys.length === 0) {
+        let e = `Got error processing public keys:\n`;
+        errs.map(v => e += `-> ${v.message}\n`);
+        await Ui.modal.error(e);
+        return;
+      }
+
       const input = $('#bulk_import .input_pubkey');
       for (const key of keys) {
         input.val(`${input.val()}\n\n${key.armor()}`);

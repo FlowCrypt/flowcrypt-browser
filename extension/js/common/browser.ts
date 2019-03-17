@@ -1239,8 +1239,8 @@ export class AttUI {
     return atts;
   }
 
-  clearAtts = () => {
-    this.attachedFiles  = {};
+  clearAllAtts = () => {
+    this.attachedFiles = {};
   }
 
   private cancelAtt = (id: string) => {
