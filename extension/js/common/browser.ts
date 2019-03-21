@@ -1195,8 +1195,8 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (id: string, name: string) => this.processNewAtt(id, name).catch(Catch.handleErr),
-          onCancel: (id: string) => Catch.try(() => this.cancelAtt(id))(),
+          onSubmitted: (uploadFileId: string, name: string) => this.processNewAtt(uploadFileId, name).catch(Catch.handleErr),
+          onCancel: (uploadFileId: string) => Catch.try(() => this.cancelAtt(uploadFileId))(),
         },
       };
       this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
@@ -1215,24 +1215,24 @@ export class AttUI {
     return Object.keys(this.attachedFiles);
   }
 
-  collectAtt = async (id: string) => {
-    const fileData = await this.readAttDataAsUint8(id);
-    return new Att({ name: this.attachedFiles[id].name, type: this.attachedFiles[id].type, data: fileData });
+  collectAtt = async (uploadFileId: string) => {
+    const fileData = await this.readAttDataAsUint8(uploadFileId);
+    return new Att({ name: this.attachedFiles[uploadFileId].name, type: this.attachedFiles[uploadFileId].type, data: fileData });
   }
 
   collectAtts = async () => {
     const atts: Att[] = [];
-    for (const id of Object.keys(this.attachedFiles)) {
-      atts.push(await this.collectAtt(id));
+    for (const uploadFileId of Object.keys(this.attachedFiles)) {
+      atts.push(await this.collectAtt(uploadFileId));
     }
     return atts;
   }
 
   collectEncryptAtts = async (pubkeys: string[], pwd?: Pwd): Promise<Att[]> => {
     const atts: Att[] = [];
-    for (const id of Object.keys(this.attachedFiles)) {
-      const file = this.attachedFiles[id];
-      const data = await this.readAttDataAsUint8(id);
+    for (const uploadFileId of Object.keys(this.attachedFiles)) {
+      const file = this.attachedFiles[uploadFileId];
+      const data = await this.readAttDataAsUint8(uploadFileId);
       const encrypted = await PgpMsg.encrypt({ pubkeys, data, pwd, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
       atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
     }
@@ -1242,20 +1242,20 @@ export class AttUI {
   clearAllAtts = () => {
     this.attachedFiles = {};
   }
-
-  private cancelAtt = (id: string) => {
-    delete this.attachedFiles[id];
+  
+  private cancelAtt = (uploadFileId: string) => {
+    delete this.attachedFiles[uploadFileId];
   }
 
-  private processNewAtt = async (id: string, name: string) => {
+  private processNewAtt = async (uploadFileId: string, name: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
-      this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
+      this.uploader.cancel(uploadFileId); // tslint:disable-line:no-unsafe-any
     } else {
-      const newFile: File = this.uploader.getFile(id); // tslint:disable-line:no-unsafe-any
+      const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
       if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
-        this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
+        this.uploader.cancel(uploadFileId); // tslint:disable-line:no-unsafe-any
         if (typeof limits.oversize === 'function') {
           await limits.oversize(this.getFileSizeSum() + newFile.size);
         } else {
@@ -1263,9 +1263,9 @@ export class AttUI {
         }
         return;
       }
-      this.attachedFiles[id] = newFile;
+      this.attachedFiles[uploadFileId] = newFile;
       if (typeof this.attAddedCb === 'function') {
-        const a = await this.collectAtt(id);
+        const a = await this.collectAtt(uploadFileId);
         await this.attAddedCb(a);
       }
     }
@@ -1279,13 +1279,13 @@ export class AttUI {
     return sum;
   }
 
-  private readAttDataAsUint8 = (id: string): Promise<Uint8Array> => {
+  private readAttDataAsUint8 = (uploadFileId: string): Promise<Uint8Array> => {
     return new Promise(resolve => {
       const reader = new FileReader();
       reader.onload = () => {
         resolve(new Uint8Array(reader.result as ArrayBuffer)); // that's what we're getting
       };
-      reader.readAsArrayBuffer(this.attachedFiles[id]);
+      reader.readAsArrayBuffer(this.attachedFiles[uploadFileId]);
     });
   }
 

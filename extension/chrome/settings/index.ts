@@ -150,7 +150,7 @@ Catch.try(async () => {
       }
     }
 
-    Api.retreiveBlogPosts().then(posts => {
+    Api.retreiveBlogPosts().then(posts => { // do not await because may take a while
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);
@@ -212,7 +212,7 @@ Catch.try(async () => {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
         Catch.handleErr(e);
-        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${String(e)}`);
+        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${Api.err.eli5(e)}\n\n${String(e)}`);
       }
     }
   };

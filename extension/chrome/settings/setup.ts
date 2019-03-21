@@ -44,9 +44,6 @@ Catch.try(async () => {
     return;
   }
 
-  $('h1').text('Set Up FlowCrypt');
-  $('.email-address').text(acctEmail);
-  $('.back').css('visibility', 'hidden');
   await Ui.passphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
   await Ui.passphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
@@ -79,6 +76,48 @@ Catch.try(async () => {
     await Ui.modal.info(notification);
   });
   BrowserMsg.listen(tabId);
+
+  const renderInitial = async () => {
+    $('h1').text('Set Up FlowCrypt');
+    $('.email-address').text(acctEmail);
+    $('.back').css('visibility', 'hidden');
+    if (storage.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
+      if (!GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
+        $('.auth_denied_warning').css('display', 'block');
+      }
+      if (typeof storage.addresses === 'undefined') {
+        if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
+          Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
+        } else { // cannot read emails, don't fetch alternative addresses
+          saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);
+        }
+      } else {
+        showSubmitAllAddrsOption(storage.addresses || []);
+      }
+    }
+    if (storage.setup_done) {
+      if (action !== 'add_key') {
+        await renderSetupDone();
+      } else {
+        await renderAddKeyFromBackup();
+      }
+    } else if (action === 'finalize') {
+      const { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
+      if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
+        $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
+        return;
+      }
+      if (typeof key_backup_method !== 'string') {
+        await Ui.modal.error('Backup has not successfully finished, will retry');
+        window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
+        return;
+      }
+      await finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
+      await renderSetupDone();
+    } else {
+      await renderSetupDialog();
+    }
+  };
 
   const showSubmitAllAddrsOption = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
@@ -116,14 +155,12 @@ Catch.try(async () => {
 
   const renderSetupDialog = async (): Promise<void> => {
     let keyserverRes, fetchedKeys;
-
     try {
       const r = await Api.attester.lookupEmail([acctEmail]);
       keyserverRes = r.results[0];
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }
-
     if (keyserverRes.pubkey) {
       if (keyserverRes.attested) {
         acctEmailAttestedFingerprint = await Pgp.key.fingerprint(keyserverRes.pubkey);
@@ -292,10 +329,12 @@ Catch.try(async () => {
     const passphrase = String($('#recovery_pasword').val());
     const newlyMatchingKeys: OpenPGP.key.Key[] = [];
     if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
-      return await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
+      await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
+      return;
     }
     if (!passphrase) {
-      return await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+      await Ui.modal.warning('Please enter the pass phrase you used when you first set up FlowCrypt, so that we can recover your original keys.');
+      return;
     }
     let matchedPreviouslyRecoveredKey = false;
     for (const recoveredKey of recoveredKeys) {
@@ -315,12 +354,13 @@ Catch.try(async () => {
       $('.line_skip_recovery').css('display', 'block');
       if (matchedPreviouslyRecoveredKey) {
         $('#recovery_pasword').val('');
-        return await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
+        await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
       } else if (recoveredKeys.length > 1) {
-        return await Ui.modal.warning(`This pass phrase did not match any of your ${recoveredKeys.length} backups. Please try again.`);
+        await Ui.modal.warning(`This pass phrase did not match any of your ${recoveredKeys.length} backups. Please try again.`);
       } else {
-        return await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
+        await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
       }
+      return;
     }
     const options: SetupOptions = {
       submit_main: false, // todo - reevaluate submitting when recovering
@@ -448,10 +488,10 @@ Catch.try(async () => {
   };
 
   $('#step_2a_manual_create .input_password').on('keyup', Ui.event.prevent('spree', () => {
-    Settings.renderPasswordStrength('#step_2a_manual_create', '.input_password', '.action_create_private');
+    Settings.renderPwdStrength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
 
-  const isActionCreatePrivateFormInputCorrect = async () => {
+  const isCreatePrivateFormInputCorrect = async () => {
     if (!$('#step_2a_manual_create .input_password').val()) {
       await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
       $('#step_2a_manual_create .input_password').focus();
@@ -473,7 +513,7 @@ Catch.try(async () => {
 
   $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent('double', async () => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
-    if (! await isActionCreatePrivateFormInputCorrect()) {
+    if (! await isCreatePrivateFormInputCorrect()) {
       return;
     }
     try {
@@ -522,43 +562,6 @@ Catch.try(async () => {
     }
   }));
 
-  // show alternative account addresses in setup form + save them for later
-  if (storage.email_provider === 'gmail') {
-    if (!GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
-      $('.auth_denied_warning').css('display', 'block');
-    }
-    if (typeof storage.addresses === 'undefined') {
-      if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
-        Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
-      } else { // cannot read emails, don't fetch alternative addresses
-        saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);
-      }
-    } else {
-      showSubmitAllAddrsOption(storage.addresses || []);
-    }
-  }
-
-  if (storage.setup_done) {
-    if (action !== 'add_key') {
-      await renderSetupDone();
-    } else {
-      await renderAddKeyFromBackup();
-    }
-  } else if (action === 'finalize') {
-    const { tmp_submit_all, tmp_submit_main, key_backup_method } = await Store.getAcct(acctEmail, ['tmp_submit_all', 'tmp_submit_main', 'key_backup_method']);
-    if (typeof tmp_submit_all === 'undefined' || typeof tmp_submit_main === 'undefined') {
-      $('#content').text(`Setup session expired. To set up FlowCrypt, please click the FlowCrypt icon on top right.`);
-      return;
-    }
-    if (typeof key_backup_method !== 'string') {
-      await Ui.modal.error('Backup has not successfully finished, will retry');
-      window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
-      return;
-    }
-    await finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
-    await renderSetupDone();
-  } else {
-    await renderSetupDialog();
-  }
+  await renderInitial();
 
 })();

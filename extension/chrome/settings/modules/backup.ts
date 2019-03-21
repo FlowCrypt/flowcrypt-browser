@@ -50,7 +50,7 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#step_1_password', '#password', '.action_password')));
+  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPwdStrength('#step_1_password', '#password', '.action_password')));
 
   const showStatus = async () => {
     $('.hide_if_backup_done').css('display', 'none');
@@ -157,7 +157,7 @@ Catch.try(async () => {
     $('#password').val('');
     $('#password2').val('');
     displayBlock('step_1_password');
-    Settings.renderPasswordStrength('#step_1_password', '#password', '.action_password');
+    Settings.renderPwdStrength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   }));
 
