@@ -7,12 +7,13 @@
 import { Store, GlobalStore, Serializable, Subscription } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
 import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
-import { Ui, Xss } from '../browser.js';
+import { Ui, Xss, Env } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
 import { PaymentMethod } from '../account.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
+import { BrowserMsg } from '../extension.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };
@@ -713,6 +714,11 @@ export class Api {
   })
 
   public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any> => {
+    if (Env.isContentScript()) {
+      // content script CORS not allowed anymore, have to drag it through background page
+      // https://www.chromestatus.com/feature/5629709824032768
+      return await BrowserMsg.send.bg.await.ajax({ req, stack });
+    }
     try {
       return await $.ajax(req);
     } catch (e) {

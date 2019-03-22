@@ -8,6 +8,7 @@ import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from 
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
+import { Buf } from './core/buf.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -53,6 +54,8 @@ export namespace Bm {
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpHashChallengeAnswer = { answer: string };
+  export type Ajax = { req: JQueryAjaxSettings, stack: string };
+  export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
 
   export namespace Res {
     export type AttestPacketReceived = { success: boolean; result: string };
@@ -69,18 +72,22 @@ export namespace Bm {
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = MsgVerifyResult;
     export type PgpHashChallengeAnswer = { hashed: string };
+    export type AjaxGmailAttGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
-    export type Db = any; // not included in Any
+    export type Db = any; // not included in Any below
+    export type Ajax = any; // not included in Any below
+
     export type Any = AttestPacketReceived | GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
-      | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet;
+      | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
+      | AjaxGmailAttGetChunk;
   }
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | SetFooter | AttestPacketReceived | ReconnectAcctAuthPopup |
     Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer;
+    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -159,7 +166,7 @@ export class BrowserMsg {
     },
   };
 
-  public static send = {
+  public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
       attestRequested: (bm: Bm.AttestRequested) => BrowserMsg.sendCatch(undefined, 'attest_requested', bm),
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
@@ -181,6 +188,8 @@ export class BrowserMsg {
         pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
+        ajax: (bm: Bm.Ajax) => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
+        ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),

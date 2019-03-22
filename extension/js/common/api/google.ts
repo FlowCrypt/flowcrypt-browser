@@ -11,7 +11,7 @@ import { Store, AccountStore, Serializable } from '../platform/store.js';
 import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
 import { Env, Ui, Xss } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
-import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult } from '../extension.js';
+import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult, BrowserMsg } from '../extension.js';
 import { Mime, SendableMsgBody } from '../core/mime.js';
 import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
@@ -145,7 +145,13 @@ export class Google extends Api {
       const { attachmentId, size, data } = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb }) as RawGmailAttRes;
       return { attachmentId, size, data: Buf.fromBase64UrlStr(data) };
     },
-    attGetChunk: (acctEmail: string, messageId: string, attId: string): Promise<Buf> => new Promise(async (resolve, reject) => {
+    attGetChunk: (acctEmail: string, msgId: string, attId: string): Promise<Buf> => new Promise((resolve, reject) => {
+      if (Env.isContentScript()) {
+        // content script CORS not allowed anymore, have to drag it through background page
+        // https://www.chromestatus.com/feature/5629709824032768
+        BrowserMsg.send.bg.await.ajaxGmailAttGetChunk({ acctEmail, msgId, attId }).then(({ chunk }) => resolve(chunk)).catch(reject);
+        return;
+      }
       const stack = Catch.stackTrace();
       const minBytes = 1000;
       let processed = 0;
@@ -154,10 +160,10 @@ export class Google extends Api {
           // make json end guessing easier
           chunk = chunk.replace(/[\n\s\r]/g, '');
           // the response is a chunk of json that may not have ended. One of:
-          // {"length":12345,"data":"kksdwei
-          // {"length":12345,"data":"kksdweiooiowei
-          // {"length":12345,"data":"kksdweiooiowei"
-          // {"length":12345,"data":"kksdweiooiowei"}
+          // {"length":123,"data":"kks
+          // {"length":123,"data":"kksdwei
+          // {"length":123,"data":"kksdwei"
+          // {"length":123,"data":"kksdwei"}
           if (chunk[chunk.length - 1] !== '"' && chunk[chunk.length - 2] !== '"') {
             chunk += '"}'; // json end
           } else if (chunk[chunk.length - 1] !== '}') {
@@ -187,7 +193,7 @@ export class Google extends Api {
       GoogleAuth.googleApiAuthHeader(acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         const method = 'GET';
-        const url = `https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attId}`;
+        const url = `https://www.googleapis.com/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
         r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();

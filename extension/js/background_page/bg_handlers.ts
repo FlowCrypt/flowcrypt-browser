@@ -6,6 +6,8 @@ import { Store } from '../common/platform/store.js';
 import { Bm } from '../common/extension.js';
 import { BgUtils } from './bgutils.js';
 import { Env } from '../common/browser.js';
+import { Api } from '../common/api/api.js';
+import { Google } from '../common/api/google.js';
 
 export class BgHandlers {
 
@@ -24,6 +26,14 @@ export class BgHandlers {
     }
     const dbFunc = (Store as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
     return await dbFunc(db, ...request.args);
+  }
+
+  public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
+    return await Api.ajax(r.req, r.stack);
+  }
+
+  public static ajaxGmailAttGetChunkHandler = async (r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> => {
+    return { chunk: await Google.gmail.attGetChunk(r.acctEmail, r.msgId, r.attId) };
   }
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {

@@ -68,6 +68,8 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
   BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
 
+  BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
+  BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('inbox', BgHandlers.openInboxPageHandler);
   BrowserMsg.bgAddListener('attest_requested', BgAttests.attestRequestedHandler);
