@@ -78,7 +78,8 @@ abstract class ApiCallError extends Error {
   }
 
   protected static describeApiAction = (req: JQueryAjaxSettings) => {
-    return `${req.method}-ing ${ApiCallError.censoredUrl(req.url)} ${typeof req.data}: ${ApiCallError.getPayloadStructure(req)}`;
+    const describeBody = typeof req.data === 'undefined' ? '(no body)' : typeof req.data;
+    return `${req.method || 'GET'}-ing ${ApiCallError.censoredUrl(req.url)} ${describeBody}: ${ApiCallError.getPayloadStructure(req)}`;
   }
 
 }
