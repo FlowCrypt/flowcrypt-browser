@@ -29,7 +29,7 @@ export class BgHandlers {
   }
 
   public static ajaxHandler = async (r: Bm.Ajax): Promise<Bm.Res.Ajax> => {
-    return await Api.ajax(r.req, r.stack);
+    return await Api.ajax(r.req, r.stack); // tslint:disable-line:no-direct-ajax
   }
 
   public static ajaxGmailAttGetChunkHandler = async (r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> => {
