@@ -49,8 +49,28 @@ export class BrowserPool {
 
   public getExtensionId = async (t: AvaContext): Promise<string> => {
     const browser = await this.newBrowserHandle(t, false);
-    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-    const url = initialPage.page.url();
+    let url = '';
+    try {
+      const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
+      url = initialPage.page.url();
+    } catch (e) {
+      if (e instanceof Error && e.message === 'Action did not trigger a new page within timeout period') {
+        try {
+          const [page] = await browser.browser.pages();
+          if (page) {
+            url = page.url();
+          } else {
+            e.message += `(plus could not detect any active pages)`;
+            throw e;
+          }
+        } catch (e2) {
+          e.message += `(plus got ${String(e2)} when attempting to get url from current tabs)`;
+          throw e;
+        }
+      } else {
+        throw e;
+      }
+    }
     const match = url.match(/[a-z]{32}/);
     if (match !== null) {
       await browser.close();
