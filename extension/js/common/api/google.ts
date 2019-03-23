@@ -46,7 +46,7 @@ export class Google extends Api {
   public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) => {
     progress = progress || {};
     let data, url;
-    if (typeof progress!.upload === 'function') { // substituted with {} above
+    if (typeof progress.upload === 'function') {
       url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + path + '?uploadType=multipart';
       data = params;
     } else {
@@ -59,7 +59,7 @@ export class Google extends Api {
     }
     contentType = contentType || 'application/json; charset=UTF-8';
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
-    const xhr = () => Api.getAjaxProgressXhr(progress);
+    const xhr = Api.getAjaxProgressXhrFactory(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
@@ -214,7 +214,7 @@ export class Google extends Api {
           if (r.readyState === 2 || r.readyState === 3) { // headers, loading
             status = r.status;
             if (status >= 300) {
-              reject(new AjaxError({ status, readyState: r.readyState }, { method, url }, stack));
+              reject(AjaxError.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
               r.abort();
             }
@@ -227,7 +227,7 @@ export class Google extends Api {
                 r.abort();
               }
             } else { // done as a fail - reject
-              reject(new AjaxError({ status, readyState: r.readyState }, { method, url }, stack));
+              reject(AjaxError.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
             }
           }

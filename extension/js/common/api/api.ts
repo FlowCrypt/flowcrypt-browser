@@ -87,35 +87,32 @@ abstract class ApiCallError extends Error {
 
 export class AjaxError extends ApiCallError {
 
+  // todo - move these out of the class, they get weirdly serialized in err reports
   public STD_ERR_MSGS = { // tslint:disable-line:oneliner-object-literal
     GOOGLE_INVALID_TO_HEADER: 'Invalid to header',
     GOOGLE_RECIPIENT_ADDRESS_REQUIRED: 'Recipient address required',
   };
 
-  public xhr: RawAjaxError;
-  public status: number;
-  public url: string;
-  public responseText: string;
-  public statusText: string;
-
-  constructor(xhr: RawAjaxError, req: JQueryAjaxSettings, stack: string) {
-    super(`${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallError.describeApiAction(req)}`);
-    this.xhr = xhr;
-    this.status = typeof xhr.status === 'number' ? xhr.status : -1;
-    this.url = AjaxError.censoredUrl(req.url);
-    this.responseText = xhr.responseText || '';
-    this.statusText = xhr.statusText || '(no status text)';
-    this.stack += `\n\nprovided ajax call stack:\n${stack}`;
-    if (this.status === 400 || this.status === 403 || (this.status === 200 && this.responseText && this.responseText[0] !== '{')) {
+  public static fromXhr = (xhr: RawAjaxError, req: JQueryAjaxSettings, stack: string) => {
+    const responseText = xhr.responseText || '';
+    const status = typeof xhr.status === 'number' ? xhr.status : -1;
+    stack += `\n\nprovided ajax call stack:\n${stack}`;
+    if (status === 400 || status === 403 || (status === 200 && responseText && responseText[0] !== '{')) {
       // RawAjaxError with status 200 can happen when it fails to parse response - eg non-json result
-      this.stack += `\n\nresponseText(0, 1000):\n${this.responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
+      stack += `\n\nresponseText(0, 1000):\n${responseText.substr(0, 1000)}\n\npayload(0, 1000):\n${Catch.stringify(req.data).substr(0, 1000)}`;
     }
+    const message = `${String(xhr.statusText || '(no status text)')}: ${String(xhr.status || -1)} when ${ApiCallError.describeApiAction(req)}`;
+    return new AjaxError(message, stack, status, AjaxError.censoredUrl(req.url), responseText, xhr.statusText || '(no status text)');
+  }
+
+  constructor(message: string, public stack: string, public status: number, public url: string, public responseText: string, public statusText: string) {
+    super(message);
   }
 
   public parseErrResMsg = (format: 'google') => {
     try {
       if (format === 'google') {
-        const errMsg = (((this.xhr as JQueryXHR).responseJSON as any).error as any).message as string; // catching all errs below
+        const errMsg = ((JSON.parse(this.responseText) as any).error as any).message as string; // catching all errs below
         if (typeof errMsg === 'string') {
           return errMsg;
         }
@@ -706,7 +703,7 @@ export class Api {
         reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
       } else {
         const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-        reject(new AjaxError({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+        reject(AjaxError.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
       }
     };
     request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
@@ -726,25 +723,33 @@ export class Api {
         throw e;
       }
       if (Api.internal.isRawAjaxError(e)) {
-        throw new AjaxError(e, req, stack);
+        throw AjaxError.fromXhr(e, req, stack);
       }
       throw new Error(`Unknown Ajax error (${String(e)}) type when calling ${req.url}`);
     }
   }
 
-  public static getAjaxProgressXhr = (progressCbs?: ProgressCbs) => {
-    const progressPeportingXhr = new XMLHttpRequest();
-    if (progressCbs && typeof progressCbs.upload === 'function') {
-      progressPeportingXhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
-        progressCbs.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined); // checked ===function above
-      }, false);
+  public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
+    if (Env.isContentScript() || Env.isBackgroundPage() || !progressCbs || !Object.keys(progressCbs).length) {
+      // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
+      // thus no progress callbacks in bg or content scripts
+      // additionally no need to create this if there are no progressCbs defined
+      return undefined;
     }
-    if (progressCbs && typeof progressCbs.download === 'function') {
-      progressPeportingXhr.onprogress = (evt: ProgressEvent) => {
-        progressCbs.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total); // checked ===function above
-      };
-    }
-    return progressPeportingXhr;
+    return () => { // returning a factory
+      const progressPeportingXhr = new XMLHttpRequest();
+      if (progressCbs && typeof progressCbs.upload === 'function') {
+        progressPeportingXhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
+          progressCbs.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined); // checked ===function above
+        }, false);
+      }
+      if (progressCbs && typeof progressCbs.download === 'function') {
+        progressPeportingXhr.onprogress = (evt: ProgressEvent) => {
+          progressCbs.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total); // checked ===function above
+        };
+      }
+      return progressPeportingXhr;
+    };
   }
 
   public static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
@@ -793,7 +798,7 @@ export class Api {
         throw new Error('unknown format:' + String(fmt));
       }
       const req: JQueryAjaxSettings = {
-        xhr: () => Api.getAjaxProgressXhr(progress),
+        xhr: Api.getAjaxProgressXhrFactory(progress),
         url: url + path,
         method,
         data: formattedData,
