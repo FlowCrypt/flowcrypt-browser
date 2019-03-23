@@ -305,7 +305,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
     let downloadedAtt: R.GmailAtt;
     try {
-      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id is present when fetched from api
+      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
     } catch (e) {
       attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       nRenderedAtts++;

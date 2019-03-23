@@ -133,6 +133,11 @@ export class Google extends Api {
       q,
       includeSpamTrash: includeDeleted,
     }),
+    /**
+     * Attempting to `msgGet format:raw` from within content scripts would likely fail if the mime message is 1MB or larger,
+     * because strings over 1 MB may fail to get to/from bg page. A way to mitigate that would be to pass `R.GmailMsg$raw` prop
+     * as a Buf instead of a string.
+    */
     msgGet: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
       format: format || 'full'
     }),
@@ -143,7 +148,7 @@ export class Google extends Api {
     attGet: async (acctEmail: string, msgId: string, attId: string, progressCb?: ProgressCb): Promise<R.GmailAtt> => {
       type RawGmailAttRes = { attachmentId: string, size: number, data: string };
       const { attachmentId, size, data } = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb }) as RawGmailAttRes;
-      return { attachmentId, size, data: Buf.fromBase64UrlStr(data) };
+      return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
     },
     attGetChunk: (acctEmail: string, msgId: string, attId: string): Promise<Buf> => new Promise((resolve, reject) => {
       if (Env.isContentScript()) {
