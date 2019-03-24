@@ -56,7 +56,7 @@ Catch.try(async () => {
     }
   }));
 
-  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase')));
+  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPwdStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase')));
 
   $('#step_1_enter_new .action_set_pass_phrase').click(Ui.event.handle(async target => {
     if ($(target).hasClass('green')) {
@@ -70,7 +70,7 @@ Catch.try(async () => {
     $('#password').val('');
     $('#password2').val('');
     displayBlock('step_1_enter_new');
-    Settings.renderPasswordStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase');
+    Settings.renderPwdStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase');
     $('#password').focus();
   }));
 

@@ -11,7 +11,7 @@ import { Store, AccountStore, Serializable } from '../platform/store.js';
 import { Api, AuthError, ReqMethod, ProgressCbs, R, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
 import { Env, Ui, Xss } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
-import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult } from '../extension.js';
+import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult, BrowserMsg } from '../extension.js';
 import { Mime, SendableMsgBody } from '../core/mime.js';
 import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
@@ -46,7 +46,7 @@ export class Google extends Api {
   public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) => {
     progress = progress || {};
     let data, url;
-    if (typeof progress!.upload === 'function') { // substituted with {} above
+    if (typeof progress.upload === 'function') {
       url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + path + '?uploadType=multipart';
       data = params;
     } else {
@@ -59,7 +59,7 @@ export class Google extends Api {
     }
     contentType = contentType || 'application/json; charset=UTF-8';
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
-    const xhr = () => Api.getAjaxProgressXhr(progress);
+    const xhr = Api.getAjaxProgressXhrFactory(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
   }
@@ -133,6 +133,11 @@ export class Google extends Api {
       q,
       includeSpamTrash: includeDeleted,
     }),
+    /**
+     * Attempting to `msgGet format:raw` from within content scripts would likely fail if the mime message is 1MB or larger,
+     * because strings over 1 MB may fail to get to/from bg page. A way to mitigate that would be to pass `R.GmailMsg$raw` prop
+     * as a Buf instead of a string.
+    */
     msgGet: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<R.GmailMsg> => Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
       format: format || 'full'
     }),
@@ -143,9 +148,15 @@ export class Google extends Api {
     attGet: async (acctEmail: string, msgId: string, attId: string, progressCb?: ProgressCb): Promise<R.GmailAtt> => {
       type RawGmailAttRes = { attachmentId: string, size: number, data: string };
       const { attachmentId, size, data } = await Google.gmailCall(acctEmail, 'GET', `messages/${msgId}/attachments/${attId}`, {}, { download: progressCb }) as RawGmailAttRes;
-      return { attachmentId, size, data: Buf.fromBase64UrlStr(data) };
+      return { attachmentId, size, data: Buf.fromBase64UrlStr(data) }; // data should be a Buf for ease of passing to/from bg page
     },
-    attGetChunk: (acctEmail: string, messageId: string, attId: string): Promise<Buf> => new Promise(async (resolve, reject) => {
+    attGetChunk: (acctEmail: string, msgId: string, attId: string): Promise<Buf> => new Promise((resolve, reject) => {
+      if (Env.isContentScript()) {
+        // content script CORS not allowed anymore, have to drag it through background page
+        // https://www.chromestatus.com/feature/5629709824032768
+        BrowserMsg.send.bg.await.ajaxGmailAttGetChunk({ acctEmail, msgId, attId }).then(({ chunk }) => resolve(chunk)).catch(reject);
+        return;
+      }
       const stack = Catch.stackTrace();
       const minBytes = 1000;
       let processed = 0;
@@ -154,10 +165,10 @@ export class Google extends Api {
           // make json end guessing easier
           chunk = chunk.replace(/[\n\s\r]/g, '');
           // the response is a chunk of json that may not have ended. One of:
-          // {"length":12345,"data":"kksdwei
-          // {"length":12345,"data":"kksdweiooiowei
-          // {"length":12345,"data":"kksdweiooiowei"
-          // {"length":12345,"data":"kksdweiooiowei"}
+          // {"length":123,"data":"kks
+          // {"length":123,"data":"kksdwei
+          // {"length":123,"data":"kksdwei"
+          // {"length":123,"data":"kksdwei"}
           if (chunk[chunk.length - 1] !== '"' && chunk[chunk.length - 2] !== '"') {
             chunk += '"}'; // json end
           } else if (chunk[chunk.length - 1] !== '}') {
@@ -187,7 +198,7 @@ export class Google extends Api {
       GoogleAuth.googleApiAuthHeader(acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         const method = 'GET';
-        const url = `https://www.googleapis.com/gmail/v1/users/me/messages/${messageId}/attachments/${attId}`;
+        const url = `https://www.googleapis.com/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
         r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
@@ -203,7 +214,7 @@ export class Google extends Api {
           if (r.readyState === 2 || r.readyState === 3) { // headers, loading
             status = r.status;
             if (status >= 300) {
-              reject(new AjaxError({ status, readyState: r.readyState }, { method, url }, stack));
+              reject(AjaxError.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
               r.abort();
             }
@@ -216,7 +227,7 @@ export class Google extends Api {
                 r.abort();
               }
             } else { // done as a fail - reject
-              reject(new AjaxError({ status, readyState: r.readyState }, { method, url }, stack));
+              reject(AjaxError.fromXhr({ status, readyState: r.readyState }, { method, url }, stack));
               window.clearInterval(responsePollInterval);
             }
           }

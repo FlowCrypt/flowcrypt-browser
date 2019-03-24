@@ -1,5 +1,7 @@
 <div>
 
+version 6.7.0 on March 23, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/322?closed=1" target="_blank">Chrome 73 compatibility fixes</a>
+
 version 6.6.9 on March 11, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/321?closed=1" target="_blank">Minimize compose window</a>
 
 version 6.6.8 on March 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/320?closed=1" target="_blank">Fix decrypt files with session pass phrase</a>

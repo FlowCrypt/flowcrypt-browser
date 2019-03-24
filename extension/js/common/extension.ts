@@ -8,6 +8,8 @@ import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from 
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
+import { Buf } from './core/buf.js';
+import { AjaxError } from './api/api.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 
@@ -17,7 +19,7 @@ export namespace Bm {
   export type Dest = string;
   export type Sender = chrome.runtime.MessageSender | 'background';
   export type Response = any;
-  export type RawResponse = { result: any, objUrls: { [name: string]: string }, exception?: { message: string, stack?: string } };
+  export type RawResponse = { result: any, objUrls: { [name: string]: string }, exception?: Bm.ErrAsJson };
   export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string; sender?: Sender; };
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
@@ -53,6 +55,8 @@ export namespace Bm {
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
   export type PgpMsgVerifyDetached = PgpMsgMethod.Arg.VerifyDetached;
   export type PgpHashChallengeAnswer = { answer: string };
+  export type Ajax = { req: JQueryAjaxSettings, stack: string };
+  export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
 
   export namespace Res {
     export type AttestPacketReceived = { success: boolean; result: string };
@@ -69,24 +73,32 @@ export namespace Bm {
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
     export type PgpMsgVerify = MsgVerifyResult;
     export type PgpHashChallengeAnswer = { hashed: string };
+    export type AjaxGmailAttGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };
-    export type Db = any; // not included in Any
+    export type Db = any; // not included in Any below
+    export type Ajax = any; // not included in Any below
+
     export type Any = AttestPacketReceived | GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
-      | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet;
+      | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
+      | AjaxGmailAttGetChunk;
   }
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | SetFooter | AttestPacketReceived | ReconnectAcctAuthPopup |
     Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer;
+    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
   export type RawBrowserMsgHandler = (req: AnyRequest, sender: Sender, respond: (r: RawResponse) => void) => void;
   export type AsyncRespondingHandler = (req: AnyRequest, sender: Sender) => Promise<Res.Any>;
   export type AsyncResponselessHandler = (req: AnyRequest, sender: Sender) => Promise<void>;
+
+  export type ErrAsJson =
+    { stack?: string; message: string, errorConstructor: 'Error' } |
+    { stack?: string; message: string, errorConstructor: 'AjaxError', ajaxErrorDetails: { status: number, url: string, responseText: string, statusText: string } };
 }
 
 type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
@@ -159,7 +171,7 @@ export class BrowserMsg {
     },
   };
 
-  public static send = {
+  public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
       attestRequested: (bm: Bm.AttestRequested) => BrowserMsg.sendCatch(undefined, 'attest_requested', bm),
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
@@ -181,6 +193,8 @@ export class BrowserMsg {
         pgpHashChallengeAnswer: (bm: Bm.PgpHashChallengeAnswer) => BrowserMsg.sendAwait(undefined, 'pgpHashChallengeAnswer', bm, true) as Promise<Bm.Res.PgpHashChallengeAnswer>,
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
+        ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
+        ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
@@ -218,24 +232,27 @@ export class BrowserMsg {
       const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[name];
       handler(bm, 'background').then(resolve).catch(reject);
     } else { // here browser messaging is used - msg has to be serializable - Buf instances need to be converted to object urls, and back upon receipt
-      const objUrls = BrowserMsg.replaceBufWithObjUrl(bm);
+      const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(bm);
       const msg: Bm.Raw = { name, data: { bm, objUrls }, to: destString || null, uid: Str.sloppyRandom(10), stack: Catch.stackTrace() }; // tslint:disable-line:no-null-keyword
       const processRawMsgResponse = (r: Bm.RawResponse) => {
         if (!awaitRes) {
           resolve();
         } else if (!r || typeof r !== 'object') { // r can be null if we sent a message to a non-existent window id
+          const lastError = chrome.runtime.lastError ? chrome.runtime.lastError.message || '(empty lastError)' : '(no lastError)';
           let e: Error;
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
-            e = new BgNotReadyError(`Bg not ready for call ${name}`);
+            if (lastError === 'The object could not be cloned.') {
+              e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+            } else { // todo - over time we should be able to catch the error below based on lastError === something, but we don't know the exact err msg yet
+              e = new BgNotReadyError(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+            }
           } else {
-            e = new Error(`BrowserMsg.RawResponse: ${destString} returned "${String(r)}" result for call ${name}`);
+            e = new Error(`BrowserMsg.sendAwait(${name}) returned(${String(r)}) with lastError: ${lastError}`);
           }
           e.stack = `${msg.stack}\n\n${e.stack}`;
           reject(e);
         } else if (r && typeof r === 'object' && r.exception) {
-          const e = new Error(`BrowserMsg(${name}) ${r.exception.message}`);
-          e.stack += `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${r.exception.stack}\n[/responderStack]\n`;
-          reject(e);
+          reject(BrowserMsg.jsonToErr(r.exception, msg));
         } else if (!r.result || typeof r.result !== 'object') {
           resolve(r.result);
         } else {
@@ -280,8 +297,10 @@ export class BrowserMsg {
 
   /**
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
+   *
+   * The requestOrResponse object will get directly updated in this function
    */
-  private static replaceBufWithObjUrl = (requestOrResponse: unknown): Dict<string> => {
+  private static replaceBufWithObjUrlInplace = (requestOrResponse: unknown): Dict<string> => {
     const objUrls: Dict<string> = {};
     if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) {
       for (const possibleBufName of Object.keys(requestOrResponse)) {
@@ -307,13 +326,32 @@ export class BrowserMsg {
     return requestOrResponse;
   }
 
-  private static sendRawResponse = (handlerRromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
-    handlerRromise.then(result => {
-      const objUrls = BrowserMsg.replaceBufWithObjUrl(result); // this actually changes the result object
+  private static errToJson = (e: any): Bm.ErrAsJson => {
+    if (e instanceof AjaxError) {
+      const { message, stack, status, url, responseText, statusText } = e;
+      return { stack, message, errorConstructor: 'AjaxError', ajaxErrorDetails: { status, url, responseText, statusText } };
+    }
+    const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
+    return { stack, message, errorConstructor: 'Error' };
+  }
+
+  private static jsonToErr = (errAsJson: Bm.ErrAsJson, msg: Bm.Raw) => {
+    const stackInfo = `\n\n[callerStack]\n${msg.stack}\n[/callerStack]\n\n[responderStack]\n${errAsJson.stack}\n[/responderStack]\n`;
+    if (errAsJson.errorConstructor === 'AjaxError') {
+      const { status, url, responseText, statusText } = errAsJson.ajaxErrorDetails;
+      return new AjaxError(`BrowserMsg(${name}) ${errAsJson.message}`, stackInfo, status, url, responseText, statusText);
+    }
+    const e = new Error(`BrowserMsg(${name}) ${errAsJson.message}`);
+    e.stack += stackInfo;
+    return e;
+  }
+
+  private static sendRawResponse = (handlerPromise: Promise<Bm.Res.Any>, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
+    handlerPromise.then(result => {
+      const objUrls = BrowserMsg.replaceBufWithObjUrlInplace(result); // this actually changes the result object
       rawRespond({ result, exception: undefined, objUrls });
     }).catch(e => {
-      const { stack, message } = Catch.rewrapErr(e, 'sendRawResponse');
-      rawRespond({ result: undefined, exception: { stack, message }, objUrls: {} });
+      rawRespond({ result: undefined, exception: BrowserMsg.errToJson(e), objUrls: {} });
     });
   }
 

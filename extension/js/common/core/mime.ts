@@ -40,7 +40,7 @@ export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVe
 export type MsgBlockType = 'text' | 'html' | 'attachment' | ReplaceableMsgBlockType;
 export type MsgBlock = {
   type: MsgBlockType;
-  content: string;
+  content: string | Buf;
   complete: boolean;
   signature?: string;
   keyDetails?: KeyDetails;
@@ -143,6 +143,8 @@ export class Mime {
               mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
             } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
               mimeContent.text = Mime.getNodeContentAsUtfStr(node);
+            } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
+              // todo - surface and render encrypted headers
             } else {
               mimeContent.atts.push(new Att({
                 name: Mime.getNodeFilename(node),
@@ -159,7 +161,7 @@ export class Mime {
         };
         parser.write(mimeMsg); // tslint:disable-line:no-unsafe-any
         parser.end(); // tslint:disable-line:no-unsafe-any
-      } catch (e) {
+      } catch (e) { // todo - on Android we may want to fail when this happens, evaluate effect on browser extension
         Catch.handleErr(e);
         resolve(mimeContent);
       }
