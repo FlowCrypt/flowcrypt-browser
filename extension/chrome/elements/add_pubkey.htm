@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="/css/cryptup.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
+  <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+  <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
 </head>
 
 <body id="settings">
@@ -31,6 +33,11 @@
       enter a new one below
     </div>
     <div class="line">
+      <b style="text-decoration: underline;">OR</b>
+      <div id="fineuploader_button" class="button green long">PUBKEY FILE</div>
+      <div id="fineuploader" class="display_none"></div>
+    </div>
+    <div class="line">
       <textarea class="pubkey" placeholder="ASCII Armored Public Key"></textarea>
     </div>
     <div class="line">
@@ -43,6 +50,7 @@
   <script src="/lib/purify.min.js"></script>
   <script src="/lib/jquery.min.js"></script>
   <script src="/lib/openpgp.js"></script>
+  <script src="/lib/fine-uploader.js"></script>
   <script src="add_pubkey.js" type="module"></script>
 </body>
 
