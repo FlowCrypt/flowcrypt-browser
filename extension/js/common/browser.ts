@@ -521,19 +521,19 @@ export class Ui {
    */
   public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
     if (block.type === 'text' || block.type === 'privateKey') {
-      return Xss.escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
+      return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'message') {
-      return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', msgId, isOutgoing, senderEmail, false);
+      return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content.toString(), 'message') : '', msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg(block.content, msgId, isOutgoing, senderEmail, false);
+      return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'publicKey') {
-      return factory.embeddedPubkey(Pgp.armor.normalize(block.content, 'publicKey'), isOutgoing);
+      return factory.embeddedPubkey(Pgp.armor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'passwordMsg') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content); // here block.content is message short id
+      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
     } else if (block.type === 'attestPacket') {
-      return factory.embeddedAttest(block.content);
+      return factory.embeddedAttest(block.content.toString());
     } else if (block.type === 'cryptupVerification') {
-      return factory.embeddedVerification(block.content);
+      return factory.embeddedVerification(block.content.toString());
     } else {
       Catch.report('dunno how to process block type: ' + block.type);
       return '';
@@ -1032,7 +1032,7 @@ export class KeyImportUi {
       if (Value.is(Pgp.armor.headers('privateKey').begin).in(utf)) {
         const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
         if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-          prv = (await openpgp.key.readArmored(firstPrv.content)).keys[0];
+          prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
         }
       } else {
         prv = (await openpgp.key.read(file.getData())).keys[0];

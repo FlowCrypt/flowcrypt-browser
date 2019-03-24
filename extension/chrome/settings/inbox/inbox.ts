@@ -396,7 +396,7 @@ Catch.try(async () => {
           r += '<br><br>';
         }
         if (showOriginal) {
-          r += Xss.escape(block.content).replace(/\n/g, '<br>');
+          r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
           r += Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
         }
