@@ -1329,7 +1329,7 @@ export const handleImportPubkeyFile = async (ui: AttUI, file: Att) => {
     if (blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
       for (const block of blocks) {
         if (block.type === "publicKey") {
-          const result = await openpgp.key.readArmored(block.content);
+          const result = await openpgp.key.readArmored(block.content as string);
           if (result.err) {
             errs.push(...result.err);
           } else {
