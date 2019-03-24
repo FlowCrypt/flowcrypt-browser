@@ -29,10 +29,12 @@ Catch.try(async () => {
     const keys = await handleImportPubkeyFile(attUI, file);
     if (keys) {
       const input = $('#bulk_import .input_pubkey');
+      let str = '';
       for (const key of keys) {
-        input.val(`${input.val()}\n\n${key.armor()}`);
+        str += `${key.armor()}\n\n`;
       }
 
+      input.val(str);
       $('#bulk_import .action_process').trigger('click');
     }
   });
