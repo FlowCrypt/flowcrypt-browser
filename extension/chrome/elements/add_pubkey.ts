@@ -69,7 +69,7 @@ Catch.try(async () => {
   attUI.setAttAddedCb(async (file) => {
     const keys = await handleImportPubkeyFile(attUI, file);
     if (keys && keys.length > 0) {
-      $('.pubkey').val(Xss.escape(String(keys[0].armor())));
+      $('.pubkey').val(String(keys[0].armor()));
       $('.action_ok').trigger('click');
     }
   });
