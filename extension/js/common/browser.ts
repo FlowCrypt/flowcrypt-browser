@@ -1290,3 +1290,72 @@ export class AttUI {
   }
 
 }
+
+/*
+ * This helper function handles using fineuploader to import a file of PGP public keys.
+ * The file can be either a binary or armoured PGP public key file.
+ * The function has some requirements for usage, examples can be found in:
+ * 'extension/chrome/settings/modules/contacts.{ts,htm}'
+ * and 'extension/chrome/elements/add_pubkey.{ts,htm}'
+ *
+ * In the markup you must add:
+ *   1. The following elements to the documents 'head':
+ *    <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+ *    <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
+ *   2. Find a place in the body for the following elements:
+ *    <div id="fineuploader_button" class="button green long">keyring file</div>
+ *    <div id="fineuploader" class="display_none"></div>
+ *  3. Place this script with the other scripts near the bottom of the body:
+ *    <script src="/lib/fine-uploader.js"></script>
+ *
+ * In the TS file you must:
+ *   1. import { AttUI, handleImportPubkeyFile } from 'js/common/browser.ts';
+ *   2. Add the following lines to connect AttUI to the fineuploader elements:
+ *      const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+ *      attUI.initAttDialog('fineuploader', 'fineuploader_button');
+ *      attUI.setAttAddedCb((file) => {
+ *        const keys = handleImportKeyringFile(attUI, file);
+ *        // Handle keys parsed from the file
+ *      });
+ */
+export const handleImportPubkeyFile = async (ui: AttUI, file: Att) => {
+  ui.clearAllAtts();
+  try {
+    const rawFile = file.getData();
+    const stringFile = new TextDecoder("utf-8").decode(rawFile);
+    const { blocks } = await Pgp.armor.detectBlocks(stringFile);
+    const keys: OpenPGP.key.Key[] = [];
+    const errs: Error[] = [];
+    if (blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
+      for (const block of blocks) {
+        if (block.type === "publicKey") {
+          const result = await openpgp.key.readArmored(block.content);
+          if (result.err) {
+            errs.push(...result.err);
+          } else {
+            keys.push(...result.keys);
+          }
+        }
+      }
+    } else {
+      const result = await openpgp.key.read(rawFile);
+      if (result.err) {
+        errs.push(...result.err);
+      } else {
+        keys.push(...result.keys);
+      }
+    }
+    if (errs.length > 0 && keys.length === 0) {
+      let e = `Got error processing public keys:\n`;
+      for (const v of errs) {
+        e += `-> ${v.message}\n`;
+      }
+      await Ui.modal.error(e);
+      return undefined;
+    }
+    return keys;
+  } catch (err) {
+    Catch.handleErr(err);
+  }
+  return undefined;
+};

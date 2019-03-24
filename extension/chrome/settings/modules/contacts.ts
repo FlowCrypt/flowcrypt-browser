@@ -5,13 +5,10 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, XssSafeFactory, AttUI, Env, Browser } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, AttUI, handleImportPubkeyFile, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
-import { requireOpenpgp } from '../../../js/common/platform/require.js';
 import { Buf } from '../../../js/common/core/buf.js';
-
-const openpgp = requireOpenpgp();
 
 Catch.try(async () => {
 
@@ -28,56 +25,17 @@ Catch.try(async () => {
 
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
-  attUI.setAttAddedCb(async (file: Att) => {
-    attUI.clearAllAtts();
-    await handleKeyfileSelected(file);
-  });
-
-  const handleKeyfileSelected = async (file: Att) => {
-    try {
-      const rawFile = file.getData();
-      const stringFile = new TextDecoder("utf-8").decode(rawFile);
-      const { blocks } = await Pgp.armor.detectBlocks(stringFile);
-
-      const keys: OpenPGP.key.Key[] = [];
-      const errs: Error[] = [];
-      if (blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
-        for (const block of blocks) {
-          if (block.type === "publicKey") {
-            const result = await openpgp.key.readArmored(block.content);
-            if (result.err) {
-              errs.push(...result.err);
-            } else {
-              keys.push(...result.keys);
-            }
-          }
-        }
-      } else {
-        const result = await openpgp.key.read(rawFile);
-        if (result.err) {
-          errs.push(...result.err);
-        } else {
-          keys.push(...result.keys);
-        }
-      }
-
-      if (errs.length > 0 && keys.length === 0) {
-        let e = `Got error processing public keys:\n`;
-        errs.map(v => e += `-> ${v.message}\n`);
-        await Ui.modal.error(e);
-        return;
-      }
-
+  attUI.setAttAddedCb(async (file) => {
+    const keys = await handleImportPubkeyFile(attUI, file);
+    if (keys) {
       const input = $('#bulk_import .input_pubkey');
       for (const key of keys) {
         input.val(`${input.val()}\n\n${key.armor()}`);
       }
 
       $('#bulk_import .action_process').trigger('click');
-    } catch (err) {
-      Catch.handleErr(err);
     }
-  };
+  });
 
   const renderContactList = async () => {
     const contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
