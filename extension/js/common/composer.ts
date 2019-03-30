@@ -371,6 +371,11 @@ export class Composer {
       if (String(parsedMsg.headers.subject)) {
         this.S.cached('input_subject').val(String(parsedMsg.headers.subject));
       }
+
+      if (parsedMsg.to.length) {
+        this.v.to = parsedMsg.to;
+      }
+
       await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
@@ -426,6 +431,7 @@ export class Composer {
         } else { // new message compose draft where draftId is not yet known
           body = encrypted.data;
         }
+
         const subject = String(this.S.cached('input_subject').val() || this.v.subject || 'FlowCrypt draft');
         const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
@@ -1125,16 +1131,19 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.v.parentTabId), 300);
   }
 
-  private parseRenderRecipients = async (errsMode: RecipientErrsMode) => {
+  private parseRenderRecipients = async (errsMode: RecipientErrsMode): Promise<boolean> => {
     this.debug(`parseRenderRecipients(${errsMode})`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
     let gentleErrInvalidEmails = '';
     if (!(Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo))) {
       this.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
-      return;
+      return false;
     }
     this.debug(`parseRenderRecipients(${errsMode}).2`);
+
+    let isRecipientAdded = false;
+
     for (const rawRecipientAddrInput of inputTo.split(',')) {
       this.debug(`parseRenderRecipients(${errsMode}).3 (${rawRecipientAddrInput})`);
       if (!rawRecipientAddrInput) {
@@ -1148,8 +1157,10 @@ export class Composer {
         gentleErrInvalidEmails += email;
       } else {
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
+        isRecipientAdded = true;
       }
     }
+
     this.debug(`parseRenderRecipients(${errsMode}).7.gentleErrs(${gentleErrInvalidEmails})`);
     this.S.cached('input_to').val(gentleErrInvalidEmails);
     this.debug(`parseRenderRecipients(${errsMode}).8`);
@@ -1159,6 +1170,8 @@ export class Composer {
     this.debug(`parseRenderRecipients(${errsMode}).10`);
     this.setInputTextHeightManuallyIfNeeded();
     this.debug(`parseRenderRecipients(${errsMode}).11`);
+
+    return isRecipientAdded;
   }
 
   private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
@@ -1173,7 +1186,12 @@ export class Composer {
     if (!Value.is(email).in(this.getRecipientsFromDom())) {
       this.S.cached('input_to').val(Str.parseEmail(email).email);
       this.debug(`selectContact -> parseRenderRecipients start`);
-      await this.parseRenderRecipients('harshRecipientErrs');
+      const isRecipientAdded = await this.parseRenderRecipients('harshRecipientErrs');
+
+      if (isRecipientAdded) {
+        this.draftSave(true);
+      }
+
       this.debug(`selectContact -> parseRenderRecipients done`);
     }
     this.hideContacts();
@@ -1189,6 +1207,7 @@ export class Composer {
     this.resizeInputTo();
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
     this.updatePubkeyIcon();
+    this.draftSave(true);
   }
 
   private authContacts = async (acctEmail: string) => {
@@ -1506,7 +1525,12 @@ export class Composer {
     this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
     this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
       this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-      await this.parseRenderRecipients('gentleRecipientErrs'); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
+      const isRecipientAdded = await this.parseRenderRecipients('gentleRecipientErrs'); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
+
+      if (isRecipientAdded) {
+        this.draftSave(true);
+      }
+
       this.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
