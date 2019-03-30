@@ -1457,7 +1457,7 @@ export class Composer {
     this.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_msg_successful').find('div.replied_from').text(this.getSender());
-    this.S.cached('reply_msg_successful').find('div.replied_to span').text(this.v.to.join(','));
+    this.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
     Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
