@@ -220,12 +220,12 @@
       "result": {
         "blocks": [
           {
-            "type": "text",
+            "type": "plainText",
             "content": "Office\n---------- Forwarded message ----------\nBlablabla\n\nhttps://flowcrypt.com/IFgvrSVR8b\n\nqwertyuiop\n\n---------- Forwarded message ----------\nblabla2",
             "complete": true
           },
           {
-            "type": "passwordMsg",
+            "type": "passwordMsgLink",
             "content": "IFgvrSVR8b",
             "complete": true
           }
@@ -242,7 +242,7 @@
       "result": {
         "blocks": [
           {
-            "type": "text",
+            "type": "plainText",
             "content": "This text breaks email and Gmail web app.\n\n-----BEGIN CERTIFICATE-----\n\nEven though it's not a vaild PGP m\n\nMuhahah",
             "complete": true
           }
