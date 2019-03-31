@@ -181,16 +181,16 @@ export class Env {
   public static urlParams = (expectedKeys: string[], parseThisUrl?: string) => {
     const url = (parseThisUrl || window.location.search.replace('?', ''));
     const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    const rawParms: Dict<string> = {};
+    const rawParams: Dict<string> = {};
     const rawParamNameDict: Dict<string> = {};
     for (const valuePair of valuePairs) {
       const pair = valuePair.split('=');
-      rawParms[pair[0]] = pair[1];
+      rawParams[pair[0]] = pair[1];
       Env.fillPossibleUrlParamNameVariations(pair[0], rawParamNameDict);
     }
     const processedParams: UrlParams = {};
     for (const expectedKey of expectedKeys) {
-      processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParms);
+      processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParams);
     }
     return processedParams;
   }
