@@ -109,7 +109,7 @@ Catch.try(async () => {
       const allErrs: Error[] = [];
       if (armoredPublicKeyBlocks.length) {
         for (const block of blocks) {
-          const { err, keys } = await openpgp.key.readArmored(block.content);
+          const { err, keys } = await openpgp.key.readArmored(block.content.toString());
           if (err) {
             allErrs.push(...err);
           }
