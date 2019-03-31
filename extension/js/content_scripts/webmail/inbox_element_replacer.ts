@@ -106,12 +106,12 @@ export class InboxElementReplacer implements WebmailElementReplacer {
     attsContainer = $(attsContainer);
     for (const a of attMetas) {
       const treatAs = a.treatAs();
-      if (treatAs !== 'standard') {
+      if (treatAs !== 'plainFile') {
         const attSel = (attsContainer as JQuery<HTMLElement>).find(this.getAttSel(a.name)).first();
         this.hideAtt(attSel, attsContainer);
-        if (treatAs === 'encrypted') { // actual encrypted attachment - show it
+        if (treatAs === 'encryptedFile') { // actual encrypted attachment - show it
           (attsContainer as JQuery<HTMLElement>).prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
-        } else if (treatAs === 'message') {
+        } else if (treatAs === 'encryptedMsg') {
           msgEl.append(this.factory.embeddedMsg('', msgId, false, senderEmail || '', false)).css('display', 'block'); // xss-safe-factory
         } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
           Google.gmail.attGet(this.acctEmail, msgId, a.id!).then(downloadedAtt => {
@@ -141,7 +141,7 @@ export class InboxElementReplacer implements WebmailElementReplacer {
       for (const loaderEl of notProcessedAttsLoaders) {
         try {
           const meta = $(loaderEl).parent().attr('download_url')!.split(':');
-          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encrypted' }));
+          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: meta[2] + ':' + meta[3], treatAs: 'encryptedFile' }));
         } catch (e) {
           Catch.handleErr(e);
         }

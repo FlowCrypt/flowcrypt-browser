@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Value, Dict } from './common.js';
-import { Pgp, KeyDetails } from './pgp.js';
+import { Pgp, KeyDetails, DecryptError } from './pgp.js';
 import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
@@ -36,15 +36,17 @@ type MimeParserNode = {
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type KeyBlockType = 'publicKey' | 'privateKey';
-export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'message' | 'passwordMsg';
-export type MsgBlockType = 'text' | 'html' | 'attachment' | ReplaceableMsgBlockType;
+export type ReplaceableMsgBlockType = KeyBlockType | 'attestPacket' | 'cryptupVerification' | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
+export type MsgBlockType = 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt' | 'decryptedAtt' | 'encryptedAttLink'
+  | 'decryptErr' | ReplaceableMsgBlockType;
 export type MsgBlock = {
   type: MsgBlockType;
   content: string | Buf;
   complete: boolean;
   signature?: string;
-  keyDetails?: KeyDetails;
-  attMeta?: AttMeta;
+  keyDetails?: KeyDetails; // only in publicKey when returned to Android (could eventually be made mandatory, done straight in detectBlocks?)
+  attMeta?: AttMeta; // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
+  decryptErr?: DecryptError; // only in decryptErr block, always
 };
 type MimeParseSignedRes = { full: string, signed?: string, signature?: string };
 
@@ -55,13 +57,15 @@ export class Mime {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {  // may be undefined or empty
       blocks.push(...Pgp.armor.detectBlocks(decoded.text).blocks);
+    } else if (decoded.html) {
+      blocks.push(Pgp.internal.msgBlockObj('plainHtml', decoded.html));
     }
     for (const file of decoded.atts) {
       const treatAs = file.treatAs();
-      if (treatAs === 'message') {
+      if (treatAs === 'encryptedMsg') {
         const armored = Pgp.armor.clip(file.getData().toUtfStr());
         if (armored) {
-          blocks.push(Pgp.internal.msgBlockObj('message', armored));
+          blocks.push(Pgp.internal.msgBlockObj('encryptedMsg', armored));
         }
       } else if (treatAs === 'signature') {
         decoded.signature = decoded.signature || file.getData().toUtfStr();
@@ -71,7 +75,7 @@ export class Mime {
     }
     if (decoded.signature) {
       for (const block of blocks) {
-        if (block.type === 'text') {
+        if (block.type === 'plainText') {
           block.type = 'signedMsg';
           block.signature = decoded.signature;
         }
@@ -97,8 +101,8 @@ export class Mime {
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
-    const msgId = parsedMimeMsg.headers['message-id'] || '';
-    const refs = parsedMimeMsg.headers['in-reply-to'] || '';
+    const msgId = String(parsedMimeMsg.headers['message-id'] || '');
+    const refs = String(parsedMimeMsg.headers['in-reply-to'] || '');
     return { 'in-reply-to': msgId, 'references': refs + ' ' + msgId };
   }
 

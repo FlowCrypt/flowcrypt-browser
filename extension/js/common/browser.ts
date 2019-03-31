@@ -520,15 +520,15 @@ export class Ui {
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
   public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    if (block.type === 'text' || block.type === 'privateKey') {
+    if (block.type === 'plainText' || block.type === 'privateKey') {
       return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
-    } else if (block.type === 'message') {
-      return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content.toString(), 'message') : '', msgId, isOutgoing, senderEmail, false);
+    } else if (block.type === 'encryptedMsg') {
+      return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'signedMsg') {
       return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
-    } else if (block.type === 'passwordMsg') {
+    } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
     } else if (block.type === 'attestPacket') {
       return factory.embeddedAttest(block.content.toString());
@@ -549,8 +549,8 @@ export class Ui {
    */
   public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
     const { blocks } = Pgp.armor.detectBlocks(origText);
-    if (blocks.length === 1 && blocks[0].type === 'text') {
-      return;
+    if (blocks.length === 1 && blocks[0].type === 'plainText') {
+      return undefined; // only has single block which is plain text - meaning
     }
     let r = '';
     for (const block of blocks) {

@@ -221,13 +221,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
       const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
       try {
-        if (treatAs !== 'standard') {
+        if (treatAs !== 'plainFile') {
           this.hideAtt(attSel, attsContainerInner);
           nRenderedAtts--;
-          if (treatAs === 'encrypted') { // actual encrypted attachment - show it
+          if (treatAs === 'encryptedFile') { // actual encrypted attachment - show it
             attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
             nRenderedAtts++;
-          } else if (treatAs === 'message') {
+          } else if (treatAs === 'encryptedMsg') {
             const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
             const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
             if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
@@ -235,7 +235,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
                 nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
-              } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
+              } else if (openpgpType && Value.is(openpgpType.type).in(['encryptedMsg', 'signedMsg'])) {
                 msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
               } else {
                 attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
@@ -252,7 +252,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             const replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
-        } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
+        } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
           const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
           const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
           if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
@@ -293,7 +293,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const downloadUrl = $(attLoaderEl).parent().attr('download_url');
         if (downloadUrl) {
           const meta = downloadUrl.split(':');
-          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted' }));
+          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encryptedFile' }));
         } else {
           console.info('Missing Google Drive attachments download_url');
         }

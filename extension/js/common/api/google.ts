@@ -340,7 +340,7 @@ export class Google extends Api {
         }
         if (atts.length) {
           for (const att of atts) {
-            if (att.treatAs() === 'message') {
+            if (att.treatAs() === 'encryptedMsg') {
               await Google.gmail.fetchAtts(acctEmail, [att]);
               const armoredMsg = Pgp.armor.clip(att.getData().toUtfStr());
               if (!armoredMsg) {

@@ -6,7 +6,7 @@ import { Value } from './common.js';
 import { KeyInfo } from '../core/pgp.js';
 import { Buf } from './buf.js';
 
-type Att$treatAs = "publicKey" | "message" | "hidden" | "signature" | "encrypted" | "standard";
+type Att$treatAs = "publicKey" | "encryptedMsg" | "hidden" | "signature" | "encryptedFile" | "plainFile";
 export type AttMeta = {
   data?: Uint8Array; type?: string; name?: string; length?: number; url?: string;
   inline?: boolean; id?: string; msgId?: string; treatAs?: Att$treatAs; cid?: string;
@@ -81,19 +81,19 @@ export class Att {
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
       return 'signature';
     } else if (!this.name && !Value.is('image/').in(this.type)) { // this.name may be '' or undefined - catch either
-      return this.length < 100 ? 'hidden' : 'message';
-    } else if (Value.is(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
-      return 'message';
+      return this.length < 100 ? 'hidden' : 'encryptedMsg';
+    } else if (Value.is(this.name).in(['encryptedMsg', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
+      return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
-      return 'encrypted';
+      return 'encryptedFile';
     } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
       return 'publicKey';
     } else if (Value.is('public').in(this.name.toLowerCase()) && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
       return 'publicKey';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
-      return 'message';
+      return 'encryptedMsg';
     } else {
-      return 'standard';
+      return 'plainFile';
     }
   }
 

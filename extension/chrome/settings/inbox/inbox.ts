@@ -389,7 +389,7 @@ Catch.try(async () => {
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
       for (const block of blocks) {
-        if (block.type === 'message' || block.type === 'publicKey' || block.type === 'signedMsg' || block.type === 'passwordMsg') {
+        if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'signedMsg' || block.type === 'encryptedMsgLink') {
           threadHasPgpBlock = true;
         }
         if (r) {
@@ -403,7 +403,7 @@ Catch.try(async () => {
       }
       const { atts } = await Mime.decode(mimeMsg);
       if (atts.length) {
-        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(a => factory.embeddedAtta(a, true)).join('')}</div>`;
+        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encryptedFile').map(a => factory.embeddedAtta(a, true)).join('')}</div>`;
       }
       r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrapMsg(htmlId, r)); // xss-safe-factory
