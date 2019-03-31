@@ -1290,3 +1290,59 @@ export class AttUI {
   }
 
 }
+
+/*
+ * This function uses fineuploader to import a file of PGP public keys (binary or armored). Usage examples:
+ * 'extension/chrome/settings/modules/contacts.{ts,htm}' and 'extension/chrome/elements/add_pubkey.{ts,htm}'
+ *
+ * In the markup you must add:
+ *   1. The following elements to the documents 'head':
+ *    <link rel="stylesheet" href="/css/fine-uploader-new.css" />
+ *    <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
+ *   2. Find a place in the body for the following elements:
+ *    <div id="fineuploader_button" class="button green long">keyring file</div>
+ *    <div id="fineuploader" class="display_none"></div>
+ *  3. Place this script with the other scripts near the bottom of the body:
+ *    <script src="/lib/fine-uploader.js"></script>
+ *
+ * In the TS file you must:
+ *      const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+ *      attUI.initAttDialog('fineuploader', 'fineuploader_button');
+ *      attUI.setAttAddedCb((file) => {
+ *        const keys = handleImportKeyringFile(attUI, file);
+ *        // Handle keys parsed from the file
+ *      });
+ */
+export const processPublicKeyFileImport = async (ui: AttUI, file: Att) => {
+  ui.clearAllAtts();
+  try {
+    const { blocks } = await Pgp.armor.detectBlocks(file.getData().toUtfStr());
+    const armoredPublicKeyBlocks = blocks.filter(block => block.type === "publicKey");
+    const allKeys: OpenPGP.key.Key[] = [];
+    const allErrs: Error[] = [];
+    if (armoredPublicKeyBlocks.length) {
+      for (const block of blocks) {
+        const { err, keys } = await openpgp.key.readArmored(block.content.toString());
+        if (err) {
+          allErrs.push(...err);
+        }
+        allKeys.push(...keys);
+      }
+    } else {
+      const { err, keys } = await openpgp.key.read(file.getData());
+      if (err) {
+        allErrs.push(...err);
+      }
+      allKeys.push(...keys);
+    }
+    if (allErrs.length && !allKeys.length) {
+      await Ui.modal.error(`error processing public keys:\n${allErrs.map(e => `-> ${e.message}\n`).join('')}`);
+      return undefined;
+    }
+    return allKeys;
+  } catch (e) {
+    Catch.handleErr(e);
+    await Ui.modal.error(`error processing public keys: ${String(e)}`);
+    return undefined;
+  }
+};

@@ -5,13 +5,10 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, XssSafeFactory, AttUI, Env, Browser } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, AttUI, processPublicKeyFileImport, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
-import { requireOpenpgp } from '../../../js/common/platform/require.js';
 import { Buf } from '../../../js/common/core/buf.js';
-
-const openpgp = requireOpenpgp();
 
 Catch.try(async () => {
 
@@ -28,9 +25,13 @@ Catch.try(async () => {
 
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
-  attUI.setAttAddedCb(async (file: Att) => {
-    attUI.clearAllAtts();
-    await handleKeyfileSelected(file);
+  attUI.setAttAddedCb(async (file) => {
+    const keys = await processPublicKeyFileImport(attUI, file);
+    if (keys) {
+      $('#bulk_import .input_pubkey').val(keys.map(key => key.armor()).join('\n\n'));
+      $('#bulk_import .action_process').trigger('click');
+      $('#file_import').hide();
+    }
   });
 
   const renderViewPublicKey = async (viewPubkeyButton: HTMLElement) => {
@@ -96,43 +97,6 @@ Catch.try(async () => {
     } else {
       $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
       $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
-    }
-  };
-
-  const handleKeyfileSelected = async (file: Att) => {
-    try {
-      const rawFile = file.getData();
-      const stringFile = new TextDecoder("utf-8").decode(rawFile);
-      const { blocks } = await Pgp.armor.detectBlocks(stringFile);
-      const armoredPublicKeyBlocks = blocks.filter(block => block.type === "publicKey");
-      const allKeys: OpenPGP.key.Key[] = [];
-      const allErrs: Error[] = [];
-      if (armoredPublicKeyBlocks.length) {
-        for (const block of blocks) {
-          const { err, keys } = await openpgp.key.readArmored(block.content.toString());
-          if (err) {
-            allErrs.push(...err);
-          }
-          allKeys.push(...keys);
-        }
-      } else {
-        const { err, keys } = await openpgp.key.read(rawFile);
-        if (err) {
-          allErrs.push(...err);
-        }
-        allKeys.push(...keys);
-      }
-      if (allErrs.length && !allKeys.length) {
-        await Ui.modal.error(`error processing public keys:\n${allErrs.map(e => `-> ${e.message}\n`).join('')}`);
-        return;
-      }
-      $('#bulk_import .input_pubkey').val(allKeys.map(key => key.armor()).join('\n\n'));
-      $('#bulk_import .action_process').trigger('click');
-      $('#file_import').hide();
-    } catch (e) {
-      Catch.handleErr(e);
-      await Ui.modal.error(`error processing public keys: ${String(e)}`);
-      window.location.reload();
     }
   };
 
