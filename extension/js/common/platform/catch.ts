@@ -86,8 +86,7 @@ export class Catch {
     console.log(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
     if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
       // @ts-ignore
-      const args: any = Array.from(arguments);
-      Catch.ORIG_ONERROR.apply(undefined, args as any); // Call any previously assigned handler
+      Catch.ORIG_ONERROR.apply(undefined, arguments); // Call any previously assigned handler
     }
     if (exception instanceof UnreportableError) {
       return;
