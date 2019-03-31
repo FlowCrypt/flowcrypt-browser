@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { VERSION } from './const.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Value, Str } from './common.js';
@@ -15,12 +14,6 @@ import { FcAttLinkData } from './att.js';
 import { Buf } from './buf.js';
 
 const openpgp = requireOpenpgp();
-
-if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
-  openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
-  openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
-  // openpgp.config.require_uid_self_cert = false;
-}
 
 export namespace PgpMsgMethod {
   export namespace Arg {

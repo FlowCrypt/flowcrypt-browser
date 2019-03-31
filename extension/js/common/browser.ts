@@ -1239,6 +1239,10 @@ export class AttUI {
     return atts;
   }
 
+  clearAllAtts = () => {
+    this.attachedFiles = {};
+  }
+
   private cancelAtt = (uploadFileId: string) => {
     delete this.attachedFiles[uploadFileId];
   }
