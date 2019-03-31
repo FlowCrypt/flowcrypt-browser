@@ -397,7 +397,8 @@ export class Composer {
         await Ui.time.sleep(500);
         await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
-        window.location.reload();
+        this.v.draftId = '';
+        window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.v);
       } else {
         Catch.handleErr(e);
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
@@ -489,6 +490,7 @@ export class Composer {
       await this.app.storageSetDraftMeta(false, this.v.draftId, this.v.threadId);
       try {
         await this.app.emailProviderDraftDelete(this.v.draftId);
+        this.v.draftId = '';
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
