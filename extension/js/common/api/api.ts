@@ -313,7 +313,7 @@ export class Api {
         return false;
       }
       if (e.status === 200 || e.status === 403) {
-        if (/(site|content|script) (is|has been|was) (restricted|blocked|disabled)/i.test(e.responseText)) {
+        if (/(site|content|script|internet) (is|has been|was|access) (restricted|blocked|disabled|denied)/i.test(e.responseText)) {
           return true;
         }
         if (/access to the requested site/.test(e.responseText)) {
