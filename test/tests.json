@@ -225,7 +225,7 @@
             "complete": true
           },
           {
-            "type": "passwordMsgLink",
+            "type": "encryptedMsgLink",
             "content": "IFgvrSVR8b",
             "complete": true
           }
