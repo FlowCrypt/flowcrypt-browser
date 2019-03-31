@@ -33,49 +33,106 @@ Catch.try(async () => {
     await handleKeyfileSelected(file);
   });
 
+  const renderViewPublicKey = async (viewPubkeyButton: HTMLElement) => {
+    const [contact] = await Store.dbContactGet(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
+    $('.hide_when_rendering_subpage').css('display', 'none');
+    Xss.sanitizeRender('h1', `${backBtn}${space}${contact!.email}`); // should exist - from list of contacts
+    if (contact!.client === 'cryptup') {
+      Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
+    } else {
+      Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+    }
+    $('#view_contact .key_dump').text(contact!.pubkey!); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact .key_fingerprint').text(contact!.fingerprint!); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact .key_words').text(contact!.keywords!); // should exist - from list of contacts && should have pgp - filtered
+    $('#view_contact').css('display', 'block');
+    $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
+  };
+
+  const renderChangePublicKey = (changePubkeyButton: HTMLElement) => {
+    $('.hide_when_rendering_subpage').css('display', 'none');
+    const email = $(changePubkeyButton).closest('tr').attr('email')!;
+    Xss.sanitizeRender('h1', `${backBtn}${space}${Xss.escape(email)}${space}(edit)`);
+    $('#edit_contact').css('display', 'block');
+    $('#edit_contact .input_pubkey').val('').attr('email', email);
+    $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
+  };
+
+  const actionSaveEditedPublicKey = async () => {
+    const armoredPubkey = String($('#edit_contact .input_pubkey').val());
+    const email = $('#edit_contact .input_pubkey').attr('email');
+    if (!armoredPubkey || !email) {
+      await Ui.modal.warning('No public key entered');
+    } else if (await Pgp.key.fingerprint(armoredPubkey)) {
+      await Store.dbContactSave(undefined, await Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
+      await renderContactList();
+    } else {
+      await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
+      $('#edit_contact .input_pubkey').val('').focus();
+    }
+  };
+
+  const actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
+    await Store.dbContactSave(undefined, await Store.dbContactObj($(rmPubkeyButton).closest('tr').attr('email')!, undefined, undefined, undefined, undefined, false, undefined));
+    await renderContactList();
+  };
+
+  const renderBulkImportPage = () => {
+    $('.hide_when_rendering_subpage').css('display', 'none');
+    Xss.sanitizeRender('h1', `${backBtn}${space}Bulk Public Key Import${space}`);
+    $('#bulk_import').css('display', 'block');
+    $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
+    $('#bulk_import .action_process').css('display', 'inline-block');
+    $('#bulk_import #processed').text('').css('display', 'none');
+    $('#file_import').show();
+    $('#file_import #fineuploader_button').css('display', 'inline-block');
+    $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
+  };
+
+  const actionProcessBulkImportTextInput = async () => {
+    const replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, String($('#bulk_import .input_pubkey').val()));
+    if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
+      await Ui.modal.warning('Could not find any new public keys');
+    } else {
+      $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
+      $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+    }
+  };
+
   const handleKeyfileSelected = async (file: Att) => {
     try {
       const rawFile = file.getData();
       const stringFile = new TextDecoder("utf-8").decode(rawFile);
       const { blocks } = await Pgp.armor.detectBlocks(stringFile);
-
-      const keys: OpenPGP.key.Key[] = [];
-      const errs: Error[] = [];
-      if (blocks.length > 0 && blocks.some(block => block.type === "publicKey")) {
+      const armoredPublicKeyBlocks = blocks.filter(block => block.type === "publicKey");
+      const allKeys: OpenPGP.key.Key[] = [];
+      const allErrs: Error[] = [];
+      if (armoredPublicKeyBlocks.length) {
         for (const block of blocks) {
-          if (block.type === "publicKey") {
-            const result = await openpgp.key.readArmored(block.content);
-            if (result.err) {
-              errs.push(...result.err);
-            } else {
-              keys.push(...result.keys);
-            }
+          const { err, keys } = await openpgp.key.readArmored(block.content);
+          if (err) {
+            allErrs.push(...err);
           }
+          allKeys.push(...keys);
         }
       } else {
-        const result = await openpgp.key.read(rawFile);
-        if (result.err) {
-          errs.push(...result.err);
-        } else {
-          keys.push(...result.keys);
+        const { err, keys } = await openpgp.key.read(rawFile);
+        if (err) {
+          allErrs.push(...err);
         }
+        allKeys.push(...keys);
       }
-
-      if (errs.length > 0 && keys.length === 0) {
-        let e = `Got error processing public keys:\n`;
-        errs.map(v => e += `-> ${v.message}\n`);
-        await Ui.modal.error(e);
+      if (allErrs.length && !allKeys.length) {
+        await Ui.modal.error(`error processing public keys:\n${allErrs.map(e => `-> ${e.message}\n`).join('')}`);
         return;
       }
-
-      const input = $('#bulk_import .input_pubkey');
-      for (const key of keys) {
-        input.val(`${input.val()}\n\n${key.armor()}`);
-      }
-
+      $('#bulk_import .input_pubkey').val(allKeys.map(key => key.armor()).join('\n\n'));
       $('#bulk_import .action_process').trigger('click');
-    } catch (err) {
-      Catch.handleErr(err);
+      $('#file_import').hide();
+    } catch (e) {
+      Catch.handleErr(e);
+      await Ui.modal.error(`error processing public keys: ${String(e)}`);
+      window.location.reload();
     }
   };
 
@@ -90,16 +147,7 @@ Catch.try(async () => {
     }));
 
     const importPublicKeysHtml = '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
-    Xss.sanitizeAppend('.line.actions', importPublicKeysHtml).find('.action_view_bulk_import').off().click(Ui.event.prevent('double', (self) => {
-      $('.hide_when_rendering_subpage').css('display', 'none');
-      Xss.sanitizeRender('h1', `${backBtn}${space}Bulk Public Key Import${space}`);
-      $('#bulk_import').css('display', 'block');
-      $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
-      $('#bulk_import .action_process').css('display', 'inline-block');
-      $('#bulk_import #processed').text('').css('display', 'none');
-      $('#file_import #fineuploader_button').css('display', 'inline-block');
-      $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
-    }));
+    Xss.sanitizeAppend('.line.actions', importPublicKeysHtml).find('.action_view_bulk_import').off().click(Ui.event.prevent('double', renderBulkImportPage));
 
     $('table#emails').text('');
     $('div.hide_when_rendering_subpage').css('display', 'block');
@@ -117,70 +165,11 @@ Catch.try(async () => {
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
 
-    $('a.action_show').off().click(Ui.event.prevent('double', async (self) => {
-      const [contact] = await Store.dbContactGet(undefined, [$(self).closest('tr').attr('email')!]); // defined above
-      $('.hide_when_rendering_subpage').css('display', 'none');
-      Xss.sanitizeRender('h1', `${backBtn}${space}${contact!.email}`); // should exist - from list of contacts
-      if (contact!.client === 'cryptup') {
-        Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;<img src="/img/logo/flowcrypt-logo-19-19.png" />');
-      } else {
-        Xss.sanitizeAppend('h1', '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
-      }
-      $('#view_contact .key_dump').text(contact!.pubkey!); // should exist - from list of contacts && should have pgp - filtered
-      $('#view_contact .key_fingerprint').text(contact!.fingerprint!); // should exist - from list of contacts && should have pgp - filtered
-      $('#view_contact .key_words').text(contact!.keywords!); // should exist - from list of contacts && should have pgp - filtered
-      $('#view_contact').css('display', 'block');
-      $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
-    }));
-
-    $('a.action_change').off().click(Ui.event.prevent('double', self => {
-      $('.hide_when_rendering_subpage').css('display', 'none');
-      const email = $(self).closest('tr').attr('email')!;
-      Xss.sanitizeRender('h1', `${backBtn}${space}${Xss.escape(email)}${space}(edit)`);
-      $('#edit_contact').css('display', 'block');
-      $('#edit_contact .input_pubkey').val('').attr('email', email);
-      $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
-    }));
-
-    $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent('double', async (self) => {
-      const armoredPubkey = String($('#edit_contact .input_pubkey').val());
-      const email = $('#edit_contact .input_pubkey').attr('email');
-      if (!armoredPubkey || !email) {
-        await Ui.modal.warning('No public key entered');
-      } else if (await Pgp.key.fingerprint(armoredPubkey)) {
-        await Store.dbContactSave(undefined, await Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
-        await renderContactList();
-      } else {
-        await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
-        $('#edit_contact .input_pubkey').val('').focus();
-      }
-    }));
-
-    $('.action_view_bulk_import').off().click(Ui.event.prevent('double', self => {
-      $('.hide_when_rendering_subpage').css('display', 'none');
-      Xss.sanitizeRender('h1', `${backBtn}${space}Bulk Public Key Import${space}`);
-      $('#bulk_import').css('display', 'block');
-      $('#bulk_import .input_pubkey').val('').css('display', 'inline-block');
-      $('#bulk_import .action_process').css('display', 'inline-block');
-      $('#bulk_import #processed').text('').css('display', 'none');
-      $('#file_import #fineuploader_button').css('display', 'inline-block');
-      $('#page_back_button').click(Ui.event.handle(() => renderContactList()));
-    }));
-
-    $('#bulk_import .action_process').off().click(Ui.event.prevent('double', async target => {
-      const replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, String($('#bulk_import .input_pubkey').val()));
-      if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
-        await Ui.modal.warning('Could not find any new public keys');
-      } else {
-        $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
-      }
-    }));
-
-    $('a.action_remove').off().click(Ui.event.prevent('double', async (self) => {
-      await Store.dbContactSave(undefined, await Store.dbContactObj($(self).closest('tr').attr('email')!, undefined, undefined, undefined, undefined, false, undefined));
-      await renderContactList();
-    }));
+    $('a.action_show').off().click(Ui.event.prevent('double', renderViewPublicKey));
+    $('a.action_change').off().click(Ui.event.prevent('double', renderChangePublicKey));
+    $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent('double', actionSaveEditedPublicKey));
+    $('#bulk_import .action_process').off().click(Ui.event.prevent('double', actionProcessBulkImportTextInput));
+    $('a.action_remove').off().click(Ui.event.prevent('double', actionRemovePublicKey));
 
   };
 
