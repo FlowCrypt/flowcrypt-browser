@@ -4,7 +4,7 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Xss, Ui, KeyImportUi, AttUI, handleImportPubkeyFile, UserAlert, Env } from '../../js/common/browser.js';
+import { Xss, Ui, KeyImportUi, AttUI, processPublicKeyFileImport, UserAlert, Env } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 
 Catch.try(async () => {
@@ -67,8 +67,8 @@ Catch.try(async () => {
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
   attUI.setAttAddedCb(async (file) => {
-    const keys = await handleImportPubkeyFile(attUI, file);
-    if (keys && keys.length > 0) {
+    const keys = await processPublicKeyFileImport(attUI, file);
+    if (keys && keys.length) {
       $('.pubkey').val(String(keys[0].armor()));
       $('.action_ok').trigger('click');
     }

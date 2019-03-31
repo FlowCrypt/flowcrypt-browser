@@ -25,17 +25,13 @@
     <div class="line">
       <select class="email"></select>
     </div>
-    <div class="line copy_from">
-      Copy from
+    <div class="line copy_from" style="text-align: left;padding-left: 25px;">
       <select class="copy_from_email" data-test="input-select-copy-from">
-        <option value=""></option>
-      </select> <b style="text-decoration: underline;">OR</b>
-      enter a new one below
-    </div>
-    <div class="line">
-      <b style="text-decoration: underline;">OR</b>
-      <div id="fineuploader_button" class="button green long">PUBKEY FILE</div>
-      <div id="fineuploader" class="display_none"></div>
+        <option value="">Copy from Contact</option>
+      </select>
+      or
+      <div id="fineuploader_button" class="button gray">LOAD FILE</div>
+      or paste below:
     </div>
     <div class="line">
       <textarea class="pubkey" placeholder="ASCII Armored Public Key"></textarea>
@@ -45,6 +41,7 @@
       <div class="button long gray action_settings">SETTINGS</div>
       <div class="button long gray action_close">CLOSE</div>
     </div>
+    <div id="fineuploader" class="display_none"></div>
   </div>
 
   <script src="/lib/purify.min.js"></script>

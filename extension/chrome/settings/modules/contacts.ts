@@ -5,13 +5,10 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, XssSafeFactory, AttUI, handleImportPubkeyFile, Env, Browser } from '../../../js/common/browser.js';
+import { Xss, Ui, XssSafeFactory, AttUI, processPublicKeyFileImport, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
-import { requireOpenpgp } from '../../../js/common/platform/require.js';
 import { Buf } from '../../../js/common/core/buf.js';
-
-const openpgp = requireOpenpgp();
 
 Catch.try(async () => {
 
@@ -29,16 +26,11 @@ Catch.try(async () => {
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
   attUI.setAttAddedCb(async (file) => {
-    const keys = await handleImportPubkeyFile(attUI, file);
+    const keys = await processPublicKeyFileImport(attUI, file);
     if (keys) {
-      const input = $('#bulk_import .input_pubkey');
-      let str = '';
-      for (const key of keys) {
-        str += `${key.armor()}\n\n`;
-      }
-
-      input.val(str);
+      $('#bulk_import .input_pubkey').val(keys.map(key => key.armor()).join('\n\n'));
       $('#bulk_import .action_process').trigger('click');
+      $('#file_import').hide();
     }
   });
 
@@ -122,7 +114,7 @@ Catch.try(async () => {
     Xss.sanitizeAppend('.line.actions', importPublicKeysHtml).find('.action_view_bulk_import').off().click(Ui.event.prevent('double', renderBulkImportPage));
 
     $('table#emails').text('');
-    $('div.hide_when_rendering_subpage').css('dcindy@girlnextdoorhomes.comisplay', 'block');
+    $('div.hide_when_rendering_subpage').css('display', 'block');
     $('table.hide_when_rendering_subpage').css('display', 'table');
     $('h1').text('Contacts and their Public Keys');
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
