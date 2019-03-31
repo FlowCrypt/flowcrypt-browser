@@ -84,7 +84,7 @@ export class Catch {
       console.error(exception);
     }
     console.log(`%c[${exception.message}]\n${exception.stack}`, 'color: #F00; font-weight: bold;');
-    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as ErrorEventHandler)) {
+    if (isManuallyCalled !== true && Catch.ORIG_ONERROR && Catch.ORIG_ONERROR !== (Catch.onErrorInternalHandler as OnErrorEventHandler)) {
       // @ts-ignore
       const args: any = Array.from(arguments);
       Catch.ORIG_ONERROR.apply(undefined, args as any); // Call any previously assigned handler
@@ -283,5 +283,5 @@ export class Catch {
 }
 
 Catch.RUNTIME_ENVIRONMENT = Catch.environment();
-window.onerror = (Catch.onErrorInternalHandler as ErrorEventHandler);
+window.onerror = (Catch.onErrorInternalHandler as OnErrorEventHandler);
 window.onunhandledrejection = Catch.onUnhandledRejectionInternalHandler;

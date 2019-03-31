@@ -277,15 +277,7 @@ export class Composer {
       // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
       // because they might not have a pubkey for the alternative address, and might get confused
     });
-    this.S.cached('input_text').get(0).onpaste = async e => {
-      const clipboardHtmlData = e.clipboardData.getData('text/html');
-      if (clipboardHtmlData) {
-        e.preventDefault();
-        e.stopPropagation();
-        const sanitized = Xss.htmlSanitizeAndStripAllTags(clipboardHtmlData, '<br>');
-        this.simulateCtrlV(sanitized);
-      }
-    };
+    this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
     this.S.cached('icon_pubkey').click(Ui.event.handle(target => {
       this.includePubkeyToggledManually = true;
       this.updatePubkeyIcon(!$(target).is('.active'));
@@ -308,6 +300,25 @@ export class Composer {
     }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
+  }
+
+  private inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
+    if (!clipboardEvent.clipboardData) {
+      return;
+    }
+    const clipboardHtmlData = clipboardEvent.clipboardData.getData('text/html');
+    if (!clipboardHtmlData) {
+      return; // if it's text, let the original handlers paste it
+    }
+    clipboardEvent.preventDefault();
+    clipboardEvent.stopPropagation();
+    const sanitized = Xss.htmlSanitizeAndStripAllTags(clipboardHtmlData, '<br>');
+    // the lines below simulate ctrl+v, but not perfectly (old selected text does not get deleted)
+    const selection = window.getSelection();
+    if (selection) {
+      const r = selection.getRangeAt(0);
+      r.insertNode(r.createContextualFragment(sanitized));
+    }
   }
 
   private initComposeBox = async () => {
@@ -1489,11 +1500,6 @@ export class Composer {
       }).join('')).css('display', 'block');
     }
     this.resizeReplyBox();
-  }
-
-  private simulateCtrlV = (toPaste: string) => {
-    const r = window.getSelection().getRangeAt(0);
-    r.insertNode(r.createContextualFragment(toPaste));
   }
 
   private debugFocusEvents = (...selNames: string[]) => {
