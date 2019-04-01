@@ -55,7 +55,6 @@ export const Lang = { // tslint:disable-line:variable-name
     refreshWindow: 'Please refresh your web mail window to read encrypted messages. ',
     updateChromeSettings: 'Need to update chrome settings to view encrypted messages. ',
     notProperlySetUp: 'FlowCrypt is not properly set up to decrypt messages. ',
-    mdcWarning: 'This message has failed or missing integrity checks, and is not safe to render. The sender must be using a very old version of their software, and should update and send a new message.',
     msgExpiredOn: 'Message expired on ',
     msgsDontExpire: 'Messages don\'t expire if recipients also have encryption set up.',
     msgDestroyed: 'Message was destroyed 30 days after expiration and cannot be renewed.',

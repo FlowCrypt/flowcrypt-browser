@@ -19,6 +19,7 @@ const openpgp = requireOpenpgp();
 if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
   openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
   openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+  openpgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
   // openpgp.config.require_uid_self_cert = false;
 }
 
@@ -96,7 +97,7 @@ type DecryptSuccess = { success: true; signature?: MsgVerifyResult; isEncrypted?
 type DecryptError$error = { type: DecryptErrTypes; message: string; };
 type DecryptError$longids = { message: string[]; matching: string[]; chosen: string[]; needPassphrase: string[]; };
 export type DecryptError = {
-  success: false; error: DecryptError$error; longids: DecryptError$longids;
+  success: false; error: DecryptError$error; longids: DecryptError$longids; content?: Buf;
   isEncrypted?: boolean; message?: OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 };
 type CryptoArmorHeaderDefinition = { begin: string, middle?: string, end: string | RegExp, replace: boolean };
@@ -553,7 +554,7 @@ export class Pgp {
         return { type: DecryptErrTypes.keyMismatch, message: e };
       } else if (msgPwd && Value.is(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
         return { type: DecryptErrTypes.wrongPwd, message: e };
-      } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.') {
+      } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.' || e === 'Decryption failed due to missing MDC.') {
         return { type: DecryptErrTypes.noMdc, message: e };
       } else if (e === 'Decryption error') {
         return { type: DecryptErrTypes.format, message: e };
@@ -707,6 +708,10 @@ export class PgpMsg {
       const decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(privateKeys, passwords, undefined, false);
       // const signature = keys.signed_by.length ? Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
       const content = new Buf(await openpgp.stream.readToEnd(decrypted.getLiteralData()!));
+      if (!prepared.isCleartext && prepared.message.packets.filterByTag(openpgp.enums.packet.symmetricallyEncrypted).length) {
+        const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). The sender should update their outdated software.\n\nDisplay the message at your own risk.';
+        return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, message: prepared.message, longids, isEncrypted };
+      }
       return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined };
     } catch (e) {
       return { success: false, error: Pgp.internal.cryptoMsgDecryptCategorizeErr(e, msgPwd), message: prepared.message, longids, isEncrypted };

@@ -97,10 +97,6 @@ Catch.try(async () => {
     } else { // rendering our own ui
       Xss.sanitizeRender('#pgp_block', htmlContent);
     }
-    // if (unsecure_mdc_ignored && !is_error) {
-    //   set_frame_color('red');
-    //   Xss.sanitize_prepend('#pgp_block', '<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
-    // }
     if (isErr) {
       $('.action_show_raw_pgp_block').click(Ui.event.handle(target => {
         $('.raw_pgp_block').css('display', 'block');
@@ -116,13 +112,6 @@ Catch.try(async () => {
     return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
   };
 
-  const armoredMsgAsHtml = (encrypted?: string) => {
-    if (!encrypted || !encrypted.length) {
-      return '';
-    }
-    return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(encrypted).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
-  };
-
   const setFrameColor = (color: 'red' | 'green' | 'gray') => {
     if (color === 'red') {
       $('#pgp_background').removeClass('pgp_secure').removeClass('pgp_neutral').addClass('pgp_insecure');
@@ -133,9 +122,13 @@ Catch.try(async () => {
     }
   };
 
-  const renderErr = async (errBoxContent: string, renderRawEncrypted: string | undefined) => {
+  const renderErr = async (errBoxContent: string, renderRawMsg: string | undefined) => {
     setFrameColor('red');
-    await renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${armoredMsgAsHtml(renderRawEncrypted)}`, true);
+    const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
+    await renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
+    $('.action_show_raw_pgp_block').click(Ui.event.handle(async () => { // this may contain content missing MDC
+      Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
+    }));
     $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
     $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail })));
     $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
@@ -391,8 +384,7 @@ Catch.try(async () => {
           const pwd = await renderPasswordPromptAndAwaitEntry('first');
           await decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
-          const errMsg = `This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC`;
-          await renderErr(errMsg, encryptedData.toUtfStr());
+          await renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
         } else if (result.error) {
           await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, encryptedData.toUtfStr());
         } else { // should generally not happen
@@ -410,7 +402,6 @@ Catch.try(async () => {
     let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
-    prompt += armoredMsgAsHtml();
     await renderContent(prompt, true);
     Ui.setTestState('ready');
     await Ui.event.clicked('.button.decrypt');
