@@ -13,7 +13,7 @@ import { Api, R } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google, GoogleAuth } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth, GoogleAcctNotConnected } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 
 Catch.try(async () => {
@@ -309,6 +309,9 @@ Catch.try(async () => {
         showNotification(Lang.account.googleAcctDisabled);
       } else if (Api.err.isInsufficientPermission(e)) {
         renderAndHandleAuthPopupNotification(true);
+      } else if (e instanceof GoogleAcctNotConnected) {
+        await Ui.modal.error('Error: Google account not connected to Browser Extension');
+        BrowserMsg.send.bg.settings({ acctEmail });
       } else {
         Catch.handleErr(e);
         showNotification(`Error trying to get list of folders ${Ui.retryLink()}`);
