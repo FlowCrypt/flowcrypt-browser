@@ -261,10 +261,18 @@ export class BrowserMsg {
           BrowserMsg.replaceObjUrlWithBuf(r.result, r.objUrls).then(resolve).catch(reject);
         }
       };
-      if (isBackgroundPage) {
-        chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
-      } else {
-        chrome.runtime.sendMessage(msg, processRawMsgResponse);
+      try {
+        if (isBackgroundPage) {
+          chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, processRawMsgResponse);
+        } else {
+          chrome.runtime.sendMessage(msg, processRawMsgResponse);
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message === 'Extension context invalidated.') {
+          Ui.modal.warning(`Please reload the tab before continuing.\n\nError: ${e.message}`).catch(Catch.handleErr);
+        } else {
+          throw e;
+        }
       }
     }
   })
