@@ -243,8 +243,10 @@ export class BrowserMsg {
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
             if (lastError === 'The object could not be cloned.') {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
-            } else { // todo - over time we should be able to catch the error below based on lastError === something, but we don't know the exact err msg yet
-              e = new BgNotReadyError(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+            } else if (lastError === 'Could not establish connection. Receiving end does not exist.') {
+              e = new BgNotReadyError(`BgNotReadyError: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
+            } else {
+              e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
             }
           } else {
             e = new Error(`BrowserMsg.sendAwait(${name}) returned(${String(r)}) with lastError: ${lastError}`);
