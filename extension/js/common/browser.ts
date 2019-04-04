@@ -522,6 +522,8 @@ export class Ui {
   public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
     if (block.type === 'plainText' || block.type === 'privateKey') {
       return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
+    } else if (block.type === 'plainHtml') {
+      return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
     } else if (block.type === 'encryptedMsg') {
       return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content.toString(), 'encryptedMsg') : '', msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'signedMsg') {
@@ -535,7 +537,7 @@ export class Ui {
     } else if (block.type === 'cryptupVerification') {
       return factory.embeddedVerification(block.content.toString());
     } else {
-      Catch.report('dunno how to process block type: ' + block.type);
+      Catch.report(`dunno how to process block type: ${block.type}`);
       return '';
     }
   }
