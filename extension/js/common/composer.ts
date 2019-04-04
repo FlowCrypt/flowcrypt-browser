@@ -494,6 +494,8 @@ export class Composer {
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
+        } else if (Api.err.isNotFound(e)) {
+          console.info(`draftDelete: ${e.message}`);
         } else if (!Api.err.isNetErr(e)) {
           Catch.handleErr(e);
         }
