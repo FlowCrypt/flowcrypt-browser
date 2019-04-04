@@ -316,7 +316,7 @@ export class Api {
         if (/(site|content|script|internet) (is|has been|was|access) (restricted|blocked|disabled|denied)/i.test(e.responseText)) {
           return true;
         }
-        if (/access to the requested site/.test(e.responseText)) {
+        if (/access to the requested site|internet security by/.test(e.responseText)) {
           return true;
         }
       }
