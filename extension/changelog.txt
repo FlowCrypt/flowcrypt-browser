@@ -1,5 +1,7 @@
 <div>
 
+version 6.7.2 on April 4, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/324?closed=1" target="_blank">Simpler MDC handling</a>
+
 version 6.7.1 on April 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/323?closed=1" target="_blank">Import Pubkey from file</a>
 
 version 6.7.0 on March 23, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/322?closed=1" target="_blank">Chrome 73 compatibility fixes</a>
