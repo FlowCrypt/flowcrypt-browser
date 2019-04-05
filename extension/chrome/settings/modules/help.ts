@@ -27,37 +27,37 @@ Catch.try(async () => {
   }
 
   $('.action_send_feedback').click(Ui.event.handle(async target => {
-    let myEmail = acctEmail;
-    if (!myEmail) {
-      if (Str.isEmailValid(String($('#input_email').val()))) {
-        myEmail = String($('#input_email').val());
-      } else {
-        return await Ui.modal.error('Please enter valid email - so that we can get back to you.');
-      }
+    const textVal = $('#input_text').val();
+    const emailVal = String($('#input_email').val());
+    if (!Str.isEmailValid(emailVal)) {
+      $('#input_email').removeAttr('disabled').focus();
+      await Ui.modal.warning('Please enter valid email - so that we can get back to you.');
+      return;
     }
-    if (!$('#input_text').val()) {
-      return await Ui.modal.error('Message should not be empty.');
+    if (!textVal) {
+      $('#input_text').focus();
+      await Ui.modal.warning('Message should not be empty.');
+      return;
     }
     const origBtnText = $(target).text();
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
-    const msg = `${$('#input_text').val()}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`;
     try {
-      const r = await Api.fc.helpFeedback(myEmail, msg);
-      if (r.sent) {
+      const { sent } = await Api.fc.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
+      if (sent) {
         $(target).text('sent!');
-        await Ui.modal.info(`Message sent! You will find your response in ${myEmail}, check your email later.`);
+        await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);
         BrowserMsg.send.closePage(parentTabId);
       } else {
         $(target).text(origBtnText);
         await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
       }
     } catch (e) {
-      if (!Api.err.isNetErr(e)) {
+      if (Api.err.isSignificant(e)) {
         Catch.reportErr(e);
       }
       $(target).text(origBtnText);
-      await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');
+      await Ui.modal.error(`There was an error sending message. Our direct email is human@flowcrypt.com\n\n${Api.err.eli5(e)}`);
     }
   }));
 
