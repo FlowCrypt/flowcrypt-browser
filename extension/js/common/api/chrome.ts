@@ -24,7 +24,7 @@ export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.wind
   if (typeof chrome.windows !== 'undefined') {
     chrome.windows.create(q, resolve);
   } else {
-    Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.handleErr);
+    Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.reportErr);
   }
 });
 

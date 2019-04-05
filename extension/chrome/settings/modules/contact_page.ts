@@ -78,7 +78,7 @@ Catch.try(async () => {
       await Ui.time.sleep(100);
       window.location.reload();
     } catch (e) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
       await Ui.modal.error(`Failed to create account, possibly a network issue. Please try again.\n\n${String(e)}`);
       await Ui.time.sleep(100);
       window.location.reload();
@@ -106,7 +106,7 @@ Catch.try(async () => {
           await Ui.modal.warning('Error: the image is too large, please choose a smaller one');
         } else {
           if (!Api.err.isServerErr(e) && !Api.err.isAuthErr(e)) {
-            Catch.handleErr(e);
+            Catch.reportErr(e);
           }
           await Ui.modal.error('Error happened, please try again');
         }

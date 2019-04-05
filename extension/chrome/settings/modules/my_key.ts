@@ -36,7 +36,7 @@ Catch.try(async () => {
     }
   } catch (e) {
     if (Api.err.isSignificant(e)) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
     }
     $('.pubkey_link_container').remove();
   }

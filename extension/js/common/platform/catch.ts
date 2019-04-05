@@ -145,7 +145,7 @@ export class Catch {
     }
   }
 
-  public static handleErr = (e: any) => {
+  public static reportErr = (e: any) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
@@ -160,7 +160,7 @@ export class Catch {
   }
 
   public static report = (name: string, details?: any) => {
-    Catch.handleErr(Catch.nameAndDetailsAsException(name, details));
+    Catch.reportErr(Catch.nameAndDetailsAsException(name, details));
   }
 
   public static log = (name: string, details?: any) => {
@@ -180,10 +180,10 @@ export class Catch {
     try {
       const r = code();
       if (Catch.isPromise(r)) {
-        r.catch(Catch.handleErr);
+        r.catch(Catch.reportErr);
       }
     } catch (codeErr) {
-      Catch.handleErr(codeErr);
+      Catch.reportErr(codeErr);
     }
   }
 
@@ -259,7 +259,7 @@ export class Catch {
 
   public static onUnhandledRejectionInternalHandler = (e: any) => {
     if (Catch.isPromiseRejectionEvent(e)) {
-      Catch.handleErr(e.reason);
+      Catch.reportErr(e.reason);
     } else {
       const str = Catch.stringify(e);
       if (str.match(/^\[typeof:object:\[object (PromiseRejectionEvent|CustomEvent|ProgressEvent)\]\] \{"isTrusted":(?:true|false)\}$/)) {

@@ -55,11 +55,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   everything = () => {
     this.replaceArmoredBlocks();
-    this.replaceAtts().catch(Catch.handleErr);
+    this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
     this.replaceConvoBtns();
     this.replaceStandardReplyBox();
-    this.evaluateStandardComposeReceivers().catch(Catch.handleErr);
+    this.evaluateStandardComposeReceivers().catch(Catch.reportErr);
   }
 
   setReplyBoxEditable = () => {
@@ -191,7 +191,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 $(newPgpAtts).find('.attachment_loader').text('Network error');
               } else {
                 if (!Api.err.isServerErr(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isNotFound(e)) {
-                  Catch.handleErr(e);
+                  Catch.reportErr(e);
                 }
                 $(newPgpAtts).find('.attachment_loader').text('Failed to load');
               }
@@ -270,7 +270,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           attSel.show().children('.attachment_loader').text('Categorize: net err');
           nRenderedAtts++;
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           attSel.show().children('.attachment_loader').text('Categorize: unknown err');
           nRenderedAtts++;
         }

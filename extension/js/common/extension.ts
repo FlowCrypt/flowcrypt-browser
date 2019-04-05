@@ -222,7 +222,7 @@ export class BrowserMsg {
   };
 
   private static sendCatch = (dest: Bm.Dest | undefined, name: string, bm: Dict<any>) => {
-    BrowserMsg.sendAwait(dest, name, bm).catch(Catch.handleErr);
+    BrowserMsg.sendAwait(dest, name, bm).catch(Catch.reportErr);
   }
 
   private static sendAwait = (destString: string | undefined, name: string, bm?: Dict<unknown>, awaitRes = false): Promise<Bm.Response> => new Promise((resolve, reject) => {
@@ -269,7 +269,7 @@ export class BrowserMsg {
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Extension context invalidated.') {
-          Ui.modal.warning(`Please reload the tab before continuing.\n\nError: ${e.message}`).catch(Catch.handleErr);
+          Ui.modal.warning(`Please reload the tab before continuing.\n\nError: ${e.message}`).catch(Catch.reportErr);
         } else {
           throw e;
         }
@@ -405,7 +405,7 @@ export class BrowserMsg {
           if (cannotRespondErr instanceof Error && cannotRespondErr.message === 'Attempting to use a disconnected port object') {
             // the page we're responding to is closed - ec when closing secure compose
           } else {
-            Catch.handleErr(cannotRespondErr);
+            Catch.reportErr(cannotRespondErr);
           }
         }
       };

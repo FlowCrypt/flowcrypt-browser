@@ -83,10 +83,10 @@ chrome.runtime.onInstalled.addListener(event => {
   await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmailIfNeeded();
   scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
-  BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.handleErr);
+  BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.reportErr);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
     await Store.removeGlobal(['errors']);
   }
 
-})().catch(Catch.handleErr);
+})().catch(Catch.reportErr);

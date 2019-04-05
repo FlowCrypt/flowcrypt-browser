@@ -111,7 +111,7 @@ Catch.try(async () => {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
           await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           await Ui.modal.error(`Error happened: ${String(e)}`);
         }
       }
@@ -131,7 +131,7 @@ Catch.try(async () => {
         await Api.attester.initialLegacySubmit(email, primaryKi.public, false);
       }
     } catch (e) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
     } finally {
       window.location.reload();
     }
@@ -147,7 +147,7 @@ Catch.try(async () => {
       Xss.sanitizeRender('.summary', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
       Xss.sanitizeRender('.summary', `Failed to load. ${Ui.retryLink()}`);
-      Catch.handleErr(e);
+      Catch.reportErr(e);
     }
   }
 

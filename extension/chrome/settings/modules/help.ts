@@ -54,7 +54,7 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
       $(target).text(origBtnText);
       await Ui.modal.error('There was an error sending message. Our direct email is human@flowcrypt.com');

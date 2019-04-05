@@ -576,7 +576,7 @@ export class GoogleAuth {
       chrome.windows.remove(oauthWin.id);
     } catch (e) {
       if (String(e).indexOf('No window with id') === -1) {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
     }
     return authRes;

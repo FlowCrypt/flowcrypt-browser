@@ -43,7 +43,7 @@ Catch.try(async () => {
 
     $('.action_open_decrypt').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt.htm')));
 
-    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.handleErr)));
+    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.reportErr)));
 
     $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
@@ -57,7 +57,7 @@ Catch.try(async () => {
           await Ui.modal.warning('Error: account needs to be re-connected first.');
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           await Ui.modal.error(`Error happened: ${String(e)}`);
         }
       }
@@ -127,7 +127,7 @@ Catch.try(async () => {
                 await Ui.modal.info(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
                 BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail });
               } catch (e) {
-                Catch.handleErr(e);
+                Catch.reportErr(e);
                 await Ui.modal.error('There was an error changing google account, please write human@flowcrypt.com');
               }
             }

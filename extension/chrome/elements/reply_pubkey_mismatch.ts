@@ -79,7 +79,7 @@ Catch.try(async () => {
         $(target).text(sendBtnText);
         await Ui.modal.error('No internet connection, please try again.');
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         $(target).text(sendBtnText);
         await Ui.modal.error(`${Api.err.eli5(e)}\n\nPlease try again.`);
       }

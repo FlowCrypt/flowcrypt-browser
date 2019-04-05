@@ -50,7 +50,7 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
       } else {
         if (Api.err.isSignificant(e)) {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
         await Ui.modal.error(`There was an error refreshing aliases, please try again\n\n${String(e)}`);
         await Ui.time.sleep(1000);

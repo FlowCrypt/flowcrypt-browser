@@ -87,9 +87,9 @@ Catch.try(async () => {
       }
       if (typeof storage.addresses === 'undefined') {
         if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
-          Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.handleErr);
+          Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.reportErr);
         } else { // cannot read emails, don't fetch alternative addresses
-          saveAndFillSubmitOption([acctEmail]).catch(Catch.handleErr);
+          saveAndFillSubmitOption([acctEmail]).catch(Catch.reportErr);
         }
       } else {
         showSubmitAllAddrsOption(storage.addresses || []);
@@ -313,7 +313,7 @@ Catch.try(async () => {
       const { keys: [prv] } = await openpgp.key.readArmored(key.private);
       await saveKeys([prv], options);
     } catch (e) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
       Xss.sanitizeRender('#step_2_easy_generating, #step_2a_manual_create', Lang.setup.fcDidntSetUpProperly);
     }
   };
@@ -464,7 +464,7 @@ Catch.try(async () => {
       } else if (e instanceof KeyCanBeFixed) {
         return await renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }
@@ -476,7 +476,7 @@ Catch.try(async () => {
     try {
       fixedPrv = await Settings.renderPrvCompatFixUiAndWaitTilSubmittedByUser(acctEmail, '#step_3_compatibility_fix', origPrv, options.passphrase, window.location.href.replace(/#$/, ''));
     } catch (e) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
       await Ui.modal.error(`Failed to fix key (${String(e)}). Please write us at human@flowcrypt.com, we are very prompt to fix similar issues.`);
       displayBlock('step_2b_manual_enter');
       return;
@@ -534,7 +534,7 @@ Catch.try(async () => {
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
       window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
     } catch (e) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
       await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
       $('#step_2a_manual_create .action_create_private').text('CREATE AND SAVE');
     }

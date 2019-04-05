@@ -116,8 +116,8 @@ Catch.try(async () => {
       $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
       const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
       if (storage.setup_done) {
-        checkGoogleAcct().catch(Catch.handleErr);
-        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.handleErr);
+        checkGoogleAcct().catch(Catch.reportErr);
+        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
         if (storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
@@ -155,7 +155,7 @@ Catch.try(async () => {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);
       }
-    }).catch(e => Api.err.isSignificant(e) ? Catch.handleErr(e) : undefined);
+    }).catch(e => Api.err.isSignificant(e) ? Catch.reportErr(e) : undefined);
   };
 
   const checkFcAcctAndSubscriptionAndContactPage = async () => {
@@ -163,7 +163,7 @@ Catch.try(async () => {
     try {
       await renderSubscriptionStatusHeader();
     } catch (e) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
     }
     const authInfo = await Store.authInfo();
     if (authInfo.acctEmail) { // have auth email set
@@ -187,7 +187,7 @@ Catch.try(async () => {
         } else {
           statusContainer.text('ecp error');
           $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
       }
     } else { // never set up
@@ -211,7 +211,7 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${Api.err.eli5(e)}\n\n${String(e)}`);
       }
     }
@@ -242,7 +242,7 @@ Catch.try(async () => {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.escape(String(e))}`);
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
     }
   };
@@ -254,7 +254,7 @@ Catch.try(async () => {
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         liveness = 'err';
       } else {
         liveness = 'offline';

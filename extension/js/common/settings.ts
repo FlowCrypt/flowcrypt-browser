@@ -313,7 +313,7 @@ export class Settings {
       } catch (e2) {
         lastErr = e2;
         if (Api.err.isSignificant(e2)) {
-          Catch.handleErr(e2);
+          Catch.reportErr(e2);
         }
       }
     }
@@ -364,7 +364,7 @@ export class Settings {
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await Ui.modal.error(`Unknown error happened when connecting to Google: ${String(e)}`);
       }
       await Ui.time.sleep(1000);

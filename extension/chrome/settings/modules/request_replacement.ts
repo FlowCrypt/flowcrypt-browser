@@ -57,7 +57,7 @@ Catch.try(async () => {
       if (e instanceof UserAlert) {
         return await Ui.modal.warning(e.message);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

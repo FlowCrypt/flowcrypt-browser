@@ -38,7 +38,7 @@ Catch.try(async () => {
   try {
     att = new Att({ name: origNameBasedOnFilename, type, msgId, id, url });
   } catch (e) {
-    Catch.handleErr(e);
+    Catch.reportErr(e);
     $('body.attachment').text(`Error processing params: ${String(e)}. Contact human@flowcrypt.com`);
     return;
   }
@@ -67,7 +67,7 @@ Catch.try(async () => {
     } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('body.attachment', `Error downloading file - no internet. ${Ui.retryLink()}`);
     } else {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
       Xss.sanitizeRender('body.attachment', `Error downloading file - ${String(e)}. ${Ui.retryLink()}`);
     }
   };
@@ -206,7 +206,7 @@ Catch.try(async () => {
       if (typeof fileSize !== 'undefined') {
         size = fileSize;
       }
-    }).catch(Catch.handleErr);
+    }).catch(Catch.reportErr);
   }
 
   try {

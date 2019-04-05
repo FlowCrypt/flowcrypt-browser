@@ -53,7 +53,7 @@ export class BgUtils {
       } else if (e instanceof StoreFailedError) {
         reason = 'db_failed';
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         reason = 'db_failed';
       }
     }

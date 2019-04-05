@@ -159,14 +159,14 @@ export class Composer {
     if (initSubs.active) {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
-      this.app.storageEmailFooterSet(undefined).catch(Catch.handleErr);
+      this.app.storageEmailFooterSet(undefined).catch(Catch.reportErr);
       const notification = `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`;
       BrowserMsg.send.notificationShow(this.v.parentTabId, { notification });
     }
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initComposeBox().catch(Catch.handleErr);
+    this.initComposeBox().catch(Catch.reportErr);
     this.initActions();
   }
 
@@ -239,7 +239,7 @@ export class Composer {
             // no need
           }
         }
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
       },
     };
@@ -400,7 +400,7 @@ export class Composer {
         this.v.draftId = '';
         window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.v);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         return abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
       }
     }
@@ -475,7 +475,7 @@ export class Composer {
           this.v.threadId = ''; // forget there was a threadId
           await this.draftSave(true); // forceSave=true to not skip
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           this.S.cached('send_btn_note').text('Not saved (error)');
         }
       }
@@ -497,7 +497,7 @@ export class Composer {
         } else if (Api.err.isNotFound(e)) {
           console.info(`draftDelete: ${e.message}`);
         } else if (!Api.err.isNetErr(e)) {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
       }
     }
@@ -634,7 +634,7 @@ export class Composer {
       await Ui.modal.error(`Could not send message: ${String(e)}`);
     } else {
       if (!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await Ui.modal.error(`Failed to send message due to: ${String(e)}`);
       }
     }
@@ -716,7 +716,7 @@ export class Composer {
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
-        this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.handleErr);
+        this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.reportErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
         await this.doSendMsg(await Api.common.msg(this.v.acctEmail, this.getSender(), recipients, subject, body, atts, this.v.threadId), plaintext);
@@ -913,7 +913,7 @@ export class Composer {
         }
       } catch (e) {
         if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
         return this.PUBKEY_LOOKUP_RESULT_FAIL;
       }
@@ -1092,7 +1092,7 @@ export class Composer {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(this.v.parentTabId, { acctEmail: this.v.acctEmail });
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
       return;
     }
@@ -1196,7 +1196,7 @@ export class Composer {
       this.debug(`selectContact -> parseRenderRecipients start`);
       const isRecipientAdded = await this.parseRenderRecipients('harshRecipientErrs');
       if (isRecipientAdded) {
-        this.draftSave(true).catch(Catch.handleErr);
+        this.draftSave(true).catch(Catch.reportErr);
       }
       this.debug(`selectContact -> parseRenderRecipients done`);
     }
@@ -1213,7 +1213,7 @@ export class Composer {
     this.resizeInputTo();
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
     this.updatePubkeyIcon();
-    this.draftSave(true).catch(Catch.handleErr);
+    this.draftSave(true).catch(Catch.reportErr);
   }
 
   private authContacts = async (acctEmail: string) => {
@@ -1528,7 +1528,7 @@ export class Composer {
       this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
       const isRecipientAdded = await this.parseRenderRecipients('gentleRecipientErrs'); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
       if (isRecipientAdded) {
-        this.draftSave(true).catch(Catch.handleErr);
+        this.draftSave(true).catch(Catch.reportErr);
       }
       this.debug(`input_to.blur -> parseRenderRecipients done`);
     }));

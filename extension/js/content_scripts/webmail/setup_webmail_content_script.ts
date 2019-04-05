@@ -71,7 +71,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     const inject = new Injector(webmailSpecific.name, webmailSpecific.variant, factory);
     inject.meta();
     await Store.acctEmailsAdd(acctEmail);
-    saveAcctEmailFullNameIfNeeded(acctEmail).catch(Catch.handleErr); // may take a long time, thus async
+    saveAcctEmailFullNameIfNeeded(acctEmail).catch(Catch.reportErr); // may take a long time, thus async
     return { tabId, notifications, factory, inject };
   };
 
@@ -84,7 +84,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         return;
       } else if (!$("div.webmail_notification").length && !storage.notification_setup_needed_dismissed && showSetupNeededNotificationIfSetupNotDone && storage.cryptup_enabled !== false) {
         notifications.show(setUpNotification, {
-          notification_setup_needed_dismiss: () => Store.setAcct(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.handleErr),
+          notification_setup_needed_dismiss: () => Store.setAcct(acctEmail, { notification_setup_needed_dismissed: true }).then(() => notifications.clear()).catch(Catch.reportErr),
           action_open_settings: () => BrowserMsg.send.bg.settings({ acctEmail }),
           close: () => {
             showSetupNeededNotificationIfSetupNotDone = false;
@@ -194,7 +194,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         console.info(`FlowCrypt cannot start: extension context invalidated. Destroying.`);
         (window as ContentScriptWindow).destroy();
       } else if (!(e instanceof DestroyTrigger)) {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
     }
   };

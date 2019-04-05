@@ -499,7 +499,7 @@ Catch.try(async () => {
         console.info(e.data);
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await renderErr(String(e), encryptedMsgUrlParam ? encryptedMsgUrlParam.toUtfStr() : undefined);
       }
     }

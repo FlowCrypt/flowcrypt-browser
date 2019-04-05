@@ -183,7 +183,7 @@ export class BgAttests {
       if (e instanceof AttestError) {
         return e;
       }
-      Catch.handleErr(e);
+      Catch.reportErr(e);
       return new AttestError(String(e), attestPacketText, acctEmail);
     }
   }

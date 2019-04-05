@@ -90,7 +90,7 @@ const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any n
 
 const reportSignificantErrs = (e: any) => {
   if (Api.err.isSignificant(e)) {
-    Catch.handleErr(e);
+    Catch.reportErr(e);
   }
 };
 

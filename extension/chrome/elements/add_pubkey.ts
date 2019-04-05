@@ -50,7 +50,7 @@ Catch.try(async () => {
       if (e instanceof UserAlert) {
         await Ui.modal.warning(e.message);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await Ui.modal.error(`Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`);
       }
     }

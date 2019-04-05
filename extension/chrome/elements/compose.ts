@@ -57,7 +57,7 @@ Catch.try(async () => {
       } else if (Api.err.isNotFound(e)) {
         threadMsgId = '';
       } else if (Api.err.isSignificant(e)) {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
       $('#loader').remove();
       return;
@@ -117,7 +117,7 @@ Catch.try(async () => {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else if (!Api.err.isNetErr(e)) {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
         return undefined;
       }
@@ -190,7 +190,7 @@ Catch.try(async () => {
         } else if (Api.err.isNetErr(e)) {
           // todo: render network error
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           // todo: render error
         }
       });
@@ -213,7 +213,7 @@ Catch.try(async () => {
         } else if (Api.err.isNotFound(e)) {
           // todo: render as new message compose?
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           // todo: render error
         }
       }

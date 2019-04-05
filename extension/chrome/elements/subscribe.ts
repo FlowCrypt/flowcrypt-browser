@@ -46,7 +46,7 @@ Catch.try(async () => {
       btnRestore();
     } else {
       renderErr('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);
-      Catch.handleErr(e);
+      Catch.reportErr(e);
     }
   };
 
@@ -99,7 +99,7 @@ Catch.try(async () => {
     } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('#content', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
       Xss.sanitizeRender('#content', `Unknown error happened when fetching account info. ${Ui.retryLink()}`);
     }
   }
@@ -196,7 +196,7 @@ Catch.try(async () => {
         $('.action_close').removeClass('gray').addClass('green').text('ok');
       } catch (e) {
         if (!Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
       }
     }

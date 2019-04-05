@@ -38,7 +38,7 @@ Catch.try(async () => {
   const setupAcctPromptPopup = (activeAcctEmail: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(activeAcctEmail);
-    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.handleErr)));
+    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr)));
   };
 
   try {

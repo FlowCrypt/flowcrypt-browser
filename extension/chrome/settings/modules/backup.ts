@@ -71,7 +71,7 @@ Catch.try(async () => {
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
           if (Api.err.isSignificant(e)) {
-            Catch.handleErr(e);
+            Catch.reportErr(e);
           }
           Xss.sanitizeRender('#content', `Could not check for backups: unknown error (${String(e)}). ${Ui.retryLink()}`);
         }
@@ -185,7 +185,7 @@ Catch.try(async () => {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
           await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           await Ui.modal.error(`Error happened, please try again (${String(e)})`);
         }
         $(target).text(btnText);
@@ -244,7 +244,7 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         return await Ui.modal.error(`Error happened: ${String(e)}`);
       }
     } finally {
@@ -393,7 +393,7 @@ Catch.try(async () => {
           });
         } else {
           Xss.sanitizeRender('#content', `Unknown error: ${String(e)}<br><a href="#" class="reload">try again</a>`).find('.reload').click(() => window.location.reload());
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
       }
     } else { // should never happen on this action. Just in case.

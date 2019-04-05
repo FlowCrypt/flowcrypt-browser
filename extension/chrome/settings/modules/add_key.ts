@@ -71,7 +71,7 @@ Catch.try(async () => {
       } else if (e instanceof KeyCanBeFixed) {
         return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

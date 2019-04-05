@@ -72,7 +72,7 @@ export class Browser {
         renderIn.append(a); // xss-escaped attachment name above
         renderIn.css('height', 'auto');
         renderIn.find('a').click(e => {
-          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.handleErr);
+          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
           e.preventDefault();
           e.stopPropagation();
           return false;
@@ -363,11 +363,11 @@ export class Ui {
         if (passphraseInput.attr('type') === 'password') {
           $(`#${id}`).attr('type', 'text');
           Xss.sanitizeRender(target, buttonHide);
-          Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.handleErr);
+          Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.reportErr);
         } else {
           $(`#${id}`).attr('type', 'password');
           Xss.sanitizeRender(target, buttonShow);
-          Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.handleErr);
+          Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.reportErr);
         }
       })).click().click(); // double-click the toggle to prevent browser from prefilling values
     }
@@ -454,15 +454,15 @@ export class Ui {
     },
     _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
       if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
-        errHandlers.network().catch(Catch.handleErr);
+        errHandlers.network().catch(Catch.reportErr);
       } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {
-        errHandlers.auth().catch(Catch.handleErr);
+        errHandlers.auth().catch(Catch.reportErr);
       } else if (Api.err.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
-        errHandlers.authPopup().catch(Catch.handleErr);
+        errHandlers.authPopup().catch(Catch.reportErr);
       } else if (errHandlers && errHandlers.other) {
-        errHandlers.other(e).catch(Catch.handleErr);
+        errHandlers.other(e).catch(Catch.reportErr);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
     },
     prevent: <THIS extends HTMLElement | void>(evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler) => {
@@ -1197,7 +1197,7 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (uploadFileId: string, name: string) => this.processNewAtt(uploadFileId, name).catch(Catch.handleErr),
+          onSubmitted: (uploadFileId: string, name: string) => this.processNewAtt(uploadFileId, name).catch(Catch.reportErr),
           onCancel: (uploadFileId: string) => Catch.try(() => this.cancelAtt(uploadFileId))(),
         },
       };
@@ -1343,7 +1343,7 @@ export const processPublicKeyFileImport = async (ui: AttUI, file: Att) => {
     }
     return allKeys;
   } catch (e) {
-    Catch.handleErr(e);
+    Catch.reportErr(e);
     await Ui.modal.error(`error processing public keys: ${String(e)}`);
     return undefined;
   }
