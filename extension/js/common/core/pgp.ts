@@ -192,7 +192,7 @@ export class Pgp {
       }
     },
     normalize: (armored: string, type: ReplaceableMsgBlockType | 'key') => {
-      armored = Str.normalize(armored);
+      armored = Str.normalize(armored).replace(/\n /g, '\n');
       if (Value.is(type).in(['encryptedMsg', 'publicKey', 'privateKey', 'key'])) {
         armored = armored.replace(/\r?\n/g, '\n').trim();
         const nl2 = armored.match(/\n\n/g);

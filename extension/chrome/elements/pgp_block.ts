@@ -300,7 +300,7 @@ Catch.try(async () => {
       if (publicKeys.length) {
         BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
-      await renderContent(Xss.escape(decryptedContent).replace(/\n/g, '<br>'), false);
+      await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
       if (fcAttBlocks.length) {
         renderInnerAtts(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
       }
@@ -313,9 +313,9 @@ Catch.try(async () => {
       if (typeof decoded.html !== 'undefined') {
         await renderContent(decoded.html, false);
       } else if (typeof decoded.text !== 'undefined') {
-        await renderContent(Xss.escape(decoded.text).replace(/\n/g, '<br>'), false);
+        await renderContent(Xss.escapeTextAsRenderableHtml(decoded.text), false);
       } else {
-        await renderContent((decryptedContent || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
+        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
       }
       const renderableAtts: Att[] = [];
       for (const att of decoded.atts) {
