@@ -23,7 +23,7 @@ Catch.try(async () => {
 
   BrowserMsg.listen(tabId); // set_css
 
-  const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  const attUI = new AttUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
   attUI.setAttAddedCb(async (file) => {
     const keys = await processPublicKeyFileImport(attUI, file);
