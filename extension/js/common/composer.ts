@@ -514,7 +514,7 @@ export class Composer {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
           this.S.cached('input_text').focus();
-          this.parseRenderRecipients('harshRecipientErrs');
+          this.parseRenderRecipients('harshRecipientErrs').catch(Catch.reportErr);
         }
         if (headers && headers.from) {
           this.S.now('input_from').val(headers.from);
