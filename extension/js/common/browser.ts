@@ -206,7 +206,7 @@ export class Env {
     return link;
   }
 
-  public static keyCodes = () => {
+  public static keyCodes = () => { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 
@@ -374,7 +374,13 @@ export class Ui {
   }
 
   public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (e.which === Env.keyCodes().enter) {
+    if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
+      callback();
+    }
+  }
+
+  public static ctrlEnter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       callback();
     }
   }

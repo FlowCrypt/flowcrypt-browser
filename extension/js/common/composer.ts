@@ -1523,6 +1523,7 @@ export class Composer {
     if (Catch.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
       this.S.cached('input_text').css({ 'padding-top': 0, 'padding-bottom': 0 });
     }
+    this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
