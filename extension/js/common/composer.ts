@@ -987,7 +987,8 @@ export class Composer {
       if (updateRefBodyHeight || !this.refBodyHeight) {
         this.refBodyHeight = this.S.cached('body').height() || 605;
       }
-      this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText);
+      const attListHeight = $("#att_list").height() || 0;
+      this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight);
     }
   }
 
@@ -1546,6 +1547,7 @@ export class Composer {
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
+    this.attach.setAttAddedCb(async () => this.setInputTextHeightManuallyIfNeeded());
     if (!String(this.S.cached('input_to').val()).length) {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in
