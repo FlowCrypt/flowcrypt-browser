@@ -960,6 +960,15 @@ export class XssSafeFactory {
     }
   }
 
+  btnSettings = (webmailName: WebMailName) => {
+    if (webmailName !== 'gmail') {
+      Catch.report('btnSettings not implemented for ' + webmailName);
+      return '';
+    } else {
+      return `<div id="fc_settings_btn" class="f1">FlowCrypt</div>`;
+    }
+  }
+
   private extUrl = (s: string) => chrome.runtime.getURL(s);
 
   private newId = () => `frame_${Str.sloppyRandom(10)}`;

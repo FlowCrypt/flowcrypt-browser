@@ -23,7 +23,7 @@ export class Injector {
     this.webmailName = webmailName;
     this.webmailVariant = webmailVariant;
     this.factory = factory;
-    this.S = Ui.buildJquerySels({
+    this.S = Ui.buildJquerySels({ // these are selectors that are not specific to any webmail variant
       body: 'body',
       compose_button_container: this.composeBtnContainerSel[this.webmailName],
       compose_button: 'div.new_message_button',

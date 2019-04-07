@@ -41,6 +41,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attsContainerInner: 'div.aQH',
     translatePrompt: '.adI',
     standardComposeWin: '.aaZ:visible',
+    settingsBtnContainer: 'div.aeH > div > .fY',
   };
 
   constructor(factory: XssSafeFactory, acctEmail: string, addresses: string[], canReadEmails: boolean, injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
@@ -60,6 +61,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.replaceConvoBtns();
     this.replaceStandardReplyBox();
     this.evaluateStandardComposeReceivers().catch(Catch.reportErr);
+    this.addSettingsBtn();
   }
 
   setReplyBoxEditable = () => {
@@ -517,6 +519,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         }
       }
       this.currentlyEvaluatingStandardComposeBoxRecipients = false;
+    }
+  }
+
+  private addSettingsBtn = () => {
+    if (window.location.hash.startsWith('#settings')) {
+      const settingsBtnContainer = $(this.sel.settingsBtnContainer);
+      if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
+        settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
+        settingsBtnContainer.find('#fc_settings_btn').on('click', Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+      }
     }
   }
 
