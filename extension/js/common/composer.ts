@@ -110,6 +110,7 @@ export class Composer {
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
     input_addresses_container_inner: '#input_addresses_container > div:first',
+    attached_files: 'table#compose #fineuploader .qq-upload-list li',
   });
 
   private attach: AttUI;
@@ -1376,11 +1377,13 @@ export class Composer {
     if (!this.S.cached('icon_sign').is('.active')) {
       this.S.cached('icon_sign').addClass('active');
       this.S.cached('compose_table').addClass('sign');
+      this.S.now('attached_files').addClass('sign');
       this.S.cached('title').text(Lang.compose.headerTitleComposeSign);
       this.S.cached('input_password').val('');
     } else {
       this.S.cached('icon_sign').removeClass('active');
       this.S.cached('compose_table').removeClass('sign');
+      this.S.now('attached_files').removeClass('sign');
       this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
     }
     if (Value.is(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
