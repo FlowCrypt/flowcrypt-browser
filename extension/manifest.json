@@ -34,8 +34,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://mail.google.com/*",
-        "*://inbox.google.com/*"
+        "*://mail.google.com/*"
       ],
       "css": [
         "/css/webmail.css"

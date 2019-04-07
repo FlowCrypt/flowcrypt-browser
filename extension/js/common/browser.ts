@@ -32,7 +32,7 @@ type KeyImportUiCheckResult = {
 };
 
 export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
-export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
+export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
 export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
@@ -211,7 +211,7 @@ export class Env {
   }
 
   public static webmails = async (): Promise<WebMailName[]> => {
-    return ['gmail', 'inbox']; // async because storage may be involved in the future
+    return ['gmail']; // async because storage may be involved in the future
   }
 
   public static getBaseUrl = () => {
@@ -926,10 +926,7 @@ export class XssSafeFactory {
   }
 
   btnCompose = (webmailName: WebMailName) => {
-    if (webmailName === 'inbox') {
-      const logo = `<div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.srcImg('logo/logo.svg')}"/></div>`;
-      return `<div class="S ${this.destroyableCls}">${logo}<label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>`;
-    } else if (webmailName === 'outlook') {
+    if (webmailName === 'outlook') {
       const btn = `<div class="new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
       return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
     } else {

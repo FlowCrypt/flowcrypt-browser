@@ -4,7 +4,6 @@
 
 import { ContentScriptWindow } from './extension.js';
 import { Ui, XssSafeFactory, SelCache, WebMailName, WebmailVariantString } from './browser.js';
-import { Catch } from './platform/catch.js';
 
 export class Injector {
 
@@ -14,7 +13,6 @@ export class Injector {
   private S: SelCache;
   private composeBtnContainerSel = { // tslint:disable-line:oneliner-object-literal
     'gmail': 'div.aic',
-    'inbox': 'div.jp',
     'outlook': 'div._fce_b',
     'settings': '#does_not_have',
   };
@@ -48,16 +46,7 @@ export class Injector {
       (window as ContentScriptWindow).TrySetDestroyableTimeout(this.btns, 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
-        let container;
-        if (this.webmailName === 'inbox') {
-          container = this.S.now('compose_button_container').append(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
-          container.find(this.S.sel('compose_button')).hover(
-            Catch.try(() => this.S.cached('compose_button_label').css('opacity', 1)),
-            Catch.try(() => this.S.cached('compose_button_label').css('opacity', '')),
-          );
-        } else {
-          container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
-        }
+        const container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
         container.find(this.S.sel('compose_button')).click(Ui.event.handle(() => this.openComposeWin()));
       }
     }

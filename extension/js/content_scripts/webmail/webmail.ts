@@ -11,7 +11,6 @@ import { Store } from '../../common/platform/store.js';
 import { Str, Value } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { InboxElementReplacer } from './inbox_element_replacer.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { ContentScriptWindow } from '../../common/extension.js';
@@ -126,52 +125,8 @@ Catch.try(async () => {
     });
   };
 
-  const inboxWebmailStartup = async () => {
-    const replacePgpElementsIntervalMs = 1000;
-    let replacePgpElsInterval: number;
-    let replacer: InboxElementReplacer;
-    let fullName = '';
-
-    const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
-      const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      const canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
-      injector.btns();
-      replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, undefined);
-      await notifications.showInitial(acctEmail);
-      replacer.everything();
-      replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as any).$ === 'function') {
-          replacer.everything();
-        } else { // firefox will unload jquery when extension is restarted or updated
-          clearInterval(replacePgpElsInterval);
-          notifyMurdered();
-        }
-      }, replacePgpElementsIntervalMs);
-    };
-
-    await contentScriptSetupIfVacant({
-      name: 'inbox',
-      variant: 'standard',
-      getUserAccountEmail: () => {
-        const creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
-        if (creds.length === 2 && creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
-          const acctEmail = creds[1].innerText.toLowerCase();
-          fullName = creds[0].innerText;
-          console.info(`Loading for ${acctEmail} (${fullName})`);
-          return acctEmail;
-        }
-        return undefined;
-      },
-      getUserFullName: () => fullName,
-      getReplacer: () => replacer,
-      start,
-    });
-  };
-
-  if (window.location.host !== 'inbox.google.com') {
-    await gmailWebmailStartup();
-  } else {
-    await inboxWebmailStartup(); // to be deprecated by Google in 2019
-  }
+  // when we support more webmails, there will be if/else here to figure out which one to run
+  // in which case each *WebmailStartup function should go into its own file
+  await gmailWebmailStartup();
 
 })();
