@@ -1548,6 +1548,7 @@ export class Composer {
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => this.setInputTextHeightManuallyIfNeeded());
+    this.attach.setAttRemovedCb(() => this.setInputTextHeightManuallyIfNeeded());
     if (!String(this.S.cached('input_to').val()).length) {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in

@@ -1204,6 +1204,7 @@ export class AttUI {
   private attachedFiles: Dict<File> = {};
   private uploader: any = undefined;
   private attAddedCb?: (r: Att) => Promise<void>;
+  private attRemovedCb?: () => void;
 
   constructor(getLimits: () => Promise<AttLimits>) {
     this.getLimits = getLimits;
@@ -1230,6 +1231,10 @@ export class AttUI {
 
   setAttAddedCb = (cb: (r: Att) => Promise<void>) => {
     this.attAddedCb = cb;
+  }
+
+  setAttRemovedCb = (cb: () => void) => {
+    this.attRemovedCb = cb;
   }
 
   hasAtt = () => {
@@ -1270,6 +1275,11 @@ export class AttUI {
 
   private cancelAtt = (uploadFileId: string) => {
     delete this.attachedFiles[uploadFileId];
+    if (this.attRemovedCb) {
+      // run at next event loop cycle - let DOM changes render first
+      // this allows code that relies on this to evaluate the DOM after the file has been removed from it
+      Catch.setHandledTimeout(this.attRemovedCb, 0);
+    }
   }
 
   private processNewAtt = async (uploadFileId: string, name: string) => {
