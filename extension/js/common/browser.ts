@@ -1186,7 +1186,7 @@ export class AttUI {
     this.getLimits = getLimits;
   }
 
-  initAttDialog = (elId: string, btnId: string, onSuccessUpload?: () => Promise<void>) => {
+  initAttDialog = (elId: string, btnId: string) => {
     $('#qq-template').load(this.templatePath, () => {
       const config = {
         autoUpload: false,
@@ -1197,7 +1197,7 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (uploadFileId: string, name: string) => this.processNewAtt(uploadFileId, name, onSuccessUpload).catch(Catch.reportErr),
+          onSubmitted: (uploadFileId: string, name: string) => this.processNewAtt(uploadFileId, name).catch(Catch.reportErr),
           onCancel: (uploadFileId: string) => Catch.try(() => this.cancelAtt(uploadFileId))(),
         },
       };
@@ -1249,7 +1249,7 @@ export class AttUI {
     delete this.attachedFiles[uploadFileId];
   }
 
-  private processNewAtt = async (uploadFileId: string, name: string, onSuccess?: () => Promise<void>) => {
+  private processNewAtt = async (uploadFileId: string, name: string) => {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
@@ -1266,7 +1266,6 @@ export class AttUI {
         return;
       }
       this.attachedFiles[uploadFileId] = newFile;
-      onSuccess!().catch(Catch.reportErr);
       if (typeof this.attAddedCb === 'function') {
         const a = await this.collectAtt(uploadFileId);
         await this.attAddedCb(a);
