@@ -405,9 +405,9 @@ table#compose #fineuploader .qq-uploader-selector { overflow: hidden; }
 table#compose #fineuploader .qq-total-progress-bar-container { display: none; height: 0; border: 0; visibility: hidden; position: absolute; }
 table#compose #fineuploader .qq-upload-list {overflow-x: hidden; }
 table#compose #fineuploader .qq-upload-list::-webkit-scrollbar {  width: 0 !important;}
-table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 0.5; margin-left: 12px; padding: 5px; }
-table#compose #fineuploader .qq-upload-list li .qq-upload-file { width: 100px; line-height: 18px; color: black; }
-table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px 7px; position: relative; }
+table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 0.5; margin-left: 12px; padding: 5px 30px 5px 5px; }
+table#compose #fineuploader .qq-upload-list li .qq-upload-file { line-height: 18px; color: black; }
+table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px; position: relative; }
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
