@@ -309,7 +309,7 @@ export class Mime {
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
       return Mime.fromEqualSignNotationAsUtf(node.rawContent);
     }
-    if (node.charset === 'iso-8859-2') { // todo - use iso88592.labels for detection
+    if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any
     }
     return Buf.fromRawBytesStr(node.rawContent).toUtfStr();
