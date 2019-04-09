@@ -102,8 +102,8 @@ export type DecryptError = {
 };
 type CryptoArmorHeaderDefinition = { begin: string, middle?: string, end: string | RegExp, replace: boolean };
 type CryptoArmorHeaderDefinitions = { readonly [type in ReplaceableMsgBlockType | 'null' | 'signature']: CryptoArmorHeaderDefinition; };
-type PrepareForDecryptRes = { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message }
-  | { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage };
+type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: OpenPGP.cleartext.CleartextMessage }
+  | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
 
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
 
@@ -484,7 +484,7 @@ export class Pgp {
       }
       return string;
     },
-    cryptoMsgPrepareForDecrypt: async (encrypted: Uint8Array): Promise<PrepareForDecryptRes> => {
+    cryptoMsgPrepareForDecrypt: async (encrypted: Uint8Array): Promise<PreparedForDecrypt> => {
       if (!encrypted.length) {
         throw new Error('Encrypted message could not be parsed because no data was provided');
       }
@@ -524,10 +524,22 @@ export class Pgp {
       };
       keys.encryptedFor = await Pgp.internal.longids(msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : []);
       keys.signedBy = await Pgp.internal.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []);
-      keys.prvMatching = kiWithPp.keys.filter(ki => Value.is(ki.longid).in(keys.encryptedFor));
+      for (const ki of kiWithPp.keys) {
+        // this is inefficient because we are doing unnecessary parsing of all keys here
+        // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
+        // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
+        // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
+        const { ids } = await Pgp.key.serialize(await Pgp.key.read(ki.private));
+        for (const { longid } of ids) {
+          if (keys.encryptedFor.includes(longid)) {
+            keys.prvMatching.push(ki);
+            break;
+          }
+        }
+      }
       keys.prvForDecrypt = keys.prvMatching.length ? keys.prvMatching : kiWithPp.keys;
       for (const prvForDecrypt of keys.prvForDecrypt) {
-        const { keys: [prv] } = await openpgp.key.readArmored(prvForDecrypt.private);
+        const prv = await Pgp.key.read(prvForDecrypt.private);
         if (prv.isDecrypted() || (kiWithPp.passphrases.length && await Pgp.key.decrypt(prv, kiWithPp.passphrases) === true)) {
           prvForDecrypt.decrypted = prv;
           keys.prvForDecryptDecrypted.push(prvForDecrypt);
@@ -675,7 +687,7 @@ export class PgpMsg {
   }
 
   static decrypt: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
-    let prepared: PrepareForDecryptRes;
+    let prepared: PreparedForDecrypt;
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
     try {
       prepared = await Pgp.internal.cryptoMsgPrepareForDecrypt(encryptedData);
