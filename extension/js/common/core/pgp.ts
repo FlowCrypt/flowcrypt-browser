@@ -358,9 +358,9 @@ export class Pgp {
     },
     parse: async (armored: string): Promise<{ original: string, normalized: string, keys: KeyDetails[] }> => {
       const { normalized, keys } = await Pgp.key.normalize(armored);
-      return { original: armored, normalized, keys: await Promise.all(keys.map(Pgp.key.serialize)) };
+      return { original: armored, normalized, keys: await Promise.all(keys.map(Pgp.key.details)) };
     },
-    serialize: async (k: OpenPGP.key.Key): Promise<KeyDetails> => { // todo - `Pgp.key.serialize` should be renamed to `Pgp.key.details`
+    details: async (k: OpenPGP.key.Key): Promise<KeyDetails> => {
       const keyPackets: OpenPGP.packet.AnyKeyPacket[] = [];
       for (const keyPacket of k.getKeys()) {
         keyPackets.push(keyPacket);
@@ -529,7 +529,7 @@ export class Pgp {
         // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
         // while messages are typically encrypted for subkeys, thus we have to parse the key to get the info
         // we are filtering here to avoid a significant performance issue of having to attempt decrypting with all keys simultaneously
-        const { ids } = await Pgp.key.serialize(await Pgp.key.read(ki.private));
+        const { ids } = await Pgp.key.details(await Pgp.key.read(ki.private));
         for (const { longid } of ids) {
           if (keys.encryptedFor.includes(longid)) {
             keys.prvMatching.push(ki);
