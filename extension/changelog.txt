@@ -1,5 +1,7 @@
 <div>
 
+version 6.7.3 on April 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/325?closed=1" target="_blank">UX Fixes</a>
+
 version 6.7.2 on April 4, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/324?closed=1" target="_blank">Simpler MDC handling</a>
 
 version 6.7.1 on April 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/323?closed=1" target="_blank">Import Pubkey from file</a>
