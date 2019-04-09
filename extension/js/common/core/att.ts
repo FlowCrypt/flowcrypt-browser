@@ -82,7 +82,7 @@ export class Att {
       return 'signature';
     } else if (!this.name && !Value.is('image/').in(this.type)) { // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
-    } else if (Value.is(this.name).in(['encryptedMsg', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
+    } else if (Value.is(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
