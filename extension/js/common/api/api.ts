@@ -313,10 +313,10 @@ export class Api {
         return false;
       }
       if (e.status === 200 || e.status === 403) {
-        if (/(site|content|script|internet) (is|has been|was|access) (restricted|blocked|disabled|denied)/i.test(e.responseText)) {
+        if (/(site|content|script|internet|web) (is|has been|was|access|filter) (restricted|blocked|disabled|denied|violat)/i.test(e.responseText)) {
           return true;
         }
-        if (/access to the requested site|internet security by/.test(e.responseText)) {
+        if (/access to the requested site|internet security by|blockedgateway/.test(e.responseText)) {
           return true;
         }
       }
