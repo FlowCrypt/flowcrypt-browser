@@ -405,7 +405,10 @@ export class BrowserMsg {
           if (cannotRespondErr instanceof Error && cannotRespondErr.message === 'Attempting to use a disconnected port object') {
             // the page we're responding to is closed - ec when closing secure compose
           } else {
-            Catch.reportErr(cannotRespondErr);
+            if (cannotRespondErr instanceof Error) {
+              cannotRespondErr.stack += `\n\nOriginal msg sender stack: ${msg.stack}`;
+            }
+            Catch.reportErr(Catch.rewrapErr(cannotRespondErr, `BrowserMsg.bgListen.respondIfPageStillOpen:${msg.name}`));
           }
         }
       };
