@@ -76,7 +76,7 @@ export class Att {
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
     if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
-    } else if (Value.is(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt'])) {
+    } else if (Value.is(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'])) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
       return 'signature';
