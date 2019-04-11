@@ -286,8 +286,17 @@ export class Google extends Api {
       }
       return internalResults;
     },
-    fetchAtts: async (acctEmail: string, atts: Att[]) => {
-      const responses = await Promise.all(atts.map(a => Google.gmail.attGet(acctEmail, a.msgId!, a.id!)));
+    fetchAtts: async (acctEmail: string, atts: Att[], progressCb?: ProgressCb) => {
+      const loadedAr: Array<number> = [];
+      // 1.33 is a coefficient we need to multiply because total size we need to download is larger than all files together
+      const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
+      const responses = await Promise.all(atts.map((a, index) => Google.gmail.attGet(acctEmail, a.msgId!, a.id!, (progress, loaded, s) => {
+        loadedAr[index] = loaded || 0;
+        const totalLoaded = loadedAr.reduce((a, b) => a + b);
+        if (progressCb) {
+          progressCb(Math.round((totalLoaded * 100) / total), totalLoaded, total);
+        }
+      })));
       for (const i of responses.keys()) {
         atts[i].setData(responses[i].data);
       }
@@ -325,7 +334,7 @@ export class Google extends Api {
     /**
      * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
      */
-    extractArmoredBlock: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<string> => {
+    extractArmoredBlock: async (acctEmail: string, msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<string> => {
       const gmailMsg = await Google.gmail.msgGet(acctEmail, msgId, format);
       if (format === 'full') {
         const bodies = Google.gmail.findBodies(gmailMsg);
@@ -341,7 +350,7 @@ export class Google extends Api {
         if (atts.length) {
           for (const att of atts) {
             if (att.treatAs() === 'encryptedMsg') {
-              await Google.gmail.fetchAtts(acctEmail, [att]);
+              await Google.gmail.fetchAtts(acctEmail, [att], progressCb);
               const armoredMsg = Pgp.armor.clip(att.getData().toUtfStr());
               if (!armoredMsg) {
                 throw new FormatError('Problem extracting armored message', att.getData().toUtfStr());

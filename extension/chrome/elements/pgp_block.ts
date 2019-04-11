@@ -477,7 +477,9 @@ Catch.try(async () => {
         } else if (canReadEmails) {
           renderText('Retrieving message...');
           const format: GmailResponseFormat = (!msgFetchedFromApi) ? 'full' : 'raw';
-          const extracted = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format);
+          const extracted = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format, (progress) => {
+            renderText(`Retrieved: ${progress}%`);
+          });
           renderText('Decrypting...');
           msgFetchedFromApi = format;
           await decryptAndRender(Buf.fromUtfStr(extracted));
