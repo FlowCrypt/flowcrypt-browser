@@ -63,13 +63,10 @@ export class Browser {
       a.href = window.URL.createObjectURL(blob);
       a.download = Xss.escape(att.name);
       if (renderIn) {
-        a.textContent = 'DECRYPTED FILE';
-        a.style.cssText = 'font-size: 16px; font-weight: bold;';
-        Xss.sanitizeRender(
-          renderIn,
-          '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>',
-        );
-        renderIn.append(a); // xss-escaped attachment name above
+        a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>';
+        a.style.cssText = `font-size: 14px; font-weight: bold; display: flex; justify-context: center;
+                           align-items: center; width: 100%; height: 100%; text-decoration: none; color: #31A217;`;
+        renderIn.html(a.outerHTML); // xss-escaped attachment name above
         renderIn.css('height', 'auto');
         renderIn.find('a').click(e => {
           Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
