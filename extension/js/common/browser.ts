@@ -63,7 +63,7 @@ export class Browser {
       a.href = window.URL.createObjectURL(blob);
       a.download = Xss.escape(att.name);
       if (renderIn) {
-        a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>';
+        a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>'; // xss-direct
         a.style.cssText = `font-size: 14px; font-weight: bold; display: flex; justify-context: center;
                            align-items: center; width: 100%; height: 100%; text-decoration: none; color: #31A217;`;
         renderIn.html(a.outerHTML); // xss-escaped attachment name above
