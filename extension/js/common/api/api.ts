@@ -326,6 +326,9 @@ export class Api {
       return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isAuthErr(e)
         && !Api.err.isBlockedByProxy(e);
     },
+    isInPrivateMode: (e: any) => {
+      return e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
+    }
   };
 
   public static common = {
