@@ -352,7 +352,7 @@ table#compose th .action_feedback img { width: 20px; }
 table#compose th .action_feedback:hover { opacity: 0.9; cursor: pointer; }
 
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
-table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none;}
+table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none; color: inherit;}
 table#compose td.input.show_send_from { height: 84px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
 table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px; outline: none;
