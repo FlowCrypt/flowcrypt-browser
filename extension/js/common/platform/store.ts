@@ -69,7 +69,6 @@ export type AccountStore = {
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
   addresses?: string[];
-  addresses_pks?: string[];
   addresses_keyserver?: string[];
   email_footer?: string | null;
   drafts_reply?: Dict<StoredReplyDraftMeta>;
@@ -94,7 +93,7 @@ export type AccountStore = {
 };
 
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
-  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'addresses_pks' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
+  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
   'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all';

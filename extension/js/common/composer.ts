@@ -21,7 +21,6 @@ interface ComposerAppFunctionsInterface {
   canReadEmails: () => boolean;
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => string[];
-  storageGetAddressesPks: () => string[];
   storageGetAddressesKeyserver: () => string[];
   storageEmailFooterGet: () => string | undefined;
   storageEmailFooterSet: (footer?: string) => Promise<void>;
@@ -138,7 +137,6 @@ export class Composer {
   private currentlySavingDraft = false;
   private passphraseInterval?: number;
   private includePubkeyToggledManually = false;
-  private myAddrsOnPks: string[] = [];
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
@@ -154,7 +152,6 @@ export class Composer {
     if (!this.urlParams.disableDraftSaving) {
       this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
     }
-    this.myAddrsOnPks = this.app.storageGetAddressesPks() || [];
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
     if (initSubs.active) {
@@ -1348,7 +1345,7 @@ export class Composer {
   private updatePubkeyIcon = (include?: boolean) => {
     if (typeof include === 'undefined') { // decide if pubkey should be included
       if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
-        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.getSender()).in(this.myAddrsOnPks));
+        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length));
       }
     } else { // set icon to specific state
       if (include) {
@@ -1406,9 +1403,8 @@ export class Composer {
     this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnPks = Value.is(this.getSender()).in(this.myAddrsOnPks);
         const sendingAddrOnKeyserver = Value.is(this.getSender()).in(this.myAddrsOnKeyserver);
-        if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup' && !sendingAddrOnPks)) {
+        if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
             this.recipientsMissingMyKey.push(email);
@@ -1666,7 +1662,6 @@ export class Composer {
       canReadEmails: () => false,
       doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
       storageGetAddresses: () => [],
-      storageGetAddressesPks: () => [],
       storageGetAddressesKeyserver: () => [],
       storageEmailFooterGet: () => undefined,
       storageEmailFooterSet: () => Promise.resolve(),
