@@ -157,7 +157,7 @@
 				css = !self.resetCss ? self.namespace : self.namespace + '-reset', /* by adding -reset to the classname, we reset all the default css */
 				$background = $(self.background || [
 					'<div class="' + css + '-loading ' + css + '">',
-					'<div class="' + css + '-content data-test="dialog">',
+					'<div class="' + css + '-content" data-test="dialog">',
 					'<button class="' + css + '-close-icon ' + self.namespace + '-close" aria-label="Close" data-test="dialog-close">',
 					self.closeIcon,
 					'</button>',
