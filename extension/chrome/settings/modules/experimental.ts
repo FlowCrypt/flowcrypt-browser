@@ -86,19 +86,6 @@ Catch.try(async () => {
       }
     }));
 
-    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/dev/storage.htm', Env.urlCreate('', {
-      filter: acctEmail,
-      keys: 'attest_log',
-      title: `Attest Log - ${acctEmail}`,
-    }).replace('?', '&'))));
-
-    $('.action_flush_attest_info').click(Ui.event.handle(async () => {
-      await Store.remove(acctEmail, ['attests_requested', 'attests_processed', 'attest_log']);
-      await Ui.modal.info('Internal attest info flushed');
-      await Ui.time.sleep(100);
-      window.location.reload();
-    }));
-
     $('.action_reset_managing_auth').click(Ui.event.handle(async () => {
       await Store.removeGlobal(['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
       BrowserMsg.send.reload(parentTabId, {});

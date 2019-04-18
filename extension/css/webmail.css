@@ -47,7 +47,7 @@ body.cryptup_inbox div.new_message { right: 100px; }
 @media screen and (max-height: 600px) {
   div.new_message, div.new_message iframe { height: 450px; }
 }
-div.evaluated iframe.embedded { width: 500px; height: 160px; border: 1px solid #cacaca; }  /* attest messages, verification results */
+div.evaluated iframe.embedded { width: 500px; height: 160px; border: 1px solid #cacaca; }  /* verification results */
 iframe.pgp_block { width: 100%; border:none; overflow: hidden; }
 iframe.reply_message { height: 80px; width: 100%; border: none; }
 div.remove_borders { border: none !important; padding:0 !important; margin:0 !important; }

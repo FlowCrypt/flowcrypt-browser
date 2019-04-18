@@ -35,7 +35,7 @@ interface ComposerAppFunctionsInterface {
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
-  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
+  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
   emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet | undefined>;
   emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<R.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
@@ -905,7 +905,6 @@ export class Composer {
             dbContact && dbContact.name ? dbContact.name : undefined,
             lookupResult.has_cryptup ? 'cryptup' : 'pgp',
             lookupResult.pubkey || undefined,
-            lookupResult.attested || undefined,
             false,
             Date.now()
           );
@@ -926,7 +925,7 @@ export class Composer {
 
   private evaluateRenderedRecipients = async () => {
     this.debug(`evaluateRenderedRecipients`);
-    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired')) {
+    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .failed, .expired')) {
       this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
       this.debug(`evaluateRenderedRecipients.email(${email})`);
@@ -1317,7 +1316,6 @@ export class Composer {
                   contact.name || undefined,
                   undefined,
                   undefined,
-                  undefined,
                   true,
                   contact.date ? new Date(contact.date).getTime() : undefined,
                 ));
@@ -1440,10 +1438,6 @@ export class Composer {
       $(emailEl).addClass("expired");
       Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(emailEl).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
-    } else if (contact.pubkey && contact.attested) {
-      $(emailEl).addClass("attested");
-      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
-      $(emailEl).attr('title', 'Does use encryption, attested by CRYPTUP' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
       $(emailEl).addClass("has_pgp");
       Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');

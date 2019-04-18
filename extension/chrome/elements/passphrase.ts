@@ -20,7 +20,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const longids = Env.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
-  const type = Env.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'attest', 'message', 'draft', 'attachment']);
+  const type = Env.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment']);
 
   const allPrivateKeys = await Store.keysGet(acctEmail);
   const selectedPrivateKeys = allPrivateKeys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
@@ -38,8 +38,6 @@ Catch.try(async () => {
       $('h1').text('Enter your pass phrase to sign email');
     } else if (type === 'draft') {
       $('h1').text('Enter your pass phrase to load a draft');
-    } else if (type === 'attest') {
-      $('h1').text('Enter your pass phrase to confirm attestation');
     } else if (type === 'attachment') {
       $('h1').text('Enter your pass phrase to decrypt a file');
     }

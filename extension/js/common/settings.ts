@@ -52,45 +52,11 @@ export class Settings {
     }
   }
 
-  static saveAttestReq = async (acctEmail: string, attester: string) => {
-    const storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
-    if (typeof storage.attests_requested === 'undefined') {
-      storage.attests_requested = [attester];
-    } else if (!Value.is(attester).in(storage.attests_requested)) {
-      storage.attests_requested.push(attester); // insert into requests if not already there
-    }
-    if (typeof storage.attests_processed === 'undefined') {
-      storage.attests_processed = [];
-    }
-    await Store.setAcct(acctEmail, storage);
-    BrowserMsg.send.bg.attestRequested({ acctEmail });
-  }
-
-  static markAsAttested = async (acctEmail: string, attester: string) => {
-    const storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
-    if (typeof storage.attests_requested === 'undefined') {
-      storage.attests_requested = [];
-    } else if (Value.is(attester).in(storage.attests_requested)) {
-      storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); // remove attester from requested
-    }
-    if (typeof storage.attests_processed === 'undefined') {
-      storage.attests_processed = [attester];
-    } else if (!Value.is(attester).in(storage.attests_processed)) {
-      storage.attests_processed.push(attester); // add attester as processed if not already there
-    }
-    await Store.setAcct(acctEmail, storage);
-  }
-
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
-    const attestResp = await Api.attester.initialLegacySubmit(acctEmail, pubkey, true);
-    if (!attestResp.attested) {
-      await Settings.saveAttestReq(acctEmail, 'CRYPTUP');
-    } else { // Attester claims it was previously successfully attested
-      await Settings.markAsAttested(acctEmail, 'CRYPTUP');
-    }
+    await Api.attester.initialLegacySubmit(acctEmail, pubkey);
     const aliases = addresses.filter(a => a !== acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => Api.attester.initialLegacySubmit(a, pubkey, false)));
+      await Promise.all(aliases.map(a => Api.attester.initialLegacySubmit(a, pubkey)));
     }
   }
 

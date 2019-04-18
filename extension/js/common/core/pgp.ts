@@ -40,7 +40,7 @@ export namespace PgpMsgMethod {
 
 export type Contact = {
   email: string; name: string | null; pubkey: string | null; has_pgp: 0 | 1; searchable: string[];
-  client: string | null; attested: boolean | null; fingerprint: string | null; longid: string | null; keywords: string | null;
+  client: string | null; fingerprint: string | null; longid: string | null; keywords: string | null;
   pending_lookup: number; last_use: number | null;
   date: number | null; /* todo - should be removed. email provider search seems to return this? */
 };
@@ -137,7 +137,6 @@ export class Pgp {
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     publicKey: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     privateKey: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
-    attestPacket: { begin: '-----BEGIN ATTEST PACKET-----', end: '-----END ATTEST PACKET-----', replace: true },
     cryptupVerification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----', replace: true },
     signedMsg: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },

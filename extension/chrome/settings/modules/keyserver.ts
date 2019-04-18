@@ -20,84 +20,58 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  const renderDiagnosis = (diagnosis: R.AttKeyserverDiagnosis, attestsRequested: string[]) => {
+  const renderDiagnosis = (diagnosis: R.AttKeyserverDiagnosis) => {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, remove, color;
       if (!result.pubkey) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
-        action = `<div class="button gray2 small action_request_attestation" email="${Xss.escape(email)}">Submit public key</div>`;
-        remove = ` &nbsp; <b class="bad action_remove_alias" email="${Xss.escape(email)}" title="Remove address from list of send-from addresses.">[x]</b> &nbsp; `;
+        action = `<div class="button gray2 small action_submit_key" email="${Xss.escape(email)}">Submit public key</div>`;
+        if (email === acctEmail) {
+          remove = '';
+        } else {
+          // todo - allow removing email even if pubkey submitted
+          // part of the process should be sending user to the takedown link
+          remove = ` &nbsp; <b class="bad action_remove_alias" email="${Xss.escape(email)}" title="Remove address from list of send-from addresses.">[x]</b> &nbsp; `;
+        }
         color = 'orange';
       } else if (result.match) {
-        if (email === acctEmail && !result.attested) {
-          if (attestsRequested && attestsRequested.length) {
-            note = `Submitted. Attestation was requested from ${Xss.escape(attestsRequested.join(', '))} and should process shortly.`;
-            action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.escape(email)}">Refresh</div>`;
-            remove = '';
-            color = 'orange';
-          } else {
-            note = 'Found but not attested.';
-            action = `<div class="button gray2 small action_request_attestation" email="${Xss.escape(email)}">Request Attestation</div>`;
-            remove = '';
-            color = 'orange';
-          }
-        } else if (email === acctEmail && result.attested) {
-          note = 'Submitted, can receive encrypted email. Attested by CRYPTUP.';
-          action = '';
-          remove = '';
-          color = 'green';
-        } else {
-          note = 'Submitted, can receive encrypted email.';
-          action = '';
-          remove = '';
-          color = 'green';
-        }
+        note = 'Submitted correctly, can receive encrypted email.';
+        action = '';
+        remove = '';
+        color = 'green';
       } else {
-        if (email === acctEmail && !result.attested) {
-          note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = `<div class="button gray2 small action_request_attestation" email="${Xss.escape(email)}">Request Attestation</div>`;
-          remove = '';
-          color = 'red';
-        } else if (email === acctEmail && result.attested && attestsRequested && attestsRequested.length) {
-          note = 'Re-Attestation requested. This should process shortly.';
-          action = `<div class="button gray2 small refresh_after_attest_request" email="${Xss.escape(email)}">Refresh</div>`;
-          remove = '';
-          color = 'orange';
-        } else if (email === acctEmail && result.attested) {
-          note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = `<div class="button gray2 small request_replacement" email="${Xss.escape(email)}">Request Replacement Attestation</div>`;
-          remove = '';
-          color = 'red';
-        } else {
-          note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
-          action = '';
-          remove = '';
-          color = 'red';
-        }
+        note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
+        // todo - pass public key and email in
+        action = `<a class="button gray2 small" href="https://flowcrypt.com/attester/update-public-keys" target="_blank">Correct records</a>`;
+        remove = '';
+        color = 'red';
       }
       Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${remove} ${action}</div>`);
     }
 
-    $('.action_request_attestation').click(Ui.event.prevent('double', async self => {
+    $('.action_submit_key').click(Ui.event.prevent('double', async self => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
-      await actionSubmitOrReqAttestation($(self).attr('email')!);
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      try {
+        await Api.attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
+      } catch (e) {
+        if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
+        }
+        await Ui.modal.error(Api.err.eli5(e));
+      } finally {
+        window.location.reload();
+      }
     }));
+
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
       const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
       await Store.setAcct(acctEmail, { 'addresses': Value.arr.withoutVal(addresses || [], $(self).attr('email')!) });
       window.location.reload();
     }));
-    $('.request_replacement').click(Ui.event.prevent('double', self => {
-      Xss.sanitizeRender(self, Ui.spinner('white'));
-      Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/request_replacement.htm');
-    }));
-    $('.refresh_after_attest_request').click(Ui.event.prevent('double', async self => {
-      Xss.sanitizeRender(self, 'Updating..' + Ui.spinner('white'));
-      BrowserMsg.send.bg.attestRequested({ acctEmail });
-      await Ui.time.sleep(30000);
-      window.location.reload();
-    }));
+
     const contentEl = Xss.sanitizeAppend('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>');
     contentEl.find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('green'));
@@ -120,30 +94,12 @@ Catch.try(async () => {
     }));
   };
 
-  const actionSubmitOrReqAttestation = async (email: string) => {
-    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    try {
-      if (email === acctEmail) { // request attestation
-        await Settings.saveAttestReq(acctEmail, 'CRYPTUP');
-        await Api.attester.initialLegacySubmit(email, primaryKi.public, true);
-      } else { // submit only
-        await Api.attester.initialLegacySubmit(email, primaryKi.public, false);
-      }
-    } catch (e) {
-      Catch.reportErr(e);
-    } finally {
-      window.location.reload();
-    }
-  };
-
-  const storage = await Store.getAcct(acctEmail, ['attests_requested', 'addresses']);
   try {
     const diagnosis = await Api.attester.diagnoseKeyserverPubkeys(acctEmail);
     $('.summary').text('');
-    renderDiagnosis(diagnosis, storage.attests_requested || []);
+    renderDiagnosis(diagnosis);
   } catch (e) {
-    if (Api.err.isNetErr(e)) {
+    if (!Api.err.isSignificant(e)) {
       Xss.sanitizeRender('.summary', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
       Xss.sanitizeRender('.summary', `Failed to load. ${Ui.retryLink()}`);

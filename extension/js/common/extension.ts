@@ -36,7 +36,6 @@ export namespace Bm {
   export type Reload = { advanced?: boolean };
   export type Redirect = { location: string };
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };
-  export type AttestRequested = { acctEmail: string };
   export type OpenPage = { page: string, addUrlText?: string | UrlParams };
   export type StripeResult = { token: string };
   export type PassphraseEntry = { entered: boolean; };
@@ -47,7 +46,6 @@ export namespace Bm {
   export type StoreGlobalSet = { values: GlobalStore; };
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
   export type StoreAcctSet = { acctEmail: string, values: AccountStore; };
-  export type AttestPacketReceived = { acctEmail: string, packet: string, passphrase: string };
   export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string };
   export type PgpMsgType = { rawBytesStr: string };
@@ -59,7 +57,6 @@ export namespace Bm {
   export type AjaxGmailAttGetChunk = { acctEmail: string, msgId: string, attId: string };
 
   export namespace Res {
-    export type AttestPacketReceived = { success: boolean; result: string };
     export type GetActiveTabInfo = { provider: 'gmail' | undefined, acctEmail: string | undefined, sameWorld: boolean | undefined };
     export type StoreSessionGet = string | null;
     export type StoreSessionSet = void;
@@ -78,15 +75,15 @@ export namespace Bm {
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 
-    export type Any = AttestPacketReceived | GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
+    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
       | PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
       | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttGetChunk;
   }
 
-  export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | AttestRequested | OpenGoogleAuthDialog | Redirect | Reload |
+  export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | SetFooter | AttestPacketReceived | ReconnectAcctAuthPopup |
+    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | SetFooter | ReconnectAcctAuthPopup |
     Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax;
 
@@ -173,13 +170,11 @@ export class BrowserMsg {
 
   public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
     bg: {
-      attestRequested: (bm: Bm.AttestRequested) => BrowserMsg.sendCatch(undefined, 'attest_requested', bm),
       settings: (bm: Bm.Settings) => BrowserMsg.sendCatch(undefined, 'settings', bm),
       updateUninstallUrl: () => BrowserMsg.sendCatch(undefined, 'update_uninstall_url', {}),
       inbox: (bm: Bm.Inbox) => BrowserMsg.sendCatch(undefined, 'inbox', bm),
       await: {
         reconnectAcctAuthPopup: (bm: Bm.ReconnectAcctAuthPopup) => BrowserMsg.sendAwait(undefined, 'reconnect_acct_auth_popup', bm, true) as Promise<Bm.Res.ReconnectAcctAuthPopup>,
-        attestPacketReceived: (bm: Bm.AttestPacketReceived) => BrowserMsg.sendAwait(undefined, 'attest_packet_received', bm, true) as Promise<Bm.Res.AttestPacketReceived>,
         getActiveTabInfo: () => BrowserMsg.sendAwait(undefined, 'get_active_tab_info', undefined, true) as Promise<Bm.Res.GetActiveTabInfo>,
         storeSessionGet: (bm: Bm.StoreSessionGet) => BrowserMsg.sendAwait(undefined, 'session_get', bm, true) as Promise<Bm.Res.StoreSessionGet>,
         storeSessionSet: (bm: Bm.StoreSessionSet) => BrowserMsg.sendAwait(undefined, 'session_set', bm, true) as Promise<Bm.Res.StoreSessionSet>,

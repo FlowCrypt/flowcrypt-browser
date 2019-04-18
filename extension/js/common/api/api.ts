@@ -6,7 +6,7 @@
 
 import { Store, GlobalStore, Serializable, Subscription } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
-import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
+import { Pgp, Contact } from '../core/pgp.js';
 import { Ui, Xss, Env } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
@@ -17,11 +17,6 @@ import { BrowserMsg } from '../extension.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };
-type ParsedAttest$content = {
-  [key: string]: string | undefined; action?: string; attester?: string; email_hash?: string;
-  fingerprint?: string; fingerprint_old?: string; random?: string;
-};
-type ParsedAttest = { success: boolean; content: ParsedAttest$content; text?: string; error?: string; };
 type FcAuthToken = { account: string, token: string };
 type FcAuthMethods = 'uuid' | FcAuthToken | null;
 type SubscriptionLevel = 'pro' | null;
@@ -44,7 +39,7 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
 export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
-export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
+export type PubkeySearchResult = { email: string; pubkey: string | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
 abstract class ApiCallError extends Error {
@@ -163,12 +158,9 @@ export namespace R { // responses
   export type FcLinkMe = { profile: null | FcLinkMe$profile };
   export type ApirFcMsgExpiration = { updated: boolean };
 
-  export type AttInitialConfirm = { attested: boolean };
-  export type AttReplaceRequest = { saved: boolean };
-  export type AttReplaceConfirm = { attested: boolean };
   export type AttTestWelcome = { sent: boolean };
-  export type AttInitialLegacySugmit = { attested: boolean, saved: boolean };
-  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ attested: boolean, pubkey?: string, match: boolean }> };
+  export type AttInitialLegacySugmit = { saved: boolean };
+  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
   export type GmailUsersMeProfile = { emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string };
   export type GmailMsg$header = { name: string, value: string };
@@ -375,21 +367,10 @@ export class Api {
     lookupEmail: (emails: string[]): Promise<{ results: PubkeySearchResult[] }> => Api.internal.apiAttesterCall('lookup/email', {
       email: emails.map(e => Str.parseEmail(e).email),
     }),
-    initialLegacySubmit: (email: string, pubkey: string, attest: boolean = false): Promise<R.AttInitialLegacySugmit> => Api.internal.apiAttesterCall('initial/legacy_submit', {
+    initialLegacySubmit: (email: string, pubkey: string): Promise<R.AttInitialLegacySugmit> => Api.internal.apiAttesterCall('initial/legacy_submit', {
       email: Str.parseEmail(email).email,
       pubkey: pubkey.trim(),
-      attest,
-    }),
-    initialConfirm: (signedAttestPacket: string): Promise<R.AttInitialConfirm> => Api.internal.apiAttesterCall('initial/confirm', {
-      signed_message: signedAttestPacket,
-    }),
-    replaceRequest: (email: string, signedAttestPacket: string, newPubkey: string): Promise<R.AttReplaceRequest> => Api.internal.apiAttesterCall('replace/request', {
-      signed_message: signedAttestPacket,
-      new_pubkey: newPubkey,
-      email,
-    }),
-    replaceConfirm: (signedAttestPacket: string): Promise<R.AttReplaceConfirm> => Api.internal.apiAttesterCall('replace/confirm', {
-      signed_message: signedAttestPacket,
+      // attest: false,
     }),
     testWelcome: (email: string, pubkey: string): Promise<R.AttTestWelcome> => Api.internal.apiAttesterCall('test/welcome', {
       email,
@@ -404,104 +385,17 @@ export class Api {
       for (const pubkeySearchResult of results) {
         if (!pubkeySearchResult.pubkey) {
           diagnosis.hasPubkeyMissing = true;
-          diagnosis.results[pubkeySearchResult.email] = { attested: false, pubkey: undefined, match: false };
+          diagnosis.results[pubkeySearchResult.email] = { pubkey: undefined, match: false };
         } else {
           let match = true;
           if (!Value.is(await Pgp.key.longid(pubkeySearchResult.pubkey)).in(storedKeysLongids)) {
             diagnosis.hasPubkeyMismatch = true;
             match = false;
           }
-          diagnosis.results[pubkeySearchResult.email] = { pubkey: pubkeySearchResult.pubkey, attested: pubkeySearchResult.attested || false, match };
+          diagnosis.results[pubkeySearchResult.email] = { pubkey: pubkeySearchResult.pubkey, match };
         }
       }
       return diagnosis;
-    },
-    packet: {
-      createSign: async (values: Dict<string>, decryptedPrv: OpenPGP.key.Key) => {
-        const lines: string[] = [];
-        for (const key of Object.keys(values)) {
-          lines.push(key + ':' + values[key]);
-        }
-        const contentText = lines.join('\n');
-        const packet = Api.attester.packet.parse(Api.internal.apiAttesterPacketArmor(contentText));
-        if (packet.success !== true) {
-          throw new FormatError(packet.error || 'packet parse error', JSON.stringify(packet, undefined, 2));
-        }
-        return await PgpMsg.sign(decryptedPrv, contentText);
-      },
-      isValidHashFormat: (v: string) => /^[A-F0-9]{40}$/.test(v),
-      parse: (text: string): ParsedAttest => {
-        const acceptedValues = {
-          'ACT': 'action',
-          'ATT': 'attester',
-          'ADD': 'email_hash',
-          'PUB': 'fingerprint',
-          'OLD': 'fingerprint_old',
-          'RAN': 'random',
-        } as Dict<string>;
-        const result: ParsedAttest = { success: false, content: {} };
-        const packetHeaders = Pgp.armor.headers('attestPacket', 're');
-        const matches = text.match(RegExp(packetHeaders.begin + '([^]+)' + packetHeaders.end, 'm'));
-        if (matches && matches[1]) {
-          result.text = matches[1].replace(/^\s+|\s+$/g, '');
-          const lines = result.text.split('\n');
-          for (const line of lines) {
-            const lineParts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
-            if (lineParts.length !== 2) {
-              result.error = 'Wrong content line format';
-              result.content = {};
-              return result;
-            }
-            if (!acceptedValues[lineParts[0]]) {
-              result.error = 'Unknown line key';
-              result.content = {};
-              return result;
-            }
-            if (result.content[acceptedValues[lineParts[0]]]) {
-              result.error = 'Duplicate line key';
-              result.content = {};
-              return result;
-            }
-            result.content[acceptedValues[lineParts[0]]] = lineParts[1];
-          }
-          if (result.content.fingerprint && !Api.attester.packet.isValidHashFormat(result.content.fingerprint)) {
-            result.error = 'Wrong PUB line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.email_hash && !Api.attester.packet.isValidHashFormat(result.content.email_hash)) {
-            result.error = 'Wrong ADD line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.str_random && !Api.attester.packet.isValidHashFormat(result.content.str_random)) {
-            result.error = 'Wrong RAN line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.fingerprint_old && !Api.attester.packet.isValidHashFormat(result.content.fingerprint_old)) {
-            result.error = 'Wrong OLD line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.action && !Value.is(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
-            result.error = 'Wrong ACT line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.attester && !Value.is(result.content.attester).in(['CRYPTUP'])) {
-            result.error = 'Wrong ATT line value format';
-            result.content = {};
-            return result;
-          }
-          result.success = true;
-          return result;
-        } else {
-          result.error = 'Could not locate packet headers';
-          result.content = {};
-          return result;
-        }
-      },
     },
   };
 
@@ -816,8 +710,7 @@ export class Api {
       }
       return res;
     },
-    apiAttesterPacketArmor: (contentText: string) => `${Pgp.armor.headers('attestPacket').begin}\n${contentText}\n${Pgp.armor.headers('attestPacket').end}`,
-    apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', undefined, { 'api-version': '3' }),
+    apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }),
     apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
   };
 
