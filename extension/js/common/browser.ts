@@ -34,7 +34,7 @@ type KeyImportUiCheckResult = {
 export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
-export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
+export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign';
 export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -535,8 +535,6 @@ export class Ui {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
-    } else if (block.type === 'attestPacket') {
-      return factory.embeddedAttest(block.content.toString());
     } else if (block.type === 'cryptupVerification') {
       return factory.embeddedVerification(block.content.toString());
     } else {
@@ -801,10 +799,6 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/verification.htm'), { verificationEmailText });
   }
 
-  srcAttest = (attestPacket: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/attest.htm'), { attestPacket, });
-  }
-
   srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
@@ -912,10 +906,6 @@ export class XssSafeFactory {
 
   embeddedAttaStatus = (content: string) => {
     return Ui.e('div', { class: 'attachment_loader', html: Xss.htmlSanitize(content) });
-  }
-
-  embeddedAttest = (attestPacket: string) => {
-    return this.iframe(this.srcAttest(attestPacket), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedStripeCheckout = () => {

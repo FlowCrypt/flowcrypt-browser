@@ -17,7 +17,6 @@ type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
-type StoredAttestLog = { attempt: number, packet?: string, success: boolean, result: string };
 export type EmailProvider = 'gmail';
 
 export type KeyBackupMethod = 'file' | 'inbox' | 'none' | 'print';
@@ -26,12 +25,12 @@ export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
 export type ContactUpdate = {
   email?: string; name?: string | null; pubkey?: string; has_pgp?: 0 | 1; searchable?: string[];
-  client?: string | null; attested?: boolean | null; fingerprint?: string | null; longid?: string | null; keywords?: string | null;
+  client?: string | null; fingerprint?: string | null; longid?: string | null; keywords?: string | null;
   pending_lookup?: number; last_use?: number | null;
   date?: number | null; /* todo - should be removed. email provider search seems to return this? */
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionAttempt | SubscriptionInfo | StoredAttestLog[] | R.OpenId;
+  | SubscriptionAttempt | SubscriptionInfo | R.OpenId;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
@@ -70,7 +69,6 @@ export type AccountStore = {
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
   addresses?: string[];
-  addresses_pks?: string[];
   addresses_keyserver?: string[];
   email_footer?: string | null;
   drafts_reply?: Dict<StoredReplyDraftMeta>;
@@ -82,12 +80,9 @@ export type AccountStore = {
   setup_simple?: boolean;
   is_newly_created_key?: boolean;
   key_backup_method?: KeyBackupMethod;
-  attests_requested?: string[]; // attester names
-  attests_processed?: string[]; // attester names
   key_backup_prompt?: number | false;
   successfully_received_at_leat_one_message?: boolean;
   notification_setup_done_seen?: boolean;
-  attest_log?: StoredAttestLog[];
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
@@ -98,9 +93,9 @@ export type AccountStore = {
 };
 
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
-  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'addresses_pks' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
-  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' | 'attests_requested' |
-  'attests_processed' | 'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'attest_log' | 'picture' |
+  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
+  'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
+  'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all';
 
 export class Subscription implements SubscriptionInfo {
@@ -512,7 +507,7 @@ export class Store {
     return index;
   }
 
-  static dbContactObj = async (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean | number, lastUse?: number): Promise<Contact> => {
+  static dbContactObj = async (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean | number, lastUse?: number): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
@@ -525,7 +520,6 @@ export class Store {
       has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
       searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
       client: pubkey ? (client || null) : null, // tslint:disable-line:no-null-keyword
-      attested: pubkey ? Boolean(attested) : null, // tslint:disable-line:no-null-keyword
       fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
       longid: fingerprint ? (await Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
       keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
@@ -569,7 +563,7 @@ export class Store {
         } else {
           let [contact] = await Store.dbContactGet(db, [email]);
           if (!contact) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, await Store.dbContactObj(email, undefined, undefined, undefined, undefined, false, undefined));
+            await Store.dbContactSave(db, await Store.dbContactObj(email, undefined, undefined, undefined, false, undefined));
             [contact] = await Store.dbContactGet(db, [email]);
             if (!contact) {
               reject(new Error('contact not found right after inserting it'));
@@ -587,7 +581,6 @@ export class Store {
             contact.name || undefined,
             contact.client || undefined,
             contact.pubkey || undefined,
-            contact.attested || undefined,
             contact.pending_lookup,
             contact.last_use || undefined
           ));

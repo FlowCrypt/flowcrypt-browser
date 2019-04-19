@@ -35,7 +35,7 @@ Catch.try(async () => {
   let threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
   let subject = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
-  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_pks', 'addresses_keyserver', 'email_footer', 'email_provider',
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_keyserver', 'email_footer', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const canReadEmail = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
   const tabId = await BrowserMsg.requiredTabId();
@@ -123,7 +123,6 @@ Catch.try(async () => {
       }
     },
     storageGetAddresses: () => storage.addresses || [acctEmail],
-    storageGetAddressesPks: () => storage.addresses_pks || [],
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageEmailFooterGet: () => storage.email_footer || undefined,
     storageEmailFooterSet: async (footer: string | undefined) => {

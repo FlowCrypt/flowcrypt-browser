@@ -21,7 +21,6 @@ interface ComposerAppFunctionsInterface {
   canReadEmails: () => boolean;
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => string[];
-  storageGetAddressesPks: () => string[];
   storageGetAddressesKeyserver: () => string[];
   storageEmailFooterGet: () => string | undefined;
   storageEmailFooterSet: (footer?: string) => Promise<void>;
@@ -35,7 +34,7 @@ interface ComposerAppFunctionsInterface {
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
-  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, attested?: boolean, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
+  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
   emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet | undefined>;
   emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<R.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
@@ -138,7 +137,6 @@ export class Composer {
   private currentlySavingDraft = false;
   private passphraseInterval?: number;
   private includePubkeyToggledManually = false;
-  private myAddrsOnPks: string[] = [];
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
   private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
@@ -154,7 +152,6 @@ export class Composer {
     if (!this.urlParams.disableDraftSaving) {
       this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
     }
-    this.myAddrsOnPks = this.app.storageGetAddressesPks() || [];
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
     if (initSubs.active) {
@@ -905,7 +902,6 @@ export class Composer {
             dbContact && dbContact.name ? dbContact.name : undefined,
             lookupResult.has_cryptup ? 'cryptup' : 'pgp',
             lookupResult.pubkey || undefined,
-            lookupResult.attested || undefined,
             false,
             Date.now()
           );
@@ -926,7 +922,7 @@ export class Composer {
 
   private evaluateRenderedRecipients = async () => {
     this.debug(`evaluateRenderedRecipients`);
-    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .attested, .failed, .expired')) {
+    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .failed, .expired')) {
       this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
       this.debug(`evaluateRenderedRecipients.email(${email})`);
@@ -1317,7 +1313,6 @@ export class Composer {
                   contact.name || undefined,
                   undefined,
                   undefined,
-                  undefined,
                   true,
                   contact.date ? new Date(contact.date).getTime() : undefined,
                 ));
@@ -1350,7 +1345,7 @@ export class Composer {
   private updatePubkeyIcon = (include?: boolean) => {
     if (typeof include === 'undefined') { // decide if pubkey should be included
       if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
-        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length) && !Value.is(this.getSender()).in(this.myAddrsOnPks));
+        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length));
       }
     } else { // set icon to specific state
       if (include) {
@@ -1408,9 +1403,8 @@ export class Composer {
     this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnPks = Value.is(this.getSender()).in(this.myAddrsOnPks);
         const sendingAddrOnKeyserver = Value.is(this.getSender()).in(this.myAddrsOnKeyserver);
-        if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup' && !sendingAddrOnPks)) {
+        if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
             this.recipientsMissingMyKey.push(email);
@@ -1440,10 +1434,6 @@ export class Composer {
       $(emailEl).addClass("expired");
       Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(emailEl).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
-    } else if (contact.pubkey && contact.attested) {
-      $(emailEl).addClass("attested");
-      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
-      $(emailEl).attr('title', 'Does use encryption, attested by CRYPTUP' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
       $(emailEl).addClass("has_pgp");
       Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
@@ -1672,7 +1662,6 @@ export class Composer {
       canReadEmails: () => false,
       doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
       storageGetAddresses: () => [],
-      storageGetAddressesPks: () => [],
       storageGetAddressesKeyserver: () => [],
       storageEmailFooterGet: () => undefined,
       storageEmailFooterSet: () => Promise.resolve(),
