@@ -6,7 +6,7 @@
 
 import { Store, GlobalStore, Serializable, Subscription } from '../platform/store.js';
 import { Value, Str, Dict } from '../core/common.js';
-import { Pgp, FormatError, PgpMsg, Contact } from '../core/pgp.js';
+import { Pgp, Contact } from '../core/pgp.js';
 import { Ui, Xss, Env } from '../browser.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
@@ -17,11 +17,6 @@ import { BrowserMsg } from '../extension.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };
-type ParsedAttest$content = {
-  [key: string]: string | undefined; action?: string; attester?: string; email_hash?: string;
-  fingerprint?: string; fingerprint_old?: string; random?: string;
-};
-type ParsedAttest = { success: boolean; content: ParsedAttest$content; text?: string; error?: string; };
 type FcAuthToken = { account: string, token: string };
 type FcAuthMethods = 'uuid' | FcAuthToken | null;
 type SubscriptionLevel = 'pro' | null;
@@ -44,7 +39,7 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
 export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
-export type PubkeySearchResult = { email: string; pubkey: string | null; attested: boolean | null; has_cryptup: boolean | null; longid: string | null; };
+export type PubkeySearchResult = { email: string; pubkey: string | null; has_cryptup: boolean | null; longid: string | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
 abstract class ApiCallError extends Error {
@@ -157,18 +152,15 @@ export namespace R { // responses
   export type FcMsgUpload = { short: string, admin_code: string };
   export type FcLinkMsg = { expire: string, deleted: boolean, url: string, expired: boolean };
   export type FcLinkMe$profile = {
-    alias: string | null, name: string | null, photo: string | null, photo_circle: boolean, intro: string | null, web: string | null,
+    alias: string | null, name: string | null, photo: string | null, intro: string | null, web: string | null,
     phone: string | null, token: string | null, subscription_level: string | null, subscription_method: string | null, email: string | null
   };
   export type FcLinkMe = { profile: null | FcLinkMe$profile };
   export type ApirFcMsgExpiration = { updated: boolean };
 
-  export type AttInitialConfirm = { attested: boolean };
-  export type AttReplaceRequest = { saved: boolean };
-  export type AttReplaceConfirm = { attested: boolean };
   export type AttTestWelcome = { sent: boolean };
-  export type AttInitialLegacySugmit = { attested: boolean, saved: boolean };
-  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ attested: boolean, pubkey?: string, match: boolean }> };
+  export type AttInitialLegacySugmit = { saved: boolean };
+  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
   export type GmailUsersMeProfile = { emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string };
   export type GmailMsg$header = { name: string, value: string };
@@ -209,7 +201,7 @@ export namespace R { // responses
 export class Api {
 
   public static err = {
-    eli5: (e: any) => {
+    eli5: (e: unknown) => {
       if (Api.err.isMailOrAcctDisabled(e)) {
         return 'Email account is disabled';
       } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -236,7 +228,7 @@ export class Api {
         return 'FlowCrypt encountered an error with unknown cause.';
       }
     },
-    detailsAsHtmlWithNewlines: (e: any) => {
+    detailsAsHtmlWithNewlines: (e: unknown) => {
       let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
       details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
       details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
@@ -245,7 +237,7 @@ export class Api {
       }
       return details;
     },
-    isNetErr: (e: any) => {
+    isNetErr: (e: unknown) => {
       if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
@@ -257,7 +249,7 @@ export class Api {
       }
       return false;
     },
-    isAuthErr: (e: any) => {
+    isAuthErr: (e: unknown) => {
       if (e instanceof AuthError) {
         return true;
       }
@@ -271,7 +263,7 @@ export class Api {
       }
       return false;
     },
-    isStandardErr: (e: any, internalType: string) => {
+    isStandardErr: (e: unknown, internalType: string) => {
       if (e instanceof ApiErrorResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
         return true;
       }
@@ -283,7 +275,7 @@ export class Api {
       }
       return false;
     },
-    isAuthPopupNeeded: (e: any) => {
+    isAuthPopupNeeded: (e: unknown) => {
       if (e instanceof AjaxError && e.status === 400 && typeof e.responseText === 'string') {
         try {
           const json = JSON.parse(e.responseText);
@@ -297,18 +289,18 @@ export class Api {
       }
       return false;
     },
-    isMailOrAcctDisabled: (e: any): boolean => {
+    isMailOrAcctDisabled: (e: unknown): boolean => {
       if (Api.err.isBadReq(e) && typeof e.responseText === 'string') {
         return e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1;
       }
       return false;
     },
-    isInsufficientPermission: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
-    isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404,
-    isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
-    isReqTooLarge: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 413,
-    isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500,
-    isBlockedByProxy: (e: any): e is AjaxError => {
+    isInsufficientPermission: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
+    isNotFound: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 404,
+    isBadReq: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 400,
+    isReqTooLarge: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 413,
+    isServerErr: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status >= 500,
+    isBlockedByProxy: (e: unknown): e is AjaxError => {
       if (!(e instanceof AjaxError)) {
         return false;
       }
@@ -322,10 +314,13 @@ export class Api {
       }
       return false;
     },
-    isSignificant: (e: any) => {
+    isSignificant: (e: unknown) => {
       return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isAuthErr(e)
         && !Api.err.isBlockedByProxy(e);
     },
+    isInPrivateMode: (e: unknown) => {
+      return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
+    }
   };
 
   public static common = {
@@ -375,21 +370,10 @@ export class Api {
     lookupEmail: (emails: string[]): Promise<{ results: PubkeySearchResult[] }> => Api.internal.apiAttesterCall('lookup/email', {
       email: emails.map(e => Str.parseEmail(e).email),
     }),
-    initialLegacySubmit: (email: string, pubkey: string, attest: boolean = false): Promise<R.AttInitialLegacySugmit> => Api.internal.apiAttesterCall('initial/legacy_submit', {
+    initialLegacySubmit: (email: string, pubkey: string): Promise<R.AttInitialLegacySugmit> => Api.internal.apiAttesterCall('initial/legacy_submit', {
       email: Str.parseEmail(email).email,
       pubkey: pubkey.trim(),
-      attest,
-    }),
-    initialConfirm: (signedAttestPacket: string): Promise<R.AttInitialConfirm> => Api.internal.apiAttesterCall('initial/confirm', {
-      signed_message: signedAttestPacket,
-    }),
-    replaceRequest: (email: string, signedAttestPacket: string, newPubkey: string): Promise<R.AttReplaceRequest> => Api.internal.apiAttesterCall('replace/request', {
-      signed_message: signedAttestPacket,
-      new_pubkey: newPubkey,
-      email,
-    }),
-    replaceConfirm: (signedAttestPacket: string): Promise<R.AttReplaceConfirm> => Api.internal.apiAttesterCall('replace/confirm', {
-      signed_message: signedAttestPacket,
+      // attest: false,
     }),
     testWelcome: (email: string, pubkey: string): Promise<R.AttTestWelcome> => Api.internal.apiAttesterCall('test/welcome', {
       email,
@@ -404,104 +388,17 @@ export class Api {
       for (const pubkeySearchResult of results) {
         if (!pubkeySearchResult.pubkey) {
           diagnosis.hasPubkeyMissing = true;
-          diagnosis.results[pubkeySearchResult.email] = { attested: false, pubkey: undefined, match: false };
+          diagnosis.results[pubkeySearchResult.email] = { pubkey: undefined, match: false };
         } else {
           let match = true;
           if (!Value.is(await Pgp.key.longid(pubkeySearchResult.pubkey)).in(storedKeysLongids)) {
             diagnosis.hasPubkeyMismatch = true;
             match = false;
           }
-          diagnosis.results[pubkeySearchResult.email] = { pubkey: pubkeySearchResult.pubkey, attested: pubkeySearchResult.attested || false, match };
+          diagnosis.results[pubkeySearchResult.email] = { pubkey: pubkeySearchResult.pubkey, match };
         }
       }
       return diagnosis;
-    },
-    packet: {
-      createSign: async (values: Dict<string>, decryptedPrv: OpenPGP.key.Key) => {
-        const lines: string[] = [];
-        for (const key of Object.keys(values)) {
-          lines.push(key + ':' + values[key]);
-        }
-        const contentText = lines.join('\n');
-        const packet = Api.attester.packet.parse(Api.internal.apiAttesterPacketArmor(contentText));
-        if (packet.success !== true) {
-          throw new FormatError(packet.error || 'packet parse error', JSON.stringify(packet, undefined, 2));
-        }
-        return await PgpMsg.sign(decryptedPrv, contentText);
-      },
-      isValidHashFormat: (v: string) => /^[A-F0-9]{40}$/.test(v),
-      parse: (text: string): ParsedAttest => {
-        const acceptedValues = {
-          'ACT': 'action',
-          'ATT': 'attester',
-          'ADD': 'email_hash',
-          'PUB': 'fingerprint',
-          'OLD': 'fingerprint_old',
-          'RAN': 'random',
-        } as Dict<string>;
-        const result: ParsedAttest = { success: false, content: {} };
-        const packetHeaders = Pgp.armor.headers('attestPacket', 're');
-        const matches = text.match(RegExp(packetHeaders.begin + '([^]+)' + packetHeaders.end, 'm'));
-        if (matches && matches[1]) {
-          result.text = matches[1].replace(/^\s+|\s+$/g, '');
-          const lines = result.text.split('\n');
-          for (const line of lines) {
-            const lineParts = line.replace('\n', '').replace(/^\s+|\s+$/g, '').split(':');
-            if (lineParts.length !== 2) {
-              result.error = 'Wrong content line format';
-              result.content = {};
-              return result;
-            }
-            if (!acceptedValues[lineParts[0]]) {
-              result.error = 'Unknown line key';
-              result.content = {};
-              return result;
-            }
-            if (result.content[acceptedValues[lineParts[0]]]) {
-              result.error = 'Duplicate line key';
-              result.content = {};
-              return result;
-            }
-            result.content[acceptedValues[lineParts[0]]] = lineParts[1];
-          }
-          if (result.content.fingerprint && !Api.attester.packet.isValidHashFormat(result.content.fingerprint)) {
-            result.error = 'Wrong PUB line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.email_hash && !Api.attester.packet.isValidHashFormat(result.content.email_hash)) {
-            result.error = 'Wrong ADD line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.str_random && !Api.attester.packet.isValidHashFormat(result.content.str_random)) {
-            result.error = 'Wrong RAN line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.fingerprint_old && !Api.attester.packet.isValidHashFormat(result.content.fingerprint_old)) {
-            result.error = 'Wrong OLD line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.action && !Value.is(result.content.action).in(['INITIAL', 'REQUEST_REPLACEMENT', 'CONFIRM_REPLACEMENT'])) {
-            result.error = 'Wrong ACT line value format';
-            result.content = {};
-            return result;
-          }
-          if (result.content.attester && !Value.is(result.content.attester).in(['CRYPTUP'])) {
-            result.error = 'Wrong ATT line value format';
-            result.content = {};
-            return result;
-          }
-          result.success = true;
-          return result;
-        } else {
-          result.error = 'Could not locate packet headers';
-          result.content = {};
-          return result;
-        }
-      },
     },
   };
 
@@ -770,10 +667,10 @@ export class Api {
   }
 
   private static internal = {
-    isStandardError: (e: any): e is StandardError => {
+    isStandardError: (e: unknown): e is StandardError => {
       return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
     },
-    isRawAjaxError: (e: any): e is RawAjaxError => {
+    isRawAjaxError: (e: unknown): e is RawAjaxError => {
       return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
     },
     apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
@@ -816,8 +713,7 @@ export class Api {
       }
       return res;
     },
-    apiAttesterPacketArmor: (contentText: string) => `${Pgp.armor.headers('attestPacket').begin}\n${contentText}\n${Pgp.armor.headers('attestPacket').end}`,
-    apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://attester.flowcrypt.com/', path, values, 'JSON', undefined, { 'api-version': '3' }),
+    apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }),
     apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
   };
 

@@ -7,9 +7,6 @@ import { Store } from '../common/platform/store.js';
 import { Value, Str } from '../common/core/common.js';
 import { Api } from '../common/api/api.js';
 import { Pgp } from '../common/core/pgp.js';
-import { Rules } from '../common/rules.js';
-
-declare const openpgp: typeof OpenPGP;
 
 export const migrateGlobal = async () => {
   if (window.localStorage && window.localStorage.length > 0) { // window.localStorage may be null on Firefox, likely disabled in settings?
@@ -30,11 +27,7 @@ export const migrateGlobal = async () => {
 
 const updateAcctInfo = async (acctEmails: string[]) => {
   for (const acctEmail of acctEmails) {
-    const rules = await Rules.newInstance(acctEmail);
     await accountUpdateStatusKeyserver(acctEmail);
-    if (!rules.hasStrictGdpr()) {
-      await accountUpdateStatusPks(acctEmail);
-    }
   }
 };
 
@@ -63,32 +56,7 @@ const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks wh
   }
 };
 
-const accountUpdateStatusPks = async (acctEmail: string) => { // checks if any new emails were registered on pks lately
-  // todo - deprecate in certain situations
-  const keyinfos = await Store.keysGet(acctEmail);
-  const myLongids = keyinfos.map(ki => ki.longid);
-  const hkp = new openpgp.HKP();
-  const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_pks']);
-  const addressesPks = storage.addresses_pks || [];
-  for (const email of storage.addresses || [acctEmail]) {
-    if (email && !Value.is(email).in(addressesPks)) {
-      try {
-        const pubkey = await hkp.lookup({ query: email });
-        if (typeof pubkey !== 'undefined') {
-          if (Value.is(await Pgp.key.longid(pubkey)).in(myLongids)) {
-            addressesPks.push(email);
-            console.info(email + ' newly found matching pubkey on PKS');
-          }
-        }
-      } catch (e) {
-        reportSignificantErrs(e);
-      }
-    }
-  }
-  await Store.setAcct(acctEmail, { addresses_pks: addressesPks });
-};
-
-const reportSignificantErrs = (e: any) => {
+const reportSignificantErrs = (e: unknown) => {
   if (Api.err.isSignificant(e)) {
     Catch.reportErr(e);
   }

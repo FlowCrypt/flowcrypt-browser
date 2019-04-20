@@ -65,7 +65,7 @@ Catch.try(async () => {
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
     } else if (await Pgp.key.fingerprint(armoredPubkey)) {
-      await Store.dbContactSave(undefined, await Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, undefined, false, Date.now()));
+      await Store.dbContactSave(undefined, await Store.dbContactObj(email, undefined, 'pgp', armoredPubkey, false, Date.now()));
       await renderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');
@@ -74,7 +74,7 @@ Catch.try(async () => {
   };
 
   const actionRemovePublicKey = async (rmPubkeyButton: HTMLElement) => {
-    await Store.dbContactSave(undefined, await Store.dbContactObj($(rmPubkeyButton).closest('tr').attr('email')!, undefined, undefined, undefined, undefined, false, undefined));
+    await Store.dbContactSave(undefined, await Store.dbContactObj($(rmPubkeyButton).closest('tr').attr('email')!, undefined, undefined, undefined, false, undefined));
     await renderContactList();
   };
 

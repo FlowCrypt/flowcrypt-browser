@@ -60,7 +60,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderErr = (e: any) => {
+  const renderErr = (e: unknown) => {
     if (Api.err.isAuthPopupNeeded(e)) {
       BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
       Xss.sanitizeRender('body.attachment', `Error downloading file - google auth needed. ${Ui.retryLink()}`);

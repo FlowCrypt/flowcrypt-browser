@@ -50,7 +50,7 @@ Catch.try(async () => {
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'addresses']);
 
   storage.email_provider = storage.email_provider || 'gmail';
-  let acctEmailAttestedFingerprint: string | undefined;
+  let acctEmailAttesterFingerprint: string | undefined;
   let recoveredKeys: OpenPGP.key.Key[] = [];
   let recoveredKeysMatchingPassphrases: string[] = [];
   let nRecoveredKeysLongid = 0;
@@ -162,9 +162,7 @@ Catch.try(async () => {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }
     if (keyserverRes.pubkey) {
-      if (keyserverRes.attested) {
-        acctEmailAttestedFingerprint = await Pgp.key.fingerprint(keyserverRes.pubkey);
-      }
+      acctEmailAttesterFingerprint = await Pgp.key.fingerprint(keyserverRes.pubkey);
       if (!rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         displayBlock('step_2b_manual_enter');
@@ -242,8 +240,10 @@ Catch.try(async () => {
     } else {
       addresses = [acctEmail];
     }
-    if (acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== await Pgp.key.fingerprint(armoredPubkey)) {
-      return; // already submitted and ATTESTED another pubkey for this email
+    if (acctEmailAttesterFingerprint && acctEmailAttesterFingerprint !== await Pgp.key.fingerprint(armoredPubkey)) {
+      // already submitted another pubkey for this email
+      // todo - offer user to fix it up
+      return;
     }
     await Settings.submitPubkeys(acctEmail, addresses, armoredPubkey);
   };
@@ -298,8 +298,7 @@ Catch.try(async () => {
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name } = await Store.getAcct(acctEmail, ['full_name']);
     for (const addr of allAddrs) {
-      const attested = Boolean(addr === acctEmail && acctEmailAttestedFingerprint && acctEmailAttestedFingerprint !== await Pgp.key.fingerprint(prvs[0].toPublic().armor()));
-      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj(addr, full_name, 'cryptup', prvs[0].toPublic().armor(), attested, false, Date.now()));
+      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj(addr, full_name, 'cryptup', prvs[0].toPublic().armor(), false, Date.now()));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   };

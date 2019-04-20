@@ -34,8 +34,8 @@ type KeyImportUiCheckResult = {
 export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
-export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
-export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
+export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign';
+export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: unknown) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
@@ -63,13 +63,10 @@ export class Browser {
       a.href = window.URL.createObjectURL(blob);
       a.download = Xss.escape(att.name);
       if (renderIn) {
-        a.textContent = 'DECRYPTED FILE';
-        a.style.cssText = 'font-size: 16px; font-weight: bold;';
-        Xss.sanitizeRender(
-          renderIn,
-          '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>',
-        );
-        renderIn.append(a); // xss-escaped attachment name above
+        a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>'; // xss-direct
+        a.style.cssText = `font-size: 14px; font-weight: bold; display: flex; justify-context: center;
+                           align-items: center; width: 100%; height: 100%; text-decoration: none; color: #31A217;`;
+        renderIn.html(a.outerHTML); // xss-escaped attachment name above
         renderIn.css('height', 'auto');
         renderIn.find('a').click(e => {
           Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
@@ -458,7 +455,7 @@ export class Ui {
         }
       };
     },
-    _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
+    _dispatchErr: (e: unknown, errHandlers?: BrowserEventErrHandler) => {
       if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
         errHandlers.network().catch(Catch.reportErr);
       } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {
@@ -538,8 +535,6 @@ export class Ui {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
     } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
-    } else if (block.type === 'attestPacket') {
-      return factory.embeddedAttest(block.content.toString());
     } else if (block.type === 'cryptupVerification') {
       return factory.embeddedVerification(block.content.toString());
     } else {
@@ -804,10 +799,6 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/verification.htm'), { verificationEmailText });
   }
 
-  srcAttest = (attestPacket: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/attest.htm'), { attestPacket, });
-  }
-
   srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
@@ -915,10 +906,6 @@ export class XssSafeFactory {
 
   embeddedAttaStatus = (content: string) => {
     return Ui.e('div', { class: 'attachment_loader', html: Xss.htmlSanitize(content) });
-  }
-
-  embeddedAttest = (attestPacket: string) => {
-    return this.iframe(this.srcAttest(attestPacket), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedStripeCheckout = () => {
