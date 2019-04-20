@@ -1,5 +1,7 @@
 <div>
 
+version 6.7.5 on April 20, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/327?closed=1" target="_blank">Deprecating attests</a>
+
 version 6.7.4 on April 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/326?closed=1" target="_blank">Decrypt performance</a>
 
 version 6.7.3 on April 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/325?closed=1" target="_blank">UX Fixes</a>
