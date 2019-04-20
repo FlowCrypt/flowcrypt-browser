@@ -152,7 +152,7 @@ export namespace R { // responses
   export type FcMsgUpload = { short: string, admin_code: string };
   export type FcLinkMsg = { expire: string, deleted: boolean, url: string, expired: boolean };
   export type FcLinkMe$profile = {
-    alias: string | null, name: string | null, photo: string | null, photo_circle: boolean, intro: string | null, web: string | null,
+    alias: string | null, name: string | null, photo: string | null, intro: string | null, web: string | null,
     phone: string | null, token: string | null, subscription_level: string | null, subscription_method: string | null, email: string | null
   };
   export type FcLinkMe = { profile: null | FcLinkMe$profile };
