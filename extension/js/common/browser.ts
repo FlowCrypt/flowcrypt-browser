@@ -35,7 +35,7 @@ export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversi
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign';
-export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
+export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: unknown) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
 export type UrlParams = Dict<UrlParam>;
@@ -455,7 +455,7 @@ export class Ui {
         }
       };
     },
-    _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
+    _dispatchErr: (e: unknown, errHandlers?: BrowserEventErrHandler) => {
       if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
         errHandlers.network().catch(Catch.reportErr);
       } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {

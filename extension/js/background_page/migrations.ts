@@ -56,7 +56,7 @@ const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks wh
   }
 };
 
-const reportSignificantErrs = (e: any) => {
+const reportSignificantErrs = (e: unknown) => {
   if (Api.err.isSignificant(e)) {
     Catch.reportErr(e);
   }

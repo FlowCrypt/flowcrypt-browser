@@ -11,7 +11,7 @@ import { Env } from '../../js/common/browser.js';
   const f = String(uncheckedUrlParams.f);
   const args = JSON.parse(String(uncheckedUrlParams.args)) as any[];
 
-  const renderRes = (error: any, result?: any) => {
+  const renderRes = (error: unknown, result?: any) => {
     error = (typeof error === 'undefined') ? undefined : String(error);
     $('#result').text(JSON.stringify({ error, result }));
     $('#result').attr('data-test-state', 'ready');

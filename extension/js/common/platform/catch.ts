@@ -31,13 +31,13 @@ export class Catch {
     'ResizeObserver loop limit exceeded',
   ];
 
-  public static rewrapErr = (e: any, message: string) => {
+  public static rewrapErr = (e: unknown, message: string) => {
     const newErr = new Error(`${message}::${e instanceof Error ? `${e.name}: ${e.message}` : String(e)}`);
     newErr.stack += `\n\n${Catch.stringify(e)}`;
     return newErr;
   }
 
-  public static stringify = (e: any) => {
+  public static stringify = (e: unknown) => {
     if (e instanceof Error) {
       return `[typeof:Error:${e.name}] ${e.message}\n\n${e.stack}`;
     }
@@ -51,11 +51,11 @@ export class Catch {
     }
   }
 
-  public static hasStack = (e: any): e is ObjWithStack => {
+  public static hasStack = (e: unknown): e is ObjWithStack => {
     return e && typeof e === 'object' && typeof (e as ObjWithStack).stack === 'string' && Boolean((e as ObjWithStack).stack);
   }
 
-  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: any, isManuallyCalled: boolean) => {
+  public static onErrorInternalHandler = (errMsg: string | undefined, url: string, line: number, col: number, originalErr: unknown, isManuallyCalled: boolean) => {
     if (errMsg && Catch.IGNORE_ERR_MSG.indexOf(errMsg) !== -1) {
       return;
     }
@@ -135,7 +135,10 @@ export class Catch {
     return true;
   }
 
-  private static getErrorLineAndCol = (e: any) => {
+  private static getErrorLineAndCol = (e: unknown) => {
+    if (!Catch.hasStack(e)) {
+      return { line: 0, col: 0 };
+    }
     try {
       const callerLine = e.stack!.split('\n')[1]; // tslint:disable-line:no-unsafe-any
       const matched = callerLine.match(/\.js:([0-9]+):([0-9]+)\)?/); // tslint:disable-line:no-unsafe-any
@@ -145,7 +148,7 @@ export class Catch {
     }
   }
 
-  public static reportErr = (e: any) => {
+  public static reportErr = (e: unknown) => {
     const { line, col } = Catch.getErrorLineAndCol(e);
     Catch.onErrorInternalHandler(e instanceof Error ? e.message : String(e), window.location.href, line, col, e, true);
   }
@@ -257,7 +260,7 @@ export class Catch {
     return false;
   }
 
-  public static onUnhandledRejectionInternalHandler = (e: any) => {
+  public static onUnhandledRejectionInternalHandler = (e: unknown) => {
     if (Catch.isPromiseRejectionEvent(e)) {
       Catch.reportErr(e.reason);
     } else {

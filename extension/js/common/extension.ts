@@ -102,7 +102,7 @@ type Handler = Bm.AsyncRespondingHandler | Bm.AsyncResponselessHandler;
 export type Handlers = Dict<Handler>;
 export type AddrParserResult = { name?: string, address?: string };
 export interface BrowserWidnow extends Window {
-  onunhandledrejection: (e: any) => void;
+  onunhandledrejection: (e: unknown) => void;
   'emailjs-mime-codec': AnyThirdPartyLibrary;
   'emailjs-mime-parser': AnyThirdPartyLibrary;
   'emailjs-mime-builder': AnyThirdPartyLibrary;
@@ -331,7 +331,7 @@ export class BrowserMsg {
     return requestOrResponse;
   }
 
-  private static errToJson = (e: any): Bm.ErrAsJson => {
+  private static errToJson = (e: unknown): Bm.ErrAsJson => {
     if (e instanceof AjaxError) {
       const { message, stack, status, url, responseText, statusText } = e;
       return { stack, message, errorConstructor: 'AjaxError', ajaxErrorDetails: { status, url, responseText, statusText } };
