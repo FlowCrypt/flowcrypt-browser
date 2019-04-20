@@ -319,7 +319,7 @@ export class Api {
         && !Api.err.isBlockedByProxy(e);
     },
     isInPrivateMode: (e: any) => {
-      return e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
+      return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
     }
   };
 
