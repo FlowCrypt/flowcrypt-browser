@@ -272,7 +272,7 @@ export class Settings {
     });
   }
 
-  static promptToRetry = async (type: 'REQUIRED', lastErr: unknown, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
+  static promptToRetry = async (type: 'REQUIRED', lastErr: any, userMsg: string, retryCb: () => Promise<void>): Promise<void> => {
     while (await Ui.renderOverlayPromptAwaitUserChoice({ retry: {} }, `${userMsg} ${Api.err.eli5(lastErr)}`, Api.err.detailsAsHtmlWithNewlines(lastErr)) === 'retry') {
       try {
         return await retryCb();

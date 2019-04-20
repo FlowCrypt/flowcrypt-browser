@@ -320,7 +320,7 @@ export class Store {
     return Store.buildSingleAccountStoreFromRawResults(Store.globalStorageScope, storageObj) as GlobalStore;
   }
 
-  static saveError = (err: unknown, errMsg?: string) => {
+  static saveError = (err: any, errMsg?: string) => {
     Store.getGlobal(['errors']).then(s => {
       if (typeof s.errors === 'undefined') {
         s.errors = [];
@@ -426,7 +426,7 @@ export class Store {
     return str.normalize('NFKD').replace(/[\u0300-\u036F]/g, '').toLowerCase();
   }
 
-  public static errCategorize = (err: unknown): Error => {
+  public static errCategorize = (err: any): Error => {
     let message: string;
     if (err instanceof Error) {
       message = err.message;
