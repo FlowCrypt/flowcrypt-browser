@@ -29,7 +29,7 @@ Catch.try(async () => {
   let origBtnContent: string;
   let origBtnSel: JQuery<HTMLElement>;
 
-  const handleErrRes = (e: unknown) => {
+  const handleErrRes = (e: any) => {
     const renderErr = (msg: string, e?: any) => {
       msg = Xss.escape(msg);
       const debug = e ? `<pre>${Xss.escape(JSON.stringify(e, undefined, 2))}</pre>` : '';

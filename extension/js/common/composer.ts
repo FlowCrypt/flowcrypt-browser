@@ -227,7 +227,7 @@ export class Composer {
           BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
         }
       },
-      other: async (e: unknown) => {
+      other: async (e: any) => {
         if (e instanceof Error) {
           e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
         } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
@@ -606,7 +606,7 @@ export class Composer {
     }
   }
 
-  private handleSendErr = async (e: unknown) => {
+  private handleSendErr = async (e: any) => {
     if (Api.err.isNetErr(e)) {
       await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
     } else if (Api.err.isAuthPopupNeeded(e)) {

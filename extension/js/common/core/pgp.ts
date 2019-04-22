@@ -557,7 +557,7 @@ export class Pgp {
       }
       return keys;
     },
-    cryptoMsgDecryptCategorizeErr: (decryptErr: unknown, msgPwd?: string): DecryptError$error => {
+    cryptoMsgDecryptCategorizeErr: (decryptErr: any, msgPwd?: string): DecryptError$error => {
       const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
       const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
         'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];

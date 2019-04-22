@@ -201,7 +201,7 @@ export namespace R { // responses
 export class Api {
 
   public static err = {
-    eli5: (e: unknown) => {
+    eli5: (e: any) => {
       if (Api.err.isMailOrAcctDisabled(e)) {
         return 'Email account is disabled';
       } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -228,7 +228,7 @@ export class Api {
         return 'FlowCrypt encountered an error with unknown cause.';
       }
     },
-    detailsAsHtmlWithNewlines: (e: unknown) => {
+    detailsAsHtmlWithNewlines: (e: any) => {
       let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
       details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
       details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
@@ -237,7 +237,7 @@ export class Api {
       }
       return details;
     },
-    isNetErr: (e: unknown) => {
+    isNetErr: (e: any) => {
       if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
@@ -249,7 +249,7 @@ export class Api {
       }
       return false;
     },
-    isAuthErr: (e: unknown) => {
+    isAuthErr: (e: any) => {
       if (e instanceof AuthError) {
         return true;
       }
@@ -263,7 +263,7 @@ export class Api {
       }
       return false;
     },
-    isStandardErr: (e: unknown, internalType: string) => {
+    isStandardErr: (e: any, internalType: string) => {
       if (e instanceof ApiErrorResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
         return true;
       }
@@ -275,7 +275,7 @@ export class Api {
       }
       return false;
     },
-    isAuthPopupNeeded: (e: unknown) => {
+    isAuthPopupNeeded: (e: any) => {
       if (e instanceof AjaxError && e.status === 400 && typeof e.responseText === 'string') {
         try {
           const json = JSON.parse(e.responseText);
@@ -289,18 +289,18 @@ export class Api {
       }
       return false;
     },
-    isMailOrAcctDisabled: (e: unknown): boolean => {
+    isMailOrAcctDisabled: (e: any): boolean => {
       if (Api.err.isBadReq(e) && typeof e.responseText === 'string') {
         return e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1;
       }
       return false;
     },
-    isInsufficientPermission: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
-    isNotFound: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 404,
-    isBadReq: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 400,
-    isReqTooLarge: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status === 413,
-    isServerErr: (e: unknown): e is AjaxError => e instanceof AjaxError && e.status >= 500,
-    isBlockedByProxy: (e: unknown): e is AjaxError => {
+    isInsufficientPermission: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
+    isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404,
+    isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
+    isReqTooLarge: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 413,
+    isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500,
+    isBlockedByProxy: (e: any): e is AjaxError => {
       if (!(e instanceof AjaxError)) {
         return false;
       }
@@ -314,11 +314,11 @@ export class Api {
       }
       return false;
     },
-    isSignificant: (e: unknown) => {
+    isSignificant: (e: any) => {
       return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isAuthErr(e)
         && !Api.err.isBlockedByProxy(e);
     },
-    isInPrivateMode: (e: unknown) => {
+    isInPrivateMode: (e: any) => {
       return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
     }
   };
@@ -667,10 +667,10 @@ export class Api {
   }
 
   private static internal = {
-    isStandardError: (e: unknown): e is StandardError => {
+    isStandardError: (e: any): e is StandardError => {
       return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
     },
-    isRawAjaxError: (e: unknown): e is RawAjaxError => {
+    isRawAjaxError: (e: any): e is RawAjaxError => {
       return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
     },
     apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {

@@ -43,7 +43,7 @@ Catch.try(async () => {
       } else {
         note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
         // todo - pass public key and email in
-        action = `<a class="button gray2 small" href="https://flowcrypt.com/attester/update-public-keys" target="_blank">Correct records</a>`;
+        action = `<a class="button gray2 small" href="https://flowcrypt.com/attester/update-public-keys">Correct records</a>`;
         remove = '';
         color = 'red';
       }
