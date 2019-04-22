@@ -508,7 +508,9 @@ export class Composer {
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
-        if (headers && headers.to && headers.to.length) {
+        if (this.urlParams.isReplyBox) {
+          await this.renderReplyMsgComposeTable();
+        } else if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
           this.S.cached('input_text').focus();
@@ -521,9 +523,7 @@ export class Composer {
       } else {
         this.setInputTextHeightManuallyIfNeeded();
       }
-      if (this.urlParams.isReplyBox) {
-        await this.renderReplyMsgComposeTable();
-      }
+
     } else {
       const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
       if (this.urlParams.isReplyBox) {
@@ -1118,6 +1118,7 @@ export class Composer {
 
   private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply') => {
     this.S.cached('prompt').css({ display: 'none' });
+    this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
