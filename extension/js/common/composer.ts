@@ -1118,7 +1118,6 @@ export class Composer {
 
   private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply') => {
     this.S.cached('prompt').css({ display: 'none' });
-    this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
