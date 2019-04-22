@@ -523,7 +523,6 @@ export class Composer {
       } else {
         this.setInputTextHeightManuallyIfNeeded();
       }
-
     } else {
       const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
       if (this.urlParams.isReplyBox) {
