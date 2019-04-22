@@ -350,8 +350,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => { // todo - test and use data-message-id with Gmail API once available
-    return $(innerMsgEl).parents(this.sel.msgOuter).attr('data-legacy-message-id') || '';
+  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {
+    const parents = $(innerMsgEl).parents(this.sel.msgOuter);
+    return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
   }
 
   private determineThreadId = (convoRootEl: HTMLElement | JQueryEl) => { // todo - test and use data-thread-id with Gmail API once available
