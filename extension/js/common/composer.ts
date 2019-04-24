@@ -508,7 +508,9 @@ export class Composer {
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
-        if (headers && headers.to && headers.to.length) {
+        if (this.urlParams.isReplyBox) {
+          await this.renderReplyMsgComposeTable();
+        } else if (headers && headers.to && headers.to.length) {
           this.S.cached('input_to').focus();
           this.S.cached('input_to').val(headers.to.join(','));
           this.S.cached('input_text').focus();
@@ -520,9 +522,6 @@ export class Composer {
         this.setInputTextHeightManuallyIfNeeded();
       } else {
         this.setInputTextHeightManuallyIfNeeded();
-      }
-      if (this.urlParams.isReplyBox) {
-        await this.renderReplyMsgComposeTable();
       }
     } else {
       const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
