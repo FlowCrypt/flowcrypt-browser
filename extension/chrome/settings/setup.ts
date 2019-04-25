@@ -156,8 +156,7 @@ Catch.try(async () => {
   const renderSetupDialog = async (): Promise<void> => {
     let keyserverRes, fetchedKeys;
     try {
-      const r = await Api.attester.lookupEmail([acctEmail]);
-      keyserverRes = r.results[0];
+      keyserverRes = await Api.attester.lookupEmail(acctEmail);
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }

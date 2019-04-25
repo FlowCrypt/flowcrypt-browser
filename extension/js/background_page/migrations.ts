@@ -42,11 +42,12 @@ const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks wh
       await Store.setAcct(acctEmail, storage); // fix duplicate email addresses
     }
     try {
-      const { results } = await Api.attester.lookupEmail(storage.addresses);
+      const lookupEmailsRes = await Api.attester.lookupEmails(storage.addresses);
       const addressesKeyserver = [];
-      for (const result of results) {
+      for (const email of Object.keys(lookupEmailsRes)) {
+        const result = lookupEmailsRes[email];
         if (result && result.pubkey && Value.is(await Pgp.key.longid(result.pubkey)).in(myLongids)) {
-          addressesKeyserver.push(result.email);
+          addressesKeyserver.push(email);
         }
       }
       await Store.setAcct(acctEmail, { addresses_keyserver: addressesKeyserver });

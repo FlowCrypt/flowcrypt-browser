@@ -29,7 +29,7 @@ Catch.try(async () => {
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 
   try {
-    const { results: [result] } = await Api.attester.lookupEmail([acctEmail]);
+    const result = await Api.attester.lookupEmail(acctEmail);
     const url = Api.fc.url('pubkey', acctEmail);
     if (result.pubkey && await Pgp.key.longid(result.pubkey) === primaryKi.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');

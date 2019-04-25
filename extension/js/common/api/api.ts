@@ -39,7 +39,7 @@ export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | 
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
 export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
-export type PubkeySearchResult = { email: string; pubkey: string | null; has_cryptup: boolean | null; longid: string | null; };
+export type PubkeySearchResult = { pubkey: string | null; has_cryptup: boolean | null; };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
 
 abstract class ApiCallError extends Error {
@@ -367,9 +367,16 @@ export class Api {
   };
 
   public static attester = {
-    lookupEmail: (emails: string[]): Promise<{ results: PubkeySearchResult[] }> => Api.internal.apiAttesterCall('lookup/email', {
-      email: emails.map(e => Str.parseEmail(e).email),
-    }),
+    lookupEmail: (email: string): Promise<PubkeySearchResult> => {
+      return Api.internal.apiAttesterCall('lookup/email', { email: Str.parseEmail(email).email });
+    },
+    lookupEmails: async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
+      const results: Dict<PubkeySearchResult> = {};
+      await Promise.all(emails.map(async (email: string) => {
+        results[email] = await Api.attester.lookupEmail(email);
+      }));
+      return results;
+    },
     initialLegacySubmit: (email: string, pubkey: string): Promise<R.AttInitialLegacySugmit> => Api.internal.apiAttesterCall('initial/legacy_submit', {
       email: Str.parseEmail(email).email,
       pubkey: pubkey.trim(),
@@ -384,18 +391,19 @@ export class Api {
       const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
       const storedKeys = await Store.keysGet(acctEmail);
       const storedKeysLongids = storedKeys.map(ki => ki.longid);
-      const { results } = await Api.attester.lookupEmail(Value.arr.unique([acctEmail].concat(addresses || [])));
-      for (const pubkeySearchResult of results) {
+      const results = await Api.attester.lookupEmails(Value.arr.unique([acctEmail].concat(addresses || [])));
+      for (const email of Object.keys(results)) {
+        const pubkeySearchResult = results[email];
         if (!pubkeySearchResult.pubkey) {
           diagnosis.hasPubkeyMissing = true;
-          diagnosis.results[pubkeySearchResult.email] = { pubkey: undefined, match: false };
+          diagnosis.results[email] = { pubkey: undefined, match: false };
         } else {
           let match = true;
           if (!Value.is(await Pgp.key.longid(pubkeySearchResult.pubkey)).in(storedKeysLongids)) {
             diagnosis.hasPubkeyMismatch = true;
             match = false;
           }
-          diagnosis.results[pubkeySearchResult.email] = { pubkey: pubkeySearchResult.pubkey, match };
+          diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
         }
       }
       return diagnosis;

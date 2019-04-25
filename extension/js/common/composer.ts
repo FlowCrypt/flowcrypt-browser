@@ -883,28 +883,28 @@ export class Composer {
     } else {
       try {
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
-        const { results: [lookupResult] } = await Api.attester.lookupEmail([email]);
+        const lookupResult = await Api.attester.lookupEmail(email);
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
-        if (lookupResult && lookupResult.email) {
+        if (lookupResult && email) {
           if (lookupResult.pubkey) {
             const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
             if (!parsed.keys[0]) {
-              Catch.log('Dropping found but incompatible public key', { for: lookupResult.email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
+              Catch.log('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             } else if (! await parsed.keys[0].getEncryptionKey()) {
-              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: lookupResult.email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
+              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
           }
           const ksContact = await this.app.storageContactObj(
-            lookupResult.email,
+            email,
             dbContact && dbContact.name ? dbContact.name : undefined,
             lookupResult.has_cryptup ? 'cryptup' : 'pgp',
             lookupResult.pubkey || undefined,
             false,
             Date.now()
           );
-          this.ksLookupsByEmail[lookupResult.email] = ksContact;
+          this.ksLookupsByEmail[email] = ksContact;
           await this.app.storageContactSave(ksContact);
           return ksContact;
         } else {
