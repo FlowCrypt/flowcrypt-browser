@@ -1216,18 +1216,16 @@ export class Composer {
     this.draftSave(true).catch(Catch.reportErr);
   }
 
-  private refreshReceiver = () => {
+  private refreshReceiver = async () => {
     const failedRecipients = $('.recipients span.failed');
     failedRecipients.removeClass('failed');
-
     for (const recipient of failedRecipients) {
       if (recipient.textContent) {
         const { email } = Str.parseEmail(recipient.textContent);
         Xss.sanitizeReplace(recipient, `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
       }
     }
-
-    this.evaluateRenderedRecipients();
+    await this.evaluateRenderedRecipients();
   }
 
   private authContacts = async (acctEmail: string) => {
@@ -1437,8 +1435,9 @@ export class Composer {
     if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
       $(emailEl).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(emailEl).addClass("failed");
-      Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch"><img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
-      $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(() => this.refreshReceiver(), this.getErrHandlers('refresh recipient')));
+      Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
+        '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
+      $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceiver(), this.getErrHandlers('refresh recipient')));
       $(emailEl).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element), this.getErrHandlers('remove recipient')));
     } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
       this.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
