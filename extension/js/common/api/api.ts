@@ -673,14 +673,14 @@ export class Api {
     isRawAjaxError: (e: any): e is RawAjaxError => {
       return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
     },
-    apiCall: async (url: string, path: string, fields: Dict<any>, fmt: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
+    apiCall: async (url: string, path: string, fields?: Dict<any>, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST') => {
       progress = progress || {} as ProgressCbs;
-      let formattedData: FormData | string;
+      let formattedData: FormData | string | undefined;
       let contentType: string | false;
-      if (fmt === 'JSON') {
+      if (fmt === 'JSON' && fields) {
         formattedData = JSON.stringify(fields);
         contentType = 'application/json; charset=UTF-8';
-      } else if (fmt === 'FORM') {
+      } else if (fmt === 'FORM' && fields) {
         formattedData = new FormData();
         for (const formFieldName of Object.keys(fields)) {
           const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any
@@ -690,6 +690,9 @@ export class Api {
             formattedData.append(formFieldName, a); // xss-none
           }
         }
+        contentType = false;
+      } else if (!fmt && !fields && method === 'GET') {
+        formattedData = undefined;
         contentType = false;
       } else {
         throw new Error('unknown format:' + String(fmt));
@@ -713,8 +716,12 @@ export class Api {
       }
       return res;
     },
-    apiAttesterCall: (path: string, values: Dict<any>): Promise<any> => Api.internal.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }),
-    apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' }),
+    apiAttesterCall: (path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<any> => {
+      return Api.internal.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method);
+    },
+    apiFcCall: (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => {
+      return Api.internal.apiCall(Api.fc.url('api'), path, vals, fmt, undefined, { 'api-version': '3' });
+    },
   };
 
   public static retreiveBlogPosts = async (): Promise<R.FcBlogPost[]> => {
