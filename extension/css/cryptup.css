@@ -315,7 +315,8 @@ table#compose td#input_addresses_container > div .recipients span { margin-top: 
 table#compose td#input_addresses_container > div .recipients { height: auto; position: relative; }
 table#compose td#input_addresses_container > div .recipients span { padding: 5px 15px 6px 15px; }
 table#compose td#input_addresses_container > div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
-table#compose td#input_addresses_container > div .recipients span > img.repeat-icon { right: -6px; top: 1px;}
+table#compose td#input_addresses_container > div .recipients span > img.repeat-icon { right: -6px; top: 1px; cursor: pointer;}
+table#compose td#input_addresses_container > div .recipients span > img.close-icon-black { margin-left: 5px; top: 1px; right: -8px; cursor: pointer;}
 table#compose td#input_addresses_container > div .recipients span > img.expired-time { opacity: 1; };
 table#compose td#input_addresses_container > div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
