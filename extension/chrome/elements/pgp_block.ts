@@ -365,6 +365,7 @@ Catch.try(async () => {
           BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: result.longids.needPassphrase });
         }));
         await Store.waitUntilPassphraseChanged(acctEmail, result.longids.needPassphrase);
+        renderText('Decrypting...');
         await decryptAndRender(encryptedData, optionalPwd);
       } else {
         const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
