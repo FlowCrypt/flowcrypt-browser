@@ -65,7 +65,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   setReplyBoxEditable = () => {
-    const replyContainerIframe = $('.reply_message_iframe_container > iframe').first();
+    const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
       $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
