@@ -212,7 +212,7 @@ Catch.try(async () => {
   };
 
   const asBackupFile = (acctEmail: string, armoredKey: string) => {
-    return new Att({ name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
+    return new Att({ name: `flowcrypt-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
   };
 
   const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
