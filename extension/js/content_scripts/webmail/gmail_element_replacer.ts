@@ -141,14 +141,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             convoUpperIcons.find('.gZ').click();
           });
         }
-      } else {
-        if (!convoUpperIcons.is('.appended')) {
-          this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithFc(), '.use_secure_reply', () => {
-            this.replaceConvoBtns(true);
-            this.replaceStandardReplyBox(true, true);
-            this.scrollToBottomOfConvo();
-          });
-        }
       }
     }
   }

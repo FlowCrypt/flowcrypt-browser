@@ -930,10 +930,6 @@ export class XssSafeFactory {
     return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
   }
 
-  btnWithFc = () => {
-    return `<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ${this.destroyableCls}" data-tooltip="Use Secure Reply"><span>secure reply</span></span>`;
-  }
-
   btnRecipientsUseEncryption = (webmailName: WebMailName) => {
     if (webmailName !== 'gmail') {
       Catch.report('switch_to_secure not implemented for ' + webmailName);
