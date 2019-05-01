@@ -1,5 +1,7 @@
 <div>
 
+version 6.7.7 on May 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/329?closed=1" target="_blank">Fix inner attachment styling</a>
+
 version 6.7.6 on April 26, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/328?closed=1" target="_blank">Compose bugfixes</a>
 
 version 6.7.5 on April 20, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/327?closed=1" target="_blank">Deprecating attests</a>
