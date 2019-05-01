@@ -78,6 +78,7 @@
     "/chrome/elements/passphrase.htm",
     "/chrome/elements/add_pubkey.htm",
     "/chrome/elements/pgp_pubkey.htm",
+    "/chrome/elements/backup.htm",
     "/chrome/elements/subscribe.htm",
     "/chrome/elements/verification.htm",
     "/chrome/elements/sending_address.htm",

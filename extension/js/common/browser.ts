@@ -827,6 +827,10 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
   }
 
+  srcBackupIframe = (armoredPubkey: string, isOutgoind?: boolean) => {
+    return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
+  }
+
   srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
     const params: UrlParams = {
       isReplyBox: true,
@@ -893,6 +897,10 @@ export class XssSafeFactory {
 
   embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
+  }
+
+  embeddedBackup = (armoredPubkey: string, isOutgoing?: boolean) => {
+    return this.iframe(this.srcBackupIframe(armoredPubkey, isOutgoing), ['backup_block']);
   }
 
   embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {

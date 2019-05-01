@@ -213,6 +213,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
+    debugger;
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = Value.is(senderEmail).in(this.addresses);
     attsContainerInner = $(attsContainerInner);
@@ -248,6 +249,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             }
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+          } else if (treatAs === 'backup') {
+            nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
             const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
@@ -323,17 +326,31 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
+  private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
+    let downloadedAtt: R.GmailAtt;
+    try {
+      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
+    } catch (e) {
+      attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
+      nRenderedAtts++;
+      return nRenderedAtts;
+    }
+    const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: downloadedAtt.data.toRawBytesStr() });
+    if (openpgpType && openpgpType.type === 'privateKey') {
+      msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedBackup(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
+    } else {
+      attSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Backup Format');
+      nRenderedAtts++;
+    }
+    return nRenderedAtts;
+  }
+
   private filterAtts = (potentialMatches: JQueryEl | HTMLElement, patterns: string[]) => {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
+      debugger;
       const name = this.innerText.trim();
       for (const pattern of patterns) {
-        if (pattern.indexOf('*.') === 0) { // wildcard
-          if (name.endsWith(pattern.substr(1))) {
-            return true;
-          }
-        } else if (name === pattern) { // exact match
-          return true;
-        } else if ((name === 'noname' && pattern === '') || (name === '' && pattern === 'noname')) { // empty filename (sometimes represented as "noname" in Gmail)
+        if (name.includes(pattern)) {
           return true;
         }
       }

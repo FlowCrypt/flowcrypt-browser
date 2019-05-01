@@ -6,7 +6,7 @@ import { Value } from './common.js';
 import { KeyInfo } from '../core/pgp.js';
 import { Buf } from './buf.js';
 
-type Att$treatAs = "publicKey" | "encryptedMsg" | "hidden" | "signature" | "encryptedFile" | "plainFile";
+type Att$treatAs = "publicKey" | 'backup' | "encryptedMsg" | "hidden" | "signature" | "encryptedFile" | "plainFile";
 export type AttMeta = {
   data?: Uint8Array; type?: string; name?: string; length?: number; url?: string;
   inline?: boolean; id?: string; msgId?: string; treatAs?: Att$treatAs; cid?: string;
@@ -86,6 +86,8 @@ export class Att {
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
+    } else if (this.name.match(/(cryptup|flowcrypt)-backup-[a-z]+\.key/g)) {
+      return 'backup';
     } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
       return 'publicKey';
     } else if (Value.is('public').in(this.name.toLowerCase()) && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
@@ -97,7 +99,7 @@ export class Att {
     }
   }
 
-  public static pgpNamePatterns = () => ['*.pgp', '*.gpg', '*.asc', 'noname', 'message', 'PGPMIME version identification', ''];
+  public static pgpNamePatterns = () => ['.pgp', '.gpg', '.asc', '.key', 'noname', 'message', 'PGPMIME version identification'];
 
   public static keyinfoAsPubkeyAtt = (ki: KeyInfo) => new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
 
