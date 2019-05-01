@@ -64,8 +64,7 @@ export class Browser {
       a.download = Xss.escape(att.name);
       if (renderIn) {
         a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>'; // xss-direct
-        a.style.cssText = `font-size: 14px; font-weight: bold; display: flex; justify-context: center;
-                           align-items: center; width: 100%; height: 100%; text-decoration: none; color: #31A217;`;
+        a.className = 'file-download-right-click-link';
         renderIn.html(a.outerHTML); // xss-escaped attachment name above
         renderIn.css('height', 'auto');
         renderIn.find('a').click(e => {
