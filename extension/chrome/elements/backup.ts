@@ -1,6 +1,6 @@
 /* © 2016-2019 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-'use strict'
+'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Ui, Env } from '../../js/common/browser.js';
@@ -44,16 +44,16 @@ Catch.try(async () => {
         }
 
         if (await Store.keysGet(acctEmail, [longId])) {
-            $('.line .private_key_status').text('This key is already imported.')
+            $('.line .private_key_status').text('This key is already imported.');
         } else {
             $('.line .private_key_status')
                 .text('This private key was not imported. We suggest to import all backups so that you can read all incoming encrypted emails.')
                 .after('<div class="line"><div class="button green" id="action_import_key">Import Missing Private Key</div></div>');
             $("#action_import_key").click(Ui.event.handle(async target => {
-                BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' })
+                BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' });
             }));
         }
-    }
+    };
 
     const sendResizeMsg = () => {
         const desiredHeight = $('#backup_block').height()!;
@@ -65,10 +65,11 @@ Catch.try(async () => {
             $(".line.pass_phrase_test").addClass('green').text("Your pass phrase matches!");
             sendResizeMsg();
         } else {
-            await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that do don\'t get locked out of your encrypted messages.');
+            await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that do don\'t get' +
+                'locked out of your encrypted messages.');
         }
     }));
 
-    render();
+    await render();
     sendResizeMsg();
 })();
