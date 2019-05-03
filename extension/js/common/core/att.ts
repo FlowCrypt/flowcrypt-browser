@@ -99,7 +99,7 @@ export class Att {
     }
   }
 
-  public static pgpNamePatterns = () => ['.pgp', '.gpg', '.asc', '.key', 'noname', 'message', 'PGPMIME version identification'];
+  public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z]+\.key)|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
 
   public static keyinfoAsPubkeyAtt = (ki: KeyInfo) => new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
 

@@ -13,7 +13,7 @@
 <body class="backup_neutral">
     <div id="backup_block" class="backup">
         <div class="line">
-            This message includes a Public Key backup for <span class="email"></span>.
+            This message includes a Private Key backup for <span class="email"></span>.
         </div>
         <div class="line">
             Private key is needed to open your encrypted messages.
@@ -25,8 +25,8 @@
         <div class="line">
             Test that you remember your pass phrase correctly:
         </div>
-        <div class="line">
-            <input class="input_pass_phrase" type="password" placeholder="Enter your pass phrase..." />
+        <div class="line pass_phrase_test">
+            <input class="input_pass_phrase" type="password" id="pass_phrase" placeholder="Enter your pass phrase..." />
             <div class="button green action_test_pass">Test Passphrase</div>
         </div>
         <div class="line fingerprints hide_if_compact">

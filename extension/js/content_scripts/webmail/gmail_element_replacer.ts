@@ -175,7 +175,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private replaceAtts = async () => {
     for (const attsContainerEl of $(this.sel.attsContainerInner)) {
       const attsContainer = $(attsContainerEl);
-      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
+      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.attachmentsPattern).addClass('evaluated');
       const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
       if (newPgpAtts.length) {
         const msgId = this.determineMsgId(attsContainer);
@@ -213,7 +213,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
-    debugger;
     const senderEmail = this.getSenderEmail(msgEl);
     const isOutgoing = Value.is(senderEmail).in(this.addresses);
     attsContainerInner = $(attsContainerInner);
@@ -222,7 +221,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const a of attMetas) {
       const treatAs = a.treatAs();
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
+      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), new RegExp(a.name)).first();
       try {
         if (treatAs !== 'plainFile') {
           this.hideAtt(attSel, attsContainerInner);
@@ -345,16 +344,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, patterns: string[]) => {
+  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
-      debugger;
       const name = this.innerText.trim();
-      for (const pattern of patterns) {
-        if (name.includes(pattern)) {
-          return true;
-        }
-      }
-      return false;
+      return regExp.test(name);
     }).closest('span.aZo, span.a5r');
   }
 
