@@ -65,7 +65,7 @@ Catch.try(async () => {
             $(".line.pass_phrase_test").addClass('green').text("Your pass phrase matches!");
             sendResizeMsg();
         } else {
-            await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that do don\'t get' +
+            await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get' +
                 'locked out of your encrypted messages.');
         }
     }));

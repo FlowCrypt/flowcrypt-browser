@@ -823,12 +823,12 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), { frameId: this.newId(), message, hasPassword, msgId, senderEmail, isOutgoing, signature, short });
   }
 
-  srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoind?: boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
+  srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoing?: boolean) => {
+    return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoing), });
   }
 
-  srcBackupIframe = (armoredPubkey: string, isOutgoind?: boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
+  srcBackupIframe = (armoredPubkey: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPubkey });
   }
 
   srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
@@ -899,8 +899,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
   }
 
-  embeddedBackup = (armoredPubkey: string, isOutgoing?: boolean) => {
-    return this.iframe(this.srcBackupIframe(armoredPubkey, isOutgoing), ['backup_block']);
+  embeddedBackup = (armoredPubkey: string) => {
+    return this.iframe(this.srcBackupIframe(armoredPubkey), ['backup_block']);
   }
 
   embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {

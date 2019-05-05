@@ -221,7 +221,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const a of attMetas) {
       const treatAs = a.treatAs();
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), new RegExp(a.name)).first();
+      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), new RegExp(`^${Str.regexEscape(a.name)}$`)).first();
       try {
         if (treatAs !== 'plainFile') {
           this.hideAtt(attSel, attsContainerInner);
@@ -249,7 +249,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
           } else if (treatAs === 'backup') {
-            nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+            nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
             const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
@@ -325,7 +325,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
+  private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
     let downloadedAtt: R.GmailAtt;
     try {
       downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
@@ -334,13 +334,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAtts++;
       return nRenderedAtts;
     }
-    const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: downloadedAtt.data.toRawBytesStr() });
-    if (openpgpType && openpgpType.type === 'privateKey') {
-      msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedBackup(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
-    } else {
-      attSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Backup Format');
-      nRenderedAtts++;
-    }
+    msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedBackup(downloadedAtt.data.toUtfStr())); // xss-safe-factory
     return nRenderedAtts;
   }
 
