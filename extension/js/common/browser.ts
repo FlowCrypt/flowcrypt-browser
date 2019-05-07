@@ -1191,6 +1191,7 @@ export class AttUI {
   private uploader: any = undefined;
   private attAddedCb?: (r: Att) => Promise<void>;
   private attRemovedCb?: () => void;
+  private initializedCb?: () => void;
 
   constructor(getLimits: () => Promise<AttLimits>) {
     this.getLimits = getLimits;
@@ -1212,6 +1213,9 @@ export class AttUI {
         },
       };
       this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
+      if (this.initializedCb) {
+        this.initializedCb();
+      }
     });
   }
 
@@ -1257,6 +1261,23 @@ export class AttUI {
 
   clearAllAtts = () => {
     this.attachedFiles = {};
+  }
+
+  setAtts = (atts: Array<Att>) => {
+    const files: Array<File> = [];
+    for (const att of atts) {
+      const data = att.getData() as Uint8Array;
+      files.push(new File([data], att.name, { type: att.type }));
+    }
+    const addFiles = () => {
+      this.uploader.reset(); // tslint:disable-line:no-unsafe-any
+      this.uploader.addFiles(files); // tslint:disable-line:no-unsafe-any
+    };
+    if (this.uploader) {
+      addFiles();
+    } else {
+      this.initializedCb = addFiles;
+    }
   }
 
   private cancelAtt = (uploadFileId: string) => {
@@ -1309,7 +1330,6 @@ export class AttUI {
       reader.readAsArrayBuffer(this.attachedFiles[uploadFileId]);
     });
   }
-
 }
 
 /*

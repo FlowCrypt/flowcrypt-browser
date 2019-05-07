@@ -430,7 +430,9 @@ export class Composer {
       try {
         this.S.cached('send_btn_note').text('Saving');
         const primaryKi = await this.app.storageGetKey(this.urlParams.acctEmail);
-        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(this.extractAsText('input_text')), armor: true }) as OpenPGP.EncryptArmorResult;
+        const data = Buf.fromUtfStr(this.extractAsText('input_text'));
+        const atts = await this.attach.collectAtts();
+        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data, armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
         if (this.urlParams.threadId) { // reply draft
           body = `[cryptup:link:draft_reply:${this.urlParams.threadId}]\n\n${encrypted.data}`;
@@ -441,7 +443,7 @@ export class Composer {
         }
         const subject = String(this.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
         const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-        const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
+        const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, atts);
         if (!this.urlParams.draftId) {
           const { id } = await this.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);
           this.S.cached('send_btn_note').text('Saved');
@@ -501,7 +503,7 @@ export class Composer {
     }
   }
 
-  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { from?: string; to: string[] }) => {
+  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { from?: string; to: string[], atts: Array<Att> }) => {
     const passphrase = await this.app.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
@@ -516,8 +518,13 @@ export class Composer {
           this.S.cached('input_text').focus();
           this.parseRenderRecipients('harshRecipientErrs').catch(Catch.reportErr);
         }
-        if (headers && headers.from) {
-          this.S.now('input_from').val(headers.from);
+        if (headers) {
+          if (headers.from) {
+            this.S.now('input_from').val(headers.from);
+          }
+          if (headers.atts && headers.atts.length) {
+            this.attach.setAtts(headers.atts);
+          }
         }
         this.setInputTextHeightManuallyIfNeeded();
       } else {
@@ -1553,8 +1560,12 @@ export class Composer {
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
-    this.attach.setAttAddedCb(async () => this.setInputTextHeightManuallyIfNeeded());
-    this.attach.setAttRemovedCb(() => this.setInputTextHeightManuallyIfNeeded());
+    const attachmentChange = async () => {
+      this.draftSave(true).catch(Catch.reportErr);
+      this.setInputTextHeightManuallyIfNeeded();
+    };
+    this.attach.setAttAddedCb(attachmentChange);
+    this.attach.setAttRemovedCb(attachmentChange);
     if (!String(this.S.cached('input_to').val()).length) {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in
