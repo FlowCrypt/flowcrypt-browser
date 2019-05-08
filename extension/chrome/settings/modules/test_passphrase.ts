@@ -39,7 +39,7 @@ Catch.try(async () => {
       `);
       $('.close').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
     } else {
-      await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that do don\'t get locked out of your encrypted messages.');
+      await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get locked out of your encrypted messages.');
     }
   }));
 

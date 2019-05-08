@@ -175,7 +175,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private replaceAtts = async () => {
     for (const attsContainerEl of $(this.sel.attsContainerInner)) {
       const attsContainer = $(attsContainerEl);
-      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
+      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.attachmentsPattern).addClass('evaluated');
       const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
       if (newPgpAtts.length) {
         const msgId = this.determineMsgId(attsContainer);
@@ -221,7 +221,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const a of attMetas) {
       const treatAs = a.treatAs();
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
+      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), new RegExp(`^${Str.regexEscape(a.name)}$`)).first();
       try {
         if (treatAs !== 'plainFile') {
           this.hideAtt(attSel, attsContainerInner);
@@ -248,6 +248,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             }
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+          } else if (treatAs === 'backup') {
+            nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
             const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
@@ -323,21 +325,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, patterns: string[]) => {
+  private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
+    let downloadedAtt: R.GmailAtt;
+    try {
+      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
+    } catch (e) {
+      attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
+      nRenderedAtts++;
+      return nRenderedAtts;
+    }
+    msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedBackup(downloadedAtt.data.toUtfStr())); // xss-safe-factory
+    return nRenderedAtts;
+  }
+
+  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
       const name = this.innerText.trim();
-      for (const pattern of patterns) {
-        if (pattern.indexOf('*.') === 0) { // wildcard
-          if (name.endsWith(pattern.substr(1))) {
-            return true;
-          }
-        } else if (name === pattern) { // exact match
-          return true;
-        } else if ((name === 'noname' && pattern === '') || (name === '' && pattern === 'noname')) { // empty filename (sometimes represented as "noname" in Gmail)
-          return true;
-        }
-      }
-      return false;
+      return regExp.test(name);
     }).closest('span.aZo, span.a5r');
   }
 
