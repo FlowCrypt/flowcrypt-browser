@@ -8,14 +8,15 @@
 
 import { Catch } from '../../common/platform/catch.js';
 import { Store } from '../../common/platform/store.js';
-import { Str, Value } from '../../common/core/common.js';
+import { Str } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { ContentScriptWindow } from '../../common/extension.js';
-import { XssSafeFactory, Env } from '../../common/browser.js';
+import { Env } from '../../common/browser.js';
 import { GoogleAuth } from '../../common/api/google.js';
+import { XssSafeFactory } from '../../common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
@@ -105,7 +106,7 @@ Catch.try(async () => {
       const unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
       $(document).keypress(e => {
         Catch.try(() => {
-          const causesUnsecureReply = Value.is(e.which).in(unsecureReplyKeyShortcuts);
+          const causesUnsecureReply = unsecureReplyKeyShortcuts.includes(e.which);
           if (causesUnsecureReply && !$(document.activeElement!).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
             e.stopImmediatePropagation();
             replacer.setReplyBoxEditable();

@@ -8,21 +8,23 @@ import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Value } from '../../../js/common/core/common.js';
+import { Backend } from '../../../js/common/api/backend.js';
+import { Assert } from '../../../js/common/assert.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const embedded = uncheckedUrlParams.embedded === true;
 
-  await Ui.passphraseToggle(['passphrase_entry']);
+  await initPassphraseToggle(['passphrase_entry']);
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
   if (!primaryKi) {
     return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   }
@@ -37,13 +39,13 @@ Catch.try(async () => {
   const onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Api.fc.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
+    await Backend.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 
   const onMsgLanguageUserChange = async () => {
     const outgoingLanguage = String($('.password_message_language').val());
-    if (Value.is(outgoingLanguage).in(['EN', 'DE'])) {
+    if (['EN', 'DE'].includes(outgoingLanguage)) {
       await Store.setAcct(acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
       window.location.reload();
     }
@@ -100,7 +102,7 @@ Catch.try(async () => {
   if (subscription.active) {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await Api.fc.accountUpdate();
+      const response = await Backend.accountUpdate();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));

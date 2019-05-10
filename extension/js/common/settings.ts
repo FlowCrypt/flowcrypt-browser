@@ -12,6 +12,7 @@ import { Rules } from './rules.js';
 import { Api } from './api/api.js';
 import { Pgp } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
+import { Attester } from './api/attester.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -53,10 +54,10 @@ export class Settings {
   }
 
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
-    await Api.attester.initialLegacySubmit(acctEmail, pubkey);
+    await Attester.initialLegacySubmit(acctEmail, pubkey);
     const aliases = addresses.filter(a => a !== acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => Api.attester.initialLegacySubmit(a, pubkey)));
+      await Promise.all(aliases.map(a => Attester.initialLegacySubmit(a, pubkey)));
     }
   }
 
@@ -123,7 +124,7 @@ export class Settings {
       throw new Error('Missing account_email to reset');
     }
     const acctEmails = await Store.acctEmailsGet();
-    if (!Value.is(acctEmail).in(acctEmails)) {
+    if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToRemove: string[] = [];
@@ -156,7 +157,7 @@ export class Settings {
       throw new Error('Missing or wrong account_email to reset');
     }
     const acctEmails = await Store.acctEmailsGet();
-    if (!Value.is(oldAcctEmail).in(acctEmails)) {
+    if (!acctEmails.includes(oldAcctEmail)) {
       throw new Error(`"${oldAcctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToChange: string[] = [];
@@ -365,4 +366,5 @@ export class Settings {
         : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
   }
+
 }

@@ -4,21 +4,22 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Xss, Env, Ui } from '../../../js/common/browser.js';
+import { Xss, Env } from '../../../js/common/browser.js';
+import { Assert } from '../../../js/common/assert.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
   const myKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
 
   $('.action_show_public_key').attr('href', myKeyUrl);
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 

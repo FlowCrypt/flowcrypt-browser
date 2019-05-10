@@ -6,14 +6,15 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { FcAcct } from '../../js/common/account.js';
+import { Assert } from '../../js/common/assert.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'verificationEmailText', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const verificationEmailText = Env.urlParamRequire.string(uncheckedUrlParams, 'verificationEmailText');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const verificationEmailText = Assert.urlParamRequire.string(uncheckedUrlParams, 'verificationEmailText');
 
   const fcAcct = new FcAcct({}, true);
   const token = fcAcct.parseTokenEmailText(verificationEmailText);

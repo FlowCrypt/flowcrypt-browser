@@ -5,11 +5,11 @@
 import { VERSION } from '../../common/core/const.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Store } from '../../common/platform/store.js';
-import { Value } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError, Bm } from '../../common/extension.js';
-import { Ui, XssSafeFactory, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
+import { Ui, WebMailName, Env } from '../../common/browser.js';
+import { XssSafeFactory, WebmailVariantString } from '../../common/xss_safe_factory.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 type WebmailSpecificInfo = {
@@ -45,7 +45,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
       const acctEmail = webmailSpecific.getUserAccountEmail();
       if (typeof acctEmail !== 'undefined') {
         (window as ContentScriptWindow).account_email_global = acctEmail;
-        if (Value.is(webmailSpecific.name).in(webmails)) {
+        if (webmails.includes(webmailSpecific.name)) {
           console.info(`Loading FlowCrypt ${VERSION} for ${acctEmail}`);
           return acctEmail;
         } else {

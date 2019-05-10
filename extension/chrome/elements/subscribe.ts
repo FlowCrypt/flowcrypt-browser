@@ -5,21 +5,24 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Xss, Ui, XssSafeFactory, Env } from '../../js/common/browser.js';
+import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { FcAcct, CheckVerificationEmail } from '../../js/common/account.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { GoogleAuth } from '../../js/common/api/google.js';
+import { Backend } from '../../js/common/api/backend.js';
+import { Assert } from '../../js/common/assert.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'placement', 'isAuthErr', 'parentTabId']);
-  let acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'embedded', 'compose', undefined]);
+  let acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'embedded', 'compose', undefined]);
   const isAuthErr = uncheckedUrlParams.isAuthErr === true;
 
   const authInfo = await Store.authInfo();
@@ -91,7 +94,7 @@ Catch.try(async () => {
   };
 
   try {
-    await Api.fc.accountCheckSync();
+    await Backend.accountCheckSync();
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
       // todo - handle auth error - add device
@@ -190,7 +193,7 @@ Catch.try(async () => {
       $('.action_add_device, .action_close').addClass('long');
       // try API call auth in case it got fixed meanwhile
       try {
-        await Api.fc.accountUpdate();
+        await Backend.accountUpdate();
         $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${acctEmail}).`);
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');

@@ -8,6 +8,9 @@ import { Att } from '../../../js/common/core/att.js';
 import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Api } from '../../../js/common/api/api.js';
+import { Attester } from '../../../js/common/api/attester.js';
+import { Backend } from '../../../js/common/api/backend.js';
+import { Assert } from '../../../js/common/assert.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
@@ -15,8 +18,8 @@ declare const ClipboardJS: any;
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
   const myKeyUserIdsUrl = Env.urlCreate('my_key_user_ids.htm', uncheckedUrlParams);
   const myKeyUpdateUrl = Env.urlCreate('my_key_update.htm', uncheckedUrlParams);
 
@@ -24,13 +27,13 @@ Catch.try(async () => {
   $('.action_view_update').attr('href', myKeyUpdateUrl);
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 
   try {
-    const result = await Api.attester.lookupEmail(acctEmail);
-    const url = Api.fc.url('pubkey', acctEmail);
+    const result = await Attester.lookupEmail(acctEmail);
+    const url = Backend.url('pubkey', acctEmail);
     if (result.pubkey && await Pgp.key.longid(result.pubkey) === primaryKi.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }

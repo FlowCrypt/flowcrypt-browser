@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Str, Value, Dict } from './common.js';
+import { Str, Dict } from './common.js';
 import { Pgp, KeyDetails, DecryptError } from './pgp.js';
 import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
@@ -245,9 +245,9 @@ export class Mime {
                 if (secondPartEndIndex !== -1) {
                   const firstPart = mimeMsg.substr(firstPartStartIndex, firstPartEndIndex - firstPartStartIndex);
                   const secondPart = mimeMsg.substr(secondPartStartIndex, secondPartEndIndex - secondPartStartIndex);
-                  const beginSignature = Pgp.armor.headers('signedMsg').middle;
+                  const beginSignature = Pgp.armor.headers('signedMsg').middle!;
                   const endSignature = String(Pgp.armor.headers('signedMsg').end);
-                  if (firstPart.match(/^content-type: application\/pgp-signature/gi) && Value.is(beginSignature).in(firstPart) && Value.is(endSignature).in(firstPart)) {
+                  if (firstPart.match(/^content-type: application\/pgp-signature/gi) && firstPart.includes(beginSignature) && firstPart.includes(endSignature)) {
                     res.signature = Pgp.armor.clip(firstPart);
                     res.signed = secondPart;
                   } else {

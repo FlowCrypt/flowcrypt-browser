@@ -4,8 +4,9 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex, RawStore } from '../../js/common/platform/store.js';
-import { Value, Str, Dict } from '../../js/common/core/common.js';
+import { Str, Dict } from '../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
+import { Assert } from '../../js/common/assert.js';
 
 Catch.try(async () => {
 
@@ -14,10 +15,10 @@ Catch.try(async () => {
   const DEBUG_EMAILS = ['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com'];
 
   const uncheckedUrlParams = Env.urlParams(['filter', 'keys', 'controls', 'title']);
-  const filter = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'filter');
-  const keys = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'keys');
-  const title = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'title');
-  const controls = uncheckedUrlParams.controls === true && (Value.is(':dev').in(Catch.environment()) || Value.is(filter).in(DEBUG_EMAILS));
+  const filter = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'filter');
+  const keys = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'keys');
+  const title = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'title');
+  const controls = uncheckedUrlParams.controls === true && (Catch.environment().includes(':dev') || DEBUG_EMAILS.includes(String(filter)));
 
   if (title) {
     Xss.sanitizePrepend('#content', `<h1>${Xss.escape(title)}</h1>`);
@@ -54,7 +55,7 @@ Catch.try(async () => {
     }
     let filtered: RenderableStorage = {};
     for (const key of Object.keys(storage)) {
-      if (Value.is(realFilter).in(key)) {
+      if (key.includes(realFilter)) {
         filtered[key.replace(realFilter, '')] = { key, value: storage[key] };
       }
     }

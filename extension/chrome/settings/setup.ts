@@ -4,7 +4,7 @@
 
 import { Store } from '../../js/common/platform/store.js';
 import { Value } from '../../js/common/core/common.js';
-import { Xss, Ui, KeyImportUi, UserAlert, KeyCanBeFixed, Env } from '../../js/common/browser.js';
+import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
@@ -13,6 +13,10 @@ import { Api } from '../../js/common/api/api.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
+import { Attester } from '../../js/common/api/attester.js';
+import { Assert } from '../../js/common/assert.js';
+import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -30,11 +34,11 @@ interface SetupOptions {
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   let parentTabId: string | undefined;
-  const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
+  const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
   if (action === 'add_key') {
-    parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
   if (acctEmail) {
@@ -44,8 +48,8 @@ Catch.try(async () => {
     return;
   }
 
-  await Ui.passphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
-  await Ui.passphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
+  await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
+  await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'addresses']);
 
@@ -146,7 +150,7 @@ Catch.try(async () => {
     if (name) {
       $('#' + blocks.join(', #')).css('display', 'none');
       $('#' + name).css('display', 'block');
-      $('.back').css('visibility', Value.is(name).in(['step_2b_manual_enter', 'step_2a_manual_create']) ? 'visible' : 'hidden');
+      $('.back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
         $('.backups_count_words').text(recoveredKeys.length > 1 ? recoveredKeys.length + ' backups' : 'a backup');
       }
@@ -156,7 +160,7 @@ Catch.try(async () => {
   const renderSetupDialog = async (): Promise<void> => {
     let keyserverRes, fetchedKeys;
     try {
-      keyserverRes = await Api.attester.lookupEmail(acctEmail);
+      keyserverRes = await Attester.lookupEmail(acctEmail);
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }
@@ -228,9 +232,9 @@ Catch.try(async () => {
     if (!options.submit_main) {
       return;
     }
-    Api.attester.testWelcome(acctEmail, armoredPubkey).catch(e => {
+    Attester.testWelcome(acctEmail, armoredPubkey).catch(e => {
       if (Api.err.isSignificant(e)) {
-        Catch.report('Api.attester.test_welcome: failed', e);
+        Catch.report('Attester.test_welcome: failed', e);
       }
     });
     let addresses;
@@ -274,7 +278,7 @@ Catch.try(async () => {
 
   const finalizeSetup = async ({ submit_main, submit_all }: { submit_main: boolean, submit_all: boolean }): Promise<void> => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     try {
       await submitPublicKeyIfNeeded(primaryKi.public, { submit_main, submit_all });
     } catch (e) {
@@ -326,7 +330,7 @@ Catch.try(async () => {
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
     const passphrase = String($('#recovery_pasword').val());
     const newlyMatchingKeys: OpenPGP.key.Key[] = [];
-    if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
+    if (passphrase && recoveredKeysMatchingPassphrases.includes(passphrase)) {
       await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
       return;
     }
@@ -339,7 +343,7 @@ Catch.try(async () => {
       const longid = await Pgp.key.longid(recoveredKey);
       const armored = recoveredKey.armor();
       if (longid) {
-        if (Value.is(longid).in(recoveredKeysSuccessfulLongids)) {
+        if (recoveredKeysSuccessfulLongids.includes(longid)) {
           matchedPreviouslyRecoveredKey = true;
         } else if (await Pgp.key.decrypt(recoveredKey, [passphrase]) === true) {
           recoveredKeysSuccessfulLongids.push(longid);

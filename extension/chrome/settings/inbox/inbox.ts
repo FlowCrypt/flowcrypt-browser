@@ -4,24 +4,26 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value, Str, Dict } from '../../../js/common/core/common.js';
-import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
+import { Str, Dict } from '../../../js/common/core/common.js';
+import { Xss, Ui, Env, UrlParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api, R } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google, GoogleAuth, GoogleAcctNotConnected } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth, GoogleAcctNotConnected, GmailRes } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { Assert } from '../../../js/common/assert.js';
+import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
-  const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
+  const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
   const showOriginal = uncheckedUrlParams.showOriginal === true;
 
   let threadHasPgpBlock = false;
@@ -29,7 +31,7 @@ Catch.try(async () => {
   let factory: XssSafeFactory;
   let injector: Injector;
   let notifications: Notifications;
-  let allLabels: R.GmailLabels$label[];
+  let allLabels: GmailRes.GmailLabels$label[];
 
   const S = Ui.buildJquerySels({ // tslint:disable-line:oneliner-object-literal
     threads: '.threads',
@@ -37,7 +39,9 @@ Catch.try(async () => {
     body: 'body',
   });
 
-  const LABEL = { INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES' };
+  const LABEL: Dict<GmailRes.GmailMsg$labelId> = {
+    INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
+  };
   const FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
 
   const tabId = await BrowserMsg.requiredTabId();
@@ -204,7 +208,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderableLabels = (labelIds: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+  const renderableLabels = (labelIds: (GmailRes.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return labelIds.map(id => renderableLabel(id, placement)).join('');
   };
 
@@ -225,7 +229,7 @@ Catch.try(async () => {
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(formatDate(lastMsg.internalDate));
       threadItem.addClass('loaded').click(Ui.event.handle(() => renderThread(thread.id, thread)));
-      if (Value.is(LABEL.UNREAD).in(lastMsg.labelIds || [])) {
+      if (lastMsg.labelIds && lastMsg.labelIds.includes(LABEL.UNREAD)) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
       if (thread.messages.length > 1) {
@@ -245,7 +249,7 @@ Catch.try(async () => {
     }
   };
 
-  const addLabelStyles = (labels: R.GmailLabels$label[]) => {
+  const addLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     let style = '';
     for (const label of labels) {
       if (label.color) {
@@ -280,7 +284,7 @@ Catch.try(async () => {
     return `UNKNOWN LABEL: ${labelId}`;
   };
 
-  const renderMenuAndLabelStyles = (labels: R.GmailLabels$label[]) => {
+  const renderMenuAndLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     allLabels = labels;
     addLabelStyles(labels);
     Xss.sanitizeAppend('.menu', `<br>${renderableLabels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
@@ -345,7 +349,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderThread = async (threadId: string, thread?: R.GmailThread) => {
+  const renderThread = async (threadId: string, thread?: GmailRes.GmailThread) => {
     displayBlock('thread', 'Loading..');
     try {
       thread = thread || await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
@@ -383,7 +387,7 @@ Catch.try(async () => {
     return Ui.e('div', { id, class: 'message line', html });
   };
 
-  const renderMsg = async (message: R.GmailMsg) => {
+  const renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = threadMsgId(message.id);
     const from = Google.gmail.findHeader(message, 'from') || 'unknown';
     try {
@@ -401,7 +405,7 @@ Catch.try(async () => {
         if (showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
-          r += Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+          r += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.addresses && storage.addresses.includes(from));
         }
       }
       const { atts } = await Mime.decode(mimeMsg);
@@ -425,12 +429,12 @@ Catch.try(async () => {
     }
   };
 
-  const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: R.GmailMsg) => {
+  const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: GmailRes.GmailMsg) => {
     let params: FactoryReplyParams;
     if (lastMsg) {
       const to = Google.gmail.findHeader(lastMsg, 'to');
       const toArr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
-      const headers = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(lastMsg, 'from'), toArr);
+      const headers = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(lastMsg, 'from'), toArr);
       const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
       params = { subject, replyTo: headers.to, addresses: storage.addresses || [], myEmail: headers.from, threadId, threadMsgId };
     } else {

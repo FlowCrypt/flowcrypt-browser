@@ -9,7 +9,7 @@ export type Dict<T> = { [key: string]: T; };
 export class Str {
 
   public static parseEmail = (full: string) => {
-    if (Value.is('<').in(full) && Value.is('>').in(full)) {
+    if (full.includes('<') && full.includes('>')) {
       const email = full.substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase();
       const name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
       return { email, name, full };
@@ -105,7 +105,7 @@ export class Value {
     unique: <T>(array: T[]): T[] => {
       const unique: T[] = [];
       for (const v of array) {
-        if (!Value.is(v).in(unique)) {
+        if (!unique.includes(v)) {
           unique.push(v);
         }
       }
@@ -145,7 +145,5 @@ export class Value {
   };
 
   public static noop = (): void => undefined;
-
-  public static is = <T>(v: T) => ({ in: (arrayOrStr: T[] | string): boolean => Value.arr.contains(arrayOrStr, v) });  // Value.this(v).in(array_or_string)
 
 }

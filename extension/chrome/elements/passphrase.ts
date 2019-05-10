@@ -4,11 +4,12 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, StorageType } from '../../js/common/platform/store.js';
-import { Value } from '../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
+import { Assert } from '../../js/common/assert.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -17,15 +18,15 @@ Catch.try(async () => {
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const longids = Env.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
-  const type = Env.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment']);
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
+  const type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment']);
 
   const allPrivateKeys = await Store.keysGet(acctEmail);
-  const selectedPrivateKeys = allPrivateKeys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
+  const selectedPrivateKeys = allPrivateKeys.filter(ki => longids.includes(ki.longid) || (ki.primary && longids.includes('primary')));
 
-  await Ui.passphraseToggle(['passphrase']);
+  await initPassphraseToggle(['passphrase']);
 
   const renderInitial = () => {
     $('#passphrase').keyup(renderNormalPpPrompt);

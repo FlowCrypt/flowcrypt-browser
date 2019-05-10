@@ -7,16 +7,18 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
+import { Assert } from '../../../js/common/assert.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  await Ui.passphraseToggle(['original_password', 'password', 'password2']);
+  await initPassphraseToggle(['original_password', 'password', 'password2']);
 
   const privateKeys = await Store.keysGet(acctEmail);
   if (privateKeys.length > 1) {
@@ -26,7 +28,7 @@ Catch.try(async () => {
   }
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const storedOrSessionPp = await Store.passphraseGet(acctEmail, primaryKi.longid);
   let { keys: [primaryPrv] } = await openpgp.key.readArmored(primaryKi.private);

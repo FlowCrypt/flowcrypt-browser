@@ -9,11 +9,15 @@ import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
-import { Api, R, ProgressCb, ProviderContactsQuery, PubkeySearchResult, SendableMsg, AwsS3UploadItem, ChunkedCb, AjaxError } from './api/api.js';
-import { Ui, Xss, AttUI, BrowserEventErrHandler, Env, AttLimits } from './browser.js';
+import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
+import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
-import { GoogleAuth } from './api/google.js';
+import { GoogleAuth, GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
+import { PubkeySearchResult, Attester } from './api/attester.js';
+import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
+import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js';
+import { AttUI, AttLimits } from './ui/att_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -35,11 +39,11 @@ interface ComposerAppFunctionsInterface {
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
   storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
-  emailProviderDraftGet: (draftId: string) => Promise<R.GmailDraftGet | undefined>;
-  emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<R.GmailDraftCreate>;
-  emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<R.GmailDraftUpdate>;
-  emailProviderDraftDelete: (draftId: string) => Promise<R.GmailDraftDelete>;
-  emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<R.GmailMsgSend>;
+  emailProviderDraftGet: (draftId: string) => Promise<GmailRes.GmailDraftGet | undefined>;
+  emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<GmailRes.GmailDraftCreate>;
+  emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<GmailRes.GmailDraftUpdate>;
+  emailProviderDraftDelete: (draftId: string) => Promise<GmailRes.GmailDraftDelete>;
+  emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<GmailRes.GmailMsgSend>;
   emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderDetermineReplyMsgHeaderVariables: () => Promise<undefined | { lastMsgId: string, headers: { 'In-Reply-To': string, 'References': string } }>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
@@ -206,7 +210,7 @@ export class Composer {
       };
     } else {
       const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && Value.is(await Pgp.hash.sha1UtfStr(this.urlParams.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
+      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await Pgp.hash.sha1UtfStr(this.urlParams.acctEmail))) ? 200 : 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,
@@ -579,7 +583,7 @@ export class Composer {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       await this.parseRenderRecipients('harshRecipientErrs');
     }
-    if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients.length) {
+    if (this.BTN_READY_TEXTS.includes(this.S.now('send_btn_span').text().trim()) && recipients.length) {
       return; // all good
     }
     if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
@@ -717,7 +721,7 @@ export class Composer {
         this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.reportErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
-        await this.doSendMsg(await Api.common.msg(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId), plaintext);
+        await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId), plaintext);
       }
     } else {
       await Ui.modal.error('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -726,13 +730,13 @@ export class Composer {
   }
 
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
-    const pfRes: R.FcMsgPresignFiles = await Api.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
+    const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
     const items: AwsS3UploadItem[] = [];
     for (const i of pfRes.approvals.keys()) {
       items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
     }
-    await Api.aws.s3Upload(items, this.renderUploadProgress);
-    const { admin_codes, confirmed } = await Api.fc.messageConfirmFiles(items.map(item => item.fields.key));
+    await Backend.s3Upload(items, this.renderUploadProgress);
+    const { admin_codes, confirmed } = await Backend.messageConfirmFiles(items.map(item => item.fields.key));
     if (!confirmed || confirmed.length !== items.length) {
       throw new Error('Attachments did not upload properly, please try again');
     }
@@ -768,7 +772,7 @@ export class Composer {
     }
     let response;
     try {
-      response = await Api.fc.messageToken();
+      response = await Backend.messageToken();
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
         if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
@@ -830,15 +834,15 @@ export class Composer {
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      const { short, admin_code } = await Api.fc.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
+      const { short, admin_code } = await Backend.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
       const storage = await Store.getAcct(this.urlParams.acctEmail, ['outgoing_language']);
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Api.common.msg(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
     } else {
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
-      await this.doSendMsg(await Api.common.msg(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
     }
   }
 
@@ -852,7 +856,7 @@ export class Composer {
     if (this.S.cached('icon_pubkey').is('.active')) {
       msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.urlParams.acctEmail)));
     }
-    let msgSentRes: R.GmailMsgSend;
+    let msgSentRes: GmailRes.GmailMsgSend;
     try {
       msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
     } catch (e) {
@@ -883,7 +887,7 @@ export class Composer {
     } else {
       try {
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
-        const lookupResult = await Api.attester.lookupEmail(email);
+        const lookupResult = await Attester.lookupEmail(email);
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
         if (lookupResult && email) {
           if (lookupResult.pubkey) {
@@ -1148,7 +1152,7 @@ export class Composer {
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
     let gentleErrInvalidEmails = '';
-    if (!(Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo))) {
+    if (!(inputTo.includes(',') || (!this.S.cached('input_to').is(':focus') && inputTo))) {
       this.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
       return false;
     }
@@ -1188,10 +1192,10 @@ export class Composer {
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
     this.debug(`selectContact 2`);
     const q = Str.parseEmail(fromQuery.substring).email;
-    if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
+    if (possiblyBogusAddr === q || possiblyBogusAddr.includes(q)) {
       possiblyBogusRecipient.remove();
     }
-    if (!Value.is(email).in(this.getRecipientsFromDom())) {
+    if (!this.getRecipientsFromDom().includes(email)) {
       this.S.cached('input_to').val(Str.parseEmail(email).email);
       this.debug(`selectContact -> parseRenderRecipients start`);
       const isRecipientAdded = await this.parseRenderRecipients('harshRecipientErrs');
@@ -1392,7 +1396,7 @@ export class Composer {
       this.S.now('attached_files').removeClass('sign');
       this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
     }
-    if (Value.is(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
+    if ([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND].includes(this.S.now('send_btn_span').text())) {
       this.resetSendBtn();
     }
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
@@ -1414,7 +1418,7 @@ export class Composer {
     this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnKeyserver = Value.is(this.getSender()).in(this.myAddrsOnKeyserver);
+        const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.getSender());
         if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey

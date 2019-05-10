@@ -8,19 +8,45 @@ import { Value } from '../../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api, R } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/api.js';
+import { Attester, AttesterRes } from '../../../js/common/api/attester.js';
+import { Pgp } from '../../../js/common/core/pgp.js';
+import { Assert } from '../../../js/common/assert.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   $('.email-address').text(acctEmail);
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  const renderDiagnosis = (diagnosis: R.AttKeyserverDiagnosis) => {
+  const diagnoseKeyserverPubkeys = async (acctEmail: string): Promise<AttesterRes.AttKeyserverDiagnosis> => {
+    const diagnosis: AttesterRes.AttKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
+    const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
+    const storedKeys = await Store.keysGet(acctEmail);
+    const storedKeysLongids = storedKeys.map(ki => ki.longid);
+    const results = await Attester.lookupEmails(Value.arr.unique([acctEmail].concat(addresses || [])));
+    for (const email of Object.keys(results)) {
+      const pubkeySearchResult = results[email];
+      if (!pubkeySearchResult.pubkey) {
+        diagnosis.hasPubkeyMissing = true;
+        diagnosis.results[email] = { pubkey: undefined, match: false };
+      } else {
+        let match = true;
+        if (!storedKeysLongids.includes(String(await Pgp.key.longid(pubkeySearchResult.pubkey)))) {
+          diagnosis.hasPubkeyMismatch = true;
+          match = false;
+        }
+        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
+      }
+    }
+    return diagnosis;
+  };
+
+  const renderDiagnosis = (diagnosis: AttesterRes.AttKeyserverDiagnosis) => {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, remove, color;
@@ -53,9 +79,9 @@ Catch.try(async () => {
     $('.action_submit_key').click(Ui.event.prevent('double', async self => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
-        await Api.attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
+        await Attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
@@ -95,7 +121,7 @@ Catch.try(async () => {
   };
 
   try {
-    const diagnosis = await Api.attester.diagnoseKeyserverPubkeys(acctEmail);
+    const diagnosis = await diagnoseKeyserverPubkeys(acctEmail);
     $('.summary').text('');
     renderDiagnosis(diagnosis);
   } catch (e) {

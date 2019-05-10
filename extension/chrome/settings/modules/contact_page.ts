@@ -6,17 +6,20 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store, Serializable } from '../../../js/common/platform/store.js';
 import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, AttUI, Env } from '../../../js/common/browser.js';
+import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api, R } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
+import { Backend, BackendRes } from '../../../js/common/api/backend.js';
+import { Assert } from '../../../js/common/assert.js';
+import { AttUI } from '../../../js/common/ui/att_ui.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   const attachJs = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let newPhotoFile: Att;
@@ -37,9 +40,9 @@ Catch.try(async () => {
     'photo': '.profile_photo img',
   });
 
-  const renderFields = (result: R.FcAccountUpdate$result) => {
+  const renderFields = (result: BackendRes.FcAccountUpdate$result) => {
     if (result.alias) {
-      const me = Api.fc.url('me', result.alias);
+      const me = Backend.url('me', result.alias);
       const meEscaped = Xss.escape(me);
       const meEscapedDisplay = Xss.escape(me.replace('https://', ''));
       Xss.sanitizeRender(S.cached('status'), `Your contact page is currently <b class="good">enabled</b> at <a href="${meEscaped}" target="_blank">${meEscapedDisplay}</a></span>`);
@@ -71,7 +74,7 @@ Catch.try(async () => {
     try {
       const alias = await findAvailableAlias(authInfo.acctEmail!);
       const initial = { alias, name: storage.full_name || Str.capitalize(authInfo.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
-      const response = await Api.fc.accountUpdate(initial);
+      const response = await Backend.accountUpdate(initial);
       if (!response.updated) {
         await Ui.modal.error('Failed to enable your Contact Page. Please try again');
       }
@@ -98,7 +101,7 @@ Catch.try(async () => {
         update.photo_content = newPhotoFile.getData().toBase64Str();
       }
       try {
-        await Api.fc.accountUpdate(update);
+        await Backend.accountUpdate(update);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           await Ui.modal.error('No internet connection, please try again');
@@ -126,7 +129,7 @@ Catch.try(async () => {
     let i = 0;
     while (true) {
       alias += (i || '');
-      const response = await Api.fc.linkMe(alias);
+      const response = await Backend.linkMe(alias);
       if (!response.profile) {
         return alias;
       }
@@ -136,7 +139,7 @@ Catch.try(async () => {
 
   Xss.sanitizeRender(S.cached('status'), 'Loading..' + Ui.spinner('green'));
   try {
-    const response = await Api.fc.accountUpdate();
+    const response = await Backend.accountUpdate();
     renderFields(response.result);
   } catch (e) {
     if (Api.err.isAuthErr(e)) {

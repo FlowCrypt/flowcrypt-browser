@@ -9,32 +9,34 @@ import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Api, R } from '../../js/common/api/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
+import { BackendRes, Backend } from '../../js/common/api/backend.js';
+import { Assert } from '../../js/common/assert.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature', 'short']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const hasChallengePassword = uncheckedUrlParams.hasPassword === true;
   const isOutgoing = uncheckedUrlParams.isOutgoing === true;
-  const short = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
-  const senderEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
-  const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
+  const short = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
+  const senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
+  const msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const heightHistory: number[] = [];
-  const encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Env.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
+  const encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
   let signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];
   let canReadEmails: undefined | boolean;
-  let passwordMsgLinkRes: R.FcLinkMsg;
+  let passwordMsgLinkRes: BackendRes.FcLinkMsg;
   let adminCodes: string[];
   let userEnteredMsgPassword: string | undefined;
 
@@ -267,7 +269,7 @@ Catch.try(async () => {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
     Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
-      const r = await Api.fc.messageExpiration(adminCodes, nDays);
+      const r = await Backend.messageExpiration(adminCodes, nDays);
       if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
         window.location.reload();
       } else {
@@ -412,7 +414,7 @@ Catch.try(async () => {
     return String($('#answer').val());
   };
 
-  const renderPasswordEncryptedMsgLoadFail = async (linkRes: R.FcLinkMsg) => {
+  const renderPasswordEncryptedMsgLoadFail = async (linkRes: BackendRes.FcLinkMsg) => {
     if (linkRes.expired) {
       let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
       if (linkRes.deleted) {
@@ -463,7 +465,7 @@ Catch.try(async () => {
       } else if (!encryptedMsgUrlParam && hasChallengePassword && short) { // need to fetch the message from FlowCrypt API
         renderText('Loading message...');
         await recoverStoredAdminCodes();
-        const msgLinkRes = await Api.fc.linkMessage(short);
+        const msgLinkRes = await Backend.linkMessage(short);
         passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
           const downloaded = await Api.download(msgLinkRes.url);

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Value, Str, Dict } from './core/common.js';
+import { Str, Dict } from './core/common.js';
 import { Pgp } from './core/pgp.js';
 
 export type DomainRule = { flags: ('NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'STRICT_GDPR')[] };
@@ -26,15 +26,15 @@ export class Rules {
   }
 
   private constructor(domainHash?: string) {
-    if (domainHash && Value.is(domainHash).in(Object.keys(this.rules))) {
+    if (domainHash && Object.keys(this.rules).includes(domainHash)) {
       this.domainHash = domainHash; // known domain, else initialized to this.other
     }
   }
 
-  canCreateKeys = () => !Value.is('NO_PRV_CREATE').in(this.rules[this.domainHash].flags);
+  canCreateKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_CREATE');
 
-  canBackupKeys = () => !Value.is('NO_PRV_BACKUP').in(this.rules[this.domainHash].flags);
+  canBackupKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_BACKUP');
 
-  hasStrictGdpr = () => Value.is('STRICT_GDPR').in(this.rules[this.domainHash].flags);
+  hasStrictGdpr = () => this.rules[this.domainHash].flags.includes('STRICT_GDPR');
 
 }

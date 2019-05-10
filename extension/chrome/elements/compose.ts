@@ -4,14 +4,17 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, ContactUpdate, DbContactFilter } from '../../js/common/platform/store.js';
-import { Value, Str } from '../../js/common/core/common.js';
+import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
-import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
+import { Xss, Ui, Env, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer.js';
-import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api.js';
+import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { KeyInfo, Contact } from '../../js/common/core/pgp.js';
+import { SendableMsg } from '../../js/common/api/email_provider_api.js';
+import { Assert } from '../../js/common/assert.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
@@ -19,21 +22,21 @@ Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
     'skipClickPrompt', 'ignoreDraft', 'debug']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const isReplyBox = uncheckedUrlParams.isReplyBox === true;
   const skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
   const ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
-  const placement = Env.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
+  const placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
   const disableDraftSaving = false;
   const debug = uncheckedUrlParams.debug === true;
-  let threadMsgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
-  let draftId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
-  let from = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
-  let to = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Env.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
-  let threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
-  let subject = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
+  let threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
+  let draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
+  let from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
+  let to = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
+  let threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
+  let subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
   const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_keyserver', 'email_footer', 'email_provider',
     'hide_message_password', 'drafts_reply']);
@@ -65,7 +68,8 @@ Catch.try(async () => {
     if (gmailMsg.threadId) {
       threadId = gmailMsg.threadId;
     }
-    const reply = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'), (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
+    const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'),
+      (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
     to = to.length ? to : reply.to;
     from = from ? from : reply.from;
     subject = subject ? subject : Google.gmail.findHeader(gmailMsg, 'subject') || '';
@@ -97,7 +101,7 @@ Catch.try(async () => {
         return false;
       }
       const storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);
-      if (Value.is(theirEmail).in(storage.pubkey_sent_to || [])) {
+      if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
         return true;
       }
       if (!canReadEmail) {
@@ -133,7 +137,7 @@ Catch.try(async () => {
     storageGetSubscription: () => Store.subscription(),
     storageGetKey: async (senderEmail: string): Promise<KeyInfo> => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       return primaryKi;
     },
     storageSetDraftMeta: async (storeIfTrue: boolean, draftId: string, threadId: string, recipients: string[], subject: string) => {
@@ -256,7 +260,7 @@ Catch.try(async () => {
   BrowserMsg.listen(tabId);
 
   if (!isReplyBox) { // don't want to deal with resizing the frame
-    await Ui.abortAndRenderErrOnUnprotectedKey(acctEmail);
+    await Assert.abortAndRenderErrOnUnprotectedKey(acctEmail);
   }
 
 })();
