@@ -14,7 +14,6 @@ for (let i = 0; i < process.argv.length; i++) {
   }
 }
 tsconfigAbsPath = path.resolve(tsconfigAbsPath || './tsconfig.json');
-console.log("path: " + tsconfigAbsPath);
 const tsconfigAbsDir = path.dirname(tsconfigAbsPath);
 
 const getNameAndPos = (f: ts.FunctionLike) => {
@@ -101,7 +100,6 @@ const compile = (): void => {
   printErrsAndExitIfPresent(errors);
   const compilerHost = ts.createCompilerHost(options);
   const fileList = files && files.length ? files : compilerHost.readDirectory!(tsconfigAbsDir, ['.ts', '.tsx', '.d.ts'], exclude, include);
-  console.log(tsconfigAbsDir)
   if (!fileList.length) {
     console.error(`fileList empty for ${tsconfigAbsPath}\ninclude:\n${(include || []).join('\n')}\n\nexclude:\n${(exclude || []).join('\n')}\nfiles:\n${(files || []).join('\n')}`);
     process.exit(1);
