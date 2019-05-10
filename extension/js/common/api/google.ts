@@ -8,7 +8,7 @@ const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
-import { Api, AuthError, ReqMethod, ProgressCbs, SendableMsg, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
+import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
 import { Env, Ui, Xss } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult, BrowserMsg } from '../extension.js';
@@ -18,6 +18,7 @@ import { FormatError, Pgp, Contact } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
 import { gmailBackupSearchQuery } from '../core/const.js';
+import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -69,7 +70,7 @@ export namespace GmailRes { // responses
 
 }
 
-export class Google extends Api {
+export class Google extends EmailProviderApi {
 
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
   private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;

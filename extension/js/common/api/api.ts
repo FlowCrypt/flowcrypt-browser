@@ -4,12 +4,10 @@
 
 // tslint:disable:no-direct-ajax
 
-import { Store } from '../platform/store.js';
-import { Value, Str, Dict } from '../core/common.js';
+import { Dict } from '../core/common.js';
 import { Contact } from '../core/pgp.js';
 import { Xss, Env } from '../browser.js';
 import { Att } from '../core/att.js';
-import { SendableMsgBody } from '../core/mime.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
 import { BrowserMsg } from '../extension.js';
@@ -32,8 +30,6 @@ type RawAjaxError = {
 export type ChunkedCb = (r: ProviderContactsResults) => void;
 export type ProgressCb = (percent?: number, loaded?: number, total?: number) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
-export type ProviderContactsQuery = { substring: string };
-export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
 
 abstract class ApiCallError extends Error {
 
@@ -252,49 +248,6 @@ export class Api {
     isInPrivateMode: (e: any) => {
       return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
     }
-  };
-
-  public static common = {
-    msg: async (acctEmail: string, from: string = '', to: string[] = [], subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string): Promise<SendableMsg> => {
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      if (!to.length) {
-        throw new Error('The To: field is empty. Please add recipients and try again');
-      }
-      const invalidEmails = to.filter(email => !Str.isEmailValid(email));
-      if (invalidEmails.length) {
-        throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
-      }
-      return {
-        headers: primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {},
-        from,
-        to,
-        subject,
-        body: typeof by === 'object' ? by : { 'text/plain': by },
-        atts: atts || [],
-        thread: threadRef,
-      };
-    },
-    replyCorrespondents: (acctEmail: string, addresses: string[], lastMsgSender: string | undefined, lastMsgRecipients: string[]) => {
-      const replyToEstimate = lastMsgRecipients;
-      if (lastMsgSender) {
-        replyToEstimate.unshift(lastMsgSender);
-      }
-      let replyTo: string[] = [];
-      let myEmail = acctEmail;
-      for (const email of replyToEstimate) {
-        if (email) {
-          if (addresses.includes(Str.parseEmail(email).email)) { // my email
-            myEmail = email;
-          } else if (!replyTo.includes(Str.parseEmail(email).email)) { // skip duplicates
-            replyTo.push(Str.parseEmail(email).email); // reply to all except my emails
-          }
-        }
-      }
-      if (!replyTo.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-        replyTo = Value.arr.unique(replyToEstimate);
-      }
-      return { to: replyTo, from: myEmail };
-    },
   };
 
   public static download = (url: string, progress?: ProgressCb): Promise<Buf> => new Promise((resolve, reject) => {

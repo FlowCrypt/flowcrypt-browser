@@ -9,13 +9,14 @@ import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
-import { Api, ProgressCb, ProviderContactsQuery, SendableMsg, ChunkedCb, AjaxError } from './api/api.js';
+import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, AttUI, BrowserEventErrHandler, Env, AttLimits } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
-import { GoogleAuth, GmailRes } from './api/google.js';
+import { GoogleAuth, GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { PubkeySearchResult, Attester } from './api/attester.js';
 import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
+import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -719,7 +720,7 @@ export class Composer {
         this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.reportErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
-        await this.doSendMsg(await Api.common.msg(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId), plaintext);
+        await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId), plaintext);
       }
     } else {
       await Ui.modal.error('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -837,10 +838,10 @@ export class Composer {
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Api.common.msg(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
     } else {
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
-      await this.doSendMsg(await Api.common.msg(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
     }
   }
 

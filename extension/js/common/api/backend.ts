@@ -7,7 +7,7 @@
 import { Api, ReqFmt, ProgressCb } from './api.js';
 import { Dict, Value } from '../core/common.js';
 import { PaymentMethod } from '../account.js';
-import { Store, GlobalStore, Subscription, Serializable } from '../platform/store.js';
+import { Store, GlobalStore, Subscription } from '../platform/store.js';
 import { Catch } from '../platform/catch.js';
 import { Att } from '../core/att.js';
 import { Ui } from '../browser.js';
@@ -17,6 +17,7 @@ import { Pgp } from '../core/pgp.js';
 type FcAuthToken = { account: string, token: string };
 type FcAuthMethods = 'uuid' | FcAuthToken | null;
 type SubscriptionLevel = 'pro' | null;
+type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
 
 export type SubscriptionInfo = { active?: boolean | null; method?: PaymentMethod | null; level?: SubscriptionLevel; expire?: string | null; expired?: boolean };
 export type AwsS3UploadItem = { baseUrl: string, fields: { key: string; file?: Att }, att: Att };
@@ -120,15 +121,9 @@ export class Backend extends Api {
     return undefined;
   }
 
-  public static accountUpdate = async (updateValues?: Dict<Serializable>): Promise<BackendRes.FcAccountUpdate> => {
-    const authInfo = await Store.authInfo();
-    const request = { account: authInfo.acctEmail, uuid: authInfo.uuid } as Dict<Serializable>;
-    if (updateValues) {
-      for (const k of Object.keys(updateValues)) {
-        request[k] = updateValues[k];
-      }
-    }
-    return await Backend.call('account/update', request) as BackendRes.FcAccountUpdate;
+  public static accountUpdate = async (profileUpdate: ProfileUpdate = {}): Promise<BackendRes.FcAccountUpdate> => {
+    const { acctEmail: account, uuid } = await Store.authInfo();
+    return await Backend.call('account/update', { account, uuid, ...profileUpdate }) as BackendRes.FcAccountUpdate;
   }
 
   public static accountSubscribe = async (product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {

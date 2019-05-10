@@ -8,10 +8,11 @@ import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer.js';
-import { Api, ProgressCb, SendableMsg, ChunkedCb } from '../../js/common/api/api.js';
+import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { KeyInfo, Contact } from '../../js/common/core/pgp.js';
+import { SendableMsg } from '../../js/common/api/email_provider_api.js';
 
 Catch.try(async () => {
 
@@ -65,7 +66,8 @@ Catch.try(async () => {
     if (gmailMsg.threadId) {
       threadId = gmailMsg.threadId;
     }
-    const reply = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'), (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
+    const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'),
+      (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
     to = to.length ? to : reply.to;
     from = from ? from : reply.from;
     subject = subject ? subject : Google.gmail.findHeader(gmailMsg, 'subject') || '';

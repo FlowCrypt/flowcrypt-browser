@@ -422,7 +422,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
-    const headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domGetMsgSender(convoRootEl), this.domGetMsgRecipients(convoRootEl));
+    const headers = Google.determineReplyCorrespondents(this.acctEmail, this.addresses, this.domGetMsgSender(convoRootEl), this.domGetMsgRecipients(convoRootEl));
     return {
       subject: this.domGetMsgSubject(convoRootEl),
       replyTo: headers.to,

@@ -432,7 +432,7 @@ Catch.try(async () => {
     if (lastMsg) {
       const to = Google.gmail.findHeader(lastMsg, 'to');
       const toArr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
-      const headers = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(lastMsg, 'from'), toArr);
+      const headers = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(lastMsg, 'from'), toArr);
       const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
       params = { subject, replyTo: headers.to, addresses: storage.addresses || [], myEmail: headers.from, threadId, threadMsgId };
     } else {
