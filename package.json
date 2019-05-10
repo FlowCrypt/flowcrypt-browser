@@ -35,7 +35,7 @@
     "test_buf": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/buf.js",
     "test_chrome_consumer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER",
     "test_chrome_enterprise": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE",
-    "prebuild": "rm -rf ./build && ./node_modules/.bin/tsc --project conf/tsconfig.tooling.json",
+    "prebuild": "rm -rf ./build && npx tsc --project conf/tsconfig.tooling.json",
     "build": "gulp --gulpfile ./conf/gulpfile.js",
     "pretest": "npm run-script build --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
     "test": "npm run-script test_buf && npm run-script test_tslint && npm run-script test_patterns && npm run-script test_async_stack && npm run-script test_chrome_consumer -- -- --pool-size=1 && npm run-script test_chrome_enterprise -- -- --pool-size=1",
