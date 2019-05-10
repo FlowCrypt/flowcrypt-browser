@@ -54,10 +54,10 @@ export class Settings {
   }
 
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
-    await Attester.attester.initialLegacySubmit(acctEmail, pubkey);
+    await Attester.initialLegacySubmit(acctEmail, pubkey);
     const aliases = addresses.filter(a => a !== acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => Attester.attester.initialLegacySubmit(a, pubkey)));
+      await Promise.all(aliases.map(a => Attester.initialLegacySubmit(a, pubkey)));
     }
   }
 

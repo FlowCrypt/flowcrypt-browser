@@ -157,7 +157,7 @@ Catch.try(async () => {
   const renderSetupDialog = async (): Promise<void> => {
     let keyserverRes, fetchedKeys;
     try {
-      keyserverRes = await Attester.attester.lookupEmail(acctEmail);
+      keyserverRes = await Attester.lookupEmail(acctEmail);
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }
@@ -229,9 +229,9 @@ Catch.try(async () => {
     if (!options.submit_main) {
       return;
     }
-    Attester.attester.testWelcome(acctEmail, armoredPubkey).catch(e => {
+    Attester.testWelcome(acctEmail, armoredPubkey).catch(e => {
       if (Api.err.isSignificant(e)) {
-        Catch.report('Attester.attester.test_welcome: failed', e);
+        Catch.report('Attester.test_welcome: failed', e);
       }
     });
     let addresses;

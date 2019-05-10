@@ -10,6 +10,7 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Attester, AttesterRes } from '../../../js/common/api/attester.js';
+import { Pgp } from '../../../js/common/core/pgp.js';
 
 Catch.try(async () => {
 
@@ -20,6 +21,29 @@ Catch.try(async () => {
   $('.email-address').text(acctEmail);
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
+
+  const diagnoseKeyserverPubkeys = async (acctEmail: string): Promise<AttesterRes.AttKeyserverDiagnosis> => {
+    const diagnosis: AttesterRes.AttKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
+    const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
+    const storedKeys = await Store.keysGet(acctEmail);
+    const storedKeysLongids = storedKeys.map(ki => ki.longid);
+    const results = await Attester.lookupEmails(Value.arr.unique([acctEmail].concat(addresses || [])));
+    for (const email of Object.keys(results)) {
+      const pubkeySearchResult = results[email];
+      if (!pubkeySearchResult.pubkey) {
+        diagnosis.hasPubkeyMissing = true;
+        diagnosis.results[email] = { pubkey: undefined, match: false };
+      } else {
+        let match = true;
+        if (!storedKeysLongids.includes(String(await Pgp.key.longid(pubkeySearchResult.pubkey)))) {
+          diagnosis.hasPubkeyMismatch = true;
+          match = false;
+        }
+        diagnosis.results[email] = { pubkey: pubkeySearchResult.pubkey, match };
+      }
+    }
+    return diagnosis;
+  };
 
   const renderDiagnosis = (diagnosis: AttesterRes.AttKeyserverDiagnosis) => {
     for (const email of Object.keys(diagnosis.results)) {
@@ -56,7 +80,7 @@ Catch.try(async () => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
-        await Attester.attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
+        await Attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
@@ -96,7 +120,7 @@ Catch.try(async () => {
   };
 
   try {
-    const diagnosis = await Attester.attester.diagnoseKeyserverPubkeys(acctEmail);
+    const diagnosis = await diagnoseKeyserverPubkeys(acctEmail);
     $('.summary').text('');
     renderDiagnosis(diagnosis);
   } catch (e) {

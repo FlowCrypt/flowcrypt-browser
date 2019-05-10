@@ -16,7 +16,7 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
 
-  await Backend.fc.accountCheckSync();
+  await Backend.accountCheckSync();
   const authInfo = await Store.authInfo();
   const subscription = await Store.subscription();
 

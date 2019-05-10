@@ -48,7 +48,7 @@ export class FcAcct {
 
   subscribe = async (acctEmail: string, chosenProduct: Product, source: string | undefined) => {
     this.eventHandlers.renderStatusText(chosenProduct.method === 'trial' ? 'enabling trial..' : 'upgrading..', true);
-    await Backend.fc.accountCheckSync();
+    await Backend.accountCheckSync();
     try {
       const newSubscriptionInfo = await this.doSubscribe(chosenProduct, source);
       const globalStoreUpdate: GlobalStore = {};
@@ -69,7 +69,7 @@ export class FcAcct {
 
   register = async (acctEmail: string) => { // register_and_attempt_to_verify
     this.eventHandlers.renderStatusText('registering..', true);
-    const response = await Backend.fc.accountLogin(acctEmail);
+    const response = await Backend.accountLogin(acctEmail);
     if (response.verified) {
       return response;
     }
@@ -91,7 +91,7 @@ export class FcAcct {
     let lastTokenErr;
     for (const token of tokens) {
       try {
-        return await Backend.fc.accountLogin(acctEmail, token);
+        return await Backend.accountLogin(acctEmail, token);
       } catch (e) {
         if (Api.err.isStandardErr(e, 'token')) {
           lastTokenErr = e;
@@ -128,7 +128,7 @@ export class FcAcct {
   private doSubscribe = async (chosenProduct: Product, source?: string) => {
     await Store.removeGlobal(['cryptup_subscription_attempt']);
     // todo - deal with auth error? would need to know account_email for new registration
-    const response = await Backend.fc.accountSubscribe(chosenProduct.id!, chosenProduct.method!, source);
+    const response = await Backend.accountSubscribe(chosenProduct.id!, chosenProduct.method!, source);
     if (response.subscription.level === chosenProduct.level && response.subscription.method === chosenProduct.method) {
       return response.subscription;
     }

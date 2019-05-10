@@ -268,7 +268,7 @@ Catch.try(async () => {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
     Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
-      const r = await Backend.fc.messageExpiration(adminCodes, nDays);
+      const r = await Backend.messageExpiration(adminCodes, nDays);
       if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
         window.location.reload();
       } else {
@@ -464,7 +464,7 @@ Catch.try(async () => {
       } else if (!encryptedMsgUrlParam && hasChallengePassword && short) { // need to fetch the message from FlowCrypt API
         renderText('Loading message...');
         await recoverStoredAdminCodes();
-        const msgLinkRes = await Backend.fc.linkMessage(short);
+        const msgLinkRes = await Backend.linkMessage(short);
         passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
           const downloaded = await Api.download(msgLinkRes.url);

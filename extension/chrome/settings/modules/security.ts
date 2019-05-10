@@ -37,7 +37,7 @@ Catch.try(async () => {
   const onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Backend.fc.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
+    await Backend.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 
@@ -100,7 +100,7 @@ Catch.try(async () => {
   if (subscription.active) {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await Backend.fc.accountUpdate();
+      const response = await Backend.accountUpdate();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));

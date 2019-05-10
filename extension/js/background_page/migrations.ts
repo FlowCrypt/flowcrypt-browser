@@ -44,7 +44,7 @@ const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks wh
       await Store.setAcct(acctEmail, storage); // fix duplicate email addresses
     }
     try {
-      const lookupEmailsRes = await Attester.attester.lookupEmails(storage.addresses);
+      const lookupEmailsRes = await Attester.lookupEmails(storage.addresses);
       const addressesKeyserver = [];
       for (const email of Object.keys(lookupEmailsRes)) {
         const result = lookupEmailsRes[email];
@@ -69,11 +69,11 @@ export const scheduleFcSubscriptionLevelCheck = (bgProcessStartReason: 'update' 
   Catch.setHandledTimeout(() => {
     if (bgProcessStartReason === 'update' || bgProcessStartReason === 'chrome_update') {
       // update may happen to too many people at the same time -- server overload
-      Catch.setHandledTimeout(() => Backend.fc.accountCheckSync().catch(reportSignificantErrs), Value.int.hoursAsMiliseconds(Math.random() * 3)); // random 0-3 hours
+      Catch.setHandledTimeout(() => Backend.accountCheckSync().catch(reportSignificantErrs), Value.int.hoursAsMiliseconds(Math.random() * 3)); // random 0-3 hours
     } else {
       // the user just installed the plugin or started their browser, no risk of overloading servers
-      Backend.fc.accountCheckSync().catch(reportSignificantErrs); // now
+      Backend.accountCheckSync().catch(reportSignificantErrs); // now
     }
   }, 10 * 60 * 1000); // 10 minutes
-  Catch.setHandledInterval(() => Backend.fc.accountCheckSync().catch(reportSignificantErrs), Value.int.hoursAsMiliseconds(23 + Math.random())); // random 23-24 hours
+  Catch.setHandledInterval(() => Backend.accountCheckSync().catch(reportSignificantErrs), Value.int.hoursAsMiliseconds(23 + Math.random())); // random 23-24 hours
 };

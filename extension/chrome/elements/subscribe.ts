@@ -92,7 +92,7 @@ Catch.try(async () => {
   };
 
   try {
-    await Backend.fc.accountCheckSync();
+    await Backend.accountCheckSync();
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
       // todo - handle auth error - add device
@@ -191,7 +191,7 @@ Catch.try(async () => {
       $('.action_add_device, .action_close').addClass('long');
       // try API call auth in case it got fixed meanwhile
       try {
-        await Backend.fc.accountUpdate();
+        await Backend.accountUpdate();
         $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${acctEmail}).`);
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');

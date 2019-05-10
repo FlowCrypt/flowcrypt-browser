@@ -44,7 +44,7 @@ Catch.try(async () => {
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
     try {
-      const { sent } = await Backend.fc.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
+      const { sent } = await Backend.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
       if (sent) {
         $(target).text('sent!');
         await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);

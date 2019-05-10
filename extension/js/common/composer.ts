@@ -728,13 +728,13 @@ export class Composer {
   }
 
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
-    const pfRes: BackendRes.FcMsgPresignFiles = await Backend.fc.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
+    const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
     const items: AwsS3UploadItem[] = [];
     for (const i of pfRes.approvals.keys()) {
       items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
     }
-    await Backend.aws.s3Upload(items, this.renderUploadProgress);
-    const { admin_codes, confirmed } = await Backend.fc.messageConfirmFiles(items.map(item => item.fields.key));
+    await Backend.s3Upload(items, this.renderUploadProgress);
+    const { admin_codes, confirmed } = await Backend.messageConfirmFiles(items.map(item => item.fields.key));
     if (!confirmed || confirmed.length !== items.length) {
       throw new Error('Attachments did not upload properly, please try again');
     }
@@ -770,7 +770,7 @@ export class Composer {
     }
     let response;
     try {
-      response = await Backend.fc.messageToken();
+      response = await Backend.messageToken();
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
         if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
@@ -832,7 +832,7 @@ export class Composer {
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
-      const { short, admin_code } = await Backend.fc.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
+      const { short, admin_code } = await Backend.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
       const storage = await Store.getAcct(this.urlParams.acctEmail, ['outgoing_language']);
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
@@ -885,7 +885,7 @@ export class Composer {
     } else {
       try {
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
-        const lookupResult = await Attester.attester.lookupEmail(email);
+        const lookupResult = await Attester.lookupEmail(email);
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
         if (lookupResult && email) {
           if (lookupResult.pubkey) {

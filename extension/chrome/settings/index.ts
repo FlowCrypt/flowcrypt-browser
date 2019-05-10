@@ -169,7 +169,7 @@ Catch.try(async () => {
     const authInfo = await Store.authInfo();
     if (authInfo.acctEmail) { // have auth email set
       try {
-        const response = await Backend.fc.accountUpdate();
+        const response = await Backend.accountUpdate();
         $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:ok`);
         if (response && response.result && response.result.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
@@ -251,7 +251,7 @@ Catch.try(async () => {
   const renderSubscriptionStatusHeader = async () => {
     let liveness = '';
     try {
-      await Backend.fc.accountCheckSync();
+      await Backend.accountCheckSync();
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {

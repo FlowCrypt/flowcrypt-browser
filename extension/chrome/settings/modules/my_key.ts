@@ -31,8 +31,8 @@ Catch.try(async () => {
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 
   try {
-    const result = await Attester.attester.lookupEmail(acctEmail);
-    const url = Backend.fc.url('pubkey', acctEmail);
+    const result = await Attester.lookupEmail(acctEmail);
+    const url = Backend.url('pubkey', acctEmail);
     if (result.pubkey && await Pgp.key.longid(result.pubkey) === primaryKi.longid) {
       $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
     }

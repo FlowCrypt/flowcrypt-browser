@@ -491,7 +491,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const { pubkey } = await Attester.attester.lookupEmail(email);
+                  const { pubkey } = await Attester.lookupEmail(email);
                   this.recipientHasPgpCache[email] = Boolean(pubkey); // true or false
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;
