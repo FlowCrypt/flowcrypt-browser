@@ -8,6 +8,7 @@ import { Catch, UnreportableError } from './platform/catch.js';
 import { KeyInfo } from './core/pgp.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './platform/store.js';
+import { Settings } from './settings.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -38,7 +39,6 @@ export class Assert {
       const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
       if (setup_done && setup_simple && primaryKi && (await openpgp.key.readArmored(primaryKi.private)).keys[0].isDecrypted()) {
         if (window.location.pathname === '/chrome/settings/index.htm') {
-          // @ts-ignore - this lets it compile in content script that is missing Settings
           Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
         } else {
           const msg = `Protect your key with a pass phrase to finish setup.`;
