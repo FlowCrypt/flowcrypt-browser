@@ -15,6 +15,7 @@ import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { KeyInfo } from '../../js/common/core/pgp.js';
+import { Backend } from '../../js/common/api/backend.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -150,7 +151,7 @@ Catch.try(async () => {
       }
     }
 
-    Api.retreiveBlogPosts().then(posts => { // do not await because may take a while
+    Backend.retreiveBlogPosts().then(posts => { // do not await because may take a while
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);
@@ -168,7 +169,7 @@ Catch.try(async () => {
     const authInfo = await Store.authInfo();
     if (authInfo.acctEmail) { // have auth email set
       try {
-        const response = await Api.fc.accountUpdate();
+        const response = await Backend.fc.accountUpdate();
         $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:ok`);
         if (response && response.result && response.result.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
@@ -250,7 +251,7 @@ Catch.try(async () => {
   const renderSubscriptionStatusHeader = async () => {
     let liveness = '';
     try {
-      await Api.fc.accountCheckSync();
+      await Backend.fc.accountCheckSync();
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {

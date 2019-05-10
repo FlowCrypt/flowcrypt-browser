@@ -13,6 +13,7 @@ import { Api } from '../../js/common/api/api.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
+import { Attester } from '../../js/common/api/attester.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -156,7 +157,7 @@ Catch.try(async () => {
   const renderSetupDialog = async (): Promise<void> => {
     let keyserverRes, fetchedKeys;
     try {
-      keyserverRes = await Api.attester.lookupEmail(acctEmail);
+      keyserverRes = await Attester.attester.lookupEmail(acctEmail);
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }
@@ -228,9 +229,9 @@ Catch.try(async () => {
     if (!options.submit_main) {
       return;
     }
-    Api.attester.testWelcome(acctEmail, armoredPubkey).catch(e => {
+    Attester.attester.testWelcome(acctEmail, armoredPubkey).catch(e => {
       if (Api.err.isSignificant(e)) {
-        Catch.report('Api.attester.test_welcome: failed', e);
+        Catch.report('Attester.attester.test_welcome: failed', e);
       }
     });
     let addresses;

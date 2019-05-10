@@ -5,12 +5,13 @@
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, KeyInfosWithPassphrases, Contact } from '../core/pgp.js';
-import { SubscriptionInfo, R } from '../api/api.js';
+import { SubscriptionInfo } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyError } from '../extension.js';
 import { Product, PaymentMethod, ProductLevel } from '../account.js';
 import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
+import { GmailRes } from '../api/google.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
@@ -30,7 +31,7 @@ export type ContactUpdate = {
   date?: number | null; /* todo - should be removed. email provider search seems to return this? */
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionAttempt | SubscriptionInfo | R.OpenId;
+  | SubscriptionAttempt | SubscriptionInfo | GmailRes.OpenId;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
@@ -86,7 +87,7 @@ export type AccountStore = {
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
-  openid?: R.OpenId;
+  openid?: GmailRes.OpenId;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;

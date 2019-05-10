@@ -9,11 +9,12 @@ import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Api, R } from '../../js/common/api/api.js';
+import { Api } from '../../js/common/api/api.js';
 import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
+import { BackendRes, Backend } from '../../js/common/api/backend.js';
 
 Catch.try(async () => {
 
@@ -34,7 +35,7 @@ Catch.try(async () => {
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];
   let canReadEmails: undefined | boolean;
-  let passwordMsgLinkRes: R.FcLinkMsg;
+  let passwordMsgLinkRes: BackendRes.FcLinkMsg;
   let adminCodes: string[];
   let userEnteredMsgPassword: string | undefined;
 
@@ -267,7 +268,7 @@ Catch.try(async () => {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
     Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
-      const r = await Api.fc.messageExpiration(adminCodes, nDays);
+      const r = await Backend.fc.messageExpiration(adminCodes, nDays);
       if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
         window.location.reload();
       } else {
@@ -412,7 +413,7 @@ Catch.try(async () => {
     return String($('#answer').val());
   };
 
-  const renderPasswordEncryptedMsgLoadFail = async (linkRes: R.FcLinkMsg) => {
+  const renderPasswordEncryptedMsgLoadFail = async (linkRes: BackendRes.FcLinkMsg) => {
     if (linkRes.expired) {
       let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
       if (linkRes.deleted) {
@@ -463,7 +464,7 @@ Catch.try(async () => {
       } else if (!encryptedMsgUrlParam && hasChallengePassword && short) { // need to fetch the message from FlowCrypt API
         renderText('Loading message...');
         await recoverStoredAdminCodes();
-        const msgLinkRes = await Api.fc.linkMessage(short);
+        const msgLinkRes = await Backend.fc.linkMessage(short);
         passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
           const downloaded = await Api.download(msgLinkRes.url);

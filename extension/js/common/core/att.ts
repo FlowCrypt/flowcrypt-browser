@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { KeyInfo } from '../core/pgp.js';
 import { Buf } from './buf.js';
 
 type Att$treatAs = "publicKey" | 'backup' | "encryptedMsg" | "hidden" | "signature" | "encryptedFile" | "plainFile";
@@ -100,6 +99,6 @@ export class Att {
 
   public static readonly attachmentsPattern = /^(((cryptup|flowcrypt)-backup-[a-z]+\.key)|(.+\.pgp)|(.+\.gpg)|(.+\.asc)|(noname)|(message)|(PGPMIME version identification)|())$/gm;
 
-  public static keyinfoAsPubkeyAtt = (ki: KeyInfo) => new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
+  public static keyinfoAsPubkeyAtt = (ki: { public: string, longid: string }) => new Att({ data: Buf.fromUtfStr(ki.public), type: 'application/pgp-keys', name: `0x${ki.longid}.asc` });
 
 }

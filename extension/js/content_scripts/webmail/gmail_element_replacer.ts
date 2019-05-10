@@ -5,14 +5,15 @@
 import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api, R, AjaxError } from '../../common/api/api.js';
+import { Api, AjaxError } from '../../common/api/api.js';
+import { Attester } from '../../common/api/attester.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams, Browser } from '../../common/browser.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
-import { Google } from '../../common/api/google.js';
+import { Google, GmailRes } from '../../common/api/google.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -307,7 +308,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
-    let downloadedAtt: R.GmailAtt;
+    let downloadedAtt: GmailRes.GmailAtt;
     try {
       downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
     } catch (e) {
@@ -326,7 +327,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
-    let downloadedAtt: R.GmailAtt;
+    let downloadedAtt: GmailRes.GmailAtt;
     try {
       downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
     } catch (e) {
@@ -490,7 +491,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const { pubkey } = await Api.attester.lookupEmail(email);
+                  const { pubkey } = await Attester.attester.lookupEmail(email);
                   this.recipientHasPgpCache[email] = Boolean(pubkey); // true or false
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;

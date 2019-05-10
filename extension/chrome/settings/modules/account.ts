@@ -6,7 +6,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
+import { Backend } from '../../../js/common/api/backend.js';
 
 Catch.try(async () => {
 
@@ -16,7 +16,7 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
 
-  await Api.fc.accountCheckSync();
+  await Backend.fc.accountCheckSync();
   const authInfo = await Store.authInfo();
   const subscription = await Store.subscription();
 

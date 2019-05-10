@@ -8,6 +8,7 @@ import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
+import { Backend } from '../../../js/common/api/backend.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -36,7 +37,7 @@ Catch.try(async () => {
   const onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Api.fc.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
+    await Backend.fc.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 
@@ -99,7 +100,7 @@ Catch.try(async () => {
   if (subscription.active) {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await Api.fc.accountUpdate();
+      const response = await Backend.fc.accountUpdate();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));

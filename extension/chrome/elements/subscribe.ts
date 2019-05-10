@@ -11,6 +11,7 @@ import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { GoogleAuth } from '../../js/common/api/google.js';
+import { Backend } from '../../js/common/api/backend.js';
 
 Catch.try(async () => {
 
@@ -91,7 +92,7 @@ Catch.try(async () => {
   };
 
   try {
-    await Api.fc.accountCheckSync();
+    await Backend.fc.accountCheckSync();
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
       // todo - handle auth error - add device
@@ -190,7 +191,7 @@ Catch.try(async () => {
       $('.action_add_device, .action_close').addClass('long');
       // try API call auth in case it got fixed meanwhile
       try {
-        await Api.fc.accountUpdate();
+        await Backend.fc.accountUpdate();
         $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${acctEmail}).`);
         $('.action_add_device').css('display', 'none');
         $('.action_close').removeClass('gray').addClass('green').text('ok');

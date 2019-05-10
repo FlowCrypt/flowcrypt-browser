@@ -8,7 +8,8 @@ import { Value } from '../../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api, R } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/api.js';
+import { Attester, AttesterRes } from '../../../js/common/api/attester.js';
 
 Catch.try(async () => {
 
@@ -20,7 +21,7 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  const renderDiagnosis = (diagnosis: R.AttKeyserverDiagnosis) => {
+  const renderDiagnosis = (diagnosis: AttesterRes.AttKeyserverDiagnosis) => {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, remove, color;
@@ -55,7 +56,7 @@ Catch.try(async () => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
-        await Api.attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
+        await Attester.attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
@@ -95,7 +96,7 @@ Catch.try(async () => {
   };
 
   try {
-    const diagnosis = await Api.attester.diagnoseKeyserverPubkeys(acctEmail);
+    const diagnosis = await Attester.attester.diagnoseKeyserverPubkeys(acctEmail);
     $('.summary').text('');
     renderDiagnosis(diagnosis);
   } catch (e) {

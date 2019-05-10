@@ -8,6 +8,7 @@ import { Str } from '../../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Api } from '../../../js/common/api/api.js';
+import { Backend } from '../../../js/common/api/backend.js';
 
 Catch.try(async () => {
 
@@ -43,7 +44,7 @@ Catch.try(async () => {
     Xss.sanitizeRender(target, Ui.spinner('white'));
     await Ui.delay(50); // give spinner time to load
     try {
-      const { sent } = await Api.fc.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
+      const { sent } = await Backend.fc.helpFeedback(emailVal, `${textVal}\n\n\nFlowCrypt ${Catch.browser().name} ${VERSION}`);
       if (sent) {
         $(target).text('sent!');
         await Ui.modal.info(`Message sent! You will find your response in ${emailVal}, check your email later.`);

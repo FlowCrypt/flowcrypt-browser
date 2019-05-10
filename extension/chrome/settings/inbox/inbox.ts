@@ -9,11 +9,11 @@ import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api, R } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google, GoogleAuth, GoogleAcctNotConnected } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth, GoogleAcctNotConnected, GmailRes } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 
 Catch.try(async () => {
@@ -29,7 +29,7 @@ Catch.try(async () => {
   let factory: XssSafeFactory;
   let injector: Injector;
   let notifications: Notifications;
-  let allLabels: R.GmailLabels$label[];
+  let allLabels: GmailRes.GmailLabels$label[];
 
   const S = Ui.buildJquerySels({ // tslint:disable-line:oneliner-object-literal
     threads: '.threads',
@@ -37,7 +37,7 @@ Catch.try(async () => {
     body: 'body',
   });
 
-  const LABEL: Dict<R.GmailMsg$labelId> = {
+  const LABEL: Dict<GmailRes.GmailMsg$labelId> = {
     INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
   };
   const FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
@@ -206,7 +206,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderableLabels = (labelIds: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+  const renderableLabels = (labelIds: (GmailRes.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return labelIds.map(id => renderableLabel(id, placement)).join('');
   };
 
@@ -247,7 +247,7 @@ Catch.try(async () => {
     }
   };
 
-  const addLabelStyles = (labels: R.GmailLabels$label[]) => {
+  const addLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     let style = '';
     for (const label of labels) {
       if (label.color) {
@@ -282,7 +282,7 @@ Catch.try(async () => {
     return `UNKNOWN LABEL: ${labelId}`;
   };
 
-  const renderMenuAndLabelStyles = (labels: R.GmailLabels$label[]) => {
+  const renderMenuAndLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     allLabels = labels;
     addLabelStyles(labels);
     Xss.sanitizeAppend('.menu', `<br>${renderableLabels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
@@ -347,7 +347,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderThread = async (threadId: string, thread?: R.GmailThread) => {
+  const renderThread = async (threadId: string, thread?: GmailRes.GmailThread) => {
     displayBlock('thread', 'Loading..');
     try {
       thread = thread || await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
@@ -385,7 +385,7 @@ Catch.try(async () => {
     return Ui.e('div', { id, class: 'message line', html });
   };
 
-  const renderMsg = async (message: R.GmailMsg) => {
+  const renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = threadMsgId(message.id);
     const from = Google.gmail.findHeader(message, 'from') || 'unknown';
     try {
@@ -427,7 +427,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: R.GmailMsg) => {
+  const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: GmailRes.GmailMsg) => {
     let params: FactoryReplyParams;
     if (lastMsg) {
       const to = Google.gmail.findHeader(lastMsg, 'to');
