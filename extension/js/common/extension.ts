@@ -5,11 +5,12 @@
 import { Str, Dict } from './core/common.js';
 import { DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgTypeResult, PgpMsgMethod } from './core/pgp.js';
 import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
-import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
+import { Ui, Env, Browser, UrlParams } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { AjaxError } from './api/api.js';
+import { PassphraseDialogType } from './xss_safe_factory.js';
 
 export type GoogleAuthWindowResult$result = 'Success' | 'Denied' | 'Error' | 'Closed';
 

@@ -9,7 +9,8 @@ import { Api, AjaxError } from '../../common/api/api.js';
 import { Attester } from '../../common/api/attester.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams, Browser } from '../../common/browser.js';
+import { Xss, Ui, Browser } from '../../common/browser.js';
+import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
@@ -95,7 +96,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       $(emailContainer).addClass('evaluated');
       const senderEmail = this.getSenderEmail(emailContainer);
       const isOutgoing = this.addresses.includes(senderEmail);
-      const replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
+      const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
         this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe

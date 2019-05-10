@@ -5,15 +5,19 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, XssSafeFactory, AttUI, processPublicKeyFileImport, Env, Browser } from '../../../js/common/browser.js';
+import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { Assert } from '../../../js/common/assert.js';
+import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
+import { AttUI } from '../../../js/common/ui/att_ui.js';
+import { processPublicKeyFileImport } from '../../../js/common/ui/key_import_ui.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
 
   const tabId = await BrowserMsg.requiredTabId();
 
@@ -91,7 +95,7 @@ Catch.try(async () => {
   };
 
   const actionProcessBulkImportTextInput = async () => {
-    const replacedHtmlSafe = Ui.replaceRenderableMsgBlocks(factory, String($('#bulk_import .input_pubkey').val()));
+    const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, String($('#bulk_import .input_pubkey').val()));
     if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
       await Ui.modal.warning('Could not find any new public keys');
     } else {

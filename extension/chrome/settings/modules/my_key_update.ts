@@ -8,14 +8,15 @@ import { Ui, Env } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
+import { Assert } from '../../../js/common/assert.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
   const showKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
 
   $('.action_show_public_key').attr('href', showKeyUrl);
@@ -24,7 +25,7 @@ Catch.try(async () => {
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
 
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   $('.email').text(acctEmail);
   $('.key_words').text(primaryKi.keywords).attr('title', primaryKi.longid);

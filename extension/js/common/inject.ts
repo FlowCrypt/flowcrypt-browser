@@ -3,7 +3,8 @@
 'use strict';
 
 import { ContentScriptWindow } from './extension.js';
-import { Ui, XssSafeFactory, SelCache, WebMailName, WebmailVariantString } from './browser.js';
+import { Ui, SelCache, WebMailName } from './browser.js';
+import { XssSafeFactory, WebmailVariantString } from './xss_safe_factory.js';
 
 export class Injector {
 

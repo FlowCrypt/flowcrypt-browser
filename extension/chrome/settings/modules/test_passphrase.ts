@@ -9,19 +9,20 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
+import { Assert } from '../../../js/common/assert.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   await Ui.passphraseToggle(['password']);
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
   if (key.isDecrypted()) {

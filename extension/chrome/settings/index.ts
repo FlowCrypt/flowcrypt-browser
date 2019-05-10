@@ -6,7 +6,7 @@ import { VERSION } from '../../js/common/core/const.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Xss, Ui, XssSafeFactory, Env, JQS, UrlParams } from '../../js/common/browser.js';
+import { Xss, Ui, Env, JQS, UrlParams } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
@@ -16,14 +16,16 @@ import { Lang } from '../../js/common/lang.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { KeyInfo } from '../../js/common/core/pgp.js';
 import { Backend } from '../../js/common/api/backend.js';
+import { Assert } from '../../js/common/assert.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
-  const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
-  let page = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
+  const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+  let page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
   page = (page === 'undefined') ? undefined : page; // in case an "undefined" strring slipped in
   const pageUrlParams: UrlParams | undefined = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : undefined;
   const addNewAcct = uncheckedUrlParams.addNewAcct === true;
@@ -374,7 +376,7 @@ Catch.try(async () => {
   };
 
   await initialize();
-  await Ui.abortAndRenderErrOnUnprotectedKey(acctEmail, tabId);
+  await Assert.abortAndRenderErrOnUnprotectedKey(acctEmail, tabId);
   if (page) {
     if (page === '/chrome/settings/modules/auth_denied.htm') {
       Settings.renderSubPage(acctEmail, tabId, page);

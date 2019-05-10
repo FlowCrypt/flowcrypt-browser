@@ -11,12 +11,13 @@ import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Attester, AttesterRes } from '../../../js/common/api/attester.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
+import { Assert } from '../../../js/common/assert.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   $('.email-address').text(acctEmail);
 
@@ -78,7 +79,7 @@ Catch.try(async () => {
     $('.action_submit_key').click(Ui.event.prevent('double', async self => {
       Xss.sanitizeRender(self, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
         await Attester.initialLegacySubmit(String($(self).attr('email')), primaryKi.public);
       } catch (e) {

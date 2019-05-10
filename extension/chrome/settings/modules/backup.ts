@@ -16,17 +16,18 @@ import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
+import { Assert } from '../../../js/common/assert.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
   let parentTabId: string | undefined;
   if (action !== 'setup') {
-    parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
   let emailProvider: EmailProvider;
@@ -171,7 +172,7 @@ Catch.try(async () => {
       const btnText = $(target).text();
       Xss.sanitizeRender(target, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
       await Settings.openpgpKeyEncrypt(prv, newPassphrase);
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
@@ -283,7 +284,7 @@ Catch.try(async () => {
   $('.action_manual_backup').click(Ui.event.prevent('double', async (target) => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     if (!await isMasterPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
@@ -328,7 +329,7 @@ Catch.try(async () => {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
-    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     await doBackupOnEmailProvider(acctEmail, primaryKi.private);
     await writeBackupDoneAndRender(false, 'inbox');
   };
@@ -379,7 +380,7 @@ Catch.try(async () => {
     if (storage.setup_simple) {
       displayBlock('loading');
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
         await doBackupOnEmailProvider(acctEmail, primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');

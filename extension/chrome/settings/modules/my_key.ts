@@ -10,6 +10,7 @@ import { Pgp } from '../../../js/common/core/pgp.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
+import { Assert } from '../../../js/common/assert.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
@@ -17,8 +18,8 @@ declare const ClipboardJS: any;
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
   const myKeyUserIdsUrl = Env.urlCreate('my_key_user_ids.htm', uncheckedUrlParams);
   const myKeyUpdateUrl = Env.urlCreate('my_key_update.htm', uncheckedUrlParams);
 
@@ -26,7 +27,7 @@ Catch.try(async () => {
   $('.action_view_update').attr('href', myKeyUpdateUrl);
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 

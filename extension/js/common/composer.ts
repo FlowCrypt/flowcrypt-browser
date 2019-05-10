@@ -10,13 +10,14 @@ import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
-import { Ui, Xss, AttUI, BrowserEventErrHandler, Env, AttLimits } from './browser.js';
+import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth, GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { PubkeySearchResult, Attester } from './api/attester.js';
 import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
 import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js';
+import { AttUI, AttLimits } from './ui/att_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 

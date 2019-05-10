@@ -8,7 +8,8 @@ import { Store } from '../../common/platform/store.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { ContentScriptWindow, BrowserMsg, TabIdRequiredError, Bm } from '../../common/extension.js';
-import { Ui, XssSafeFactory, WebMailName, WebmailVariantString, Env } from '../../common/browser.js';
+import { Ui, WebMailName, Env } from '../../common/browser.js';
+import { XssSafeFactory, WebmailVariantString } from '../../common/xss_safe_factory.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
 type WebmailSpecificInfo = {

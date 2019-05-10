@@ -5,7 +5,7 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str, Dict } from '../../../js/common/core/common.js';
-import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
+import { Xss, Ui, Env, UrlParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -15,13 +15,15 @@ import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Google, GoogleAuth, GoogleAcctNotConnected, GmailRes } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { Assert } from '../../../js/common/assert.js';
+import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
-  const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
+  const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
   const showOriginal = uncheckedUrlParams.showOriginal === true;
 
   let threadHasPgpBlock = false;
@@ -403,7 +405,7 @@ Catch.try(async () => {
         if (showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
-          r += Ui.renderableMsgBlock(factory, block, message.id, from, storage.addresses && storage.addresses.includes(from));
+          r += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.addresses && storage.addresses.includes(from));
         }
       }
       const { atts } = await Mime.decode(mimeMsg);

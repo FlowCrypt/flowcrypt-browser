@@ -6,11 +6,12 @@ import { Store } from '../../js/common/platform/store.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
+import { Assert } from '../../js/common/assert.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['action']);
-  const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
+  const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
 
   $('#title').text(action === 'inbox' ? 'Choose inbox account' : 'Select an account to open settings');
 

@@ -10,24 +10,25 @@ import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Att } from '../../js/common/core/att.js';
 import { Google } from '../../js/common/api/google.js';
+import { Assert } from '../../js/common/assert.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   let size = uncheckedUrlParams.size ? parseInt(String(uncheckedUrlParams.size)) : undefined;
   const origNameBasedOnFilename = uncheckedUrlParams.name ? String(uncheckedUrlParams.name).replace(/\.(pgp|gpg)$/ig, '') : 'noname';
-  const type = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
+  const type = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'type');
   const isEncrypted = uncheckedUrlParams.isEncrypted === true;
-  const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
-  const id = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
-  const name = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
+  const msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
+  const id = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'attId');
+  const name = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'name');
   // url contains either actual url of remote content or objectUrl for direct content, either way needs to be downloaded
-  const url = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
+  const url = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'url');
 
   const button = $('#download');
   let origHtmlContent: string;

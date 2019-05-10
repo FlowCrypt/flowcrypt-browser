@@ -366,4 +366,5 @@ export class Settings {
         : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
   }
+
 }

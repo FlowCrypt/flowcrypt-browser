@@ -6,18 +6,20 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store, Serializable } from '../../../js/common/platform/store.js';
 import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, AttUI, Env } from '../../../js/common/browser.js';
+import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Backend, BackendRes } from '../../../js/common/api/backend.js';
+import { Assert } from '../../../js/common/assert.js';
+import { AttUI } from '../../../js/common/ui/att_ui.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   const attachJs = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let newPhotoFile: Att;

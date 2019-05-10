@@ -9,13 +9,14 @@ import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Backend } from '../../../js/common/api/backend.js';
+import { Assert } from '../../../js/common/assert.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'bugReport']);
-  const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const bugReport = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
+  const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const bugReport = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'bugReport');
 
   if (acctEmail) {
     $('#input_email').val(acctEmail).attr('disabled', 'disabled');

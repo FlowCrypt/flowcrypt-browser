@@ -15,22 +15,23 @@ import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { BackendRes, Backend } from '../../js/common/api/backend.js';
+import { Assert } from '../../js/common/assert.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature', 'short']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const hasChallengePassword = uncheckedUrlParams.hasPassword === true;
   const isOutgoing = uncheckedUrlParams.isOutgoing === true;
-  const short = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
-  const senderEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
-  const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
+  const short = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
+  const senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
+  const msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const heightHistory: number[] = [];
-  const encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Env.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
+  const encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
   let signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];

@@ -14,8 +14,9 @@ import { Notifications } from '../../common/notifications.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { ContentScriptWindow } from '../../common/extension.js';
-import { XssSafeFactory, Env } from '../../common/browser.js';
+import { Env } from '../../common/browser.js';
 import { GoogleAuth } from '../../common/api/google.js';
+import { XssSafeFactory } from '../../common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
