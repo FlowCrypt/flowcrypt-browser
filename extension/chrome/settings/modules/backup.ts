@@ -17,6 +17,7 @@ import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { Assert } from '../../../js/common/assert.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -32,7 +33,7 @@ Catch.try(async () => {
 
   let emailProvider: EmailProvider;
 
-  await Ui.passphraseToggle(['password', 'password2']);
+  await initPassphraseToggle(['password', 'password2']);
 
   const storage = await Store.getAcct(acctEmail, ['setup_simple', 'email_provider']);
   emailProvider = storage.email_provider || 'gmail';

@@ -16,6 +16,7 @@ import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -47,8 +48,8 @@ Catch.try(async () => {
     return;
   }
 
-  await Ui.passphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
-  await Ui.passphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
+  await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
+  await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'addresses']);
 

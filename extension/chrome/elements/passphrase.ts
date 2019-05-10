@@ -9,6 +9,7 @@ import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Assert } from '../../js/common/assert.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -25,7 +26,7 @@ Catch.try(async () => {
   const allPrivateKeys = await Store.keysGet(acctEmail);
   const selectedPrivateKeys = allPrivateKeys.filter(ki => longids.includes(ki.longid) || (ki.primary && longids.includes('primary')));
 
-  await Ui.passphraseToggle(['passphrase']);
+  await initPassphraseToggle(['passphrase']);
 
   const renderInitial = () => {
     $('#passphrase').keyup(renderNormalPpPrompt);

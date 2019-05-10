@@ -12,6 +12,7 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 import { Google } from '../../../js/common/api/google.js';
 import { Assert } from '../../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../../js/common/ui/key_import_ui.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 Catch.try(async () => {
 
@@ -19,7 +20,7 @@ Catch.try(async () => {
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  await Ui.passphraseToggle(['input_passphrase']);
+  await initPassphraseToggle(['input_passphrase']);
   const keyImportUi = new KeyImportUi({ rejectKnown: true });
   keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId);
 

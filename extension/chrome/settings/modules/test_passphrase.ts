@@ -10,6 +10,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Assert } from '../../../js/common/assert.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -19,7 +20,7 @@ Catch.try(async () => {
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  await Ui.passphraseToggle(['password']);
+  await initPassphraseToggle(['password']);
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
