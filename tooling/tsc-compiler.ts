@@ -14,7 +14,7 @@ for (let i = 0; i < process.argv.length; i++) {
   }
 }
 tsconfigAbsPath = path.resolve(tsconfigAbsPath || './tsconfig.json');
-const tsconfigAbsDir = tsconfigAbsPath.replace(/\/[^/]+$/g, '');
+const tsconfigAbsDir = path.dirname(tsconfigAbsPath);
 
 const getNameAndPos = (f: ts.FunctionLike) => {
   const sf = f.getSourceFile();
