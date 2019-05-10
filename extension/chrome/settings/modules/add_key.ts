@@ -32,7 +32,7 @@ Catch.try(async () => {
     if (keyBackups.length) {
       const notImportedBackupLongids: string[] = [];
       for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(Pgp.key.longid)))) {
-        if (longid && !Value.is(longid).in(privateKeysLongIds)) {
+        if (longid && !privateKeysLongIds.includes(longid)) {
           notImportedBackupLongids.push(longid);
         }
       }

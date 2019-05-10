@@ -4,7 +4,7 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value, Str, Dict } from '../../../js/common/core/common.js';
+import { Str, Dict } from '../../../js/common/core/common.js';
 import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
@@ -37,7 +37,9 @@ Catch.try(async () => {
     body: 'body',
   });
 
-  const LABEL = { INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES' };
+  const LABEL: Dict<R.GmailMsg$labelId> = {
+    INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
+  };
   const FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
 
   const tabId = await BrowserMsg.requiredTabId();
@@ -225,7 +227,7 @@ Catch.try(async () => {
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(formatDate(lastMsg.internalDate));
       threadItem.addClass('loaded').click(Ui.event.handle(() => renderThread(thread.id, thread)));
-      if (Value.is(LABEL.UNREAD).in(lastMsg.labelIds || [])) {
+      if (lastMsg.labelIds && lastMsg.labelIds.includes(LABEL.UNREAD)) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
       if (thread.messages.length > 1) {
@@ -401,7 +403,7 @@ Catch.try(async () => {
         if (showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
-          r += Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+          r += Ui.renderableMsgBlock(factory, block, message.id, from, storage.addresses && storage.addresses.includes(from));
         }
       }
       const { atts } = await Mime.decode(mimeMsg);

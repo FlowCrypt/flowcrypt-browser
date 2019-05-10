@@ -307,8 +307,8 @@ export class Google extends Api {
     searchContacts: async (acctEmail: string, userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb) => {
       let gmailQuery = `is:sent ${Google.GMAIL_USELESS_CONTACTS_FILTER} `;
       if (userQuery) {
-        const variationsOfTo = userQuery.split(/[ .]/g).filter(v => !Value.is(v).in(['com', 'org', 'net']));
-        if (!Value.is(userQuery).in(variationsOfTo)) {
+        const variationsOfTo = userQuery.split(/[ .]/g).filter(v => !['com', 'org', 'net'].includes(v));
+        if (!variationsOfTo.includes(userQuery)) {
           variationsOfTo.push(userQuery);
         }
         gmailQuery += '(';
@@ -605,7 +605,7 @@ export class GoogleAuth {
     const parts = title.split(' ', 2);
     const result = parts[0];
     const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
-    if (!Value.is(result).in(['Success', 'Denied', 'Error'])) {
+    if (!['Success', 'Denied', 'Error'].includes(result)) {
       return { result: 'Error', error: `Unknown google auth result '${result}'` };
     }
     return { result: result as GoogleAuthWindowResult$result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined };
@@ -618,7 +618,7 @@ export class GoogleAuth {
   private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[]): Promise<AuthRes> => {
     while (true) {
       const [oauth] = await tabsQuery({ windowId });
-      if (oauth && oauth.title && Value.is(GoogleAuth.OAUTH.state_header).in(oauth.title) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
+      if (oauth && oauth.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
         const { result, error, code } = GoogleAuth.processOauthResTitle(oauth.title);
         if (error === 'access_denied') {
           return { acctEmail, result: 'Denied', error }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}

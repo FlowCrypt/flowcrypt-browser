@@ -8,7 +8,6 @@ import { Xss, Ui, Env } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Value } from '../../../js/common/core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -43,7 +42,7 @@ Catch.try(async () => {
 
   const onMsgLanguageUserChange = async () => {
     const outgoingLanguage = String($('.password_message_language').val());
-    if (Value.is(outgoingLanguage).in(['EN', 'DE'])) {
+    if (['EN', 'DE'].includes(outgoingLanguage)) {
       await Store.setAcct(acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
       window.location.reload();
     }

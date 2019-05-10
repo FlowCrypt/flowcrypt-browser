@@ -146,7 +146,7 @@ Catch.try(async () => {
     if (name) {
       $('#' + blocks.join(', #')).css('display', 'none');
       $('#' + name).css('display', 'block');
-      $('.back').css('visibility', Value.is(name).in(['step_2b_manual_enter', 'step_2a_manual_create']) ? 'visible' : 'hidden');
+      $('.back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
         $('.backups_count_words').text(recoveredKeys.length > 1 ? recoveredKeys.length + ' backups' : 'a backup');
       }
@@ -326,7 +326,7 @@ Catch.try(async () => {
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
     const passphrase = String($('#recovery_pasword').val());
     const newlyMatchingKeys: OpenPGP.key.Key[] = [];
-    if (passphrase && Value.is(passphrase).in(recoveredKeysMatchingPassphrases)) {
+    if (passphrase && recoveredKeysMatchingPassphrases.includes(passphrase)) {
       await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
       return;
     }
@@ -339,7 +339,7 @@ Catch.try(async () => {
       const longid = await Pgp.key.longid(recoveredKey);
       const armored = recoveredKey.armor();
       if (longid) {
-        if (Value.is(longid).in(recoveredKeysSuccessfulLongids)) {
+        if (recoveredKeysSuccessfulLongids.includes(longid)) {
           matchedPreviouslyRecoveredKey = true;
         } else if (await Pgp.key.decrypt(recoveredKey, [passphrase]) === true) {
           recoveredKeysSuccessfulLongids.push(longid);

@@ -123,7 +123,7 @@ export class Settings {
       throw new Error('Missing account_email to reset');
     }
     const acctEmails = await Store.acctEmailsGet();
-    if (!Value.is(acctEmail).in(acctEmails)) {
+    if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToRemove: string[] = [];
@@ -156,7 +156,7 @@ export class Settings {
       throw new Error('Missing or wrong account_email to reset');
     }
     const acctEmails = await Store.acctEmailsGet();
-    if (!Value.is(oldAcctEmail).in(acctEmails)) {
+    if (!acctEmails.includes(oldAcctEmail)) {
       throw new Error(`"${oldAcctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToChange: string[] = [];

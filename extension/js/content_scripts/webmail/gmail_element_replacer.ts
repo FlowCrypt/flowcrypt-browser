@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Value, Str, Dict } from '../../common/core/common.js';
+import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { Api, R, AjaxError } from '../../common/api/api.js';
@@ -93,7 +93,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const emailContainer of emailsEontainingPgpBlock) {
       $(emailContainer).addClass('evaluated');
       const senderEmail = this.getSenderEmail(emailContainer);
-      const isOutgoing = Value.is(senderEmail).in(this.addresses);
+      const isOutgoing = this.addresses.includes(senderEmail);
       const replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
@@ -214,7 +214,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
-    const isOutgoing = Value.is(senderEmail).in(this.addresses);
+    const isOutgoing = this.addresses.includes(senderEmail);
     attsContainerInner = $(attsContainerInner);
     attsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let nRenderedAtts = attMetas.length;
@@ -230,14 +230,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
             nRenderedAtts++;
           } else if (treatAs === 'encryptedMsg') {
-            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
+            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp'].includes(a.name); // ambiguous .asc name
             const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
             if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
               const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
               const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
                 nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
-              } else if (openpgpType && Value.is(openpgpType.type).in(['encryptedMsg', 'signedMsg'])) {
+              } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
                 msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
               } else {
                 attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
@@ -253,7 +253,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           } else if (treatAs === 'signature') {
             const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
             const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
-            const replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
+            const replace = !msgEl.is('.evaluated') && !msgEl.text().includes(Pgp.armor.headers('null').begin);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
         } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc

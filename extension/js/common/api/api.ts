@@ -352,9 +352,9 @@ export class Api {
       let myEmail = acctEmail;
       for (const email of replyToEstimate) {
         if (email) {
-          if (Value.is(Str.parseEmail(email).email).in(addresses)) { // my email
+          if (addresses.includes(Str.parseEmail(email).email)) { // my email
             myEmail = email;
-          } else if (!Value.is(Str.parseEmail(email).email).in(replyTo)) { // skip duplicates
+          } else if (!replyTo.includes(Str.parseEmail(email).email)) { // skip duplicates
             replyTo.push(Str.parseEmail(email).email); // reply to all except my emails
           }
         }
@@ -399,7 +399,7 @@ export class Api {
           diagnosis.results[email] = { pubkey: undefined, match: false };
         } else {
           let match = true;
-          if (!Value.is(await Pgp.key.longid(pubkeySearchResult.pubkey)).in(storedKeysLongids)) {
+          if (!storedKeysLongids.includes(String(await Pgp.key.longid(pubkeySearchResult.pubkey)))) {
             diagnosis.hasPubkeyMismatch = true;
             match = false;
           }
@@ -663,7 +663,7 @@ export class Api {
     for (const type of Object.keys(parts)) {
       body += '--' + boundary + '\n';
       body += 'Content-Type: ' + type + '\n';
-      if (Value.is('json').in(String(type))) {
+      if (type.includes('json')) {
         body += '\n' + parts[type] + '\n\n';
       } else {
         body += 'Content-Transfer-Encoding: base64\n';

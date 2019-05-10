@@ -4,7 +4,7 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, ContactUpdate, DbContactFilter } from '../../js/common/platform/store.js';
-import { Value, Str } from '../../js/common/core/common.js';
+import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Xss, Ui, XssSafeFactory, Env, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer.js';
@@ -97,7 +97,7 @@ Catch.try(async () => {
         return false;
       }
       const storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);
-      if (Value.is(theirEmail).in(storage.pubkey_sent_to || [])) {
+      if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
         return true;
       }
       if (!canReadEmail) {

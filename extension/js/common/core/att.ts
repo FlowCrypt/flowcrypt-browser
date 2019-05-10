@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { Value } from './common.js';
 import { KeyInfo } from '../core/pgp.js';
 import { Buf } from './buf.js';
 
@@ -76,13 +75,13 @@ export class Att {
     // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
     if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
-    } else if (Value.is(this.name).in(['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'])) {
+    } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
       return 'hidden';  // PGPexch.htm.pgp is html alternative of textual body content produced by PGP Desktop and GPG4o
     } else if (this.name === 'signature.asc' || this.type === 'application/pgp-signature') {
       return 'signature';
-    } else if (!this.name && !Value.is('image/').in(this.type)) { // this.name may be '' or undefined - catch either
+    } else if (!this.name && !this.type.startsWith('image/')) { // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
-    } else if (Value.is(this.name).in(['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'])) {
+    } else if (['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'].includes(this.name)) {
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
       return 'encryptedFile';
@@ -90,7 +89,7 @@ export class Att {
       return 'backup';
     } else if (this.name.match(/^(0|0x)?[A-F0-9]{8}([A-F0-9]{8})?.*\.asc$/g)) { // name starts with a key id
       return 'publicKey';
-    } else if (Value.is('public').in(this.name.toLowerCase()) && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
+    } else if (this.name.toLowerCase().includes('public') && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
       return 'publicKey';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
       return 'encryptedMsg';

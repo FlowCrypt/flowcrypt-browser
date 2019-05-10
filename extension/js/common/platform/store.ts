@@ -239,7 +239,7 @@ export class Store {
     if (!longids) {
       return keys;
     }
-    return keys.filter(ki => Value.is(ki.longid).in(longids) || (Value.is('primary').in(longids) && ki.primary));
+    return keys.filter(ki => longids.includes(ki.longid) || (longids.includes('primary') && ki.primary));
   }
 
   static keysGetAllWithPassphrases = async (acctEmail: string): Promise<KeyInfosWithPassphrases> => {
@@ -376,7 +376,7 @@ export class Store {
     const acctEmails: string[] = [];
     if (typeof storage.account_emails !== 'undefined') {
       for (const acctEmail of JSON.parse(storage.account_emails) as string[]) {
-        if (!Value.is(acctEmail.toLowerCase()).in(acctEmails)) {
+        if (!acctEmails.includes(acctEmail.toLowerCase())) {
           acctEmails.push(acctEmail.toLowerCase());
         }
       }
@@ -393,7 +393,7 @@ export class Store {
       acctEmail = acctEmail.toLowerCase();
     }
     const acctEmails = await Store.acctEmailsGet();
-    if (!Value.is(acctEmail).in(acctEmails) && acctEmail) {
+    if (!acctEmails.includes(acctEmail) && acctEmail) {
       acctEmails.push(acctEmail);
       await Store.setGlobal({ account_emails: JSON.stringify(acctEmails) });
       BrowserMsg.send.bg.updateUninstallUrl();
@@ -498,7 +498,7 @@ export class Store {
         for (const letter of part.split('')) {
           substring += letter;
           const normalized = Store.normalizeString(substring);
-          if (!Value.is(normalized).in(index)) {
+          if (!index.includes(normalized)) {
             index.push(Store.dbIndex(hasPgp, normalized));
           }
         }
@@ -625,7 +625,7 @@ export class Store {
         BrowserMsg.send.bg.await.db({ f: 'dbContactSearch', args: [query] }).then(resolve).catch(Catch.reportErr);
       } else {
         for (const key of Object.keys(query)) {
-          if (!Value.is(key).in(Store.dbQueryKeys)) {
+          if (!Store.dbQueryKeys.includes(key)) {
             throw new Error('dbContactSearch: unknown key: ' + key);
           }
         }

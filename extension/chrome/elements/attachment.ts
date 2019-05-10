@@ -4,7 +4,6 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Value } from '../../js/common/core/common.js';
 import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
@@ -105,7 +104,7 @@ Catch.try(async () => {
     const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(acctEmail), encryptedData: encryptedAtt.getData() });
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
-      if (!result.filename || Value.is(result.filename).in(['msg.txt', 'null'])) {
+      if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
         result.filename = encryptedAtt.name;
       }
       Browser.saveToDownloads(new Att({ name: result.filename, type: encryptedAtt.type, data: result.content }), $('body'));

@@ -206,7 +206,7 @@ export class Composer {
       };
     } else {
       const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && Value.is(await Pgp.hash.sha1UtfStr(this.urlParams.acctEmail)).in(allowHugeAtts)) ? 200 : 25;
+      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await Pgp.hash.sha1UtfStr(this.urlParams.acctEmail))) ? 200 : 25;
       return {
         sizeMb,
         size: sizeMb * 1024 * 1024,
@@ -579,7 +579,7 @@ export class Composer {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       await this.parseRenderRecipients('harshRecipientErrs');
     }
-    if (Value.is(this.S.now('send_btn_span').text().trim()).in(this.BTN_READY_TEXTS) && recipients.length) {
+    if (this.BTN_READY_TEXTS.includes(this.S.now('send_btn_span').text().trim()) && recipients.length) {
       return; // all good
     }
     if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
@@ -1148,7 +1148,7 @@ export class Composer {
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
     let gentleErrInvalidEmails = '';
-    if (!(Value.is(',').in(inputTo) || (!this.S.cached('input_to').is(':focus') && inputTo))) {
+    if (!(inputTo.includes(',') || (!this.S.cached('input_to').is(':focus') && inputTo))) {
       this.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
       return false;
     }
@@ -1188,10 +1188,10 @@ export class Composer {
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
     this.debug(`selectContact 2`);
     const q = Str.parseEmail(fromQuery.substring).email;
-    if (possiblyBogusAddr === q || Value.is(q).in(possiblyBogusAddr)) {
+    if (possiblyBogusAddr === q || possiblyBogusAddr.includes(q)) {
       possiblyBogusRecipient.remove();
     }
-    if (!Value.is(email).in(this.getRecipientsFromDom())) {
+    if (!this.getRecipientsFromDom().includes(email)) {
       this.S.cached('input_to').val(Str.parseEmail(email).email);
       this.debug(`selectContact -> parseRenderRecipients start`);
       const isRecipientAdded = await this.parseRenderRecipients('harshRecipientErrs');
@@ -1392,7 +1392,7 @@ export class Composer {
       this.S.now('attached_files').removeClass('sign');
       this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
     }
-    if (Value.is(this.S.now('send_btn_span').text()).in([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND])) {
+    if ([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND].includes(this.S.now('send_btn_span').text())) {
       this.resetSendBtn();
     }
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
@@ -1414,7 +1414,7 @@ export class Composer {
     this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnKeyserver = Value.is(this.getSender()).in(this.myAddrsOnKeyserver);
+        const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.getSender());
         if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey

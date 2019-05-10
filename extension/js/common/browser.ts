@@ -124,7 +124,7 @@ export class Env {
 
   public static isContentScript = () => Env.isExtension() && window.location.href.indexOf(chrome.runtime.getURL('')) === -1; // extension but not on its own url
 
-  public static isBackgroundPage = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
+  public static isBackgroundPage = () => Boolean(window.location && window.location.href.includes('background_page.htm'));
 
   public static isExtension = () => typeof Env.runtimeId() !== 'undefined';
 
@@ -196,7 +196,7 @@ export class Env {
       const value = params[key];
       if (typeof value !== 'undefined') {
         const transformed = Value.obj.keyByValue(Env.URL_PARAM_DICT, value);
-        link += (!Value.is('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
+        link += (link.includes('?') ? '&' : '?') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
       }
     }
     return link;
@@ -966,7 +966,7 @@ export class XssSafeFactory {
 
   private resolveFromTo = (secondaryEmails: string[], myEmail: string, theirEmails: string[]) => {
     // when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-    if (theirEmails.length === 1 && Value.is(theirEmails[0]).in(secondaryEmails)) {
+    if (theirEmails.length === 1 && secondaryEmails.includes(theirEmails[0])) {
       return { from: theirEmails[0], to: myEmail }; // replying to myself, reverse the values to actually write to them
     }
     return { to: theirEmails, from: myEmail };
@@ -1048,7 +1048,7 @@ export class KeyImportUi {
     attach.setAttAddedCb(async file => {
       let prv: OpenPGP.key.Key | undefined;
       const utf = file.getData().toUtfStr();
-      if (Value.is(Pgp.armor.headers('privateKey').begin).in(utf)) {
+      if (utf.includes(Pgp.armor.headers('privateKey').begin)) {
         const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
         if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
           prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
@@ -1129,7 +1129,7 @@ export class KeyImportUi {
     if (this.rejectKnown) {
       const keyinfos = await Store.keysGet(acctEmail);
       const privateKeysLongids = keyinfos.map(ki => ki.longid);
-      if (Value.is(await Pgp.key.longid(k)).in(privateKeysLongids)) {
+      if (privateKeysLongids.includes(String(await Pgp.key.longid(k)))) {
         throw new UserAlert('This is one of your current keys, try another one.');
       }
     }

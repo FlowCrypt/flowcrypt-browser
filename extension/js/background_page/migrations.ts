@@ -46,7 +46,7 @@ const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks wh
       const addressesKeyserver = [];
       for (const email of Object.keys(lookupEmailsRes)) {
         const result = lookupEmailsRes[email];
-        if (result && result.pubkey && Value.is(await Pgp.key.longid(result.pubkey)).in(myLongids)) {
+        if (result && result.pubkey && myLongids.includes(String(await Pgp.key.longid(result.pubkey)))) {
           addressesKeyserver.push(email);
         }
       }

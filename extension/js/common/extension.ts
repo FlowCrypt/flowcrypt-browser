@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Str, Value, Dict } from './core/common.js';
+import { Str, Dict } from './core/common.js';
 import { DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgTypeResult, PgpMsgMethod } from './core/pgp.js';
 import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams, PassphraseDialogType } from './browser.js';
@@ -365,7 +365,7 @@ export class BrowserMsg {
     chrome.runtime.onMessage.addListener((msg: Bm.Raw, sender, rawRespond: (rawResponse: Bm.RawResponse) => void) => {
       try {
         if (msg.to === listenForTabId || msg.to === 'broadcast') {
-          if (!Value.is(msg.uid).in(processed)) {
+          if (!processed.includes(msg.uid)) {
             processed.push(msg.uid);
             if (typeof BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name] !== 'undefined') {
               const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_FRAME[msg.name];
@@ -412,7 +412,7 @@ export class BrowserMsg {
           msg.sender = sender;
           chrome.tabs.sendMessage(BrowserMsg.browserMsgDestParse(msg.to).tab!, msg, {}, respondIfPageStillOpen);
           return true; // will respond
-        } else if (Value.is(msg.name).in(Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND))) { // standard or broadcast message
+        } else if (Object.keys(BrowserMsg.HANDLERS_REGISTERED_BACKGROUND).includes(msg.name)) { // standard or broadcast message
           const handler: Bm.AsyncRespondingHandler = BrowserMsg.HANDLERS_REGISTERED_BACKGROUND[msg.name];
           BrowserMsg.replaceObjUrlWithBuf(msg.data.bm, msg.data.objUrls)
             .then(bm => BrowserMsg.sendRawResponse(handler(bm, sender), respondIfPageStillOpen))

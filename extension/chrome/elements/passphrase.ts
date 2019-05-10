@@ -4,7 +4,6 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, StorageType } from '../../js/common/platform/store.js';
-import { Value } from '../../js/common/core/common.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp } from '../../js/common/core/pgp.js';
@@ -23,7 +22,7 @@ Catch.try(async () => {
   const type = Env.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment']);
 
   const allPrivateKeys = await Store.keysGet(acctEmail);
-  const selectedPrivateKeys = allPrivateKeys.filter(ki => Value.is(ki.longid).in(longids) || (ki.primary && Value.is('primary').in(longids)));
+  const selectedPrivateKeys = allPrivateKeys.filter(ki => longids.includes(ki.longid) || (ki.primary && longids.includes('primary')));
 
   await Ui.passphraseToggle(['passphrase']);
 

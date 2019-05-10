@@ -4,7 +4,6 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
 import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
@@ -20,8 +19,7 @@ Catch.try(async () => {
   const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  // this is for debugging
-  if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
+  if (Catch.environment() === 'ex:dev') {
     Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.escape(Env.urlCreate('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
   }
 

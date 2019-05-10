@@ -5,7 +5,7 @@
 import { VERSION } from './const.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
-import { Value, Str } from './common.js';
+import { Str } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
@@ -156,7 +156,7 @@ export class Pgp {
 
   public static armor = {
     clip: (text: string): string | undefined => {
-      if (text && Value.is(Pgp.ARMOR_HEADER_DICT.null.begin).in(text) && Value.is(String(Pgp.ARMOR_HEADER_DICT.null.end)).in(text)) {
+      if (text && text.includes(Pgp.ARMOR_HEADER_DICT.null.begin) && text.includes(String(Pgp.ARMOR_HEADER_DICT.null.end))) {
         const match = text.match(/(-----BEGIN PGP (MESSAGE|SIGNED MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----[^]+-----END PGP (MESSAGE|SIGNATURE|PUBLIC KEY BLOCK)-----)/gm);
         return (match && match.length) ? match[0] : undefined;
       }
@@ -192,7 +192,7 @@ export class Pgp {
     },
     normalize: (armored: string, type: ReplaceableMsgBlockType | 'key') => {
       armored = Str.normalize(armored).replace(/\n /g, '\n');
-      if (Value.is(type).in(['encryptedMsg', 'publicKey', 'privateKey', 'key'])) {
+      if (['encryptedMsg', 'publicKey', 'privateKey', 'key'].includes(type)) {
         armored = armored.replace(/\r?\n/g, '\n').trim();
         const nl2 = armored.match(/\n\n/g);
         const nl3 = armored.match(/\n\n\n/g);
@@ -207,7 +207,7 @@ export class Pgp {
       const lines = armored.split('\n');
       const h = Pgp.armor.headers(type === 'key' ? 'null' : type);
       // check for and fix missing a mandatory empty line
-      if (lines.length > 5 && Value.is(h.begin).in(lines[0]) && Value.is(String(h.end)).in(lines[lines.length - 1]) && !Value.is('').in(lines)) {
+      if (lines.length > 5 && lines[0].includes(h.begin) && lines[lines.length - 1].includes(String(h.end)) && !lines.includes('')) {
         for (let i = 1; i < 5; i++) {
           if (lines[i].match(/^[a-zA-Z0-9\-_. ]+: .+$/)) {
             continue; // skip comment lines, looking for first data line
@@ -251,7 +251,7 @@ export class Pgp {
       try {
         return await key.decrypt(passphrases);
       } catch (e) {
-        if (e instanceof Error && Value.is('passphrase').in(e.message.toLowerCase())) {
+        if (e instanceof Error && e.message.toLowerCase().includes('passphrase')) {
           return false;
         }
         throw e;
@@ -395,8 +395,7 @@ export class Pgp {
       const timeToCrack = zxcvbnResultGuesses / Pgp.PASSWORD_GUESSES_PER_SECOND;
       for (const word of Pgp.PASSWORD_CRACK_TIME_WORDS) {
         const readableTime = Pgp.internal.readableCrackTime(timeToCrack);
-        // looks for a word match from readable_crack_time, defaults on "weak"
-        if (Value.is(word.match).in(readableTime)) {
+        if (readableTime.includes(word.match)) { // looks for a word match from readable_crack_time, defaults on "weak"
           return { word, seconds: Math.round(timeToCrack), time: readableTime };
         }
       }
@@ -488,8 +487,8 @@ export class Pgp {
         throw new Error('Encrypted message could not be parsed because no data was provided');
       }
       const utfChunk = new Buf(encrypted.slice(0, 100)).toUtfStr('ignore'); // ignore errors - this may not be utf string, just testing
-      const isArmoredEncrypted = Value.is(Pgp.armor.headers('encryptedMsg').begin).in(utfChunk);
-      const isArmoredSignedOnly = Value.is(Pgp.armor.headers('signedMsg').begin).in(utfChunk);
+      const isArmoredEncrypted = utfChunk.includes(Pgp.armor.headers('encryptedMsg').begin);
+      const isArmoredSignedOnly = utfChunk.includes(Pgp.armor.headers('signedMsg').begin);
       const isArmored = isArmoredEncrypted || isArmoredSignedOnly;
       if (isArmoredEncrypted) {
         return { isArmored, isCleartext: false, message: await openpgp.message.readArmored(new Buf(encrypted).toUtfStr()) };
@@ -561,9 +560,9 @@ export class Pgp {
       const e = String(decryptErr).replace('Error: ', '').replace('Error decrypting message: ', '');
       const keyMismatchErrStrings = ['Cannot read property \'isDecrypted\' of null', 'privateKeyPacket is null',
         'TypeprivateKeyPacket is null', 'Session key decryption failed.', 'Invalid session key for decryption.'];
-      if (Value.is(e).in(keyMismatchErrStrings) && !msgPwd) {
+      if (keyMismatchErrStrings.includes(e) && !msgPwd) {
         return { type: DecryptErrTypes.keyMismatch, message: e };
-      } else if (msgPwd && Value.is(e).in(['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'])) {
+      } else if (msgPwd && ['Invalid enum value.', 'CFB decrypt: invalid key', 'Session key decryption failed.'].includes(e)) {
         return { type: DecryptErrTypes.wrongPwd, message: e };
       } else if (e === 'Decryption failed due to missing MDC in combination with modern cipher.' || e === 'Decryption failed due to missing MDC.') {
         return { type: DecryptErrTypes.noMdc, message: e };
@@ -629,17 +628,17 @@ export class PgpMsg {
       } else { // 10XX XXXX - potential old pgp packet tag
         tagNumber = (firstByte & 0b00111100) / 4; // 10TTTTLL where T is tag number bit. Division by 4 in place of two bit shifts. I hate bit shifts.
       }
-      if (Value.is(tagNumber).in(Object.values(openpgp.enums.packet))) {
+      if (Object.values(openpgp.enums.packet).includes(tagNumber)) {
         // Indeed a valid OpenPGP packet tag number
         // This does not 100% mean it's OpenPGP message
         // But it's a good indication that it may
         const t = openpgp.enums.packet;
         const msgTpes = [t.symEncryptedIntegrityProtected, t.modificationDetectionCode, t.symEncryptedAEADProtected, t.symmetricallyEncrypted, t.compressed];
-        return { armored: false, type: Value.is(tagNumber).in(msgTpes) ? 'encryptedMsg' : 'publicKey' };
+        return { armored: false, type: msgTpes.includes(tagNumber) ? 'encryptedMsg' : 'publicKey' };
       }
     }
     const { blocks } = Pgp.armor.detectBlocks(new Buf(data.slice(0, 50)).toUtfStr().trim()); // only interested in first 50 bytes
-    if (blocks.length === 1 && blocks[0].complete === false && Value.is(blocks[0].type).in(['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'])) {
+    if (blocks.length === 1 && blocks[0].complete === false && ['encryptedMsg', 'privateKey', 'publicKey', 'signedMsg'].includes(blocks[0].type)) {
       return { armored: true, type: blocks[0].type };
     }
     return undefined;
@@ -813,7 +812,7 @@ export class PgpMsg {
     // these tags were created by FlowCrypt exclusively, so the structure is fairly rigid
     // `<a href="${att.url}" class="cryptup_file" cryptup-data="${fcData}">${linkText}</a>\n`
     // thus we use RegEx so that it works on both browser and node
-    if (Value.is('class="cryptup_file"').in(decryptedContent)) {
+    if (decryptedContent.includes('class="cryptup_file"')) {
       decryptedContent = decryptedContent.replace(/<a\s+href="([^"]+)"\s+class="cryptup_file"\s+cryptup-data="([^"]+)"\s*>[^<]+<\/a>\n?/gm, (_, url, fcData) => {
         const a = Str.htmlAttrDecode(String(fcData));
         if (PgpMsg.isFcAttLinkData(a)) {
