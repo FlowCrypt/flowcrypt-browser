@@ -14,8 +14,8 @@ import { BrowserMsg } from '../extension.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };
-export type ReqFmt = 'JSON' | 'FORM';
-type ResFmt = 'json';
+export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
+type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type ProviderContactsResults = { new: Contact[], all: Contact[] };
 type RawAjaxError = {
@@ -269,14 +269,24 @@ export class Api {
     request.send();
   })
 
-  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any> => {
+  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> => {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
       return await BrowserMsg.send.bg.await.ajax({ req, stack });
     }
     try {
-      return await $.ajax(req);
+      return await new Promise((resolve, reject) => {
+        $.ajax({ ...req, dataType: req.dataType === 'xhr' ? undefined : req.dataType }).then((data, s, xhr) => {
+          if (req.dataType === 'xhr') {
+            // @ts-ignore -> prevent the xhr object from getting further "resolved" and processed by jQuery, below
+            xhr.then = xhr.promise = undefined;
+            resolve(xhr);
+          } else {
+            resolve(data);
+          }
+        }).catch(reject);
+      });
     } catch (e) {
       if (e instanceof Error) {
         throw e;
@@ -320,7 +330,7 @@ export class Api {
   }
 
   protected static apiCall = async (
-    url: string, path: string, fields?: Dict<any>, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
+    url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
   ) => {
     progress = progress || {} as ProgressCbs;
     let formattedData: FormData | string | undefined;
@@ -328,7 +338,10 @@ export class Api {
     if (fmt === 'JSON' && fields) {
       formattedData = JSON.stringify(fields);
       contentType = 'application/json; charset=UTF-8';
-    } else if (fmt === 'FORM' && fields) {
+    } else if (fmt === 'TEXT' && typeof fields === 'string') {
+      formattedData = fields;
+      contentType = false;
+    } else if (fmt === 'FORM' && fields && typeof fields !== 'string') {
       formattedData = new FormData();
       for (const formFieldName of Object.keys(fields)) {
         const a: Att | string = fields[formFieldName]; // tslint:disable-line:no-unsafe-any

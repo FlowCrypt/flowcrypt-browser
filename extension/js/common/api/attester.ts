@@ -5,7 +5,8 @@
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
 
-export type PubkeySearchResult = { pubkey: string | null; has_cryptup: boolean | null; };
+type PgpClient = 'flowcrypt' | 'pgp-other' | null;
+export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
 
 export namespace AttesterRes { // responses
   export type AttTestWelcome = { sent: boolean };
@@ -15,13 +16,27 @@ export namespace AttesterRes { // responses
 
 export class Attester extends Api {
 
-  private static call = (path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<any> => {
+  private static jsonCall = (path: string, values?: Dict<any>, method: ReqMethod = 'POST'): Promise<any> => {
     return Api.apiCall('https://flowcrypt.com/attester/', path, values, 'JSON', undefined, { 'api-version': '3' }, 'json', method);
   }
 
-  public static lookupEmail = (email: string): Promise<PubkeySearchResult> => {
-    return Attester.call('lookup/email', { email: Str.parseEmail(email).email });
+  private static pubCall = (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<{ responseText: string, getResponseHeader: (n: string) => string | null }> => {
+    return Api.apiCall('https://flowcrypt.com/attester/', resource, data, undefined, undefined, undefined, 'xhr', method);
   }
+
+  public static lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
+    try {
+      const r = await Attester.pubCall(`pub/${email}`);
+      return { pubkey: r.responseText, pgpClient: r.getResponseHeader('pgp-client') as PgpClient };
+    } catch (e) {
+      if (Api.err.isNotFound(e)) {
+        return { pubkey: null, pgpClient: null };
+      }
+      throw e;
+    }
+  }
+
+  public static lookupLongid = (longid: string) => Attester.lookupEmail(longid); // the api accepts either email or longid
 
   public static lookupEmails = async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
     const results: Dict<PubkeySearchResult> = {};
@@ -31,11 +46,11 @@ export class Attester extends Api {
     return results;
   }
   public static initialLegacySubmit = (email: string, pubkey: string): Promise<AttesterRes.AttInitialLegacySugmit> => {
-    return Attester.call('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
+    return Attester.jsonCall('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   }
 
   public static testWelcome = (email: string, pubkey: string): Promise<AttesterRes.AttTestWelcome> => {
-    return Attester.call('test/welcome', { email, pubkey });
+    return Attester.jsonCall('test/welcome', { email, pubkey });
   }
 
 }

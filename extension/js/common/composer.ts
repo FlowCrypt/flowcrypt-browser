@@ -903,7 +903,9 @@ export class Composer {
           const ksContact = await this.app.storageContactObj(
             email,
             dbContact && dbContact.name ? dbContact.name : undefined,
-            lookupResult.has_cryptup ? 'cryptup' : 'pgp',
+            // todo - clean up. Should say flowcrypt|pgp-other
+            // But is already in storage, so fixing this involves a migration
+            lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp',
             lookupResult.pubkey || undefined,
             false,
             Date.now()

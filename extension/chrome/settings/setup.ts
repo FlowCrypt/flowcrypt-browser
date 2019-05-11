@@ -183,7 +183,7 @@ Catch.try(async () => {
           displayBlock('step_0_found_key');
         }
       } else { // cannot read gmail to find a backup, or this is outlook
-        if (keyserverRes.has_cryptup) {
+        if (keyserverRes.pgpClient === 'flowcrypt') {
           // a key has been created, and the user has used cryptup in the past - this suggest they likely have a backup available, but we cannot fetch it. Enter it manually
           displayBlock('step_2b_manual_enter');
           Xss.sanitizePrepend('#step_2b_manual_enter', `<div class="line red">${Lang.setup.cannotLocateBackupPasteManually}<br/><br/></div>`);
