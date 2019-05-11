@@ -69,7 +69,7 @@ Catch.try(async () => {
       } else {
         note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
         // todo - pass public key and email in
-        action = `<a class="button gray2 small" href="https://flowcrypt.com/attester/update-public-keys">Correct records</a>`;
+        action = `<div class="button gray2 small action_replace_pubkey" email="${Xss.escape(email)}">Correct public records</a>`;
         remove = '';
         color = 'red';
       }
@@ -88,6 +88,23 @@ Catch.try(async () => {
         }
         await Ui.modal.error(Api.err.eli5(e));
       } finally {
+        window.location.reload();
+      }
+    }));
+
+    $('.action_replace_pubkey').click(Ui.event.prevent('double', async self => {
+      Xss.sanitizeRender(self, Ui.spinner('white'));
+      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      try {
+        const responseText = await Attester.replacePubkey(String($(self).attr('email')), primaryKi.public);
+        await Ui.modal.info(responseText);
+        BrowserMsg.send.closePage(parentTabId);
+      } catch (e) {
+        if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
+        }
+        await Ui.modal.error(Api.err.eli5(e));
         window.location.reload();
       }
     }));

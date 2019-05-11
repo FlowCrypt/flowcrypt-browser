@@ -21,7 +21,7 @@ export class Attester extends Api {
   }
 
   private static pubCall = (resource: string, method: ReqMethod = 'GET', data?: string | undefined): Promise<{ responseText: string, getResponseHeader: (n: string) => string | null }> => {
-    return Api.apiCall('https://flowcrypt.com/attester/', resource, data, undefined, undefined, undefined, 'xhr', method);
+    return Api.apiCall('https://flowcrypt.com/attester/', resource, data, typeof data === 'string' ? 'TEXT' : undefined, undefined, undefined, 'xhr', method);
   }
 
   public static lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
@@ -36,8 +36,6 @@ export class Attester extends Api {
     }
   }
 
-  public static lookupLongid = (longid: string) => Attester.lookupEmail(longid); // the api accepts either email or longid
-
   public static lookupEmails = async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
     const results: Dict<PubkeySearchResult> = {};
     await Promise.all(emails.map(async (email: string) => {
@@ -45,6 +43,14 @@ export class Attester extends Api {
     }));
     return results;
   }
+
+  public static lookupLongid = (longid: string) => Attester.lookupEmail(longid); // the api accepts either email or longid
+
+  public static replacePubkey = async (email: string, pubkey: string): Promise<string> => {
+    const r = await Attester.pubCall(`pub/${email}`, 'POST', pubkey);
+    return r.responseText;
+  }
+
   public static initialLegacySubmit = (email: string, pubkey: string): Promise<AttesterRes.AttInitialLegacySugmit> => {
     return Attester.jsonCall('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   }
