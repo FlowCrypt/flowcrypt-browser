@@ -283,7 +283,7 @@ export class Api {
             xhr.then = xhr.promise = undefined;
             resolve(xhr);
           } else {
-            resolve(data);
+            resolve(data as any);
           }
         }).catch(reject);
       });
