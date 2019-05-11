@@ -9,6 +9,8 @@ import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Attester } from '../../../js/common/api/attester.js';
+import { Api } from '../../../js/common/api/api.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -65,7 +67,16 @@ Catch.try(async () => {
     await Store.keysAdd(acctEmail, updatedPrv.armor());
     await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
     await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
-    await Ui.modal.info('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
+    if (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
+      try {
+        await Ui.modal.info(await Attester.updatePubkey(primaryKi.longid, updatedPrv.armor()));
+      } catch (e) {
+        if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
+        }
+        await Ui.modal.error(`Error updating public records:\n\n${Api.err.eli5(e)}\n\n(but local update was successful)`);
+      }
+    }
     window.location.href = showKeyUrl;
   };
 

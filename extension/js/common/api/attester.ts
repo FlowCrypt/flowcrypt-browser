@@ -46,8 +46,13 @@ export class Attester extends Api {
 
   public static lookupLongid = (longid: string) => Attester.lookupEmail(longid); // the api accepts either email or longid
 
-  public static replacePubkey = async (email: string, pubkey: string): Promise<string> => {
+  public static replacePubkey = async (email: string, pubkey: string): Promise<string> => { // replace key assigned to a certain email with a different one
     const r = await Attester.pubCall(`pub/${email}`, 'POST', pubkey);
+    return r.responseText;
+  }
+
+  public static updatePubkey = async (longid: string, pubkey: string): Promise<string> => { // update key with a newer version of the same key
+    const r = await Attester.pubCall(`pub/${longid}`, 'PUT', pubkey);
     return r.responseText;
   }
 
