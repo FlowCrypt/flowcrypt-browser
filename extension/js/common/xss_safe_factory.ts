@@ -282,6 +282,8 @@ export class XssSafeFactory {
       return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
+    } else if (block.type === 'backup') {
+      return factory.embeddedBackup(Pgp.armor.normalize(block.content.toString(), 'privateKey'));
     } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
     } else if (block.type === 'cryptupVerification') {

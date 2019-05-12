@@ -38,7 +38,7 @@ export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'cryptupVerification' | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
 export type MsgBlockType = 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt' | 'decryptedAtt' | 'encryptedAttLink'
-  | 'decryptErr' | ReplaceableMsgBlockType;
+  | 'decryptErr' | 'backup' | ReplaceableMsgBlockType;
 export type MsgBlock = {
   type: MsgBlockType;
   content: string | Buf;
@@ -71,6 +71,10 @@ export class Mime {
         decoded.signature = decoded.signature || file.getData().toUtfStr();
       } else if (treatAs === 'publicKey') {
         blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
+      } else if (treatAs === 'backup') {
+        const backupBlocks = Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks;
+        backupBlocks.forEach(b => b.type = 'backup');
+        blocks.push(...backupBlocks);
       }
     }
     if (decoded.signature) {
