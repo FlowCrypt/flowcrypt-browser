@@ -4,7 +4,6 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Ui, Env } from '../../js/common/browser.js';
-import { Str } from '../../js/common/core/common.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -28,27 +27,19 @@ Catch.try(async () => {
     if (key) {
       $('.line.fingerprints .fingerprint').text(await Pgp.key.fingerprint(key, 'spaced') || '(fingerprint error)');
       $('.line.fingerprints .keywords').text(mnemonic(longId) || '(mnemonic error)');
+      if (! await key.getEncryptionKey() && ! await key.getSigningKey()) {
+        $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
+        $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
+      }
     } else {
       $('.line.fingerprints').css({ display: 'none' });
     }
 
-    if (typeof key !== 'undefined') {
-      if (! await key.getEncryptionKey() && ! await key.getSigningKey()) {
-        $('.line.add_contact').addClass('bad').text('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
-        $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
-      } else {
-        const email = key.users[0].userId ? Str.parseEmail(key.users[0].userId ? key.users[0].userId!.userid : '').email : undefined;
-        if (email) {
-          $('.email').text(email);
-        }
-      }
-    }
-
     if (await Store.keysGet(acctEmail, [longId])) {
-      $('.line .private_key_status').text('This key is already imported.');
+      $('.line .private_key_status').text('This Private Key is already imported.');
     } else {
       $('.line .private_key_status')
-        .text('This private key was not imported. We suggest to import all backups so that you can read all incoming encrypted emails.')
+        .text('This private key was not imported yet. We suggest to import all backups so that you can read all incoming encrypted emails.')
         .after('<div class="line"><div class="button green" id="action_import_key">Import Missing Private Key</div></div>');
       $("#action_import_key").click(Ui.event.handle(async target => {
         BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' });
