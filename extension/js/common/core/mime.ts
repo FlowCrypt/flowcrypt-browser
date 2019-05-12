@@ -73,7 +73,10 @@ export class Mime {
         blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'backup') {
         const backupBlocks = Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks;
-        backupBlocks.forEach(b => b.type = 'backup');
+        // Need to set type to the backup because Pgp detects it as a private key
+        for (const block of backupBlocks) {
+          block.type = 'backup';
+        }
         blocks.push(...backupBlocks);
       }
     }
