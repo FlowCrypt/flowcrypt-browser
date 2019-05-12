@@ -9,6 +9,7 @@ import { Pgp } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Assert } from '../../js/common/assert.js';
+import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 
 Catch.try(async () => {
   Ui.event.protect();
@@ -18,6 +19,8 @@ Catch.try(async () => {
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const armoredPrvBackup = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPrvBackup');
+
+  await initPassphraseToggle(['pass_phrase']);
 
   const render = async () => {
     const prvBackup = await Pgp.key.read(armoredPrvBackup);

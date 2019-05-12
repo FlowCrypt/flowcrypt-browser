@@ -303,6 +303,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block.pgp_pubkey .line { margin: 0; }
 #pgp_block.pgp_pubkey pre.pubkey { display: none; }
 
+#backup_block label#toggle_pass_phrase.toggle_show_hide_pass_phrase { padding-top: 3px; margin-top: 1px; height: 32px }
 #backup_block.backup .line { margin: 0; }
 
 table#compose { height: 100%; border-spacing: 0; border-collapse: collapse; width: 100%; background-color: white; }
