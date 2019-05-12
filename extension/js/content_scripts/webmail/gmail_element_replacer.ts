@@ -250,7 +250,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             }
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
-          } else if (treatAs === 'backup') {
+          } else if (treatAs === 'privateKey') {
             nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
             const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';

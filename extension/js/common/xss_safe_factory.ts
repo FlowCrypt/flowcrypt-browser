@@ -272,7 +272,7 @@ export class XssSafeFactory {
    * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
    */
   public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    if (block.type === 'plainText' || block.type === 'privateKey') {
+    if (block.type === 'plainText') {
       return Xss.escape(block.content.toString()).replace(/\n/g, '<br>') + '<br><br>';
     } else if (block.type === 'plainHtml') {
       return Xss.htmlSanitizeAndStripAllTags(block.content.toString(), '<br>') + '<br><br>';
@@ -282,7 +282,7 @@ export class XssSafeFactory {
       return factory.embeddedMsg(block.content.toString(), msgId, isOutgoing, senderEmail, false);
     } else if (block.type === 'publicKey') {
       return factory.embeddedPubkey(Pgp.armor.normalize(block.content.toString(), 'publicKey'), isOutgoing);
-    } else if (block.type === 'backup') {
+    } else if (block.type === 'privateKey') {
       return factory.embeddedBackup(Pgp.armor.normalize(block.content.toString(), 'privateKey'));
     } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id

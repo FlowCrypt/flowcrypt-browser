@@ -37,8 +37,8 @@ export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'cryptupVerification' | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
-export type MsgBlockType = 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt' | 'decryptedAtt' | 'encryptedAttLink'
-  | 'decryptErr' | 'backup' | ReplaceableMsgBlockType;
+export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
+  | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr';
 export type MsgBlock = {
   type: MsgBlockType;
   content: string | Buf;
@@ -71,13 +71,8 @@ export class Mime {
         decoded.signature = decoded.signature || file.getData().toUtfStr();
       } else if (treatAs === 'publicKey') {
         blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
-      } else if (treatAs === 'backup') {
-        const backupBlocks = Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks;
-        // Need to set type to the backup because Pgp detects it as a private key
-        for (const block of backupBlocks) {
-          block.type = 'backup';
-        }
-        blocks.push(...backupBlocks);
+      } else if (treatAs === 'privateKey') {
+        blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
       }
     }
     if (decoded.signature) {
