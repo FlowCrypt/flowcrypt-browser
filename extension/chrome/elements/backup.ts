@@ -10,24 +10,24 @@ import { BrowserMsg } from '../../js/common/extension.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Assert } from '../../js/common/assert.js';
 
-declare const openpgp: typeof OpenPGP;
-
 Catch.try(async () => {
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['primary', 'acctEmail', 'parentTabId', 'frameId']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'armoredPrvBackup', 'parentTabId', 'frameId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-  const [primaryKey] = await Store.keysGet(acctEmail, ['primary']);
-  const { keys: [key] } = await openpgp.key.readArmored(primaryKey.private);
+  const armoredPrvBackup = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPrvBackup');
 
   const render = async () => {
-    const longId = await Pgp.key.longid(key) || '';
-    if (key) {
-      $('.line.fingerprints .fingerprint').text(await Pgp.key.fingerprint(key, 'spaced') || '(fingerprint error)');
-      $('.line.fingerprints .keywords').text(mnemonic(longId) || '(mnemonic error)');
-      if (! await key.getEncryptionKey() && ! await key.getSigningKey()) {
+    const prvBackup = await Pgp.key.read(armoredPrvBackup);
+    const longid = await Pgp.key.longid(prvBackup) || '';
+    const [storedPrvWithMatchingLongid] = await Store.keysGet(acctEmail, [longid]);
+
+    if (prvBackup) {
+      $('.line.fingerprints .fingerprint').text(await Pgp.key.fingerprint(prvBackup, 'spaced') || '(fingerprint error)');
+      $('.line.fingerprints .keywords').text(mnemonic(longid) || '(mnemonic error)');
+      if (! await prvBackup.getEncryptionKey() && ! await prvBackup.getSigningKey()) {
         $('.line.add_contact').addClass('bad').text('This private key looks correctly formatted, but cannot be used for encryption.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
       }
@@ -35,7 +35,7 @@ Catch.try(async () => {
       $('.line.fingerprints').css({ display: 'none' });
     }
 
-    if (await Store.keysGet(acctEmail, [longId])) {
+    if (storedPrvWithMatchingLongid) {
       $('.line .private_key_status').text('This Private Key is already imported.');
     } else {
       $('.line .private_key_status')
@@ -53,15 +53,16 @@ Catch.try(async () => {
   };
 
   $('.action_test_pass').click(Ui.event.handle(async target => {
-    if (await Pgp.key.decrypt(key, [String($('#pass_phrase').val())]) === true) {
-      $(".line.pass_phrase_test").addClass('green').text("Your pass phrase matches!");
-      sendResizeMsg();
+    if (await Pgp.key.decrypt(await Pgp.key.read(armoredPrvBackup), [String($('#pass_phrase').val())]) === true) {
+      await Ui.modal.info('Success - your pass phrase matches this backup!');
     } else {
       await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get' +
         ' locked out of your encrypted messages.');
     }
+    $('#pass_phrase').val('');
   }));
 
   await render();
   sendResizeMsg();
+
 })();

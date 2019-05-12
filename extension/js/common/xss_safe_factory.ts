@@ -104,8 +104,8 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoing), });
   }
 
-  srcBackupIframe = (armoredPubkey: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPubkey });
+  srcBackupIframe = (armoredPrvBackup: string) => {
+    return this.frameSrc(this.extUrl('chrome/elements/backup.htm'), { frameId: this.newId(), armoredPrvBackup });
   }
 
   srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
@@ -176,8 +176,8 @@ export class XssSafeFactory {
     return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
   }
 
-  embeddedBackup = (armoredPubkey: string) => {
-    return this.iframe(this.srcBackupIframe(armoredPubkey), ['backup_block']);
+  embeddedBackup = (armoredPrvBackup: string) => {
+    return this.iframe(this.srcBackupIframe(armoredPrvBackup), ['backup_block']);
   }
 
   embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {
