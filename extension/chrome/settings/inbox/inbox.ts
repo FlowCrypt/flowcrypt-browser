@@ -396,7 +396,7 @@ Catch.try(async () => {
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
       for (const block of blocks) {
-        if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'signedMsg' || block.type === 'encryptedMsgLink') {
+        if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'backup' || block.type === 'signedMsg' || block.type === 'encryptedMsgLink') {
           threadHasPgpBlock = true;
         }
         if (r) {

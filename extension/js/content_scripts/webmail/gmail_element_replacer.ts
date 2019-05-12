@@ -336,7 +336,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       nRenderedAtts++;
       return nRenderedAtts;
     }
-    msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'set', this.factory.embeddedBackup(downloadedAtt.data.toUtfStr())); // xss-safe-factory
+    msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAtt.data.toUtfStr())); // xss-safe-factory
     return nRenderedAtts;
   }
 
