@@ -309,7 +309,7 @@ export class Ui {
         // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
         // so this indeed seems like the only defense
         // happened on only one machine, but could potentially happen to other users as well
-        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, const me know
+        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
         e.stopPropagation();
       });
     },
