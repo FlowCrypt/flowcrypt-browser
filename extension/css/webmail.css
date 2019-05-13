@@ -18,7 +18,7 @@ body.cryptup_inbox div.new_message_button > img { width: 28px; padding: 6px; pad
 body.cryptup_inbox .pgp_message_container .nk .tq:first-child { display: none !important; } /* reply, reply all, forward in menu next to encrypted messages */
 
 /* buttons body.cryptup_gmail */
-body.cryptup_gmail div.reply_message_button { cursor: pointer; min-width: 30px; background: #31A217; color: white; font-size: 15px; -webkit-transition: .4s; transition: .4s;
+body.cryptup_gmail div.reply_message_button { cursor: pointer; min-width: 30px; font-size: 15px;
   padding: 15px 8px; border-radius: 2px; border: 1px solid transparent; opacity: 0.8; position: relative; }
 body.cryptup_gmail .inserted div.reply_message_button { display: inline-flex; padding: 24px 10px 4px 10px; }
 body.cryptup_gmail div.reply_message_button i { margin-right: 12px; }
