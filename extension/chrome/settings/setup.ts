@@ -301,7 +301,9 @@ Catch.try(async () => {
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await Store.getAcct(acctEmail, ['full_name']);
     for (const email of allAddrs) {
-      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({ email, name, client: 'cryptup', pubkey: prvs[0].toPublic().armor(), lastUse: Date.now() }));
+      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({
+        email, name, client: 'cryptup', pubkey: prvs[0].toPublic().armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(prvs[0].toPublic())
+      }));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   };

@@ -50,6 +50,7 @@ export type Contact = {
   keywords: string | null;
   pending_lookup: number;
   last_use: number | null;
+  pubkey_last_sig: number | null;
 };
 
 export interface PrvKeyInfo {
@@ -395,7 +396,11 @@ export class Pgp {
         created,
       };
     },
-    getLatestValidSelfSignatureDate: async (key: OpenPGP.key.Key): Promise<Date> => {
+    /**
+     * Get latest self-signature date, in utc millis.
+     * This is used to figure out how recently was key updated, and if one key is newer than other.
+     */
+    lastSig: async (key: OpenPGP.key.Key): Promise<number> => {
       const allSignatures: OpenPGP.packet.Signature[] = [];
       for (const user of key.users) {
         allSignatures.push(...user.selfCertifications);
@@ -407,7 +412,7 @@ export class Pgp {
       while (allSignatures.length) {
         const sig = allSignatures.shift()!;
         if (sig.verified) { // todo - sigs that were not yet verified may be ignored - this may need fixing
-          return sig.created;
+          return sig.created.getTime();
         }
       }
       throw new Error('No valid signature found in key');

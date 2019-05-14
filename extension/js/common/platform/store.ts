@@ -40,6 +40,7 @@ export type ContactUpdate = {
   keywords?: string | null;
   pending_lookup?: number;
   last_use?: number | null;
+  pubkey_last_sig?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
   | SubscriptionAttempt | SubscriptionInfo | GmailRes.OpenId;
@@ -525,6 +526,9 @@ export class Store {
     if (!Str.isEmailValid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
     }
+    if (!lastSig && pubkey) {
+      lastSig = await Pgp.key.lastSig(await Pgp.key.read(pubkey));
+    }
     return {
       email,
       name: name || null, // tslint:disable-line:no-null-keyword
@@ -537,6 +541,7 @@ export class Store {
       keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
       pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
       last_use: lastUse || null, // tslint:disable-line:no-null-keyword
+      pubkey_last_sig: lastSig || null, // tslint:disable-line:no-null-keyword
     };
   }
 
