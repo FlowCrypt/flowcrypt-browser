@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch, UnreportableError } from './platform/catch.js';
-import { Store, Subscription, ContactUpdate } from './platform/store.js';
+import { Store, Subscription, ContactUpdate, DbContactObjArg } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
@@ -38,7 +38,7 @@ interface ComposerAppFunctionsInterface {
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
-  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
+  storageContactObj: (o: DbContactObjArg) => Promise<Contact>;
   emailProviderDraftGet: (draftId: string) => Promise<GmailRes.GmailDraftGet | undefined>;
   emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<GmailRes.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<GmailRes.GmailDraftUpdate>;
@@ -900,16 +900,13 @@ export class Composer {
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
           }
-          const ksContact = await this.app.storageContactObj(
+          const ksContact = await this.app.storageContactObj({
             email,
-            dbContact && dbContact.name ? dbContact.name : undefined,
-            // todo - clean up. Should say flowcrypt|pgp-other
-            // But is already in storage, so fixing this involves a migration
-            lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp',
-            lookupResult.pubkey || undefined,
-            false,
-            Date.now()
-          );
+            name: dbContact && dbContact.name ? dbContact.name : undefined,
+            client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up. Should say flowcrypt|pgp-other. But is already in storage, so fixing this involves a migration
+            pubkey: lookupResult.pubkey,
+            lastUse: Date.now()
+          });
           this.ksLookupsByEmail[email] = ksContact;
           await this.app.storageContactSave(ksContact);
           return ksContact;
@@ -1325,14 +1322,7 @@ export class Composer {
               const [inDb] = await this.app.storageContactGet([contact.email]);
               this.debug(`searchContacts 5`);
               if (!inDb) {
-                await this.app.storageContactSave(await this.app.storageContactObj(
-                  contact.email,
-                  contact.name || undefined,
-                  undefined,
-                  undefined,
-                  true,
-                  contact.date ? new Date(contact.date).getTime() : undefined,
-                ));
+                await this.app.storageContactSave(await this.app.storageContactObj({ email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.date }));
               } else if (!inDb.name && contact.name) {
                 const toUpdate = { name: contact.name };
                 await this.app.storageContactUpdate(contact.email, toUpdate);

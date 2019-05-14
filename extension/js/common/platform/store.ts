@@ -18,6 +18,10 @@ type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
+export type DbContactObjArg = {
+  email: string, name?: string | null, client?: string | null, pubkey?: string | null,
+  pendingLookup?: boolean | number | null, lastUse?: number | null
+};
 export type EmailProvider = 'gmail';
 
 export type KeyBackupMethod = 'file' | 'inbox' | 'none' | 'print';
@@ -469,7 +473,7 @@ export class Store {
           contacts.createIndex('index_pending_lookup', 'pending_lookup');
         }
         if (event.oldVersion < 2) {
-          contacts = openDbReq.transaction!.objectStore('contacts'); // todo - added ! after ts3 upgrade - investigate
+          contacts = openDbReq.transaction!.objectStore('contacts');
           contacts.createIndex('index_longid', 'longid');
         }
       };
@@ -508,7 +512,7 @@ export class Store {
     return index;
   }
 
-  static dbContactObj = async (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean | number, lastUse?: number): Promise<Contact> => {
+  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse }: DbContactObjArg): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
@@ -564,7 +568,7 @@ export class Store {
         } else {
           let [contact] = await Store.dbContactGet(db, [email]);
           if (!contact) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, await Store.dbContactObj(email, undefined, undefined, undefined, false, undefined));
+            await Store.dbContactSave(db, await Store.dbContactObj({ email }));
             [contact] = await Store.dbContactGet(db, [email]);
             if (!contact) {
               reject(new Error('contact not found right after inserting it'));
@@ -577,14 +581,7 @@ export class Store {
           }
           const tx = db.transaction('contacts', 'readwrite');
           const contactsTable = tx.objectStore('contacts');
-          contactsTable.put(await Store.dbContactObj(
-            email,
-            contact.name || undefined,
-            contact.client || undefined,
-            contact.pubkey || undefined,
-            contact.pending_lookup,
-            contact.last_use || undefined
-          ));
+          contactsTable.put(await Store.dbContactObj({ email, ...contact }));
           tx.oncomplete = Catch.try(resolve);
           tx.onabort = () => reject(Store.errCategorize(tx.error));
         }

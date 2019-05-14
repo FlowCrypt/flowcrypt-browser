@@ -299,9 +299,9 @@ Catch.try(async () => {
       await Store.passphraseSave(options.passphrase_save ? 'local' : 'session', acctEmail, longid, options.passphrase);
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
-    const { full_name } = await Store.getAcct(acctEmail, ['full_name']);
-    for (const addr of allAddrs) {
-      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj(addr, full_name, 'cryptup', prvs[0].toPublic().armor(), false, Date.now()));
+    const { full_name: name } = await Store.getAcct(acctEmail, ['full_name']);
+    for (const email of allAddrs) {
+      myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({ email, name, client: 'cryptup', pubkey: prvs[0].toPublic().armor(), lastUse: Date.now() }));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);
   };

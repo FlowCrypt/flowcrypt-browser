@@ -388,6 +388,23 @@ export class Pgp {
         created,
       };
     },
+    getLatestValidSelfSignatureDate: async (key: OpenPGP.key.Key): Promise<Date> => {
+      const allSignatures: OpenPGP.packet.Signature[] = [];
+      for (const user of key.users) {
+        allSignatures.push(...user.selfCertifications);
+      }
+      for (const subKey of key.subKeys) {
+        allSignatures.push(...subKey.bindingSignatures);
+      }
+      allSignatures.sort((a, b) => b.created.getTime() - a.created.getTime());
+      while (allSignatures.length) {
+        const sig = allSignatures.shift()!;
+        if (sig.verified) { // todo - sigs that were not yet verified may be ignored - this may need fixing
+          return sig.created;
+        }
+      }
+      throw new Error('No valid signature found in key');
+    }
   };
 
   public static password = {

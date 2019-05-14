@@ -47,7 +47,7 @@ Catch.try(async () => {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
-      await Store.dbContactSave(undefined, await Store.dbContactObj(String($('select.email').val()), undefined, 'pgp', normalized, false, Date.now()));
+      await Store.dbContactSave(undefined, await Store.dbContactObj({ email: String($('select.email').val()), client: 'pgp', pubkey: normalized, lastUse: Date.now() }));
       closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {
