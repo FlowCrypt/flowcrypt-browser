@@ -18,14 +18,11 @@ export const base64decode = (b64tr: string): string => {
 
 export const normalizeLongId = (longid: string) => {
   let result = longid.trim().replace(/0x|\s|:|-/g, '').toUpperCase();
-
   if (result.length >= 16) {
-    result = result.substring(result.length - 16, 16);
-
+    result = result.substring(result.length - 16);
     if (result.match(/[A-F0-9]{16}/g)) {
       return result;
     }
   }
-
   return;
 };

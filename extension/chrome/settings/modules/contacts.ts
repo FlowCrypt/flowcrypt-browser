@@ -97,22 +97,27 @@ Catch.try(async () => {
   };
 
   const actionProcessBulkImportTextInput = async () => {
-    const fingerprint = String($('#bulk_import .input_pubkey').val());
-    const normalizedLongid = normalizeLongId(fingerprint);
+    const value = String($('#bulk_import .input_pubkey').val());
+    const normalizedLongid = normalizeLongId(value);
+    let pubkey: string;
+
     if (normalizedLongid) {
       const data = await Attester.lookupLongid(normalizedLongid);
       if (data.pubkey) {
-        const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, data.pubkey);
-
-        if (replacedHtmlSafe) {
-          $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-          $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
-        }
+        pubkey = data.pubkey;
       } else {
-        await Ui.modal.warning('Could not find any new public keys');
+        await Ui.modal.warning('Can\'t lookup your fingerprint');
+        return;
       }
     } else {
-      await Ui.modal.warning('Incorrect fingerprint format');
+      pubkey = value;
+    }
+    const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, pubkey);
+    if (replacedHtmlSafe && replacedHtmlSafe !== value) {
+      $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
+      $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+    } else {
+      await Ui.modal.warning('Could not find any new public keys');
     }
   };
 
