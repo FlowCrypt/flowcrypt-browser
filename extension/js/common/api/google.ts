@@ -490,7 +490,7 @@ export class Google extends EmailProviderApi {
     }
     const newValidResults = await Promise.all(rawParsedResults
       .filter(r => r.address && Str.isEmailValid(r.address))
-      .map(({ address, name }) => Store.dbContactObj({ email: address!, name: name }))); // address! because we .filter based on r.address being truthy
+      .map(({ address, name }) => Store.dbContactObj({ email: address!, name }))); // address! because we .filter based on r.address being truthy
     const uniqueNewValidResults: Contact[] = [];
     for (const newValidRes of newValidResults) {
       if (allResults.map(c => c.email).indexOf(newValidRes.email) === -1) {

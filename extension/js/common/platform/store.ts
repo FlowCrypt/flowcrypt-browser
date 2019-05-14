@@ -20,7 +20,7 @@ type StoredComposeDraftMeta = { recipients: string[], subject: string, date: num
 type StoredAdminCode = { date: number, codes: string[] };
 export type DbContactObjArg = {
   email: string, name?: string | null, client?: string | null, pubkey?: string | null,
-  pendingLookup?: boolean | number | null, lastUse?: number | null
+  pendingLookup?: boolean | number | null, lastUse?: number | null, lastSig?: number | null,
 };
 export type EmailProvider = 'gmail';
 
@@ -29,10 +29,17 @@ export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: n
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
 export type ContactUpdate = {
-  email?: string; name?: string | null; pubkey?: string; has_pgp?: 0 | 1; searchable?: string[];
-  client?: string | null; fingerprint?: string | null; longid?: string | null; keywords?: string | null;
-  pending_lookup?: number; last_use?: number | null;
-  date?: number | null; /* todo - should be removed. email provider search seems to return this? */
+  email?: string;
+  name?: string | null;
+  pubkey?: string;
+  has_pgp?: 0 | 1;
+  searchable?: string[];
+  client?: string | null;
+  fingerprint?: string | null;
+  longid?: string | null;
+  keywords?: string | null;
+  pending_lookup?: number;
+  last_use?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
   | SubscriptionAttempt | SubscriptionInfo | GmailRes.OpenId;
@@ -512,7 +519,7 @@ export class Store {
     return index;
   }
 
-  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse }: DbContactObjArg): Promise<Contact> => {
+  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig }: DbContactObjArg): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
@@ -530,7 +537,6 @@ export class Store {
       keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
       pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
       last_use: lastUse || null, // tslint:disable-line:no-null-keyword
-      date: null, // tslint:disable-line:no-null-keyword
     };
   }
 

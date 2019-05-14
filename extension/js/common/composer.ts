@@ -903,7 +903,7 @@ export class Composer {
           const ksContact = await this.app.storageContactObj({
             email,
             name: dbContact && dbContact.name ? dbContact.name : undefined,
-            client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up. Should say flowcrypt|pgp-other. But is already in storage, so fixing this involves a migration
+            client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
             pubkey: lookupResult.pubkey,
             lastUse: Date.now()
           });
@@ -1322,7 +1322,7 @@ export class Composer {
               const [inDb] = await this.app.storageContactGet([contact.email]);
               this.debug(`searchContacts 5`);
               if (!inDb) {
-                await this.app.storageContactSave(await this.app.storageContactObj({ email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.date }));
+                await this.app.storageContactSave(await this.app.storageContactObj({ email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use }));
               } else if (!inDb.name && contact.name) {
                 const toUpdate = { name: contact.name };
                 await this.app.storageContactUpdate(contact.email, toUpdate);

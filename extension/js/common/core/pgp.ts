@@ -39,10 +39,17 @@ export namespace PgpMsgMethod {
 }
 
 export type Contact = {
-  email: string; name: string | null; pubkey: string | null; has_pgp: 0 | 1; searchable: string[];
-  client: string | null; fingerprint: string | null; longid: string | null; keywords: string | null;
-  pending_lookup: number; last_use: number | null;
-  date: number | null; /* todo - should be removed. email provider search seems to return this? */
+  email: string;
+  name: string | null;
+  pubkey: string | null;
+  has_pgp: 0 | 1;
+  searchable: string[];
+  client: string | null;
+  fingerprint: string | null;
+  longid: string | null;
+  keywords: string | null;
+  pending_lookup: number;
+  last_use: number | null;
 };
 
 export interface PrvKeyInfo {
