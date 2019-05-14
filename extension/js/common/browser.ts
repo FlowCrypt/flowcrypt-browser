@@ -559,5 +559,4 @@ export class Xss {
     }
     return Xss.HREF_REGEX_CACHE;
   }
-
 }

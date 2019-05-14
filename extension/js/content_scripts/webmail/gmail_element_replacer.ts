@@ -111,23 +111,28 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private replaceConvoBtns = (force: boolean = false) => {
     const convoUpperIcons = $('div.ade:visible');
-    const useEncryptionInThisConvo = $('iframe.pgp_block').filter(':visible').length || force;
+    const isEncrypted = $('iframe.pgp_block').filter(':visible').length;
+    const useEncryptionInThisConvo = isEncrypted || force;
     // reply buttons
-    if (useEncryptionInThisConvo) {
-      const visibleReplyBtns = $('td.acX:visible');
-      if (visibleReplyBtns.not('.replaced').length) { // last reply button in convo gets replaced
-        const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced');
-        const hasVisibleReplacements = visibleReplyBtns.filter('.replaced').length > 0;
-        const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
-        if (!hasVisibleReplacements && convoReplyBtnsToReplaceArr.length) {
-          // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
-          const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
-          $(lastReplyBtn).addClass('replaced').html(this.factory.btnReply()); // xss-safe-factory
-          $(lastReplyBtn).click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
+    const visibleReplyBtns = $('td.acX:visible');
+    if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
+      const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced, .inserted');
+      const hasVisibleReplacements = visibleReplyBtns.filter('.replaced, .inserted').length > 0;
+      const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
+      if (!hasVisibleReplacements && convoReplyBtnsToReplaceArr.length) {
+        // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
+        const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
+        if (isEncrypted) {
+          $(lastReplyBtn).addClass('replaced').html(this.factory.btnReply()) // xss-safe-factory
+            .click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
+        } else {
+          $(lastReplyBtn).addClass('inserted');
+          $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last())
+            .click(Ui.event.prevent('double', Catch.try(() => this.replaceStandardReplyBox(true, true)))); // xss-safe-factory
         }
-        for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
-          $(replyBtn).addClass('replaced').text(''); // hide all except last
-        }
+      }
+      for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
+        $(replyBtn).addClass('replaced').text(''); // hide all except last
       }
     }
     // conversation top-right icon buttons
@@ -136,14 +141,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         if (!convoUpperIcons.is('.appended') || convoUpperIcons.find('.use_secure_reply').length) { // either not appended, or appended icon is outdated (convo switched to encrypted)
           this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithoutFc(), '.show_original_conversation', () => {
             convoUpperIcons.find('.gZ').click();
-          });
-        }
-      } else {
-        if (!convoUpperIcons.is('.appended')) {
-          this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithFc(), '.use_secure_reply', () => {
-            this.replaceConvoBtns(true);
-            this.replaceStandardReplyBox(true, true);
-            this.scrollToBottomOfConvo();
           });
         }
       }
