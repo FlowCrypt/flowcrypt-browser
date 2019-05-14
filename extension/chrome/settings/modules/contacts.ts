@@ -15,6 +15,7 @@ import { Attester } from '../../../js/common/api/attester.js';
 import { normalizeLongId } from '../../../js/common/platform/util.js';
 import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Api } from '../../../js/common/api/api.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
@@ -97,27 +98,34 @@ Catch.try(async () => {
   };
 
   const actionProcessBulkImportTextInput = async () => {
-    const value = String($('#bulk_import .input_pubkey').val());
-    const normalizedLongid = normalizeLongId(value);
-    let pubkey: string;
+    try {
+      const value = String($('#bulk_import .input_pubkey').val());
+      const normalizedLongid = normalizeLongId(value);
+      let pubkey: string;
 
-    if (normalizedLongid) {
-      const data = await Attester.lookupLongid(normalizedLongid);
-      if (data.pubkey) {
-        pubkey = data.pubkey;
+      if (normalizedLongid) {
+        const data = await Attester.lookupLongid(normalizedLongid);
+        if (data.pubkey) {
+          pubkey = data.pubkey;
+        } else {
+          await Ui.modal.warning('Can\'t lookup your fingerprint');
+          return;
+        }
       } else {
-        await Ui.modal.warning('Can\'t lookup your fingerprint');
-        return;
+        pubkey = value;
       }
-    } else {
-      pubkey = value;
-    }
-    const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, pubkey);
-    if (replacedHtmlSafe && replacedHtmlSafe !== value) {
-      $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-      $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
-    } else {
-      await Ui.modal.warning('Could not find any new public keys');
+      const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, pubkey);
+      if (replacedHtmlSafe && replacedHtmlSafe !== value) {
+        $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
+        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+      } else {
+        await Ui.modal.warning('Could not find any new public keys');
+      }
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
+      }
+      await Ui.modal.error(`There was an error trying to find this public key.\n\n${Api.err.eli5(e)}`);
     }
   };
 
