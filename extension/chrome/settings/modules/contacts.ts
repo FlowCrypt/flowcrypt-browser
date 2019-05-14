@@ -5,23 +5,25 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Xss, Ui, Browser, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Buf } from '../../../js/common/core/buf.js';
-import { Assert } from '../../../js/common/assert.js';
-import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
 import { processPublicKeyFileImport } from '../../../js/common/ui/key_import_ui.js';
+import { Attester } from '../../../js/common/api/attester.js';
+import { normalizeLongId } from '../../../js/common/platform/util.js';
+import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
+import { Assert } from '../../../js/common/assert.js';
 
 Catch.try(async () => {
-
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
 
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const tabId = await BrowserMsg.requiredTabId();
 
   const factory = new XssSafeFactory(acctEmail, tabId, undefined, undefined, { compact: true });
+
   const backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   const space = '&nbsp;&nbsp;&nbsp;&nbsp;';
 
@@ -95,12 +97,22 @@ Catch.try(async () => {
   };
 
   const actionProcessBulkImportTextInput = async () => {
-    const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, String($('#bulk_import .input_pubkey').val()));
-    if (!replacedHtmlSafe || replacedHtmlSafe === $('#bulk_import .input_pubkey').val()) {
-      await Ui.modal.warning('Could not find any new public keys');
+    const fingerprint = String($('#bulk_import .input_pubkey').val());
+    const normalizedLongid = normalizeLongId(fingerprint);
+    if (normalizedLongid) {
+      const data = await Attester.lookupLongid(normalizedLongid);
+      if (data.pubkey) {
+        const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, data.pubkey);
+
+        if (replacedHtmlSafe) {
+          $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
+          $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+        }
+      } else {
+        await Ui.modal.warning('Could not find any new public keys');
+      }
     } else {
-      $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-      $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+      await Ui.modal.warning('Incorrect fingerprint format');
     }
   };
 

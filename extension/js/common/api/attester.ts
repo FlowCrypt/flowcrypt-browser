@@ -36,6 +36,10 @@ export class Attester extends Api {
     }
   }
 
+  public static lookupFingerprint = async (fingerprint: string) => {
+    return await Attester.pubCall(`lookup/${fingerprint}`);
+  }
+
   public static lookupEmails = async (emails: string[]): Promise<Dict<PubkeySearchResult>> => {
     const results: Dict<PubkeySearchResult> = {};
     await Promise.all(emails.map(async (email: string) => {
