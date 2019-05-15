@@ -95,9 +95,9 @@ Catch.try(async () => {
     if (pubs.length > 1) {
       const contacts: Contact[] = [];
       for (const pubkey of pubs) {
-        const emailAddr = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
-        if (Str.isEmailValid(emailAddr)) {
-          contacts.push(await Store.dbContactObj(emailAddr, undefined, 'pgp', pubkey.armor(), false, Date.now()));
+        const email = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
+        if (Str.isEmailValid(email)) {
+          contacts.push(await Store.dbContactObj({ email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey) }));
         }
       }
       await Store.dbContactSave(undefined, contacts);
@@ -105,7 +105,9 @@ Catch.try(async () => {
       $('.input_email').remove();
     } else if (pubs.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
-        const contact = await Store.dbContactObj(String($('.input_email').val()), undefined, 'pgp', pubs[0].armor(), false, Date.now());
+        const contact = await Store.dbContactObj({
+          email: String($('.input_email').val()), client: 'pgp', pubkey: pubs[0].armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubs[0]),
+        });
         await Store.dbContactSave(undefined, contact);
         Xss.sanitizeReplace(target, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();

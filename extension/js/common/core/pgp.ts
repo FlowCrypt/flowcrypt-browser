@@ -39,10 +39,19 @@ export namespace PgpMsgMethod {
 }
 
 export type Contact = {
-  email: string; name: string | null; pubkey: string | null; has_pgp: 0 | 1; searchable: string[];
-  client: string | null; fingerprint: string | null; longid: string | null; keywords: string | null;
-  pending_lookup: number; last_use: number | null;
-  date: number | null; /* todo - should be removed. email provider search seems to return this? */
+  email: string;
+  name: string | null;
+  pubkey: string | null;
+  has_pgp: 0 | 1;
+  searchable: string[];
+  client: string | null;
+  fingerprint: string | null;
+  longid: string | null;
+  keywords: string | null;
+  pending_lookup: number;
+  last_use: number | null;
+  pubkey_last_sig: number | null;
+  pubkey_last_check: number | null;
 };
 
 export interface PrvKeyInfo {
@@ -388,6 +397,26 @@ export class Pgp {
         created,
       };
     },
+    /**
+     * Get latest self-signature date, in utc millis.
+     * This is used to figure out how recently was key updated, and if one key is newer than other.
+     */
+    lastSig: async (key: OpenPGP.key.Key): Promise<number> => {
+      await key.getExpirationTime(); // will force all sigs to be verified
+      const allSignatures: OpenPGP.packet.Signature[] = [];
+      for (const user of key.users) {
+        allSignatures.push(...user.selfCertifications);
+      }
+      for (const subKey of key.subKeys) {
+        allSignatures.push(...subKey.bindingSignatures);
+      }
+      allSignatures.sort((a, b) => b.created.getTime() - a.created.getTime());
+      const newestSig = allSignatures.find(sig => sig.verified === true);
+      if (newestSig) {
+        return newestSig.created.getTime();
+      }
+      throw new Error('No valid signature found in key');
+    }
   };
 
   public static password = {
