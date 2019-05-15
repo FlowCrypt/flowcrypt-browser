@@ -218,6 +218,18 @@ export class KeyImportUi {
       throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
     }
   }
+
+  public static normalizeLongId = (longid: string) => {
+    let result = longid.trim().replace(/0x|\s|:|-/g, '').toUpperCase();
+    if (result.length >= 16) {
+      result = result.substring(result.length - 16);
+      if (result.match(/[A-F0-9]{16}/g)) {
+        return result;
+      }
+    }
+    return;
+  }
+
 }
 
 /*

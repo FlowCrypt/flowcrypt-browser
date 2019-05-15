@@ -10,9 +10,8 @@ import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
-import { processPublicKeyFileImport } from '../../../js/common/ui/key_import_ui.js';
+import { processPublicKeyFileImport, KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 import { Attester } from '../../../js/common/api/attester.js';
-import { normalizeLongId } from '../../../js/common/platform/util.js';
 import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Api } from '../../../js/common/api/api.js';
@@ -100,9 +99,8 @@ Catch.try(async () => {
   const actionProcessBulkImportTextInput = async () => {
     try {
       const value = String($('#bulk_import .input_pubkey').val());
-      const normalizedLongid = normalizeLongId(value);
+      const normalizedLongid = KeyImportUi.normalizeLongId(value);
       let pubkey: string;
-
       if (normalizedLongid) {
         const data = await Attester.lookupLongid(normalizedLongid);
         if (data.pubkey) {
