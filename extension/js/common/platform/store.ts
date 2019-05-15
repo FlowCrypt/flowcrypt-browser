@@ -19,8 +19,14 @@ type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
 export type DbContactObjArg = {
-  email: string, name?: string | null, client?: string | null, pubkey?: string | null,
-  pendingLookup?: boolean | number | null, lastUse?: number | null, lastSig?: number | null,
+  email: string,
+  name?: string | null,
+  client?: string | null,
+  pubkey?: string | null,
+  pendingLookup?: boolean | number | null,
+  lastUse?: number | null, // when was this contact last used to send an email
+  lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
+  lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
 };
 export type EmailProvider = 'gmail';
 
@@ -41,6 +47,7 @@ export type ContactUpdate = {
   pending_lookup?: number;
   last_use?: number | null;
   pubkey_last_sig?: number | null;
+  pubkey_last_check?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
   | SubscriptionAttempt | SubscriptionInfo | GmailRes.OpenId;
@@ -520,7 +527,7 @@ export class Store {
     return index;
   }
 
-  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig }: DbContactObjArg): Promise<Contact> => {
+  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }: DbContactObjArg): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
@@ -542,6 +549,7 @@ export class Store {
       pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
       last_use: lastUse || null, // tslint:disable-line:no-null-keyword
       pubkey_last_sig: lastSig || null, // tslint:disable-line:no-null-keyword
+      pubkey_last_check: lastCheck || null, // tslint:disable-line:no-null-keyword
     };
   }
 
@@ -592,7 +600,7 @@ export class Store {
           }
           const tx = db.transaction('contacts', 'readwrite');
           const contactsTable = tx.objectStore('contacts');
-          contactsTable.put(await Store.dbContactObj({ email, ...contact }));
+          contactsTable.put(contact);
           tx.oncomplete = Catch.try(resolve);
           tx.onabort = () => reject(Store.errCategorize(tx.error));
         }

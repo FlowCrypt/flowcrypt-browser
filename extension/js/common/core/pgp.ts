@@ -51,6 +51,7 @@ export type Contact = {
   pending_lookup: number;
   last_use: number | null;
   pubkey_last_sig: number | null;
+  pubkey_last_check: number | null;
 };
 
 export interface PrvKeyInfo {

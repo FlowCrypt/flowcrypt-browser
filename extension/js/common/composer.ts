@@ -879,10 +879,44 @@ export class Composer {
     }
   }
 
+  private checkAttesterForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
+    try {
+      if (!contact.pubkey || !contact.longid) {
+        return;
+      }
+      if (!contact.pubkey_last_sig) {
+        const lastSig = await Pgp.key.lastSig(await Pgp.key.read(contact.pubkey));
+        contact.pubkey_last_sig = lastSig;
+        await this.app.storageContactUpdate(contact.email, { pubkey_last_sig: lastSig })
+      }
+      if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
+        const { pubkey: fetchedPubkey } = await Attester.lookupLongid(contact.longid);
+        if (fetchedPubkey) {
+          const fetchedLastSig = await Pgp.key.lastSig(await Pgp.key.read(fetchedPubkey));
+          if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
+            console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
+            await this.app.storageContactUpdate(contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+            return;
+          }
+        }
+        // we checked for newer key and it did not result in updating the key, don't check again for another week
+        await this.app.storageContactUpdate(contact.email, { pubkey_last_check: Date.now() });
+      }
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        throw e; // insignificant (temporary) errors ignored
+      }
+    }
+  }
+
   private lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
     this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.0`);
     const [dbContact] = await this.app.storageContactGet([email]);
     if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
+      // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
+      // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
+      //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
+      this.checkAttesterForNewerVersionOfKnownPubkeyIfNeeded(dbContact).catch(Catch.reportErr);
       return dbContact;
     } else {
       try {
@@ -905,7 +939,8 @@ export class Composer {
             name: dbContact && dbContact.name ? dbContact.name : undefined,
             client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
             pubkey: lookupResult.pubkey,
-            lastUse: Date.now()
+            lastUse: Date.now(),
+            lastCheck: Date.now(),
           });
           this.ksLookupsByEmail[email] = ksContact;
           await this.app.storageContactSave(ksContact);
