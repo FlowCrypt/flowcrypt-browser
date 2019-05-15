@@ -410,11 +410,9 @@ export class Pgp {
         allSignatures.push(...subKey.bindingSignatures);
       }
       allSignatures.sort((a, b) => b.created.getTime() - a.created.getTime());
-      while (allSignatures.length) {
-        const sig = allSignatures.shift()!;
-        if (sig.verified) {
-          return sig.created.getTime();
-        }
+      const newestSig = allSignatures.find(sig => sig.verified === true);
+      if (newestSig) {
+        return newestSig.created.getTime();
       }
       throw new Error('No valid signature found in key');
     }
