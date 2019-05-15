@@ -887,7 +887,7 @@ export class Composer {
       if (!contact.pubkey_last_sig) {
         const lastSig = await Pgp.key.lastSig(await Pgp.key.read(contact.pubkey));
         contact.pubkey_last_sig = lastSig;
-        await this.app.storageContactUpdate(contact.email, { pubkey_last_sig: lastSig })
+        await this.app.storageContactUpdate(contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
         const { pubkey: fetchedPubkey } = await Attester.lookupLongid(contact.longid);
