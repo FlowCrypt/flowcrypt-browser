@@ -4,7 +4,7 @@
 
 /**
  * Functions which must be written differently to run in NodeJS versus in web browsers.
- * 
+ *
  * If the code would be the same on both platforms, it does not belong here (or anywhere in platform/ directory)
  */
 
