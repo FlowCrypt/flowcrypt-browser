@@ -401,6 +401,7 @@ export class Pgp {
      * This is used to figure out how recently was key updated, and if one key is newer than other.
      */
     lastSig: async (key: OpenPGP.key.Key): Promise<number> => {
+      await key.getExpirationTime(); // will force all sigs to be verified
       const allSignatures: OpenPGP.packet.Signature[] = [];
       for (const user of key.users) {
         allSignatures.push(...user.selfCertifications);
@@ -411,7 +412,7 @@ export class Pgp {
       allSignatures.sort((a, b) => b.created.getTime() - a.created.getTime());
       while (allSignatures.length) {
         const sig = allSignatures.shift()!;
-        if (sig.verified) { // todo - sigs that were not yet verified may be ignored - this may need fixing
+        if (sig.verified) {
           return sig.created.getTime();
         }
       }
