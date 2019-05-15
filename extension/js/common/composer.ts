@@ -663,7 +663,7 @@ export class Composer {
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
       await this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
-        await this.signSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
+        await this.signSend(recipients, subject, plaintext);
       } else {
         await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
       }
@@ -686,7 +686,7 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private signSend = async (recipients: string[], subject: string, plaintext: string) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
     if (primaryKi) {
@@ -695,7 +695,7 @@ export class Composer {
       if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((typeof await this.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
-          await this.signSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
+          await this.signSend(recipients, subject, plaintext);
         } else { // timeout - reset - no passphrase entered
           clearInterval(this.passphraseInterval);
           this.resetSendBtn();
