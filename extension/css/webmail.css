@@ -18,11 +18,11 @@ body.cryptup_inbox div.new_message_button > img { width: 28px; padding: 6px; pad
 body.cryptup_inbox .pgp_message_container .nk .tq:first-child { display: none !important; } /* reply, reply all, forward in menu next to encrypted messages */
 
 /* buttons body.cryptup_gmail */
-body.cryptup_gmail div.reply_message_button { cursor: pointer; min-width: 30px; font-size: 15px;
-  padding: 15px 8px; border-radius: 2px; border: 1px solid transparent; opacity: 0.8; position: relative; }
-body.cryptup_gmail .inserted div.reply_message_button { display: inline-flex; padding: 24px 10px 4px 10px; }
-body.cryptup_gmail div.reply_message_button i { margin-right: 12px; }
-body.cryptup_gmail div.reply_message_button > img { width: 30px; position: absolute; left: 0; right: 0; top: 4px; margin: 0 auto;}
+body.cryptup_gmail .inserted div.reply_message_button { position: relative; display: inline-flex; padding: 20px 12px 4px 10px; opacity: 0.75; 
+  margin-left: 18px; margin-right: 8px }
+body.cryptup_gmail.firefox .inserted div.reply_message_button { padding-top: 16px; } /* else buttons misaligned vertically on FF */
+body.cryptup_gmail .inserted div.reply_message_button:hover { opacity: 0.9; cursor: pointer; }
+body.cryptup_gmail div.reply_message_button > img { width: 28px; position: absolute; left: 0; right: 0; top: 3px; margin: 0 auto;}
 body.cryptup_gmail_standard div.new_message_button { background: #31A217; }
 body.cryptup_gmail_standard .z0 .T-I { min-width: 105px; }
 body.cryptup_gmail_new div.new_message_button:hover { background-color: #fafafb; }
@@ -31,8 +31,8 @@ body.cryptup_gmail div.ade.appended span.cryptup_convo_button > span { text-tran
   display: inline-block; border-radius: 2px; cursor: default; }
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button:hover > img, div.ade.appended span.cryptup_convo_button:hover > span { opacity: 1; }
 body.cryptup_gmail div.ade.appended span.cryptup_convo_button:not(:first-child) { margin-left: 5px; }
-body.cryptup_gmail.cryptup_gmail_new div.reply_message_button { margin-left: 18px; zoom: 0.8; }
 body.cryptup_gmail.cryptup_gmail_new div.ade.appended span.cryptup_convo_button { margin-left: 18px; zoom: 1.2; }
+
 
 /* buttons body.cryptup_outlook */
 body.cryptup_outlook .cryptup_compose_button_container { display: inline-block; width: 30px; }

@@ -5,6 +5,7 @@
 import { ContentScriptWindow } from './extension.js';
 import { Ui, SelCache, WebMailName } from './browser.js';
 import { XssSafeFactory, WebmailVariantString } from './xss_safe_factory.js';
+import { Catch } from './platform/catch.js';
 
 export class Injector {
 
@@ -32,7 +33,7 @@ export class Injector {
   }
 
   meta = () => {
-    this.S.cached('body').addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant}`)
+    this.S.cached('body').addClass(`cryptup_${this.webmailName} cryptup_${this.webmailName}_${this.webmailVariant} ${Catch.browser().name}`)
       .append(this.factory.metaStylesheet('webmail') + this.factory.metaNotificationContainer());  // xss-safe-factory
   }
 
