@@ -180,6 +180,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const msgId = this.determineMsgId(attsContainer);
         if (msgId) {
           if (this.canReadEmails) {
+            debugger;
             Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
             try {
               const msg = await Google.gmail.msgGet(this.acctEmail, msgId, 'full');
@@ -220,7 +221,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const a of attMetas) {
       const treatAs = a.treatAs();
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), new RegExp(`^${Str.regexEscape(a.name)}$`)).first();
+      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)).first();
       try {
         if (treatAs !== 'plainFile') {
           this.hideAtt(attSel, attsContainerInner);
