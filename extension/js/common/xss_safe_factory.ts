@@ -207,7 +207,7 @@ export class XssSafeFactory {
   }
 
   btnReply = () => {
-    return `<div class="${this.destroyableCls} reply_message_button"><img src="${this.srcImg('svgs/reply-icon.svg')}" /></div>`;
+    return `<div class="${this.destroyableCls} reply_message_button"><img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" /></div>`;
   }
 
   btnWithoutFc = () => {

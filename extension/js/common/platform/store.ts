@@ -18,6 +18,16 @@ type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
+export type DbContactObjArg = {
+  email: string,
+  name?: string | null,
+  client?: string | null,
+  pubkey?: string | null,
+  pendingLookup?: boolean | number | null,
+  lastUse?: number | null, // when was this contact last used to send an email
+  lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
+  lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
+};
 export type EmailProvider = 'gmail';
 
 export type KeyBackupMethod = 'file' | 'inbox' | 'none' | 'print';
@@ -25,10 +35,19 @@ export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: n
 export type StorageType = 'session' | 'local';
 export type FlatTypes = null | undefined | number | string | boolean;
 export type ContactUpdate = {
-  email?: string; name?: string | null; pubkey?: string; has_pgp?: 0 | 1; searchable?: string[];
-  client?: string | null; fingerprint?: string | null; longid?: string | null; keywords?: string | null;
-  pending_lookup?: number; last_use?: number | null;
-  date?: number | null; /* todo - should be removed. email provider search seems to return this? */
+  email?: string;
+  name?: string | null;
+  pubkey?: string;
+  has_pgp?: 0 | 1;
+  searchable?: string[];
+  client?: string | null;
+  fingerprint?: string | null;
+  longid?: string | null;
+  keywords?: string | null;
+  pending_lookup?: number;
+  last_use?: number | null;
+  pubkey_last_sig?: number | null;
+  pubkey_last_check?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
   | SubscriptionAttempt | SubscriptionInfo | GmailRes.OpenId;
@@ -469,7 +488,7 @@ export class Store {
           contacts.createIndex('index_pending_lookup', 'pending_lookup');
         }
         if (event.oldVersion < 2) {
-          contacts = openDbReq.transaction!.objectStore('contacts'); // todo - added ! after ts3 upgrade - investigate
+          contacts = openDbReq.transaction!.objectStore('contacts');
           contacts.createIndex('index_longid', 'longid');
         }
       };
@@ -508,11 +527,14 @@ export class Store {
     return index;
   }
 
-  static dbContactObj = async (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean | number, lastUse?: number): Promise<Contact> => {
+  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }: DbContactObjArg): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
     email = Str.parseEmail(email).email;
     if (!Str.isEmailValid(email)) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
+    }
+    if (!lastSig && pubkey) {
+      lastSig = await Pgp.key.lastSig(await Pgp.key.read(pubkey));
     }
     return {
       email,
@@ -526,7 +548,8 @@ export class Store {
       keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
       pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
       last_use: lastUse || null, // tslint:disable-line:no-null-keyword
-      date: null, // tslint:disable-line:no-null-keyword
+      pubkey_last_sig: lastSig || null, // tslint:disable-line:no-null-keyword
+      pubkey_last_check: lastCheck || null, // tslint:disable-line:no-null-keyword
     };
   }
 
@@ -564,7 +587,7 @@ export class Store {
         } else {
           let [contact] = await Store.dbContactGet(db, [email]);
           if (!contact) { // updating a non-existing contact, insert it first
-            await Store.dbContactSave(db, await Store.dbContactObj(email, undefined, undefined, undefined, false, undefined));
+            await Store.dbContactSave(db, await Store.dbContactObj({ email }));
             [contact] = await Store.dbContactGet(db, [email]);
             if (!contact) {
               reject(new Error('contact not found right after inserting it'));
@@ -577,14 +600,7 @@ export class Store {
           }
           const tx = db.transaction('contacts', 'readwrite');
           const contactsTable = tx.objectStore('contacts');
-          contactsTable.put(await Store.dbContactObj(
-            email,
-            contact.name || undefined,
-            contact.client || undefined,
-            contact.pubkey || undefined,
-            contact.pending_lookup,
-            contact.last_use || undefined
-          ));
+          contactsTable.put(contact);
           tx.oncomplete = Catch.try(resolve);
           tx.onabort = () => reject(Store.errCategorize(tx.error));
         }

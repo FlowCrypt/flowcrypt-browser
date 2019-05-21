@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch, UnreportableError } from './platform/catch.js';
-import { Store, Subscription, ContactUpdate } from './platform/store.js';
+import { Store, Subscription, ContactUpdate, DbContactObjArg } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
@@ -38,7 +38,7 @@ interface ComposerAppFunctionsInterface {
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
   storageContactSave: (contact: Contact) => Promise<void>;
   storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
-  storageContactObj: (email: string, name?: string, client?: string, pubkey?: string, pendingLookup?: boolean, lastUse?: number) => Promise<Contact>;
+  storageContactObj: (o: DbContactObjArg) => Promise<Contact>;
   emailProviderDraftGet: (draftId: string) => Promise<GmailRes.GmailDraftGet | undefined>;
   emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<GmailRes.GmailDraftCreate>;
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<GmailRes.GmailDraftUpdate>;
@@ -663,7 +663,7 @@ export class Composer {
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
       await this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
-        await this.signSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
+        await this.signSend(recipients, subject, plaintext);
       } else {
         await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
       }
@@ -686,7 +686,7 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private signSend = async (recipients: string[], subject: string, plaintext: string) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
     if (primaryKi) {
@@ -695,7 +695,7 @@ export class Composer {
       if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((typeof await this.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
-          await this.signSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
+          await this.signSend(recipients, subject, plaintext);
         } else { // timeout - reset - no passphrase entered
           clearInterval(this.passphraseInterval);
           this.resetSendBtn();
@@ -879,10 +879,44 @@ export class Composer {
     }
   }
 
+  private checkAttesterForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
+    try {
+      if (!contact.pubkey || !contact.longid) {
+        return;
+      }
+      if (!contact.pubkey_last_sig) {
+        const lastSig = await Pgp.key.lastSig(await Pgp.key.read(contact.pubkey));
+        contact.pubkey_last_sig = lastSig;
+        await this.app.storageContactUpdate(contact.email, { pubkey_last_sig: lastSig });
+      }
+      if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
+        const { pubkey: fetchedPubkey } = await Attester.lookupLongid(contact.longid);
+        if (fetchedPubkey) {
+          const fetchedLastSig = await Pgp.key.lastSig(await Pgp.key.read(fetchedPubkey));
+          if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
+            console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
+            await this.app.storageContactUpdate(contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+            return;
+          }
+        }
+        // we checked for newer key and it did not result in updating the key, don't check again for another week
+        await this.app.storageContactUpdate(contact.email, { pubkey_last_check: Date.now() });
+      }
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        throw e; // insignificant (temporary) errors ignored
+      }
+    }
+  }
+
   private lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
     this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.0`);
     const [dbContact] = await this.app.storageContactGet([email]);
     if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
+      // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
+      // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
+      //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
+      this.checkAttesterForNewerVersionOfKnownPubkeyIfNeeded(dbContact).catch(Catch.reportErr);
       return dbContact;
     } else {
       try {
@@ -900,16 +934,14 @@ export class Composer {
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
           }
-          const ksContact = await this.app.storageContactObj(
+          const ksContact = await this.app.storageContactObj({
             email,
-            dbContact && dbContact.name ? dbContact.name : undefined,
-            // todo - clean up. Should say flowcrypt|pgp-other
-            // But is already in storage, so fixing this involves a migration
-            lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp',
-            lookupResult.pubkey || undefined,
-            false,
-            Date.now()
-          );
+            name: dbContact && dbContact.name ? dbContact.name : undefined,
+            client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
+            pubkey: lookupResult.pubkey,
+            lastUse: Date.now(),
+            lastCheck: Date.now(),
+          });
           this.ksLookupsByEmail[email] = ksContact;
           await this.app.storageContactSave(ksContact);
           return ksContact;
@@ -1325,14 +1357,7 @@ export class Composer {
               const [inDb] = await this.app.storageContactGet([contact.email]);
               this.debug(`searchContacts 5`);
               if (!inDb) {
-                await this.app.storageContactSave(await this.app.storageContactObj(
-                  contact.email,
-                  contact.name || undefined,
-                  undefined,
-                  undefined,
-                  true,
-                  contact.date ? new Date(contact.date).getTime() : undefined,
-                ));
+                await this.app.storageContactSave(await this.app.storageContactObj({ email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use }));
               } else if (!inDb.name && contact.name) {
                 const toUpdate = { name: contact.name };
                 await this.app.storageContactUpdate(contact.email, toUpdate);
