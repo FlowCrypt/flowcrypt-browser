@@ -180,7 +180,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const msgId = this.determineMsgId(attsContainer);
         if (msgId) {
           if (this.canReadEmails) {
-            debugger;
             Xss.sanitizePrepend(newPgpAtts, this.factory.embeddedAttaStatus('Getting file info..' + Ui.spinner('green')));
             try {
               const msg = await Google.gmail.msgGet(this.acctEmail, msgId, 'full');
