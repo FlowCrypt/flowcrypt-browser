@@ -19,7 +19,7 @@ Catch.try(async () => {
     }
     const origBtnContent = $(self).html();
     Xss.sanitizeRender(self, 'Evaluating.. ' + Ui.spinner('white'));
-    await performKeyCompatabilityTests(keyString);
+    await performKeyCompatibilityTests(keyString);
     Xss.sanitizeRender(self, origBtnContent);
   }));
 
@@ -161,7 +161,7 @@ Catch.try(async () => {
     }
   };
 
-  const performKeyCompatabilityTests = async (keyString: string) => {
+  const performKeyCompatibilityTests = async (keyString: string) => {
     $('pre').text('').css('display', 'block');
     testIndex = 1;
     try {

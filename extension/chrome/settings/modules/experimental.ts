@@ -38,7 +38,7 @@ Catch.try(async () => {
       window.location.reload();
     }));
 
-    $('.action_open_compatability').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/compatability.htm')));
+    $('.action_open_compatibility').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/compatibility.htm')));
 
     $('.action_open_decrypt').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt.htm')));
 
