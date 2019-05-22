@@ -336,15 +336,13 @@ Catch.try(async () => {
       await writeBackupDoneAndRender(false, 'inbox');
     } catch(e) {
       if (Api.err.isAuthPopupNeeded(e)) {
-        const result = await Ui.modal.confirm("FlowCrypt needs to recconect your Gmail Account. Reconnect it?");
-        if (result) {
-          const connectResult = await GoogleAuth.newAuthPopup({ acctEmail });
-          if (!connectResult.error) {
+        await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
+        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail });
+        if (!connectResult.error) {
             await setupCreateSimpleAutomaticInboxBackup();
-          }
+        } else {
+          throw e;
         }
-      } else {
-        throw e;
       }
     }
   };
