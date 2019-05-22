@@ -331,8 +331,20 @@ Catch.try(async () => {
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    await doBackupOnEmailProvider(acctEmail, primaryKi.private);
-    await writeBackupDoneAndRender(false, 'inbox');
+    try {
+      await doBackupOnEmailProvider(acctEmail, primaryKi.private);
+      await writeBackupDoneAndRender(false, 'inbox');
+    } catch(e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
+        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail });
+        if (!connectResult.error) {
+            await setupCreateSimpleAutomaticInboxBackup();
+        } else {
+          throw e;
+        }
+      }
+    }
   };
 
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
