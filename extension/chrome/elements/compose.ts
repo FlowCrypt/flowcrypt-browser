@@ -19,7 +19,6 @@ import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 Catch.try(async () => {
 
   Ui.event.protect();
-
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
     'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
@@ -69,8 +68,13 @@ Catch.try(async () => {
       threadId = gmailMsg.threadId;
     }
     const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'),
-      (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
-    to = to.length ? to : reply.to;
+    (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
+    const replyTo = Google.gmail.findHeader(gmailMsg, 'reply-to');
+    if (replyTo) {
+      to = replyTo.split(',');
+    } else {
+      to = to.length ? to : reply.to;
+    }
     from = from ? from : reply.from;
     subject = subject ? subject : Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
@@ -81,7 +85,7 @@ Catch.try(async () => {
   }
 
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
-
+  
   const closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (isReplyBox) {
@@ -92,7 +96,7 @@ Catch.try(async () => {
       BrowserMsg.send.closeNewMessage(parentTabId);
     }
   };
-
+  
   const composer = new Composer({
     canReadEmails: () => canReadEmail,
     doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean | undefined> => {
