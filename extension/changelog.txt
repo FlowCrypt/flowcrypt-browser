@@ -1,5 +1,7 @@
 <div>
 
+version 6.8.1 on May 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/333?closed=1" target="_blank">Reply Button Bugfix</a>
+
 version 6.8.0 on May 23, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/332?closed=1" target="_blank">Bugfixes</a>
 
 version 6.7.9 on May 15, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/331?closed=1" target="_blank">Keep pubkeys up to date</a>
