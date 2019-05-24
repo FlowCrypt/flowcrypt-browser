@@ -85,7 +85,6 @@ Catch.try(async () => {
   }
 
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
-  
   const closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (isReplyBox) {
@@ -96,7 +95,6 @@ Catch.try(async () => {
       BrowserMsg.send.closeNewMessage(parentTabId);
     }
   };
-  
   const composer = new Composer({
     canReadEmails: () => canReadEmail,
     doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean | undefined> => {
