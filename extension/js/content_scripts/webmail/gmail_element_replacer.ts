@@ -130,8 +130,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           element.click(Ui.event.prevent('double', Catch.try(() => this.replaceStandardReplyBox(true, true)))); // xss-safe-factory
         }
       }
-      for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
-        $(replyBtn).addClass('replaced').text(''); // hide all except last
+      if (isEncrypted) {
+        // hide original gmail reply buttons, except for the last one, but ONLY IF this is an encrypted conversation
+        // the reason is that currently encrypted replies only support replying to last message. If some other reply button
+        // was clicked, and FlowCrypt replaced the reply box with an encrypted one mid-message, it would create a false imagination
+        // for the user that they are replying mid-convo, when in fact it would end up replying to the last message anyway
+        // todo - revisit this (and potentially remove) when we support encrypted replies mid-convo
+        for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
+          $(replyBtn).addClass('replaced').text(''); // hide all except last
+        }
       }
     }
     // conversation top-right icon buttons
