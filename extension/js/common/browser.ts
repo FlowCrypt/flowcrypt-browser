@@ -456,7 +456,7 @@ export class Xss {
 
   private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5',
     'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
-  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
+  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index', 'target'];
   private static HREF_REGEX_CACHE: RegExp | undefined;
 
   public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
