@@ -536,7 +536,6 @@ export class Xss {
   }
 
   public static escapeTextAsRenderableHtml = (text: string) => {
-    console.log(text);
     return Xss.escape(text)
       .replace(/\n/g, '<br>\n') // leave newline so that following replaces work
       .replace(/^ +/gm, spaces => spaces.replace(/ /g, '&nbsp;'))
