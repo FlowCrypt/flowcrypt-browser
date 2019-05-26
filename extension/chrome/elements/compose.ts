@@ -32,9 +32,10 @@ Catch.try(async () => {
   const debug = uncheckedUrlParams.debug === true;
   let threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
   let draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
+  let threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
+  // todo - stop getting these 3 below from url params and stop parsing them from dom https://github.com/FlowCrypt/flowcrypt-browser/issues/1493
   let from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
   let to = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
-  let threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
   let subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
   const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_keyserver', 'email_footer', 'email_provider',
@@ -67,16 +68,14 @@ Catch.try(async () => {
     if (gmailMsg.threadId) {
       threadId = gmailMsg.threadId;
     }
-    const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(gmailMsg, 'from'),
-    (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','));
-    const replyTo = Google.gmail.findHeader(gmailMsg, 'reply-to');
-    if (replyTo) {
-      to = replyTo.split(',');
-    } else {
-      to = to.length ? to : reply.to;
-    }
-    from = from ? from : reply.from;
-    subject = subject ? subject : Google.gmail.findHeader(gmailMsg, 'subject') || '';
+    const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], {
+      lmSender: Google.gmail.findHeader(gmailMsg, 'from'),
+      lmRecipients: (Google.gmail.findHeader(gmailMsg, 'to') || '').split(','),
+      lmReplyTo: Google.gmail.findHeader(gmailMsg, 'reply-to'),
+    });
+    to = reply.to;
+    from = reply.from;
+    subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
   })();
 

@@ -12,6 +12,7 @@ import { SendableMsgBody } from '../core/mime.js';
 
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
+type LastMsgHeaders = { lmSender: string | undefined, lmRecipients: string[], lmReplyTo: string | undefined };
 
 export class EmailProviderApi extends Api {
 
@@ -37,10 +38,10 @@ export class EmailProviderApi extends Api {
     };
   }
 
-  public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], lastMsgSender: string | undefined, lastMsgRecipients: string[]) => {
-    const replyToEstimate = lastMsgRecipients;
-    if (lastMsgSender) {
-      replyToEstimate.unshift(lastMsgSender);
+  public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], { lmSender, lmRecipients, lmReplyTo }: LastMsgHeaders) => {
+    const replyToEstimate = lmRecipients;
+    if (lmSender) {
+      replyToEstimate.unshift(lmSender);
     }
     let replyTo: string[] = [];
     let myEmail = acctEmail;
@@ -55,6 +56,9 @@ export class EmailProviderApi extends Api {
     }
     if (!replyTo.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
       replyTo = Value.arr.unique(replyToEstimate);
+    }
+    if (lmReplyTo) {
+      return { to: [lmReplyTo], from: myEmail };
     }
     return { to: replyTo, from: myEmail };
   }

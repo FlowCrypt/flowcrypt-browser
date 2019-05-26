@@ -159,7 +159,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const contenteditable = $(contenteditableEl);
       const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
       if (fcLinkMatch) {
-        let button;
+        let button: string | undefined;
         const [, name, buttonHrefId] = fcLinkMatch;
         if (name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
@@ -426,7 +426,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
-    const headers = Google.determineReplyCorrespondents(this.acctEmail, this.addresses, this.domGetMsgSender(convoRootEl), this.domGetMsgRecipients(convoRootEl));
+    const headers = Google.determineReplyCorrespondents(this.acctEmail, this.addresses, {
+      lmSender: this.domGetMsgSender(convoRootEl),
+      lmRecipients: this.domGetMsgRecipients(convoRootEl),
+      lmReplyTo: undefined, // cannot get this info from DOM, will be later added from API
+    });
     return {
       subject: this.domGetMsgSubject(convoRootEl),
       replyTo: headers.to,
