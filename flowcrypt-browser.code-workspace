@@ -12,6 +12,11 @@
     "files.exclude": {
       "**/node_modules/**": true
     },
+    "errorLens.enabledDiagnosticLevels": [
+      "error"
+    ],
+    "errorLens.errorColor": "#FF00000A",
+    "errorLens.errorTextColor": "#FF000066"
   },
   "folders": [
     {
