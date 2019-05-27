@@ -1,6 +1,6 @@
 <div>
 
-version 6.8.2 on May 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/334?closed=1" target="_blank">Checkout Fix</a>
+version 6.8.2 on May 27, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/334?closed=1" target="_blank">Checkout Fix</a>
 
 version 6.8.1 on May 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/333?closed=1" target="_blank">Reply Button Bugfix</a>
 
