@@ -7,7 +7,7 @@ import { Store, Subscription, ContactUpdate, DbContactObjArg } from './platform/
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
-import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
+import { BrowserMsg, Extension, BrowserWidnow, Bm } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
@@ -77,6 +77,7 @@ export type ComposerUrlParams = {
 type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
 
 export class Composer {
+  private readonly fullWindowClass = 'full_window';
 
   private debugId = Str.sloppyRandom();
 
@@ -148,6 +149,7 @@ export class Composer {
   private btnUpdateTimeout?: number;
   private refBodyHeight?: number;
   private urlParams: ComposerUrlParams;
+  private isMaximized = false;
 
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
@@ -1182,6 +1184,7 @@ export class Composer {
   }
 
   private parseRenderRecipients = async (errsMode: RecipientErrsMode): Promise<boolean> => {
+    debugger;
     this.debug(`parseRenderRecipients(${errsMode})`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
@@ -1614,6 +1617,7 @@ export class Composer {
         });
         this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
       }));
+      $('.popout').click(Ui.event.handle(() => this.toggleFullScreen()));
       this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
     }
@@ -1699,6 +1703,22 @@ export class Composer {
       body['text/html'] = origBody['text/html'] + (emailFooter ? '<br>\n' + emailFooter.replace(/\n/g, '<br>\n') : '');
     }
     return body;
+  }
+
+  private toggleFullScreen = async () => {
+    const changeClassOptions: Bm.AddOrRemoveClass = {
+      class: this.fullWindowClass,
+      selector: `div#new_message`,
+    };
+     if (!this.isMaximized) {
+      await BrowserMsg.send.bg.await.addClass(this.urlParams.parentTabId, changeClassOptions);
+    } else {
+      await BrowserMsg.send.bg.await.removeClass(this.urlParams.parentTabId, changeClassOptions);
+    }
+    setTimeout(() => {
+      this.resizeInputTo();
+    });
+    this.isMaximized = !this.isMaximized;
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {

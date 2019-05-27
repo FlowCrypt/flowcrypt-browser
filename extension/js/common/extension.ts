@@ -24,6 +24,7 @@ export namespace Bm {
   export type Raw = { name: string; data: { bm: AnyRequest | {}, objUrls: Dict<string> }; to: Dest | null; uid: string; stack: string; sender?: Sender; };
 
   export type SetCss = { css: Dict<string>, traverseUp?: number, selector: string; };
+  export type AddOrRemoveClass = { class: string, selector: string; };
   export type Settings = { path?: string, page?: string, acctEmail?: string, pageUrlParams?: UrlParams, addNewAcct?: boolean };
   export type PassphraseDialog = { type: PassphraseDialogType, longids: string[] };
   export type NotificationShow = { notification: string, callbacks?: Dict<() => void> };
@@ -84,7 +85,7 @@ export namespace Bm {
 
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
-    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | SetFooter | ReconnectAcctAuthPopup |
+    NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | SetFooter | ReconnectAcctAuthPopup |
     Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax;
 
@@ -167,6 +168,12 @@ export class BrowserMsg {
       }
       el.css(data.css);
     },
+    add_class: async (data: Bm.AddOrRemoveClass) => {
+      $(data.selector).addClass(data.class);
+    },
+    remove_class: async(data: Bm.AddOrRemoveClass) => {
+      $(data.selector).removeClass(data.class);
+    }
   };
 
   public static send = { // todo - may want to organise this differently, seems to always confuse me when sending a message
@@ -191,6 +198,8 @@ export class BrowserMsg {
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>,
+        addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendAwait(dest, 'add_class', bm),
+        removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendAwait(dest, 'remove_class', bm),
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),
