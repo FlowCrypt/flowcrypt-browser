@@ -36,10 +36,10 @@ buildContentScript(([] as string[]).concat(
 ), 'webmail_bundle.js');
 
 // checkout
-buildContentScript([
-  `${sourceDir}/common/platform/catch.js`,
+buildContentScript(getFilesInDir(`${sourceDir}/common/platform`, /\.js$/, false).concat([
+  `${sourceDir}/common/assert.js`,
   `${sourceDir}/common/core/common.js`,
   `${sourceDir}/common/browser.js`,
   `${sourceDir}/common/extension.js`,
   `${sourceDir}/content_scripts/checkout/stripe.js`,
-], 'stripe_bundle.js');
+]), 'stripe_bundle.js');
