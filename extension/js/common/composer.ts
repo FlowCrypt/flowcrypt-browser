@@ -1344,12 +1344,13 @@ export class Composer {
       this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
       this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.urlParams.acctEmail), this.getErrHandlers(`authorize contact search`)));
       const offset = this.S.cached('input_to').offset()!;
+      const inputToPadding = parseInt(this.S.cached('input_to').css('padding-left'));
       let leftOffset: number;
-      if (this.S.cached('body').width()! < offset.left + this.S.cached('contacts').width()!) {
+      if (this.S.cached('body').width()! < offset.left + inputToPadding + this.S.cached('contacts').width()!) {
         // Here we need to align contacts popover by right side
-        leftOffset = offset.left + this.S.cached('input_to').width()! - this.S.cached('contacts').width()!;
+        leftOffset = offset.left + inputToPadding + this.S.cached('input_to').width()! - this.S.cached('contacts').width()!;
       } else {
-        leftOffset = offset.left;
+        leftOffset = offset.left + inputToPadding; // 6px padding
       }
       this.S.cached('contacts').css({
         display: 'block',
