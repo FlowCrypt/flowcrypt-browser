@@ -418,7 +418,7 @@ div#contacts { display: none; position: absolute; background: white; top: 74px; 
   padding: 6px 0; z-index: 1; }
 body#reply_message div#contacts { top: 39px; }
 div#contacts ul { padding: 0; margin: 0; min-width: 320px; }
-div#contacts ul li { padding: 13px; height: 16px; }
+div#contacts ul li { padding: 13px; height: 16px; list-style: none; }
 div#contacts ul li img { padding-left: 6px; padding-right: 12px; height: 13px; position: relative; top: 1px; }
 div#contacts ul li:first-child { background: #eee; }
 div#contacts ul li.auth_contacts { background: #fff !important; height: 24px; }

@@ -45,7 +45,7 @@ Catch.try(async () => {
       Xss.sanitizeAppend('.recipients', Ui.e('span', { text: recipient }));
     }
     $('.pubkey_file_name').text(att.name);
-    composer.resizeReplyBox();
+    composer.resizeComposeBox();
     BrowserMsg.send.scrollToBottomOfConversation(parentTabId);
     $('#input_text').focus();
   };
