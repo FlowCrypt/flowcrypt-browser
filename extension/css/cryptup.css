@@ -266,7 +266,7 @@ body#settings > div#content.account .level, body#settings > div#content.account 
   text-transform: capitalize; }
 
 
-body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; background-color: #FFF; word-wrap: break-word; }
+body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }
 html {  padding:0; margin: 0; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0;
@@ -308,7 +308,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 
 table#compose { height: 100%; border-spacing: 0; border-collapse: collapse; width: 100%; background-color: white; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0; border: 1px solid #31A217; background-color: #31A217; }
-table#compose th h1 { display: inline-block; font-size: 13.8px; font-weight: normal; color: #FFF; text-align: left; margin-left: 10px;}
+table#compose th div.header h1 { font-size: 15px; font-weight: normal; color: #FFF; text-align: left;}
 table#compose.sign th { background-color: #808080; border-color: #808080; }
 table#compose td.input { height: 42px; vertical-align: middle; }
 table#compose td#input_addresses_container { vertical-align: middle; }
@@ -343,17 +343,12 @@ table#compose.sign .recipients img, table#compose.sign .recipients i { display: 
 table#compose.sign .recipients img.display_when_sign { display: inline-block !important; }
 table#compose.sign #password_or_pubkey_container { display: none !important; }
 
-table#compose th span.close_new_message { display: inline-block; position: absolute; right: 0; margin-right: 5px; margin-top: 4px; color: white;
-  font-weight: bold; opacity: .7; height: 15px; width: 15px; text-align: center; padding: 5px; }
-table#compose th span.close_new_message img { width: 15px; height: 15px; }
-table#compose th span.close_new_message:hover { cursor: pointer; opacity: 1; }
-table#compose th span.minimize_new_message { display: inline-block; position: absolute; right: 42px; margin-top: 4px; color: white;
-  font-weight: bold; opacity: .7; height: 15px; width: 10px; padding: 1px; border-bottom: 3px solid #fff; }
-table#compose th span.minimize_new_message:hover { cursor: pointer; opacity: 1; }
-@media (max-height:36px) { table#compose tbody tr:not(:first-of-type) { display: none; } }
-table#compose th .action_feedback { position: absolute; right: 70px; top: 8px; opacity: 0.5; }
-table#compose th .action_feedback img { width: 20px; }
-table#compose th .action_feedback:hover { opacity: 0.9; cursor: pointer; }
+table#compose th div.header { display: flex; justify-content: space-between; padding: 0px 1px 0px 10px; }
+table#compose th div.header > div.actions_container { display: flex; align-items: center; }
+table#compose th div.header > div.actions_container span, table#compose th div.header > div.actions_container span img { color: #fff; fill: #fff; width: 15px; height: 15px; }
+table#compose th div.header > div.actions_container span { display: inline-block; cursor: pointer; margin-right: 10px; opacity: .7 }
+table#compose th div.header > div.actions_container span.minimize_new_message{ width: 10px; border-bottom: 3px solid #fff; box-sizing: border-box; -moz-box-sizing: border-box; -webkit-box-sizing: border-box; }
+table#compose th div.header > div.actions_container span:hover { opacity: 1 }
 
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none; color: inherit;}
@@ -417,11 +412,13 @@ table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: 
 table#compose #fineuploader .qq-upload-list .sign { border-left: 1px solid #ccc !important; background-image: none !important; padding-left: 8px; }
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 
+body.full_window table#compose { position: relative;}
+
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   padding: 6px 0; z-index: 1; }
 body#reply_message div#contacts { top: 39px; }
 div#contacts ul { padding: 0; margin: 0; min-width: 320px; }
-div#contacts ul li { padding: 13px; height: 16px; }
+div#contacts ul li { padding: 13px; height: 16px; list-style: none; }
 div#contacts ul li img { padding-left: 6px; padding-right: 12px; height: 13px; position: relative; top: 1px; }
 div#contacts ul li:first-child { background: #eee; }
 div#contacts ul li.auth_contacts { background: #fff !important; height: 24px; }
@@ -446,6 +443,8 @@ body#new_message.popup { width: 474px; height: 600px; }
 body#new_message.popup table#compose { width: 490px; border: none; }
 body#new_message.popup table#compose tr td { border-left: none; border-right: none; }
 
+body#new_message.full_window { background-color: rgba(0,0,0,.5); padding: 20px 150px;  }
+body#new_message.full_window table#compose { box-shadow: 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12), 0 5px 5px -3px rgba(0,0,0,0.2); }
 div#reply_message_table_container { display: none; }
 div#initial_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; min-height: 72px; padding: 8px 0 0 8px; }
 div#initial_prompt #reply_click_area { width: 95%; height: 50px; margin-top: 3px; position: absolute; }

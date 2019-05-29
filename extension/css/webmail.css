@@ -42,7 +42,10 @@ body.cryptup_outlook ._fce_i { padding: 0 6px 0 6px; } /* slightly less horizont
 
 /* elements */
 div.new_message { position: absolute; bottom: 0; width: 540px; right: 30px; padding: 0; z-index: 6; height: 605px; box-shadow: rgba(0,0,0,0.3) 0 2px 8px; }
+div.new_message.full_window { width: 100%; height: 100%; right: unset; }
 div.new_message iframe { width: 100%; height: 605px; border:none; padding: 0; margin: 0; overflow: hidden;}
+div.new_message.full_window iframe { height: 100%;}
+
 body.cryptup_inbox div.new_message { right: 100px; }
 @media screen and (max-height: 600px) {
   div.new_message, div.new_message iframe { height: 450px; }

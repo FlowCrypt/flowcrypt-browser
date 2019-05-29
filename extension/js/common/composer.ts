@@ -77,7 +77,6 @@ export type ComposerUrlParams = {
 type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
 
 export class Composer {
-
   private debugId = Str.sloppyRandom();
 
   private S = Ui.buildJquerySels({
@@ -106,6 +105,7 @@ export class Composer {
     icon_footer: '.icon.action_include_footer',
     icon_help: '.action_feedback',
     icon_sign: '.icon.action_sign',
+    icon_popout: '.popout img',
     prompt: 'div#initial_prompt',
     reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
@@ -129,12 +129,14 @@ export class Composer {
   private BTN_LOADING = 'Loading..';
   private BTN_SENDING = 'Sending..';
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
+  private FULL_WINDOW_CLASS = 'full_window';
 
   private lastDraftBody = '';
   private lastDraftSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private composeWindowIsMinimized = false;
+  private composeWindowIsMaximized = false;
   private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
   private saveDraftInterval?: number;
@@ -302,6 +304,12 @@ export class Composer {
     }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
+    $("body").click(event => {
+      const target = $(event.target);
+      if (this.composeWindowIsMaximized && (!target.closest(".container").length)) {
+        this.minimizeComposerWindow();
+      }
+    });
   }
 
   private inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
@@ -353,7 +361,7 @@ export class Composer {
       if (!this.urlParams.skipClickPrompt && !this.urlParams.draftId) {
         this.S.cached('prompt').css('display', 'block');
       }
-      $(document).ready(() => this.resizeReplyBox());
+      $(document).ready(() => this.resizeComposeBox());
     } else {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
@@ -531,7 +539,7 @@ export class Composer {
       const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
       if (this.urlParams.isReplyBox) {
         Xss.sanitizeRender(this.S.cached('prompt'), promptText).css({ display: 'block' });
-        this.resizeReplyBox();
+        this.resizeComposeBox();
       } else {
         Xss.sanitizeRender(this.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
       }
@@ -1014,6 +1022,7 @@ export class Composer {
    */
   private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
+      this.S.cached('input_text').css('height', '');
       let cellHeightExceptText = 0;
       for (const cell of this.S.cached('all_cells_except_text')) {
         cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
@@ -1057,9 +1066,9 @@ export class Composer {
     }
     if (this.urlParams.isReplyBox) {
       if (!wasPreviouslyVisible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {
-        this.resizeReplyBox((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
+        this.resizeComposeBox((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
       } else {
-        this.resizeReplyBox();
+        this.resizeComposeBox();
       }
     }
     this.setInputTextHeightManuallyIfNeeded();
@@ -1093,7 +1102,7 @@ export class Composer {
     return;
   }
 
-  resizeReplyBox = (addExtra: number = 0) => {
+  resizeComposeBox = (addExtra: number = 0) => {
     if (this.urlParams.isReplyBox) {
       this.S.cached('input_text').css('max-width', (this.S.cached('body').width()! - 20) + 'px'); // body should always be present
       let minHeight = 0;
@@ -1110,12 +1119,16 @@ export class Composer {
         this.lastReplyBoxTableHeight = currentHeight;
         BrowserMsg.send.setCss(this.urlParams.parentTabId, { selector: `iframe#${this.urlParams.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
+    } else {
+      this.S.cached('input_text').css('max-width', '');
+      this.resizeInputTo();
+      this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
   }
 
   private appendForwardedMsg = (textBytes: Buf) => {
     Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${Xss.escape(textBytes.toUtfStr()).replace(/\r?\n/g, '<br>&gt; ')}`);
-    this.resizeReplyBox();
+    this.resizeComposeBox();
   }
 
   private retrieveDecryptAddForwardedMsg = async (msgId: string) => {
@@ -1177,7 +1190,7 @@ export class Composer {
       $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
     }
-    this.resizeReplyBox();
+    this.resizeComposeBox();
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
@@ -1242,6 +1255,7 @@ export class Composer {
   }
 
   private resizeInputTo = () => { // below both present in template
+    this.S.cached('input_to').css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
   }
 
@@ -1327,9 +1341,19 @@ export class Composer {
       }, this.getErrHandlers(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
       this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.urlParams.acctEmail), this.getErrHandlers(`authorize contact search`)));
+      const offset = this.S.cached('input_to').offset()!;
+      const inputToPadding = parseInt(this.S.cached('input_to').css('padding-left'));
+      let leftOffset: number;
+      if (this.S.cached('body').width()! < offset.left + inputToPadding + this.S.cached('contacts').width()!) {
+        // Here we need to align contacts popover by right side
+        leftOffset = offset.left + inputToPadding + this.S.cached('input_to').width()! - this.S.cached('contacts').width()!;
+      } else {
+        leftOffset = offset.left + inputToPadding;
+      }
       this.S.cached('contacts').css({
         display: 'block',
-        top: `${$('#compose > tbody > tr:first').height()! + this.S.cached('input_addresses_container_inner').height()! + 10}px`, // both are in the template
+        left: leftOffset,
+        top: `${$('#compose > tbody > tr:first').height()! + offset.top}px`, // both are in the template
       });
     } else {
       this.hideContacts();
@@ -1544,7 +1568,7 @@ export class Composer {
         return this.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
-    this.resizeReplyBox();
+    this.resizeComposeBox();
   }
 
   private debugFocusEvents = (...selNames: string[]) => {
@@ -1601,22 +1625,28 @@ export class Composer {
         await this.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
-      Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
-        $(window).resize(Ui.event.prevent('veryslowspree', () => this.resizeReplyBox()));
-        this.S.cached('input_text').keyup(() => this.resizeReplyBox());
-      }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
-      $('.minimize_new_message').click(Ui.event.handle(() => {
-        BrowserMsg.send.setCss(this.urlParams.parentTabId, {
-          selector: `iframe#${this.urlParams.frameId}, div#new_message`,
-          css: { height: this.composeWindowIsMinimized ? '605px' : '36px' },
-        });
-        this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
+      $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
+      $('.popout').click(Ui.event.handle(async () => {
+        this.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
+        await this.toggleFullScreen();
+        this.S.cached('body').show();
       }));
       this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
     }
+    Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
+      // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
+      // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
+      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized()));
+      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized()));
+    }, 1000);
+  }
+
+  private windowResized = () => {
+    this.resizeComposeBox();
+    this.setInputTextHeightManuallyIfNeeded(true);
   }
 
   private renderSenderAliasesOptionsToggle() {
@@ -1627,6 +1657,17 @@ export class Composer {
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle(() => this.renderSenderAliasesOptions(), this.getErrHandlers(`show sending address options`)));
     }
+  }
+
+  private minimizeComposerWindow = () => {
+    if (this.composeWindowIsMaximized) {
+      this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
+    }
+    BrowserMsg.send.setCss(this.urlParams.parentTabId, {
+      selector: `iframe#${this.urlParams.frameId}, div#new_message`,
+      css: { height: this.composeWindowIsMinimized ? '' : '36px' },
+    });
+    this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
   }
 
   private renderSenderAliasesOptions() {
@@ -1643,7 +1684,7 @@ export class Composer {
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
       if (this.urlParams.isReplyBox) {
-        this.resizeReplyBox();
+        this.resizeComposeBox();
       }
       if (Catch.browser().name === 'firefox') {
         inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
@@ -1699,6 +1740,29 @@ export class Composer {
       body['text/html'] = origBody['text/html'] + (emailFooter ? '<br>\n' + emailFooter.replace(/\n/g, '<br>\n') : '');
     }
     return body;
+  }
+
+  private toggleFullScreen = async () => {
+    if (this.composeWindowIsMinimized) {
+      this.minimizeComposerWindow();
+    }
+    this.addOrRemoveFullScreenStyles(!this.composeWindowIsMaximized);
+    if (!this.composeWindowIsMaximized) {
+      this.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
+    } else {
+      this.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
+    }
+    this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
+  }
+
+  private addOrRemoveFullScreenStyles = (add: boolean) => {
+    if (add) {
+      this.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
+      BrowserMsg.send.addClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+    } else {
+      this.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
+      BrowserMsg.send.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+    }
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
