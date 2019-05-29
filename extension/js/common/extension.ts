@@ -171,7 +171,7 @@ export class BrowserMsg {
     add_class: async (data: Bm.AddOrRemoveClass) => {
       $(data.selector).addClass(data.class);
     },
-    remove_class: async(data: Bm.AddOrRemoveClass) => {
+    remove_class: async (data: Bm.AddOrRemoveClass) => {
       $(data.selector).removeClass(data.class);
     }
   };
@@ -198,8 +198,8 @@ export class BrowserMsg {
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
         ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>,
-        addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendAwait(dest, 'add_class', bm),
-        removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass) => BrowserMsg.sendAwait(dest, 'remove_class', bm),
+        addClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass): Promise<void> => BrowserMsg.sendAwait(dest, 'add_class', bm),
+        removeClass: (dest: Bm.Dest, bm: Bm.AddOrRemoveClass): Promise<void> => BrowserMsg.sendAwait(dest, 'remove_class', bm),
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),

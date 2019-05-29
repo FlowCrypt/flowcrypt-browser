@@ -7,7 +7,7 @@ import { Store, Subscription, ContactUpdate, DbContactObjArg } from './platform/
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
-import { BrowserMsg, Extension, BrowserWidnow, Bm } from './extension.js';
+import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
@@ -77,8 +77,6 @@ export type ComposerUrlParams = {
 type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
 
 export class Composer {
-  private readonly fullWindowClass = 'full_window';
-
   private debugId = Str.sloppyRandom();
 
   private S = Ui.buildJquerySels({
@@ -107,6 +105,7 @@ export class Composer {
     icon_footer: '.icon.action_include_footer',
     icon_help: '.action_feedback',
     icon_sign: '.icon.action_sign',
+    icon_popout: '.popout img',
     prompt: 'div#initial_prompt',
     reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
@@ -130,6 +129,7 @@ export class Composer {
   private BTN_LOADING = 'Loading..';
   private BTN_SENDING = 'Sending..';
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
+  private FULL_WINDOW_CLASS = 'full_window';
 
   private lastDraftBody = '';
   private lastDraftSubject = '';
@@ -304,6 +304,17 @@ export class Composer {
     }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
+    $(window).resize(() => {
+      this.S.cached('input_to').css('width', '100%');
+      this.S.cached('input_text').css('max-width', '');
+      this.resizeReplyBox();
+    });
+    $("body").click(event => {
+      const target = $(event.target);
+      if (this.isMaximized && !target.closest("#compose").length) {
+        this.minimizeComposerWindow().catch(Catch.reportErr);
+      }
+    });
   }
 
   private inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
@@ -1112,6 +1123,9 @@ export class Composer {
         this.lastReplyBoxTableHeight = currentHeight;
         BrowserMsg.send.setCss(this.urlParams.parentTabId, { selector: `iframe#${this.urlParams.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
+    } else {
+      this.resizeInputTo();
+      this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
   }
 
@@ -1184,7 +1198,6 @@ export class Composer {
   }
 
   private parseRenderRecipients = async (errsMode: RecipientErrsMode): Promise<boolean> => {
-    debugger;
     this.debug(`parseRenderRecipients(${errsMode})`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
@@ -1610,14 +1623,12 @@ export class Composer {
       }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
-      $('.minimize_new_message').click(Ui.event.handle(() => {
-        BrowserMsg.send.setCss(this.urlParams.parentTabId, {
-          selector: `iframe#${this.urlParams.frameId}, div#new_message`,
-          css: { height: this.composeWindowIsMinimized ? '605px' : '36px' },
-        });
-        this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
+      $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
+      $('.popout').click(Ui.event.handle(async () => {
+        this.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
+        await this.toggleFullScreen();
+        this.S.cached('body').show();
       }));
-      $('.popout').click(Ui.event.handle(() => this.toggleFullScreen()));
       this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
     }
@@ -1631,6 +1642,17 @@ export class Composer {
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle(() => this.renderSenderAliasesOptions(), this.getErrHandlers(`show sending address options`)));
     }
+  }
+
+  private minimizeComposerWindow = async () => {
+    if (this.isMaximized) {
+      await this.addOrRemoveFullScreenStyles(this.composeWindowIsMinimized);
+    }
+    BrowserMsg.send.setCss(this.urlParams.parentTabId, {
+      selector: `iframe#${this.urlParams.frameId}, div#new_message`,
+      css: { height: this.composeWindowIsMinimized ? '' : '36px' },
+    });
+    this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
   }
 
   private renderSenderAliasesOptions() {
@@ -1706,19 +1728,26 @@ export class Composer {
   }
 
   private toggleFullScreen = async () => {
-    const changeClassOptions: Bm.AddOrRemoveClass = {
-      class: this.fullWindowClass,
-      selector: `div#new_message`,
-    };
-     if (!this.isMaximized) {
-      await BrowserMsg.send.bg.await.addClass(this.urlParams.parentTabId, changeClassOptions);
-    } else {
-      await BrowserMsg.send.bg.await.removeClass(this.urlParams.parentTabId, changeClassOptions);
+    if (this.composeWindowIsMinimized) {
+      await this.minimizeComposerWindow();
     }
-    setTimeout(() => {
-      this.resizeInputTo();
-    });
+    await this.addOrRemoveFullScreenStyles(!this.isMaximized);
+    if (!this.isMaximized) {
+      this.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
+    } else {
+      this.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
+    }
     this.isMaximized = !this.isMaximized;
+  }
+
+  private addOrRemoveFullScreenStyles = async (add: boolean) => {
+    if (add) {
+      this.S.cached('body').addClass(this.FULL_WINDOW_CLASS);
+      await BrowserMsg.send.bg.await.addClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+    } else {
+      this.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
+      await BrowserMsg.send.bg.await.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
+    }
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
