@@ -304,11 +304,6 @@ export class Composer {
     }, this.getErrHandlers('delete draft')));
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
-    $(window).resize(Ui.event.prevent('slowspree', () => {
-      this.S.cached('input_to').css('width', '100%');
-      this.S.cached('input_text').css('max-width', '');
-      this.resizeComposeBox();
-    }));
     $("body").click(event => {
       const target = $(event.target);
       if (this.composeWindowIsMaximized && (!target.closest(".container").length)) {
@@ -1258,6 +1253,7 @@ export class Composer {
   }
 
   private resizeInputTo = () => { // below both present in template
+    this.S.cached('input_to').css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
   }
 
@@ -1626,10 +1622,6 @@ export class Composer {
         await this.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
-      Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
-        $(window).resize(Ui.event.prevent('veryslowspree', () => this.resizeComposeBox()));
-        this.S.cached('input_text').keyup(() => this.resizeComposeBox());
-      }, 1000);
     } else {
       $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
       $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
@@ -1641,6 +1633,12 @@ export class Composer {
       this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
     }
+    Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
+      // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
+      // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
+      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.resizeComposeBox()));
+      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.resizeComposeBox()));
+    }, 1000);
   }
 
   private renderSenderAliasesOptionsToggle() {
