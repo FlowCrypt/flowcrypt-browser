@@ -1346,7 +1346,7 @@ export class Composer {
         // Here we need to align contacts popover by right side
         leftOffset = offset.left + inputToPadding + this.S.cached('input_to').width()! - this.S.cached('contacts').width()!;
       } else {
-        leftOffset = offset.left + inputToPadding; // 6px padding
+        leftOffset = offset.left + inputToPadding;
       }
       this.S.cached('contacts').css({
         display: 'block',
