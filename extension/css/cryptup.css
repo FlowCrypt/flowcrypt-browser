@@ -412,7 +412,7 @@ table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: 
 table#compose #fineuploader .qq-upload-list .sign { border-left: 1px solid #ccc !important; background-image: none !important; padding-left: 8px; }
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 
-body.full_window table#compose { position: relative; width: 90%; height: 95%; left: 5%; top: 2.5%; }
+body.full_window table#compose { position: relative;}
 
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   padding: 6px 0; z-index: 1; }

@@ -311,7 +311,7 @@ export class Composer {
     });
     $("body").click(event => {
       const target = $(event.target);
-      if (this.isMaximized && !target.closest("#compose").length) {
+      if (this.isMaximized && (!target.closest(".container").length)) {
         this.minimizeComposerWindow().catch(Catch.reportErr);
       }
     });
@@ -1343,9 +1343,18 @@ export class Composer {
       }, this.getErrHandlers(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
       this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.urlParams.acctEmail), this.getErrHandlers(`authorize contact search`)));
+      const offset = this.S.cached('input_to').offset()!;
+      let leftOffset: number;
+      if (this.S.cached('body').width()! < offset.left + this.S.cached('contacts').width()!) {
+        // Here we need to align contacts popover by right side
+        leftOffset = offset.left + this.S.cached('input_to').width()! - this.S.cached('contacts').width()!;
+      } else {
+        leftOffset = offset.left;
+      }
       this.S.cached('contacts').css({
         display: 'block',
-        top: `${$('#compose > tbody > tr:first').height()! + this.S.cached('input_addresses_container_inner').height()! + 10}px`, // both are in the template
+        left: leftOffset,
+        top: `${$('#compose > tbody > tr:first').height()! + offset.top}px`, // both are in the template
       });
     } else {
       this.hideContacts();
