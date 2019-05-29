@@ -1022,6 +1022,7 @@ export class Composer {
    */
   private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
+      this.S.cached('input_text').css('height', '');
       let cellHeightExceptText = 0;
       for (const cell of this.S.cached('all_cells_except_text')) {
         cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
@@ -1119,6 +1120,7 @@ export class Composer {
         BrowserMsg.send.setCss(this.urlParams.parentTabId, { selector: `iframe#${this.urlParams.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
     } else {
+      this.S.cached('input_text').css('max-width', '');
       this.resizeInputTo();
       this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
@@ -1637,9 +1639,14 @@ export class Composer {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.resizeComposeBox()));
-      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.resizeComposeBox()));
+      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized()));
+      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized()));
     }, 1000);
+  }
+
+  private windowResized = () => {
+    this.resizeComposeBox();
+    this.setInputTextHeightManuallyIfNeeded(true);
   }
 
   private renderSenderAliasesOptionsToggle() {
