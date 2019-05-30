@@ -59,8 +59,13 @@ Catch.try(async () => {
   }));
 
   $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPwdStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase')));
+  $('#password').on('keydown', event => {
+    if (event.which === 13) {
+      $('#step_1_enter_new .action_set_pass_phrase').click();
+    }
+  });
 
-  $('#step_1_enter_new .action_set_pass_phrase').click(Ui.event.handle(async target => {
+  $('#step_1_enter_new .action_set_pass_phrase').click(Ui.event.handle(async (target: HTMLElement) => {
     if ($(target).hasClass('green')) {
       displayBlock('step_2_confirm_new');
     } else {
@@ -76,7 +81,12 @@ Catch.try(async () => {
     $('#password').focus();
   }));
 
-  $('#step_2_confirm_new .action_change').click(Ui.event.prevent('double', async self => {
+  $("#password2").on('keydown', event => {
+    if (event.which === 13) {
+      $('#step_2_confirm_new .action_change').click();
+    }
+  });
+  $('#step_2_confirm_new .action_change').click(Ui.event.prevent('double', async () => {
     const newPp = String($('#password').val());
     if (newPp !== $('#password2').val()) {
       await Ui.modal.warning('The two pass phrases do not match, please try again.');

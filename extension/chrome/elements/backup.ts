@@ -48,14 +48,14 @@ Catch.try(async () => {
         BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' });
       }));
     }
+    $('#pass_phrase').keydown(event => {
+      if (event.which === 13) {
+        $('.action_test_pass').click();
+      }
+    });
   };
 
-  const sendResizeMsg = () => {
-    const desiredHeight = $('#backup_block').height()!;
-    BrowserMsg.send.setCss(parentTabId, { selector: `iframe#${frameId}`, css: { height: `${desiredHeight}px` } });
-  };
-
-  $('.action_test_pass').click(Ui.event.handle(async target => {
+  $('.action_test_pass').click(Ui.event.handle(async () => {
     if (await Pgp.key.decrypt(await Pgp.key.read(armoredPrvBackup), [String($('#pass_phrase').val())]) === true) {
       await Ui.modal.info('Success - your pass phrase matches this backup!');
     } else {
@@ -64,6 +64,11 @@ Catch.try(async () => {
     }
     $('#pass_phrase').val('');
   }));
+
+  const sendResizeMsg = () => {
+    const desiredHeight = $('#backup_block').height()!;
+    BrowserMsg.send.setCss(parentTabId, { selector: `iframe#${frameId}`, css: { height: `${desiredHeight}px` } });
+  };
 
   await render();
   sendResizeMsg();

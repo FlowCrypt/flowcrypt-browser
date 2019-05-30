@@ -41,7 +41,8 @@
 
     <div id="step_0_found_key">
       <div class="wide line">Used PGP encryption before?</div>
-      <div class="wide line"><a href="#" class="button long green action_manual_enter_key" data-test="action-step0foundkey-choose-manual-enter">Enter
+      <div class="wide line"><a href="#" class="button long green action_manual_enter_key"
+          data-test="action-step0foundkey-choose-manual-enter">Enter
           existing key</a></div>
       <div class="wide line">Alternatively, <a href="#new_key" class="action_manual_create_key hover_underline"
           data-test="action-step0foundkey-choose-manual-create">create
@@ -53,7 +54,8 @@
         <div class="line circle-i" style="padding-bottom: 10px;">
           <img src="/img/svgs/stopwatch-icon.svg" alt="stopwatch icon">
         </div>
-        <div class="button long green action_manual_create_key" data-test="action-step1easyormanual-choose-manual-create">new
+        <div class="button long green action_manual_create_key"
+          data-test="action-step1easyormanual-choose-manual-create">new
           encryption key</div>
         <div class="wide line">&nbsp;</div>
         <div class="wide line">New to encryption?</div>
@@ -64,7 +66,8 @@
         <div class="line circle-i">
           <img src="/img/fa/fa-cogs-green.png" alt="Settings">
         </div>
-        <div class="button long green action_manual_enter_key" data-test="action-step1easyormanual-choose-manual-enter">use
+        <div class="button long green action_manual_enter_key" data-test="action-step1easyormanual-choose-manual-enter">
+          use
           my own private key</div>
         <div class="wide line">&nbsp;</div>
         <div class="wide line">Use your own PGP key</div>
@@ -81,49 +84,58 @@
     </div>
 
     <div id="step_2a_manual_create" class="manual">
-      <div class="line left">Choose pass phrase to protect your encrypted emails. <a href="#" data-featherlight="/chrome/texts/passphrase_help.htm">choosing
+      <div class="line left">Choose pass phrase to protect your encrypted emails. <a href="#"
+          data-featherlight="/chrome/texts/passphrase_help.htm">choosing
           secure pass phrases</a></div>
-      <div class="line left password_feedback"><span class="password_result"></span> (time to crack: <span class="password_time"></span>)<ul></ul>
+      <div class="line left password_feedback"><span class="password_result"></span> (time to crack: <span
+          class="password_time"></span>)<ul></ul>
       </div>
       <div class="line left">
-        <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;" id="step_2a_manual_create_input_password"
-          data-test="input-step2bmanualcreate-passphrase-1" />
+        <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;"
+          id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" />
         <br />
         <div class="password_bar">
           <div></div>
         </div>
       </div>
       <div class="line left">
-        <input class="input_password2" type="text" placeholder="Repeat pass phrase" id="step_2a_manual_create_input_password2"
-          data-test="input-step2bmanualcreate-passphrase-2" />
+        <input class="input_password2" type="text" placeholder="Repeat pass phrase"
+          id="step_2a_manual_create_input_password2" data-test="input-step2bmanualcreate-passphrase-2" />
       </div>
 
       <div class="line left">
         <div class="advanced_create_settings_container">
-          <div class="action_show_advanced_create_settings" data-test="action-step2bmanualcreate-show-advanced-create-settings"><img
+          <div class="action_show_advanced_create_settings"
+            data-test="action-step2bmanualcreate-show-advanced-create-settings"><img
               src="/img/svgs/settings-icon.svg" /><span>Show
               Advanced Settings</span></div>
           <div class="line advanced_create_settings display_none">
             <hr style="border: 1px dotted rgba(0,0,0,0.25);height: 1px;border-bottom: none;margin: 0;">
             <div class="line left">
               <div class="squaredFour">
-                <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing" name="check" checked="" />
-                <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing" data-test="input-step2bmanualcreate-save-passphrase"></label>
+                <input type="checkbox" class="input_passphrase_save" value="" id="c_rememberPassphraseAfterClosing"
+                  name="check" checked="" />
+                <label class="checkboxSquaredOne" for="c_rememberPassphraseAfterClosing"
+                  data-test="input-step2bmanualcreate-save-passphrase"></label>
               </div>
               <span class="labelCopy">Remember Pass Phrase after closing browser (recommended)</span>
             </div>
             <div class="line left">
               <div class="squaredFour">
-                <input type="checkbox" class="input_backup_inbox" value="" id="c_backupInInbox" name="check" checked="" />
-                <label class="checkboxSquaredOne" for="c_backupInInbox" data-test="input-step2bmanualcreate-backup-inbox"></label>
+                <input type="checkbox" class="input_backup_inbox" value="" id="c_backupInInbox" name="check"
+                  checked="" />
+                <label class="checkboxSquaredOne" for="c_backupInInbox"
+                  data-test="input-step2bmanualcreate-backup-inbox"></label>
               </div>
               <span class="labelCopy">Back up encrypted private key in inbox (recommended)</span>
             </div>
 
             <div class="line left">
               <div class="squaredFour">
-                <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check" checked="">
-                <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver" data-test="input-step2bmanualcreate-submit-pubkey"></label>
+                <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check"
+                  checked="">
+                <label class="checkboxSquaredOne" for="c_submitPubkeytoKeyserver"
+                  data-test="input-step2bmanualcreate-submit-pubkey"></label>
               </div>
               <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (recommended)</span>
             </div>
@@ -149,13 +161,15 @@
 
     <div id="step_2b_manual_enter" class="manual">
       <div class="aligncenter">
-        <div class="wide line">Import your private key. Keys are stored safely in your local browser extension storage.</div>
+        <div class="wide line">Import your private key. Keys are stored safely in your local browser extension storage.
+        </div>
         <div class="wide line">The key will not leave your browser.</div>
         <div class="wide line">
           <ul style="list-style: none;margin-left: 0;padding-left: 0;" class="source_selector">
             <li><input type="radio" name="source" id="source_file" value="file"> <label for="source_file">Load from a
                 file</label></li>
-            <li><input type="radio" name="source" id="source_paste" value="paste" data-test="input-step2bmanualenter-source-paste">
+            <li><input type="radio" name="source" id="source_paste" value="paste"
+                data-test="input-step2bmanualenter-source-paste">
               <label for="source_paste">Paste armored key directly</label></li>
           </ul>
         </div>
@@ -165,7 +179,8 @@
         </div>
         <div class="source_paste_container display_none">
           <div class="wide line">
-            <textarea class="input_private_key" placeholder="ASCII Armored Private Key" data-test="input-step2bmanualenter-ascii-key"></textarea>
+            <textarea class="input_private_key" placeholder="ASCII Armored Private Key"
+              data-test="input-step2bmanualenter-ascii-key"></textarea>
           </div>
           <div class="line display_none pass_phrase_needed" style="text-align: left; padding-left: 40px;">
             This key is unprotected. Create a pass phrase or <a href="#" class="action_use_random_pass_phrase"
@@ -173,20 +188,23 @@
               a random one</a>.
           </div>
           <div class="line" style="text-align: left; padding-left: 40px;">
-            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase" id="step_2b_manual_enter_passphrase"
-              data-test="input-step2bmanualenter-passphrase" />
+            <input class="input_passphrase" type="text" placeholder="Private Key Passphrase"
+              id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>
           <div class="line left">
             <div class="squaredFour">
-              <input type="checkbox" value="" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour" checked="">
-              <label class="checkboxSquaredOne" for="e_rememberPassphrase" data-test="input-step2bmanualenter-save-passphrase"></label>
+              <input type="checkbox" value="" id="e_rememberPassphrase" name="check"
+                class="input_passphrase_save squaredFour" checked="">
+              <label class="checkboxSquaredOne" for="e_rememberPassphrase"
+                data-test="input-step2bmanualenter-save-passphrase"></label>
             </div>
             <span class="labelCopy">Remember Pass Phrase after closing browser</span>
           </div>
           <div class="line left">
             <div class="squaredFour">
               <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
-              <label class="checkboxSquaredOne" for="e_submitPubkey" data-test="input-step2bmanualenter-submit-pubkey"></label>
+              <label class="checkboxSquaredOne" for="e_submitPubkey"
+                data-test="input-step2bmanualenter-submit-pubkey"></label>
             </div>
             <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
           </div>
@@ -212,7 +230,8 @@
       <div class="line recovery_status">Found <span class="backups_count_words"></span> of your account key. Enter your
         pass phrase to continue.</div>
       <div class="wide line recovery_passphrase_container">
-        <input type="text" id="recovery_pasword" placeholder="Enter your pass phrase" data-test="input-recovery-pass-phrase" />
+        <input type="text" id="recovery_pasword" placeholder="Enter your pass phrase"
+          data-test="input-recovery-pass-phrase" />
       </div>
       <div class="wide line">
         <div class="button green long action_recover_account" data-test="action-recover-account">RECOVER ACCOUNT</div>

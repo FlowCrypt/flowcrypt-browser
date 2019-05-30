@@ -43,6 +43,11 @@ Catch.try(async () => {
       $('h1').text('Enter your pass phrase to decrypt a file');
     }
     $('#passphrase').focus();
+    $('#passphrase').keydown(event => {
+      if (event.which === 13) {
+        $('.action_ok').click();
+      }
+    });
     if (allPrivateKeys.length > 1) {
       let html: string;
       if (selectedPrivateKeys.length === 1) {
