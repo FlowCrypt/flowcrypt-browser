@@ -32,6 +32,12 @@ Catch.try(async () => {
     return;
   }
 
+  $('#password').keydown(event => {
+    if (event.which === 13) {
+      $('.action_verify').click();
+    }
+  });
+
   $('.action_verify').click(Ui.event.handle(async () => {
 
     if (await Pgp.key.decrypt(key, [String($('#password').val())]) === true) {

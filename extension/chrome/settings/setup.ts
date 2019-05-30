@@ -329,6 +329,12 @@ Catch.try(async () => {
     displayBlock('step_1_easy_or_manual');
   }));
 
+  $("#recovery_pasword").on('keydown', event => {
+    if (event.which === 13) {
+      $('#step_2_recovery .action_recover_account').click();
+    }
+  });
+
   $('#step_2_recovery .action_recover_account').click(Ui.event.prevent('double', async (self) => {
     try {
       const passphrase = String($('#recovery_pasword').val());
@@ -501,6 +507,18 @@ Catch.try(async () => {
   $('#step_2a_manual_create .input_password').on('keyup', Ui.event.prevent('spree', () => {
     Settings.renderPwdStrength('#step_2a_manual_create', '.input_password', '.action_create_private');
   }));
+
+  $('.input_password').on('keydown', event => {
+    if (event.which === 13) {
+      $('#step_2a_manual_create .action_create_private').click();
+    }
+  });
+
+  $('.input_password2').on('keydown', event => {
+    if (event.which === 13) {
+      $('#step_2a_manual_create .action_create_private').click();
+    }
+  });
 
   const isCreatePrivateFormInputCorrect = async () => {
     if (!$('#step_2a_manual_create .input_password').val()) {

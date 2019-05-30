@@ -162,8 +162,13 @@ Catch.try(async () => {
     Settings.renderPwdStrength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   }));
+  $("#password2").keydown(event => {
+    if (event.which === 13) {
+      $('.action_backup').click();
+    }
+  });
 
-  $('.action_backup').click(Ui.event.prevent('double', async (target) => {
+  $('.action_backup').click(Ui.event.prevent('double', async (target: HTMLElement) => {
     const newPassphrase = String($('#password').val());
     if (newPassphrase !== $('#password2').val()) {
       await Ui.modal.warning('The two pass phrases do not match, please try again.');
