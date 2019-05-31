@@ -44,6 +44,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     translatePrompt: '.adI',
     standardComposeWin: '.aaZ:visible',
     settingsBtnContainer: 'div.aeH > div > .fY',
+    standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
   };
 
   constructor(factory: XssSafeFactory, acctEmail: string, addresses: string[], canReadEmails: boolean, injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
@@ -485,7 +486,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       this.currentlyEvaluatingStandardComposeBoxRecipients = true;
       for (const standardComposeWinEl of $(this.sel.standardComposeWin)) {
         const standardComposeWin = $(standardComposeWinEl);
-        const recipients = standardComposeWin.find('div.az9 span[email]').get().map(e => $(e).attr('email')!).filter(e => !!e);
+        const recipients = standardComposeWin.find(this.sel.standardComposeRecipient).get().map(e => $(e).attr('email')!).filter(e => !!e);
         if (!recipients.length) {
           standardComposeWin.find('.recipients_use_encryption').remove();
         } else {
@@ -506,6 +507,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                     break;
                   }
                 } catch (e) {
+                  if (Api.err.isSignificant(e)) {
+                    Catch.reportErr(e);
+                  }
                   // this is a low-importance request, so evaluate has_pgp as false on errors
                   // this way faulty requests wouldn't unnecessarily repeat and overwhelm Attester
                   this.recipientHasPgpCache[email] = false;
