@@ -310,6 +310,8 @@ export class Composer {
         this.minimizeComposerWindow();
       }
     });
+    BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
+    BrowserMsg.listen(this.urlParams.parentTabId);
   }
 
   private inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
@@ -433,6 +435,17 @@ export class Composer {
     if (!entered) {
       this.resetSendBtn();
       clearInterval(this.passphraseInterval);
+    }
+  }
+
+  private checkReciepientsKeys = async () => {
+    for (const recipientEl of $('.recipients span.no_pgp')) {
+      const email = $(recipientEl).text().trim();
+      const res = await this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
+      if (res !== 'fail') {
+        $(recipientEl).removeClass('no_pgp');
+        await this.renderPubkeyResult(recipientEl, email, res);
+      }
     }
   }
 
