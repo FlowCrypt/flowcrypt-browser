@@ -299,10 +299,27 @@ Catch.try(async () => {
       decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
       decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
       decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
+      const forwardedParts = devideForwardedPart(decryptedContent);
+      decryptedContent = forwardedParts[0];
       if (publicKeys.length) {
         BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
       }
-      await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
+      if (forwardedParts[1]) {
+        await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(forwardedParts[0])}</div>`, false);
+        $("#pgp_block")
+          .append('<div id="action_open_full" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>')
+          .append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(forwardedParts[1]))}</div>`);
+        $('#action_open_full').click(Ui.event.handle(async target => {
+          if ($("#forwarded_msg").css('display') === 'none') {
+            $("#forwarded_msg").css('display', 'block');
+          } else {
+            $("#forwarded_msg").css('display', 'none');
+          }
+          sendResizeBrowserMsg();
+        }));
+      } else {
+        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
+      }
       if (fcAttBlocks.length) {
         renderInnerAtts(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
       }
@@ -436,6 +453,14 @@ Catch.try(async () => {
     }
   };
 
+  const devideForwardedPart = (textContent: string) => {
+    const index = textContent.search(/(?!^)\n\nForwarded message:\n\n(>\s.+\n?)+$/g);
+    if (index !== -1) {
+      return [textContent.slice(0, index + 2), textContent.slice(index + 2)]; // +2 because we have two '\n' before forwarded message in the RegEx above
+    }
+    return [textContent];
+  };
+
   const initialize = async (forcePullMsgFromApi = false) => {
     try {
       if (canReadEmails && encryptedMsgUrlParam && signature === true && msgId) {
@@ -505,7 +530,7 @@ Catch.try(async () => {
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else if (Api.err.isInPrivateMode(e)) {
         await renderErr(`Error: FlowCrypt extension cannot communicate with its background script to decrypt this message.
-        On Firefox, this is commonly caused by the Private Browsing Mode or the use of Firefox Containers.`, undefined);
+  On Firefox, this is commonly caused by the Private Browsing Mode or the use of Firefox Containers.`, undefined);
       } else {
         Catch.reportErr(e);
         await renderErr(String(e), encryptedMsgUrlParam ? encryptedMsgUrlParam.toUtfStr() : undefined);
