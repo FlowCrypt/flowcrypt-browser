@@ -59,6 +59,11 @@ Catch.try(async () => {
     $('.passhprase_checkbox_container').css('display', 'none');
     $('.passphrase_entry_container').css('display', 'block');
   }));
+  $('#passphrase_entry').keydown(event => {
+    if (event.which === 13) {
+      $('.confirm_passphrase_requirement_change').click();
+    }
+  });
 
   $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
 
