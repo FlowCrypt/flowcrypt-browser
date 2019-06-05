@@ -27,6 +27,12 @@ export class Attester extends Api {
   public static lookupEmail = async (email: string): Promise<PubkeySearchResult> => {
     try {
       const r = await Attester.pubCall(`pub/${email}`);
+      // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back
+      // because it had to go through background scripts, and objects are serialized when this happens
+      // the fix would be to send back headers from bg along with response text, and parse it here
+      if (!r.getResponseHeader) {
+        return { pubkey: r.responseText, pgpClient: null }; // tslint:disable-line:no-null-keyword
+      }
       return { pubkey: r.responseText, pgpClient: r.getResponseHeader('pgp-client') as PgpClient };
     } catch (e) {
       if (Api.err.isNotFound(e)) {
