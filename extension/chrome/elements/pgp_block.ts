@@ -307,8 +307,10 @@ Catch.try(async () => {
       if (forwardedParts[1]) {
         await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(forwardedParts[0])}</div>`, false);
         $("#pgp_block")
-          .append('<div id="action_open_full" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>')
-          .append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(forwardedParts[1]))}</div>`);
+          .append('<div id="action_open_full" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>') // xss-safe-factory
+          .append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">` + // xss-safe-factory
+            `${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(forwardedParts[1]))}
+                  </div>`);
         $('#action_open_full').click(Ui.event.handle(async target => {
           if ($("#forwarded_msg").css('display') === 'none') {
             $("#forwarded_msg").css('display', 'block');
