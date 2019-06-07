@@ -441,10 +441,10 @@ export class Composer {
   private checkReciepientsKeys = async () => {
     for (const recipientEl of $('.recipients span.no_pgp')) {
       const email = $(recipientEl).text().trim();
-      const res = await this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
-      if (res !== 'fail') {
+      const [dbContact] = await this.app.storageContactGet([email]);
+      if (dbContact) {
         $(recipientEl).removeClass('no_pgp');
-        await this.renderPubkeyResult(recipientEl, email, res);
+        await this.renderPubkeyResult(recipientEl, email, dbContact);
       }
     }
   }
