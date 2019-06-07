@@ -102,6 +102,7 @@ Catch.try(async () => {
       }
       await Store.dbContactSave(undefined, contacts);
       Xss.sanitizeReplace(target, '<span class="good">added public keys</span>');
+      BrowserMsg.send.addToContacts(parentTabId);
       $('.input_email').remove();
     } else if (pubs.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
@@ -109,6 +110,7 @@ Catch.try(async () => {
           email: String($('.input_email').val()), client: 'pgp', pubkey: pubs[0].armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubs[0]),
         });
         await Store.dbContactSave(undefined, contact);
+        BrowserMsg.send.addToContacts(parentTabId);
         Xss.sanitizeReplace(target, `<span class="good">${Xss.escape(String($('.input_email').val()))} added</span>`);
         $('.input_email').remove();
       } else {
