@@ -78,7 +78,6 @@ Catch.try(async () => {
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 1000);
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 1500);
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
-
   BrowserMsg.addListener('notification_show', notificationShowHandler);
   BrowserMsg.addListener('close_new_message', async () => {
     $('div.new_message').remove();
@@ -91,7 +90,10 @@ Catch.try(async () => {
   });
   BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
-      $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
+      $('body').append(factory.dialogPassphrase(longids, type))  // xss-safe-factory;
+        .click(Ui.event.handle(e => { // click on the area outside the iframe
+          $('#cryptup_dialog').remove();
+        }));
     }
   });
   BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
