@@ -76,10 +76,16 @@ Catch.try(async () => {
     $('#passphrase').focus();
   };
 
-  $('.action_close').click(Ui.event.handle(() => {
-    BrowserMsg.send.passphraseEntry('broadcast', { entered: false });
+  const closeDialog = (entered: boolean = false) => {
+    BrowserMsg.send.passphraseEntry('broadcast', { entered });
     BrowserMsg.send.closeDialog(parentTabId);
-  }));
+  };
+  $('.action_close').click(() => closeDialog());
+  $('body').on('keydown', ev => {
+    if (ev.which === 27) {
+      closeDialog();
+    }
+  });
 
   $('.action_ok').click(Ui.event.handle(async () => {
     const pass = String($('#passphrase').val());
@@ -101,8 +107,7 @@ Catch.try(async () => {
       }
     }
     if (atLeastOneMatched) {
-      BrowserMsg.send.passphraseEntry('broadcast', { entered: true });
-      BrowserMsg.send.closeDialog(parentTabId);
+      closeDialog(true);
     } else {
       renderFailedEntryPpPrompt();
       Catch.setHandledTimeout(renderNormalPpPrompt, 1500);

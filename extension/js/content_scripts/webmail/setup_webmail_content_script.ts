@@ -127,7 +127,10 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
       if (!$('#cryptup_dialog').length) {
-        $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
+        $('body').append(factory.dialogPassphrase(longids, type)) // xss-safe-factory;
+          .click(Ui.event.handle(e => { // click on the area outside the iframe
+            $('#cryptup_dialog').remove();
+          }));
       }
     });
     BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
