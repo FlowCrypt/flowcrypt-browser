@@ -45,6 +45,16 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
     await pageHasReplyContainer(gmailPage);
   }));
 
+  ava.test('mail.google.com[global:compatibility] - pubkey gets rendered when using quoted-printable mime', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    const gmailPage = await openGmailPage(t, browser, '/WhctKJVRFztXGwvSbwcrbDshGTnLWMFvhwJmhqllRWwvpKnlpblQMXVZLTsKfWdPWKhPFBV');
+    const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
+    expect(urls.length).to.equal(1);
+    await pageHasReplyContainer(gmailPage);
+    const pubkeyPage = await browser.newPage(t, urls[0]);
+    const content = await pubkeyPage.read('body');
+    expect(content).to.contain('STONE NEED REMAIN SLIDE DEPOSIT BRICK');
+  }));
+
   // const compose_frame = await gmail_page.get_frame(['compose.htm']);
   // Task.compose_fill_message(compose_frame, 'human@flowcrypt.com', 'message from gmail');
   // await compose_frame.wait_and_click('@action-send', {delay: 0.5});
