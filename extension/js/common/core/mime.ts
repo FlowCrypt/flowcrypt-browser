@@ -152,12 +152,7 @@ export class Mime {
             } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
               // todo - surface and render encrypted headers
             } else {
-              mimeContent.atts.push(new Att({
-                name: Mime.getNodeFilename(node),
-                type: Mime.getNodeType(node),
-                data: node.content,
-                cid: Mime.getNodeContentId(node),
-              }));
+              mimeContent.atts.push(Mime.getNodeAsAtt(node));
             }
           }
           const { from, to } = Mime.headersToFrom(mimeContent);
@@ -297,10 +292,19 @@ export class Mime {
     return;
   }
 
-  private static fromEqualSignNotationAsUtf = (str: string): string => {
-    return str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
+  private static fromEqualSignNotationAsBuf = (str: string): Buf => {
+    return Buf.fromRawBytesStr(str.replace(/(=[A-F0-9]{2})+/g, equalSignUtfPart => {
       const bytes = equalSignUtfPart.replace(/^=/, '').split('=').map(twoHexDigits => parseInt(twoHexDigits, 16));
-      return new Buf(bytes).toUtfStr();
+      return new Buf(bytes).toRawBytesStr();
+    }));
+  }
+
+  private static getNodeAsAtt = (node: MimeParserNode): Att => {
+    return new Att({
+      name: Mime.getNodeFilename(node),
+      type: Mime.getNodeType(node),
+      data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent) : node.content,
+      cid: Mime.getNodeContentId(node),
     });
   }
 
@@ -309,7 +313,7 @@ export class Mime {
       return Buf.fromUint8(node.content).toUtfStr();
     }
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
-      return Mime.fromEqualSignNotationAsUtf(node.rawContent);
+      return Mime.fromEqualSignNotationAsBuf(node.rawContent).toUtfStr();
     }
     if (node.charset && Iso88592.labels.includes(node.charset)) {
       return Iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any
