@@ -490,7 +490,7 @@ export class Xss {
         a.className = 'image_src_link';
         a.target = '_blank';
         a.innerText = title || 'show image';
-        const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
+        const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
         a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
         img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
       }
