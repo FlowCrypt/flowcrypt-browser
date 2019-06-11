@@ -438,7 +438,7 @@ Catch.try(async () => {
 
   const initialize = async (forcePullMsgFromApi = false) => {
     try {
-      if (canReadEmails && encryptedMsgUrlParam && signature === true && msgId) {
+      if (canReadEmails && signature === true && msgId) {
         renderText('Loading signed message...');
         const { raw } = await Google.gmail.msgGet(acctEmail, msgId, 'raw');
         msgFetchedFromApi = 'raw';
@@ -492,7 +492,6 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
       } else if (e instanceof FormatError) {
-        console.info(e.data);
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else if (Api.err.isInPrivateMode(e)) {
         await renderErr(`Error: FlowCrypt extension cannot communicate with its background script to decrypt this message.
