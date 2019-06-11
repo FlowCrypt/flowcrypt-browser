@@ -708,7 +708,7 @@ export class PgpMsg {
 
   static verifyDetached: PgpMsgMethod.VerifyDetached = async ({ plaintext, sigText }) => {
     const message = openpgp.message.fromText(Buf.fromUint8(plaintext).toUtfStr());
-    message.appendSignature(sigText);
+    await message.appendSignature(Buf.fromUint8(sigText).toUtfStr());
     const keys = await Pgp.internal.cryptoMsgGetSortedKeys({ keys: [], passphrases: [] }, message);
     return await PgpMsg.verify(message, keys.forVerification, keys.verificationContacts[0]);
   }

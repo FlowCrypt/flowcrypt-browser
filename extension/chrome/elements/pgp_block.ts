@@ -439,25 +439,16 @@ Catch.try(async () => {
   const initialize = async (forcePullMsgFromApi = false) => {
     try {
       if (canReadEmails && encryptedMsgUrlParam && signature === true && msgId) {
-        renderText('Loading signature...');
+        renderText('Loading signed message...');
         const { raw } = await Google.gmail.msgGet(acctEmail, msgId, 'raw');
-        if (!raw) {
-          await decryptAndRender(encryptedMsgUrlParam);
+        msgFetchedFromApi = 'raw';
+        const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
+        const parsed = await Mime.decode(mimeMsg);
+        if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
+          signature = parsed.signature;
+          await decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent));
         } else {
-          msgFetchedFromApi = 'raw';
-          const mimeMsg = Buf.fromBase64UrlStr(raw);
-          const parsed = Mime.signed(mimeMsg);
-          if (parsed && typeof parsed.signed === 'string') {
-            signature = parsed.signature || undefined;
-            await decryptAndRender(encryptedMsgUrlParam);
-          } else {
-            const decoded = await Mime.decode(mimeMsg);
-            signature = decoded.signature || undefined;
-            console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-            console.info(mimeMsg.toUtfStr());
-            console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-            await decryptAndRender(encryptedMsgUrlParam);
-          }
+          await renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
         }
       } else if (encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         renderText(signature ? 'Verifying..' : 'Decrypting...');
