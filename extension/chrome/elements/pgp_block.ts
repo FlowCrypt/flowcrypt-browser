@@ -292,27 +292,17 @@ Catch.try(async () => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
+    const renderableAtts: Att[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
+    let isHtml: boolean = false;
     // todo - replace with PgpMsg.fmtDecrypted
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttBlocks: MsgBlock[] = [];
       decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
       decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
       decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
-      const messageParts = devideMessageIfForwarded(decryptedContent);
-      decryptedContent = messageParts[0];
-      if (publicKeys.length) {
-        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
-      }
-      // If messageParts[1] exists then message has forwarded part
-      if (messageParts[1]) {
-        await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(messageParts[0])}</div>`, false);
-        appendForwardedMessage(messageParts[1]);
-      } else {
-        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
-      }
       if (fcAttBlocks.length) {
-        renderInnerAtts(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
+        renderableAtts.push.apply(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
       }
       if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
         renderFutureExpiration(passwordMsgLinkRes.expire);
@@ -321,13 +311,11 @@ Catch.try(async () => {
       renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
       if (typeof decoded.html !== 'undefined') {
-        await renderContent(decoded.html, false);
+        decryptedContent = decoded.html;
+        isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
-        await renderContent(Xss.escapeTextAsRenderableHtml(decoded.text), false);
-      } else {
-        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
+        decryptedContent = decoded.text;
       }
-      const renderableAtts: Att[] = [];
       for (const att of decoded.atts) {
         if (att.treatAs() !== 'publicKey') {
           renderableAtts.push(att);
@@ -335,13 +323,34 @@ Catch.try(async () => {
           publicKeys.push(att.getData().toUtfStr());
         }
       }
-      if (renderableAtts.length) {
-        renderInnerAtts(decoded.atts);
+    }
+    if (isHtml) {
+      const $message = $('<div>').html(Xss.htmlSanitize(decryptedContent));
+      const $lastElement = $($message[0].lastElementChild!);
+      if ($lastElement.prop('tagName') === 'BLOCKQUOTE') {
+        $lastElement.remove();
+        await renderContent($message.html(), false);
+        addSecondPart($lastElement.html(), true);
+      } else {
+        await renderContent(decryptedContent, false);
       }
-      if (publicKeys.length) {
-        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
+    } else {
+      const index = decryptedContent.search(/(?!^)(>.*\n?)+(\n?)+$/g);
+      if (index !== -1) {
+        await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(decryptedContent.slice(0, index))}</div>`, false);
+        addSecondPart(decryptedContent.slice(index));
+      } else {
+        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
       }
     }
+    if (publicKeys.length) {
+      BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
+    }
+    if (renderableAtts.length) {
+      renderInnerAtts(renderableAtts);
+    }
+    sendResizeBrowserMsg();
+
     Ui.setTestState('ready');
   };
 
@@ -444,20 +453,18 @@ Catch.try(async () => {
     }
   };
 
-  const devideMessageIfForwarded = (textContent: string) => {
-    const index = textContent.search(/(?!^)\n\nForwarded message:\n\n(>.*\n?)+$/g);
-    if (index !== -1) {
-      return [textContent.slice(0, index + 2), textContent.slice(index + 2)]; // +2 because we have two '\n' before forwarded message in the RegEx above
-    }
-    return [textContent];
-  };
-
-  const appendForwardedMessage = (forwardedMsg: string) => {
-    $("#pgp_block")
-      .append('<div id="action_open_full" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>') // xss-safe-factory
-      .append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">` + // xss-safe-factory
-        `${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(forwardedMsg))}
+  const addSecondPart = (message: string, isHtml: boolean = false) => {
+    const pgpBlock = $("#pgp_block")
+      .append('<div id="action_open_full" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-safe-factory
+    if (isHtml) {
+      pgpBlock.append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">` + // xss-safe-factory
+        `${Xss.htmlSanitizeKeepBasicTags(message)}
+          </div>`);
+    } else {
+      pgpBlock.append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">` + // xss-safe-factory
+        `${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(message))}
                   </div>`);
+    }
     $('#action_open_full').click(Ui.event.handle(async target => {
       if ($("#forwarded_msg").css('display') === 'none') {
         $("#forwarded_msg").css('display', 'block');
