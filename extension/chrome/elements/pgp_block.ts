@@ -292,7 +292,7 @@ Catch.try(async () => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
-    const renderableAtts: Att[] = [];
+    let renderableAtts: Att[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
     let isHtml: boolean = false;
     // todo - replace with PgpMsg.fmtDecrypted
@@ -302,10 +302,7 @@ Catch.try(async () => {
       decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
       decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
       if (fcAttBlocks.length) {
-        renderableAtts.push.apply(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
-      }
-      if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
-        renderFutureExpiration(passwordMsgLinkRes.expire);
+        renderableAtts = fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!));
       }
     } else {
       renderText('Formatting...');
@@ -348,6 +345,9 @@ Catch.try(async () => {
     }
     if (renderableAtts.length) {
       renderInnerAtts(renderableAtts);
+    }
+    if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
+      renderFutureExpiration(passwordMsgLinkRes.expire);
     }
     sendResizeBrowserMsg();
 
