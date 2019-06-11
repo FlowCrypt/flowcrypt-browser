@@ -325,7 +325,7 @@ Catch.try(async () => {
       }
     }
     if (isHtml) {
-      const $message = $('<div>').html(Xss.htmlSanitize(decryptedContent));
+      const $message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-safe-factory
       const $lastElement = $($message[0].lastElementChild!);
       if ($lastElement.prop('tagName') === 'BLOCKQUOTE') {
         $lastElement.remove();
