@@ -461,11 +461,11 @@ Catch.try(async () => {
 
   const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
     const pgpBlock = $("#pgp_block")
-      .append('<div id="action_show_quoted_content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); //  xss-direct
+      .append('<div id="action_show_quoted_content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
     if (isHtml) {
-      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(message)}</div>`); // xss-sanitised
+      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(message)}</div>`); // xss-sanitized
     } else {
-      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitised
+      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
     }
     $('#action_show_quoted_content').click(Ui.event.handle(async target => {
       $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
