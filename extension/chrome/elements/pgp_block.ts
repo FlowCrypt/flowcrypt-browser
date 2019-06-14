@@ -321,25 +321,9 @@ Catch.try(async () => {
         }
       }
     }
-    if (isHtml) {
-      const $message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-safe-factory
-      const $lastElement = $($message[0].lastElementChild!);
-      if ($lastElement.prop('tagName') === 'BLOCKQUOTE') {
-        $lastElement.remove();
-        await renderContent($message.html(), false);
-        addSecondPart($lastElement.html(), true);
-      } else {
-        await renderContent(decryptedContent, false);
-      }
-    } else {
-      const index = decryptedContent.search(/(?!^)(>.*\n?)+(\n?)+$/g);
-      if (index !== -1) {
-        await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(decryptedContent.slice(0, index))}</div>`, false);
-        addSecondPart(decryptedContent.slice(index));
-      } else {
-        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
-      }
-    }
+
+    await separateQuotedContentAndRenderText(decryptedContent, isHtml);
+
     if (publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
     }
@@ -453,24 +437,38 @@ Catch.try(async () => {
     }
   };
 
-  const addSecondPart = (message: string, isHtml: boolean = false) => {
-    const pgpBlock = $("#pgp_block")
-      .append('<div id="action_open_full" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-safe-factory
+  const separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
-      pgpBlock.append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">` + // xss-safe-factory
-        `${Xss.htmlSanitizeKeepBasicTags(message)}
-          </div>`);
-    } else {
-      pgpBlock.append(`<div id="forwarded_msg" class="forwarded_msg" style="display:none">` + // xss-safe-factory
-        `${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(message))}
-                  </div>`);
-    }
-    $('#action_open_full').click(Ui.event.handle(async target => {
-      if ($("#forwarded_msg").css('display') === 'none') {
-        $("#forwarded_msg").css('display', 'block');
+      const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
+      const lastElement = $(message[0].lastElementChild!);
+      if (lastElement.prop('tagName') === 'BLOCKQUOTE') {
+        lastElement.remove();
+        await renderContent(message.html(), false);
+        appendCollapsedQuotedContentButton(lastElement.html(), true);
       } else {
-        $("#forwarded_msg").css('display', 'none');
+        await renderContent(decryptedContent, false);
       }
+    } else {
+      const index = decryptedContent.search(/(?!^)(>.*\n?)+(\n?)+$/g);
+      if (index !== -1) {
+        await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(decryptedContent.slice(0, index))}</div>`, false);
+        appendCollapsedQuotedContentButton(decryptedContent.slice(index));
+      } else {
+        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
+      }
+    }
+  };
+
+  const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
+    const pgpBlock = $("#pgp_block")
+      .append('<div id="action_show_quoted_content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); //  xss-direct
+    if (isHtml) {
+      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(message)}</div>`); // xss-sanitised
+    } else {
+      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitised
+    }
+    $('#action_show_quoted_content').click(Ui.event.handle(async target => {
+      $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
       sendResizeBrowserMsg();
     }));
   };
