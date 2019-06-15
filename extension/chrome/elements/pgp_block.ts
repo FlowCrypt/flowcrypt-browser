@@ -438,17 +438,26 @@ Catch.try(async () => {
 
   const initialize = async (forcePullMsgFromApi = false) => {
     try {
-      if (canReadEmails && signature === true && msgId) {
-        renderText('Loading signed message...');
+      if (canReadEmails && encryptedMsgUrlParam && signature === true && msgId) {
+        renderText('Loading signature...');
         const { raw } = await Google.gmail.msgGet(acctEmail, msgId, 'raw');
-        msgFetchedFromApi = 'raw';
-        const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
-        const parsed = await Mime.decode(mimeMsg);
-        if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
-          signature = parsed.signature;
-          await decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent));
+        if (!raw) {
+          await decryptAndRender(encryptedMsgUrlParam);
         } else {
-          await renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
+          msgFetchedFromApi = 'raw';
+          const mimeMsg = Buf.fromBase64UrlStr(raw);
+          const parsed = Mime.signed(mimeMsg);
+          if (parsed && typeof parsed.signed === 'string') {
+            signature = parsed.signature || undefined;
+            await decryptAndRender(encryptedMsgUrlParam);
+          } else {
+            const decoded = await Mime.decode(mimeMsg);
+            signature = decoded.signature || undefined;
+            console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
+            console.info(mimeMsg.toUtfStr());
+            console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
+            await decryptAndRender(encryptedMsgUrlParam);
+          }
         }
       } else if (encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         renderText(signature ? 'Verifying..' : 'Decrypting...');
@@ -492,6 +501,7 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
       } else if (e instanceof FormatError) {
+        console.info(e.data);
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else if (Api.err.isInPrivateMode(e)) {
         await renderErr(`Error: FlowCrypt extension cannot communicate with its background script to decrypt this message.
