@@ -48,6 +48,11 @@ Catch.try(async () => {
     composer.resizeComposeBox();
     BrowserMsg.send.scrollToBottomOfConversation(parentTabId);
     $('#input_text').focus();
+
+    Catch.setHandledTimeout(() => {
+      $(window).resize(Ui.event.prevent('veryslowspree', () => composer.resizeComposeBox()));
+      $('#input_text').keyup(Ui.event.prevent('slowspree', () => composer.resizeComposeBox()));
+    }, 1000);
   };
 
   const determineReplyHeaders = async () => {
