@@ -340,6 +340,8 @@ export class Composer {
       this.S.cached('contacts').css('top', '39px');
       this.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
       this.S.cached('input_text').css('overflow-y', 'hidden');
+    } else {
+      this.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
       await this.initialDraftLoad();
