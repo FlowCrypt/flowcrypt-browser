@@ -22,7 +22,6 @@
  */
 
 import { VERSION } from '../../../js/common/core/const.js';
-import { MimeParser } from '../../../types/emailjs.js';
 
 const loadedTags: string[] = [];
 
@@ -42,8 +41,8 @@ export const requireOpenpgp = (): typeof OpenPGP => {
   }
 };
 
-export const requireMimeParser = (): typeof MimeParser => {
-  return (window as any)['emailjs-mime-parser']; // tslint:disable-line:no-unsafe-any
+export const requireMimeParser = (): any => {
+  return (window as any)['emailjs-mime-parser'];
 };
 
 export const requireMimeBuilder = (): any => {

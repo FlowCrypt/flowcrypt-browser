@@ -18,6 +18,8 @@ export let defineElementTests = (testVariant: TestVariant, testWithNewBrowser: T
     expect(content).to.contain('ALMOST FAMOUS EXILE LOYAL FICTION COME');
   }));
 
+  ava.test.todo('compose - elements/pgp_pubkey loads pubkey into contacts');
+
   ava.test.todo('compose[global:compatibility] - elements/pgp_pubkey shows graceful error when pubkey not usable');
 
   ava.test.todo('compose[global:compatibility] - elements/pgp_pubkey can render several pubkeys in one armor');
