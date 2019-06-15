@@ -40,7 +40,8 @@
     "pretest": "npm run-script build --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
     "test": "npm run-script test_buf && npm run-script test_tslint && npm run-script test_patterns && npm run-script test_async_stack && npm run-script test_chrome_consumer -- -- --pool-size=1 && npm run-script test_chrome_enterprise -- -- --pool-size=1",
     "release": "npm run-script prebuild && gulp --gulpfile ./conf/gulpfile.js release",
-    "run_firefox": "npm run-script build && ./node_modules/.bin/web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
+    "run_firefox": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
+    "run_firefox_windows": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
     "internal_tslint_dev_run": "npm run-script prebuild && npm run-script test_tslint",
     "internal_run_rebuilt_puppeteer": "npm run-script pretest && npm run-script test_chrome_consumer -- --pool-size=1"
   },

@@ -1037,7 +1037,7 @@ export class Composer {
    */
   private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
-      this.S.cached('input_text').css('height', '');
+      this.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
       for (const cell of this.S.cached('all_cells_except_text')) {
         cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
