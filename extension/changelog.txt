@@ -1,5 +1,7 @@
 <div>
 
+version 6.8.4 on Jun 16, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/336?closed=1" target="_blank">Fix Detached Signatures</a>
+
 version 6.8.3 on Jun 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/335?closed=1" target="_blank">Keyboard Actions</a>
 
 version 6.8.2 on May 27, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/334?closed=1" target="_blank">Checkout Fix</a>
