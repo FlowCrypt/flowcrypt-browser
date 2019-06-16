@@ -804,7 +804,7 @@ declare namespace OpenPGP {
       encrypt(passphrase: string | string[]): Promise<void>;
       getExpirationTime(): Promise<Date | typeof Infinity>;
       getKeyIds(): Keyid[];
-      getPrimaryUser(): Promise<PrimaryUser>;
+      getPrimaryUser(): Promise<PrimaryUser | null>;
       getUserIds(): string[];
       isPrivate(): boolean;
       isPublic(): boolean;
