@@ -431,7 +431,7 @@ Catch.try(async () => {
   }));
 
   $('.action_send').click(Ui.event.handle(() => {
-    window.location.href = Env.urlCreate('index.htm', { acctEmail, page: '/chrome/elements/compose.htm' });
+    window.location.href = `https://mail.google.com/mail/u/${acctEmail}`;
   }));
 
   $('.action_account_settings').click(Ui.event.handle(() => {
