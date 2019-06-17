@@ -112,6 +112,23 @@ export class Mime {
     return Boolean(contentType.index === 0 && utf8.match(/boundary=/));
   }
 
+  private static retrieveRawSignedContent = (nodes: MimeParserNode[]): string | undefined => {
+    for (const node of nodes) {
+      if (node._isMultipart === 'signed' && node._childNodes && node._childNodes[0]) {
+        // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
+        // however emailjs parser will replace it to <LF>, so we fix it here
+        let rawSignedContent = node._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
+        if (/--$/.test(rawSignedContent)) { // end of boundary without a mandatory newline
+          rawSignedContent += '\r\n'; // emailjs wrongly leaves out the last newline, fix it here
+        }
+        return rawSignedContent;
+      } else if (node._childNodes) {
+        return Mime.retrieveRawSignedContent(node._childNodes);
+      }
+    }
+    return undefined;
+  }
+
   public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
     return new Promise(async resolve => {
       const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
@@ -128,14 +145,7 @@ export class Mime {
           for (const name of Object.keys(parser.node.headers)) {
             mimeContent.headers[name] = parser.node.headers[name][0].value;
           }
-          if (parser.node._isMultipart === 'signed' && parser.node._childNodes && parser.node._childNodes[0]) {
-            // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
-            // however emailjs parser will replace it to <LF>, so we fix it here
-            mimeContent.rawSignedContent = parser.node._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
-            if (/--$/.test(mimeContent.rawSignedContent)) { // end of boundary without a mandatory newline
-              mimeContent.rawSignedContent += '\r\n'; // also, emailjs wrongly leaves out the last newline
-            }
-          }
+          mimeContent.rawSignedContent = Mime.retrieveRawSignedContent([parser.node]);
           for (const node of Object.values(leafNodes)) {
             if (Mime.getNodeType(node) === 'application/pgp-signature') {
               mimeContent.signature = node.rawContent;
