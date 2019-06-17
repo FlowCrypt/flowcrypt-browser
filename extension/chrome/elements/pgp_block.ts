@@ -440,11 +440,30 @@ Catch.try(async () => {
   const separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
       const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
-      const lastElement = $(message[0].lastElementChild!);
-      if (lastElement.prop('tagName') === 'BLOCKQUOTE') {
-        lastElement.remove();
+
+      let blockQuoteExists: boolean = false;
+      const shouldBeQuoted: Array<Element> = [];
+      for (let i = message[0].children.length  - 1; i >= 0; i-- ) {
+        if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
+          shouldBeQuoted.push(message[0].children[i]);
+          if (message[0].children[i].nodeName === 'BLOCKQUOTE') {
+            blockQuoteExists = true;
+            break;
+          }
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      if (blockQuoteExists) {
+        let quotedHtml = '';
+        for(let i = shouldBeQuoted.length - 1; i >= 0; i--) {
+          message[0].removeChild(shouldBeQuoted[i]);
+          quotedHtml += shouldBeQuoted[i].outerHTML;
+        }
         await renderContent(message.html(), false);
-        appendCollapsedQuotedContentButton(lastElement.html(), true);
+        appendCollapsedQuotedContentButton(quotedHtml, true);
       } else {
         await renderContent(decryptedContent, false);
       }
