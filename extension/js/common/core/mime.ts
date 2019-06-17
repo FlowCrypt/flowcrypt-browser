@@ -8,6 +8,7 @@ import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
 import { Buf } from './buf.js';
+import { MimeParserNode } from '../../../types/emailjs.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -18,19 +19,11 @@ type MimeContent = {
   headers: Dict<MimeContentHeader>;
   atts: Att[];
   signature?: string;
+  rawSignedContent?: string;
   html?: string;
   text?: string;
   from?: string;
   to: string[];
-};
-type MimeParserNode = {
-  path: string[];
-  headers: { [key: string]: { value: string; initial: string; params?: { charset?: string, filename?: string, name?: string } }[]; };
-  rawContent: string;
-  content: Uint8Array;
-  appendChild: (child: MimeParserNode) => void;
-  contentTransferEncoding: { value: string }; charset?: string;
-  addHeader: (name: string, value: string) => void;
 };
 
 export type RichHeaders = Dict<string | string[]>;
@@ -48,7 +41,6 @@ export type MsgBlock = {
   attMeta?: AttMeta; // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
   decryptErr?: DecryptError; // only in decryptErr block, always
 };
-type MimeParseSignedRes = { full: string, signed?: string, signature?: string };
 
 export class Mime {
 
@@ -124,23 +116,27 @@ export class Mime {
     return new Promise(async resolve => {
       const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
       try {
-        const parser = new MimeParser(); // tslint:disable-line:no-unsafe-any
-        const parsed: { [key: string]: MimeParserNode } = {};
-        parser.onheader = (node: MimeParserNode) => { // tslint:disable-line:no-unsafe-any
-          if (!String(node.path.join('.'))) { // root node headers
-            for (const name of Object.keys(node.headers)) {
-              mimeContent.headers[name] = node.headers[name][0].value;
+        const parser = new MimeParser();
+        const leafNodes: { [key: string]: MimeParserNode } = {};
+        parser.onbody = (node: MimeParserNode) => {
+          const path = String(node.path.join('.'));
+          if (typeof leafNodes[path] === 'undefined') {
+            leafNodes[path] = node;
+          }
+        };
+        parser.onend = () => {
+          for (const name of Object.keys(parser.node.headers)) {
+            mimeContent.headers[name] = parser.node.headers[name][0].value;
+          }
+          if (parser.node._isMultipart === 'signed' && parser.node._childNodes && parser.node._childNodes[0]) {
+            // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
+            // however emailjs parser will replace it to <LF>, so we fix it here
+            mimeContent.rawSignedContent = parser.node._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
+            if (/--$/.test(mimeContent.rawSignedContent)) { // end of boundary without a mandatory newline
+              mimeContent.rawSignedContent += '\r\n'; // also, emailjs wrongly leaves out the last newline
             }
           }
-        };
-        parser.onbody = (node: MimeParserNode) => { // tslint:disable-line:no-unsafe-any
-          const path = String(node.path.join('.'));
-          if (typeof parsed[path] === 'undefined') {
-            parsed[path] = node;
-          }
-        };
-        parser.onend = () => { // tslint:disable-line:no-unsafe-any
-          for (const node of Object.values(parsed)) {
+          for (const node of Object.values(leafNodes)) {
             if (Mime.getNodeType(node) === 'application/pgp-signature') {
               mimeContent.signature = node.rawContent;
             } else if (Mime.getNodeType(node) === 'text/html' && !Mime.getNodeFilename(node)) {
@@ -160,8 +156,8 @@ export class Mime {
           mimeContent.to = to;
           resolve(mimeContent);
         };
-        parser.write(mimeMsg); // tslint:disable-line:no-unsafe-any
-        parser.end(); // tslint:disable-line:no-unsafe-any
+        parser.write(mimeMsg);
+        parser.end();
       } catch (e) { // todo - on Android we may want to fail when this happens, evaluate effect on browser extension
         Catch.reportErr(e);
         resolve(mimeContent);
@@ -194,72 +190,6 @@ export class Mime {
       rootNode.appendChild(new MimeBuilder(type, { filename: att.name }).setHeader(header).setContent(att.getData())); // tslint:disable-line:no-unsafe-any
     }
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
-  }
-
-  public static signed = (mimeMsgBytes: Buf) => {
-    /*
-      Trying to grab the full signed content that may look like this in its entirety (it's a signed mime message. May also be signed plain text)
-      Unfortunately, emailjs-mime-parser was not able to do this, or I wasn't able to use it properly
-
-      --eSmP07Gus5SkSc9vNmF4C0AutMibfplSQ
-      Content-Type: multipart/mixed; boundary="XKKJ27hlkua53SDqH7d1IqvElFHJROQA1"
-      From: Henry Electrum <henry.electrum@gmail.com>
-      To: human@flowcrypt.com
-      Message-ID: <abd68ba1-35c3-ee8a-0d60-0319c608d56b@gmail.com>
-      Subject: compatibility - simples signed email
-
-      --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1
-      Content-Type: text/plain; charset=utf-8
-      Content-Transfer-Encoding: quoted-printable
-
-      content
-
-      --XKKJ27hlkua53SDqH7d1IqvElFHJROQA1--
-      */
-    let mimeMsg = mimeMsgBytes.toUtfStr();
-    const signedHeaderIndex = mimeMsg.substr(0, 100000).toLowerCase().indexOf('content-type: multipart/signed');
-    if (signedHeaderIndex !== -1) {
-      mimeMsg = mimeMsg.substr(signedHeaderIndex);
-      const firstBoundaryIndex = mimeMsg.substr(0, 1000).toLowerCase().indexOf('boundary=');
-      if (firstBoundaryIndex) {
-        let boundary = mimeMsg.substr(firstBoundaryIndex, 100);
-        boundary = (boundary.match(/boundary="[^"]{1,70}"/gi) || boundary.match(/boundary=[a-z0-9][a-z0-9 ]{0,68}[a-z0-9]/gi) || [])[0];
-        if (boundary) {
-          boundary = boundary.replace(/^boundary="?|"$/gi, '');
-          const boundaryBegin = '\r\n--' + boundary + '\r\n';
-          const boundaryEnd = '--' + boundary + '--';
-          const endIndex = mimeMsg.indexOf(boundaryEnd);
-          if (endIndex !== -1) {
-            mimeMsg = mimeMsg.substr(0, endIndex + boundaryEnd.length);
-            if (mimeMsg) {
-              const res: MimeParseSignedRes = { full: mimeMsg };
-              let firstPartStartIndex = mimeMsg.indexOf(boundaryBegin);
-              if (firstPartStartIndex !== -1) {
-                firstPartStartIndex += boundaryBegin.length;
-                const firstPartEndIndex = mimeMsg.indexOf(boundaryBegin, firstPartStartIndex);
-                const secondPartStartIndex = firstPartEndIndex + boundaryBegin.length;
-                const secondPartEndIndex = mimeMsg.indexOf(boundaryEnd, secondPartStartIndex);
-                if (secondPartEndIndex !== -1) {
-                  const firstPart = mimeMsg.substr(firstPartStartIndex, firstPartEndIndex - firstPartStartIndex);
-                  const secondPart = mimeMsg.substr(secondPartStartIndex, secondPartEndIndex - secondPartStartIndex);
-                  const beginSignature = Pgp.armor.headers('signedMsg').middle!;
-                  const endSignature = String(Pgp.armor.headers('signedMsg').end);
-                  if (firstPart.match(/^content-type: application\/pgp-signature/gi) && firstPart.includes(beginSignature) && firstPart.includes(endSignature)) {
-                    res.signature = Pgp.armor.clip(firstPart);
-                    res.signed = secondPart;
-                  } else {
-                    res.signature = Pgp.armor.clip(secondPart);
-                    res.signed = firstPart;
-                  }
-                  return res;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return undefined;
   }
 
   private static getNodeType = (node: MimeParserNode) => {
@@ -303,7 +233,7 @@ export class Mime {
     return new Att({
       name: Mime.getNodeFilename(node),
       type: Mime.getNodeType(node),
-      data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent) : node.content,
+      data: node.contentTransferEncoding.value === 'quoted-printable' ? Mime.fromEqualSignNotationAsBuf(node.rawContent!) : node.content,
       cid: Mime.getNodeContentId(node),
     });
   }
@@ -313,12 +243,12 @@ export class Mime {
       return Buf.fromUint8(node.content).toUtfStr();
     }
     if (node.charset === 'utf-8' && node.contentTransferEncoding.value === 'quoted-printable') {
-      return Mime.fromEqualSignNotationAsBuf(node.rawContent).toUtfStr();
+      return Mime.fromEqualSignNotationAsBuf(node.rawContent!).toUtfStr();
     }
     if (node.charset && Iso88592.labels.includes(node.charset)) {
-      return Iso88592.decode(node.rawContent); // tslint:disable-line:no-unsafe-any
+      return Iso88592.decode(node.rawContent!); // tslint:disable-line:no-unsafe-any
     }
-    return Buf.fromRawBytesStr(node.rawContent).toUtfStr();
+    return Buf.fromRawBytesStr(node.rawContent!).toUtfStr();
   }
 
   // tslint:disable-next-line:variable-name

@@ -804,7 +804,7 @@ declare namespace OpenPGP {
       encrypt(passphrase: string | string[]): Promise<void>;
       getExpirationTime(): Promise<Date | typeof Infinity>;
       getKeyIds(): Keyid[];
-      getPrimaryUser(): Promise<PrimaryUser>;
+      getPrimaryUser(): Promise<PrimaryUser | null>;
       getUserIds(): string[];
       isPrivate(): boolean;
       isPublic(): boolean;
@@ -953,7 +953,7 @@ declare namespace OpenPGP {
        * Append signature to unencrypted message object
        * @param {String|Uint8Array} detachedSignature The detached ASCII-armored or Uint8Array PGP signature
        */
-      appendSignature(detachedSignature: string | Uint8Array): void;
+      appendSignature(detachedSignature: string | Uint8Array): Promise<void>;
 
       packets: packet.List<packet.AnyPacket>;
     }
