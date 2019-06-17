@@ -112,6 +112,19 @@ export class Mime {
     return Boolean(contentType.index === 0 && utf8.match(/boundary=/));
   }
 
+  private static retrieveRawSignedContent = (rfc822signedContentRootNode: MimeParserNode): string | undefined => {
+    if (rfc822signedContentRootNode && rfc822signedContentRootNode._childNodes && rfc822signedContentRootNode._childNodes[0]) {
+      // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
+      // however emailjs parser will replace it to <LF>, so we fix it here
+      let rawSignedContent = rfc822signedContentRootNode._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
+      if (/--$/.test(rawSignedContent)) { // end of boundary without a mandatory newline
+        rawSignedContent += '\r\n'; // emailjs wrongly leaves out the last newline, fix it here
+      }
+      return rawSignedContent;
+    }
+    return undefined;
+  }
+
   public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
     return new Promise(async resolve => {
       const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
@@ -128,12 +141,12 @@ export class Mime {
           for (const name of Object.keys(parser.node.headers)) {
             mimeContent.headers[name] = parser.node.headers[name][0].value;
           }
-          if (parser.node._isMultipart === 'signed' && parser.node._childNodes && parser.node._childNodes[0]) {
-            // PGP/MIME signed content uses <CR><LF> as in // use CR-LF https://tools.ietf.org/html/rfc3156#section-5
-            // however emailjs parser will replace it to <LF>, so we fix it here
-            mimeContent.rawSignedContent = parser.node._childNodes[0].raw.replace(/\r?\n/g, '\r\n');
-            if (/--$/.test(mimeContent.rawSignedContent)) { // end of boundary without a mandatory newline
-              mimeContent.rawSignedContent += '\r\n'; // also, emailjs wrongly leaves out the last newline
+          if (parser.node._isMultipart === 'signed') { // enigmail, protonmail, kraken, etc
+            mimeContent.rawSignedContent = Mime.retrieveRawSignedContent(parser.node);
+          } else if (parser.node._isMultipart === 'mixed' && parser.node._childNodes) { // apple mail / gpg suite
+            const rfc822signedNode = parser.node._childNodes.find(node => node._isRfc822);
+            if (rfc822signedNode && rfc822signedNode._childNodes && rfc822signedNode._childNodes[0] && rfc822signedNode._childNodes[0]._isMultipart === 'signed') {
+              mimeContent.rawSignedContent = Mime.retrieveRawSignedContent(rfc822signedNode._childNodes[0]);
             }
           }
           for (const node of Object.values(leafNodes)) {
