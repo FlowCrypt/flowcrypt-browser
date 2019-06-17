@@ -303,6 +303,12 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block.pgp_pubkey .line { margin: 0; }
 #pgp_block.pgp_pubkey pre.pubkey { display: none; }
 
+#pgp_block .three_dots { text-align: center; width: 25px; display: inline-block; background-color: #e8eaed; border-radius: 5.5px; margin: 10px 0; cursor: pointer; }
+#pgp_block .three_dots:hover { background-color: #dadce0; }
+#pgp_block .three_dots img {width: 13px;}
+
+#pgp_block .quoted_content { display: none; opacity: 0.75; }
+
 #backup_block label#toggle_pass_phrase.toggle_show_hide_pass_phrase { padding-top: 3px; margin-top: 1px; height: 32px }
 #backup_block.backup .line { margin: 0; }
 

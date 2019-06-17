@@ -47,7 +47,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
 
   for (const m of Config.tests.messages) {
     ava.test(`decrypt[global:compatibility] - ${m.name}`, testWithSemaphoredBrowser('compatibility', async (t, browser) => {
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password);
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password, m.quoted);
     }));
   }
 
@@ -69,16 +69,16 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
     // this test slightly alters state (imports a pubkey). If this ends up causing trouble, it should run it its own browser instead of the global one
     const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
       `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
-    await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, ["missing pubkey", "Flowcrypt.Compatibility@Protonmail.Com"]);
+    await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["missing pubkey", "Flowcrypt.Compatibility@Protonmail.Com"]);
     const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(protonCompatPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
     const pubFrame = await browser.newPage(t, pubFrameUrl);
     await pubFrame.waitAndClick('@action-add-contact');
     await Util.sleep(1);
     await pubFrame.close();
-    await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
+    await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     const htmlMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c0fe4e034bc2&` +
       `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
-    await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, htmlMsgFrameUrl, ["1234"], undefined, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
+    await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, htmlMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
   }));
 
   ava.test.todo('decrypt[global:compatibility] - by entering secondary pass phrase');

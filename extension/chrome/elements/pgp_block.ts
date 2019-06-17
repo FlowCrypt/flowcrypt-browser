@@ -292,34 +292,27 @@ Catch.try(async () => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
+    let renderableAtts: Att[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
+    let isHtml: boolean = false;
     // todo - replace with PgpMsg.fmtDecrypted
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttBlocks: MsgBlock[] = [];
       decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
       decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
       decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
-      if (publicKeys.length) {
-        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
-      }
-      await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
       if (fcAttBlocks.length) {
-        renderInnerAtts(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
-      }
-      if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
-        renderFutureExpiration(passwordMsgLinkRes.expire);
+        renderableAtts = fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!));
       }
     } else {
       renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
       if (typeof decoded.html !== 'undefined') {
-        await renderContent(decoded.html, false);
+        decryptedContent = decoded.html;
+        isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
-        await renderContent(Xss.escapeTextAsRenderableHtml(decoded.text), false);
-      } else {
-        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
+        decryptedContent = decoded.text;
       }
-      const renderableAtts: Att[] = [];
       for (const att of decoded.atts) {
         if (att.treatAs() !== 'publicKey') {
           renderableAtts.push(att);
@@ -327,13 +320,21 @@ Catch.try(async () => {
           publicKeys.push(att.getData().toUtfStr());
         }
       }
-      if (renderableAtts.length) {
-        renderInnerAtts(decoded.atts);
-      }
-      if (publicKeys.length) {
-        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
-      }
     }
+
+    await separateQuotedContentAndRenderText(decryptedContent, isHtml);
+
+    if (publicKeys.length) {
+      BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
+    }
+    if (renderableAtts.length) {
+      renderInnerAtts(renderableAtts);
+    }
+    if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
+      renderFutureExpiration(passwordMsgLinkRes.expire);
+    }
+    sendResizeBrowserMsg();
+
     Ui.setTestState('ready');
   };
 
@@ -436,6 +437,57 @@ Catch.try(async () => {
     }
   };
 
+  const separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
+    if (isHtml) {
+      const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
+
+      let blockQuoteExists: boolean = false;
+      const shouldBeQuoted: Array<Element> = [];
+      for (let i = message[0].children.length - 1; i >= 0; i--) {
+        if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
+          shouldBeQuoted.push(message[0].children[i]);
+          if (message[0].children[i].nodeName === 'BLOCKQUOTE') {
+            blockQuoteExists = true;
+            break;
+          }
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      if (blockQuoteExists) {
+        let quotedHtml = '';
+        for (let i = shouldBeQuoted.length - 1; i >= 0; i--) {
+          message[0].removeChild(shouldBeQuoted[i]);
+          quotedHtml += shouldBeQuoted[i].outerHTML;
+        }
+        await renderContent(message.html(), false);
+        appendCollapsedQuotedContentButton(quotedHtml, true);
+      } else {
+        await renderContent(decryptedContent, false);
+      }
+    } else {
+      const index = decryptedContent.search(/(?!^)(>.*\n?)+(\n?)+$/g);
+      if (index !== -1) {
+        await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(decryptedContent.slice(0, index))}</div>`, false);
+        appendCollapsedQuotedContentButton(decryptedContent.slice(index));
+      } else {
+        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
+      }
+    }
+  };
+
+  const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
+    const pgpBlk = $("#pgp_block");
+    pgpBlk.append('<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
+    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
+    pgpBlk.find('#action_show_quoted_content').click(Ui.event.handle(async target => {
+      $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
+      sendResizeBrowserMsg();
+    }));
+  };
+
   const initialize = async (forcePullMsgFromApi = false) => {
     try {
       if (canReadEmails && signature === true && msgId) {
@@ -495,7 +547,7 @@ Catch.try(async () => {
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else if (Api.err.isInPrivateMode(e)) {
         await renderErr(`Error: FlowCrypt extension cannot communicate with its background script to decrypt this message.
-        On Firefox, this is commonly caused by the Private Browsing Mode or the use of Firefox Containers.`, undefined);
+  On Firefox, this is commonly caused by the Private Browsing Mode or the use of Firefox Containers.`, undefined);
       } else {
         Catch.reportErr(e);
         await renderErr(String(e), encryptedMsgUrlParam ? encryptedMsgUrlParam.toUtfStr() : undefined);
