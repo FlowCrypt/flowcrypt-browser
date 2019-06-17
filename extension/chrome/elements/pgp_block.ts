@@ -443,7 +443,7 @@ Catch.try(async () => {
 
       let blockQuoteExists: boolean = false;
       const shouldBeQuoted: Array<Element> = [];
-      for (let i = message[0].children.length  - 1; i >= 0; i-- ) {
+      for (let i = message[0].children.length - 1; i >= 0; i--) {
         if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
           shouldBeQuoted.push(message[0].children[i]);
           if (message[0].children[i].nodeName === 'BLOCKQUOTE') {
@@ -458,7 +458,7 @@ Catch.try(async () => {
 
       if (blockQuoteExists) {
         let quotedHtml = '';
-        for(let i = shouldBeQuoted.length - 1; i >= 0; i--) {
+        for (let i = shouldBeQuoted.length - 1; i >= 0; i--) {
           message[0].removeChild(shouldBeQuoted[i]);
           quotedHtml += shouldBeQuoted[i].outerHTML;
         }
@@ -479,14 +479,10 @@ Catch.try(async () => {
   };
 
   const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
-    const pgpBlock = $("#pgp_block")
-      .append('<div id="action_show_quoted_content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
-    if (isHtml) {
-      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(message)}</div>`); // xss-sanitized
-    } else {
-      pgpBlock.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
-    }
-    $('#action_show_quoted_content').click(Ui.event.handle(async target => {
+    const pgpBlk = $("#pgp_block");
+    pgpBlk.append('<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
+    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
+    pgpBlk.find('#action_show_quoted_content').click(Ui.event.handle(async target => {
       $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
       sendResizeBrowserMsg();
     }));

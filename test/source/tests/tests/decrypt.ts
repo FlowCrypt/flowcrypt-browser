@@ -12,7 +12,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
 
   for (const m of Config.tests.messages) {
     ava.test(`decrypt[global:compatibility] - ${m.name}`, testWithSemaphoredBrowser('compatibility', async (t, browser) => {
-      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password);
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password, m.quoted);
     }));
   }
 

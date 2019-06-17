@@ -62,7 +62,7 @@ export class BrowserRecipe {
     return { acctEmail, k, settingsPage };
   }
 
-  public static pgpBlockVerifyDecryptedContent = async (t: AvaContext, browser: BrowserHandle, url: string, expectedContents: string[], password?: string) => {
+  public static pgpBlockVerifyDecryptedContent = async (t: AvaContext, browser: BrowserHandle, url: string, expectedContents: string[], password?: string, quoted?: boolean) => {
     const pgpBlockPage = await browser.newPage(t, url);
     await pgpBlockPage.waitAll('@pgp-block-content');
     await pgpBlockPage.waitForSelTestState('ready', 100);
@@ -72,6 +72,14 @@ export class BrowserRecipe {
       await pgpBlockPage.waitAndClick('@action-decrypt-with-password');
       await Util.sleep(1);
       await pgpBlockPage.waitForSelTestState('ready', 15);
+    }
+    if (quoted) {
+      await pgpBlockPage.waitAndClick('@action-show-quoted-content');
+      await Util.sleep(1);
+    } else {
+      if (await pgpBlockPage.isElementPresent('@action-show-quoted-content')) {
+        throw new Error(`element: @action-show-quoted-content not expected in: ${t.title}`);
+      }
     }
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of expectedContents) {

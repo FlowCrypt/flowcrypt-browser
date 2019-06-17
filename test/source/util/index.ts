@@ -2,7 +2,7 @@
 import * as fs from 'fs';
 
 interface TestConfigInterface {
-  messages: { name: string, content: string[], password?: string, params: string }[];
+  messages: { name: string, content: string[], password?: string, params: string, quoted?: boolean }[];
   unit_tests: { name: string, f: string, args: any[], result: any }[];
 }
 
