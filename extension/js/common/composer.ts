@@ -151,6 +151,8 @@ export class Composer {
   private refBodyHeight?: number;
   private urlParams: ComposerUrlParams;
 
+  private isSendMessageInProgress = false;
+
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
@@ -881,12 +883,14 @@ export class Composer {
     }
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
+      this.isSendMessageInProgress = true;
       msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
     } catch (e) {
       if (msg.thread && Api.err.isNotFound(e) && this.urlParams.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
         msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
       } else {
+        this.isSendMessageInProgress = false;
         throw e;
       }
     }
@@ -895,6 +899,7 @@ export class Composer {
       notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.`
     });
     await this.draftDelete();
+    this.isSendMessageInProgress = false;
     if (this.urlParams.isReplyBox) {
       this.renderReplySuccess(msg, plaintext, msgSentRes.id);
     } else {
@@ -1641,7 +1646,15 @@ export class Composer {
       }
       this.renderSenderAliasesOptionsToggle();
     } else {
-      $('.close_new_message').click(Ui.event.handle(() => this.app.closeMsg(), this.getErrHandlers(`close message`)));
+      $('.close_new_message').click(Ui.event.handle(async () => {
+        if (!this.isSendMessageInProgress) {
+          this.app.closeMsg();
+        } else {
+          if (await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
+            this.app.closeMsg();
+          }
+        }
+      }, this.getErrHandlers(`close message`)));
       $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
       $('.popout').click(Ui.event.handle(async () => {
         this.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
