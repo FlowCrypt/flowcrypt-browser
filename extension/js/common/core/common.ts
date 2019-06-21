@@ -124,7 +124,7 @@ export class Value {
     contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
-    zeroes: (length: number): number[] => new Array(length).map(() => 0),
+    zeroes: (length: number): number[] => new Array(length).map(() => 0)
   };
 
   public static obj = {
