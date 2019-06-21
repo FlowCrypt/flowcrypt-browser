@@ -1647,12 +1647,8 @@ export class Composer {
       this.renderSenderAliasesOptionsToggle();
     } else {
       $('.close_new_message').click(Ui.event.handle(async () => {
-        if (!this.isSendMessageInProgress) {
+        if (!this.isSendMessageInProgress || await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
           this.app.closeMsg();
-        } else {
-          if (await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
-            this.app.closeMsg();
-          }
         }
       }, this.getErrHandlers(`close message`)));
       $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
