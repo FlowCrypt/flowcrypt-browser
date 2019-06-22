@@ -571,16 +571,21 @@ export class GoogleAuth {
 
   public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' = 'default') => {
     const { profile, contacts, compose, modify } = GoogleAuth.OAUTH.scopes;
+    console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
+    const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
     if (group === 'default') {
       if (BUILD === 'consumer') {
-        return [profile, compose, modify]; // consumer may freak out that extension asks for their contacts early on
+        // todo - replace "read" with "modify" when approved by google
+        return [profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
       } else if (BUILD === 'enterprise') {
-        return [profile, compose, modify, contacts]; // enterprise expects their contact search to work properly
+        // todo - replace "read" with "modify" when approved by google
+        return [profile, compose, read, contacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${BUILD}`);
       }
     } else if (group === 'contacts') {
-      return [profile, compose, modify, contacts];
+      // todo - replace "read" with "modify" when approved by google
+      return [profile, compose, read, contacts];
     } else if (group === 'compose_only') {
       return [profile, compose]; // consumer may freak out that the extension asks for read email permission
     } else {
