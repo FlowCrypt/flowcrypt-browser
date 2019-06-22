@@ -1,6 +1,17 @@
 {
   "messages": [
     {
+      "name": "quoted part will not crash browser",
+      "content": [
+        "point to them directly",
+        "free cert through",
+        "will honestly soon",
+        "dropped significantly"
+      ],
+      "params": "?frameId=none&message=&hasPassword=___cu_false___&msgId=16b7bc0ef9559ff7&senderEmail=sender%40gmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0",
+      "quoted": true
+    },
+    {
       "name": "[flowcrypt] signed message inline",
       "content": [
         "Standard message",
