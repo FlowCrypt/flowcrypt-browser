@@ -321,9 +321,7 @@ Catch.try(async () => {
         }
       }
     }
-
     await separateQuotedContentAndRenderText(decryptedContent, isHtml);
-
     if (publicKeys.length) {
       BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
     }
@@ -334,7 +332,6 @@ Catch.try(async () => {
       renderFutureExpiration(passwordMsgLinkRes.expire);
     }
     sendResizeBrowserMsg();
-
     Ui.setTestState('ready');
   };
 
@@ -440,14 +437,13 @@ Catch.try(async () => {
   const separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
     if (isHtml) {
       const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
-
-      let blockQuoteExists: boolean = false;
+      let htmlBlockQuoteExists: boolean = false;
       const shouldBeQuoted: Array<Element> = [];
       for (let i = message[0].children.length - 1; i >= 0; i--) {
         if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
           shouldBeQuoted.push(message[0].children[i]);
           if (message[0].children[i].nodeName === 'BLOCKQUOTE') {
-            blockQuoteExists = true;
+            htmlBlockQuoteExists = true;
             break;
           }
           continue;
@@ -455,8 +451,7 @@ Catch.try(async () => {
           break;
         }
       }
-
-      if (blockQuoteExists) {
+      if (htmlBlockQuoteExists) {
         let quotedHtml = '';
         for (let i = shouldBeQuoted.length - 1; i >= 0; i--) {
           message[0].removeChild(shouldBeQuoted[i]);
@@ -468,12 +463,23 @@ Catch.try(async () => {
         await renderContent(decryptedContent, false);
       }
     } else {
-      const index = decryptedContent.search(/(?!^)(>.*\n?)+(\n?)+$/g);
-      if (index !== -1) {
-        await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(decryptedContent.slice(0, index))}</div>`, false);
-        appendCollapsedQuotedContentButton(decryptedContent.slice(index));
-      } else {
-        await renderContent(Xss.escapeTextAsRenderableHtml(decryptedContent), false);
+      const lines = decryptedContent.trim().split(/\r?\n/);
+      const linesQuotedPart: string[] = [];
+      while (lines.length) {
+        const lastLine = lines.pop()!; // lines.length above ensures there is a line
+        if (lastLine[0] === '>' || !lastLine.length) { // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
+          linesQuotedPart.unshift(lastLine);
+        } else { // found first non-quoted part from the bottom, push it back & finish
+          lines.push(lastLine);
+          break;
+        }
+      }
+      if (linesQuotedPart.length && !lines.length) { // only got quoted part, no real text -> show everything as real text, without quoting
+        lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
+      }
+      await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(lines.join('\n'))}</div>`, false);
+      if (linesQuotedPart.length) {
+        appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
     }
   };
