@@ -477,7 +477,7 @@ Catch.try(async () => {
       if (linesQuotedPart.length && !lines.length) { // only got quoted part, no real text -> show everything as real text, without quoting
         lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
       }
-      await renderContent(`<div>${Xss.escapeTextAsRenderableHtml(lines.join('\n'))}</div>`, false);
+      await renderContent(Xss.escapeTextAsRenderableHtml(lines.join('\n')), false);
       if (linesQuotedPart.length) {
         appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
