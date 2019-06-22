@@ -18,6 +18,7 @@ import { PubkeySearchResult, Attester } from './api/attester.js';
 import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
 import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js';
 import { AttUI, AttLimits } from './ui/att_ui.js';
+import { Settings } from './settings.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -174,6 +175,7 @@ export class Composer {
     }
     this.initComposeBox().catch(Catch.reportErr);
     this.initActions();
+    this.checkEmailAliases().catch(Catch.reportErr);
   }
 
   private debug = (msg: string) => {
@@ -1712,6 +1714,19 @@ export class Composer {
       }
       if (Catch.browser().name === 'firefox') {
         inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
+      }
+    }
+  }
+
+  private async checkEmailAliases() {
+    if (!this.urlParams.isReplyBox) {
+      const addresses = Value.arr.unique((await Settings.fetchAcctAliasesFromGmail(this.urlParams.acctEmail)).concat(this.urlParams.acctEmail));
+      const storedAdresses = (await Store.getAcct(this.urlParams.acctEmail, ['addresses'])).addresses || [];
+      if (addresses.sort().join() !== storedAdresses.sort().join()) { // This way of comparation two arrays works only for not object arrays
+        await Store.setAcct(this.urlParams.acctEmail, { addresses });
+        if (await Ui.modal.confirm('Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?')) {
+          window.location.reload();
+        }
       }
     }
   }
