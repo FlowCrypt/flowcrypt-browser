@@ -769,8 +769,13 @@ export class GoogleAuth {
       addScopes.push(...(google_token_scopes || []));
     }
     addScopes = Value.arr.unique(addScopes);
-    if (addScopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1 && addScopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1) {
+    if (addScopes.includes(GoogleAuth.OAUTH.legacy_scopes.read) && addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
       addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.legacy_scopes.read); // modify scope is a superset of read scope
+    }
+    // todo - removed these following lines once "modify" scope is verified
+    if (addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
+      addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.scopes.modify);
+      addScopes.push(GoogleAuth.OAUTH.legacy_scopes.read);
     }
     return addScopes;
   }
