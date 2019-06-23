@@ -22,6 +22,17 @@ Catch.try(async () => {
 
   const print = (line: string) => $('pre').text($('pre').text() + '\n' + line);
 
+  const censor = (value: string) => {
+    value = value.replace(/[a-z0-9.\-_]+@[a-z0-9.\-_]+\.[a-z0-9.\-_]+/g, foundEmail => {
+      if (foundEmail !== acctEmail && !foundEmail.includes('@flowcrypt.com')) {
+        return 'censored@email.com';
+      }
+      return foundEmail;
+    });
+    value = value.replace(/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/g, '1.1.1.1');
+    return value;
+  };
+
   try {
     print('starting');
     const { messages: msgMetas, resultSizeEstimate } = await Google.gmail.msgList(acctEmail, 'is:inbox');
@@ -69,6 +80,12 @@ Catch.try(async () => {
       attachments[att.id!] = { data: att.getData().toBase64UrlStr(), size: att.getData().length };
     }
     print(`done. found ${messages.length} messages, ${fetchableAtts.length} downloaded and ${skippedAtts.length} skipped atts, ${labels.length} labels`);
+    print('censoring..');
+    for (const msg of messages) {
+      for (const h of msg.payload!.headers!) {
+        h.value = censor(h.value);
+      }
+    }
     print('saving to file..');
     const data = Buf.fromUtfStr(JSON.stringify({ messages, attachments, labels }));
     print(`export size: ${data.length / (1024 * 1024)} MB`);
