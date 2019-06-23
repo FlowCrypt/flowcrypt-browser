@@ -80,7 +80,11 @@ export class Api<REQ, RES> {
 
   public close = (): Promise<void> => new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
 
-  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => undefined as void;
+  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+    if (req.url !== '/favicon.ico') {
+      console.log(`${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);
+    }
+  }
 
   protected handleReq = async (req: IncomingMessage, res: ServerResponse): Promise<Buffer> => {
     const handler = this.chooseHandler(req);
@@ -102,9 +106,12 @@ export class Api<REQ, RES> {
     if (!req.url) {
       throw new Error('no url');
     }
-    const handler = this.handlers[req.url];
-    if (handler) { // direct handler name match
-      return handler;
+    if (this.handlers[req.url]) { // direct handler name match
+      return this.handlers[req.url];
+    }
+    const url = req.url.split('?')[0];
+    if (this.handlers[url]) { // direct handler name match - ignoring query
+      return this.handlers[url];
     }
     const steps = req.url.split('/');
     steps.pop();
@@ -116,13 +123,19 @@ export class Api<REQ, RES> {
   }
 
   protected fmtHandlerRes = (handlerRes: RES, serverRes: ServerResponse): Buffer => {
-    serverRes.setHeader('content-type', 'application/json');
+    if (String(handlerRes).match(/^<!DOCTYPE HTML><html>/)) {
+      serverRes.setHeader('content-type', 'text/html');
+    } else {
+      serverRes.setHeader('content-type', 'application/json');
+    }
     return this.fmtRes(handlerRes);
   }
 
   protected fmtRes = (response: {} | string): Buffer => {
     if (response instanceof Buffer) {
       return response;
+    } else if (typeof response === 'string') {
+      return Buffer.from(response);
     }
     return Buffer.from(JSON.stringify(response));
   }
