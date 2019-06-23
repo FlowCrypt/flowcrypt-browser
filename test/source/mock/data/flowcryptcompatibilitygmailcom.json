@@ -323,5 +323,492 @@
       "size": 6855,
       "data": "LS0tLS1CRUdJTiBQR1AgUFJJVkFURSBLRVkgQkxPQ0stLS0tLQ0KVmVyc2lvbjogRmxvd0NyeXB0IDUuMC40IEdtYWlsIEVuY3J5cHRpb24gZmxvd2NyeXB0LmNvbQ0KQ29tbWVudDogU2VhbWxlc3NseSBzZW5kLCByZWNlaXZlIGFuZCBzZWFyY2ggZW5jcnlwdGVkIGVtYWlsDQoNCnhjYUdCRm43cVY0QkVBQ2dLZnVmRzZ5c2VSUDlqS1haMXpyTTVzUXRrR1dpS0xrczE3OTltMEt3SVl1QQpReVl2dzZjSVdiTTJkY3VCTk96WUhzTHFsdXFvWGFDRGJVcEs4d0kveG5ILzlaSER5b21rMEFTZHlJMEsKT2duMkRyWEZ5U3VSbGdsUG1uTVFGN3ZocG5YZWZscXA5YnhROW00eWlITVMrRlFhek12Zi96Y3JBS0tnCmhQeGNZWEMxQkpmU3ViNXRqMXJZMjRBUnBLOTFmV09RTzZnQUZVdnBlU2lOaUtiN0M0bG1XdUxnNjRVTApqTFRMWE85UC8yVnMyQkJIT0FDczZ1MHBtRG5GdERuRmxlR0xDNWpyTDZWdlFEcDNla0V2Y3FjZkM1TVYKUjBONnVWVGVzUmM1aGxCdHdoYkdnNEh1STVjRkxMK2prUndXY1ZTbHVKUzlNTXR1ZzJlVTdGQVdJek9DCnhXYStMZmI4Y0hwRWc2Y2lkR1N4U2U0OXZnS0tyeXN2NVBkVmZPdVhoTDYzaTRURW5LRnNwT1lCOHFYeQo1bjNGa1lGLzVDcFlOL0hRYW9DQ3hESVhMR3AzM3UwM09JdGFkQXRRVStxQUNhR21SaFFBOXF3ZTRpK2sKTFdMM294b1N3US9hZXdiM2ZWbytLN3lnR05sdGs2cG9IUGNMMGRVNlZIWWU4aDJNQ0VPLzFMUjd5VnNLClc0N0I0ZmdkM2h1WGg4NjhBWDNZUW40UGQ2bXFmdDRXZGNDdVJwR0pndkpOSHExOEp2SXlzRHBnc0xTcQpRRjQ0WjBHT0gydlFybk9oSnhJV05VS04rUW5NeThSTjZTWjFVRm80UCt2ZjF6OTdZSTJNZnJNTGZIQi8KVFVuc3hTNmZHcktoTlZ4TjdFVEg2OXAyckk2RjgzNkVaaGViTFFBUkFRQUIvZ2tEQ0R5dU16a29NUWpDCllMVWRsUGhWaWlvUFFBYi9XTWZhaUU1bnRmM3UyU2NtMW1HdVhUUXNUbVUyeVRiWTNpZ1hUSjZZSkg0QwpGTEIxOGY2dStOaFpiMHI5N0x0ZUY0Sml1VHRtNlpBNjNlalNncC81TG5zMVo1d1k3cE1OUHNIMGNUVTMKVXJGUWgvZ2hveGFuU0hhTjFYUXBhb3ZZc09IZnNXY1l6QXh0dnFoRFYydnFmSWxoaUw2RWRFN1ZuODRDClFFMDk2R3U0aU10S1pTWENEVTlCMVhOMitySzJlKzljMW5RSEFYakFxNDl2OVdVenN0emp2ckNtQmFqVQpHUzZDY3kzVkhSZWw0NThib01OT1pxdkxPQkN0dzRueDJHRkRzMTZaUU5aRnl3ajFwVGhFeEtNeEhsbkIKU3c2dE1KMEZKQkNrMkU5UzI4QnV1ZHU2c0pKZXJaR2pVS0lhZm9TQ2NPOHdwdml4ekwxczRkcUpzK2lIClJ2MDR4ZkhrNzhyZ2FQMDEwTndvcUhqZCtvcHMrTnhMb0M5ZFM1UGNEbTlDQXVCeFJqZjlnU0o4UW84dwoxamVsZGo5M3FpWVU0WjBPODdyelcrSURYNkdCSWNFOEpnaHBPTytYTXhOMG5mYjJFWnBrRmhCTGU2MmoKSk9nUXNkb1l5K2lCS0dTZ3gydW9ISXZpZnhpcTgyN1hHQ1hUWm1Ia0F3WnlKUGw3bXlqYS9xZGl1ZGxECkZuQnRPZXhUblo3N0hYbEZDOXM3L1BJdFpacUtuSVB1SUtoc1cvVGs4ZnpwVVBmN1V1MHRTL3ZDemM4KwphYnJwUU0ycHBJN085M2tDS0pkWFZ6S2lvRTJNZlY1RGhMak5PZTgyT1JXWk80dXdDZzJ1OFpIaENPenoKTXNNcEFtODlmKzFudk9RdHZCUzl2NDVNaFpkYm5kd1BIUUVnMnBNNjg5WnhIdzlFZ1BpT2h5T01GR00xCjR0QlozallmUHhHeFRXN05aZnJ5V1VReHZTU2tGYUxzUE1qeFRCOTNUL2ZzSmRlVURHS0pSNDRjUndlUApBVFFXSy9FQmd4MWQrakpVSEtZbDVhSFV4ZEtMdndIMWlremdIdUtrYjRwVjB5YVJqT055OHNFZ1hZa2oKSG9IMXFmWkFxYkNvcXJhUm9yVEVnTzlRdnphTEtiOWdkRGpFTXh1ekVKdUEzUXhQOUhxSFI1YVUrVDhvCmhYc3M5U01GVmpWb2s2dDkydjZrZWVVVlJKWXhqaG9ST1pOVWVNd2ZJZy9FUUVYQUNRVUlHb2tKcWFZQwo0VFgzR29MV2E1K0JUdzVDaEtpUkM5Vk95Rk52cThRMmV1QnpTUm9ZUFlVVTdla0Rhd1VRVStTQ3BOMEkKM0hZaUpsR3pESjd6d0Z5YmVFTWR2MUY5NEY0TmVmUk9kUkZjUHR6ckFKNExNMzh6b3EyWUVVeUs5Uk4wCmxPMkk5QkZ3MzBBUitQcy9xeHRwdFd0ek5YQm9oWXVOTnBhWnQyVU1jTU9aaFJZbUhKanE1OW9INjVYOQovbDh3RWs0bnhnRm1Dam5wSHlHcG4yanRkTXRSRHJ3QWVIS0JKNFpRVVYzU1UvY2dwYzBWWjJyZytacUwKN2lBV2ZvZm9EL00vM2JFT3U2ZVBxY2wyYktPaHc4UlQwN0NpbW92S1VjWHVqcDcvaHNqNDd5TkdLQVNzCnJaTXlKWFQrVnFNQS9NV2IrK2pPVXdRa0N6NmRsek04VzVVQzJlemxtMXVJWCtuclpwMExvV3pxMlZHRwpFTmJEcG55WGgwVzNGbVZlU2d3ZWoxRmc3QUo0d2RMa1B4ZWI5MTZVR09OclViRllSdEU3akFvL2g5YzMKa3VzLzhyc3hNVmZUdlF1K3RaUE83bGlXeGh1dVJXYUcrWU9KZTJzOE5ZdXFseXlQcHZLUnRHSXF5MzYzCmM5ajVWbmZxT2lsMVN4QWpFZ203RTVBSGtDZFFEMi9CTDQraFJlZXgyN1dlamVkU0hSVnlRNk04SDBSTworNDhlZmxGZWFDVFRXRTk3MEhJWjFoTVFUZjNiTEVhQjA4NzU4VXVZVmE3Z2VGNmpRbXBnOE9ua1JQQlEKYWNRSGdCT1YxRnpmMGFuMHVNaFZ3MHZCUUlYM1hkYUxlK3VWVXV2bDAwVk9MQjRKRXJDUXpLREdzQU1qCk4ydUUxY0FDZkFFYXVUTWlrOSsvRzV3cDJoVzhKT08xbXJIN2xxN3ozUnpoSk4vVmtURkZTT0d5L21CMQp5dTRpbmIrdTVhVnlKSUw1bGpzL05Cbm85Yi9hRE9VbW1pSHc0bXkwS0NRVmRHTmJsZXRxZmplSlY0Z00KSVFuWFlYbFFnZzM5OExCYXdDTkxZSGtiL2RETk8wWnNiM2REY25sd2RDQkRiMjF3WVhScFltbHNhWFI1CklEeG1iRzkzWTNKNWNIUXVZMjl0Y0dGMGFXSnBiR2wwZVVCbmJXRnBiQzVqYjIwK3dzRjFCQkFCQ0FBcApCUUpaKzZsakJnc0pCd2dEQWdrUXJhd25uSlVKTWdjRUZRZ0tBZ01XQWdFQ0dRRUNHd01DSGdFQUFNN20KRC85cTUwN2tUc3BlSmNoRE9xeFYrSFJHazVMa3JBTnJ4azBBN05zR05CdCtQSytPZTk2UDJsakw3cytpCjMwME44YTB3UXlsYVBtNWE0K0VQVisvWXEvKzRFL2h5d21wL3hWdXpVZldFUGl3UGJWR3NkNnN6dkVJWApNZzNWY2VHUjZaSHNnQXMxOTZTc0wxTWFMZ2hoaG10a3JQL0lyU1VLTlB3RWl1aU5oUVRrSTROcnlZbzgKSFlGS1luQ28zQm5HR3ZRb3FjL0tTczRCbCtrQ3VjY1IxamNrVG5oSjdvVUxFb3hZNjJjb0VkekFlSkpPCnhmK2NHMHJmU3dLNlgyUFZhQjNXTVZFbmJqZ1JJbDNzenB3R1Uyc25vWk5rT0tXdWFtajJkVTdTeVZQQQpQOWdQb1lMSTNldmVFbmNnUU9mQmtyVG1rdjdXMnN6cnZYeW5KWnJMQjlQcmE5Yk12dWsycVR1MGlDRmYKNGV1K3NkVTFpejhiY3VjMzJibk9VSWt5VG5Bby81LzJpV3pQY3VXNmxxYlpxNlNEK0hVZGNTWGVXV0wyCjcxQ1FtUnNab1FOWkgxUUtjZi9Hakp1bExTYUNOVmkzUUhxTTFpOGNFc3VHNXFPRkg3V3lOVWdpRFNUQgovRmw5Q0FWZklBdnd0YTdpYzFwSVFnSlNYeUZVRlovMVhwZWZoVmZzbVNSYVVUY2tRSEppSzVtUUFPRkoKM0tTVWxpUkgxOUNOUnprQnhteFNBNjVOZXhqaDhiUWdTdkl6T3ZGSERTcUNvYlh1dUt2VzZxdThzT3NNCnpYd1U5YVJiWW5BYk1YUmhIbko3TysvUGNmZXRlaUQ2dklUTjVrQTNqeG5Ddk84WkZ5OFJra1dZSFVMQgpNZXRiaFRLUUxuM2Ftb2RIa3JpZFhzRlJQTWZHaGdSWis2bGVBUkFBcjhZYVBLSGNJZURUSVprdm1yZ3MKbCtmYkVBRlhUUkZlTERFM0k5ei90ak5pQkpxY0ZDYk1XUGNBd21Gd1Ywbkg4U0RlTFNsT3ZxcHNDZkRPClJpaEtiMUgyVGpROU1EMHMvZ0F3RS9pNWVMQnR1UlhZMldqOUV5Q1ljM2dxcTdQQmorRnMwcnBtNk1XMApNWmVuYXovQ3ExK3QrWjBPZGU1U0dlS1dzNmpvMUg4T3UweG9TYXhkTUo5Q0ptT2VaS1FBUW05VlFrcUsKRnYwTG5Vdk1WSlk5Z1F5U001YWpUZGxKZ2xIbzJPNXVNd3JhRlVSdUh6QkR0YSs5MSt5dzZMQTc2REJmCkR2T0p0bW1FSXdEc0FOV3BSNHpYU3I2UDVNc2FIK0MrbWJTQ0dxTXBteDJUWjZHZHhTVk5DRU9UQmp3awpubUlucEJPR0NOakJvQndMUUNSN21zRC91YytmcGd5ZkdVLzlIczJycm5XWHhJR2pOeFBPT3g0NUxCNXEKc2ZtMHg0ckpxeTFOWVFnY1VCM210Z2dTcHJDbkgwWHp1UXZGR0ZDUDAxUkRxNlNaMUhyby94Nld5YjBCCmwxQzVwQVhuZWdSRG5QQzVRcno3QmVvTk1Mem5kZTE4ZXdLL0VvUTAvUmxkZS9LcFdqWWcxRTBFN2xhVgpKaENNYkdqR2lHelZmNEl3Q1lWSU85dFh2UjFsVi9SeEFuMGFKMmh3Qy92UU00ZDVjRzQ2SmRrR3JJWkkKMk41dytYWnNXdmdEcXZsRXljMWtPdGlKNWNrNFJaU3FCcGZTNDFCcHhmZ0I1eVlxSUlUSkhUeGNvUTlXCmVja1pRenVZNitHNFowZlJrTFRkbFErb3NDRjliWnpGeXlJNTVORHUxendzdHBPN2Zqdy9GV3crUTNYMQpGc0VBRVFFQUFmNEpBd2hlZHp1V3QxeHJSR0R4NHM0ZXB0bmdkbDRxekIwdlFtQ1UxbjBXZW5aazg2Q3UKZGpHcDRKdWxHaG5DdlQxcG44TmlKUjlTQU82NGtoRVhPYWl1RnpQSW93NVpOYjU1Tk1ZVllna0hnQTBBCmFKN2dSU0dzbDdod01YRStEaFMrNitUOG95M21RdE01eEpvM3ZTUWdxKzNhVkJNc1hPTHFBSmIxTllDMQova21ENEp3Nmc3RFMwaXdGekZOSXZaWHBKQU1CTDBvRWx5REtGQUM5dDdMamhsdnl6eVNhMjNWZkNYMXMKUzBiYTRPOG8yOXR2VWF6TjVkL1hCYlpwekE3ZzRDYXNsY3lFNnh4WnZwNklQSDcyd2d6bFdnT3RRYm9yCjd2WlZLZjNHcHNRVDBybjVUemVwNEFodngyZjRVdTRwSFQ1cTRBa1hYMXVRSlRObEJMZkJmTUtiOFA0KwpvVDRGWjdGM3NsM3liL09EUjVMUEQ3U0VERkR1ekRsellSMW5vdWFvRFdxenJKU0FpVDNZZTUrQTc1K2wKR2RSVkdFUHRtU1hGOW9iZDBzaDFzNnpsSG9OMEQzUFRYbXZaVTZIaExtWXNsOWlzSkNvUzJwdTBtbFE2CnQ3SmQ2TU5nNEsrLytha1ZyelVSWTR3YWJKSzhROHJ0M2JsVUNBZ3o4eExhWFlmNmdudWN3amhuR0FIdApiaWRYUFhsZ3JkR2drb0NWekxMLy9Vd0RJMXNmZE5UeXZLMDRwdzk4SUh1cUFBL3JLTUVhdDZQUWpPNHgKWUdhNjRzSzkrSmdpcGdNR0Jub2F1NEFtRzY1MDlkdUdpT1hTWDNQNlZ3ejNnaFFZNmdZYUZRakxkbUMzCmFjdEFVSGk5NkJqWVJoUUV3NDdwMWg0eUhaQXpDVkpUcmR5ZW5FVC9EckJ2THh0Rm5nWU04UUdaaVFKTgpuUzl0WGZpOG52Wm40c25UOFU2dE81QUR4RWRRbnNzeVJOWGs0WHlpamJSd1QwNkh3VEpyTDdKaTF4d3YKWXp5YW1JbjBWYzdMRlJGWExQaFZvTjlKZCtqWnE1TE85UUF0VUQrUXhQY2hWWm4zYjFNSnZtNGo4ckJ5Cm9neVUva2lIbUdQVDdRTGZpL2xlZVEwTXM3d2JkdHhENDBCdmZKMVNEa1drUkhMUzlibE8yQkNaL1RnSgowOG5malc2c2cyaDIydFJKcHVJNm9FZEpNdFZwcGh0SVZ3WVh0U3ZpVkhBT1hIZm5RbW9CeHVud09YWjQKb3lOYnNTUWVkTm9vb0x1VW5BYnJZamRkdFdEaVoyU0RNMEE0WDFRcU4wZFdmdEQ4TlRlYnJ0azNuREJLCnU1OSs3b05ZMnNPZksybVgwZDNEYXowQVhsUTNWWi9HaHM3czRQYTlBOG53VnlEeVE5U0NjblU3TUcyLwpNMC9uY0NpdHQzeEVQSEh1c0ZBRzBJVkEzeFNyV1N4UXFKZzJwdDVGbnE4NjJZY3VHTEtHTXl5c1hSeWkKRHV2enAwQUNWWkFrdWUvN05TMTFuWXNaTGRvWXlNQnZ0aitJNVZMbERyL3RuRDNmQW9BQitYdThWMW50Ck1YT3IrblgvN0hCempaYTA3M3BlTVVLMm9xMmxEaXdaRXhTM3ZOUzZyeGttVGJxTnIzaisvcUllRkgwWQpnUGNjMklNdEcrbEE4V0lyazh6bW5vUWpSbmtsOHZrNUNPK3lhLytXMjdsZVk3clR5NWVoa2t6c2pBOEYKMFpudkkyc083UVQwd1JUdFJibVNCSkRONFlSSlg2UERhdGZGVHJCZDRnQ0dRYUc2YnQvUW1ncXBoZzZOCkVNc0JjNjBtQlVBY1p5Mmo1VGhjbEFyZ0cvdWlFS2svUXo2RktzUlRXNWdZTFViZzdvWktrMzdoWlgzMgpMNGtzVUhKclJIUmxSbDhwQzVUUVNORmRmZjFZcFBrdGZ0eFJOTXdlMjVqZGQzOEVMOWd3V3B1VG40eG4KUS9VdlZyQWthU0V4SnpXb0t0RFU0UzB5VGoxcVRZaXRQNFRYMkJEcVZIZXJ2SkFIa1B2S3o5bmxmUmx0Ck96TG9Zcmtsa1RkZmZXaC84Tk51S0NwWXNRMlRlaUhrNW9NMW5XRmhTWWQ3VGV4QzVXdkFQeE5hcUtEago4cDlDQVd0UU1zUjFOa2w3TlN6SnNmT1BOYkRrVHo3bGF1VUdmSGs4UkZwbk1FWEM1dFhNQWdBUDAyeEUKWURNUVhSa0VpeXJOekV4RE1YU09lKzJYdGdRMUM0ZjFsZzI1bGoySDEveTV6TlhwWXpZZVpDS2dWU3pDCmZNTDRVM0FMMUY3NDAyT3UxMUFDeFVrQ2VmWUZiaTI5ZVZodmZ0K2g3U3Z4WU9SUXRuaER3c0ZmQkJnQgpDQUFUQlFKWis2bGtDUkN0ckNlY2xRa3lCd0liREFBQXViZ1AvalFPTTFmalZrVFNLWk1rd3p3K3hSb3UKS1poWERGTFBlbHMzSG5jZHVPR3J1SXNTeTZhMGpvbStYZ05WQ0pvMFZxYlNTQ09xMlNRaDFhd2Y2eFNWClVJVWgyaVVBckVuZkN0RGRRempxNytLR2hxeS9jOHN6M1FFMXZJczJQYTh5RVdqWVBVb3ZBNzFDM3lpSQpYaXlPTnZVVmczM21CWXhUMVNmSitlWU1Hbjl2RGFiY2JNcU9KaEZvWC9xUmY1ZkIya0xUc3l3Zk5qeE8KRFY4SzgzOWpLSURjOTF1UVRMM0ZtYU5WWm11Q005U0NYeDNUWldXQ1R0YnpBdTd2K3lXQU03Y2grZEpsCjAvU1llbE5vNHB1VGhKUlVUUkZJZCtSTlM5aHVsODBYVGlheEYyNElSZXhEdm9ucENNa1VuSDlxUlByegpRWVM5b3NKeWJQZ29ZQlF4U0JwMGZtWThKZDZ4dkpyc2RJc3BMSHViems2SW5mRWhHZGVwN3UxaGZXL0kKU01UcXpPelFRQ0dsbFEvYUtyTVBMdnA5OURLZEF3ZnFYTkRKNGN0TVl6Rm5VNWkzS2ZsSytVZHJtZWtBCm1kSldNeXhXTE8yVnVGK3BrOTA4TFJsbXUzZ1RTRVlzZ0FadVlONDRVNHZMTUVGNGIvRExSdW5pNHNmQgorZjF3em1VdmRjdWo1VkhRSTN3MHQrUHlIakpVdkVqTlVDSlFaQ3g2aWRmTDRrRFI2c1BZbUczK2VlelEKT2dWYXFOd05qbFQ4c2dsV2lrYUdCOXkwM0VoS2NUSElxamg3S3JXSlVxTzNVY2lUaEZFT20xaEVTQUIrCmJ3dmVYd1M0SGFyWG5mbXVTcXYrNGNmTEg2MkhTOVpTY3JZaTlGWUJsa3RCbFM5WEdURk1JYjc3dkc4UwoNCj1GMDZ4DQotLS0tLUVORCBQR1AgUFJJVkFURSBLRVkgQkxPQ0stLS0tLQ0K"
     }
-  }
+  },
+  "labels": [
+    {
+      "id": "Label_23",
+      "name": "compatibility/pgp desktop",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_3",
+      "name": "tests/encrypted",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_19",
+      "name": "compatibility/airmail",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_9",
+      "name": "fix/chrome",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#fb4c2f"
+      }
+    },
+    {
+      "id": "Label_34",
+      "name": "fix/milestone",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#16a765"
+      }
+    },
+    {
+      "id": "Label_8272036656862431111",
+      "name": "compatibility/other",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_32",
+      "name": "fix/google inbox",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#fb4c2f"
+      }
+    },
+    {
+      "id": "Label_7",
+      "name": "fix",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#fb4c2f"
+      }
+    },
+    {
+      "id": "CATEGORY_PERSONAL",
+      "name": "CATEGORY_PERSONAL",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_33",
+      "name": "compatibility/customers",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_25",
+      "name": "compatibility/gpg4win gpg0L",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "CATEGORY_SOCIAL",
+      "name": "CATEGORY_SOCIAL",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_22",
+      "name": "compatibility/GPG4o",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_8",
+      "name": "fix/android",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#fb4c2f"
+      }
+    },
+    {
+      "id": "IMPORTANT",
+      "name": "IMPORTANT",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_2085959779186395490",
+      "name": "compatibility/outlook",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_6383495043513189035",
+      "name": "fix/wontfix",
+      "type": "user"
+    },
+    {
+      "id": "Label_6",
+      "name": "tests/pubkey",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_27",
+      "name": "compatibility/open keychain",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_13",
+      "name": "tests/html",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_1",
+      "name": "tests/meta",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_12",
+      "name": "tests/unicode",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_15",
+      "name": "new",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#16a765"
+      }
+    },
+    {
+      "id": "Label_17",
+      "name": "compatibility/enigmail",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_20",
+      "name": "compatibility/gpgmail",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_2",
+      "name": "tests",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_16",
+      "name": "compatibility",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_6733941514790441523",
+      "name": "fix/wip",
+      "type": "user"
+    },
+    {
+      "id": "CATEGORY_UPDATES",
+      "name": "CATEGORY_UPDATES",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "CATEGORY_FORUMS",
+      "name": "CATEGORY_FORUMS",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_14",
+      "name": "tests/decrypt error",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "CHAT",
+      "name": "CHAT",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_24",
+      "name": "compatibility/protonmail",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_4",
+      "name": "tests/signed",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "SENT",
+      "name": "SENT",
+      "type": "system"
+    },
+    {
+      "id": "INBOX",
+      "name": "INBOX",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelShow",
+      "type": "system"
+    },
+    {
+      "id": "Label_10",
+      "name": "fix/ios",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#fb4c2f"
+      }
+    },
+    {
+      "id": "TRASH",
+      "name": "TRASH",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_18",
+      "name": "compatibility/encryptomatic",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "CATEGORY_PROMOTIONS",
+      "name": "CATEGORY_PROMOTIONS",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_11",
+      "name": "fix/desktop",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#fb4c2f"
+      }
+    },
+    {
+      "id": "DRAFT",
+      "name": "DRAFT",
+      "type": "system"
+    },
+    {
+      "id": "SPAM",
+      "name": "SPAM",
+      "messageListVisibility": "hide",
+      "labelListVisibility": "labelHide",
+      "type": "system"
+    },
+    {
+      "id": "Label_21",
+      "name": "compatibility/mailvelope",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "STARRED",
+      "name": "STARRED",
+      "type": "system"
+    },
+    {
+      "id": "UNREAD",
+      "name": "UNREAD",
+      "type": "system"
+    },
+    {
+      "id": "Label_26",
+      "name": "compatibility/k-9",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_29",
+      "name": "tests/plain",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_5",
+      "name": "tests/attachment",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    },
+    {
+      "id": "Label_31",
+      "name": "compatibility/eM",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#ffffff",
+        "backgroundColor": "#ffad46"
+      }
+    },
+    {
+      "id": "Label_28",
+      "name": "tests/secondary",
+      "messageListVisibility": "show",
+      "labelListVisibility": "labelShow",
+      "type": "user",
+      "color": {
+        "textColor": "#0d3472",
+        "backgroundColor": "#b6cff5"
+      }
+    }
+  ]
 }

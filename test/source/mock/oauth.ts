@@ -56,10 +56,14 @@ export class OauthMock {
   }
 
   public getAccessTokenResponse = (refreshToken: string) => {
-    const access_token = this.getAccessToken(refreshToken);
-    this.checkKnownAcct(this.acctByAccessToken[access_token]);
-    const id_token = this.getIdToken();
-    return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
+    try {
+      const access_token = this.getAccessToken(refreshToken);
+      this.checkKnownAcct(this.acctByAccessToken[access_token]);
+      const id_token = this.getIdToken();
+      return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
+    } catch (e) {
+      throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
+    }
   }
 
   public checkAuthorizationHeader = (authorization: string | undefined) => {
@@ -69,9 +73,7 @@ export class OauthMock {
     const accessToken = authorization.replace(/^Bearer /, '');
     const acct = this.acctByAccessToken[accessToken];
     if (!acct) {
-      // todo - should actually respond with oauth popup needed error, something like
-      // http err 400, {"error": "invalid_grant", "error_description": "Token has been expired or revoked."}
-      throw new HttpClientErr('Invalid auth token', Status.BAD_REQUEST);
+      throw new HttpClientErr('Invalid auth token', Status.UNAUTHORIZED);
     }
     this.checkKnownAcct(acct);
     return acct;

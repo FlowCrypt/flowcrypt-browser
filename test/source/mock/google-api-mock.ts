@@ -42,14 +42,14 @@ export const startGoogleApiMock = async () => {
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
-    '/gmail/v1/users/me/profile': async (parsedReqBody, req) => {
+    '/gmail/v1/users/me/profile': async (parsedReq, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
         return { emailAddress: acct, historyId: 'historyId', messagesTotal: 100, threadsTotal: 20 };
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
-    '/gmail/v1/users/me/settings/sendAs': async (parsedReqBody, req) => {
+    '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
         return { sendAs: [{ sendAsEmail: acct, displayName: 'First Last', replyToAddress: acct, signature: '', isDefault: true, treatAsAlias: false, verificationStatus: 'accepted' }] };
@@ -78,21 +78,36 @@ export const startGoogleApiMock = async () => {
         }
         const msg = data.getMessage(id);
         if (msg) {
-          if (format === 'full') {
-            msg.raw = undefined;
-            return msg;
-          } else if (format === 'raw') {
-            if (msg.raw) {
-              throw new Error(`MOCK: format=raw not implemented yet`);
-              // const { threadId, raw } = msg; // todo - missing a bunch
-              // return { id, threadId, raw };
-            }
-            throw new Error(`MOCK: format=raw missing data for message id ${id}. Solution: add them to ./test/source/mock/data/acct.json`);
-          } else {
-            throw new Error(`MOCK: format=${format} not implemented yet`);
-          }
+          return Data.fmtMsg(msg, format);
         }
         throw new HttpClientErr(`MOCK Message not found for ${acct}: ${id}`, Status.NOT_FOUND);
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/labels': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isGet(req)) {
+        return { labels: new Data(acct).getLabels() };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/threads': async ({ query: { labelIds, includeSpamTrash } }, req) => {
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isGet(req)) {
+        const threads = new Data(acct).getThreads();
+        return { threads, resultSizeEstimate: threads.length };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isGet(req) && format === 'metadata') {
+        const id = parseResourceId(req.url!);
+        const msgs = new Data(acct).getMessagesByThread(id);
+        if (!msgs.length) {
+          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`);
+        }
+        return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
