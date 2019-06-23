@@ -99,7 +99,7 @@ export class Api<REQ, RES> {
       res.setHeader('content-type', 'application/json');
       return this.fmtRes({ alive: true });
     }
-    throw new HttpClientErr(`unknown path ${req.url}`);
+    throw new HttpClientErr(`unknown MOCK path ${req.url}`);
   }
 
   protected chooseHandler = (req: IncomingMessage): RequestHandler<REQ, RES> | undefined => {
@@ -113,9 +113,12 @@ export class Api<REQ, RES> {
     if (this.handlers[url]) { // direct handler name match - ignoring query
       return this.handlers[url];
     }
-    const steps = req.url.split('/');
-    steps.pop();
-    return this.handlers[`${steps.join('/')}/?`]
+    // handler match where definition url ends with "/?" - incomplete path definition
+    for (const handlerPathDefinition of Object.keys(this.handlers).filter(def => /\/\?$/.test(def))) {
+      if (req.url.startsWith(handlerPathDefinition.replace(/\?$/, ''))) {
+        return this.handlers[handlerPathDefinition];
+      }
+    }
   }
 
   protected fmtErr = (e: any): Buffer => {

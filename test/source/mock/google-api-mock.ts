@@ -4,22 +4,14 @@
 
 import { Api, HttpClientErr, Status } from './api';
 import { IncomingMessage } from 'http';
-import { readFileSync } from 'fs';
 import { OauthMock } from './oauth';
+import { Data } from './data';
 
 const oauth = new OauthMock();
 
 const isGet = (r: IncomingMessage) => r.method === 'GET' || r.method === 'HEAD';
 const isPost = (r: IncomingMessage) => r.method === 'POST';
-
-const asset = (url: string): Buffer => {
-  const assetPath = `./test/source/mock/data/${url.replace(/[^a-zA-Z0-9_?=]+/g, ' ').trim().replace(/ +/g, '-')}.json`;
-  try {
-    return readFileSync(assetPath);
-  } catch (e) {
-    throw new HttpClientErr(`Asset not found for '${url}' at '${assetPath}'`, Status.NOT_FOUND);
-  }
-};
+const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
 
 export const startGoogleApiMock = async () => {
   const api = new Api<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
@@ -33,7 +25,7 @@ export const startGoogleApiMock = async () => {
           return oauth.consentResultPage(login_hint, state, result);
         }
       }
-      throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/oauth2/v4/token': async ({ query: { grant_type, refreshToken, client_id, code, redirect_uri } }, req) => {
       if (isPost(req) && grant_type === 'authorization_code' && code && client_id === oauth.clientId) { // auth code from auth screen gets exchanged for access and refresh tokens
@@ -48,23 +40,63 @@ export const startGoogleApiMock = async () => {
       if (isGet(req)) {
         return { issued_to: 'issued_to', audience: 'audience', scope: 'scope', expires_in: oauth.expiresIn, access_type: 'offline' };
       }
-      throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/gmail/v1/users/me/profile': async (parsedReqBody, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
         return { emailAddress: acct, historyId: 'historyId', messagesTotal: 100, threadsTotal: 20 };
       }
-      throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
-    '/gmail/v1/users/me/messages/?': async (parsedReqBody, req) => {
+    '/gmail/v1/users/me/settings/sendAs': async (parsedReqBody, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
-        return asset(req.url!);
+        return { sendAs: [{ sendAsEmail: acct, displayName: 'First Last', replyToAddress: acct, signature: '', isDefault: true, treatAsAlias: false, verificationStatus: 'accepted' }] };
       }
-      throw new Error(`Method not implemented for ${req.url}: ${req.method}`);
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
-    '/favicon.ico': async (parsedReqBody, req) => '',
+    '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => {
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isGet(req) && q && q.includes('subject:"Your FlowCrypt Backup"')) {
+        const msgs = new Data(acct).searchMessages('Your FlowCrypt Backup');
+        return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), sizeEstimate: msgs.length };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => {
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isGet(req)) {
+        const id = parseResourceId(req.url!);
+        const data = new Data(acct);
+        if (req.url!.includes('/attachments/')) {
+          const att = data.getAttachment(id);
+          if (att) {
+            return att;
+          }
+          throw new HttpClientErr(`MOCK attachment not found for ${acct}: ${id}`, Status.NOT_FOUND);
+        }
+        const msg = data.getMessage(id);
+        if (msg) {
+          if (format === 'full') {
+            msg.raw = undefined;
+            return msg;
+          } else if (format === 'raw') {
+            if (msg.raw) {
+              throw new Error(`MOCK: format=raw not implemented yet`);
+              // const { threadId, raw } = msg; // todo - missing a bunch
+              // return { id, threadId, raw };
+            }
+            throw new Error(`MOCK: format=raw missing data for message id ${id}. Solution: add them to ./test/source/mock/data/acct.json`);
+          } else {
+            throw new Error(`MOCK: format=${format} not implemented yet`);
+          }
+        }
+        throw new HttpClientErr(`MOCK Message not found for ${acct}: ${id}`, Status.NOT_FOUND);
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/favicon.ico': async () => '',
   });
   await api.listen(8001);
 };
