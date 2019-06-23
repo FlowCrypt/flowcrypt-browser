@@ -1,3 +1,7 @@
 
-console.error('not implemented');
-process.exit(1);
+import { startGoogleApiMock } from './mock/google-api-mock';
+
+startGoogleApiMock().catch(e => {
+  console.error(e);
+  process.exit(1);
+});

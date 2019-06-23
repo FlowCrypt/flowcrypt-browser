@@ -75,10 +75,10 @@ export class Api<REQ, RES> {
       const msg = `${this.apiName} listening on ${typeof address === 'object' && address ? address.port : address}`;
       console.log(msg);
       resolve();
-    })
-  });
+    });
+  })
 
-  public close = (): Promise<void> => new Promise((resolve, reject) => this.server.close(err => err ? reject(err) : resolve()));
+  public close = (): Promise<void> => new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
 
   protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => undefined as void;
 
@@ -99,6 +99,9 @@ export class Api<REQ, RES> {
   }
 
   protected chooseHandler = (req: IncomingMessage): RequestHandler<REQ, RES> | undefined => {
+    if (!req.url) {
+      throw new Error('no url');
+    }
     const handler = this.handlers[req.url];
     if (handler) { // direct handler name match
       return handler;
@@ -109,7 +112,7 @@ export class Api<REQ, RES> {
   }
 
   protected fmtErr = (e: any): Buffer => {
-    return Buffer.from(JSON.stringify({ "error": e }));
+    return Buffer.from(JSON.stringify({ "error": { "message": e instanceof Error ? e.message : String(e) } }));
   }
 
   protected fmtHandlerRes = (handlerRes: RES, serverRes: ServerResponse): Buffer => {
@@ -117,7 +120,10 @@ export class Api<REQ, RES> {
     return this.fmtRes(handlerRes);
   }
 
-  protected fmtRes = (response: {}): Buffer => {
+  protected fmtRes = (response: {} | string): Buffer => {
+    if (response instanceof Buffer) {
+      return response;
+    }
     return Buffer.from(JSON.stringify(response));
   }
 
@@ -141,8 +147,25 @@ export class Api<REQ, RES> {
     });
   })
 
+  private parseUrlQuery = (url: string): { [k: string]: string } => {
+    const queryIndex = url.indexOf('?');
+    if (!queryIndex) {
+      return {};
+    }
+    const queryStr = url.substring(queryIndex + 1);
+    const valuePairs = queryStr.split('&');
+    const params: { [k: string]: string } = {};
+    for (const valuePair of valuePairs) {
+      if (valuePair) {
+        const equalSignSeparatedParts = valuePair.split('=');
+        params[equalSignSeparatedParts.shift()!] = decodeURIComponent(equalSignSeparatedParts.join('='));
+      }
+    }
+    return params;
+  }
+
   protected parseReqBody = (body: Buffer, req: IncomingMessage): REQ => {
-    return JSON.parse(body.toString()) as REQ;
+    return { query: this.parseUrlQuery(req.url!), body: body.length ? JSON.parse(body.toString()) : undefined } as unknown as REQ;
   }
 
 }

@@ -16,7 +16,8 @@
     "../tooling/resolve-modules.ts",
     "../tooling/bundle-content-scripts.ts",
     "../tooling/fill-values.ts",
-    "../tooling/tsc-compiler.ts"
+    "../tooling/tsc-compiler.ts",
+    "../tooling/build-types.ts"
   ],
   "include": [
     "../tooling/tslint-rules/*.ts"

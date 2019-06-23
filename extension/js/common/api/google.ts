@@ -17,7 +17,7 @@ import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
-import { gmailBackupSearchQuery } from '../core/const.js';
+import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
@@ -86,10 +86,10 @@ export class Google extends EmailProviderApi {
     progress = progress || {};
     let data, url;
     if (typeof progress.upload === 'function') {
-      url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + path + '?uploadType=multipart';
+      url = `${GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
       data = params;
     } else {
-      url = 'https://www.googleapis.com/gmail/v1/users/me/' + path;
+      url = `${GOOGLE_API_HOST}/gmail/v1/users/me/${path}`;
       if (method === 'GET' || method === 'DELETE') {
         data = params;
       } else {
@@ -131,7 +131,7 @@ export class Google extends EmailProviderApi {
       },
     },
     usersMeProfile: async (acctEmail: string | undefined, accessToken?: string): Promise<GmailRes.GmailUsersMeProfile> => {
-      const url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
+      const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/profile`;
       let r: GmailRes.GmailUsersMeProfile;
       if (acctEmail && !accessToken) {
         r = await Google.call(acctEmail, 'GET', url, {}) as GmailRes.GmailUsersMeProfile;
@@ -254,7 +254,7 @@ export class Google extends EmailProviderApi {
       GoogleAuth.googleApiAuthHeader(acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         const method = 'GET';
-        const url = `https://www.googleapis.com/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
+        const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
         r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
@@ -551,8 +551,8 @@ export class GoogleAuth {
 
   public static OAUTH = {
     client_id: "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
-    url_code: "https://accounts.google.com/o/oauth2/auth",
-    url_tokens: "https://www.googleapis.com/oauth2/v4/token",
+    url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
+    url_tokens: `${GOOGLE_API_HOST}/oauth2/v4/token`,
     url_redirect: "urn:ietf:wg:oauth:2.0:oob:auto",
     state_header: "CRYPTUP_STATE_",
     scopes: {
@@ -741,7 +741,7 @@ export class GoogleAuth {
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
 
   private static googleAuthCheckAccessToken = (accessToken: string) => Api.ajax({
-    url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token: accessToken }),
+    url: Env.urlCreate(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
     crossDomain: true,
     async: true,
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>
