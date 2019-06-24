@@ -5,12 +5,14 @@
 import { Api, HttpClientErr, Status } from './api';
 import { IncomingMessage } from 'http';
 import { OauthMock } from './oauth';
-import { Data } from './data';
+import { Data, GmailMsg } from './data';
 
 const oauth = new OauthMock();
 
 const isGet = (r: IncomingMessage) => r.method === 'GET' || r.method === 'HEAD';
 const isPost = (r: IncomingMessage) => r.method === 'POST';
+const isPut = (r: IncomingMessage) => r.method === 'PUT';
+const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
 
 export const startGoogleApiMock = async () => {
@@ -52,15 +54,30 @@ export const startGoogleApiMock = async () => {
     '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
-        return { sendAs: [{ sendAsEmail: acct, displayName: 'First Last', replyToAddress: acct, signature: '', isDefault: true, treatAsAlias: false, verificationStatus: 'accepted' }] };
+        const sendAs = [{ sendAsEmail: acct, displayName: 'First Last', replyToAddress: acct, signature: '', isDefault: true, treatAsAlias: false, verificationStatus: 'accepted' }];
+        if (acct === 'flowcrypt.compatibility@gmail.com') {
+          const alias = 'flowcryptcompatibility@gmail.com';
+          sendAs.push({ sendAsEmail: alias, displayName: 'An Alias', replyToAddress: alias, signature: '', isDefault: false, treatAsAlias: false, verificationStatus: 'accepted' });
+        }
+        return { sendAs };
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
-      if (isGet(req) && q && q.includes('subject:"Your FlowCrypt Backup"')) {
-        const msgs = new Data(acct).searchMessages('Your FlowCrypt Backup');
-        return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), sizeEstimate: msgs.length };
+      const fmtRes = (msgs: GmailMsg[]) => ({ messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length });
+      if (isGet(req) && q) {
+        const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
+        if (subject) { // if any subject query found, all else is ignored - messages just filtered by subject
+          return fmtRes(new Data(acct).searchMessagesBySubject(subject));
+        }
+        const includePeople = (q.match(/(?:from|to):([a-zA-Z0-9@.\-_]+)/g) || []).map(e => e.replace(/^(from|to):/, ''));
+        const excludePeople = (q.match(/(?:-from|-to):([a-zA-Z0-9@.\-_]+)/g) || []).map(e => e.replace(/^(-from|-to):/, ''));
+        if (includePeople.length || excludePeople.length) {
+          // if any to,from query found, all such queries are collected and applied with OR, regardless how structured. Also to: and from: has no distinction
+          return fmtRes(new Data(acct).searchMessagesByPeople(includePeople, excludePeople));
+        }
+        return { resultSizeEstimate: 0 }; // all other query types get 0 results
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
@@ -114,6 +131,23 @@ export const startGoogleApiMock = async () => {
     '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
       // todo - parse msg and add to Data store, as if sent
       return { id: 'mockfakesend' };
+    },
+    '/gmail/v1/users/me/drafts': async (parsedReq, req) => {
+      if (isPost(req)) {
+        return { id: 'mockfakedraftsave' };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/gmail/v1/users/me/drafts/?': async (parsedReq, req) => {
+      const id = parseResourceId(req.url!);
+      if (isGet(req)) {
+        throw new HttpClientErr(`MOCK drafts not recorded, giving fake 404`, Status.NOT_FOUND);
+      } else if (isPut(req)) {
+        return {};
+      } else if (isDelete(req)) {
+        return {};
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/favicon.ico': async () => '',
   });

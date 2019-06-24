@@ -6,11 +6,11 @@ type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string
 type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
 type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
 type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
-type GmailMsg = {
+export type GmailMsg = {
   id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
   labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
 };
-type GmailThread = { historyId: string; id: string; snippet: string; }
+type GmailThread = { historyId: string; id: string; snippet: string; };
 type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide", labelListVisibility: "labelHide", type: 'system' };
 type AcctDataFile = { messages: GmailMsg[]; attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
 
@@ -36,8 +36,39 @@ export class Data {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
   }
 
-  public searchMessages = (subject: string) => {
-    return DATA[this.acct].messages.filter(m => Data.msgSubject(m).includes(subject));
+  public searchMessagesBySubject = (subject: string) => {
+    subject = subject.trim().toLowerCase();
+    return DATA[this.acct].messages.filter(m => Data.msgSubject(m).toLowerCase().includes(subject));
+  }
+
+  public searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
+    includePeople = includePeople.map(person => person.trim().toLowerCase());
+    excludePeople = excludePeople.map(person => person.trim().toLowerCase());
+    return DATA[this.acct].messages.filter(m => {
+      const msgPeople = Data.msgPeople(m).toLowerCase();
+      let includeTestPasses = false;
+      let excludeTestPasses = true;
+      if (includePeople.length) { // filter who to include
+        for (const includePerson of includePeople) {
+          if (msgPeople.includes(includePerson)) {
+            includeTestPasses = true;
+            break;
+          }
+        }
+      } else { // do not filter who to include - include any
+        includeTestPasses = true;
+      }
+      if (excludePeople.length) { // filter who to exclude
+        for (const excludePerson of excludePeople) {
+          if (!msgPeople.includes(excludePerson)) {
+            excludeTestPasses = false;
+          }
+        }
+      } else { // don't exclude anyone
+        excludeTestPasses = false;
+      }
+      return includeTestPasses && !excludeTestPasses;
+    });
   }
 
   public getAttachment = (attachmentId: string) => {
@@ -60,6 +91,10 @@ export class Data {
 
   private static msgSubject = (m: GmailMsg): string => {
     return m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject')!.value || '(no subject)';
+  }
+
+  private static msgPeople = (m: GmailMsg): string => {
+    return m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value).filter(h => !!h).join(',');
   }
 
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {
