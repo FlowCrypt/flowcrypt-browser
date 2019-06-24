@@ -34,7 +34,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore on each retry, thus almost the same as below
-  TIMEOUT_OVERALL: minutes(poolSizeOne ? 5 : 14),
+  TIMEOUT_OVERALL: minutes(poolSizeOne ? 30 : 14),
   ATTEMPTS: poolSizeOne ? 1 : 3,
   POOL_SIZE: poolSizeOne ? 1 : 5,
   POOL_SIZE_COMPATIBILITY: poolSizeOne ? 1 : 2,
