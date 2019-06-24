@@ -45,7 +45,7 @@ export namespace GmailRes { // responses
     labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
   };
   export type GmailMsgList$message = { id: string, threadId: string };
-  export type GmailMsgList = { messages?: GmailMsgList$message[], resultSizeEstimate: number };
+  export type GmailMsgList = { messages?: GmailMsgList$message[], resultSizeEstimate: number, nextPageToken?: string };
   export type GmailLabels$label = {
     id: string, name: string, messageListVisibility: 'show' | 'hide', labelListVisibility: 'labelShow' | 'labelHide', type: 'user' | 'system',
     messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: { textColor: string, backgroundColor: string }
@@ -185,9 +185,10 @@ export class Google extends EmailProviderApi {
       const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });
       return Google.gmailCall(acctEmail, 'POST', 'messages/send', request.body, { upload: progressCb || Value.noop }, request.contentType);
     },
-    msgList: (acctEmail: string, q: string, includeDeleted: boolean = false): Promise<GmailRes.GmailMsgList> => Google.gmailCall(acctEmail, 'GET', 'messages', {
+    msgList: (acctEmail: string, q: string, includeDeleted: boolean = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => Google.gmailCall(acctEmail, 'GET', 'messages', {
       q,
       includeSpamTrash: includeDeleted,
+      pageToken,
     }),
     /**
      * Attempting to `msgGet format:raw` from within content scripts would likely fail if the mime message is 1MB or larger,

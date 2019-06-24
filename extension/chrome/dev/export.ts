@@ -42,8 +42,18 @@ Catch.try(async () => {
 
   try {
     print('starting');
-    const { messages: msgMetas, resultSizeEstimate } = await Google.gmail.msgList(acctEmail, 'is:inbox');
-    print(`found in inbox: ${(msgMetas || []).length} msgs (total ${resultSizeEstimate} in inbox)`);
+    const msgMetas: GmailRes.GmailMsgList$message[] = [];
+    let nextCyclePageToken: string | undefined;
+    while (true) {
+      const { messages, resultSizeEstimate, nextPageToken } = await Google.gmail.msgList(acctEmail, 'is:inbox', false, nextCyclePageToken);
+      print(`msgList: ${(messages || []).length} msgs, resultSizeEstimate:${resultSizeEstimate}, nextPageToken: ${nextPageToken}`);
+      msgMetas.push(...(messages || []));
+      if (!messages || !messages.length || !nextPageToken) {
+        break;
+      }
+      nextCyclePageToken = nextPageToken;
+    }
+    print(`found in inbox: ${(msgMetas || []).length} msgs`);
     print(`downloading full..`);
     const msgsFull = await Google.gmail.msgsGet(acctEmail, (msgMetas || []).map(m => m.id), 'full');
     print(`downloading full done. waiting 5 seconds..`);
