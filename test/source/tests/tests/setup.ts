@@ -104,7 +104,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
   }));
 
-  ava.test('setup - recover with a pass phrase - skip remaining', testWithBrowser(async (t, browser) => {
+  ava.test.skip('setup - recover with a pass phrase - skip remaining', testWithBrowser(async (t, browser) => {
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
     await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: false });
     await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
