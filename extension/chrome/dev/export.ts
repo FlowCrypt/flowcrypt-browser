@@ -9,6 +9,9 @@ import { Assert } from '../../js/common/assert.js';
 import { Api } from '../../js/common/api/api.js';
 import { Att } from '../../js/common/core/att.js';
 import { Buf } from '../../js/common/core/buf.js';
+import { requireOpenpgp } from '../../js/common/platform/require.js';
+
+const openpgp = requireOpenpgp();
 
 Catch.try(async () => {
 
@@ -33,14 +36,18 @@ Catch.try(async () => {
     return value;
   };
 
+  const save = (data: Uint8Array) => {
+    Browser.saveToDownloads(new Att({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/pgp-encrypted' }));
+  };
+
   try {
     print('starting');
     const { messages: msgMetas, resultSizeEstimate } = await Google.gmail.msgList(acctEmail, 'is:inbox');
     print(`found in inbox: ${(msgMetas || []).length} msgs (total ${resultSizeEstimate} in inbox)`);
     print(`downloading full..`);
     const msgsFull = await Google.gmail.msgsGet(acctEmail, (msgMetas || []).map(m => m.id), 'full');
-    print(`downloading full done. waiting 10 seconds..`);
-    await Ui.time.sleep(10000);
+    print(`downloading full done. waiting 5 seconds..`);
+    await Ui.time.sleep(5000);
     print(`waiting done. Downloading raw..`);
     const msgsRaw = await Google.gmail.msgsGet(acctEmail, (msgMetas || []).map(m => m.id), 'raw');
     print(`downloading raw done. Joining results..`);
@@ -60,8 +67,8 @@ Catch.try(async () => {
     }
     print(`joining done. Downloading labels..`);
     const { labels } = await Google.gmail.labelsGet(acctEmail);
-    print('labels done. waiting 10s..');
-    await Ui.time.sleep(10000);
+    print('labels done. waiting 5s..');
+    await Ui.time.sleep(5000);
     print('waiting done. Downloading attachments..');
     const fetchableAtts: Att[] = [];
     const skippedAtts: Att[] = [];
@@ -86,13 +93,22 @@ Catch.try(async () => {
         h.value = censor(h.value);
       }
     }
-    print('saving to file..');
     const data = Buf.fromUtfStr(JSON.stringify({ messages, attachments, labels }));
     print(`export size: ${data.length / (1024 * 1024)} MB`);
-    Browser.saveToDownloads(new Att({ data, name: `${acctEmail.replace(/[^a-z0-9+]/g, '')}.json`, type: 'application/json' }));
+    const pwd = prompt('Please enter encryption password');
+    if (pwd) {
+      print('encrypting..');
+      const encrypted = await openpgp.encrypt({ armor: false, message: openpgp.message.fromBinary(data), passwords: [pwd] });
+      save(encrypted.message.packets.write());
+    } else {
+      save(data);
+    }
   } catch (e) {
     print(Api.err.eli5(e));
     print(String(e));
+    if (e instanceof Error) {
+      print(e.stack || 'no stack');
+    }
   }
 
 })();

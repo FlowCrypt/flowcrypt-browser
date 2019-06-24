@@ -343,14 +343,22 @@ export class Google extends EmailProviderApi {
       return internalResults;
     },
     fetchAtts: async (acctEmail: string, atts: Att[], progressCb?: ProgressCb) => {
+      if (!atts.length) {
+        return;
+      }
+      let lastProgressPercent = -1;
       const loadedAr: Array<number> = [];
       // 1.33 is a coefficient we need to multiply because total size we need to download is larger than all files together
       const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
       const responses = await Promise.all(atts.map((a, index) => Google.gmail.attGet(acctEmail, a.msgId!, a.id!, (progress, loaded, s) => {
-        loadedAr[index] = loaded || 0;
-        const totalLoaded = loadedAr.reduce((a, b) => a + b);
         if (progressCb) {
-          progressCb(Math.round((totalLoaded * 100) / total), totalLoaded, total);
+          loadedAr[index] = loaded || 0;
+          const totalLoaded = loadedAr.reduce((a, b) => a + b);
+          const progressPercent = Math.round((totalLoaded * 100) / total);
+          if (progressPercent !== lastProgressPercent) {
+            lastProgressPercent = progressPercent;
+            progressCb(progressPercent, totalLoaded, total);
+          }
         }
       })));
       for (const i of responses.keys()) {

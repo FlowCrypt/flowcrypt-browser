@@ -20,7 +20,7 @@ export class Data {
 
   constructor(private acct: string) {
     if (!DATA[acct]) {
-      DATA[acct] = JSON.parse(readFileSync(`./test/source/mock/data/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
+      DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
     }
   }
 

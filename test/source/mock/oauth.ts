@@ -1,11 +1,6 @@
 import { HttpClientErr, Status } from './api';
 import { Config } from '../util';
-import { Buf } from '../../../extension/js/common/core/buf';
-
-// @ts-ignore - for Buf in Node
-global.btoa = (x: string) => Buffer.from(x, 'binary').toString('base64');
-// @ts-ignore - for Buf in Node
-global.atob = (x: string) => Buffer.from(x, 'base64').toString('binary');
+import { Buf } from '../core/buf';
 
 // tslint:disable:variable-name
 

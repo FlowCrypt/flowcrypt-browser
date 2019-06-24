@@ -21,6 +21,7 @@
     "gulp-replace": "1.0.0",
     "inquirer": "5.2.0",
     "json-stable-stringify": "1.0.1",
+    "openpgp": "4.5.4",
     "puppeteer": "1.11.0",
     "sweetalert2": "8.0.7",
     "tslint": "5.11.0",
