@@ -56,7 +56,7 @@ export const startGoogleApiMock = async () => {
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
-    '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => {
+    '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req) && q && q.includes('subject:"Your FlowCrypt Backup"')) {
         const msgs = new Data(acct).searchMessages('Your FlowCrypt Backup');
@@ -64,7 +64,7 @@ export const startGoogleApiMock = async () => {
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
-    '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => {
+    '/gmail/v1/users/me/messages/?': async ({ query: { format } }, req) => { // get msg or attachment
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
         const id = parseResourceId(req.url!);
@@ -110,6 +110,10 @@ export const startGoogleApiMock = async () => {
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
+      // todo - parse msg and add to Data store, as if sent
+      return { id: 'mockfakesend' };
     },
     '/favicon.ico': async () => '',
   });

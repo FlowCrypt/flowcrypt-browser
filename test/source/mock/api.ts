@@ -184,7 +184,7 @@ export class Api<REQ, RES> {
   }
 
   protected parseReqBody = (body: Buffer, req: IncomingMessage): REQ => {
-    return { query: this.parseUrlQuery(req.url!), body: body.length ? JSON.parse(body.toString()) : undefined } as unknown as REQ;
+    return { query: this.parseUrlQuery(req.url!), body: body.length ? (req.url!.startsWith('/upload/') ? body.toString() : JSON.parse(body.toString())) : undefined } as unknown as REQ;
   }
 
 }
