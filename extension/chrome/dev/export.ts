@@ -84,7 +84,7 @@ Catch.try(async () => {
     const skippedAtts: Att[] = [];
     for (const msg of messages) {
       for (const att of Google.gmail.findAtts(msg)) {
-        if (att.length > 1024 * 1024 * 1.5) { // over 1.5 mb - attachment too big
+        if (att.length > 1024 * 1024 * 7) { // over 7 mb - attachment too big
           skippedAtts.push(new Att({ data: Buf.fromUtfStr(`MOCK: ATTACHMENT STRIPPED - ORIGINAL SIZE ${att.length}`), id: att.id, msgId: msg.id }));
         } else {
           fetchableAtts.push(att);

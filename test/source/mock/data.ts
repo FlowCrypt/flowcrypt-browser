@@ -94,7 +94,7 @@ export class Data {
   }
 
   private static msgPeople = (m: GmailMsg): string => {
-    return m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value).filter(h => !!h).join(',');
+    return String(m.payload && m.payload.headers && m.payload.headers.filter(h => h.name === 'To' || h.name === 'From').map(h => h.value!).filter(h => !!h).join(','));
   }
 
   public static fmtMsg = (m: GmailMsg, format: 'raw' | 'full' | 'metadata' | string) => {

@@ -152,7 +152,7 @@ export class Api<REQ, RES> {
     req.on('data', (chunk: Buffer) => {
       byteLength += chunk.length;
       if (this.maxRequestSizeBytes && byteLength > this.maxRequestSizeBytes) {
-        reject(new HttpClientErr(`Message over ${this.maxRequestSizeMb} MB`))
+        reject(new HttpClientErr(`Message over ${this.maxRequestSizeMb} MB`));
       } else {
         body.push(chunk);
       }
