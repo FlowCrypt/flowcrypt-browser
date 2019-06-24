@@ -14,6 +14,7 @@ import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/accoun
 import { Config, Util } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
+import { mock } from './mock';
 
 export type TestVariant = 'CONSUMER' | 'ENTERPRISE';
 let TEST_VARIANT: TestVariant;
@@ -24,7 +25,7 @@ if (process.argv.indexOf('CONSUMER') !== -1) {
 } else {
   throw new Error('Unknown test type: specify CONSUMER or ENTERPRISE');
 }
-const BUILD_DIR = `build/chrome-${TEST_VARIANT.toLowerCase()}`;
+const BUILD_DIR = `build/chrome-${TEST_VARIANT.toLowerCase()}-mock`;
 console.info(`TEST_VARIANT: ${TEST_VARIANT}`);
 
 const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
@@ -55,6 +56,7 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
     browsers: new BrowserPool(consts.POOL_SIZE_COMPOSE, 'browserPoolGlobal', true, BUILD_DIR),
   },
 };
+let closeMockApi: () => Promise<void>;
 
 ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY);
@@ -70,6 +72,8 @@ ava.before('set up global browsers and config', async t => {
   if (!Config.extensionId) {
     throw new Error('was not able to get extensionId');
   }
+  const mockApi = await mock();
+  closeMockApi = mockApi.close;
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
   for (const group of Object.keys(browserGlobal)) {
@@ -112,6 +116,12 @@ ava.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
   await browserPool.close();
   await browserGlobal.compatibility.browsers.close();
+  t.pass();
+});
+
+ava.after.always('close mock api', async t => {
+  standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
+  await closeMockApi();
   t.pass();
 });
 

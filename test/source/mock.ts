@@ -7,8 +7,7 @@ import { requireOpenpgp } from './platform/require';
 
 const openpgp = requireOpenpgp();
 
-(async () => {
-
+export const mock = async () => {
   // load and decrypt mock data if missing
   await Promise.all(Config.secrets.auth.google.map(a => a.email).map(async email => {
     if (email === 'flowcrypt.test.key.multibackup@gmail.com') {
@@ -28,10 +27,12 @@ const openpgp = requireOpenpgp();
       console.info(`downloaded mock data to ${filepath}`);
     }
   }));
+  return await startGoogleApiMock();
+};
 
-  await startGoogleApiMock();
-
-})().catch(e => {
-  console.error(e);
-  process.exit(1);
-});
+if (require.main === module) {
+  mock().catch(e => {
+    console.error(e);
+    process.exit(1);
+  });
+}

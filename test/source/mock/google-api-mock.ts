@@ -114,4 +114,5 @@ export const startGoogleApiMock = async () => {
     '/favicon.ico': async () => '',
   });
   await api.listen(8001);
+  return api;
 };
