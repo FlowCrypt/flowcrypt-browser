@@ -684,7 +684,7 @@ export class GoogleAuth {
   /**
    * Is the title actually just url of the page? (means real title not loaded yet)
    */
-  private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.includes(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
+  private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
 
   private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
 
