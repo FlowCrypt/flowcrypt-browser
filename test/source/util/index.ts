@@ -16,8 +16,9 @@ export const getParsedCliParams = () => {
   }
   const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
   const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
+  const oneIfNotPooled = (suggestedPoolSize: number) => poolSizeOne ? 1 : suggestedPoolSize;
   console.info(`TEST_VARIANT: ${testVariant} (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
-  return { testVariant, poolSizeOne, buildDir, isMock: testVariant.includes('-MOCK') };
+  return { testVariant, oneIfNotPooled, buildDir, isMock: testVariant.includes('-MOCK') };
 };
 
 interface TestConfigInterface {

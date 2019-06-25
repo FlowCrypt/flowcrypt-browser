@@ -16,18 +16,18 @@ import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
 
-const { testVariant, poolSizeOne, buildDir, isMock } = getParsedCliParams();
+const { testVariant, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 
 const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
-  TIMEOUT_ALL_RETRIES: minutes(poolSizeOne ? 28 : 13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
-  TIMEOUT_OVERALL: minutes(poolSizeOne ? 30 : 14),
-  ATTEMPTS: poolSizeOne ? 1 : 3,
-  POOL_SIZE: poolSizeOne ? 1 : 5,
-  POOL_SIZE_COMPATIBILITY: poolSizeOne ? 1 : 2,
-  POOL_SIZE_COMPOSE: poolSizeOne ? 1 : 1,
-  PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>,
+  TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
+  TIMEOUT_OVERALL: minutes(14),
+  ATTEMPTS: oneIfNotPooled(3),
+  POOL_SIZE: oneIfNotPooled(isMock ? 8 : 5),
+  POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 2 : 1),
+  POOL_SIZE_COMPOSE: oneIfNotPooled(1),
+  PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
 consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() => reject(new Error(`TIMEOUT_OVERALL`)), consts.TIMEOUT_OVERALL));
