@@ -53,7 +53,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       }));
     }
 
-    ava.test('decrypt[global:compatibility] - by entering pass phrase + remember in session', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] decrypt - by entering pass phrase + remember in session', testWithNewBrowser(async (t, browser) => {
       const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
       const threadId = '15f7f5630573be2d';
       const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
@@ -67,7 +67,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
     }));
 
-    ava.test('[protonmail] load pubkey into contact + verify detached msg', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.test('[standalone] protonmail - load pubkey into contact + verify detached msg', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       // this test slightly alters state (imports a pubkey). If this ends up causing trouble, it should run it its own browser instead of the global one
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
@@ -83,7 +83,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, htmlMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     }));
 
-    ava.test.todo('decrypt[global:compatibility] - by entering secondary pass phrase');
+    ava.test.todo('[standalone] decrypt - by entering secondary pass phrase');
 
   }
 

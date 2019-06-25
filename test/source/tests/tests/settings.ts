@@ -91,14 +91,14 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
 
     ava.test.todo('settings - edit contact public key');
 
-    ava.test('settings - change passphrase - current in local storage', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] settings - change passphrase - current in local storage', testWithNewBrowser(async (t, browser) => {
       const { acctEmail, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp); // change pp and test
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted' });
     }));
 
-    ava.test('settings - change passphrase - current in session known', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] settings - change passphrase - current in session known', testWithNewBrowser(async (t, browser) => {
       const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
@@ -115,7 +115,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp });
     }));
 
-    ava.test('settings - change passphrase - current in session unknown', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] settings - change passphrase - current in session unknown', testWithNewBrowser(async (t, browser) => {
       const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
       await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
@@ -130,9 +130,9 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp });
     }));
 
-    ava.test.todo('settings - change passphrase - mismatch curent pp');
+    ava.test.todo('[standalone] settings - change passphrase - mismatch curent pp');
 
-    ava.test.todo('settings - change passphrase - mismatch new pp');
+    ava.test.todo('[standalone] settings - change passphrase - mismatch new pp');
 
   }
 

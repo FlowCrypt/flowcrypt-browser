@@ -33,7 +33,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.close();
     }));
 
-    ava.test('compose - standalone - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (t, browser) => {
       // console.info(`ava.test.timeout.1`);
       const k = Config.key('test.ci.compose');
       // console.info(`ava.test.timeout.2`);
@@ -72,14 +72,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       // console.info(`ava.test.timeout.18`);
     }));
 
-    ava.test('compose - standalone - can load contact based on name', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] compose - can load contact based on name', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     }));
 
-    ava.test(`compose - standalone - can choose found contact`, testWithNewBrowser(async (t, browser) => {
+    ava.test(`[standalone] compose - can choose found contact`, testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // composePage.enable_debugging('choose-contact');
@@ -93,14 +93,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.test(`compose - standalone - freshly loaded pubkey`, testWithNewBrowser(async (t, browser) => {
+    ava.test(`[standalone] compose - freshly loaded pubkey`, testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'freshly loaded pubkey');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.test('compose - standalone - recipient pasted including name', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] compose - recipient pasted including name', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, 'Human at Flowcrypt <Human@FlowCrypt.com>', 'recipient pasted including name');

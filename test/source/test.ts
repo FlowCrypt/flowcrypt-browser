@@ -25,7 +25,7 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: oneIfNotPooled(3),
   POOL_SIZE: oneIfNotPooled(isMock ? 8 : 5),
-  POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 2 : 1),
+  POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 3 : 1),
   POOL_SIZE_COMPOSE: oneIfNotPooled(1),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
 };
