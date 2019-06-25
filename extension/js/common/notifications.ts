@@ -38,7 +38,7 @@ export class Notifications {
         if (authRes.result === 'Success') {
           this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
         } else {
-          this.show(`Failed to connect (${authRes.result}) ${authRes.error}. <a href="#" class="close">Close</a>`);
+          this.show(`Failed to connect (${authRes.result}) ${authRes.error || ''}. <a href="#" class="close">Close</a>`);
         }
       },
     });
