@@ -11,26 +11,12 @@ import { defineGmailTests } from './tests/tests/gmail';
 import { defineSettingsTests } from './tests/tests/settings';
 import { defineElementTests } from './tests/tests/elements';
 import { defineConsumerAcctTests as defineAcctTests } from './tests/tests/account';
-import { Config, Util } from './util';
+import { Config, Util, getParsedCliParams } from './util';
 import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
 
-export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL';
-let TEST_VARIANT: TestVariant;
-if (process.argv.indexOf('CONSUMER-MOCK') !== -1) {
-  TEST_VARIANT = 'CONSUMER-MOCK';
-} else if (process.argv.indexOf('ENTERPRISE-MOCK') !== -1) {
-  TEST_VARIANT = 'ENTERPRISE-MOCK';
-} else if (process.argv.indexOf('CONSUMER-LIVE-GMAIL') !== -1) {
-  TEST_VARIANT = 'CONSUMER-LIVE-GMAIL';
-} else {
-  throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
-}
-const BUILD_DIR = `build/chrome-${(TEST_VARIANT === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : TEST_VARIANT).toLowerCase()}`;
-console.info(`TEST_VARIANT: ${TEST_VARIANT} (build dir: ${BUILD_DIR})`);
-
-const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
+const { testVariant, poolSizeOne, buildDir } = getParsedCliParams();
 
 const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
@@ -49,13 +35,13 @@ consts.PROMISE_TIMEOUT_OVERALL = new Promise((resolve, reject) => setTimeout(() 
 export type Consts = typeof consts;
 export type CommonBrowserGroup = 'compatibility' | 'compose';
 
-const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, BUILD_DIR);
+const browserPool = new BrowserPool(consts.POOL_SIZE, 'browserPool', false, buildDir);
 const browserGlobal: { [group: string]: GlobalBrowser } = {
   compatibility: {
-    browsers: new BrowserPool(consts.POOL_SIZE_COMPATIBILITY, 'browserPoolGlobal', true, BUILD_DIR),
+    browsers: new BrowserPool(consts.POOL_SIZE_COMPATIBILITY, 'browserPoolGlobal', true, buildDir),
   },
   compose: {
-    browsers: new BrowserPool(consts.POOL_SIZE_COMPOSE, 'browserPoolGlobal', true, BUILD_DIR),
+    browsers: new BrowserPool(consts.POOL_SIZE_COMPOSE, 'browserPoolGlobal', true, buildDir),
   },
 };
 let closeMockApi: () => Promise<void>;
@@ -131,7 +117,7 @@ ava.after.always('close mock api', async t => {
 ava.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
-  const testId = `FlowCrypt Browser Extension ${TEST_VARIANT} ${failRnd}`;
+  const testId = `FlowCrypt Browser Extension ${testVariant} ${failRnd}`;
   const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
@@ -146,11 +132,11 @@ ava.after.always('send debug info if any', async t => {
   t.pass();
 });
 
-defineSetupTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineUnitTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineComposeTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineDecryptTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineGmailTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineSettingsTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineElementTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
-defineAcctTests(TEST_VARIANT, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineSetupTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineUnitTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineComposeTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineDecryptTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineGmailTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineSettingsTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineElementTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);
+defineAcctTests(testVariant, testWithNewBrowser, testWithSemaphoredGlobalBrowser);

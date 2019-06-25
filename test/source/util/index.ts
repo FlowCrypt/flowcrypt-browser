@@ -1,6 +1,25 @@
 
 import * as fs from 'fs';
 
+export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL';
+
+export const getParsedCliParams = () => {
+  let testVariant: TestVariant;
+  if (process.argv.indexOf('CONSUMER-MOCK') !== -1) {
+    testVariant = 'CONSUMER-MOCK';
+  } else if (process.argv.indexOf('ENTERPRISE-MOCK') !== -1) {
+    testVariant = 'ENTERPRISE-MOCK';
+  } else if (process.argv.indexOf('CONSUMER-LIVE-GMAIL') !== -1) {
+    testVariant = 'CONSUMER-LIVE-GMAIL';
+  } else {
+    throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
+  }
+  const buildDir = `build/chrome-${(testVariant === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : testVariant).toLowerCase()}`;
+  const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
+  console.info(`TEST_VARIANT: ${testVariant} (build dir: ${buildDir}, poolSizeOne: ${poolSizeOne})`);
+  return { testVariant, poolSizeOne, buildDir };
+};
+
 interface TestConfigInterface {
   messages: { name: string, content: string[], password?: string, params: string, quoted?: boolean }[];
   unit_tests: { name: string, f: string, args: any[], result: any }[];
