@@ -57,6 +57,7 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
   },
 };
 let closeMockApi: () => Promise<void>;
+const mockApiLogs: string[] = [];
 
 ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
@@ -72,7 +73,7 @@ ava.before('set up global browsers and config', async t => {
   if (!Config.extensionId) {
     throw new Error('was not able to get extensionId');
   }
-  const mockApi = await mock();
+  const mockApi = await mock(line => mockApiLogs.push(line));
   closeMockApi = mockApi.close;
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
@@ -129,7 +130,7 @@ ava.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
   const failRnd = Util.lousyRandom();
   const testId = `FlowCrypt Browser Extension ${TEST_VARIANT} ${failRnd}`;
-  const debugHtmlAttachments = getDebugHtmlAtts(testId);
+  const debugHtmlAttachments = getDebugHtmlAtts(testId, mockApiLogs);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
     standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);

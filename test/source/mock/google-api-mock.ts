@@ -6,6 +6,7 @@ import { Api, HttpClientErr, Status } from './api';
 import { IncomingMessage } from 'http';
 import { OauthMock } from './oauth';
 import { Data, GmailMsg } from './data';
+import * as http from 'http';
 
 const oauth = new OauthMock();
 
@@ -15,8 +16,15 @@ const isPut = (r: IncomingMessage) => r.method === 'PUT';
 const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
 
-export const startGoogleApiMock = async () => {
-  const api = new Api<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
+export const startGoogleApiMock = async (logger: (line: string) => void) => {
+  class LoggedApi<A, B> extends Api<A, B> {
+    protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
+      if (req.url !== '/favicon.ico') {
+        logger(`${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);
+      }
+    }
+  }
+  const api = new LoggedApi<{ query: { [k: string]: string }, body?: unknown }, unknown>('google-mock', {
     '/o/oauth2/auth': async ({ query: { client_id, response_type, access_type, state, redirect_uri, scope, login_hint, result } }, req) => {
       if (isGet(req) && client_id === oauth.clientId && response_type === 'code' && access_type === 'offline' && state && redirect_uri === oauth.redirectUri && scope) { // auth screen
         if (!login_hint) {
