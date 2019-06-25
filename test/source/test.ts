@@ -16,7 +16,7 @@ import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
 
-const { testVariant, poolSizeOne, buildDir } = getParsedCliParams();
+const { testVariant, poolSizeOne, buildDir, isMock } = getParsedCliParams();
 
 const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
@@ -61,8 +61,10 @@ ava.before('set up global browsers and config', async t => {
   if (!Config.extensionId) {
     throw new Error('was not able to get extensionId');
   }
-  const mockApi = await mock(line => mockApiLogs.push(line));
-  closeMockApi = mockApi.close;
+  if (isMock) {
+    const mockApi = await mock(line => mockApiLogs.push(line));
+    closeMockApi = mockApi.close;
+  }
   const setupPromises: Promise<void>[] = [];
   const globalBrowsers: { [group: string]: BrowserHandle[] } = { compatibility: [], compose: [] };
   for (const group of Object.keys(browserGlobal)) {
@@ -108,11 +110,13 @@ ava.after.always('close browsers', async t => {
   t.pass();
 });
 
-ava.after.always('close mock api', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
-  closeMockApi().catch(t.log);
-  t.pass();
-});
+if (isMock) {
+  ava.after.always('close mock api', async t => {
+    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+    closeMockApi().catch(t.log);
+    t.pass();
+  });
+}
 
 ava.after.always('send debug info if any', async t => {
   console.info('send debug info - deciding');
