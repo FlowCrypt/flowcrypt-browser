@@ -33,7 +33,7 @@ const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
-  TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore on each retry, thus almost the same as below
+  TIMEOUT_ALL_RETRIES: minutes(poolSizeOne ? 28 : 13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(poolSizeOne ? 30 : 14),
   ATTEMPTS: poolSizeOne ? 1 : 3,
   POOL_SIZE: poolSizeOne ? 1 : 5,
@@ -59,7 +59,7 @@ const browserGlobal: { [group: string]: GlobalBrowser } = {
 let closeMockApi: () => Promise<void>;
 
 ava.before('set up global browsers and config', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY);
+  standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   for (const i of [1, 2, 3]) {
     try {
       Config.extensionId = await browserPool.getExtensionId(t);
@@ -113,15 +113,15 @@ export const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (
 };
 
 ava.after.always('close browsers', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
+  standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
   await browserPool.close();
   await browserGlobal.compatibility.browsers.close();
   t.pass();
 });
 
 ava.after.always('close mock api', async t => {
-  standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
-  await closeMockApi();
+  standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
+  closeMockApi().catch(t.log);
   t.pass();
 });
 
@@ -132,7 +132,7 @@ ava.after.always('send debug info if any', async t => {
   const debugHtmlAttachments = getDebugHtmlAtts(testId);
   if (debugHtmlAttachments.length) {
     console.info(`FAIL ID ${testId}`);
-    standaloneTestTimeout(t, consts.TIMEOUT_SHORT);
+    standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);
     for (let i = 0; i < debugHtmlAttachments.length; i++) {
       const subject = `${testId} ${i + 1}/${debugHtmlAttachments.length}`;
       await FlowCryptApi.hookCiDebugEmail(subject, debugHtmlAttachments[i]);
