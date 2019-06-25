@@ -32,7 +32,7 @@ export const addDebugHtml = (html: string) => {
 };
 
 export const getDebugHtmlAtts = (testId: string, mockApiLogs: string[]): string[] => {
-  if (mockApiLogs.length) {
+  if (debugHtmls.length && mockApiLogs.length) {
     debugHtmls.push(`<h1>Google Mock API logs</h1><pre>${mockApiLogs.join('\n')}</pre>`);
   }
   const debugAtts: string[] = [];
