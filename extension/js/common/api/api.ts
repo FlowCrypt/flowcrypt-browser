@@ -306,15 +306,26 @@ export class Api {
       return undefined;
     }
     return () => { // returning a factory
+      let lastProgressPercent = -1;
       const progressPeportingXhr = new XMLHttpRequest();
       if (progressCbs && typeof progressCbs.upload === 'function') {
         progressPeportingXhr.upload.addEventListener('progress', (evt: ProgressEvent) => {
-          progressCbs.upload!(evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined); // checked ===function above
+          const newProgressPercent = evt.lengthComputable ? Math.round((evt.loaded / evt.total) * 100) : undefined;
+          if (newProgressPercent && newProgressPercent !== lastProgressPercent) {
+            lastProgressPercent = newProgressPercent;
+            progressCbs.upload!(newProgressPercent); // checked ===function above
+          }
         }, false);
       }
       if (progressCbs && typeof progressCbs.download === 'function') {
         progressPeportingXhr.onprogress = (evt: ProgressEvent) => {
-          progressCbs.download!(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total); // checked ===function above
+          const newProgressPercent = evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined;
+          if (typeof newProgressPercent === 'undefined' || newProgressPercent !== lastProgressPercent) {
+            if (newProgressPercent) {
+              lastProgressPercent = newProgressPercent;
+            }
+            progressCbs.download!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
+          }
         };
       }
       return progressPeportingXhr;

@@ -31,7 +31,10 @@ export const addDebugHtml = (html: string) => {
   debugHtmls.push(html);
 };
 
-export const getDebugHtmlAtts = (testId: string): string[] => {
+export const getDebugHtmlAtts = (testId: string, mockApiLogs: string[]): string[] => {
+  if (debugHtmls.length && mockApiLogs.length) {
+    debugHtmls.push(`<h1>Google Mock API logs</h1><pre>${mockApiLogs.join('\n')}</pre>`);
+  }
   const debugAtts: string[] = [];
   let currentDebugAtt = '';
   for (const debugHtml of debugHtmls) {
@@ -51,7 +54,7 @@ export const getDebugHtmlAtts = (testId: string): string[] => {
   return formattedDebugAtts;
 };
 
-export const standaloneTestTimeout = (t: AvaContext, ms: number) => setTimeout(() => { t.fail(`Standalone timeout exceeded`); }, ms);
+export const standaloneTestTimeout = (t: AvaContext, ms: number, name: string) => setTimeout(() => { t.fail(`Standalone timeout exceeded (${name})`); }, ms);
 
 export const newWithTimeoutsFunc = (consts: Consts): <T>(actionPromise: Promise<T>) => Promise<T> => { // returns a function
   const timeoutAllRetries = new Promise((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_ALL_RETRIES`)), consts.TIMEOUT_ALL_RETRIES)) as Promise<never>;

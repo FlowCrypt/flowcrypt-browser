@@ -1,4 +1,4 @@
-import { Page, Browser } from 'puppeteer';
+import { Page, Browser, Target } from 'puppeteer';
 import { Semaphore } from './browser_pool';
 import { ControllablePage } from './controllable';
 import { Util, Config } from '../util';
@@ -100,13 +100,15 @@ export class BrowserHandle {
   private doAwaitTriggeredPage = (triggeringAction: () => Promise<void>): Promise<Page> => new Promise((resolve, reject) => {
     setTimeout(() => reject(new Error('Action did not trigger a new page within timeout period')), TIMEOUT_ELEMENT_APPEAR * 1000);
     let resolved = 0;
-    this.browser.on('targetcreated', async target => {
+    const listener = async (target: Target) => {
       if (target.type() === 'page') {
         if (!resolved++) {
+          this.browser.removeListener('targetcreated', listener);
           target.page().then(resolve, reject);
         }
       }
-    });
+    };
+    this.browser.on('targetcreated', listener);
     triggeringAction().catch(console.error);
   })
 

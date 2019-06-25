@@ -323,7 +323,7 @@ export class ComposePageRecipe extends PageRecipe {
   ): Promise<ControllablePage> => {
     const email = (group === 'compose') ? 'test.ci.compose%40org.flowcrypt.com' : 'flowcrypt.compatibility%40gmail.com';
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
-    await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
+    // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!hasReplyPrompt) {
       await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
     } else {
@@ -390,6 +390,7 @@ export class OauthPageRecipe extends PageRecipe {
   private static longTimeout = 40;
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
+    const isMock = oauthPage.target.url().includes('localhost');
     const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
     const selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
@@ -426,12 +427,12 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
         await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
-        await Util.sleep(2);
+        await Util.sleep(isMock ? 0 : 2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       }
-      await Util.sleep(5);
+      await Util.sleep(isMock ? 0 : 5);
       const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice, selectors.pwd_input]);
-      await Util.sleep(1);
+      await Util.sleep(isMock ? 0 : 1);
       if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email
         await element.click();
         await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
@@ -456,7 +457,7 @@ export class OauthPageRecipe extends PageRecipe {
       if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
       }
-      t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
+      // t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   }

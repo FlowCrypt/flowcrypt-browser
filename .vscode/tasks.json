@@ -67,6 +67,11 @@
       "type": "npm",
       "script": "test_tslint",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test_run_gmail_mock",
+      "problemMatcher": []
     }
   ]
 }

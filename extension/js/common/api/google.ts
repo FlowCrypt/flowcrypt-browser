@@ -17,7 +17,7 @@ import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
-import { gmailBackupSearchQuery } from '../core/const.js';
+import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
@@ -45,7 +45,7 @@ export namespace GmailRes { // responses
     labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
   };
   export type GmailMsgList$message = { id: string, threadId: string };
-  export type GmailMsgList = { messages?: GmailMsgList$message[], resultSizeEstimate: number };
+  export type GmailMsgList = { messages?: GmailMsgList$message[], resultSizeEstimate: number, nextPageToken?: string };
   export type GmailLabels$label = {
     id: string, name: string, messageListVisibility: 'show' | 'hide', labelListVisibility: 'labelShow' | 'labelHide', type: 'user' | 'system',
     messagesTotal?: number, messagesUnread?: number, threadsTotal?: number, threadsUnread?: number, color?: { textColor: string, backgroundColor: string }
@@ -86,10 +86,10 @@ export class Google extends EmailProviderApi {
     progress = progress || {};
     let data, url;
     if (typeof progress.upload === 'function') {
-      url = 'https://www.googleapis.com/upload/gmail/v1/users/me/' + path + '?uploadType=multipart';
+      url = `${GOOGLE_API_HOST}/upload/gmail/v1/users/me/${path}?uploadType=multipart`;
       data = params;
     } else {
-      url = 'https://www.googleapis.com/gmail/v1/users/me/' + path;
+      url = `${GOOGLE_API_HOST}/gmail/v1/users/me/${path}`;
       if (method === 'GET' || method === 'DELETE') {
         data = params;
       } else {
@@ -131,7 +131,7 @@ export class Google extends EmailProviderApi {
       },
     },
     usersMeProfile: async (acctEmail: string | undefined, accessToken?: string): Promise<GmailRes.GmailUsersMeProfile> => {
-      const url = 'https://www.googleapis.com/gmail/v1/users/me/profile';
+      const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/profile`;
       let r: GmailRes.GmailUsersMeProfile;
       if (acctEmail && !accessToken) {
         r = await Google.call(acctEmail, 'GET', url, {}) as GmailRes.GmailUsersMeProfile;
@@ -185,9 +185,10 @@ export class Google extends EmailProviderApi {
       const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });
       return Google.gmailCall(acctEmail, 'POST', 'messages/send', request.body, { upload: progressCb || Value.noop }, request.contentType);
     },
-    msgList: (acctEmail: string, q: string, includeDeleted: boolean = false): Promise<GmailRes.GmailMsgList> => Google.gmailCall(acctEmail, 'GET', 'messages', {
+    msgList: (acctEmail: string, q: string, includeDeleted: boolean = false, pageToken?: string): Promise<GmailRes.GmailMsgList> => Google.gmailCall(acctEmail, 'GET', 'messages', {
       q,
       includeSpamTrash: includeDeleted,
+      pageToken,
     }),
     /**
      * Attempting to `msgGet format:raw` from within content scripts would likely fail if the mime message is 1MB or larger,
@@ -254,7 +255,7 @@ export class Google extends EmailProviderApi {
       GoogleAuth.googleApiAuthHeader(acctEmail).then(authToken => {
         const r = new XMLHttpRequest();
         const method = 'GET';
-        const url = `https://www.googleapis.com/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
+        const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/messages/${msgId}/attachments/${attId}`;
         r.open(method, url, true);
         r.setRequestHeader('Authorization', authToken);
         r.send();
@@ -343,14 +344,22 @@ export class Google extends EmailProviderApi {
       return internalResults;
     },
     fetchAtts: async (acctEmail: string, atts: Att[], progressCb?: ProgressCb) => {
+      if (!atts.length) {
+        return;
+      }
+      let lastProgressPercent = -1;
       const loadedAr: Array<number> = [];
       // 1.33 is a coefficient we need to multiply because total size we need to download is larger than all files together
       const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
       const responses = await Promise.all(atts.map((a, index) => Google.gmail.attGet(acctEmail, a.msgId!, a.id!, (progress, loaded, s) => {
-        loadedAr[index] = loaded || 0;
-        const totalLoaded = loadedAr.reduce((a, b) => a + b);
         if (progressCb) {
-          progressCb(Math.round((totalLoaded * 100) / total), totalLoaded, total);
+          loadedAr[index] = loaded || 0;
+          const totalLoaded = loadedAr.reduce((a, b) => a + b);
+          const progressPercent = Math.round((totalLoaded * 100) / total);
+          if (progressPercent !== lastProgressPercent) {
+            lastProgressPercent = progressPercent;
+            progressCb(progressPercent, totalLoaded, total);
+          }
         }
       })));
       for (const i of responses.keys()) {
@@ -551,8 +560,8 @@ export class GoogleAuth {
 
   public static OAUTH = {
     client_id: "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
-    url_code: "https://accounts.google.com/o/oauth2/auth",
-    url_tokens: "https://www.googleapis.com/oauth2/v4/token",
+    url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
+    url_tokens: `${GOOGLE_API_HOST}/oauth2/v4/token`,
     url_redirect: "urn:ietf:wg:oauth:2.0:oob:auto",
     state_header: "CRYPTUP_STATE_",
     scopes: {
@@ -672,7 +681,10 @@ export class GoogleAuth {
     return { result: result as GoogleAuthWindowResult$result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined };
   }
 
-  private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null;
+  /**
+   * Is the title actually just url of the page? (means real title not loaded yet)
+   */
+  private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.startsWith(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
 
   private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
 
@@ -741,7 +753,7 @@ export class GoogleAuth {
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
 
   private static googleAuthCheckAccessToken = (accessToken: string) => Api.ajax({
-    url: Env.urlCreate('https://www.googleapis.com/oauth2/v1/tokeninfo', { access_token: accessToken }),
+    url: Env.urlCreate(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
     crossDomain: true,
     async: true,
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>

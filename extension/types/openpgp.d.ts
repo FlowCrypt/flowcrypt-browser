@@ -47,8 +47,6 @@ declare namespace OpenPGP {
     sessionKey?: SessionKey;
     /** (optional) which compression algorithm to compress the message with, defaults to what is specified in config */
     compression?: enums.compression;
-    /** (optional) if the return values should be ascii armored or the message/signature objects */
-    armor?: boolean;
     /** (optional) whether to return data as a stream. Defaults to the type of stream `message` was created from, if any. */
     streaming?: 'web' | 'node' | false;
     /** (optional) if the signature should be detached (if true, signature will be added to returned object) */
@@ -406,9 +404,8 @@ declare namespace OpenPGP {
    * @async
    * @static
    */
-  export function encrypt(options: EncryptArmorOptions | BaseEncryptOptions): Promise<EncryptArmorResult>;
-
   export function encrypt(options: EncryptBinaryOptions): Promise<EncryptBinaryResult>;
+  export function encrypt(options: EncryptArmorOptions | BaseEncryptOptions): Promise<EncryptArmorResult>;
 
   /**
    * Signs a cleartext message.
