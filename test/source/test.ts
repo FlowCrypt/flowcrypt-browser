@@ -22,10 +22,10 @@ if (process.argv.indexOf('CONSUMER-MOCK') !== -1) {
   TEST_VARIANT = 'CONSUMER-MOCK';
 } else if (process.argv.indexOf('ENTERPRISE-MOCK') !== -1) {
   TEST_VARIANT = 'ENTERPRISE-MOCK';
-} else if (process.argv.indexOf('CONSUMER') !== -1) {
+} else if (process.argv.indexOf('CONSUMER-LIVE-GMAIL') !== -1) {
   TEST_VARIANT = 'CONSUMER-LIVE-GMAIL';
 } else {
-  throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE');
+  throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE-GMAIL');
 }
 const BUILD_DIR = `build/chrome-${(TEST_VARIANT === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : TEST_VARIANT).toLowerCase()}`;
 console.info(`TEST_VARIANT: ${TEST_VARIANT} (build dir: ${BUILD_DIR})`);
