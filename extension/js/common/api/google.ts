@@ -681,7 +681,10 @@ export class GoogleAuth {
     return { result: result as GoogleAuthWindowResult$result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined };
   }
 
-  private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.includes(GOOGLE_OAUTH_SCREEN_HOST);
+  /**
+   * Is the title actually just url of the page? (means real title not loaded yet)
+   */
+  private static isAuthUrl = (title: string) => title.match(/^(?:https?:\/\/)?accounts\.google\.com/) !== null || title.includes(GOOGLE_OAUTH_SCREEN_HOST.replace(/^https?:\/\//, ''));
 
   private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
 
