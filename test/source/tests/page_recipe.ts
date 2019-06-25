@@ -114,7 +114,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.click('@action-overlay-retry');
         // after retry, the rest should continue as usual below
       }
-      await settingsPage.waitAll('@action-step4done-account-settings', { timeout: fixKey ? 45 : 20 });
+      await settingsPage.waitAll('@action-step4done-account-settings', { timeout: fixKey ? 90 : 20 });
       await settingsPage.waitAndClick('@action-step4done-account-settings');
       await SettingsPageRecipe.ready(settingsPage);
     } finally {
