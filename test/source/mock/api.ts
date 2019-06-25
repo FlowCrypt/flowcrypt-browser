@@ -130,6 +130,7 @@ export class Api<REQ, RES> {
     } else {
       serverRes.setHeader('content-type', 'application/json');
     }
+    serverRes.setHeader('Access-Control-Allow-Origin', '*');
     return this.fmtRes(handlerRes);
   }
 
