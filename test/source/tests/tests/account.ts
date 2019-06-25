@@ -6,7 +6,7 @@ import * as ava from 'ava';
 import { Config, Util } from '../../util';
 import { expect } from 'chai';
 import { FlowCryptApi } from '../api';
-import { TestVariant } from '../../test';
+import { TestVariant } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 

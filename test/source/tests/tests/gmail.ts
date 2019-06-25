@@ -4,7 +4,7 @@ import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
 import { GmailPageRecipe, SetupPageRecipe } from '../page_recipe';
-import { TestVariant } from '../../test';
+import { TestVariant } from '../../util';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -14,22 +14,22 @@ import { TestVariant } from '../../test';
 
 export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
-  const pageHasReplyContainer = async (gmailPage: ControllablePage) => {
-    const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
-    expect(urls.length).to.equal(1);
-  };
-
-  const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
-    const url = Url.gmail(0, path);
-    const gmialPage = await browser.newPage(t, url);
-    await gmialPage.waitAll('@action-secure-compose');
-    if (path) { // gmail does weird things with navigation sometimes, nudge it again
-      await gmialPage.goto(url);
-    }
-    return gmialPage;
-  };
-
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
+
+    const pageHasReplyContainer = async (gmailPage: ControllablePage) => {
+      const urls = await gmailPage.getFramesUrls(['/chrome/elements/compose.htm'], { sleep: 0 });
+      expect(urls.length).to.equal(1);
+    };
+
+    const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
+      const url = Url.gmail(0, path);
+      const gmialPage = await browser.newPage(t, url);
+      await gmialPage.waitAll('@action-secure-compose');
+      if (path) { // gmail does weird things with navigation sometimes, nudge it again
+        await gmialPage.goto(url);
+      }
+      return gmialPage;
+    };
 
     ava.test('gmail setup prompt notification shows up + goes away when close clicked + shows up again + setup link opens settings', testWithBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
