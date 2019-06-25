@@ -83,6 +83,12 @@ export class Api<REQ, RES> {
   protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => undefined as void;
 
   protected handleReq = async (req: IncomingMessage, res: ServerResponse): Promise<Buffer> => {
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Allow', 'GET,HEAD,POST,PUT,DELETE,OPTIONS');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Headers', '*');
+      return this.fmtRes({});
+    }
     const handler = this.chooseHandler(req);
     if (handler) {
       return this.fmtHandlerRes(await handler(this.parseReqBody(await this.collectReq(req), req), req), res);
