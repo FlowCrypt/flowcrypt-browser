@@ -17,7 +17,7 @@ const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
-  class LoggedApi<A, B> extends Api<A, B> {
+  class LoggedApi<REQ, RES> extends Api<REQ, RES> {
     protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => {
       if (req.url !== '/favicon.ico') {
         logger(`${res.statusCode} ${req.method} ${req.url} | ${errRes ? errRes : ''}`);
@@ -73,19 +73,9 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
     },
     '/gmail/v1/users/me/messages': async ({ query: { q } }, req) => { // search messages
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
-      const fmtRes = (msgs: GmailMsg[]) => ({ messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length });
       if (isGet(req) && q) {
-        const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
-        if (subject) { // if any subject query found, all else is ignored - messages just filtered by subject
-          return fmtRes(new Data(acct).searchMessagesBySubject(subject));
-        }
-        const includePeople = (q.match(/(?:from|to):([a-zA-Z0-9@.\-_]+)/g) || []).map(e => e.replace(/^(from|to):/, ''));
-        const excludePeople = (q.match(/(?:-from|-to):([a-zA-Z0-9@.\-_]+)/g) || []).map(e => e.replace(/^(-from|-to):/, ''));
-        if (includePeople.length || excludePeople.length) {
-          // if any to,from query found, all such queries are collected and applied with OR, regardless how structured. Also to: and from: has no distinction
-          return fmtRes(new Data(acct).searchMessagesByPeople(includePeople, excludePeople));
-        }
-        return { resultSizeEstimate: 0 }; // all other query types get 0 results
+        const msgs = new Data(acct).searchMessages(q);
+        return { messages: msgs.map(({ id, threadId }) => ({ id, threadId })), resultSizeEstimate: msgs.length };
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },

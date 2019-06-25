@@ -18,6 +18,9 @@ const DATA: { [acct: string]: AcctDataFile } = {};
 
 export class Data {
 
+  private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
+  private includePplSearchQuery = /(?:from|to):"?([a-zA-Z0-9@.\-_]+)"?/g;
+
   constructor(private acct: string) {
     if (!DATA[acct]) {
       DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
@@ -36,38 +39,60 @@ export class Data {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
   }
 
-  public searchMessagesBySubject = (subject: string) => {
+  public searchMessages = (q: string) => {
+    const subject = (q.match(/subject:"([^"]+)"/) || [])[1];
+    if (subject) {
+      // if any subject query found, all else is ignored
+      // messages just filtered by subject
+      return this.searchMessagesBySubject(subject);
+    }
+    const excludePeople = (q.match(this.exludePplSearchQuery) || []).map(e => e.replace(/^(-from|-to):/, '').replace(/"/g, ''));
+    q = q.replace(this.exludePplSearchQuery, ' ');
+    const includePeople = (q.match(this.includePplSearchQuery) || []).map(e => e.replace(/^(from|to):/, '').replace(/"/g, ''));
+    if (includePeople.length || excludePeople.length) {
+      // if any to,from query found, all such queries are collected
+      // no distinction made between to and from, just searches headers
+      // to: and from: are joined with OR
+      // -to: and -from: are joined with AND
+      // rest of query ignored
+      return this.searchMessagesByPeople(includePeople, excludePeople);
+    }
+    return [];
+  }
+
+  private searchMessagesBySubject = (subject: string) => {
     subject = subject.trim().toLowerCase();
     return DATA[this.acct].messages.filter(m => Data.msgSubject(m).toLowerCase().includes(subject));
   }
 
-  public searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
+  private searchMessagesByPeople = (includePeople: string[], excludePeople: string[]) => {
     includePeople = includePeople.map(person => person.trim().toLowerCase());
     excludePeople = excludePeople.map(person => person.trim().toLowerCase());
     return DATA[this.acct].messages.filter(m => {
       const msgPeople = Data.msgPeople(m).toLowerCase();
-      let includeTestPasses = false;
-      let excludeTestPasses = true;
+      let shouldInclude = false;
+      let shouldExclude = false;
       if (includePeople.length) { // filter who to include
         for (const includePerson of includePeople) {
           if (msgPeople.includes(includePerson)) {
-            includeTestPasses = true;
+            shouldInclude = true;
             break;
           }
         }
       } else { // do not filter who to include - include any
-        includeTestPasses = true;
+        shouldInclude = true;
       }
       if (excludePeople.length) { // filter who to exclude
         for (const excludePerson of excludePeople) {
-          if (!msgPeople.includes(excludePerson)) {
-            excludeTestPasses = false;
+          if (msgPeople.includes(excludePerson)) {
+            shouldExclude = true;
+            break;
           }
         }
       } else { // don't exclude anyone
-        excludeTestPasses = false;
+        shouldExclude = false;
       }
-      return includeTestPasses && !excludeTestPasses;
+      return shouldInclude && !shouldExclude;
     });
   }
 

@@ -80,7 +80,7 @@ export class Api<REQ, RES> {
 
   public close = (): Promise<void> => new Promise((resolve, reject) => this.server.close((err: any) => err ? reject(err) : resolve()));
 
-  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => undefined;
+  protected log = (req: http.IncomingMessage, res: http.ServerResponse, errRes?: Buffer) => undefined as void;
 
   protected handleReq = async (req: IncomingMessage, res: ServerResponse): Promise<Buffer> => {
     const handler = this.chooseHandler(req);
