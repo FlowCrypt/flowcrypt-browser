@@ -18,6 +18,8 @@ import { mock } from './mock';
 
 const { testVariant, oneIfNotPooled, buildDir, isMock } = getParsedCliParams();
 
+process.setMaxListeners(30);
+
 const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_SHORT: minutes(1),
   TIMEOUT_EACH_RETRY: minutes(3),
