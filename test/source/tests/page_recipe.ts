@@ -457,7 +457,7 @@ export class OauthPageRecipe extends PageRecipe {
       if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
       }
-      t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
+      // t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   }
