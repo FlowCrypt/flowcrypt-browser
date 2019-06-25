@@ -24,8 +24,8 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: oneIfNotPooled(3),
-  POOL_SIZE: oneIfNotPooled(isMock ? 9 : 2),
-  POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 4 : 1),
+  POOL_SIZE: oneIfNotPooled(isMock ? 12 : 2),
+  POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 5 : 1),
   POOL_SIZE_COMPOSE: oneIfNotPooled(1),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
 };
