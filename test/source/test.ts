@@ -16,17 +16,19 @@ import { FlowCryptApi } from './tests/api';
 import { getDebugHtmlAtts, AvaContext, standaloneTestTimeout, minutes, GlobalBrowser, newWithTimeoutsFunc } from './tests';
 import { mock } from './mock';
 
-export type TestVariant = 'CONSUMER' | 'ENTERPRISE';
+export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL';
 let TEST_VARIANT: TestVariant;
-if (process.argv.indexOf('CONSUMER') !== -1) {
-  TEST_VARIANT = 'CONSUMER';
-} else if (process.argv.indexOf('ENTERPRISE') !== -1) {
-  TEST_VARIANT = 'ENTERPRISE';
+if (process.argv.indexOf('CONSUMER-MOCK') !== -1) {
+  TEST_VARIANT = 'CONSUMER-MOCK';
+} else if (process.argv.indexOf('ENTERPRISE-MOCK') !== -1) {
+  TEST_VARIANT = 'ENTERPRISE-MOCK';
+} else if (process.argv.indexOf('CONSUMER') !== -1) {
+  TEST_VARIANT = 'CONSUMER-LIVE-GMAIL';
 } else {
-  throw new Error('Unknown test type: specify CONSUMER or ENTERPRISE');
+  throw new Error('Unknown test type: specify CONSUMER-MOCK or ENTERPRISE-MOCK CONSUMER-LIVE');
 }
-const BUILD_DIR = `build/chrome-${TEST_VARIANT.toLowerCase()}-mock`;
-console.info(`TEST_VARIANT: ${TEST_VARIANT}`);
+const BUILD_DIR = `build/chrome-${(TEST_VARIANT === 'CONSUMER-LIVE-GMAIL' ? 'CONSUMER' : TEST_VARIANT).toLowerCase()}`;
+console.info(`TEST_VARIANT: ${TEST_VARIANT} (build dir: ${BUILD_DIR})`);
 
 const poolSizeOne = process.argv.indexOf('--pool-size=1') !== -1;
 
@@ -108,7 +110,7 @@ export const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (
       await browserPool.withGlobalBrowserTimeoutAndRetry(browser, cb, t, consts);
       t.pass();
     } finally {
-      browserGlobal[group].browsers.doneUsingBrowser(browser);
+      await browserGlobal[group].browsers.doneUsingBrowser(browser);
     }
   };
 };

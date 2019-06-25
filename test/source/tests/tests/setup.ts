@@ -20,43 +20,6 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
   }));
 
-  // mail.google.com
-  ava.test.skip('gmail setup prompt notification shows up + goes away when close clicked + shows up again + setup link opens settings', testWithBrowser(async (t, browser) => {
-    const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-    await settingsPage.close();
-    let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-    await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-    await gmailPage.waitAndClick('@notification-setup-action-close', { confirmGone: true });
-    await gmailPage.close();
-    gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-    await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-    const newSettingsPage = await browser.newPageTriggeredBy(t, () => gmailPage.waitAndClick('@notification-setup-action-open-settings'));
-    await newSettingsPage.waitAll('@action-connect-to-gmail');
-  }));
-
-  // mail.google.com
-  ava.test.skip('gmail shows success notification after setup + goes away after click + does not re-appear', testWithBrowser(async (t, browser) => {
-    const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-    await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
-    let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-    await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
-    await gmailPage.waitAndClick('@notification-successfully-setup-action-close', { confirmGone: true });
-    await gmailPage.close();
-    gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-    await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
-  }));
-
-  // mail.google.com
-  ava.test.skip('gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(async (t, browser) => {
-    await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
-    let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-    await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-    await gmailPage.waitAndClick('@notification-setup-action-dismiss', { confirmGone: true });
-    await gmailPage.close();
-    gmailPage = await BrowserRecipe.openGmailPage(t, browser);
-    await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
-  }));
-
   ava.test('setup - import key - do not submit - did not use before', testWithBrowser(async (t, browser) => {
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
     await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp', { submitPubkey: false, usedPgpBefore: false });
@@ -100,7 +63,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithBrowser: Test
     await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: false });
   }));
 
-  ava.test.skip('setup - recover with a pass phrase - skip remaining', testWithBrowser(async (t, browser) => { // skipping because mail.google.com mock
+  ava.test('setup - recover with a pass phrase - skip remaining', testWithBrowser(async (t, browser) => {
     const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.compatibility@gmail.com');
     await SetupPageRecipe.recover(settingsPage, 'flowcrypt.compatibility.1pp1', { hasRecoverMore: true, clickRecoverMore: false });
   }));

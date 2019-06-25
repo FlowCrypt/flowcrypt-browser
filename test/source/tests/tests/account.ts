@@ -12,10 +12,10 @@ import { TestVariant } from '../../test';
 
 export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
-  if (testVariant === 'CONSUMER') {
+  if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 
     // todo - make a helper method that forces account tests to run in sequence with Semaphore
-    ava.test.skip('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
+    ava.test('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
       // delete account
       await FlowCryptApi.hookCiAcctDelete(Config.secrets.ci_dev_account);
       // set up acct and open compose page
