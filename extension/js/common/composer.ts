@@ -19,6 +19,7 @@ import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
 import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js';
 import { AttUI, AttLimits } from './ui/att_ui.js';
 import { Settings } from './settings.js';
+import { KeyImportUi } from './ui/key_import_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -1619,6 +1620,27 @@ export class Composer {
         this.draftSave(true).catch(Catch.reportErr);
       }
       this.debug(`input_to.blur -> parseRenderRecipients done`);
+    }));
+    this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
+      if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
+        const textData = event.originalEvent.clipboardData.getData('text/plain');
+        const keyImportUi = new KeyImportUi({ checkEncryption: true });
+        let normalizedPub: string;
+        try {
+          normalizedPub = await keyImportUi.checkPub(textData);
+        } catch (e) {
+          return; // key is invalid
+        }
+        const { keys: [key] } = await Pgp.key.parse(normalizedPub);
+        if (!key.users.length) { // there can be no users
+          return;
+        }
+        const keyUser = Str.parseEmail(key.users[0]);
+        if (!await Store.dbContactGet(undefined, [keyUser.email])) {
+          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: keyUser.email, name: keyUser.name, client: 'pgp', pubkey: normalizedPub, lastCheck: Date.now() }));
+        }
+        this.S.cached('input_to').val(keyUser.email).blur().focus(); // Need (blur + focus) to run parseRender function
+      }
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.getErrHandlers(`hide contact box`)));
