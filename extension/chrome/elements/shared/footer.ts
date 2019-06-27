@@ -50,7 +50,7 @@ Catch.try(async () => {
   }));
 
   $('.action_add_footer').click(Ui.event.prevent('double', async self => {
-    const footer = String($('.input_email_footer').val());
+    const footer = `${String($('.input_email_footer').val())}`.replace(/([^\n]{1,80})\s/g, '$1\n');
     await saveFooterIfAppropriate(Boolean($('.input_remember').prop('checked')), footer);
     BrowserMsg.send.setFooter(parentTabId, { footer });
   }));
