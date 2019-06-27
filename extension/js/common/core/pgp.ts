@@ -566,6 +566,18 @@ export class Pgp {
       }
       return longids;
     },
+    cryptoMsgGetSignedBy: async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
+      keys.signedBy = await Pgp.internal.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []);
+      if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
+        const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
+        keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
+        keys.forVerification = [];
+        for (const contact of keys.verificationContacts) {
+          const { keys: keysForVerification } = await openpgp.key.readArmored(contact.pubkey!);
+          keys.forVerification.push(...keysForVerification);
+        }
+      }
+    },
     cryptoMsgGetSortedKeys: async (kiWithPp: KeyInfosWithPassphrases, msg: OpenpgpMsgOrCleartext): Promise<SortedKeysForDecrypt> => {
       const keys: SortedKeysForDecrypt = {
         verificationContacts: [],
@@ -578,7 +590,7 @@ export class Pgp {
         prvForDecryptWithoutPassphrases: [],
       };
       keys.encryptedFor = await Pgp.internal.longids(msg instanceof openpgp.message.Message ? (msg as OpenPGP.message.Message).getEncryptionKeyIds() : []);
-      keys.signedBy = await Pgp.internal.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []);
+      await Pgp.internal.cryptoMsgGetSignedBy(msg, keys);
       for (const ki of kiWithPp.keys) {
         // this is inefficient because we are doing unnecessary parsing of all keys here
         // better would be to compare to already stored KeyInfo, however KeyInfo currently only holds primary longid, not longids of subkeys
@@ -600,15 +612,6 @@ export class Pgp {
           keys.prvForDecryptDecrypted.push(prvForDecrypt);
         } else {
           keys.prvForDecryptWithoutPassphrases.push(prvForDecrypt);
-        }
-      }
-      if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
-        const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
-        keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
-        keys.forVerification = [];
-        for (const contact of keys.verificationContacts) {
-          const { keys: keysForVerification } = await openpgp.key.readArmored(contact.pubkey!);
-          keys.forVerification.push(...keysForVerification);
         }
       }
       return keys;
@@ -741,6 +744,71 @@ export class PgpMsg {
     return await PgpMsg.verify(message, keys.forVerification, keys.verificationContacts[0]);
   }
 
+  /**
+   * Mostly copied from openpgp.js library
+   * Todo - remove when this resolved: remove when resolved: https://github.com/openpgpjs/openpgpjs/issues/916
+   */
+  static extractSignature = async (decrypted: OpenPGP.message.Message): Promise<Buf | undefined> => {
+    // tslint:disable:no-unsafe-any
+    const finalPacketList = new openpgp.packet.List();
+    const streaming = false;
+    const msg = decrypted.unwrapCompressed();
+    const literalDataList = msg.packets.filterByTag(openpgp.enums.packet.literal);
+    if (literalDataList.length !== 1) {
+      throw new Error('Can only verify message with one literal data packet.');
+    }
+    const onePassSigList = msg.packets.filterByTag(openpgp.enums.packet.onePassSignature).reverse() as OpenPGP.packet.List<OpenPGP.packet.OnePassSignature>;
+    const signatureList = msg.packets.filterByTag(openpgp.enums.packet.signature) as OpenPGP.packet.List<OpenPGP.packet.Signature>;
+    // @ts-ignore
+    if (onePassSigList.length && !signatureList.length && msg.packets.stream) {
+      // @ts-ignore
+      await Promise.all(onePassSigList.map(async onePassSig => {
+        onePassSig.correspondingSig = new Promise((resolve, reject) => {
+          // @ts-ignore
+          onePassSig.correspondingSigResolve = resolve;
+          // @ts-ignore
+          onePassSig.correspondingSigReject = reject;
+        });
+        // @ts-ignore
+        onePassSig.signatureData = openpgp.stream.fromAsync(async () => (await onePassSig.correspondingSig!).signatureData);
+        // @ts-ignore
+        onePassSig.hashed = await onePassSig.hash(onePassSig.signatureType, literalDataList[0], undefined, streaming);
+      }));
+      // @ts-ignore
+      msg.packets.stream = openpgp.stream.transformPair(msg.packets.stream, async (readable, writable) => {
+        // @ts-ignore
+        const reader = openpgp.stream.getReader(readable);
+        // @ts-ignore
+        const writer = openpgp.stream.getWriter(writable);
+        try {
+          for (let i = 0; i < onePassSigList.length; i++) { // tslint:disable-line:prefer-for-of
+            const { value: signature } = await reader.read();
+            // @ts-ignore
+            onePassSigList[i].correspondingSigResolve(signature);
+          }
+          await reader.readToEnd();
+          await writer.ready;
+          await writer.close();
+        } catch (e) {
+          onePassSigList.forEach(onePassSig => {
+            // @ts-ignore
+            onePassSig.correspondingSigReject(e);
+          });
+          await writer.abort(e);
+        }
+      });
+      // @ts-ignore
+      finalPacketList.push(... await Promise.all(onePassSigList.map(s => s.correspondingSig)));
+    }
+    finalPacketList.push(...finalPacketList);
+    if (!finalPacketList.length) {
+      return undefined;
+    }
+    // @ts-ignore
+    return Buf.fromUtfStr(new openpgp.signature.Signature(finalPacketList).armor());
+    // tslint:enable:no-unsafe-any
+  }
+
   static decrypt: PgpMsgMethod.Decrypt = async ({ kisWithPp, encryptedData, msgPwd }) => {
     let prepared: PreparedForDecrypt;
     const longids: DecryptError$longids = { message: [], matching: [], chosen: [], needPassphrase: [] };
@@ -773,13 +841,22 @@ export class PgpMsg {
       const passwords = msgPwd ? [msgPwd] : undefined;
       const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
       const decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(privateKeys, passwords, undefined, false);
-      // const signature = keys.signed_by.length ? Pgp.message.verify(message, keys.for_verification, keys.verification_contacts[0]) : false;
       const content = new Buf(await openpgp.stream.readToEnd(decrypted.getLiteralData()!));
+      let signature: MsgVerifyResult | undefined;
+      try { // remove when resolved: https://github.com/openpgpjs/openpgpjs/issues/916
+        const sigText = await PgpMsg.extractSignature(decrypted);
+        signature = sigText ? await PgpMsg.verifyDetached({ plaintext: content, sigText }) : undefined;
+        // await Pgp.internal.cryptoMsgGetSignedBy(decrypted, keys); // with encrypted messages, we don't know if it's signed until decrypted
+        // const signature = keys.signedBy.length ? await PgpMsg.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined; // hangs
+      } catch (e) {
+        console.error('error verifying decrypted signature');
+        console.error(e);
+      }
       if (!prepared.isCleartext && prepared.message.packets.filterByTag(openpgp.enums.packet.symmetricallyEncrypted).length) {
         const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). The sender should update their outdated software.\n\nDisplay the message at your own risk.';
         return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, message: prepared.message, longids, isEncrypted };
       }
-      return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined };
+      return { success: true, content, isEncrypted, filename: decrypted.getFilename() || undefined, signature };
     } catch (e) {
       return { success: false, error: Pgp.internal.cryptoMsgDecryptCategorizeErr(e, msgPwd), message: prepared.message, longids, isEncrypted };
     }

@@ -114,10 +114,10 @@ function delegate(id, method, options) {
     response({ id:id, event:'method-return', err:'Unknown Worker Event' });
     return;
   }
-  // parse cloned packets
-  options = openpgp.packet.clone.parseClonedPackets(options, method);
   // construct ReadableStreams from MessagePorts
   openpgp.util.restoreStreams(options);
+  // parse cloned packets
+  options = openpgp.packet.clone.parseClonedPackets(options, method);
   openpgp[method](options).then(function(data) {
     // clone packets (for web worker structured cloning algorithm)
     response({ id:id, event:'method-return', data:openpgp.packet.clone.clonePackets(data) });
@@ -136,5 +136,10 @@ function delegate(id, method, options) {
 function response(event) {
   self.postMessage(event, openpgp.util.getTransferables(event.data, true));
 }
+
+/**
+ * Let the main window know the worker has loaded.
+ */
+postMessage({ event: 'loaded' });
 
 },{}]},{},[1]);
