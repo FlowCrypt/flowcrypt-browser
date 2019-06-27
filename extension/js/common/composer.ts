@@ -1632,6 +1632,9 @@ export class Composer {
           return; // key is invalid
         }
         const { keys: [key] } = await Pgp.key.parse(normalizedPub);
+        if (!key.users.length) { // there can be no users
+          return;
+        }
         const keyUser = Str.parseEmail(key.users[0]);
         if (!await Store.dbContactGet(undefined, [keyUser.email])) {
           await Store.dbContactSave(undefined, await Store.dbContactObj({ email: keyUser.email, name: keyUser.name, client: 'pgp', pubkey: normalizedPub, lastCheck: Date.now() }));
