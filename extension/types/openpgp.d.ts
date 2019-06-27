@@ -852,7 +852,7 @@ declare namespace OpenPGP {
 
     interface KeyResult {
       keys: Key[];
-      err: Error[];
+      err?: Error[];
     }
 
     type AlgorithmInfo = {

@@ -7,8 +7,9 @@ import { Store } from '../../js/common/platform/store.js';
 import { Xss, Ui, Env } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Assert } from '../../js/common/assert.js';
-import { KeyImportUi, processPublicKeyFileImport, UserAlert, } from '../../js/common/ui/key_import_ui.js';
+import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
 import { AttUI } from '../../js/common/ui/att_ui.js';
+import { Pgp } from '../../js/common/core/pgp.js';
 
 Catch.try(async () => {
 
@@ -70,10 +71,16 @@ Catch.try(async () => {
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   attUI.initAttDialog('fineuploader', 'fineuploader_button');
   attUI.setAttAddedCb(async (file) => {
-    const keys = await processPublicKeyFileImport(attUI, file);
-    if (keys && keys.length) {
+    attUI.clearAllAtts();
+    const { keys, errs } = await Pgp.key.readMany(file.getData());
+    if (keys.length) {
+      if (errs.length) {
+        await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
+      }
       $('.pubkey').val(String(keys[0].armor()));
       $('.action_ok').trigger('click');
+    } else if (errs.length) {
+      await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
     }
   });
 

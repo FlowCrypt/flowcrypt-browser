@@ -252,9 +252,37 @@ export class Pgp {
       const k = await openpgp.generateKey({ numBits, userIds, passphrase });
       return { public: k.publicKeyArmored, private: k.privateKeyArmored };
     },
-    read: async (armoredKey: string) => {
+    /**
+     * used only for keys that we ourselves parsed / formatted before, eg from local storage, because no err handling
+     */
+    read: async (armoredKey: string) => { // should be renamed to readOne
       const { keys: [key] } = await openpgp.key.readArmored(armoredKey);
       return key;
+    },
+    /**
+     * Read many keys, could be armored or binary, in single armor or separately, useful for importing keychains of various formats
+     */
+    readMany: async (fileData: Buf): Promise<{ keys: OpenPGP.key.Key[], errs: Error[] }> => {
+      const allKeys: OpenPGP.key.Key[] = [];
+      const allErrs: Error[] = [];
+      const { blocks } = await Pgp.armor.detectBlocks(fileData.toUtfStr());
+      const armoredPublicKeyBlocks = blocks.filter(block => block.type === "publicKey");
+      try {
+        if (armoredPublicKeyBlocks.length) {
+          for (const block of blocks) {
+            const { err, keys } = await openpgp.key.readArmored(block.content.toString());
+            allErrs.push(...(err || []));
+            allKeys.push(...keys);
+          }
+        } else {
+          const { err, keys } = await openpgp.key.read(fileData);
+          allErrs.push(...(err || []));
+          allKeys.push(...keys);
+        }
+      } catch (e) {
+        allErrs.push(e instanceof Error ? e : new Error(String(e)));
+      }
+      return { keys: allKeys, errs: allErrs };
     },
     decrypt: async (key: OpenPGP.key.Key, passphrases: string[]): Promise<boolean> => {
       try {
