@@ -1807,9 +1807,7 @@ export class Composer {
 
   // This function is needed for removing things that don't need to be displayed in the replyed message
   // we have only div element with 'cryptup-reply'class
-  private formatTextForReply = (plainText: string): string => {
-    return plainText.replace(/<.*class\s*=\s*["'].*cryptup_reply.*["']\s*>(.*)<\/.*>/g, '');
-  }
+  private formatTextForReply = (plainText: string): string => plainText.replace(/<.*class\s*=\s*["'].*cryptup_reply.*["']\s*>(.*)<\/.*>/g, '');
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
     return {
