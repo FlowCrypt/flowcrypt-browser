@@ -1570,6 +1570,7 @@ export class Composer {
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_msg_successful').find('div.replied_from').text(this.getSender());
     this.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
+    plaintext = this.formatTextForReply(plaintext);
     Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
@@ -1802,6 +1803,12 @@ export class Composer {
       this.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
+  }
+
+  // This function is needed for removing things that don't need to be displayed in the replyed message
+  // we have only div element with 'cryptup-reply'class
+  private formatTextForReply = (plainText: string): string => {
+    return plainText.replace(/<.*class\s*=\s*["'].*cryptup_reply.*["']\s*>(.*)<\/.*>/g, '');
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
