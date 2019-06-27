@@ -1571,6 +1571,7 @@ export class Composer {
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_msg_successful').find('div.replied_from').text(this.getSender());
     this.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
+    plaintext = PgpMsg.stripFcTeplyToken(plaintext);
     Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
