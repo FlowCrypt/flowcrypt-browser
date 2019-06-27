@@ -529,8 +529,8 @@ export class Store {
 
   static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }: DbContactObjArg): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
-    email = Str.parseEmail(email).email;
-    if (!Str.isEmailValid(email)) {
+    email = Str.parseEmail(email).email!; // ! due to a TS quirk - may still be undefined! check below:
+    if (email) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
     }
     if (!lastSig && pubkey) {

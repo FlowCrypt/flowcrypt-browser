@@ -9,12 +9,18 @@ export type Dict<T> = { [key: string]: T; };
 export class Str {
 
   public static parseEmail = (full: string) => {
+    let email: string | undefined;
+    let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
-      const email = full.substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase();
-      const name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
-      return { email, name, full };
+      email = full.substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase();
+      name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
+    } else {
+      email = full.replace(/["']/g, '').trim().toLowerCase();
     }
-    return { email: full.replace(/["']/g, '').trim().toLowerCase(), name: undefined, full };
+    if (!Str.isEmailValid(email)) {
+      email = undefined;
+    }
+    return { email, name, full };
   }
 
   public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
