@@ -317,7 +317,7 @@ Catch.try(async () => {
         isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
         if (isHtml) {
-          decryptedContent += Xss.htmlSanitizeAndStripAllTags(decoded.text, '\n');
+          decryptedContent += Xss.escape(decoded.text);
         } else {
           decryptedContent += decoded.text;
         }
