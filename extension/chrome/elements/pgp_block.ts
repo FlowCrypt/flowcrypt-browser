@@ -307,12 +307,22 @@ Catch.try(async () => {
     } else {
       renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
+      decryptedContent = '';
+      if (decoded.subject) {
+        decryptedContent = createEncryptedSubject(decoded.subject);
+        isHtml = true;
+      }
       if (typeof decoded.html !== 'undefined') {
-        decryptedContent = decoded.html;
+        decryptedContent += decoded.html;
         isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
-        decryptedContent = decoded.text;
+        if (isHtml) {
+          decryptedContent += Xss.htmlSanitizeAndStripAllTags(decoded.text, '\n');
+        } else {
+          decryptedContent += decoded.text;
+        }
       }
+
       for (const att of decoded.atts) {
         if (att.treatAs() !== 'publicKey') {
           renderableAtts.push(att);
@@ -483,6 +493,13 @@ Catch.try(async () => {
       }
     }
   };
+
+  const createEncryptedSubject = (subject: string) => {
+    return `<div style="font-size: 14px;"> Encrypted Subject:
+              <b> ${subject}</b>
+            </div>
+            <hr/>`;
+  }
 
   const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
     const pgpBlk = $("#pgp_block");
