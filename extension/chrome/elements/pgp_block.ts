@@ -307,28 +307,18 @@ Catch.try(async () => {
     } else {
       renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
-      decryptedContent = '';
-      if (decoded.subject) {
-        decryptedContent = createEncryptedSubject(decoded.subject);
-        isHtml = true;
-      }
       if (typeof decoded.html !== 'undefined') {
-        decryptedContent += decoded.html;
+        decryptedContent = decoded.html;
         isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
-        if (isHtml) {
-          decryptedContent += Xss.escape(decoded.text);
-        } else {
-          decryptedContent += decoded.text;
-        }
+        decryptedContent = decoded.text;
       }
-
+      if (decoded.subject) {
+        decryptedContent = getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent;
+      }
       for (const att of decoded.atts) {
-        if (att.treatAs() !== 'publicKey') {
-          renderableAtts.push(att);
-        } else {
+        att.treatAs() !== 'publicKey' ? renderableAtts.push(att) :
           publicKeys.push(att.getData().toUtfStr());
-        }
       }
     }
     await separateQuotedContentAndRenderText(decryptedContent, isHtml);
@@ -494,11 +484,15 @@ Catch.try(async () => {
     }
   };
 
-  const createEncryptedSubject = (subject: string) => {
-    return `<div style="font-size: 14px;"> Encrypted Subject:
-              <b> ${subject}</b>
-            </div>
-            <hr/>`;
+  const getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
+    if (isHtml) {
+      return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
+                <b> ${subject}</b>
+              </div>
+              <hr/>`;
+    } else {
+      return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
+    }
   };
 
   const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
