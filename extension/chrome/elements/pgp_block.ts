@@ -499,7 +499,7 @@ Catch.try(async () => {
               <b> ${subject}</b>
             </div>
             <hr/>`;
-  }
+  };
 
   const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
     const pgpBlk = $("#pgp_block");
