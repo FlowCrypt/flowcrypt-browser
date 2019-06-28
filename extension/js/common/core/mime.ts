@@ -157,9 +157,8 @@ export class Mime {
             } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
               mimeContent.text = Mime.getNodeContentAsUtfStr(node);
             } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
-              const subjectsLines = Mime.getNodeContentAsUtfStr(node).match(/(?<=Subject:\s).*/gi);
-              if (subjectsLines && subjectsLines.length) {
-                mimeContent.subject = subjectsLines[0];
+              if (node._parentNode && node._parentNode.headers.subject) {
+                mimeContent.subject = node._parentNode.headers.subject[0].value;
               }
             } else {
               mimeContent.atts.push(Mime.getNodeAsAtt(node));
