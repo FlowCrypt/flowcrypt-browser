@@ -318,9 +318,9 @@ Catch.try(async () => {
       }
       for (const att of decoded.atts) {
         if (att.treatAs() !== 'publicKey') {
-          renderableAtts.push(att)
+          renderableAtts.push(att);
         } else {
-          publicKeys.push(att.getData().toUtfStr())
+          publicKeys.push(att.getData().toUtfStr());
         }
       }
     }
