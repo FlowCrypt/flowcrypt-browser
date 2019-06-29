@@ -317,8 +317,11 @@ Catch.try(async () => {
         decryptedContent = getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent;
       }
       for (const att of decoded.atts) {
-        att.treatAs() !== 'publicKey' ? renderableAtts.push(att) :
-          publicKeys.push(att.getData().toUtfStr());
+        if (att.treatAs() !== 'publicKey') {
+          renderableAtts.push(att)
+        } else {
+          publicKeys.push(att.getData().toUtfStr())
+        }
       }
     }
     await separateQuotedContentAndRenderText(decryptedContent, isHtml);
