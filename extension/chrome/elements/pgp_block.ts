@@ -313,6 +313,9 @@ Catch.try(async () => {
       } else if (typeof decoded.text !== 'undefined') {
         decryptedContent = decoded.text;
       }
+      if (decoded.subject) {
+        decryptedContent = getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent;
+      }
       for (const att of decoded.atts) {
         if (att.treatAs() !== 'publicKey') {
           renderableAtts.push(att);
@@ -481,6 +484,17 @@ Catch.try(async () => {
       if (linesQuotedPart.length) {
         appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
       }
+    }
+  };
+
+  const getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
+    if (isHtml) {
+      return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
+                <b> ${subject}</b>
+              </div>
+              <hr/>`;
+    } else {
+      return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
     }
   };
 

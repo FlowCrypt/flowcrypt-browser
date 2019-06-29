@@ -20,6 +20,7 @@ type MimeContent = {
   atts: Att[];
   signature?: string;
   rawSignedContent?: string;
+  subject?: string;
   html?: string;
   text?: string;
   from?: string;
@@ -131,7 +132,7 @@ export class Mime {
 
   public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
     return new Promise(async resolve => {
-      const mimeContent: MimeContent = { atts: [], headers: {}, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
+      const mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
       try {
         const parser = new MimeParser();
         const leafNodes: { [key: string]: MimeParserNode } = {};
@@ -156,7 +157,9 @@ export class Mime {
             } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
               mimeContent.text = Mime.getNodeContentAsUtfStr(node);
             } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
-              // todo - surface and render encrypted headers
+              if (node._parentNode && node._parentNode.headers.subject) {
+                mimeContent.subject = node._parentNode.headers.subject[0].value;
+              }
             } else {
               mimeContent.atts.push(Mime.getNodeAsAtt(node));
             }
