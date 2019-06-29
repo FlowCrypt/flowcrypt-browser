@@ -12,6 +12,7 @@ import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { GmailRes } from '../api/google.js';
+import { PgpClient } from '../api/attester.js';
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
@@ -21,7 +22,7 @@ type StoredAdminCode = { date: number, codes: string[] };
 export type DbContactObjArg = {
   email: string,
   name?: string | null,
-  client?: string | null,
+  client?: 'pgp' | 'cryptup' | PgpClient | null,
   pubkey?: string | null,
   pendingLookup?: boolean | number | null,
   lastUse?: number | null, // when was this contact last used to send an email
@@ -527,6 +528,16 @@ export class Store {
     return index;
   }
 
+  private static storablePgpClient = (rawPgpClient: 'pgp' | 'cryptup' | PgpClient | null): 'pgp' | 'cryptup' | null => { // tslint:disable-line:no-null-keyword
+    if (rawPgpClient === 'flowcrypt') {
+      return 'cryptup';
+    } else if (rawPgpClient === 'pgp-other') {
+      return 'pgp';
+    } else {
+      return rawPgpClient;
+    }
+  }
+
   static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }: DbContactObjArg): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
     const checkedEmail = Str.parseEmail(email).email;
@@ -542,7 +553,7 @@ export class Store {
       pubkey: pubkey || null, // tslint:disable-line:no-null-keyword
       has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
       searchable: Store.dbCreateSearchIndexList(checkedEmail, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
-      client: pubkey ? (client || null) : null, // tslint:disable-line:no-null-keyword
+      client: Store.storablePgpClient(pubkey ? (client || 'pgp') : null), // tslint:disable-line:no-null-keyword
       fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
       longid: fingerprint ? (await Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
       keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
