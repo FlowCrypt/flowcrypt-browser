@@ -23,6 +23,7 @@ Catch.try(async () => {
   const subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
+  const threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
   const to = uncheckedUrlParams.to ? String(uncheckedUrlParams.to).split(',') : [];
   const debug = uncheckedUrlParams.debug === true;
 
@@ -32,7 +33,7 @@ Catch.try(async () => {
   const appFunctions = Composer.defaultAppFunctions();
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
-    acctEmail, draftId: '', threadId, subject, from, to, frameId, tabId, debug,
+    acctEmail, draftId: '', threadId, subject, from, to, frameId, threadMsgId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true
   };

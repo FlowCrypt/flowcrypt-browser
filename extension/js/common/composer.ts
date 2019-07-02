@@ -11,7 +11,7 @@ import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
-import { Mime, SendableMsgBody } from './core/mime.js';
+import { Mime, SendableMsgBody, MimeContent } from './core/mime.js';
 import { GoogleAuth, GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { PubkeySearchResult, Attester } from './api/attester.js';
@@ -67,6 +67,7 @@ export type ComposerUrlParams = {
   tabId: string;
   acctEmail: string;
   threadId: string;
+  threadMsgId: string;
   draftId: string;
   subject: string;
   from: string | undefined;
@@ -108,6 +109,7 @@ export class Composer {
     icon_help: '.action_feedback',
     icon_sign: '.icon.action_sign',
     icon_popout: '.popout img',
+    icon_show_prev_msg: '.action_show_prev_msg',
     prompt: 'div#initial_prompt',
     reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
@@ -1150,8 +1152,17 @@ export class Composer {
   }
 
   private appendForwardedMsg = (textBytes: Buf) => {
-    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${Xss.escape(textBytes.toUtfStr()).replace(/\r?\n/g, '<br>&gt; ')}`);
+    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${this.quoteText(Xss.escape(textBytes.toUtfStr()))}`);
     this.resizeComposeBox();
+  }
+
+  private generateHTMLRepliedPart = (msg: MimeContent) => {
+    if (!msg.headers.date || !msg.text) {
+      return;
+    }
+    const msgSentDate = new Date(msg.headers.date as string);
+    const header = `On ${this.formatDate(msgSentDate)} ${msg.from} wrote:<br/>`;
+    return header + this.quoteText(Xss.escape(msg.text));
   }
 
   private retrieveDecryptAddForwardedMsg = async (msgId: string) => {
@@ -1201,6 +1212,20 @@ export class Composer {
         if (method === 'forward') {
           this.urlParams.subject = 'Fwd: ' + this.urlParams.subject;
           await this.retrieveDecryptAddForwardedMsg(determined.lastMsgId);
+        } else {
+          try {
+            const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, this.urlParams.threadMsgId, 'raw');
+            const msgMimeContent = await Mime.decode(Buf.fromBase64UrlStr(raw!));
+            if (!this.urlParams.draftId && msgMimeContent.text) {
+              const repliedPart = '<br/>' + this.generateHTMLRepliedPart(msgMimeContent);
+              if (repliedPart) {
+                Xss.sanitizeAppend(this.S.cached('input_text'), repliedPart);
+              }
+            }
+          } catch (e) {
+            Catch.reportErr(e);
+            return;
+          }
         }
       }
     } else {
@@ -1653,8 +1678,8 @@ export class Composer {
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
-    this.attach.setAttAddedCb(async () => this.setInputTextHeightManuallyIfNeeded());
-    this.attach.setAttRemovedCb(() => this.setInputTextHeightManuallyIfNeeded());
+    this.attach.setAttAddedCb(async () => { this.setInputTextHeightManuallyIfNeeded(); this.resizeComposeBox(); });
+    this.attach.setAttRemovedCb(() => { this.setInputTextHeightManuallyIfNeeded(); this.resizeComposeBox(); });
     if (!String(this.S.cached('input_to').val()).length) {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in
@@ -1825,6 +1850,24 @@ export class Composer {
       this.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
+  }
+
+  private quoteText(text: string) {
+    return text.split('\n').map(l => '<br/>&gt; ' + l).join('\n');
+  }
+
+  private formatDate(date: Date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDay();
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    let result = year + '-';
+    result += (month < 10 ? '0' + month : month) + '-';
+    result += (day < 10 ? '0' + day : day) + ' at ';
+    result += (hours < 10 ? '0' + hours : hours) + ':';
+    result += (minutes < 10 ? '0' + minutes : minutes) + '';
+    return result;
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
