@@ -11,7 +11,7 @@ import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
-import { Mime, SendableMsgBody, MimeContent } from './core/mime.js';
+import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth, GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { PubkeySearchResult, Attester } from './api/attester.js';
@@ -1156,13 +1156,9 @@ export class Composer {
     this.resizeComposeBox();
   }
 
-  private generateHTMLRepliedPart = (msg: MimeContent) => {
-    if (!msg.headers.date || !msg.text) {
-      return;
-    }
-    const msgSentDate = new Date(msg.headers.date as string);
-    const header = `On ${this.formatDate(msgSentDate)} ${msg.from} wrote:<br/>`;
-    return header + this.quoteText(Xss.escape(msg.text));
+  private generateHTMLRepliedPart = (text: string, date: Date, from: string) => {
+    const header = `On ${this.formatDate(date)} ${from} wrote:<br/>`;
+    return header + this.quoteText(Xss.escape(text));
   }
 
   private retrieveDecryptAddForwardedMsg = async (msgId: string) => {
@@ -1215,9 +1211,34 @@ export class Composer {
         } else {
           try {
             const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, this.urlParams.threadMsgId, 'raw');
-            const msgMimeContent = await Mime.decode(Buf.fromBase64UrlStr(raw!));
-            if (!this.urlParams.draftId && msgMimeContent.text) {
-              const repliedPart = '<br/>' + this.generateHTMLRepliedPart(msgMimeContent);
+            const msgMimeContent = await Mime.process(Buf.fromBase64UrlStr(raw!));
+            if (!msgMimeContent.from || !msgMimeContent.headers.date || !msgMimeContent.blocks || !msgMimeContent.blocks.length) {
+              return;
+            }
+            if (!this.urlParams.draftId) {
+              const blocksToDisplay = msgMimeContent.blocks.filter(b => b.type === 'encryptedMsg' ||
+                b.type === 'plainText' || b.type === 'plainHtml');
+              const contentToDisplay: Array<string> = [];
+              for (const block of blocksToDisplay) {
+                if (block.type === 'encryptedMsg') {
+                  const armored = Pgp.armor.clip(block.content as string);
+                  if (armored) {
+                    const decrypted = await PgpMsg.decrypt({
+                      kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail),
+                      encryptedData: Buf.fromUtfStr(armored)
+                    });
+                    if (decrypted.success) {
+                      contentToDisplay.push(decrypted.content.toUtfStr());
+                    }
+                  }
+                } else if (block.type === 'plainHtml') {
+                  contentToDisplay.push(Xss.escape(block.content as string));
+                } else {
+                  contentToDisplay.push(block.content as string);
+                }
+              }
+              const sentDate = new Date(msgMimeContent.headers.date as string);
+              const repliedPart = '<br/>' + this.generateHTMLRepliedPart(contentToDisplay.join('\n'), sentDate, msgMimeContent.from!);
               if (repliedPart) {
                 Xss.sanitizeAppend(this.S.cached('input_text'), repliedPart);
               }
