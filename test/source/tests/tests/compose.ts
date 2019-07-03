@@ -1,4 +1,4 @@
-import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import { Url } from '../../browser';
@@ -8,7 +8,7 @@ import { TestVariant } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
-export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 

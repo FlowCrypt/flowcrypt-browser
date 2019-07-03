@@ -1,10 +1,11 @@
-import { TestWithBrowser, TestWithGlobalBrowser, AvaContext } from '..';
+import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { Url, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
 import { GmailPageRecipe, SetupPageRecipe } from '../page_recipe';
 import { TestVariant } from '../../util';
+import { AvaContext } from '..';
 
 /**
  * All tests that use mail.google.com or have to operate without a Gmail API mock should go here
@@ -12,7 +13,7 @@ import { TestVariant } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
-export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export const defineGmailTests = (testVariant: TestVariant, TestWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 
@@ -31,7 +32,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       return gmialPage;
     };
 
-    ava.test('[standalone] gmail setup prompt notification shows up + goes away when close clicked + shows up again + setup link opens settings', testWithBrowser(async (t, browser) => {
+    ava.test('[standalone] gmail setup prompt notification shows up + goes away when close clicked + shows up again + setup link opens settings', TestWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await settingsPage.close();
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
@@ -44,7 +45,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await newSettingsPage.waitAll('@action-connect-to-gmail');
     }));
 
-    ava.test('[standalone] gmail shows success notification after setup + goes away after click + does not re-appear', testWithBrowser(async (t, browser) => {
+    ava.test('[standalone] gmail shows success notification after setup + goes away after click + does not re-appear', TestWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       await SetupPageRecipe.manualEnter(settingsPage, 'flowcrypt.test.key.used.pgp');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
@@ -55,7 +56,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithBrowser: Test
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
     }));
 
-    ava.test('[standalone] gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithBrowser(async (t, browser) => {
+    ava.test('[standalone] gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', TestWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.test.key.imported@gmail.com');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);

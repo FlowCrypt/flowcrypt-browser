@@ -16,6 +16,7 @@ import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/goo
 import { Buf } from '../../js/common/core/buf.js';
 import { BackendRes, Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
+import { Attester } from '../../js/common/api/attester.js';
 
 Catch.try(async () => {
 
@@ -208,13 +209,67 @@ Catch.try(async () => {
     }));
   };
 
+  const renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string | undefined): Promise<void> => { // don't have appropriate pubkey by longid in contacts
+    const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(Ui.event.handle(action));
+    try {
+      if (senderEmail) { // we know who sent it
+        const [senderContactByEmail] = await Store.dbContactGet(undefined, [senderEmail]);
+        if (senderContactByEmail) {
+          render(`Found the right pubkey ${signerLongid} on keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
+          return;
+        } // ---> and user doesn't have pubkey for that email addr
+        const { pubkey, pgpClient } = await Attester.lookupEmail(senderEmail);
+        if (!pubkey) {
+          render(`Missing pubkey ${signerLongid}`, () => undefined);
+          return;
+        } // ---> and pubkey found on keyserver by sender email
+        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
+          render(`Fetched signing pubkey ${signerLongid}, but cannot confirm it\'s the right one. Click to load pubkey and verify anyway.`, async () => {
+            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU manual import option
+            window.location.reload();
+          });
+        } // ---> and longid it matches signature
+        await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
+        render('Fetched pubkey, click to verify', () => window.location.reload());
+      } else { // don't know who sent it
+        const { pubkey, pgpClient } = await Attester.lookupEmail(signerLongid);
+        if (!pubkey) { // but can find matching pubkey by longid on keyserver
+          render(`Could not find sender's pubkey anywhere: ${signerLongid}`, () => undefined);
+          return;
+        }
+        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        const pubkeyEmail = Str.parseEmail(keyDetails.users[0] || '').email!;
+        if (!pubkeyEmail) {
+          render(`Fetched matching pubkey ${signerLongid} but no valid email address is listed in it.`, () => undefined);
+          return;
+        }
+        const [conflictingContact] = await Store.dbContactGet(undefined, [pubkeyEmail]);
+        if (conflictingContact) {
+          render(`Fetched matching pubkey ${signerLongid} but conflicting key is in local contacts ${conflictingContact.longid} for email ${pubkeyEmail}, cannot verify.`, () => undefined);
+          return;
+        }
+        render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
+          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
+          window.location.reload();
+        });
+      }
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
+        render(`Could not load sender pubkey ${signerLongid} due to an error.`, () => undefined);
+      } else {
+        render(`Could not look up sender's pubkey due to network error, click to retry.`, () => window.location.reload());
+      }
+    }
+  };
+
   const renderPgpSignatureCheckResult = (signature: MsgVerifyResult | undefined) => {
     if (signature) {
       const signerEmail = signature.contact ? signature.contact.name || senderEmail : senderEmail;
       $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
-        $('#pgp_signature').addClass('neutral');
-        $('#pgp_signature > .result').text(`missing pubkey ${signature.signer}`);
+        renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, senderEmail).catch(Catch.reportErr); // async so that it doesn't slow down rendering
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
         $('#pgp_signature > .result').text('matching signature');

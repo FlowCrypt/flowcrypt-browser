@@ -86,7 +86,6 @@ export class BrowserRecipe {
     const content = await pgpBlockPage.read('@pgp-block-content');
     for (const expectedContent of expectedContents) {
       if (content.indexOf(expectedContent) === -1) {
-        await pgpBlockPage.close();
         throw new Error(`pgp_block_verify_decrypted_content:missing expected content:${expectedContent}`);
       }
     }
@@ -94,7 +93,6 @@ export class BrowserRecipe {
       const sigContent = await pgpBlockPage.read('@pgp-signature');
       for (const expectedSigContent of signature) {
         if (sigContent.indexOf(expectedSigContent) === -1) {
-          await pgpBlockPage.close();
           throw new Error(`pgp_block_verify_decrypted_content:missing expected signature content:${expectedSigContent}`);
         }
       }
