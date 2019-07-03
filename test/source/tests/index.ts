@@ -1,10 +1,8 @@
 
 import { BrowserPool } from '../browser';
-import { testWithNewBrowser, testWithSemaphoredGlobalBrowser, Consts } from '../test';
+import { Consts } from '../test';
 import * as ava from 'ava';
 
-export type TestWithBrowser = typeof testWithNewBrowser;
-export type TestWithGlobalBrowser = typeof testWithSemaphoredGlobalBrowser;
 export type AvaContext = ava.ExecutionContext<{}> & { retry?: true, attemptNumber?: number, totalAttempts?: number, attemptText?: string };
 export type GlobalBrowser = { browsers: BrowserPool };
 

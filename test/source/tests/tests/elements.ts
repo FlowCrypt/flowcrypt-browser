@@ -1,11 +1,11 @@
-import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { TestVariant } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
-export let defineElementTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export let defineElementTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 

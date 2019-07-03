@@ -1,4 +1,4 @@
-import { TestWithBrowser, TestWithGlobalBrowser } from '..';
+import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { Url } from '../../browser';
 import * as ava from 'ava';
@@ -9,7 +9,7 @@ import { TestVariant } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
-export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
