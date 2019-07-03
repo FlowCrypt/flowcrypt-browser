@@ -68,6 +68,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.test('[standalone] protonmail - load pubkey into contact + verify detached msg', testWithNewBrowser(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["Missing pubkey", "Mismatch@Mail.Com"]);
@@ -83,6 +84,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.test('[standalone] protonmail - auto TOFU load matching pubkey first time', testWithNewBrowser(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["Fetched pubkey, click to verify", "Flowcrypt.Compatibility@Protonmail.Com"]);
