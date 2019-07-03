@@ -57,6 +57,7 @@ Catch.try(async () => {
     }));
   }
 
+  $('.action_open_webmail').attr('href', Google.webmailUrl(acctEmail));
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send.bg.settings({ acctEmail })));
   $('.action_choose_account').get(0).title = acctEmail;
   $(".action-toggle-accounts-menu").click(Ui.event.handle((target, event) => {

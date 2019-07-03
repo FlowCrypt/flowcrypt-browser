@@ -75,6 +75,8 @@ export class Google extends EmailProviderApi {
   private static GMAIL_USELESS_CONTACTS_FILTER = '-to:txt.voice.google.com -to:craigslist.org';
   private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;
 
+  public static webmailUrl = (acctEmail: string) => `https://mail.google.com/mail/u/${acctEmail}`;
+
   private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string): Promise<any> => {
     const data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
     const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };

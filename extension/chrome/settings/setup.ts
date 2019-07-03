@@ -431,7 +431,7 @@ Catch.try(async () => {
   }));
 
   $('.action_send').click(Ui.event.handle(() => {
-    window.location.href = `https://mail.google.com/mail/u/${acctEmail}`;
+    window.location.href = Google.webmailUrl(acctEmail);
   }));
 
   $('.action_account_settings').click(Ui.event.handle(() => {
