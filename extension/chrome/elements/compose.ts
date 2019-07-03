@@ -96,9 +96,9 @@ Catch.try(async () => {
   };
   const composer = new Composer({
     canReadEmails: () => canReadEmail,
-    doesRecipientHaveMyPubkey: async (theirEmail: string): Promise<boolean | undefined> => {
-      theirEmail = Str.parseEmail(theirEmail).email;
-      if (!Str.isEmailValid(theirEmail)) {
+    doesRecipientHaveMyPubkey: async (theirEmailUnchecked: string): Promise<boolean | undefined> => {
+      const theirEmail = Str.parseEmail(theirEmailUnchecked).email;
+      if (!theirEmail) {
         return false;
       }
       const storage = await Store.getAcct(acctEmail, ['pubkey_sent_to']);

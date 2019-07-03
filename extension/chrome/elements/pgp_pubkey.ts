@@ -73,7 +73,7 @@ Catch.try(async () => {
           $('.email').text('more than one person');
           $('.input_email').css({ display: 'none' });
           const pubToEmail = (pubkey: OpenPGP.key.Key) => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
-          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubs.map(pubToEmail).filter(e => Str.isEmailValid(e)).join(', ')));
+          Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubs.map(pubToEmail).filter(e => !!e).join(', ')));
         }
         setBtnText().catch(Catch.reportErr);
       }
@@ -96,7 +96,7 @@ Catch.try(async () => {
       const contacts: Contact[] = [];
       for (const pubkey of pubs) {
         const email = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
-        if (Str.isEmailValid(email)) {
+        if (email) {
           contacts.push(await Store.dbContactObj({ email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey) }));
         }
       }

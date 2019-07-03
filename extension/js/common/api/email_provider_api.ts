@@ -39,19 +39,17 @@ export class EmailProviderApi extends Api {
   }
 
   public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], { lmSender, lmRecipients, lmReplyTo }: LastMsgHeaders) => {
-    const replyToEstimate = lmRecipients;
+    const replyToEstimate = lmRecipients.map(e => Str.parseEmail(e).email!).filter(e => !!e); // the ! is due to a QS quirk, we filter it after
     if (lmSender) {
       replyToEstimate.unshift(lmSender);
     }
     let replyTo: string[] = [];
     let myEmail = acctEmail;
     for (const email of replyToEstimate) {
-      if (email) {
-        if (addresses.includes(Str.parseEmail(email).email)) { // my email
-          myEmail = email;
-        } else if (!replyTo.includes(Str.parseEmail(email).email)) { // skip duplicates
-          replyTo.push(Str.parseEmail(email).email); // reply to all except my emails
-        }
+      if (addresses.includes(email)) { // my email
+        myEmail = email;
+      } else if (!replyTo.includes(email)) { // skip duplicates
+        replyTo.push(email); // reply to all except my emails
       }
     }
     if (!replyTo.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
