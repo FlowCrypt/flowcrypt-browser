@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Dict } from './core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgTypeResult, PgpMsgMethod } from './core/pgp.js';
+import { DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from './core/pgp.js';
 import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams } from './browser.js';
 import { Catch } from './platform/catch.js';
@@ -50,6 +50,7 @@ export namespace Bm {
   export type StoreAcctSet = { acctEmail: string, values: AccountStore; };
   export type Inbox = { acctEmail?: string };
   export type ReconnectAcctAuthPopup = { acctEmail: string };
+  export type PgpKeyDetails = { pubkey: string };
   export type PgpMsgType = { rawBytesStr: string };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
   export type PgpMsgDiagnoseMsgPubkeys = PgpMsgMethod.Arg.DiagnosePubkeys;
@@ -67,6 +68,7 @@ export namespace Bm {
     export type StoreAcctGet = AccountStore;
     export type StoreAcctSet = void;
     export type ReconnectAcctAuthPopup = AuthRes;
+    export type PgpKeyDetails = { original: string, normalized: string, keys: KeyDetails[] };
     export type PgpMsgType = PgpMsgTypeResult;
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
@@ -77,7 +79,7 @@ export namespace Bm {
     export type Db = any; // not included in Any below
     export type Ajax = any; // not included in Any below
 
-    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup
+    export type Any = GetActiveTabInfo | _tab_ | ReconnectAcctAuthPopup | PgpKeyDetails
       | PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerify | PgpHashChallengeAnswer
       | StoreSessionGet | StoreSessionSet | StoreAcctGet | StoreAcctSet | StoreGlobalGet | StoreGlobalSet
       | AjaxGmailAttGetChunk;
@@ -86,7 +88,7 @@ export namespace Bm {
   export type AnyRequest = PassphraseEntry | StripeResult | OpenPage | OpenGoogleAuthDialog | Redirect | Reload |
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | SetFooter | ReconnectAcctAuthPopup |
-    Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
+    PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
     PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
@@ -197,7 +199,8 @@ export class BrowserMsg {
         pgpMsgDecrypt: (bm: Bm.PgpMsgDecrypt) => BrowserMsg.sendAwait(undefined, 'pgpMsgDecrypt', bm, true) as Promise<Bm.Res.PgpMsgDecrypt>,
         pgpMsgVerifyDetached: (bm: Bm.PgpMsgVerifyDetached) => BrowserMsg.sendAwait(undefined, 'pgpMsgVerifyDetached', bm, true) as Promise<Bm.Res.PgpMsgVerify>,
         ajax: (bm: Bm.Ajax): Promise<Bm.Res.Ajax> => BrowserMsg.sendAwait(undefined, 'ajax', bm, true) as Promise<Bm.Res.Ajax>,
-        ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>
+        ajaxGmailAttGetChunk: (bm: Bm.AjaxGmailAttGetChunk) => BrowserMsg.sendAwait(undefined, 'ajaxGmailAttGetChunk', bm, true) as Promise<Bm.Res.AjaxGmailAttGetChunk>,
+        pgpKeyDetails: (bm: Bm.PgpKeyDetails) => BrowserMsg.sendAwait(undefined, 'pgpKeyDetails', bm, true) as Promise<Bm.Res.PgpKeyDetails>,
       },
     },
     passphraseEntry: (dest: Bm.Dest, bm: Bm.PassphraseEntry) => BrowserMsg.sendCatch(dest, 'passphrase_entry', bm),

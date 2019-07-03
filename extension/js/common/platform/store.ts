@@ -13,6 +13,9 @@ import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { GmailRes } from '../api/google.js';
 import { PgpClient } from '../api/attester.js';
+import { requireOpenpgp } from './require.js';
+
+const openpgp = requireOpenpgp();
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
@@ -538,30 +541,35 @@ export class Store {
     }
   }
 
-  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }: DbContactObjArg): Promise<Contact> => {
-    const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
-    email = Str.parseEmail(email).email;
-    if (!Str.isEmailValid(email)) {
-      throw new Error(`Cannot save contact because email is not valid: ${email}`);
+  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
+    if (typeof openpgp === 'undefined') { // relay op through background process
+      // todo - currently will silently swallow errors
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }] }) as Contact;
+    } else {
+      const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
+      const validEmail = Str.parseEmail(email).email;
+      if (!validEmail) {
+        throw new Error(`Cannot save contact because email is not valid: ${email}`);
+      }
+      if (!lastSig && pubkey) {
+        lastSig = await Pgp.key.lastSig(await Pgp.key.read(pubkey));
+      }
+      return {
+        email: validEmail,
+        name: name || null, // tslint:disable-line:no-null-keyword
+        pubkey: pubkey || null, // tslint:disable-line:no-null-keyword
+        has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
+        searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
+        client: Store.storablePgpClient(pubkey ? (client || 'pgp') : null), // tslint:disable-line:no-null-keyword
+        fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
+        longid: fingerprint ? (await Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
+        keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
+        pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
+        last_use: lastUse || null, // tslint:disable-line:no-null-keyword
+        pubkey_last_sig: lastSig || null, // tslint:disable-line:no-null-keyword
+        pubkey_last_check: lastCheck || null, // tslint:disable-line:no-null-keyword
+      };
     }
-    if (!lastSig && pubkey) {
-      lastSig = await Pgp.key.lastSig(await Pgp.key.read(pubkey));
-    }
-    return {
-      email,
-      name: name || null, // tslint:disable-line:no-null-keyword
-      pubkey: pubkey || null, // tslint:disable-line:no-null-keyword
-      has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
-      searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
-      client: Store.storablePgpClient(pubkey ? (client || 'pgp') : null), // tslint:disable-line:no-null-keyword
-      fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
-      longid: fingerprint ? (await Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
-      keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
-      pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
-      last_use: lastUse || null, // tslint:disable-line:no-null-keyword
-      pubkey_last_sig: lastSig || null, // tslint:disable-line:no-null-keyword
-      pubkey_last_check: lastCheck || null, // tslint:disable-line:no-null-keyword
-    };
   }
 
   static dbContactSave = (db: IDBDatabase | undefined, contact: Contact | Contact[]): Promise<void> => new Promise(async (resolve, reject) => {

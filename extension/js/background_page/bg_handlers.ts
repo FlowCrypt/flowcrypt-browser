@@ -8,6 +8,7 @@ import { BgUtils } from './bgutils.js';
 import { Env } from '../common/browser.js';
 import { Api } from '../common/api/api.js';
 import { Google } from '../common/api/google.js';
+import { Pgp } from '../common/core/pgp.js';
 
 export class BgHandlers {
 
@@ -25,6 +26,9 @@ export class BgHandlers {
       return await new Promise(resolve => undefined); // never resolve, error was already shown
     }
     const dbFunc = (Store as any)[request.f] as (db: IDBDatabase, ...args: any[]) => Promise<Bm.Res.Db>; // due to https://github.com/Microsoft/TypeScript/issues/6480
+    if (request.f === 'dbContactObj') {
+      return await dbFunc(request.args[0] as any); // db not needed, it goes through background because openpgp.js may not be available in the frame
+    }
     return await dbFunc(db, ...request.args);
   }
 
@@ -34,6 +38,10 @@ export class BgHandlers {
 
   public static ajaxGmailAttGetChunkHandler = async (r: Bm.AjaxGmailAttGetChunk): Promise<Bm.Res.AjaxGmailAttGetChunk> => {
     return { chunk: await Google.gmail.attGetChunk(r.acctEmail, r.msgId, r.attId) };
+  }
+
+  public static pgpKeyDetails = async ({ pubkey }: Bm.PgpKeyDetails): Promise<Bm.Res.PgpKeyDetails> => {
+    return await Pgp.key.parse(pubkey);
   }
 
   public static updateUninstallUrl: Bm.AsyncResponselessHandler = async () => {
