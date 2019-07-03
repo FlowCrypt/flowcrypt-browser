@@ -48,6 +48,7 @@ export class BrowserPool {
   }
 
   public getExtensionId = async (t: AvaContext): Promise<string> => {
+    // todo - messy & should be refactored to just wait for the first page, then wait 2 seconds, then pull all tabs & find the right url or fail
     const browser = await this.newBrowserHandle(t, false);
     let url = '';
     try {
@@ -56,11 +57,12 @@ export class BrowserPool {
     } catch (e) {
       if (e instanceof Error && e.message === 'Action did not trigger a new page within timeout period') {
         try {
-          const [page] = await browser.browser.pages();
-          if (page) {
-            url = page.url();
+          await Util.sleep(2);
+          const pages = await browser.browser.pages();
+          if (pages.length) {
+            url = pages.find(page => page.url() !== 'about:blank').url();
           } else {
-            e.message += `(plus could not detect any active pages)`;
+            e.message += `(plus could not detect any active pages in "${pages.map(page => page.url()).join('|')}")`;
             throw e;
           }
         } catch (e2) {
@@ -71,12 +73,22 @@ export class BrowserPool {
         throw e;
       }
     }
+    const debuggedUrls: string[] = [];
+    if (url === 'about:blank' || !url) { // give it one more try
+      await Util.sleep(3);
+      const pages = await browser.browser.pages();
+      debuggedUrls.push(...pages.map(page => page.url()));
+      const extensionUrl = debuggedUrls.find(url => url !== 'about:blank');
+      if (extensionUrl) {
+        url = extensionUrl;
+      }
+    }
     const match = url.match(/[a-z]{32}/);
     if (match !== null) {
       await browser.close();
       return match[0];
     }
-    throw new Error(`Cannot determine extension id from url: ${url}`);
+    throw new Error(`Cannot determine extension id from url: ${url} (all urls if blank:${debuggedUrls.join('|')})`);
   }
 
   public close = async () => {
