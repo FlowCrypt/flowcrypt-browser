@@ -13,9 +13,6 @@ import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { GmailRes } from '../api/google.js';
 import { PgpClient } from '../api/attester.js';
-import { requireOpenpgp } from './require.js';
-
-const openpgp = requireOpenpgp();
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
@@ -542,8 +539,10 @@ export class Store {
   }
 
   static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
-    if (typeof openpgp === 'undefined') { // relay op through background process
-      // todo - currently will silently swallow errors
+    // @ts-ignore
+    const haveOpenpgp = typeof openpgp !== 'undefined';
+    // if openpgp is mising, relay op through background process
+    if (!haveOpenpgp) {
       return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }] }) as Contact;
     } else {
       const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;

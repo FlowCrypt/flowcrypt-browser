@@ -72,6 +72,11 @@
       "type": "npm",
       "script": "test_run_gmail_mock",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test_chrome_consumer_live_gmail",
+      "problemMatcher": []
     }
   ]
 }
