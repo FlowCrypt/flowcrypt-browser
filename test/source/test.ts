@@ -85,14 +85,14 @@ ava.before('set up global browsers and config', async t => {
   t.pass();
 });
 
-export const testWithNewBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
+const testWithNewBrowser = (cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     await browserPool.withNewBrowserTimeoutAndRetry(cb, t, consts);
     t.pass();
   };
 };
 
-export const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
+const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (t: AvaContext, browser: BrowserHandle) => Promise<void>): ava.Implementation<{}> => {
   return async (t: AvaContext) => {
     const withTimeouts = newWithTimeoutsFunc(consts);
     const browser = await withTimeouts(browserGlobal[group].browsers.openOrReuseBrowser(t));
@@ -104,6 +104,9 @@ export const testWithSemaphoredGlobalBrowser = (group: CommonBrowserGroup, cb: (
     }
   };
 };
+
+export type TestWithNewBrowser = typeof testWithNewBrowser;
+export type TestWithGlobalBrowser = typeof testWithSemaphoredGlobalBrowser;
 
 ava.after.always('close browsers', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_SHORT, t.title);

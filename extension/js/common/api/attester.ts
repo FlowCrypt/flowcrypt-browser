@@ -5,7 +5,7 @@
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
 
-type PgpClient = 'flowcrypt' | 'pgp-other' | null;
+export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
 export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
 
 export namespace AttesterRes { // responses
