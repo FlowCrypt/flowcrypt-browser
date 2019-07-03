@@ -1640,10 +1640,14 @@ export class Composer {
           return;
         }
         const keyUser = Str.parseEmail(key.users[0]);
-        if (!await Store.dbContactGet(undefined, [keyUser.email])) {
-          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: keyUser.email, name: keyUser.name, client: 'pgp', pubkey: normalizedPub, lastCheck: Date.now() }));
+        if (keyUser.email) {
+          if (!await Store.dbContactGet(undefined, [keyUser.email])) {
+            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: keyUser.email, name: keyUser.name, client: 'pgp', pubkey: normalizedPub, lastCheck: Date.now() }));
+          }
+          this.S.cached('input_to').val(keyUser.email).blur().focus(); // Need (blur + focus) to run parseRender function
+        } else {
+          await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
         }
-        this.S.cached('input_to').val(keyUser.email).blur().focus(); // Need (blur + focus) to run parseRender function
       }
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
