@@ -994,13 +994,13 @@ export class Composer {
       this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
       const email = Str.parseEmail($(emailEl).text()).email;
       this.debug(`evaluateRenderedRecipients.email(${email})`);
-      if (Str.isEmailValid(email)) {
+      if (email) {
         this.S.now('send_btn_span').text(this.BTN_LOADING);
         this.setInputTextHeightManuallyIfNeeded();
         const pubkeyLookupRes = await this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
         await this.renderPubkeyResult(emailEl, email, pubkeyLookupRes);
       } else {
-        await this.renderPubkeyResult(emailEl, email, this.PUBKEY_LOOKUP_RESULT_WRONG);
+        await this.renderPubkeyResult(emailEl, $(emailEl).text(), this.PUBKEY_LOOKUP_RESULT_WRONG);
       }
     }
     this.setInputTextHeightManuallyIfNeeded();
@@ -1237,8 +1237,10 @@ export class Composer {
       this.debug(`parseRenderRecipients(${errsMode}).5`);
       const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
       this.debug(`parseRenderRecipients(${errsMode}).6 (${email})`);
-      if (errsMode === 'gentleRecipientErrs' && !Str.isEmailValid(email)) {
-        gentleErrInvalidEmails += email;
+      if (!email) {
+        if (errsMode === 'gentleRecipientErrs') {
+          gentleErrInvalidEmails += email;
+        }
       } else {
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
         isRecipientAdded = true;
@@ -1262,11 +1264,11 @@ export class Composer {
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
     this.debug(`selectContact 2`);
     const q = Str.parseEmail(fromQuery.substring).email;
-    if (possiblyBogusAddr === q || possiblyBogusAddr.includes(q)) {
+    if (possiblyBogusAddr && q && (possiblyBogusAddr === q || possiblyBogusAddr.includes(q))) {
       possiblyBogusRecipient.remove();
     }
     if (!this.getRecipientsFromDom().includes(email)) {
-      this.S.cached('input_to').val(Str.parseEmail(email).email);
+      this.S.cached('input_to').val(Str.parseEmail(email).email || '');
       this.debug(`selectContact -> parseRenderRecipients start`);
       const isRecipientAdded = await this.parseRenderRecipients('harshRecipientErrs');
       if (isRecipientAdded) {
@@ -1297,7 +1299,7 @@ export class Composer {
     for (const recipient of failedRecipients) {
       if (recipient.textContent) {
         const { email } = Str.parseEmail(recipient.textContent);
-        Xss.sanitizeReplace(recipient, `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
+        Xss.sanitizeReplace(recipient, `<span>${Xss.escape(email || recipient.textContent)} ${Ui.spinner('green')}</span>`);
       }
     }
     await this.evaluateRenderedRecipients();
@@ -1357,9 +1359,9 @@ export class Composer {
       }
       Xss.sanitizeRender(this.S.cached('contacts').find('ul'), ulHtml);
       this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', async (target: HTMLElement) => {
-        const email = $(target).attr('email');
+        const email = Str.parseEmail($(target).attr('email') || '').email;
         if (email) {
-          await this.selectContact(Str.parseEmail(email).email, query);
+          await this.selectContact(email, query);
         }
       }, this.getErrHandlers(`select contact`)));
       this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
@@ -1385,9 +1387,10 @@ export class Composer {
 
   private searchContacts = async (dbOnly = false) => {
     this.debug(`searchContacts`);
-    const query = { substring: Str.parseEmail(String(this.S.cached('input_to').val())).email };
-    this.debug(`searchContacts.query(${JSON.stringify(query)})`);
-    if (query.substring !== '') {
+    const substring = Str.parseEmail(String(this.S.cached('input_to').val()), 'DO-NOT-VALIDATE').email;
+    this.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
+    if (substring) {
+      const query = { substring };
       const contacts = await this.app.storageContactSearch(query);
       if (dbOnly || !this.canReadEmails) {
         this.debug(`searchContacts 1`);
@@ -1563,7 +1566,7 @@ export class Composer {
 
   private renderReplySuccess = (msg: SendableMsg, plaintext: string, msgId: string) => {
     const isSigned = this.S.cached('icon_sign').is('.active');
-    this.app.renderReinsertReplyBox(msgId, msg.headers.To.split(',').map(a => Str.parseEmail(a).email));
+    this.app.renderReinsertReplyBox(msgId, msg.headers.To.split(',').map(a => Str.parseEmail(a).email).filter(e => !!e) as string[]);
     if (isSigned) {
       this.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }

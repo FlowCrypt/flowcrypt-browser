@@ -211,7 +211,7 @@ export class Settings {
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
   ): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid).filter(Boolean) as string[];
+      const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
       if (!uids.length) {
         uids.push(acctEmail);
       }

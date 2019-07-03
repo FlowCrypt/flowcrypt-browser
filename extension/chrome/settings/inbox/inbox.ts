@@ -227,7 +227,7 @@ Catch.try(async () => {
       const fromHeaderVal = Google.gmail.findHeader(firstMsg, 'from');
       if (fromHeaderVal) {
         const from = Str.parseEmail(fromHeaderVal);
-        threadItem.find('.from').text(from.name || from.email);
+        threadItem.find('.from').text(from.name || from.email || from.full);
       }
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(formatDate(lastMsg.internalDate));
@@ -438,7 +438,7 @@ Catch.try(async () => {
       const to = Google.gmail.findHeader(lastMsg, 'to');
       const headers = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], {
         lmSender: Google.gmail.findHeader(lastMsg, 'from'),
-        lmRecipients: to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [],
+        lmRecipients: to ? to.split(',').map(e => Str.parseEmail(e)).map(e => e.email).filter(e => !!e) as string[] : [],
         lmReplyTo: Google.gmail.findHeader(lastMsg, 'reply-to'),
       });
       const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
