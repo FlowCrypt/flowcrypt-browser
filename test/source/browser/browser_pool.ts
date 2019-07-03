@@ -60,7 +60,10 @@ export class BrowserPool {
           await Util.sleep(2);
           const pages = await browser.browser.pages();
           if (pages.length) {
-            url = pages.find(page => page.url() !== 'about:blank').url();
+            const extPage = pages.find(page => page.url() !== 'about:blank');
+            if (extPage) {
+              url = extPage.url();
+            }
           } else {
             e.message += `(plus could not detect any active pages in "${pages.map(page => page.url()).join('|')}")`;
             throw e;
