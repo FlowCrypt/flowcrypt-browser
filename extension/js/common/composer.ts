@@ -47,7 +47,7 @@ interface ComposerAppFunctionsInterface {
   emailProviderDraftDelete: (draftId: string) => Promise<GmailRes.GmailDraftDelete>;
   emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<GmailRes.GmailMsgSend>;
   emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
-  emailProviderDetermineReplyMsgHeaderVariables: () => Promise<undefined | { lastMsgId: string, headers: { 'In-Reply-To': string, 'References': string } }>;
+  emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | { lastMsgId: string, headers: { 'In-Reply-To': string, 'References': string } }>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
   renderFooterDialog: () => void;
   renderAddPubkeyDialog: (emails: string[]) => void;
@@ -126,6 +126,7 @@ export class Composer {
     input_addresses_container_outer: '#input_addresses_container',
     input_addresses_container_inner: '#input_addresses_container > div:first',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
+    loader: "#loader"
   });
 
   private attach: AttUI;
@@ -357,7 +358,9 @@ export class Composer {
       this.S.cached('contacts').css('top', '39px');
       this.S.cached('compose_table').css({ 'border-bottom': '1px solid #cfcfcf', 'border-top': '1px solid #cfcfcf' });
       this.S.cached('input_text').css('overflow-y', 'hidden');
-      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage();
+      if (!this.urlParams.skipClickPrompt && !this.urlParams.draftId) {
+        this.S.cached('prompt').css('display', 'block');
+      }
     } else {
       this.S.cached('compose_table').css({ 'height': '100%' });
     }
@@ -380,9 +383,6 @@ export class Composer {
       }
     }
     if (this.urlParams.isReplyBox) {
-      if (!this.urlParams.skipClickPrompt && !this.urlParams.draftId) {
-        this.S.cached('prompt').css('display', 'block');
-      }
       $(document).ready(() => this.resizeComposeBox());
     } else {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
@@ -795,6 +795,10 @@ export class Composer {
     }
   }
 
+  private renderGettingPreviousMessageProgress = (progress: number) => {
+    this.S.cached("loader").find('.loaded').text(progress);
+  }
+
   private addUploadedFileLinksToMsgBody = (plaintext: string, atts: Att[]) => {
     plaintext += '\n\n';
     for (const att of atts) {
@@ -1169,13 +1173,16 @@ export class Composer {
   }
 
   private generateHTMLRepliedPart = (text: string, date: Date, from: string) => {
-    const header = `On ${this.formatDate(date)} ${from} wrote:<br>`;
+    const header = `On ${Str.fromDate(date)} ${from} wrote:<br>`;
     return header + this.quoteText(Xss.escape(text));
   }
 
   private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
     this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
+    if (!this.messageToReplyOrForward) {
+      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage();
+    }
     await this.renderComposeTable();
     if (this.canReadEmails) {
       if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {
@@ -1383,21 +1390,26 @@ export class Composer {
   }
 
   private getAndDecryptPreviousMessage = async (): Promise<MessageToReplyOrForward | undefined> => {
-    const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
+    this.S.cached('loader').css('display', 'block');
+    Xss.sanitizeAppend(this.S.cached('loader'), `<span>${Ui.spinner('green')}</span>`);
+    const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables((progress: number) => this.renderGettingPreviousMessageProgress(progress * 0.3));
     if (determined && determined.lastMsgId) {
       try {
-        const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, determined.lastMsgId, 'raw');
+        const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, determined.lastMsgId, 'raw',
+          (progress: number) => this.renderGettingPreviousMessageProgress(30 + progress * 0.3));
         const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
         const readableBlocks = message.blocks
           .filter(b => b.type === 'encryptedMsg' || b.type === 'plainText' || b.type === 'plainHtml');
+        const encryptedCount = readableBlocks.filter(b => b.type === 'encryptedMsg').length;
         const decryptedAndFormatedContent: string[] = [];
-        for (const block of readableBlocks) {
+        for (const [index, block] of readableBlocks.entries()) {
           const stringContent = String(block.content);
           if (block.type === 'encryptedMsg') {
             const decrptResult = await PgpMsg.decrypt({
               kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail),
               encryptedData: Buf.fromUtfStr(stringContent)
             });
+            this.renderGettingPreviousMessageProgress(60 + (40 / encryptedCount) * (index + 1));
             if (decrptResult.success) {
               decryptedAndFormatedContent.push(decrptResult.content.toUtfStr());
             } else {
@@ -1409,6 +1421,7 @@ export class Composer {
             decryptedAndFormatedContent.push(stringContent);
           }
         }
+        this.S.cached('loader').css('display', 'none');
         return {
           headers: {
             inReplyToHeaders: determined.headers['In-Reply-To'],
@@ -1714,8 +1727,14 @@ export class Composer {
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
     this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
-    this.attach.setAttAddedCb(async () => { this.setInputTextHeightManuallyIfNeeded(); this.resizeComposeBox(); });
-    this.attach.setAttRemovedCb(() => { this.setInputTextHeightManuallyIfNeeded(); this.resizeComposeBox(); });
+    this.attach.setAttAddedCb(async () => {
+      this.setInputTextHeightManuallyIfNeeded();
+      this.resizeComposeBox();
+    });
+    this.attach.setAttRemovedCb(() => {
+      this.setInputTextHeightManuallyIfNeeded();
+      this.resizeComposeBox();
+    });
     if (!String(this.S.cached('input_to').val()).length) {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in
@@ -1890,20 +1909,6 @@ export class Composer {
 
   private quoteText(text: string) {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
-  }
-
-  private formatDate(date: Date) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDay();
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    let result = year + '-';
-    result += (month < 10 ? '0' + month : month) + '-';
-    result += (day < 10 ? '0' + day : day) + ' at ';
-    result += (hours < 10 ? '0' + hours : hours) + ':';
-    result += (minutes < 10 ? '0' + minutes : minutes) + '';
-    return result;
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {

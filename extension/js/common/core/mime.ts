@@ -15,7 +15,7 @@ const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
 const Iso88592 = requireIso88592();  // tslint:disable-line:variable-name
 
 type MimeContentHeader = string | { address: string; name: string; }[];
-export type MimeContent = {
+type MimeContent = {
   headers: Dict<MimeContentHeader>;
   atts: Att[];
   signature?: string;

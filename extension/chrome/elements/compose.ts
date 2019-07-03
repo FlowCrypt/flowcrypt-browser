@@ -199,9 +199,9 @@ Catch.try(async () => {
         }
       });
     },
-    emailProviderDetermineReplyMsgHeaderVariables: async () => {
+    emailProviderDetermineReplyMsgHeaderVariables: async (progressCb?: ProgressCb) => {
       try {
-        const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full');
+        const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full', progressCb);
         if (thread.messages && thread.messages.length > 0) {
           const threadMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
           const threadMsgRefsLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
