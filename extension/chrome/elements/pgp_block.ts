@@ -40,6 +40,7 @@ Catch.try(async () => {
   let passwordMsgLinkRes: BackendRes.FcLinkMsg;
   let adminCodes: string[];
   let userEnteredMsgPassword: string | undefined;
+  let doNotSetStateAsReadyYet = false;
 
   const renderText = (text: string) => {
     document.getElementById('pgp_block')!.innerText = text;
@@ -269,7 +270,11 @@ Catch.try(async () => {
       const signerEmail = signature.contact ? signature.contact.name || senderEmail : senderEmail;
       $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
-        renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, senderEmail).catch(Catch.reportErr); // async so that it doesn't slow down rendering
+        doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
+        renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, senderEmail).then(() => { // async so that it doesn't block rendering
+          doNotSetStateAsReadyYet = false;
+          Ui.setTestState('ready');
+        }).catch(Catch.reportErr);
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
         $('#pgp_signature > .result').text('matching signature');
@@ -390,7 +395,9 @@ Catch.try(async () => {
       renderFutureExpiration(passwordMsgLinkRes.expire);
     }
     sendResizeBrowserMsg();
-    Ui.setTestState('ready');
+    if (!doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
+      Ui.setTestState('ready');
+    }
   };
 
   const decryptAndRender = async (encryptedData: Buf, optionalPwd?: string) => {
