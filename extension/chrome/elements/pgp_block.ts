@@ -217,22 +217,21 @@ Catch.try(async () => {
         if (senderContactByEmail) {
           render(`Found the right pubkey ${signerLongid} on keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
           return;
-        } // and user doesn't have pubkey for that email addr
+        } // ---> and user doesn't have pubkey for that email addr
         const { pubkey, pgpClient } = await Attester.lookupEmail(senderEmail);
         if (!pubkey) {
           render(`Missing pubkey ${signerLongid}`, () => undefined);
           return;
-        } // and pubkey found on keyserver by sender email
+        } // ---> and pubkey found on keyserver by sender email
         const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
-        if (keyDetails && keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) { // and longid it matches signature
-          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU auto-import
-          render('Fetched pubkey, click to verify', () => window.location.reload());
-        } else {
+        if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
           render(`Fetched signing pubkey ${signerLongid}, but cannot confirm it\'s the right one. Click to load pubkey and verify anyway.`, async () => {
-            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU manual import
+            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU manual import option
             window.location.reload();
           });
-        }
+        } // ---> and longid it matches signature
+        await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
+        render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
         const { pubkey, pgpClient } = await Attester.lookupEmail(signerLongid);
         if (!pubkey) { // but can find matching pubkey by longid on keyserver
