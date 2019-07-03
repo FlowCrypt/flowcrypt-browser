@@ -529,19 +529,19 @@ export class Store {
 
   static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }: DbContactObjArg): Promise<Contact> => {
     const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
-    email = Str.parseEmail(email).email!; // ! due to a TS quirk - may still be undefined! check below:
-    if (!email) {
+    const checkedEmail = Str.parseEmail(email).email;
+    if (!checkedEmail) {
       throw new Error(`Cannot save contact because email is not valid: ${email}`);
     }
     if (!lastSig && pubkey) {
       lastSig = await Pgp.key.lastSig(await Pgp.key.read(pubkey));
     }
     return {
-      email,
+      email: checkedEmail,
       name: name || null, // tslint:disable-line:no-null-keyword
       pubkey: pubkey || null, // tslint:disable-line:no-null-keyword
       has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
-      searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
+      searchable: Store.dbCreateSearchIndexList(checkedEmail, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
       client: pubkey ? (client || null) : null, // tslint:disable-line:no-null-keyword
       fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
       longid: fingerprint ? (await Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
