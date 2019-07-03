@@ -10,7 +10,7 @@ import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
-import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg, Pgp } from '../../js/common/core/pgp.js';
+import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
@@ -209,54 +209,51 @@ Catch.try(async () => {
     }));
   };
 
-  const renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string | undefined) => { // don't have appropriate pubkey by longid in contacts
+  const renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string | undefined): Promise<void> => { // don't have appropriate pubkey by longid in contacts
     const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(Ui.event.handle(action));
     try {
-      if (senderEmail) { // know who sent it
+      if (senderEmail) { // we know who sent it
         const [senderContactByEmail] = await Store.dbContactGet(undefined, [senderEmail]);
-        if (!senderContactByEmail) { // and don't have pubkey for that email addr
-          const { pubkey, pgpClient } = await Attester.lookupEmail(senderEmail);
-          if (pubkey && await Pgp.key.longid(pubkey) === signerLongid) { // and pubkey found on keyserver by sender email, and longid it matches signature
-            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU auto-import
-            render('Fetched pubkey, click to verify', () => window.location.reload());
-          } else if (pubkey) {
-            render(`Fetched signing pubkey ${signerLongid}, but cannot confirm it\'s the right one. Click to load pubkey and verify anyway.`, async () => {
-              await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU manual import
-              window.location.reload();
-            });
-          } else {
-            render(`Missing pubkey ${signerLongid}`, () => undefined);
-          }
-        } else {
+        if (senderContactByEmail) {
           render(`Found the right pubkey ${signerLongid} on keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
+          return;
+        } // and user doesn't have pubkey for that email addr
+        const { pubkey, pgpClient } = await Attester.lookupEmail(senderEmail);
+        if (!pubkey) {
+          render(`Missing pubkey ${signerLongid}`, () => undefined);
+          return;
+        } // and pubkey found on keyserver by sender email
+        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        if (keyDetails && keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) { // and longid it matches signature
+          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU auto-import
+          render('Fetched pubkey, click to verify', () => window.location.reload());
+        } else {
+          render(`Fetched signing pubkey ${signerLongid}, but cannot confirm it\'s the right one. Click to load pubkey and verify anyway.`, async () => {
+            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU manual import
+            window.location.reload();
+          });
         }
       } else { // don't know who sent it
         const { pubkey, pgpClient } = await Attester.lookupEmail(signerLongid);
-        if (pubkey) { // but can find matching pubkey by longid on keyserver
-          const pub = await Pgp.key.read(pubkey);
-          const pubLongid = await Pgp.key.longid(pub);
-          const primaryUser = await pub.getPrimaryUser();
-          if (primaryUser && primaryUser.user.userId && primaryUser.user.userId.userid && Str.parseEmail(primaryUser.user.userId.userid).email) {
-            const pubkeyEmail = Str.parseEmail(primaryUser.user.userId.userid).email;
-            if (pubkeyEmail) {
-              const [conflictingContact] = await Store.dbContactGet(undefined, [pubkeyEmail]);
-              if (!conflictingContact) {
-                render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
-                  await Store.dbContactSave(undefined, await Store.dbContactObj({ email: pubkey, pubkey, client: pgpClient })); // TOFU manual import
-                  window.location.reload();
-                });
-              } else {
-                render(`Fetched matching pubkey ${signerLongid} but conflicting key is in local contacts: ${pubLongid}: cannot verify.`, () => undefined);
-              }
-            } else {
-              render(`Fetched matching pubkey ${signerLongid} but no valid email address is listed in it.`, () => undefined);
-            }
-          } else {
-            render(`Fetched matching pubkey ${signerLongid} but it does not seem usable.`, () => undefined);
-          }
-        } else {
+        if (!pubkey) { // but can find matching pubkey by longid on keyserver
           render(`Could not find sender's pubkey anywhere: ${signerLongid}`, () => undefined);
+          return;
         }
+        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        const pubkeyEmail = Str.parseEmail(keyDetails.users[0] || '').email!;
+        if (!pubkeyEmail) {
+          render(`Fetched matching pubkey ${signerLongid} but no valid email address is listed in it.`, () => undefined);
+          return;
+        }
+        const [conflictingContact] = await Store.dbContactGet(undefined, [pubkeyEmail]);
+        if (conflictingContact) {
+          render(`Fetched matching pubkey ${signerLongid} but conflicting key is in local contacts ${conflictingContact.longid} for email ${pubkeyEmail}, cannot verify.`, () => undefined);
+          return;
+        }
+        render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
+          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
+          window.location.reload();
+        });
       }
     } catch (e) {
       if (Api.err.isSignificant(e)) {

@@ -66,6 +66,7 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await Pgp.hash.challengeAnswer(r.answer) }));
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
   BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
+  BrowserMsg.bgAddListener('pgpKeyDetails', BgHandlers.pgpKeyDetails);
 
   BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
   BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);
