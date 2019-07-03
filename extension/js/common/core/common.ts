@@ -8,7 +8,7 @@ export type Dict<T> = { [key: string]: T; };
 
 export class Str {
 
-  public static parseEmail = (full: string) => {
+  public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
     let email: string | undefined;
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
@@ -17,7 +17,7 @@ export class Str {
     } else {
       email = full.replace(/["']/g, '').trim().toLowerCase();
     }
-    if (!Str.isEmailValid(email)) {
+    if (flag === 'VALIDATE' && !Str.isEmailValid(email)) {
       email = undefined;
     }
     return { email, name, full };

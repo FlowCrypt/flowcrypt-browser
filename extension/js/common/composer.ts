@@ -1386,7 +1386,7 @@ export class Composer {
 
   private searchContacts = async (dbOnly = false) => {
     this.debug(`searchContacts`);
-    const substring = Str.parseEmail(String(this.S.cached('input_to').val())).email;
+    const substring = Str.parseEmail(String(this.S.cached('input_to').val()), 'DO-NOT-VALIDATE').email;
     this.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
     if (substring) {
       const query = { substring };

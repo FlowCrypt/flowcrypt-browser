@@ -437,7 +437,7 @@ Catch.try(async () => {
       const to = Google.gmail.findHeader(lastMsg, 'to');
       const headers = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], {
         lmSender: Google.gmail.findHeader(lastMsg, 'from'),
-        lmRecipients: to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => !!e) as string[] : [],
+        lmRecipients: to ? to.split(',').map(e => Str.parseEmail(e)).map(e => e.email).filter(e => !!e) as string[] : [],
         lmReplyTo: Google.gmail.findHeader(lastMsg, 'reply-to'),
       });
       const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
