@@ -42,10 +42,16 @@ export type MsgBlock = {
   attMeta?: AttMeta; // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
   decryptErr?: DecryptError; // only in decryptErr block, always
 };
+export type MimeProccesedMsg = {
+  headers: Dict<MimeContentHeader>,
+  blocks: MsgBlock[],
+  from: string | undefined,
+  to: string[]
+};
 
 export class Mime {
 
-  public static process = async (mimeMsg: Uint8Array) => {
+  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
     const decoded = await Mime.decode(mimeMsg);
     const blocks: MsgBlock[] = [];
     if (decoded.text) {  // may be undefined or empty

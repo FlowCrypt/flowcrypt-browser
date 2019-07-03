@@ -125,11 +125,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
         $(lastReplyBtn).addClass('inserted');
         const element = $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last());
-        if (isEncrypted) {
-          element.click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
-        } else {
-          element.click(Ui.event.prevent('double', Catch.try(() => this.replaceStandardReplyBox(true, true)))); // xss-safe-factory
-        }
+        element.click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
       }
       if (isEncrypted) {
         // hide original gmail reply buttons, except for the last one, but ONLY IF this is an encrypted conversation

@@ -83,7 +83,7 @@ Catch.try(async () => {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
 
-  const processedUrlParams = { acctEmail, draftId, threadId, threadMsgId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
+  const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
   const closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (isReplyBox) {
