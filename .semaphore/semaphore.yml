@@ -15,7 +15,7 @@ blocks:
         - name: flowcrypt-browser-ci-secrets
       env_vars:
         - name: SEMAPHORE_GIT_DIR
-          value: /home/semaphore/git/flowcrypt-backend
+          value: /home/semaphore/git/flowcrypt-browser
       jobs:
         - name: Install + Build + Pretest
           commands:
