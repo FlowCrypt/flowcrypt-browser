@@ -13,7 +13,7 @@ import { requireOpenpgp } from '../platform/require.js';
 import { secureRandomBytes, base64encode } from '../platform/util.js';
 import { FcAttLinkData } from './att.js';
 import { Buf } from './buf.js';
-import { Xss } from '../platform/xss.js'
+import { Xss } from '../platform/xss.js';
 
 const openpgp = requireOpenpgp();
 
