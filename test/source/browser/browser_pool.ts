@@ -74,9 +74,11 @@ export class BrowserPool {
         }
       }
       if (i === 5) {
+        await browser.close();
         throw new Error(`Cannot determine extension id from urls |${urls.join('|')}|`);
       }
     }
+    await browser.close();
     throw new Error(`Cannot determine extension id from urls.`);
   }
 
