@@ -7,26 +7,6 @@ agent:
 
 blocks:
 
-  - name: Invalidate
-    execution_time_limit:
-      minutes: 1
-    task:
-      jobs:
-        - name: Invalidate cache
-          commands:
-            - cache delete sources
-
-  - name: Pull
-    execution_time_limit:
-      minutes: 2
-    task:
-      jobs:
-        - name: Assemble sources
-          commands:
-            - mkdir ~/git
-            - cd ~/git && git clone --depth=1 https://github.com/FlowCrypt/flowcrypt-browser.git
-            - cd ~ && cache store sources ./git
-
   - name: Install
     execution_time_limit:
       minutes: 2
@@ -36,8 +16,10 @@ blocks:
       jobs:
         - name: Install & pretest
           commands:
-            - npm install -g npm@6.8.0
-            - cache restore sources
+            - cache delete sources
+            - mkdir ~/git
+            - cd ~/git && git clone --depth=1 https://github.com/FlowCrypt/flowcrypt-browser.git
+            - npm install -g npm@6.8.0s
             - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - npm install
@@ -45,7 +27,7 @@ blocks:
             - npm --version
             - ./node_modules/typescript/bin/tsc --version
             - npm run-script pretest
-            - cd ~ && cache delete sources && cache store sources ./git
+            - cd ~ && cache store sources ./git
 
   - name: Test
     execution_time_limit:
