@@ -474,8 +474,7 @@ export class Composer {
       try {
         this.S.cached('send_btn_note').text('Saving');
         const primaryKi = await this.app.storageGetKey(this.urlParams.acctEmail);
-        const quotedPart = Xss.htmlSanitizeAndStripAllTags(this.msgExpandingHTMLPart || '', '\n');
-        const plainText = this.extractAsText('input_text') + (quotedPart ? `\n\n${quotedPart}` : '');
+        const plainText = this.extractAsText('input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
         if (this.urlParams.threadId) { // reply draft
@@ -691,7 +690,11 @@ export class Composer {
   }
 
   private extractAsText = (elSel: 'input_text' | 'input_intro') => {
-    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(this.S.cached(elSel)[0].innerHTML, '\n'));
+    let html = this.S.cached(elSel)[0].innerHTML;
+    if (elSel === 'input_text' && this.msgExpandingHTMLPart) {
+      html += `<br /><br />${this.msgExpandingHTMLPart}`;
+    }
+    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
 
   private extractProcessSendMsg = async () => {
