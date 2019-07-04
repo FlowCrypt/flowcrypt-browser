@@ -67,6 +67,7 @@ ava.before('set up global browsers and config', async t => {
     console.error(`Exiting with exit code 2 because cannot retrieve extension id after 3 attempts`);
     process.exit(2); // ci retries errcode > 1
   }
+  console.log(`Extension url: chrome-extension://${Config.extensionId}`);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;
