@@ -39,7 +39,7 @@ export namespace GmailRes { // responses
   export type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
   export type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
   export type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
-  export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
+  export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'TRASH';
   export type GmailMsg = {
     id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
     labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;

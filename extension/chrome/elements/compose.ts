@@ -202,13 +202,13 @@ Catch.try(async () => {
     emailProviderDetermineReplyMsgHeaderVariables: async (progressCb?: ProgressCb) => {
       try {
         const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full', progressCb);
-        if (thread.messages && thread.messages.length > 0) {
-          const threadMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
-          const threadMsgRefsLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
-          return { lastMsgId: thread.messages[thread.messages.length - 1].id, headers: { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast } };
-        } else {
+        const lastMsg = (thread.messages || []).reverse().find(m => !m.labelIds || !m.labelIds.includes('TRASH'));
+        if (!lastMsg) {
           return;
         }
+        const threadMsgIdLast = Google.gmail.findHeader(lastMsg, 'Message-ID') || '';
+        const threadMsgRefsLast = Google.gmail.findHeader(lastMsg, 'In-Reply-To') || '';
+        return { lastMsgId: lastMsg.id, headers: { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast } };
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
