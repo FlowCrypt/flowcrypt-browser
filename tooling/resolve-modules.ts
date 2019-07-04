@@ -35,7 +35,7 @@ const resolveLineImports = (line: string, path: string) => line.replace(namedImp
   }
 });
 
-const errIfSrcMissingJs = (src: string, path: string) => {
+const errIfSrcMissingJsExtensionInImport = (src: string, path: string) => {
   const matched = src.match(importLineNotEndingWithJs);
   if (matched) {
     console.error(`\nresolve-modules ERROR:\nImport not ending with .js in ${path}:\n--\n${matched[0]}\n--\n`);
@@ -59,6 +59,6 @@ for (const srcFilePath of srcFilePaths) {
   if (resolved !== original) {
     writeFileSync(srcFilePath, resolved);
   }
-  errIfSrcMissingJs(resolved, srcFilePath);
+  errIfSrcMissingJsExtensionInImport(resolved, srcFilePath);
   errIfRelativeSrcDoesNotBeginWithDot(resolved, srcFilePath);
 }
