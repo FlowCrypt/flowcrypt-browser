@@ -1,5 +1,7 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
+console.log('UPDATED???');
+
 import * as ava from 'ava';
 import { BrowserHandle, BrowserPool } from './browser';
 import { BrowserRecipe } from './tests/browser_recipe';
@@ -68,6 +70,8 @@ ava.before('set up global browsers and config', async t => {
   const msg = `Extension url: chrome-extension://${Config.extensionId}`;
   t.log(msg);
   console.error(msg);
+  console.log(msg);
+  console.info(msg);
   await Util.sleep(1);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
