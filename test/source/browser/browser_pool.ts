@@ -197,15 +197,9 @@ export class BrowserPool {
   }
 
   private closeInitialExtensionPage = async (t: AvaContext, browser: BrowserHandle) => {
-    try {
-      const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-      await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
-      await initialPage.close();
-    } catch (e) {
-      if (String(e).includes('timeout')) {
-        return; // ignore page didn't show up errors
-      }
-    }
+    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
+    await initialPage.waitAll('@initial-page'); // first page opened by flowcrypt
+    await initialPage.close();
   }
 }
 
