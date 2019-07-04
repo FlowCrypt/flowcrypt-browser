@@ -58,10 +58,14 @@ ava.before('set up global browsers and config', async t => {
     } catch (e) {
       t.log(`set up #${i} err: ${String(e)}`);
       await Util.sleep(10);
+      if (i === 3) {
+        console.error(String(e));
+      }
     }
   }
   if (!Config.extensionId) {
-    throw new Error('was not able to get extensionId');
+    console.error(`Exiting with exit code 2 because cannot retrieve extension id after 3 attempts`);
+    process.exit(2); // ci retries errcode > 1
   }
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
