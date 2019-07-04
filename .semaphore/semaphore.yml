@@ -49,7 +49,7 @@ blocks:
       minutes: 6
     task:
       secrets:
-        - name: flowcrypt-backend-ci-secrets
+        - name: flowcrypt-browser-ci-secrets
       jobs:
         - name: test_chrome_consumer mock
           commands:
