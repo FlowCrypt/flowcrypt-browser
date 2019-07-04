@@ -19,7 +19,7 @@ blocks:
             - cache delete sources
             - mkdir ~/git
             - cd ~/git && git clone --depth=1 https://github.com/FlowCrypt/flowcrypt-browser.git
-            - npm install -g npm@6.8.0s
+            - npm install -g npm@6.8.0
             - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - npm install
