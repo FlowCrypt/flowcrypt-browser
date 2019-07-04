@@ -1180,8 +1180,9 @@ export class Composer {
     this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
-      // not awaited because it blocks whole the compose box and it can take a lot of time depends on replied/forwarded message
-      this.addExpandingButton(method).catch(Catch.reportErr);
+      if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+        this.addExpandingButton(method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
+      }
     } else {
       Xss.sanitizeRender(this.S.cached('prompt'),
         `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
@@ -1921,16 +1922,7 @@ export class Composer {
         }
         const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
         this.msgExpandingHTMLPart = '<br><br>' + this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
-        if (!this.urlParams.draftId) {
-          this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
-        } else {
-          const currentHTML = this.S.cached('input_text').html();
-          if (currentHTML.endsWith(this.msgExpandingHTMLPart)) {
-            Xss.sanitizeRender(this.S.cached('input_text'), currentHTML.substring(0, currentHTML.length - this.msgExpandingHTMLPart.length));
-            this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
-            this.resizeComposeBox();
-          }
-        }
+        this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
       }
     }
   }
