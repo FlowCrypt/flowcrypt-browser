@@ -39,7 +39,7 @@ export class BrowserPool {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
     // to run headless-like: "xvfb-run node test.js"
-    const browser = await launch({ args, headless: false, slowMo: 50, devtools: false });
+    const browser = await launch({ args, headless: false, slowMo: 100, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       await this.closeInitialExtensionPage(t, handle);
