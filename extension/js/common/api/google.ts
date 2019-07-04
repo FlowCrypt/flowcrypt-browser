@@ -9,7 +9,7 @@ const BUILD = 'consumer'; // todo
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
 import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
-import { Env, Ui, Xss } from '../browser.js';
+import { Env, Ui } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult, BrowserMsg } from '../extension.js';
 import { Mime, SendableMsgBody } from '../core/mime.js';
@@ -19,6 +19,7 @@ import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
 import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
+import { Xss } from '../platform/xss.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };

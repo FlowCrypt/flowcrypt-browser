@@ -4,8 +4,9 @@
 'use strict';
 
 import { Store } from '../platform/store.js';
-import { Ui, Xss } from '../browser.js';
+import { Ui } from '../browser.js';
 import { Catch } from '../platform/catch.js';
+import { Xss } from '../platform/xss.js';
 
 export const initPassphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide?: "show" | "hide") => {
   const buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';

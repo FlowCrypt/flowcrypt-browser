@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Dict } from './core/common.js';
-import { DiagnoseMsgPubkeysResult, DecryptResult, MsgVerifyResult, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from './core/pgp.js';
+import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from './core/pgp.js';
 import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
 import { Ui, Env, Browser, UrlParams } from './browser.js';
 import { Catch } from './platform/catch.js';
@@ -72,7 +72,7 @@ export namespace Bm {
     export type PgpMsgType = PgpMsgTypeResult;
     export type PgpMsgDecrypt = DecryptResult;
     export type PgpMsgDiagnoseMsgPubkeys = DiagnoseMsgPubkeysResult;
-    export type PgpMsgVerify = MsgVerifyResult;
+    export type PgpMsgVerify = VerifyRes;
     export type PgpHashChallengeAnswer = { hashed: string };
     export type AjaxGmailAttGetChunk = { chunk: Buf };
     export type _tab_ = { tabId: string | null | undefined };

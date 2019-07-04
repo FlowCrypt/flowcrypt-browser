@@ -4,8 +4,9 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Xss, Env } from '../../../js/common/browser.js';
+import { Env } from '../../../js/common/browser.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 

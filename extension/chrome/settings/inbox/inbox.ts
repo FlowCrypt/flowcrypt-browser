@@ -5,7 +5,7 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Str, Dict } from '../../../js/common/core/common.js';
-import { Xss, Ui, Env, UrlParams } from '../../../js/common/browser.js';
+import { Ui, Env, UrlParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -17,6 +17,7 @@ import { Google, GoogleAuth, GoogleAcctNotConnected, GmailRes } from '../../../j
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

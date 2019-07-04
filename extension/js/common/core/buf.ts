@@ -6,7 +6,17 @@ import { base64encode, base64decode } from '../platform/util.js';
 
 export class Buf extends Uint8Array {
 
-  public static fromUint8 = (u8a: Uint8Array) => {
+  public static with = (input: Uint8Array | Buf | string): Buf => { // utf8 string or Typed Array bytes
+    if (input instanceof Buf) {
+      return input;
+    } else if (input instanceof Uint8Array) {
+      return Buf.fromUint8(input);
+    } else {
+      return Buf.fromUtfStr(input);
+    }
+  }
+
+  public static fromUint8 = (u8a: Uint8Array): Buf => {
     return new Buf(u8a);
   }
 

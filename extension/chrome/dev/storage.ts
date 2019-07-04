@@ -5,8 +5,9 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, Storable, AccountStore, GlobalStore, GlobalIndex, AccountIndex, RawStore } from '../../js/common/platform/store.js';
 import { Str, Dict } from '../../js/common/core/common.js';
-import { Xss, Ui, Env } from '../../js/common/browser.js';
+import { Ui, Env } from '../../js/common/browser.js';
 import { Assert } from '../../js/common/assert.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

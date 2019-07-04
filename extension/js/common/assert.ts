@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { Ui, Xss, UrlParams, UrlParam } from './browser.js';
+import { Ui, UrlParams, UrlParam } from './browser.js';
 import { Dict } from './core/common.js';
 import { Catch, UnreportableError } from './platform/catch.js';
 import { KeyInfo } from './core/pgp.js';
 import { BrowserMsg } from './extension.js';
 import { Store } from './platform/store.js';
 import { Settings } from './settings.js';
+import { Xss } from './platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
