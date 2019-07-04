@@ -1368,11 +1368,8 @@ export class Composer {
 
   private setQuoteLoaderProgress = (text: string) => this.S.cached('icon_show_prev_msg').find('#loader').text(text);
 
-  private decryptPreviousMsg = async (index: number, encryptedCount: number, encryptedData: Buf, progressCb?: ProgressCb): Promise<string> => {
+  private decryptMessage = async (encryptedData: Buf): Promise<string> => {
     const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail), encryptedData });
-    if (progressCb) {
-      progressCb(60 + (40 / encryptedCount) * (index + 1));
-    }
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {
@@ -1382,7 +1379,7 @@ export class Composer {
         BrowserMsg.listen(this.urlParams.parentTabId);
       });
       if (wasPpEntered) {
-        return await this.decryptPreviousMsg(index, encryptedCount, encryptedData, progressCb); // retry with pp
+        return await this.decryptMessage(encryptedData); // retry with pp
       }
       return `\n(Skipping previous message quote)\n`;
     } else {
@@ -1406,7 +1403,10 @@ export class Composer {
         for (const [index, block] of readableBlocks.entries()) {
           const stringContent = String(block.content);
           if (block.type === 'encryptedMsg') {
-            decryptedAndFormatedContent.push(await this.decryptPreviousMsg(index, encryptedCount, Buf.fromUtfStr(stringContent), progressCb));
+            decryptedAndFormatedContent.push(await this.decryptMessage(Buf.fromUtfStr(stringContent)));
+            if (progressCb) {
+              progressCb(60 + (40 / encryptedCount) * (index + 1));
+            }
           } else if (block.type === 'plainHtml') {
             decryptedAndFormatedContent.push(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n'));
           } else {
