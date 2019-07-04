@@ -31,11 +31,14 @@ blocks:
     execution_time_limit:
       minutes: 2
     task:
+      secrets:
+        - name: flowcrypt-browser-ci-secrets
       jobs:
         - name: Install & pretest
           commands:
             - npm install -g npm@6.8.0
             - cache restore sources
+            - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - npm install
             - node --version
@@ -48,14 +51,34 @@ blocks:
     execution_time_limit:
       minutes: 6
     task:
-      secrets:
-        - name: flowcrypt-browser-ci-secrets
       jobs:
-        - name: test_chrome_consumer mock
+
+        - name: consumer mock
           commands:
-            # - rm -rf node_modules test/node_modules && npm cache clean --force && sed -i '/^registry/d' ~/.npmrc
             - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
             - cache restore sources
-            - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - npm run-script test_chrome_consumer
+
+        - name: enterprise mock
+          commands:
+            - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
+            - cache restore sources
+            - cd ~/git/flowcrypt-browser
+            - npm run-script test_chrome_enteprise
+
+        - name: consumer live gmail
+          commands:
+            - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
+            - cache restore sources
+            - cd ~/git/flowcrypt-browser
+            - npm run-script test_chrome_consumer_live_gmail
+
+        - name: quick checks
+          commands:
+            - cache restore sources
+            - cd ~/git/flowcrypt-browser
+            - npm run-script test_tslint
+            - npm run-script test_patterns
+            - npm run-script test_async_stack
+            - npm run-script test_buf
