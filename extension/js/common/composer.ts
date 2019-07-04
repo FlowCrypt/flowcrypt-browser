@@ -689,9 +689,9 @@ export class Composer {
     }
   }
 
-  private extractAsText = (elSel: 'input_text' | 'input_intro') => {
+  private extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
     let html = this.S.cached(elSel)[0].innerHTML;
-    if (elSel === 'input_text' && this.msgExpandingHTMLPart) {
+    if (elSel === 'input_text' && this.msgExpandingHTMLPart && flag !== 'SKIP-ADDONS') {
       html += `<br /><br />${this.msgExpandingHTMLPart}`;
     }
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
@@ -769,7 +769,7 @@ export class Composer {
         this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.reportErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
-        await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId), plaintext);
+        await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
       }
     } else {
       await Ui.modal.error('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
@@ -887,14 +887,14 @@ export class Composer {
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId));
     } else {
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
-      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId), text);
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId));
     }
   }
 
-  private doSendMsg = async (msg: SendableMsg, plaintext: string) => {
+  private doSendMsg = async (msg: SendableMsg) => {
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
@@ -924,7 +924,7 @@ export class Composer {
     await this.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.urlParams.isReplyBox) {
-      this.renderReplySuccess(msg, plaintext, msgSentRes.id);
+      this.renderReplySuccess(msg, msgSentRes.id);
     } else {
       this.app.closeMsg();
     }
@@ -1627,7 +1627,7 @@ export class Composer {
     return this.urlParams.acctEmail;
   }
 
-  private renderReplySuccess = (msg: SendableMsg, plaintext: string, msgId: string) => {
+  private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     const isSigned = this.S.cached('icon_sign').is('.active');
     this.app.renderReinsertReplyBox(msgId, msg.headers.To.split(',').map(a => Str.parseEmail(a).email));
     if (isSigned) {
@@ -1637,8 +1637,7 @@ export class Composer {
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_msg_successful').find('div.replied_from').text(this.getSender());
     this.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
-    plaintext = PgpMsg.stripFcTeplyToken(plaintext);
-    Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(plaintext).replace(/\n/g, '<br>'));
+    Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(this.extractAsText('input_text', 'SKIP-ADDONS')).replace(/\n/g, '<br>'));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
       const renderableEscapedEmailFooter = Xss.escape(emailFooter).replace(/\n/g, '<br>');
