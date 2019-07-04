@@ -1,0 +1,58 @@
+version: v1.0
+name: Flowcrypt Node Core Tests
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+
+blocks:
+
+  - name: Invalidate
+    execution_time_limit:
+      minutes: 1
+    task:
+      jobs:
+        - name: Invalidate cache
+          commands:
+            - cache delete sources
+
+  - name: Pull
+    execution_time_limit:
+      minutes: 2
+    task:
+      jobs:
+        - name: Assemble sources
+          commands:
+            - mkdir ~/git
+            - cd ~/git && git clone --depth=1 https://github.com/FlowCrypt/flowcrypt-browser.git
+            - cd ~ && cache store sources ./git
+
+  - name: Install
+    execution_time_limit:
+      minutes: 2
+    task:
+      jobs:
+        - name: Install & pretest
+          commands:
+            - npm install -g npm@6.8.0
+            - cache restore sources
+            - cd ~/git/flowcrypt-browser
+            - npm install
+            - node --version
+            - npm --version
+            - ./node_modules/typescript/bin/tsc --version
+            - npm run-script pretest
+            - cd ~ && cache delete sources && cache store sources ./git
+
+  - name: Test
+    execution_time_limit:
+      minutes: 6
+    task:
+      jobs:
+        - name: test_chrome_consumer mock
+          commands:
+            # - rm -rf node_modules test/node_modules && npm cache clean --force && sed -i '/^registry/d' ~/.npmrc
+            - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
+            - cache restore sources
+            - cd ~/git/flowcrypt-browser
+            - npm run-script test_chrome_consumer
