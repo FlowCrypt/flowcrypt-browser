@@ -7,7 +7,7 @@ import { Store, Subscription, ContactUpdate, DbContactObjArg } from './platform/
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
-import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
+import { BrowserMsg, Extension, BrowserWidnow, Bm } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
 import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
@@ -1171,8 +1171,7 @@ export class Composer {
   }
 
   private generateHTMLRepliedPart = (text: string, date: Date, from: string) => {
-    const header = `On ${Str.fromDate(date)} ${from} wrote:<br>`;
-    return header + this.quoteText(Xss.escape(text));
+    return `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`;
   }
 
   private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
@@ -1362,6 +1361,30 @@ export class Composer {
     }
   }
 
+  private setQuoteLoaderProgress = (text: string) => this.S.cached('icon_show_prev_msg').find('#loader').text(text);
+
+  private decryptPreviousMsg = async (index: number, encryptedCount: number, encryptedData: Buf, progressCb?: ProgressCb): Promise<string> => {
+    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail), encryptedData });
+    if (progressCb) {
+      progressCb(60 + (40 / encryptedCount) * (index + 1));
+    }
+    if (decryptRes.success) {
+      return decryptRes.content.toUtfStr();
+    } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {
+      BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'quote', longids: decryptRes.longids.needPassphrase });
+      const wasPpEntered: boolean = await new Promise(resolve => {
+        BrowserMsg.addListener('passphrase_entry', async (response: Bm.PassphraseEntry) => resolve(response.entered));
+        BrowserMsg.listen(this.urlParams.parentTabId);
+      });
+      if (wasPpEntered) {
+        return await this.decryptPreviousMsg(index, encryptedCount, encryptedData, progressCb); // retry with pp
+      }
+      return `\n(Skipping previous message quote)\n`;
+    } else {
+      return `\n(Failed to decrypt quote from previous message because: ${decryptRes.error.type}: ${decryptRes.error.message})\n`;
+    }
+  }
+
   private getAndDecryptPreviousMessage = async (progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables(
       progressCb ? (progress: number) => progressCb(progress * 0.3) : undefined
@@ -1378,18 +1401,7 @@ export class Composer {
         for (const [index, block] of readableBlocks.entries()) {
           const stringContent = String(block.content);
           if (block.type === 'encryptedMsg') {
-            const decrptResult = await PgpMsg.decrypt({
-              kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail),
-              encryptedData: Buf.fromUtfStr(stringContent)
-            });
-            if (progressCb) {
-              progressCb(60 + (40 / encryptedCount) * (index + 1));
-            }
-            if (decrptResult.success) {
-              decryptedAndFormatedContent.push(decrptResult.content.toUtfStr());
-            } else {
-              decryptedAndFormatedContent.push(`\n(Failed to decrypt quote from previous message because: ${decrptResult.error.type}: ${decrptResult.error.message})\n`);
-            }
+            decryptedAndFormatedContent.push(await this.decryptPreviousMsg(index, encryptedCount, Buf.fromUtfStr(stringContent), progressCb));
           } else if (block.type === 'plainHtml') {
             decryptedAndFormatedContent.push(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n'));
           } else {
@@ -1402,7 +1414,8 @@ export class Composer {
             references: determined.headers.References,
             date: String(message.headers.date),
             from: message.from
-          }, text: decryptedAndFormatedContent.join('\n')
+          },
+          text: decryptedAndFormatedContent.join('\n').trim(),
         };
       } catch (e) {
         if (e instanceof FormatError) {
@@ -1427,6 +1440,7 @@ export class Composer {
         Xss.sanitizeAppend(this.S.cached('input_text'), expandedHTMLText);
         this.msgExpandingHTMLPart = undefined;
         this.S.cached('input_text').focus();
+        this.resizeComposeBox();
       }));
   }
 
@@ -1888,12 +1902,9 @@ export class Composer {
     if (!this.messageToReplyOrForward) {
       this.S.cached('icon_show_prev_msg').show().addClass('progress');
       Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
-      const loader = this.S.cached('icon_show_prev_msg').find('#loader');
       this.resizeComposeBox();
-      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress: number) => {
-        loader.text(progress + '%');
-      });
-      loader.remove();
+      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress) => this.setQuoteLoaderProgress(progress + '%'));
+      this.S.cached('icon_show_prev_msg').find('#loader').remove();
       this.S.cached('icon_show_prev_msg').removeClass('progress');
     }
     if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {

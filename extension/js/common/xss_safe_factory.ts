@@ -13,7 +13,7 @@ import { Browser, UrlParams, Env, Ui, Xss, WebMailName } from './browser.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
-export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign';
+export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote`;
 export type FactoryReplyParams = {
   threadId?: string,
   threadMsgId?: string,
