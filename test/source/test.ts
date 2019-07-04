@@ -1,7 +1,5 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-console.log('UPDATED???');
-
 import * as ava from 'ava';
 import { BrowserHandle, BrowserPool } from './browser';
 import { BrowserRecipe } from './tests/browser_recipe';
@@ -67,11 +65,7 @@ ava.before('set up global browsers and config', async t => {
     console.error(`Exiting with exit code 2 because cannot retrieve extension id after 3 attempts`);
     process.exit(2); // ci retries errcode > 1
   }
-  const msg = `Extension url: chrome-extension://${Config.extensionId}`;
-  t.log(msg);
-  console.error(msg);
-  console.log(msg);
-  console.info(msg);
+  console.info(`Extension url: chrome-extension://${Config.extensionId}`);
   await Util.sleep(1);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));

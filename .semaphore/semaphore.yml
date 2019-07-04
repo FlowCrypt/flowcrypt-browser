@@ -13,13 +13,16 @@ blocks:
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
+      env_vars:
+        - name: SEMAPHORE_GIT_DIR
+          value: /home/semaphore/git/flowcrypt-backend
       jobs:
         - name: Install + Build + Pretest
           commands:
             - cache delete sources
-            - mkdir ~/git
-            - cd ~/git && git clone --depth=1 https://github.com/FlowCrypt/flowcrypt-browser.git
             - npm install -g npm@6.8.0
+            - mkdir ~/git
+            - checkout
             - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - npm install
