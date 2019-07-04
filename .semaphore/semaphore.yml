@@ -33,34 +33,31 @@ blocks:
     execution_time_limit:
       minutes: 8
     task:
+
+      prologue:
+        commands:
+          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
+          - cache restore sources
+          - cd ~/git/flowcrypt-browser
+
       jobs:
 
         # - name: consumer live gmail
         #   commands:
-        #     - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
-        #     - cache restore sources
-        #     - cd ~/git/flowcrypt-browser
         #     - npm run-script test_chrome_consumer_live_gmail
 
         - name: consumer mock
           commands:
-            - sleep 20
-            - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
-            - cache restore sources
-            - cd ~/git/flowcrypt-browser
+            - sleep 20 # maybe prevents initially colliding with tests below. Maybe.
             - npm run-script test_chrome_consumer
 
         - name: enterprise mock
           commands:
-            - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
-            - cache restore sources
-            - cd ~/git/flowcrypt-browser
             - npm run-script test_chrome_enterprise
 
         - name: quick checks
           commands:
-            - cache restore sources
-            - cd ~/git/flowcrypt-browser
             - npm run-script test_tslint
             - npm run-script test_patterns
             - npm run-script test_async_stack
