@@ -50,6 +50,7 @@ let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
 ava.before('set up global browsers and config', async t => {
+  console.log('beginning');
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
   for (const i of [1, 2, 3]) {
     try {

@@ -46,9 +46,9 @@ blocks:
 
       jobs:
 
-        # - name: consumer live gmail
-        #   commands:
-        #     - npm run-script test_chrome_consumer_live_gmail
+        - name: consumer live gmail
+          commands:
+            - npm run-script test_chrome_consumer_live_gmail
 
         - name: consumer mock
           commands:
