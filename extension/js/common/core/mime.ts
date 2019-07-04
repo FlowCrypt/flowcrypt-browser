@@ -44,6 +44,7 @@ export type MsgBlock = {
   verifyRes?: VerifyRes,
 };
 export type MimeProccesedMsg = {
+  rawSignedContent: string | undefined,
   headers: Dict<MimeContentHeader>,
   blocks: MsgBlock[],
   from: string | undefined,
