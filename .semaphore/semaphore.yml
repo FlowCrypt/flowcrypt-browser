@@ -48,11 +48,14 @@ blocks:
     execution_time_limit:
       minutes: 6
     task:
+      secrets:
+        - name: flowcrypt-backend-ci-secrets
       jobs:
         - name: test_chrome_consumer mock
           commands:
             # - rm -rf node_modules test/node_modules && npm cache clean --force && sed -i '/^registry/d' ~/.npmrc
             - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
             - cache restore sources
+            - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
             - npm run-script test_chrome_consumer
