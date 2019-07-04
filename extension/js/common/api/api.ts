@@ -318,15 +318,16 @@ export class Api {
         }, false);
       }
       if (progressCbs && typeof progressCbs.download === 'function') {
-        progressPeportingXhr.onprogress = (evt: ProgressEvent) => {
-          const newProgressPercent = evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined;
+        progressPeportingXhr.addEventListener('progress', (evt: ProgressEvent) => {
+          // 100 because if the request takes less time than 1-2 seconds browsers trigger this function only once and when it's completed
+          const newProgressPercent = evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : 100;
           if (typeof newProgressPercent === 'undefined' || newProgressPercent !== lastProgressPercent) {
             if (newProgressPercent) {
               lastProgressPercent = newProgressPercent;
             }
             progressCbs.download!(newProgressPercent, evt.loaded, evt.total); // checked ===function above
           }
-        };
+        });
       }
       return progressPeportingXhr;
     };

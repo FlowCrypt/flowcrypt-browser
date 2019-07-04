@@ -83,6 +83,8 @@ export class Str {
 
   public static datetimeToDate = (date: string) => date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
 
+  public static fromDate = (date: Date) => date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
+
   private static base64urlUtfEncode = (str: string) => {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {

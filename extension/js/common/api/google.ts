@@ -39,7 +39,7 @@ export namespace GmailRes { // responses
   export type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
   export type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
   export type GmailMsg$payload = { parts?: GmailMsg$payload$part[], headers?: GmailMsg$header[], mimeType?: string, body?: GmailMsg$payload$body };
-  export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES';
+  export type GmailMsg$labelId = 'INBOX' | 'UNREAD' | 'CATEGORY_PERSONAL' | 'IMPORTANT' | 'SENT' | 'CATEGORY_UPDATES' | 'TRASH';
   export type GmailMsg = {
     id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
     labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
@@ -147,9 +147,10 @@ export class Google extends EmailProviderApi {
       r.emailAddress = r.emailAddress.toLowerCase();
       return r;
     },
-    threadGet: (acctEmail: string, threadId: string, format?: GmailResponseFormat): Promise<GmailRes.GmailThread> => Google.gmailCall(acctEmail, 'GET', `threads/${threadId}`, {
-      format,
-    }),
+    threadGet: (acctEmail: string, threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailThread> =>
+      Google.gmailCall(acctEmail, 'GET', `threads/${threadId}`, {
+        format,
+      }, { download: progressCb }),
     threadList: (acctEmail: string, labelId: string): Promise<GmailRes.GmailThreadList> => Google.gmailCall(acctEmail, 'GET', `threads`, {
       labelIds: labelId !== 'ALL' ? labelId : undefined,
       includeSpamTrash: Boolean(labelId === 'SPAM' || labelId === 'TRASH'),
@@ -197,9 +198,10 @@ export class Google extends EmailProviderApi {
      * because strings over 1 MB may fail to get to/from bg page. A way to mitigate that would be to pass `R.GmailMsg$raw` prop
      * as a Buf instead of a string.
     */
-    msgGet: async (acctEmail: string, msgId: string, format: GmailResponseFormat): Promise<GmailRes.GmailMsg> => Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
-      format: format || 'full'
-    }),
+    msgGet: async (acctEmail: string, msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailMsg> =>
+      Google.gmailCall(acctEmail, 'GET', `messages/${msgId}`, {
+        format: format || 'full'
+      }, { download: progressCb }),
     msgsGet: (acctEmail: string, msgIds: string[], format: GmailResponseFormat): Promise<GmailRes.GmailMsg[]> => {
       return Promise.all(msgIds.map(id => Google.gmail.msgGet(acctEmail, id, format)));
     },

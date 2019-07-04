@@ -295,7 +295,7 @@ export class Ui {
   }
 
   public static event = {
-    clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function () { resolve(this); })),
+    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> => new Promise(resolve => $(selector as string).one('click', function () { resolve(this); })),
     stop: () => (e: JQuery.Event) => { // returns a function
       e.preventDefault();
       e.stopPropagation();

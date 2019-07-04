@@ -21,7 +21,7 @@ Catch.try(async () => {
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');
-  const type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment']);
+  const type = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'type', ['embedded', 'sign', 'message', 'draft', 'attachment', 'quote']);
 
   const allPrivateKeys = await Store.keysGet(acctEmail);
   const selectedPrivateKeys = allPrivateKeys.filter(ki => longids.includes(ki.longid) || (ki.primary && longids.includes('primary')));
@@ -41,6 +41,8 @@ Catch.try(async () => {
       $('h1').text('Enter your pass phrase to load a draft');
     } else if (type === 'attachment') {
       $('h1').text('Enter your pass phrase to decrypt a file');
+    } else if (type === 'quote') {
+      $('h1').text('Enter your pass phrase to load quoted content');
     }
     $('#passphrase').focus();
     $('#passphrase').keydown(event => {

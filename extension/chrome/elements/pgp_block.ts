@@ -534,8 +534,12 @@ Catch.try(async () => {
         const lastLine = lines.pop()!; // lines.length above ensures there is a line
         if (lastLine[0] === '>' || !lastLine.length) { // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
           linesQuotedPart.unshift(lastLine);
-        } else { // found first non-quoted part from the bottom, push it back & finish
-          lines.push(lastLine);
+        } else { // found first non-quoted part from the bottom
+          if (lastLine.startsWith('On ') && lastLine.endsWith(' wrote:')) { // on the very top of quoted content, looks like qote header
+            linesQuotedPart.unshift(lastLine);
+          } else { // no quote header, just regular content from here onwards
+            lines.push(lastLine);
+          }
           break;
         }
       }

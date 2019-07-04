@@ -60,6 +60,7 @@ div.line.left { text-align: left; }
 div.line input[type=text], div.line input[type=email], div.line input[type=password] { height: 46px; padding: 12px; min-width: 200px; }
 
 body#settings { text-align: center; position: relative; font-family: 'Open Sans', sans-serif; font-size: 16px; }
+body#settings.whitebg { height: 100%; background: white; }
 body#settings > div#content { margin-top: 70px; margin-bottom: 150px; position: relative; }
 body#settings > div#content pre { text-align: left; border: 1px solid #cacaca; background: #fafafa; margin: 20px; padding: 8px; font-size: 12px; border-radius: 2px; }
 body#settings > div#content.setup { margin-top: 0px; }
@@ -391,10 +392,12 @@ table#compose .bottom .icon.action_sign.active i { background-image: url(/img/sv
 
 table#compose td.text { border-bottom: none; position: relative; }
 table#compose td.text div#input_text { padding-top: 8px; padding-left: 8px; outline: none; border: none !important; -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important; box-shadow: none !important; height: 100%; word-wrap: break-word; max-width: 525px;
-  background-image: url(/img/lock-seamless-bg-alpha.png); overflow-y: auto; padding-bottom: 16px; min-height: 140px; }
-table#compose td.text div.text_container { display: flex; flex-direction: column; height: 100%; overflow-x: hidden;  }
+  -moz-box-shadow: none !important; box-shadow: none !important; height: 100%; word-wrap: break-word; max-width: 525px; overflow-y: auto; padding-bottom: 16px; min-height: 140px; }
+table#compose td.text div.text_container { display: flex; flex-direction: column; height: 100%; overflow-x: hidden; background-image: url(/img/lock-seamless-bg-alpha.png);  }
 #new_message table#compose td.text div#input_text { overflow-x: hidden; }
+table#compose td.text div.text_container .action_show_prev_msg { text-align: center; width: 25px; display: block; background-color: #e8eaed; border-radius: 5.5px; margin: 3px 8px; cursor: pointer;}
+table#compose td.text div.text_container .action_show_prev_msg.progress { display: flex; justify-content: space-around; width: 60px; opacity: .6; cursor: default; white-space: nowrap; }
+table#compose td.text div.text_container .action_show_prev_msg img { width: 13px; }
 table#compose td.text .action_add_intro { display: none; position: absolute; right: 8px; border: 4px solid white; padding: 1px 5px; font-weight: bold;
   margin-top: -15px; cursor: pointer; user-select: none; background-color: #31A217; color: white; -webkit-animation: fadeInRight 1s; animation: fadeInRight 1s; }
 table#compose .intro_container { display: none; }
@@ -412,7 +415,7 @@ table#compose #fineuploader .qq-upload-list {overflow-x: hidden; }
 table#compose #fineuploader .qq-upload-list::-webkit-scrollbar {  width: 0 !important;}
 table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 1; margin-left: 12px; padding: 5px 30px 5px 24px; }
 table#compose #fineuploader .qq-upload-list li .qq-upload-file { line-height: 18px; color: black; }
-table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px; position: relative; 
+table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px 0px 3px 10px ; position: relative; 
   border-left: 4px solid #31A217; background-image: url("/img/svgs/locked-icon-green.svg"); background-repeat: no-repeat; background-size: 9px;
   background-position-x: 8px; background-position-y: 8px; }
 table#compose #fineuploader .qq-upload-list .sign { border-left: 1px solid #ccc !important; background-image: none !important; padding-left: 8px; }
