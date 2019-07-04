@@ -53,8 +53,16 @@ blocks:
     task:
       jobs:
 
+        # - name: consumer live gmail
+        #   commands:
+        #     - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
+        #     - cache restore sources
+        #     - cd ~/git/flowcrypt-browser
+        #     - npm run-script test_chrome_consumer_live_gmail
+
         - name: consumer mock
           commands:
+            - sleep 20
             - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
             - cache restore sources
             - cd ~/git/flowcrypt-browser
@@ -65,14 +73,7 @@ blocks:
             - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts && echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
             - cache restore sources
             - cd ~/git/flowcrypt-browser
-            - npm run-script test_chrome_enteprise
-
-        - name: consumer live gmail
-          commands:
-            - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
-            - cache restore sources
-            - cd ~/git/flowcrypt-browser
-            - npm run-script test_chrome_consumer_live_gmail
+            - npm run-script test_chrome_enterprise
 
         - name: quick checks
           commands:
