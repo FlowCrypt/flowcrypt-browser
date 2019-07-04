@@ -64,8 +64,13 @@ ava.before('set up global browsers and config', async t => {
     }
   }
   if (!Config.extensionId) {
-    console.error(`Exiting with exit code 2 because cannot retrieve extension id after 3 attempts`);
-    process.exit(2); // ci retries errcode > 1
+    console.error(`Could not determine extension id! Will try to guess it for ${testVariant}`);
+    if (testVariant === 'ENTERPRISE-MOCK') {
+      Config.extensionId = 'gckhpbgafbidkfcjempdblmjeiahonfe'; // will only work on ci
+    } else {
+      console.error(`Exiting with exit code 2 because cannot retrieve extension id after 3 attempts`);
+      process.exit(2); // ci retries errcode > 1
+    }
   }
   console.log(`Extension url: chrome-extension://${Config.extensionId}`);
   if (isMock) {
