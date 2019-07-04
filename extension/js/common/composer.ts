@@ -125,8 +125,7 @@ export class Composer {
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
     input_addresses_container_inner: '#input_addresses_container > div:first',
-    attached_files: 'table#compose #fineuploader .qq-upload-list li',
-    loader: "#loader"
+    attached_files: 'table#compose #fineuploader .qq-upload-list li'
   });
 
   private attach: AttUI;
@@ -625,6 +624,9 @@ export class Composer {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       await this.parseRenderRecipients('harshRecipientErrs');
     }
+    if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
+      throw new ComposerNotReadyError('Retrieving previous message, please wait.');
+    }
     if (this.BTN_READY_TEXTS.includes(this.S.now('send_btn_span').text().trim()) && recipients.length) {
       return; // all good
     }
@@ -793,10 +795,6 @@ export class Composer {
       progress = Math.floor(progress);
       this.S.now('send_btn_span').text(`${this.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
-  }
-
-  private renderGettingPreviousMessageProgress = (progress: number) => {
-    this.S.cached("loader").find('.loaded').text(progress);
   }
 
   private addUploadedFileLinksToMsgBody = (plaintext: string, atts: Att[]) => {
@@ -1180,35 +1178,10 @@ export class Composer {
   private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
     this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
-    if (!this.messageToReplyOrForward) {
-      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage();
-    }
     await this.renderComposeTable();
     if (this.canReadEmails) {
-      if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {
-        if (method === 'forward') {
-          this.additionalMsgHeaders['In-Reply-To'] = this.messageToReplyOrForward.headers.inReplyToHeaders;
-          this.additionalMsgHeaders.References = this.messageToReplyOrForward.headers.references;
-          this.urlParams.subject = 'Fwd: ' + this.urlParams.subject;
-          await this.appendForwardedMsg(this.messageToReplyOrForward.text);
-        } else {
-          if (!this.messageToReplyOrForward.headers.from || !this.messageToReplyOrForward.headers.date) {
-            return;
-          }
-          const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
-          this.msgExpandingHTMLPart = '<br><br>' + this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
-          if (!this.urlParams.draftId) {
-            this.showExpandButton(this.msgExpandingHTMLPart);
-          } else {
-            const currentHTML = this.S.cached('input_text').html();
-            if (currentHTML.endsWith(this.msgExpandingHTMLPart)) {
-              Xss.sanitizeRender(this.S.cached('input_text'), currentHTML.substring(0, currentHTML.length - this.msgExpandingHTMLPart.length));
-              this.showExpandButton(this.msgExpandingHTMLPart);
-              this.resizeComposeBox();
-            }
-          }
-        }
-      }
+      // not awaited because it blocks whole the compose box and it can take a lot of time depends on replied/forwarded message
+      this.addExpandingButton(method).catch(Catch.reportErr);
     } else {
       Xss.sanitizeRender(this.S.cached('prompt'),
         `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
@@ -1389,14 +1362,14 @@ export class Composer {
     }
   }
 
-  private getAndDecryptPreviousMessage = async (): Promise<MessageToReplyOrForward | undefined> => {
-    this.S.cached('loader').css('display', 'block');
-    Xss.sanitizeAppend(this.S.cached('loader'), `<span>${Ui.spinner('green')}</span>`);
-    const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables((progress: number) => this.renderGettingPreviousMessageProgress(progress * 0.3));
+  private getAndDecryptPreviousMessage = async (progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+    const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables(
+      progressCb ? (progress: number) => progressCb(progress * 0.3) : undefined
+    );
     if (determined && determined.lastMsgId) {
       try {
         const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, determined.lastMsgId, 'raw',
-          (progress: number) => this.renderGettingPreviousMessageProgress(30 + progress * 0.3));
+          progressCb ? (progress: number) => progressCb(30 + progress * 0.3) : undefined);
         const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
         const readableBlocks = message.blocks
           .filter(b => b.type === 'encryptedMsg' || b.type === 'plainText' || b.type === 'plainHtml');
@@ -1409,7 +1382,9 @@ export class Composer {
               kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail),
               encryptedData: Buf.fromUtfStr(stringContent)
             });
-            this.renderGettingPreviousMessageProgress(60 + (40 / encryptedCount) * (index + 1));
+            if (progressCb) {
+              progressCb(60 + (40 / encryptedCount) * (index + 1));
+            }
             if (decrptResult.success) {
               decryptedAndFormatedContent.push(decrptResult.content.toUtfStr());
             } else {
@@ -1421,7 +1396,6 @@ export class Composer {
             decryptedAndFormatedContent.push(stringContent);
           }
         }
-        this.S.cached('loader').css('display', 'none');
         return {
           headers: {
             inReplyToHeaders: determined.headers['In-Reply-To'],
@@ -1446,9 +1420,8 @@ export class Composer {
     return undefined;
   }
 
-  private showExpandButton = (expandedHTMLText: string) => {
+  private setExpandingTextAfterClick = (expandedHTMLText: string) => {
     this.S.cached('icon_show_prev_msg')
-      .css('display', 'block')
       .click(Ui.event.handle(el => {
         el.style.display = 'none';
         Xss.sanitizeAppend(this.S.cached('input_text'), expandedHTMLText);
@@ -1909,6 +1882,45 @@ export class Composer {
 
   private quoteText(text: string) {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
+  }
+
+  private addExpandingButton = async (method: ('reply' | 'forward')) => {
+    if (!this.messageToReplyOrForward) {
+      this.S.cached('icon_show_prev_msg').show().addClass('progress');
+      Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
+      const loader = this.S.cached('icon_show_prev_msg').find('#loader');
+      this.resizeComposeBox();
+      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress: number) => {
+        loader.text(progress + '%');
+      });
+      loader.remove();
+      this.S.cached('icon_show_prev_msg').removeClass('progress');
+    }
+    if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {
+      if (method === 'forward') {
+        this.additionalMsgHeaders['In-Reply-To'] = this.messageToReplyOrForward.headers.inReplyToHeaders;
+        this.additionalMsgHeaders.References = this.messageToReplyOrForward.headers.references;
+        this.urlParams.subject = 'Fwd: ' + this.urlParams.subject;
+        this.S.cached('icon_show_prev_msg').remove();
+        await this.appendForwardedMsg(this.messageToReplyOrForward.text);
+      } else {
+        if (!this.messageToReplyOrForward.headers.from || !this.messageToReplyOrForward.headers.date) {
+          return;
+        }
+        const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
+        this.msgExpandingHTMLPart = '<br><br>' + this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
+        if (!this.urlParams.draftId) {
+          this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
+        } else {
+          const currentHTML = this.S.cached('input_text').html();
+          if (currentHTML.endsWith(this.msgExpandingHTMLPart)) {
+            Xss.sanitizeRender(this.S.cached('input_text'), currentHTML.substring(0, currentHTML.length - this.msgExpandingHTMLPart.length));
+            this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
+            this.resizeComposeBox();
+          }
+        }
+      }
+    }
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
