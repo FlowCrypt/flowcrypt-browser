@@ -474,7 +474,8 @@ export class Composer {
       try {
         this.S.cached('send_btn_note').text('Saving');
         const primaryKi = await this.app.storageGetKey(this.urlParams.acctEmail);
-        const plainText = this.extractAsText('input_text') + Xss.htmlSanitizeAndStripAllTags(this.msgExpandingHTMLPart || '', '\n');
+        const quotedPart = Xss.htmlSanitizeAndStripAllTags(this.msgExpandingHTMLPart || '', '\n');
+        const plainText = this.extractAsText('input_text') + (quotedPart ? `\n\n${quotedPart}` : '');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
         if (this.urlParams.threadId) { // reply draft
