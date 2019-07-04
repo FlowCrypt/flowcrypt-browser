@@ -7,14 +7,14 @@ agent:
 
 blocks:
 
-  - name: Install
+  - name: Build
     execution_time_limit:
       minutes: 2
     task:
       secrets:
         - name: flowcrypt-browser-ci-secrets
       jobs:
-        - name: Install & pretest
+        - name: Install + Build + Pretest
           commands:
             - cache delete sources
             - mkdir ~/git
@@ -29,9 +29,9 @@ blocks:
             - npm run-script pretest
             - cd ~ && cache store sources ./git
 
-  - name: Test
+  - name: Tests
     execution_time_limit:
-      minutes: 6
+      minutes: 8
     task:
       jobs:
 

@@ -56,11 +56,9 @@ ava.before('set up global browsers and config', async t => {
       Config.extensionId = await browserPool.getExtensionId(t);
       break;
     } catch (e) {
+      console.error(`set up #${i} err: ${String(e)}`);
       t.log(`set up #${i} err: ${String(e)}`);
       await Util.sleep(10);
-      if (i === 3) {
-        console.error(String(e));
-      }
     }
   }
   if (!Config.extensionId) {
