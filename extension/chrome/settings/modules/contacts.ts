@@ -5,7 +5,7 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, Browser, Env } from '../../../js/common/browser.js';
+import { Ui, Browser, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Buf } from '../../../js/common/core/buf.js';
@@ -15,6 +15,7 @@ import { Attester } from '../../../js/common/api/attester.js';
 import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Api } from '../../../js/common/api/api.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);

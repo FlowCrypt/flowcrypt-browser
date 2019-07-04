@@ -4,7 +4,7 @@
 
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
-import { Pgp, KeyInfo, KeyInfosWithPassphrases, Contact } from '../core/pgp.js';
+import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
 import { SubscriptionInfo } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyError } from '../extension.js';
 import { Product, PaymentMethod, ProductLevel } from '../account.js';
@@ -13,6 +13,9 @@ import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { GmailRes } from '../api/google.js';
 import { PgpClient } from '../api/attester.js';
+
+let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
+let KEY_CACHE_WIPE_TIMEOUT: number;
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
 type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
@@ -263,10 +266,12 @@ export class Store {
     return keys.filter(ki => longids.includes(ki.longid) || (longids.includes('primary') && ki.primary));
   }
 
-  static keysGetAllWithPassphrases = async (acctEmail: string): Promise<KeyInfosWithPassphrases> => {
+  static keysGetAllWithPp = async (acctEmail: string): Promise<KeyInfo[]> => {
     const keys = await Store.keysGet(acctEmail);
-    const passphrases = (await Promise.all(keys.map(ki => Store.passphraseGet(acctEmail, ki.longid)))).filter(pp => typeof pp !== 'undefined') as string[];
-    return { keys, passphrases };
+    for (const ki of keys) {
+      ki.passphrase = await Store.passphraseGet(acctEmail, ki.longid);
+    }
+    return keys;
   }
 
   private static keysObj = async (armoredPrv: string, primary = false): Promise<KeyInfo> => {
@@ -701,6 +706,39 @@ export class Store {
         }
       }
     });
+  }
+
+  static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
+    // todo - not yet used in browser extension, but planned to be enabled soon
+    // Store.keyCacheRenewExpiry();
+    // KEY_CACHE[keyLongid(k)] = k;
+  }
+
+  static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
+    Store.keyCacheRenewExpiry();
+    return KEY_CACHE[longid];
+  }
+
+  static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
+    // todo - not yet used in browser extension, but planned to be enabled soon
+    // Store.keyCacheRenewExpiry();
+    // KEY_CACHE[armored] = k;
+  }
+
+  static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
+    Store.keyCacheRenewExpiry();
+    return KEY_CACHE[armored];
+  }
+
+  static keyCacheWipe = () => {
+    KEY_CACHE = {};
+  }
+
+  private static keyCacheRenewExpiry = () => {
+    if (KEY_CACHE_WIPE_TIMEOUT) {
+      clearTimeout(KEY_CACHE_WIPE_TIMEOUT);
+    }
+    KEY_CACHE_WIPE_TIMEOUT = Catch.setHandledTimeout(Store.keyCacheWipe, 2 * 60 * 1000);
   }
 
 }

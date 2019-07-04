@@ -4,10 +4,11 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Xss, Ui, Env } from '../../../js/common/browser.js';
+import { Ui, Env } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

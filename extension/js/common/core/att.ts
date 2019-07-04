@@ -90,6 +90,8 @@ export class Att {
       return 'publicKey';
     } else if (this.name.toLowerCase().includes('public') && this.name.match(/[A-F0-9]{8}.*\.asc$/g)) { // name contains the word "public", any key id and ends with .asc
       return 'publicKey';
+    } else if (this.name.match(/\.asc$/) && this.hasData() && Buf.with(this.getData().subarray(0, 100)).toUtfStr().includes('-----BEGIN PGP PUBLIC KEY BLOCK-----')) {
+      return 'publicKey';
     } else if (this.name.match(/\.asc$/) && this.length < 100000 && !this.inline) {
       return 'encryptedMsg';
     } else {

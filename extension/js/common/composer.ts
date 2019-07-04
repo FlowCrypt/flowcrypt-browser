@@ -10,7 +10,7 @@ import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
-import { Ui, Xss, BrowserEventErrHandler, Env } from './browser.js';
+import { Ui, BrowserEventErrHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth, GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
@@ -20,6 +20,7 @@ import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js'
 import { AttUI, AttLimits } from './ui/att_ui.js';
 import { Settings } from './settings.js';
 import { KeyImportUi } from './ui/key_import_ui.js';
+import { Xss } from './platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -536,7 +537,7 @@ export class Composer {
   private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { from?: string; to: string[] }) => {
     const passphrase = await this.app.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
-      const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
+      const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
       if (result.success) {
         this.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
@@ -1170,7 +1171,7 @@ export class Composer {
       }
       return;
     }
-    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(armoredMsg) });
+    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(armoredMsg) });
     if (result.success) {
       if (!Mime.resemblesMsg(result.content)) {
         this.appendForwardedMsg(result.content);

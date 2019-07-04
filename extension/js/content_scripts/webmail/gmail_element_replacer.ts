@@ -9,12 +9,13 @@ import { Api, AjaxError } from '../../common/api/api.js';
 import { Attester } from '../../common/api/attester.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui, Browser } from '../../common/browser.js';
+import { Ui, Browser } from '../../common/browser.js';
 import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
 import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Google, GmailRes } from '../../common/api/google.js';
+import { Xss } from '../../common/platform/xss.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 

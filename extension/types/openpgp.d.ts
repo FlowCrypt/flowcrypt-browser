@@ -181,6 +181,7 @@ declare namespace OpenPGP {
       tag: enums.packet.secretKey;
       isDecrypted(): boolean;
       encrypt(passphrase: string): Promise<boolean>;
+      decrypt(passphrase: string): Promise<true>;
     }
 
     export class Userid extends BasePacket {
@@ -798,7 +799,7 @@ declare namespace OpenPGP {
     class Key {
       constructor(packetlist: packet.List<packet.AnyPacket>);
       armor(): string;
-      decrypt(passphrase: string | string[]): Promise<boolean>;
+      decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
       encrypt(passphrase: string | string[]): Promise<void>;
       getExpirationTime(): Promise<Date | typeof Infinity>;
       getKeyIds(): Keyid[];
@@ -812,7 +813,7 @@ declare namespace OpenPGP {
       isRevoked(): Promise<boolean>;
       getEncryptionKey(keyid?: Keyid | null, date?: Date, userid?: UserId | null): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
       getSigningKey(): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
-      getKeys(): packet.List<packet.AnyKeyPacket>;
+      getKeys(keyId?: Keyid): (Key | SubKey)[];
       isDecrypted(): boolean;
       getFingerprint(): string;
       getCreationTime(): Date;
@@ -822,6 +823,7 @@ declare namespace OpenPGP {
       subKeys: SubKey[];
       users: User[];
       revocationSignatures: packet.Signature[];
+      keyPacket: packet.PublicKey | packet.SecretKey;
     }
 
     class SubKey {

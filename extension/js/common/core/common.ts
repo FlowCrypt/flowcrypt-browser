@@ -23,7 +23,7 @@ export class Str {
     return { email, name, full };
   }
 
-  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
+  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
 
   public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
 
@@ -64,7 +64,7 @@ export class Str {
   public static regexEscape = (toBeUsedInRegex: string) => toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   public static asEscapedHtml = (text: string) => {
-    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br>');
+    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br />');
   }
 
   public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));

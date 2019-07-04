@@ -6,11 +6,12 @@
 
 import { Dict } from '../core/common.js';
 import { Contact } from '../core/pgp.js';
-import { Xss, Env } from '../browser.js';
+import { Env } from '../browser.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
 import { Buf } from '../core/buf.js';
 import { BrowserMsg } from '../extension.js';
+import { Xss } from '../platform/xss.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };

@@ -6,7 +6,7 @@ import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Store, KeyBackupMethod, EmailProvider } from '../../../js/common/platform/store.js';
 import { Value } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -18,6 +18,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -339,12 +340,12 @@ Catch.try(async () => {
     try {
       await doBackupOnEmailProvider(acctEmail, primaryKi.private);
       await writeBackupDoneAndRender(false, 'inbox');
-    } catch(e) {
+    } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
         const connectResult = await GoogleAuth.newAuthPopup({ acctEmail });
         if (!connectResult.error) {
-            await setupCreateSimpleAutomaticInboxBackup();
+          await setupCreateSimpleAutomaticInboxBackup();
         } else {
           throw e;
         }

@@ -3,7 +3,7 @@
 'use strict';
 
 import { Str, Dict } from './common.js';
-import { Pgp, KeyDetails, DecryptError } from './pgp.js';
+import { Pgp, KeyDetails, DecryptError, VerifyRes } from './pgp.js';
 import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
@@ -32,7 +32,7 @@ export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?
 export type KeyBlockType = 'publicKey' | 'privateKey';
 export type ReplaceableMsgBlockType = KeyBlockType | 'cryptupVerification' | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
 export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
-  | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr';
+  | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
 export type MsgBlock = {
   type: MsgBlockType;
   content: string | Buf;
@@ -41,6 +41,7 @@ export type MsgBlock = {
   keyDetails?: KeyDetails; // only in publicKey when returned to Android (could eventually be made mandatory, done straight in detectBlocks?)
   attMeta?: AttMeta; // only in plainAtt, encryptedAtt, decryptedAtt, encryptedAttLink (not sure if always)
   decryptErr?: DecryptError; // only in decryptErr block, always
+  verifyRes?: VerifyRes,
 };
 
 export class Mime {
@@ -48,8 +49,16 @@ export class Mime {
   public static process = async (mimeMsg: Uint8Array) => {
     const decoded = await Mime.decode(mimeMsg);
     const blocks: MsgBlock[] = [];
-    if (decoded.text) {  // may be undefined or empty
-      blocks.push(...Pgp.armor.detectBlocks(decoded.text).blocks);
+    if (decoded.text) {
+      const blocksFromTextPart = Pgp.armor.detectBlocks(Str.normalize(decoded.text)).blocks;
+      // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
+      if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey' || b.type === 'cryptupVerification')) {
+        blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
+      } else if (decoded.html) { // if no pgp blocks found in text part and there is html part, prefer html
+        blocks.push(Pgp.internal.msgBlockObj('plainHtml', decoded.html));
+      } else { // else if no html and just a plain text message, use that
+        blocks.push(...blocksFromTextPart);
+      }
     } else if (decoded.html) {
       blocks.push(Pgp.internal.msgBlockObj('plainHtml', decoded.html));
     }
@@ -66,6 +75,10 @@ export class Mime {
         blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
       } else if (treatAs === 'privateKey') {
         blocks.push(...Pgp.armor.detectBlocks(file.getData().toUtfStr()).blocks);
+      } else if (treatAs === 'encryptedFile') {
+        blocks.push(Pgp.internal.msgBlockAttObj('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
+      } else if (treatAs === 'plainFile') {
+        blocks.push(Pgp.internal.msgBlockAttObj('plainAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
       }
     }
     if (decoded.signature) {
@@ -73,10 +86,16 @@ export class Mime {
         if (block.type === 'plainText') {
           block.type = 'signedMsg';
           block.signature = decoded.signature;
+        } else if (block.type === 'plainHtml') {
+          block.type = 'signedHtml';
+          block.signature = decoded.signature;
         }
       }
+      if (!blocks.find(block => block.type === 'plainText' || block.type === 'plainHtml' || block.type === 'signedMsg' || block.type === 'signedHtml')) { // signed an empty message
+        blocks.push({ type: "signedMsg", "content": "", signature: decoded.signature, complete: true });
+      }
     }
-    return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to };
+    return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to, rawSignedContent: decoded.rawSignedContent };
   }
 
   private static headersToFrom = (parsedMimeMsg: MimeContent) => {

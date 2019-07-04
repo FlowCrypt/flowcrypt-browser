@@ -4,7 +4,7 @@
 
 import { Store } from '../../js/common/platform/store.js';
 import { Value } from '../../js/common/core/common.js';
-import { Xss, Ui, Env } from '../../js/common/browser.js';
+import { Ui, Env } from '../../js/common/browser.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
@@ -17,6 +17,7 @@ import { Attester } from '../../js/common/api/attester.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -312,7 +313,7 @@ Catch.try(async () => {
     await Settings.forbidAndRefreshPageIfCannot('CREATE_KEYS', rules);
     const { full_name } = await Store.getAcct(acctEmail, ['full_name']);
     try {
-      const key = await Pgp.key.create([{ name: full_name || '', email: acctEmail }], 4096, options.passphrase); // todo - add all addresses?
+      const key = await Pgp.key.create([{ name: full_name || '', email: acctEmail }], 'rsa4096', options.passphrase); // todo - add all addresses?
       options.is_newly_created_key = true;
       const { keys: [prv] } = await openpgp.key.readArmored(key.private);
       await saveKeys([prv], options);

@@ -5,7 +5,7 @@
 import { Catch } from './platform/catch.js';
 import { Store } from './platform/store.js';
 import { Value, Str, Dict } from './core/common.js';
-import { Xss, Ui, Env, UrlParams, JQS } from './browser.js';
+import { Ui, Env, UrlParams, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
@@ -13,6 +13,7 @@ import { Api } from './api/api.js';
 import { Pgp } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
 import { Attester } from './api/attester.js';
+import { Xss } from './platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types

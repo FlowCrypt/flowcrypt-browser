@@ -4,13 +4,14 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../js/common/browser.js';
 import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Att } from '../../js/common/core/att.js';
 import { Google } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 
@@ -102,7 +103,7 @@ Catch.try(async () => {
   });
 
   const decryptAndSaveAttToDownloads = async (encryptedAtt: Att) => {
-    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(acctEmail), encryptedData: encryptedAtt.getData() });
+    const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(acctEmail), encryptedData: encryptedAtt.getData() });
     Xss.sanitizeRender('#download', origHtmlContent).removeClass('visible');
     if (result.success) {
       if (!result.filename || ['msg.txt', 'null'].includes(result.filename)) {
@@ -181,7 +182,7 @@ Catch.try(async () => {
   const processAsPublicKeyAndHideAttIfAppropriate = async (a: Att) => {
     if (a.msgId && a.id && a.treatAs() === 'publicKey') { // this is encrypted public key - download && decrypt & parse & render
       const { data } = await Google.gmail.attGet(acctEmail, a.msgId, a.id);
-      const decrRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPassphrases(acctEmail), encryptedData: data });
+      const decrRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(acctEmail), encryptedData: data });
       if (decrRes.success && decrRes.content) {
         const openpgpType = await PgpMsg.type({ data: decrRes.content });
         if (openpgpType && openpgpType.type === 'publicKey') {
