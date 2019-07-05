@@ -63,6 +63,7 @@
       ]
     },
     "typeRoots": [
+      "./extension/js/common/core/types",
       "./extension/types"
     ]
   },

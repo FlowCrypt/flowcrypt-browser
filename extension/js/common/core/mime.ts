@@ -8,7 +8,7 @@ import { Att, AttMeta } from './att.js';
 import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
 import { Buf } from './buf.js';
-import { MimeParserNode } from '../../../types/emailjs.js';
+import { MimeParserNode } from './types/emailjs';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
