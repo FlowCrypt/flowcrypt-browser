@@ -19,7 +19,7 @@ blocks:
       jobs:
         - name: Install + Build + Pretest
           commands:
-            - cache delete sources && npm install -g npm@6.8.0 && mkdir ~/git && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+            - cache delete sources && npm install -g npm@6.8.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser && cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json),node-modules-master-$(checksum package.json)
             - npm install
             - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json) node_modules
