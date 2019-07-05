@@ -77,6 +77,11 @@
       "type": "npm",
       "script": "test_chrome_consumer_live_gmail",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test_headless",
+      "problemMatcher": []
     }
   ]
 }
