@@ -5,7 +5,7 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Xss, Ui, Env } from '../../js/common/browser.js';
+import { Ui, Env } from '../../js/common/browser.js';
 import { FcAcct, CheckVerificationEmail } from '../../js/common/account.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
@@ -14,6 +14,7 @@ import { GoogleAuth } from '../../js/common/api/google.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

@@ -16,18 +16,13 @@
     "chai": "4.1.2",
     "del": "3.0.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
-    "gulp": "4.0.0",
-    "gulp-json-editor": "2.4.1",
-    "gulp-replace": "1.0.0",
-    "inquirer": "5.2.0",
     "json-stable-stringify": "1.0.1",
     "openpgp": "4.5.4",
     "puppeteer": "1.11.0",
     "sweetalert2": "8.0.7",
     "tslint": "5.11.0",
     "typescript": "3.4.1",
-    "web-ext": "3.0.0",
-    "ncp": "2.0.0"
+    "web-ext": "3.0.0"
   },
   "scripts": {
     "test_ci_initialize": "node build/test/test/source/ci-initialize.js",
@@ -39,15 +34,14 @@
     "test_chrome_consumer_live_gmail": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-LIVE-GMAIL",
     "test_chrome_consumer": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- CONSUMER-MOCK",
     "test_chrome_enterprise": "node ./node_modules/ava/cli --verbose --concurrency=1 build/test/test/source/test.js -- ENTERPRISE-MOCK",
-    "prebuild": "rm -rf ./build && npx tsc --project conf/tsconfig.tooling.json",
-    "build": "gulp --gulpfile ./conf/gulpfile.js && node ./build/tooling/build-types",
+    "build": "./build.sh",
     "pretest": "npm run-script build --silent && cd conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json",
     "test": "npm run-script test_buf && npm run-script test_tslint && npm run-script test_patterns && npm run-script test_async_stack && npm run-script test_chrome_consumer -- -- --pool-size=1",
-    "release": "npm run-script prebuild && gulp --gulpfile ./conf/gulpfile.js release",
+    "test_live": "npm run-script pretest && npm run-script test_chrome_consumer_live_gmail -- -- --pool-size=1",
+    "test_headless": "xvfb-run npm run-script test",
+    "release": "npm run-script build && node ./conf/release.js",
     "run_firefox": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
-    "run_firefox_windows": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
-    "internal_tslint_dev_run": "npm run-script prebuild && npm run-script test_tslint",
-    "internal_run_rebuilt_puppeteer": "npm run-script pretest && npm run-script test_chrome_consumer -- --pool-size=1"
+    "run_firefox_windows": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes"
   },
   "repository": {
     "type": "git",

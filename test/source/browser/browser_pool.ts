@@ -19,7 +19,7 @@ export class BrowserPool {
     private reuse: boolean,
     private extensionBuildDir: string,
     private width = 1280,
-    private height = 900
+    private height = 850
   ) {
     this.semaphore = new Semaphore(poolSize, name);
   }
@@ -38,8 +38,7 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    // to run headless-like: "xvfb-run node test.js"
-    const browser = await launch({ args, headless: false, slowMo: 50, devtools: false });
+    const browser = await launch({ args, headless: false, slowMo: 100, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       await this.closeInitialExtensionPage(t, handle);
@@ -48,50 +47,26 @@ export class BrowserPool {
   }
 
   public getExtensionId = async (t: AvaContext): Promise<string> => {
-    // todo - messy & should be refactored to just wait for the first page, then wait 2 seconds, then pull all tabs & find the right url or fail
     const browser = await this.newBrowserHandle(t, false);
-    let url = '';
-    try {
-      const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-      url = initialPage.page.url();
-    } catch (e) {
-      if (e instanceof Error && e.message === 'Action did not trigger a new page within timeout period') {
-        try {
-          await Util.sleep(2);
-          const pages = await browser.browser.pages();
-          if (pages.length) {
-            const extPage = pages.find(page => page.url() !== 'about:blank');
-            if (extPage) {
-              url = extPage.url();
-            }
-          } else {
-            e.message += `(plus could not detect any active pages in "${pages.map(page => page.url()).join('|')}")`;
-            throw e;
-          }
-        } catch (e2) {
-          e.message += `(plus got ${String(e2)} when attempting to get url from current tabs)`;
-          throw e;
-        }
-      } else {
-        throw e;
-      }
-    }
-    const debuggedUrls: string[] = [];
-    if (url === 'about:blank' || !url) { // give it one more try
-      await Util.sleep(3);
+    for (const i of [1, 2, 3, 4, 5]) {
+      await Util.sleep(2);
       const pages = await browser.browser.pages();
-      debuggedUrls.push(...pages.map(page => page.url()));
-      const extensionUrl = debuggedUrls.find(url => url !== 'about:blank');
+      const urls = pages.map(page => page.url());
+      const extensionUrl = urls.find(url => url !== 'about:blank');
       if (extensionUrl) {
-        url = extensionUrl;
+        const match = extensionUrl.match(/[a-z]{32}/);
+        if (match !== null) {
+          await browser.close();
+          return match[0];
+        }
+      }
+      if (i === 5) {
+        await browser.close();
+        throw new Error(`Cannot determine extension id from urls |${urls.join('|')}|`);
       }
     }
-    const match = url.match(/[a-z]{32}/);
-    if (match !== null) {
-      await browser.close();
-      return match[0];
-    }
-    throw new Error(`Cannot determine extension id from url: ${url} (all urls if blank:${debuggedUrls.join('|')})`);
+    await browser.close();
+    throw new Error(`Cannot determine extension id from urls.`);
   }
 
   public close = async () => {

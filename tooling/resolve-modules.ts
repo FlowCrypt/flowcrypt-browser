@@ -2,10 +2,12 @@
 
 'use strict';
 
+// tslint:disable:no-unsafe-any
+
 import { readFileSync, writeFileSync } from 'fs';
 import { getFilesInDir } from './utils/tooling-utils';
 
-const { compilerOptions } = JSON.parse(readFileSync('../tsconfig.json').toString());
+const { compilerOptions } = JSON.parse(readFileSync('./tsconfig.json').toString());
 const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
   if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {
@@ -35,7 +37,7 @@ const resolveLineImports = (line: string, path: string) => line.replace(namedImp
   }
 });
 
-const errIfSrcMissingJs = (src: string, path: string) => {
+const errIfSrcMissingJsExtensionInImport = (src: string, path: string) => {
   const matched = src.match(importLineNotEndingWithJs);
   if (matched) {
     console.error(`\nresolve-modules ERROR:\nImport not ending with .js in ${path}:\n--\n${matched[0]}\n--\n`);
@@ -51,7 +53,7 @@ const errIfRelativeSrcDoesNotBeginWithDot = (src: string, path: string) => {
   }
 };
 
-const srcFilePaths = getFilesInDir(`../${compilerOptions.outDir}`, /\.js$/);
+const srcFilePaths = getFilesInDir(compilerOptions.outDir, /\.js$/);
 
 for (const srcFilePath of srcFilePaths) {
   const original = readFileSync(srcFilePath).toString();
@@ -59,6 +61,6 @@ for (const srcFilePath of srcFilePaths) {
   if (resolved !== original) {
     writeFileSync(srcFilePath, resolved);
   }
-  errIfSrcMissingJs(resolved, srcFilePath);
+  errIfSrcMissingJsExtensionInImport(resolved, srcFilePath);
   errIfRelativeSrcDoesNotBeginWithDot(resolved, srcFilePath);
 }

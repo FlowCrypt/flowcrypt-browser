@@ -391,12 +391,11 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
-    const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
+    const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
     const selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
-      // pwd_input: '.zHQkBf',
-      pwd_input: 'input[type="password"]',
+      pwd_input: 'input[type="password"]', // pwd_input: '.zHQkBf',
       pwd_confirm_btn: '.CwaK9',
     };
     const enterPwdAndConfirm = async () => {
@@ -457,7 +456,7 @@ export class OauthPageRecipe extends PageRecipe {
       if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
       }
-      // t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
+      // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   }

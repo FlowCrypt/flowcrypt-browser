@@ -26,9 +26,9 @@ const consts = { // higher concurrency can cause 429 google errs when composing
   TIMEOUT_ALL_RETRIES: minutes(13), // this has to suffer waiting for semaphore between retries, thus almost the same as below
   TIMEOUT_OVERALL: minutes(14),
   ATTEMPTS: oneIfNotPooled(3),
-  POOL_SIZE: oneIfNotPooled(isMock ? 13 : 2),
+  POOL_SIZE: oneIfNotPooled(isMock ? 13 : 1),
   POOL_SIZE_COMPATIBILITY: oneIfNotPooled(isMock ? 5 : 1),
-  POOL_SIZE_COMPOSE: oneIfNotPooled(1),
+  POOL_SIZE_COMPOSE: oneIfNotPooled(isMock ? 1 : 0),
   PROMISE_TIMEOUT_OVERALL: undefined as any as Promise<never>, // will be set right below
 };
 console.info('consts: ', JSON.stringify(consts), '\n');
@@ -51,18 +51,9 @@ const mockApiLogs: string[] = [];
 
 ava.before('set up global browsers and config', async t => {
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
-  for (const i of [1, 2, 3]) {
-    try {
-      Config.extensionId = await browserPool.getExtensionId(t);
-      break;
-    } catch (e) {
-      t.log(`set up #${i} err: ${String(e)}`);
-      await Util.sleep(10);
-    }
-  }
-  if (!Config.extensionId) {
-    throw new Error('was not able to get extensionId');
-  }
+  Config.extensionId = await browserPool.getExtensionId(t);
+  console.info(`Extension url: chrome-extension://${Config.extensionId}`);
+  await Util.sleep(1);
   if (isMock) {
     const mockApi = await mock(line => mockApiLogs.push(line));
     closeMockApi = mockApi.close;

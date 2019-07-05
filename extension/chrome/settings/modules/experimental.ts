@@ -5,7 +5,7 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
@@ -13,6 +13,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

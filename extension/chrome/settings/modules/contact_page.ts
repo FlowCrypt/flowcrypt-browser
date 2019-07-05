@@ -6,7 +6,7 @@ import { Catch } from '../../../js/common/platform/catch.js';
 import { Store, Serializable } from '../../../js/common/platform/store.js';
 import { Value, Str, Dict } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, Env } from '../../../js/common/browser.js';
+import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
@@ -14,6 +14,7 @@ import { Lang } from '../../../js/common/lang.js';
 import { Backend, BackendRes } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

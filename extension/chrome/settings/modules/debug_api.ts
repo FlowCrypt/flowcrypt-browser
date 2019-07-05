@@ -3,11 +3,12 @@
 'use strict';
 
 import { Dict } from '../../../js/common/core/common.js';
-import { Xss, Env } from '../../../js/common/browser.js';
+import { Env } from '../../../js/common/browser.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Google } from '../../../js/common/api/google.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

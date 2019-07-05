@@ -63,7 +63,8 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
       await helpFrame.waitAndRespondToModal('info', 'confirm', 'Message sent!');
     }));
 
-    ava.test('settings[global:compatibility] - view contact public key', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.test('settings[new:compatibility] - view contact public key', testWithNewBrowser(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);

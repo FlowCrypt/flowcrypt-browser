@@ -4,7 +4,8 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from "../../js/common/platform/store.js";
-import { Xss, Ui } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 

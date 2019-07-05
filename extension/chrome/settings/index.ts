@@ -6,7 +6,7 @@ import { VERSION } from '../../js/common/core/const.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Xss, Ui, Env, JQS, UrlParams } from '../../js/common/browser.js';
+import { Ui, Env, JQS, UrlParams } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
@@ -18,6 +18,7 @@ import { KeyInfo } from '../../js/common/core/pgp.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 

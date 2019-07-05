@@ -6,17 +6,18 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
-import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
-import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
+import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { BackendRes, Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { Attester } from '../../js/common/api/attester.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 
@@ -162,7 +163,7 @@ Catch.try(async () => {
   };
 
   const decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
+    const kisWithPp = await Store.keysGetAllWithPp(acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await getDecryptPwd() });
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content });
@@ -265,7 +266,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderPgpSignatureCheckResult = (signature: MsgVerifyResult | undefined) => {
+  const renderPgpSignatureCheckResult = (signature: VerifyRes | undefined) => {
     if (signature) {
       const signerEmail = signature.contact ? signature.contact.name || senderEmail : senderEmail;
       $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
@@ -350,7 +351,7 @@ Catch.try(async () => {
     }
   };
 
-  const decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: MsgVerifyResult | undefined) => {
+  const decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined) => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
@@ -404,7 +405,7 @@ Catch.try(async () => {
 
   const decryptAndRender = async (encryptedData: Buf, optionalPwd?: string) => {
     if (typeof signature !== 'string') {
-      const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
+      const kisWithPp = await Store.keysGetAllWithPp(acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await getDecryptPwd(optionalPwd) });
       if (typeof result === 'undefined') {
         await renderErr(Lang.general.restartBrowserAndTryAgain, undefined);

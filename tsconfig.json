@@ -13,7 +13,7 @@
     "sourceMap": false,
     "checkJs": false,
     "strict": true,
-    "outDir": "build/chrome-consumer",
+    "outDir": "build/generic-extension-wip",
     "baseUrl": "./extension",
     "paths": {
       "jquery": [

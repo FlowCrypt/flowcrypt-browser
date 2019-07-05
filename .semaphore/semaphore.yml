@@ -1,0 +1,66 @@
+version: v1.0
+name: Flowcrypt Node Core Tests
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+
+blocks:
+
+  - name: Build
+    execution_time_limit:
+      minutes: 2
+    task:
+      secrets:
+        - name: flowcrypt-browser-ci-secrets
+      env_vars:
+        - name: SEMAPHORE_GIT_DIR
+          value: /home/semaphore/git/flowcrypt-browser
+      jobs:
+        - name: Install + Build + Pretest
+          commands:
+            - cache delete sources && npm install -g npm@6.8.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+            - cd ~/git/flowcrypt-browser
+            - checksum package.json > package.json.sum
+            - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum),node-modules-master-$(cat package.json.sum)
+            - npm install
+            - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum) node_modules
+            - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
+            - npm run-script pretest
+            - rm -rf node_modules && cd ~ && cache store sources ./git
+
+  - name: Tests
+    execution_time_limit:
+      minutes: 10
+    task:
+
+      prologue:
+        commands:
+          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts" && sudo sh -c "echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
+          - cache restore sources
+          - cd ~/git/flowcrypt-browser
+          - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(cat package.json.sum)
+
+      jobs:
+
+        - name: code quality
+          commands:
+            - npm run-script test_tslint
+            - npm run-script test_patterns
+
+        # - name: consumer live gmail
+        #   commands:
+        #     - npm run-script test_chrome_consumer_live_gmail
+
+        - name: consumer mock
+          commands:
+            - npm run-script test_chrome_consumer
+
+        - name: enterprise mock
+          commands:
+            - npm run-script test_chrome_enterprise
+
+        - name: internals
+          commands:
+            - npm run-script test_async_stack
+            - npm run-script test_buf

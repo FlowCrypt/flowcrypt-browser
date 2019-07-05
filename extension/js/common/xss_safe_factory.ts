@@ -9,7 +9,8 @@ import { Str, Dict } from './core/common.js';
 import { Pgp } from './core/pgp.js';
 import { Att } from './core/att.js';
 import { MsgBlock } from './core/mime.js';
-import { Browser, UrlParams, Env, Ui, Xss, WebMailName } from './browser.js';
+import { Browser, UrlParams, Env, Ui, WebMailName } from './browser.js';
+import { Xss } from './platform/xss.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
