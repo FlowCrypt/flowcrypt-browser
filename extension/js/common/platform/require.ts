@@ -1,5 +1,7 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
+/// <reference path="../core/types/openpgp.d.ts" />
+
 'use strict';
 
 /**
@@ -22,7 +24,7 @@
  */
 
 import { VERSION } from '../../../js/common/core/const.js';
-import { MimeParser } from '../../../types/emailjs.js';
+import { MimeParser } from '../core/types/emailjs.js';
 
 const loadedTags: string[] = [];
 
