@@ -47,9 +47,9 @@ blocks:
             - npm run-script test_tslint
             - npm run-script test_patterns
 
-        # - name: consumer live gmail
-        #   commands:
-        #     - npm run-script test_chrome_consumer_live_gmail
+        - name: consumer live gmail
+          commands:
+            - npm run-script test_chrome_consumer_live_gmail
 
         # - name: consumer mock
         #   commands:
