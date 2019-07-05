@@ -20,7 +20,7 @@ blocks:
         - name: Install + Build + Pretest
           commands:
             - cache delete sources && npm install -g npm@6.8.0 && mkdir ~/git && checkout && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
-            - export SUM=$(checksum package.json)
+            - export SUM=$(sha1sum package.json | cut -d " " -f 1)
             - cd ~/git/flowcrypt-browser && cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$SUM,node-modules-master-$SUM
             - npm install
             - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$SUM node_modules
@@ -38,7 +38,7 @@ blocks:
           - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts" && sudo sh -c "echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
           - cache restore sources
           - cd ~/git/flowcrypt-browser
-          - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json)
+          - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(sha1sum package.json | cut -d " " -f 1)
 
       jobs:
 
