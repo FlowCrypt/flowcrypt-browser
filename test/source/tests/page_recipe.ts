@@ -391,7 +391,8 @@ export class OauthPageRecipe extends PageRecipe {
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
-    const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
+    const auth = Config.secrets.auth.google.find(a => a.email === acctEmail);
+    const email = auth ? auth.email : acctEmail; // auth[] may not be defined for mocked accounts
     const selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
@@ -409,7 +410,7 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAny('#Email, #submit_approve_access, #identifierId, .w6VTHd, #profileIdentifier', { timeout: 45 });
       if (await oauthPage.target.$('#Email') !== null) { // 2016-style login
         await oauthPage.waitAll('#Email', { timeout: OauthPageRecipe.longTimeout });
-        await oauthPage.waitAndType('#Email', auth.email);
+        await oauthPage.waitAndType('#Email', email);
         await oauthPage.waitAndClick('#next');
         await oauthPage.waitForNavigationIfAny();
         await Util.sleep(OauthPageRecipe.oauthPwdDelay);
@@ -419,12 +420,12 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitForNavigationIfAny();
       } else if (await oauthPage.target.$('#identifierId') !== null) { // 2017-style login
         await oauthPage.waitAll('#identifierId', { timeout: OauthPageRecipe.longTimeout });
-        await oauthPage.waitAndType('#identifierId', auth.email, { delay: 2 });
+        await oauthPage.waitAndType('#identifierId', email, { delay: 2 });
         await oauthPage.waitAndClick('.zZhnYe', { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
         await enterPwdAndConfirm();
-      } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
-        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
+      } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${email}"]`) !== null) { // already logged in - just choose an account
+        await oauthPage.waitAndClick(`#profileIdentifier[data-email="${email}"]`, { delay: 1 });
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
         await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
         await Util.sleep(isMock ? 0 : 2);
@@ -444,7 +445,7 @@ export class OauthPageRecipe extends PageRecipe {
       await oauthPage.waitAll('#submit_approve_access');
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
-      FlowCryptApi.hookCiCookiesSet(auth.email, await oauthPage.page.cookies()).catch(e => console.error(String(e)));
+      FlowCryptApi.hookCiCookiesSet(email, await oauthPage.page.cookies()).catch(e => console.error(String(e)));
       if (action === 'close') {
         await oauthPage.close();
       } else if (action === 'deny') {
@@ -457,7 +458,7 @@ export class OauthPageRecipe extends PageRecipe {
       if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
       }
-      // t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
+      // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   }
