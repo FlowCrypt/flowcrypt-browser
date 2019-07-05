@@ -46,22 +46,24 @@ blocks:
 
       jobs:
 
-        - name: consumer live gmail
-          commands:
-            - npm run-script test_chrome_consumer_live_gmail
-
-        - name: consumer mock
-          commands:
-            - sleep 20 # maybe prevents initially colliding with tests below. Maybe.
-            - npm run-script test_chrome_consumer
-
-        - name: enterprise mock
-          commands:
-            - npm run-script test_chrome_enterprise
-
-        - name: quick checks
+        - name: code quality
           commands:
             - npm run-script test_tslint
             - npm run-script test_patterns
+
+        # - name: consumer live gmail
+        #   commands:
+        #     - npm run-script test_chrome_consumer_live_gmail
+
+        # - name: consumer mock
+        #   commands:
+        #     - npm run-script test_chrome_consumer
+
+        # - name: enterprise mock
+        #   commands:
+        #     - npm run-script test_chrome_enterprise
+
+        - name: internals
+          commands:
             - npm run-script test_async_stack
             - npm run-script test_buf

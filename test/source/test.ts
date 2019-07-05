@@ -50,22 +50,8 @@ let closeMockApi: () => Promise<void>;
 const mockApiLogs: string[] = [];
 
 ava.before('set up global browsers and config', async t => {
-  console.log('beginning');
   standaloneTestTimeout(t, consts.TIMEOUT_EACH_RETRY, t.title);
-  for (const i of [1, 2, 3]) {
-    try {
-      Config.extensionId = await browserPool.getExtensionId(t);
-      break;
-    } catch (e) {
-      console.error(`set up #${i} err: ${String(e)}`);
-      t.log(`set up #${i} err: ${String(e)}, sleeping 10`);
-      await Util.sleep(10);
-    }
-  }
-  if (!Config.extensionId) {
-    console.error(`Exiting with exit code 2 because cannot retrieve extension id after 3 attempts`);
-    process.exit(2); // ci retries errcode > 1
-  }
+  Config.extensionId = await browserPool.getExtensionId(t);
   console.info(`Extension url: chrome-extension://${Config.extensionId}`);
   await Util.sleep(1);
   if (isMock) {

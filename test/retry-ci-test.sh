@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# not currently used
+
 set -uo pipefail
 
 N=0

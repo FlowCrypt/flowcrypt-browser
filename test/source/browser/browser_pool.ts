@@ -19,16 +19,14 @@ export class BrowserPool {
     private reuse: boolean,
     private extensionBuildDir: string,
     private width = 1280,
-    private height = 900
+    private height = 850
   ) {
     this.semaphore = new Semaphore(poolSize, name);
   }
 
   public newBrowserHandle = async (t: AvaContext, closeInitialPage = true) => {
-    console.log(`newBrowserHandle 1`);
     await this.semaphore.acquire();
     // ext frames in gmail: https://github.com/GoogleChrome/puppeteer/issues/2506 https://github.com/GoogleChrome/puppeteer/issues/2548
-    console.log(`newBrowserHandle 2`);
     const args = [
       '--no-sandbox', // make it work in travis-ci
       '--disable-setuid-sandbox',
@@ -40,32 +38,21 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    console.log(`newBrowserHandle 3`);
-    // to run headless-like: "xvfb-run node test.js"
     const browser = await launch({ args, headless: false, slowMo: 100, devtools: false });
-    console.log(`newBrowserHandle 4`);
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
-    console.log(`newBrowserHandle 5`);
     if (closeInitialPage) {
-      console.log(`newBrowserHandle 6`);
       await this.closeInitialExtensionPage(t, handle);
     }
-    console.log(`newBrowserHandle 7`);
     return handle;
   }
 
   public getExtensionId = async (t: AvaContext): Promise<string> => {
-    console.info(`getExtensionId 1`);
     const browser = await this.newBrowserHandle(t, false);
-    console.info(`getExtensionId 2`);
     for (const i of [1, 2, 3, 4, 5]) {
       await Util.sleep(2);
-      console.info(`getExtensionId 3`);
       const pages = await browser.browser.pages();
-      console.info(`getExtensionId 4`);
       const urls = pages.map(page => page.url());
       const extensionUrl = urls.find(url => url !== 'about:blank');
-      console.info(`getExtensionId urls(i ${i}): ${urls.join(' ')}`);
       if (extensionUrl) {
         const match = extensionUrl.match(/[a-z]{32}/);
         if (match !== null) {
