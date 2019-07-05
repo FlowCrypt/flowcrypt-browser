@@ -15,7 +15,7 @@ export class Catch {
     // core errs that are not rethrown are not very interesting
   }
 
-  public static report = (name: string, details?: any) => {
+  public static reportErr = (name: string, details?: any) => {
     // core reports are not very interesting
   }
 
