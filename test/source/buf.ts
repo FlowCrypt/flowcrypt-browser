@@ -25,8 +25,8 @@ const withThousandRandomInputs = (cb: (data: Uint8Array) => void) => {
 };
 
 const UTF8 = `გამარჯობა.\nこんにちは。\nЗдравствуй.\nChào bạn.\nDobrý deň!\n여보세요?\n你好。\r\n\t。 `;
-const UTF8_AS_BYTES = new Buffer(UTF8);
-const UTF8_AS_RAW_STRING = new Buffer(UTF8).toString('binary');
+const UTF8_AS_BYTES = Buffer.from(UTF8);
+const UTF8_AS_RAW_STRING = Buffer.from(UTF8).toString('binary');
 
 const equals = (a: string | Uint8Array, b: string | Uint8Array) => {
   expect(typeof a).to.equal(typeof b, `types dont match`);
