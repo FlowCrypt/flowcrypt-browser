@@ -402,7 +402,7 @@ export class OauthPageRecipe extends PageRecipe {
     };
     const enterPwdAndConfirm = async () => {
       await Util.sleep(OauthPageRecipe.oauthPwdDelay);
-      await oauthPage.waitAndType(selectors.pwd_input, auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
+      await oauthPage.waitAndType(selectors.pwd_input, auth!.password, { delay: OauthPageRecipe.oauthPwdDelay });
       await oauthPage.waitAndClick(selectors.pwd_confirm_btn, { delay: 1 });  // confirm password
       await oauthPage.waitForNavigationIfAny();
     };
@@ -414,7 +414,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('#next');
         await oauthPage.waitForNavigationIfAny();
         await Util.sleep(OauthPageRecipe.oauthPwdDelay);
-        await oauthPage.waitAndType('#Passwd', auth.password, { delay: OauthPageRecipe.oauthPwdDelay });
+        await oauthPage.waitAndType('#Passwd', auth!.password, { delay: OauthPageRecipe.oauthPwdDelay });
         await oauthPage.waitForNavigationIfAny();
         await oauthPage.waitAndClick('#signIn', { delay: 1 });
         await oauthPage.waitForNavigationIfAny();
@@ -436,7 +436,7 @@ export class OauthPageRecipe extends PageRecipe {
       await Util.sleep(isMock ? 0 : 1);
       if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email
         await element.click();
-        await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
+        await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth!.backup, { delay: 2 });
         await oauthPage.waitAndClick('#next', { delay: 2 });
       } else if (await oauthPage.isElementPresent(selectors.pwd_input)) {
         await enterPwdAndConfirm();
