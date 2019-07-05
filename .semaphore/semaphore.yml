@@ -19,21 +19,13 @@ blocks:
       jobs:
         - name: Install + Build + Pretest
           commands:
-            - cache delete sources
-            - npm install -g npm@6.8.0
-            - mkdir ~/git
-            - checkout
-            - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
-            - cd ~/git/flowcrypt-browser
-            - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json),node-modules-master-$(checksum package.json)
+            - cache delete sources && npm install -g npm@6.8.0 && mkdir ~/git && mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
+            - cd ~/git/flowcrypt-browser && cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json),node-modules-master-$(checksum package.json)
             - npm install
             - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json) node_modules
-            - node --version
-            - npm --version
-            - ./node_modules/typescript/bin/tsc --version
+            - echo "NODE=$(node --version), NPM=$(npm --version), TSC=$( ./node_modules/typescript/bin/tsc --version)"
             - npm run-script pretest
-            - rm -rf node_modules
-            - cd ~ && cache store sources ./git
+            - rm -rf node_modules && cd ~ && cache store sources ./git
 
   - name: Tests
     execution_time_limit:
@@ -42,8 +34,7 @@ blocks:
 
       prologue:
         commands:
-          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts"
-          - sudo sh -c "echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
+          - sudo sh -c "echo '209.250.232.81 cron.flowcrypt.com' >> /etc/hosts" && sudo sh -c "echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
           - cache restore sources
           - cd ~/git/flowcrypt-browser
           - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json)
