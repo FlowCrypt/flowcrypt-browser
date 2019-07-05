@@ -18,7 +18,7 @@
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "json-stable-stringify": "1.0.1",
     "openpgp": "4.5.4",
-    "puppeteer": "1.18.1",
+    "puppeteer": "1.11.0",
     "sweetalert2": "8.0.7",
     "tslint": "5.11.0",
     "typescript": "3.4.1",
