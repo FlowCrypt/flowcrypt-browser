@@ -25,11 +25,14 @@ blocks:
             - checkout
             - mv ~/test-secrets.json ~/git/flowcrypt-browser/test/test-secrets.json
             - cd ~/git/flowcrypt-browser
+            - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json),node-modules-master-$(checksum package.json)
             - npm install
+            - cache store node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json) node_modules
             - node --version
             - npm --version
             - ./node_modules/typescript/bin/tsc --version
             - npm run-script pretest
+            - rm -rf node_modules
             - cd ~ && cache store sources ./git
 
   - name: Tests
@@ -43,6 +46,7 @@ blocks:
           - sudo sh -c "echo '127.0.0.1 google.mock.flowcrypt.com' >> /etc/hosts"
           - cache restore sources
           - cd ~/git/flowcrypt-browser
+          - cache restore node-modules-$SEMAPHORE_GIT_BRANCH-$(checksum package.json)
 
       jobs:
 
