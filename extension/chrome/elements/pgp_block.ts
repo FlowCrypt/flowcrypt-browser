@@ -46,7 +46,7 @@ Catch.try(async () => {
     document.getElementById('pgp_block')!.innerText = text;
   };
 
-  const sendResizeBrowserMsg = () => {
+  const resizePgpBlockFrame = () => {
     let height = Math.max($('#pgp_block').height()!, 20) + 40;
     const isInfiniteResizeLoop = () => {
       heightHistory.push(height);
@@ -70,7 +70,7 @@ Catch.try(async () => {
     img.setAttribute('style', a.getAttribute('style') || '');
     img.style.background = 'none';
     img.style.border = 'none';
-    img.addEventListener('load', () => sendResizeBrowserMsg());
+    img.addEventListener('load', () => resizePgpBlockFrame());
     if (a.href.indexOf('cid:') === 0) { // image included in the email
       const contentId = a.href.replace(/^cid:/g, '');
       const content = includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
@@ -105,11 +105,11 @@ Catch.try(async () => {
       $('.action_show_raw_pgp_block').click(Ui.event.handle(target => {
         $('.raw_pgp_block').css('display', 'block');
         $(target).css('display', 'none');
-        sendResizeBrowserMsg();
+        resizePgpBlockFrame();
       }));
     }
-    sendResizeBrowserMsg(); // resize window now
-    Catch.setHandledTimeout(() => $(window).resize(Ui.event.prevent('spree', sendResizeBrowserMsg)), 1000); // start auto-resizing the window after 1s
+    resizePgpBlockFrame(); // resize window now
+    Catch.setHandledTimeout(() => $(window).resize(Ui.event.prevent('spree', resizePgpBlockFrame)), 1000); // start auto-resizing the window after 1s
   };
 
   const btnHtml = (text: string, addClasses: string) => {
@@ -167,13 +167,13 @@ Catch.try(async () => {
     if (decrypted.success) {
       const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content });
       Browser.saveToDownloads(att, renderIn);
-      sendResizeBrowserMsg();
+      resizePgpBlockFrame();
     } else {
       delete decrypted.message;
       console.info(decrypted);
       await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
       Browser.saveToDownloads(encrypted, renderIn);
-      sendResizeBrowserMsg();
+      resizePgpBlockFrame();
     }
   };
 
@@ -194,12 +194,12 @@ Catch.try(async () => {
       const htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
     }
-    sendResizeBrowserMsg();
+    resizePgpBlockFrame();
     $('div.attachment').click(Ui.event.prevent('double', async target => {
       const att = includedAtts[Number($(target).attr('index'))];
       if (att.hasData()) {
         Browser.saveToDownloads(att, $(target));
-        sendResizeBrowserMsg();
+        resizePgpBlockFrame();
       } else {
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
         att.setData(await Api.download(att.url!, (perc, load, total) => renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));
@@ -274,6 +274,8 @@ Catch.try(async () => {
         renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, senderEmail).then(() => { // async so that it doesn't block rendering
           doNotSetStateAsReadyYet = false;
           Ui.setTestState('ready');
+          $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render
+          resizePgpBlockFrame();
         }).catch(Catch.reportErr);
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
@@ -394,7 +396,7 @@ Catch.try(async () => {
     if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
       renderFutureExpiration(passwordMsgLinkRes.expire);
     }
-    sendResizeBrowserMsg();
+    resizePgpBlockFrame();
     if (!doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
       Ui.setTestState('ready');
     }
@@ -570,7 +572,7 @@ Catch.try(async () => {
     pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
     pgpBlk.find('#action_show_quoted_content').click(Ui.event.handle(async target => {
       $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
-      sendResizeBrowserMsg();
+      resizePgpBlockFrame();
     }));
   };
 
@@ -605,7 +607,7 @@ Catch.try(async () => {
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!msgId) {
           Xss.sanitizeRender('#pgp_block', `Missing msgId to fetch message in pgp_block. If this happens repeatedly, please report the issue to human@flowcrypt.com`);
-          sendResizeBrowserMsg();
+          resizePgpBlockFrame();
         } else if (canReadEmails) {
           renderText('Retrieving message...');
           const format: GmailResponseFormat = (!msgFetchedFromApi) ? 'full' : 'raw';
@@ -619,7 +621,7 @@ Catch.try(async () => {
           // tslint:disable-next-line:max-line-length
           const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
           Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
-          sendResizeBrowserMsg();
+          resizePgpBlockFrame();
           $('.auth_settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }

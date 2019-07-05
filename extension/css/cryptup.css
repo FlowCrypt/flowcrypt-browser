@@ -273,11 +273,11 @@ html {  padding:0; margin: 0; }
 table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0;
   -webkit-border-horizontal-spacing: 0; -webkit-border-vertical-spacing: 0; vertical-align: top; }
 
-.pgp_secure { background: white; border: 1px solid #f0f0f0; border-left: 4px solid #31A217; min-height: 50px;
+.pgp_secure { background: white; border: 1px solid #f0f0f0; border-left: 4px solid #31A217;
   background-image: url(/img/lock-seamless-bg-alpha.png); padding: 6px 10px; }
-.pgp_neutral, .backup_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; min-height: 100px; } /* accomodate sig result */
-.pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; min-height: 50px; }
-#pgp_block, #backup_block { height: auto; }
+.pgp_neutral, .backup_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; }
+.pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; }
+#pgp_block, #backup_block { height: auto; min-height: 50px; }
 #pgp_block div.error { margin-bottom: 30px; margin-left: 12px; }
 #pgp_block div.raw_pgp_block { margin: 12px; color: #444; font-size: 10px; font-family: monospace; unicode-bidi: embed; white-space: pre; }
 #pgp_block a.action_show_raw_pgp_block { position: relative; left: 12px; top: -12px; }
@@ -292,7 +292,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block > .future_expiration { padding-right: 8px; text-align: right; font-family: monospace; font-size: 11px; opacity: 0.7; color: #31A217; font-weight: 500; }
 #pgp_block > .future_expiration:hover { opacity: 1; }
 #pgp_block .input_email, #backup_block .input_pass_phrase { padding: 9px; position: relative; top: 1px; width: 270px; height: 37px; }
-#pgp_signature { text-align: right; position: fixed; top: 8px; right: 12px; opacity: 0.5; width: fit-content; }
+#pgp_signature { text-align: right; position: fixed; top: 6px; right: 12px; opacity: 0.5; width: fit-content; }
 #pgp_signature > .cursive { font-family: signature; font-size: 24px; text-transform: capitalize; font-weight: bold; }
 #pgp_signature > .result { font-size: 10px; font-family: monospace; width: 200px; float: right; }
 #pgp_signature.neutral, #pgp_signature.bad, #pgp_signature:hover { opacity: 1; }
