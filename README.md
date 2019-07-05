@@ -6,7 +6,6 @@
 Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/download
 
 
-
 ## Developers
 
 [![Tests](https://semaphoreci.com/api/v1/flowcrypt/flowcrypt-browser/branches/master/badge.svg)](https://semaphoreci.com/flowcrypt/flowcrypt-browser)
