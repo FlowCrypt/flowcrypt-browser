@@ -87,6 +87,11 @@
       "type": "npm",
       "script": "test_live",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test_enterprise",
+      "problemMatcher": []
     }
   ]
 }
