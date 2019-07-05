@@ -2,10 +2,12 @@
 
 'use strict';
 
+// tslint:disable:no-unsafe-any
+
 import { readFileSync, writeFileSync } from 'fs';
 import { getFilesInDir } from './utils/tooling-utils';
 
-const { compilerOptions } = JSON.parse(readFileSync('../tsconfig.json').toString());
+const { compilerOptions } = JSON.parse(readFileSync('./tsconfig.json').toString());
 const moduleMap: { [name: string]: string | null } = {};
 for (const moduleName of Object.keys(compilerOptions.paths)) {
   if (compilerOptions.paths[moduleName].indexOf('COMMENT') !== -1) {
@@ -51,7 +53,7 @@ const errIfRelativeSrcDoesNotBeginWithDot = (src: string, path: string) => {
   }
 };
 
-const srcFilePaths = getFilesInDir(`../${compilerOptions.outDir}`, /\.js$/);
+const srcFilePaths = getFilesInDir(compilerOptions.outDir, /\.js$/);
 
 for (const srcFilePath of srcFilePaths) {
   const original = readFileSync(srcFilePath).toString();

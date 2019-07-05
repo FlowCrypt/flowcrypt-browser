@@ -2,11 +2,14 @@
 
 'use strict';
 
+// tslint:disable:no-unsafe-any
+
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { getFilesInDir } from './utils/tooling-utils';
 
-const OUT_DIR = `../build/chrome-consumer/js/content_scripts`;
-const { compilerOptions: { outDir: sourceDir } } = JSON.parse(readFileSync('./tsconfig.content_scripts.json').toString());
+const OUT_DIR = `./build/generic-extension-wip/js/content_scripts`;
+let { compilerOptions: { outDir: sourceDir } } = JSON.parse(readFileSync('./conf/tsconfig.content_scripts.json').toString());
+sourceDir = `./build/${sourceDir}`;
 
 const processedSrc = (srcFilePath: string) => {
   let file = readFileSync(srcFilePath).toString();

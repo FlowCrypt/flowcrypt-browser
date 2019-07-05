@@ -13,6 +13,7 @@
     "outDir": "../build/tooling"
   },
   "files": [
+    "../tooling/build-manifests.ts",
     "../tooling/resolve-modules.ts",
     "../tooling/bundle-content-scripts.ts",
     "../tooling/fill-values.ts",
