@@ -82,6 +82,11 @@
       "type": "npm",
       "script": "test_headless",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "test_live",
+      "problemMatcher": []
     }
   ]
 }
