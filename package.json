@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "6.8.8",
+  "version": "6.8.9",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -46,7 +46,7 @@
     "test_chrome_consumer_live_gmail": "echo 'deprecated, call test_ci_chrome_consumer_live_gmail instead' && sleep 10 && npm run-script test_ci_chrome_consumer_live_gmail",
     "test_chrome_consumer": "echo 'deprecated, call test_ci_chrome_consumer instead' && sleep 10 && npm run-script test_ci_chrome_consumer",
     "test_chrome_enterprise": "echo 'deprecated, call test_ci_chrome_enterprise instead' && sleep 10 && npm run-script test_ci_chrome_enterprise",
-    "release": "npm run-script build && node ./conf/release.js"
+    "release": "npm run-script build && node ./tooling/release.js"
   },
   "repository": {
     "type": "git",

@@ -897,7 +897,7 @@ export class PgpMsg {
         console.error('error verifying decrypted signature');
         console.error(e);
       }
-      if (!prepared.isCleartext && prepared.message.packets.filterByTag(openpgp.enums.packet.symmetricallyEncrypted).length) {
+      if (!prepared.isCleartext && (prepared.message as OpenPGP.message.Message).packets.filterByTag(openpgp.enums.packet.symmetricallyEncrypted).length) {
         const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). The sender should update their outdated software.\n\nDisplay the message at your own risk.';
         return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, message: prepared.message, longids, isEncrypted };
       }
