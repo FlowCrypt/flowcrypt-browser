@@ -1922,8 +1922,10 @@ export class Composer {
       try {
         this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress) => this.setQuoteLoaderProgress(progress + '%'));
       } catch (e) {
-        Catch.reportErr(e);
-        await Ui.modal.error(`The error occured while getting ${method === 'reply' ? 'replied' : 'forwarded'} message. The messasge won't be included in new message.`);
+        if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
+        }
+        await Ui.modal.error(`The error occured while getting ${method === 'reply' ? 'replied' : 'forwarded'} message. The messasge won't be included in new message.\n${Api.err.eli5(e)}`);
         this.S.cached('icon_show_prev_msg').remove();
         return;
       }
