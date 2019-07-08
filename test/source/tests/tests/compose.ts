@@ -186,7 +186,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(replyFrame);
     }));
 
-    ava.test.only('compose[global:compose] - standalone - quote - can load quote from plain text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.test('compose[global:compose] - standalone - quote - can load quote from plain text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16b8e09ebf6c5f54&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&threadMsgId=16b8e09ebf6c5f54&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E&from=test.ci.compose%40org.flowcrypt.com ' +
         '&subject=Re%3A%20do%20not%20delete%3A%20plain%20message%20so%20that%20human%20shows%20in%20contacts';
