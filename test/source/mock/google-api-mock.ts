@@ -116,7 +116,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
     },
     '/gmail/v1/users/me/threads/?': async ({ query: { format } }, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
-      if (isGet(req) && format === 'metadata') {
+      if (isGet(req) && (format === 'metadata' || format === 'full')) {
         const id = parseResourceId(req.url!);
         const msgs = new Data(acct).getMessagesByThread(id);
         if (!msgs.length) {
