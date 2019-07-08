@@ -1919,7 +1919,15 @@ export class Composer {
       this.S.cached('icon_show_prev_msg').show().addClass('progress');
       Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
       this.resizeComposeBox();
-      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress) => this.setQuoteLoaderProgress(progress + '%'));
+      try {
+        this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress) => this.setQuoteLoaderProgress(progress + '%'));
+      } catch (e) {
+        if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
+        }
+        await Ui.modal.error(`Could not load quoted content, please try again.\n\n${Api.err.eli5(e)}`);
+        return;
+      }
       this.S.cached('icon_show_prev_msg').find('#loader').remove();
       this.S.cached('icon_show_prev_msg').removeClass('progress');
     }

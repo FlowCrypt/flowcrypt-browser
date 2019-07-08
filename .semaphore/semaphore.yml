@@ -2,7 +2,7 @@ version: v1.0
 name: Flowcrypt Node Core Tests
 agent:
   machine:
-    type: e1-standard-4  # larger instance because enterprise-mock tends to crash a lot with "Error: Page crashed!"
+    type: e1-standard-4
     os_image: ubuntu1804
 
 blocks:
