@@ -1,7 +1,7 @@
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
-import { Url } from '../../browser';
+import { Url, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { TestVariant } from '../../util';
@@ -186,20 +186,29 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(replyFrame);
     }));
 
-    ava.test('compose[global:compose] - standalone - quote - can load quote from plain text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.test('compose[global:compose] - standalone - quote - can load quote from encrypted text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16b8e09ebf6c5f54&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&threadMsgId=16b8e09ebf6c5f54&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E&from=test.ci.compose%40org.flowcrypt.com ' +
         '&subject=Re%3A%20do%20not%20delete%3A%20plain%20message%20so%20that%20human%20shows%20in%20contacts';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await composePage.waitAll(['@action-expand-quoted-text']);
-      expect(await composePage.read('@input-body')).to.not.include('On 2019-06-25 at 09:48, human@flowcrypt.com wrote:');
-      await composePage.click('@action-expand-quoted-text');
-      await composePage.waitTillGone(['@action-expand-quoted-text']);
-      expect(await composePage.read('@input-body')).to.include('On 2019-06-25 at 09:48, human@flowcrypt.com wrote:');
+      await baseQuotingTest(composePage, 'On 2019-06-25 at 09:48, human@flowcrypt.com wrote:');
     }));
 
-    ava.test.only('compose[global:compatibility] - reply - can load quote from plain/html email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.test('compose[global:compatibility] - standalone - quote - can load quote from plain text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=16402d6dc4342e7f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
+        '&threadMsgId=16402d6dc4342e7f&to=Tom%20James%20Holub%20%3Ccensored%40email.com%3E&from=flowcrypt.compatibility%40gmail.com' +
+        '&subject=Re%3A%20received%20MMS%20from%20google%20voice%20should%20not%20get%20FlowCrypt%20confused';
+      const messageBeginingText =
+        ['On 2018-06-15 at 09:46, info@nvimp.com wrote:',
+          '> cropping all except for the image below'
+        ].join('\n');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await baseQuotingTest(composePage, messageBeginingText);
+    }));
+
+    ava.test('compose[global:compatibility] - reply - can load quote from plain/html email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' +
         '&ignoreDraft=___cu_false___&threadMsgId=16b36861a890bb26&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E' +
         '&from=flowcrypt.compatibility%40gmail.com&subject=Re%3A%20Plain%20text%20html%20utf';
@@ -215,17 +224,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         ].join('\n');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await composePage.waitAll(['@action-expand-quoted-text']);
-      expect(await composePage.read('@input-body')).to.not.include(messageBeginingText);
-      await composePage.click('@action-expand-quoted-text');
-      await composePage.waitTillGone(['@action-expand-quoted-text']);
-      expect(await composePage.read('@input-body')).to.include(messageBeginingText);
+      await baseQuotingTest(composePage, messageBeginingText);
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.test.todo('compose[global:compose] - reply - skip click prompt');
 
+
+
   }
 
+};
+
+const baseQuotingTest = async (composePage: ControllablePage, textToInclude: string) => {
+  await composePage.waitAll(['@action-expand-quoted-text']);
+  expect(await composePage.read('@input-body')).to.not.include(textToInclude);
+  await composePage.click('@action-expand-quoted-text');
+  await composePage.waitTillGone(['@action-expand-quoted-text']);
+  expect(await composePage.read('@input-body')).to.include(textToInclude);
 };
