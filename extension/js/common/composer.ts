@@ -1925,8 +1925,7 @@ export class Composer {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
         }
-        await Ui.modal.error(`The error occured while getting ${method === 'reply' ? 'replied' : 'forwarded'} message. The messasge won't be included in new message.\n${Api.err.eli5(e)}`);
-        this.S.cached('icon_show_prev_msg').remove();
+        await Ui.modal.error(`Could not load quoted content, please try again.\n\n${Api.err.eli5(e)}`);
         return;
       }
       this.S.cached('icon_show_prev_msg').find('#loader').remove();
