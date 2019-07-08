@@ -199,6 +199,29 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await composePage.read('@input-body')).to.include('On 2019-06-25 at 09:48, human@flowcrypt.com wrote:');
     }));
 
+    ava.test.only('compose[global:compatibility] - reply - can load quote from plain/html email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' +
+        '&ignoreDraft=___cu_false___&threadMsgId=16b36861a890bb26&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E' +
+        '&from=flowcrypt.compatibility%40gmail.com&subject=Re%3A%20Plain%20text%20html%20utf';
+      const messageBeginingText =
+        ['On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
+          '> Used to fail on Android app',
+          '>',
+          '> ---------- Forwarded message ---------',
+          '> From: Mozilla <Mozilla@e.mozilla.org>',
+          '> Date: Thu, 6 Jun 2019, 17:22',
+          '> Subject: Your misinformation questions ... answered.',
+          '> To: <tom@cryptup.org>'
+        ].join('\n');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAll(['@action-expand-quoted-text']);
+      expect(await composePage.read('@input-body')).to.not.include(messageBeginingText);
+      await composePage.click('@action-expand-quoted-text');
+      await composePage.waitTillGone(['@action-expand-quoted-text']);
+      expect(await composePage.read('@input-body')).to.include(messageBeginingText);
+    }));
+
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.test.todo('compose[global:compose] - reply - skip click prompt');
