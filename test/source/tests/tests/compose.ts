@@ -186,7 +186,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(replyFrame);
     }));
 
-    ava.test('compose[global:compose] - standalone - quote - can load quote from encrypted text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.test('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16b8e09ebf6c5f54&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&threadMsgId=16b8e09ebf6c5f54&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E&from=test.ci.compose%40org.flowcrypt.com ' +
         '&subject=Re%3A%20do%20not%20delete%3A%20plain%20message%20so%20that%20human%20shows%20in%20contacts';
@@ -195,7 +195,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await baseQuotingTest(composePage, 'On 2019-06-25 at 09:48, human@flowcrypt.com wrote:');
     }));
 
-    ava.test('compose[global:compatibility] - standalone - quote - can load quote from plain text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.test('compose[global:compatibility] - standalone - quote - can load quote from plain/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16402d6dc4342e7f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&threadMsgId=16402d6dc4342e7f&to=Tom%20James%20Holub%20%3Ccensored%40email.com%3E&from=flowcrypt.compatibility%40gmail.com' +
         '&subject=Re%3A%20received%20MMS%20from%20google%20voice%20should%20not%20get%20FlowCrypt%20confused';
@@ -213,7 +213,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         '&ignoreDraft=___cu_false___&threadMsgId=16b36861a890bb26&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E' +
         '&from=flowcrypt.compatibility%40gmail.com&subject=Re%3A%20Plain%20text%20html%20utf';
       const messageBeginingText =
-        ['On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
+        [
+          'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
           '> Used to fail on Android app',
           '>',
           '> ---------- Forwarded message ---------',
@@ -227,11 +228,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await baseQuotingTest(composePage, messageBeginingText);
     }));
 
+    ava.test.only('compose[global:compatibility] - reply - can load quote from encrypted/html email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=1663a65bbd73ce1a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
+        '&threadMsgId=1663a65bbd73ce1a&to=Henry%20Electrum%20%3Ccensored%40email.com%3E&from=flowcrypt.compatibility%40gmail.com' +
+        '&subject=Re%3A%20Encrypted%20Message';
+      const messageBeginingText =
+        [
+          'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
+          '> The following text is bold: this is bold',
+          '>',
+          '> The following text is red: this text is red'
+        ].join('\n');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await baseQuotingTest(composePage, messageBeginingText);
+    }));
+
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.test.todo('compose[global:compose] - reply - skip click prompt');
-
-
 
   }
 
