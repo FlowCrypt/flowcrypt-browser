@@ -1406,12 +1406,16 @@ export class Composer {
         for (const [index, block] of readableBlocks.entries()) {
           const stringContent = String(block.content);
           if (block.type === 'encryptedMsg') {
-            decryptedAndFormatedContent.push(await this.decryptMessage(Buf.fromUtfStr(stringContent)));
+            const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
+            const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
+            const htmlBlock = msgBlocks.find(b => b.type === 'decryptedHtml');
+            const htmlParsed = Xss.htmlSanitizeAndStripAllTags(htmlBlock ? htmlBlock.content.toString() : 'No Content', '\n');
+            decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
             if (progressCb) {
               progressCb(60 + (40 / encryptedCount) * (index + 1));
             }
           } else if (block.type === 'plainHtml') {
-            decryptedAndFormatedContent.push(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n'));
+            decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
           } else {
             decryptedAndFormatedContent.push(stringContent);
           }

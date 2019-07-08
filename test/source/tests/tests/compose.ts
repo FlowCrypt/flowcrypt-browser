@@ -5,6 +5,7 @@ import { Url } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { TestVariant } from '../../util';
+import { expect } from "chai";
 
 // tslint:disable:no-blank-lines-func
 
@@ -183,6 +184,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await replyFrame.waitAndType('@input-body', `This is an automated puppeteer test: thread id does not exist reply`, { delay: 1 });
       await Util.sleep(3); // todo: should wait until actually loaded
       await ComposePageRecipe.sendAndClose(replyFrame);
+    }));
+
+    ava.test('compose[global:compose] - standalone - quote - can load quote from plain text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=16b8e09ebf6c5f54&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
+        '&threadMsgId=16b8e09ebf6c5f54&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E&from=test.ci.compose%40org.flowcrypt.com ' +
+        '&subject=Re%3A%20do%20not%20delete%3A%20plain%20message%20so%20that%20human%20shows%20in%20contacts';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAll(['@action-expand-quoted-text']);
+      expect(await composePage.read('@input-body')).to.not.include('On 2019-06-25 at 09:48, human@flowcrypt.com wrote:');
+      await composePage.click('@action-expand-quoted-text');
+      await composePage.waitTillGone(['@action-expand-quoted-text']);
+      expect(await composePage.read('@input-body')).to.include('On 2019-06-25 at 09:48, human@flowcrypt.com wrote:');
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
