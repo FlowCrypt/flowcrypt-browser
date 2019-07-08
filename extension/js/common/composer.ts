@@ -1919,7 +1919,14 @@ export class Composer {
       this.S.cached('icon_show_prev_msg').show().addClass('progress');
       Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
       this.resizeComposeBox();
-      this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress) => this.setQuoteLoaderProgress(progress + '%'));
+      try {
+        this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress) => this.setQuoteLoaderProgress(progress + '%'));
+      } catch (e) {
+        Catch.reportErr(e);
+        await Ui.modal.error(`The error occured while getting ${method === 'reply' ? 'replied' : 'forwarded'} message. The messasge won't be included in new message.`);
+        this.S.cached('icon_show_prev_msg').remove();
+        return;
+      }
       this.S.cached('icon_show_prev_msg').find('#loader').remove();
       this.S.cached('icon_show_prev_msg').removeClass('progress');
     }
