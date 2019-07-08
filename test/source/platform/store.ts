@@ -2,12 +2,7 @@
 
 'use strict';
 
-export type Contact = {
-  email: string; name: string | null; pubkey: string | null; has_pgp: 0 | 1; searchable: string[];
-  client: string | null; attested: boolean | null; fingerprint: string | null; longid: string | null; keywords: string | null;
-  pending_lookup: number; last_use: number | null;
-  date: number | null; /* todo - should be removed. email provider search seems to return this? */
-};
+import { Contact } from '../core/pgp';
 
 export interface PrvKeyInfo {
   private: string;
@@ -28,6 +23,22 @@ export class Store {
 
   static dbContactGet = async (db: void, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     return [];
+  }
+
+  static decryptedKeyCacheSet = (k: OpenPGP.key.Key) => {
+    // tests don't need this
+  }
+
+  static decryptedKeyCacheGet = (longid: string): OpenPGP.key.Key | undefined => {
+    return undefined; // tests don't need this
+  }
+
+  static armoredKeyCacheSet = (armored: string, k: OpenPGP.key.Key) => {
+    // tests don't need this
+  }
+
+  static armoredKeyCacheGet = (armored: string): OpenPGP.key.Key | undefined => {
+    return undefined; // tests don't need this
   }
 
 }
