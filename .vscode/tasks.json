@@ -31,6 +31,11 @@
       "type": "npm",
       "script": "dev_start_gmail_mock_api",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "release",
+      "problemMatcher": []
     }
   ]
 }

@@ -7,12 +7,12 @@ import { TestVariant } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
-export let defineUnitTests = (testVariant: TestVariant, TestWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export let defineUnitTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
     for (const ut of Config.tests.unit_tests) {
-      ava.test(`[standalone] unit ${ut.name}`, TestWithNewBrowser(async (t, browser) => {
+      ava.test(`[standalone] unit ${ut.name}`, testWithNewBrowser(async (t, browser) => {
         const page = await browser.newPage(t, `chrome/dev/unit_test.htm?f=${ut.f}&args=${encodeURIComponent(JSON.stringify(ut.args))}`);
         await page.waitForSelTestState('ready');
         const content = await page.read('@unit-test-result');
