@@ -1914,7 +1914,7 @@ export class Composer {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private addExpandingButton = async (method: ('reply' | 'forward')) => {
+  private addExpandingButton = async (method: ('reply' | 'forward')): Promise<boolean | undefined> => {
     if (!this.messageToReplyOrForward) {
       this.S.cached('icon_show_prev_msg').show().addClass('progress');
       Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
@@ -1926,7 +1926,13 @@ export class Composer {
           Catch.reportErr(e);
         }
         await Ui.modal.error(`Could not load quoted content, please try again.\n\n${Api.err.eli5(e)}`);
-        return;
+        this.S.cached('icon_show_prev_msg').click(Ui.event.prevent('double', async el => {
+          this.S.cached('icon_show_prev_msg').unbind('click');
+          const success = await this.addExpandingButton(method);
+          if (success) {
+            this.S.cached('icon_show_prev_msg').click();
+          }
+        }));
       }
       this.S.cached('icon_show_prev_msg').find('#loader').remove();
       this.S.cached('icon_show_prev_msg').removeClass('progress');
@@ -1946,7 +1952,9 @@ export class Composer {
         this.msgExpandingHTMLPart = '<br><br>' + this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
         this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
       }
+      return true;
     }
+    return;
   }
 
   static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
