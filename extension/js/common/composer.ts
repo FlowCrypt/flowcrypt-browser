@@ -1926,12 +1926,21 @@ export class Composer {
           Catch.reportErr(e);
         }
         await Ui.modal.error(`Could not load quoted content, please try again.\n\n${Api.err.eli5(e)}`);
-        return;
       }
       this.S.cached('icon_show_prev_msg').find('#loader').remove();
       this.S.cached('icon_show_prev_msg').removeClass('progress');
     }
-    if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {
+    if (!this.messageToReplyOrForward) {
+      this.S.cached('icon_show_prev_msg').click(Ui.event.handle(async el => {
+        this.S.cached('icon_show_prev_msg').unbind('click');
+        await this.addExpandingButton(method);
+        if (this.messageToReplyOrForward) {
+          this.S.cached('icon_show_prev_msg').click();
+        }
+      }));
+      return;
+    }
+    if (this.messageToReplyOrForward.text) {
       if (method === 'forward') {
         this.additionalMsgHeaders['In-Reply-To'] = this.messageToReplyOrForward.headers.inReplyToHeaders;
         this.additionalMsgHeaders.References = this.messageToReplyOrForward.headers.references;
@@ -1940,12 +1949,15 @@ export class Composer {
         await this.appendForwardedMsg(this.messageToReplyOrForward.text);
       } else {
         if (!this.messageToReplyOrForward.headers.from || !this.messageToReplyOrForward.headers.date) {
+          this.S.cached('icon_show_prev_msg').hide();
           return;
         }
         const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
         this.msgExpandingHTMLPart = '<br><br>' + this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
         this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
       }
+    } else {
+      this.S.cached('icon_show_prev_msg').hide();
     }
   }
 
