@@ -21,6 +21,7 @@ import { AttUI, AttLimits } from './ui/att_ui.js';
 import { Settings } from './settings.js';
 import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
+import { DeterminatedMessageHeaders } from '../../chrome/elements/compose.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -48,7 +49,7 @@ interface ComposerAppFunctionsInterface {
   emailProviderDraftDelete: (draftId: string) => Promise<GmailRes.GmailDraftDelete>;
   emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<GmailRes.GmailMsgSend>;
   emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
-  emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | { lastMsgId: string, headers: { 'In-Reply-To': string, 'References': string } }>;
+  emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | DeterminatedMessageHeaders>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
   renderFooterDialog: () => void;
   renderAddPubkeyDialog: (emails: string[]) => void;
@@ -80,8 +81,6 @@ export type ComposerUrlParams = {
 type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
 type MessageToReplyOrForward = {
   headers: {
-    inReplyToHeaders: string,
-    references: string,
     date?: string,
     from?: string
   },
@@ -1184,8 +1183,13 @@ export class Composer {
     this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
-      if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-        this.addExpandingButton(method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
+      const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
+      if (determined) {
+        this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
+        this.additionalMsgHeaders.References = determined.headers.References;
+        if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+          this.addExpandingButton(determined, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
+        }
       }
     } else {
       Xss.sanitizeRender(this.S.cached('prompt'),
@@ -1390,14 +1394,11 @@ export class Composer {
     }
   }
 
-  private getAndDecryptPreviousMessage = async (progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
-    const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables(
-      progressCb ? (progress: number) => progressCb(progress * 0.3) : undefined
-    );
-    if (determined && determined.lastMsgId) {
+  private getAndDecryptPreviousMessage = async (determined: DeterminatedMessageHeaders, progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+    if (determined.lastMsgId) {
       try {
         const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, determined.lastMsgId, 'raw',
-          progressCb ? (progress: number) => progressCb(30 + progress * 0.3) : undefined);
+          progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
         const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
         const readableBlocks = message.blocks
           .filter(b => b.type === 'encryptedMsg' || b.type === 'plainText' || b.type === 'plainHtml');
@@ -1420,15 +1421,7 @@ export class Composer {
             decryptedAndFormatedContent.push(stringContent);
           }
         }
-        return {
-          headers: {
-            inReplyToHeaders: determined.headers['In-Reply-To'],
-            references: determined.headers.References,
-            date: String(message.headers.date),
-            from: message.from
-          },
-          text: decryptedAndFormatedContent.join('\n').trim(),
-        };
+        return { headers: { date: String(message.headers.date), from: message.from }, text: decryptedAndFormatedContent.join('\n').trim(), };
       } catch (e) {
         if (e instanceof FormatError) {
           Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
@@ -1914,13 +1907,13 @@ export class Composer {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private addExpandingButton = async (method: ('reply' | 'forward')) => {
+  private addExpandingButton = async (determined: DeterminatedMessageHeaders, method: ('reply' | 'forward')) => {
     if (!this.messageToReplyOrForward) {
       this.S.cached('icon_show_prev_msg').show().addClass('progress');
       Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
       this.resizeComposeBox();
       try {
-        this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage((progress) => this.setQuoteLoaderProgress(progress + '%'));
+        this.messageToReplyOrForward = await this.getAndDecryptPreviousMessage(determined, (progress) => this.setQuoteLoaderProgress(progress + '%'));
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
@@ -1933,7 +1926,7 @@ export class Composer {
     if (!this.messageToReplyOrForward) {
       this.S.cached('icon_show_prev_msg').click(Ui.event.handle(async el => {
         this.S.cached('icon_show_prev_msg').unbind('click');
-        await this.addExpandingButton(method);
+        await this.addExpandingButton(determined, method);
         if (this.messageToReplyOrForward) {
           this.S.cached('icon_show_prev_msg').click();
         }
@@ -1942,8 +1935,6 @@ export class Composer {
     }
     if (this.messageToReplyOrForward.text) {
       if (method === 'forward') {
-        this.additionalMsgHeaders['In-Reply-To'] = this.messageToReplyOrForward.headers.inReplyToHeaders;
-        this.additionalMsgHeaders.References = this.messageToReplyOrForward.headers.references;
         this.urlParams.subject = 'Fwd: ' + this.urlParams.subject;
         this.S.cached('icon_show_prev_msg').remove();
         await this.appendForwardedMsg(this.messageToReplyOrForward.text);

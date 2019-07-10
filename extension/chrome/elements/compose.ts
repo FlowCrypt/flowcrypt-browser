@@ -17,6 +17,11 @@ import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 
+export type DeterminatedMessageHeaders = {
+  lastMsgId: string,
+  headers: { 'In-Reply-To': string, 'References': string }
+};
+
 Catch.try(async () => {
 
   Ui.event.protect();
@@ -200,7 +205,7 @@ Catch.try(async () => {
         }
       });
     },
-    emailProviderDetermineReplyMsgHeaderVariables: async (progressCb?: ProgressCb) => {
+    emailProviderDetermineReplyMsgHeaderVariables: async (progressCb?: ProgressCb): Promise<DeterminatedMessageHeaders | undefined> => {
       try {
         const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full', progressCb);
         const lastMsg = (thread.messages || []).reverse().find(m => !m.labelIds || !m.labelIds.includes('TRASH'));
