@@ -1,11 +1,12 @@
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
-import { Url, ControllablePage } from '../../browser';
+import { Url, Controllable, BrowserHandle } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { TestVariant } from '../../util';
 import { expect } from "chai";
+import { AvaContext } from '..';
 
 // tslint:disable:no-blank-lines-func
 
@@ -186,17 +187,24 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(replyFrame);
     }));
 
-    ava.test('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
-      const appendUrl = 'isReplyBox=___cu_true___&threadId=16b8e09ebf6c5f54&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
-        '&threadMsgId=16b8e09ebf6c5f54&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E&from=test.ci.compose%40org.flowcrypt.com ' +
-        '&subject=Re%3A%20do%20not%20delete%3A%20plain%20message%20so%20that%20human%20shows%20in%20contacts';
+    ava.test('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
+        '&threadMsgId=16b584ed95837510&to=flowcrypt.compatibility%40gmail.com&from=flowcrypt.compatibility%40gmail.com' +
+        '&subject=Re%3A%20testing%20quotes';
       const messageBeginingText =
         [
-          'On 2019-06-25 at 09:48, human@flowcrypt.com wrote:',
-          '> --',
-          '> Human at FlowCrypt. Try our new Android app'
+          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+          '> This is some message',
+          '>',
+          '> and below is the quote',
+          '>',
+          '> > this is the quote',
+          '> > still the quote',
+          '> > third line',
+          '> >> double quote',
+          '> >> again double quote'
         ].join('\n');
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose', { appendUrl, hasReplyPrompt: true });
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
       await baseQuotingTest(composePage, messageBeginingText);
     }));
@@ -250,6 +258,51 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await baseQuotingTest(composePage, messageBeginingText);
     }));
 
+    ava.test('compose[global:compatibility] - reply - pass phrase dialog - dialog ok', testWithNewBrowser(async (t, browser) => {
+      const messageBeginingText =
+        [
+          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+          '> This is some message',
+          '>',
+          '> and below is the quote',
+          '>',
+          '> > this is the quote',
+          '> > still the quote',
+          '> > third line',
+          '> >> double quote',
+          '> >> again double quote'
+        ].join('\n');
+      const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+      const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
+      // Get Passphrase dialog and write confirm passphrase
+      const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
+      await passPhraseFrame.waitAndType('@input-pass-phrase', pp);
+      await passPhraseFrame.waitAndClick('@action-confirm-pass-phrase-entry');
+      await inboxPage.waitTillGone('@dialog');
+      // Then we can try to run base test
+      await baseQuotingTest(replyFrame, messageBeginingText);
+    }));
+
+    ava.test('compose[global:compatibility] - reply - pass phrase dialog - dialog cancel', testWithNewBrowser(async (t, browser) => {
+      const messageBeginingText =
+        [
+          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+          '> (Skipping previous message quote)'
+        ].join('\n');
+      const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+      const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
+      // Get Passphrase dialog and cancel confirm passphrase
+      const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
+      await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
+      await inboxPage.waitTillGone('@dialog');
+      await replyFrame.waitAll(['@action-expand-quoted-text']);
+      // tslint:disable: no-unused-expression
+      expect(await replyFrame.read('@input-body')).to.be.empty;
+      await baseQuotingTest(replyFrame, messageBeginingText);
+    }));
+
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.test.todo('compose[global:compose] - reply - skip click prompt');
@@ -258,7 +311,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
 };
 
-const baseQuotingTest = async (composePage: ControllablePage, textToInclude: string) => {
+const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {
+  const settingsPage = await browser.newPage(t, Url.extensionSettings());
+  await SettingsPageRecipe.changePassphraseRequirement(settingsPage, passpharase, 'session');
+  // Open Message Page
+  const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`));
+  await inboxPage.waitAll('iframe');
+  // Get Reply Window (Composer) and click on reply button.
+  const replyFrame = await inboxPage.getFrame(['compose.htm']);
+  await replyFrame.waitAndClick('@action-accept-reply-prompt');
+
+  return { inboxPage, replyFrame };
+}
+
+const baseQuotingTest = async (composePage: Controllable, textToInclude: string) => {
   await composePage.waitAll(['@action-expand-quoted-text']);
   expect(await composePage.read('@input-body')).to.not.include(textToInclude);
   await composePage.click('@action-expand-quoted-text');
