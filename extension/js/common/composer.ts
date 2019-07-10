@@ -1376,7 +1376,6 @@ export class Composer {
     if (decryptRes.success) {
       return decryptRes.content.toUtfStr();
     } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {
-      console.log('passphrase needed');
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'quote', longids: decryptRes.longids.needPassphrase });
       const wasPpEntered: boolean = await new Promise(resolve => {
         BrowserMsg.addListener('passphrase_entry', async (response: Bm.PassphraseEntry) => resolve(response.entered));
