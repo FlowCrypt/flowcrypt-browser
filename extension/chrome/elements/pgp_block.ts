@@ -216,8 +216,8 @@ Catch.try(async () => {
     try {
       if (senderEmail) { // we know who sent it
         const [senderContactByEmail] = await Store.dbContactGet(undefined, [senderEmail]);
-        if (senderContactByEmail) {
-          render(`Found the right pubkey ${signerLongid} on keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
+        if (senderContactByEmail && senderContactByEmail.pubkey) {
+          render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
           return;
         } // ---> and user doesn't have pubkey for that email addr
         const { pubkey, pgpClient } = await Keyserver.lookupEmail(acctEmail, senderEmail);
@@ -227,10 +227,8 @@ Catch.try(async () => {
         } // ---> and pubkey found on keyserver by sender email
         const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
         if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
-          render(`Fetched signing pubkey ${signerLongid}, but cannot confirm it\'s the right one. Click to load pubkey and verify anyway.`, async () => {
-            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // TOFU manual import option
-            window.location.reload();
-          });
+          render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
+          return;
         } // ---> and longid it matches signature
         await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
@@ -247,7 +245,7 @@ Catch.try(async () => {
           return;
         }
         const [conflictingContact] = await Store.dbContactGet(undefined, [pubkeyEmail]);
-        if (conflictingContact) {
+        if (conflictingContact && conflictingContact.pubkey) {
           render(`Fetched matching pubkey ${signerLongid} but conflicting key is in local contacts ${conflictingContact.longid} for email ${pubkeyEmail}, cannot verify.`, () => undefined);
           return;
         }

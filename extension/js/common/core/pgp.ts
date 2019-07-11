@@ -5,7 +5,7 @@
 import { VERSION } from './const.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
-import { Str } from './common.js';
+import { Str, Value } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
@@ -48,6 +48,7 @@ export type Contact = {
   client: string | null;
   fingerprint: string | null;
   longid: string | null;
+  longids: string[];
   keywords: string | null;
   pending_lookup: number;
   last_use: number | null;
@@ -600,7 +601,7 @@ export class Pgp {
       return longids;
     },
     cryptoMsgGetSignedBy: async (msg: OpenpgpMsgOrCleartext, keys: SortedKeysForDecrypt) => {
-      keys.signedBy = await Pgp.internal.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []);
+      keys.signedBy = Value.arr.unique(await Pgp.internal.longids(msg.getSigningKeyIds ? msg.getSigningKeyIds() : []));
       if (keys.signedBy.length && typeof Store.dbContactGet === 'function') {
         const verificationContacts = await Store.dbContactGet(undefined, keys.signedBy);
         keys.verificationContacts = verificationContacts.filter(contact => contact && contact.pubkey) as Contact[];
