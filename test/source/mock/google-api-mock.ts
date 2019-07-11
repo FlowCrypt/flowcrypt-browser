@@ -6,10 +6,18 @@ import { Api, HttpClientErr, Status } from './api';
 import { IncomingMessage } from 'http';
 import { OauthMock } from './oauth';
 import { Data, GmailMsg } from './data';
-import Parse, { ParseMsgResult } from '../util/parse';
-import { simpleParser } from "mailparser";
+import { simpleParser, ParsedMail } from "mailparser";
 import { existsSync } from 'fs';
 import * as http from 'http';
+import Parse, { ParseMsgResult } from '../util/parse';
+import { parse } from 'url';
+
+type DraftSaveModel = {
+  message: {
+    raw: string,
+    threadId: string
+  }
+}
 
 const oauth = new OauthMock();
 
@@ -124,7 +132,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
         const id = parseResourceId(req.url!);
         const msgs = new Data(acct).getMessagesByThread(id);
         if (!msgs.length) {
-          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`);
+          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, 404);
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
       }
@@ -133,31 +141,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isPost(req)) {
         if (parsedReq.body && typeof parsedReq.body === 'string') {
-          let parsed: ParseMsgResult;
-          try {
-            parsed = Parse.strictParse(parsedReq.body);
-          } catch (e) {
-            if (e instanceof Error) {
-              throw new HttpClientErr(e.message, 400);
-            }
-            throw new HttpClientErr('Unknown error', 500);
-          }
-          if (parsed.threadId && !new Data(acct).getThreads().find(t => t.id === parsed.threadId)) {
-            throw new HttpClientErr('You are replying with not existing thread id', 4000);
-          }
-          const mimeMsg = await simpleParser(parsed.mimeMsg);
-          if (!mimeMsg.subject) {
-            throw new HttpClientErr('Subject line is required', 400);
-          }
-          if (!mimeMsg.text) {
-            throw new HttpClientErr('Message body is required', 400);
-          }
-          if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !availableEmails.includes(em.address))) {
-            throw new HttpClientErr('You can\'t send a message to unexisting email address(es)');
-          }
-          if (!mimeMsg.from.value.length || mimeMsg.from.value.find(em => em.address !== acct)) {
-            throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
-          }
+          await parseDataAndValidateMimeMsg(acct, parsedReq.body);
           return { id: 'mockfakesend' };
         }
       }
@@ -165,7 +149,14 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
     },
     '/gmail/v1/users/me/drafts': async (parsedReq, req) => {
       if (isPost(req)) {
-        return { id: 'mockfakedraftsave' };
+        const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+        const body = parsedReq.body as DraftSaveModel;
+        if (body && body.message && body.message.raw 
+            && typeof body.message.raw === 'string' )  {
+          const mimeMsg = await Parse.convertBase64ToMimeMsg(body.message.raw);
+          validateMimeMsg(acct, mimeMsg, body.message.threadId)
+          return { id: 'mockfakesend' };
+        }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
@@ -185,3 +176,35 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
   await api.listen(8001);
   return api;
 };
+
+const parseDataAndValidateMimeMsg = async (acct: string, multipartData: string): Promise<ParseMsgResult> => {
+  let parsed: ParseMsgResult;
+  try {
+    parsed = await Parse.strictParse(multipartData);
+  } catch (e) {
+    if (e instanceof Error) {
+      throw new HttpClientErr(e.message, 400);
+    }
+    throw new HttpClientErr('Unknown error', 500);
+  }
+  validateMimeMsg(acct, parsed.mimeMsg, parsed.threadId);
+  return parsed;
+};
+
+const validateMimeMsg = (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
+  if (threadId && !new Data(acct).getThreads().find(t => t.id === threadId)) {
+    throw new HttpClientErr('The thread you are replying to not found', 404);
+  }
+  if (!mimeMsg.subject) {
+    throw new HttpClientErr('Subject line is required', 400);
+  }
+  if (!mimeMsg.text) {
+    throw new HttpClientErr('Message body is required', 400);
+  }
+  if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !availableEmails.includes(em.address))) {
+    throw new HttpClientErr('You can\'t send a message to unexisting email address(es)');
+  }
+  if (!mimeMsg.from.value.length || mimeMsg.from.value.find(em => em.address !== acct)) {
+    throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
+  }
+}
