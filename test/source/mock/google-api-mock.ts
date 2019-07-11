@@ -204,7 +204,11 @@ const validateMimeMsg = (acct: string, mimeMsg: ParsedMail, threadId?: string) =
   if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !availableEmails.includes(em.address))) {
     throw new HttpClientErr('You can\'t send a message to unexisting email address(es)');
   }
-  if (!mimeMsg.from.value.length || mimeMsg.from.value.find(em => em.address !== acct)) {
+  const aliases = [acct];
+  if (acct === 'flowcrypt.compatibility@gmail.com') {
+    aliases.push('flowcryptcompatibility@gmail.com')
+  }
+  if (!mimeMsg.from.value.length || mimeMsg.from.value.find(em => !aliases.includes(em.address))) {
     throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
   }
 }
