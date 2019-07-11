@@ -154,7 +154,9 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
         if (body && body.message && body.message.raw 
             && typeof body.message.raw === 'string' )  {
           const mimeMsg = await Parse.convertBase64ToMimeMsg(body.message.raw);
-          validateMimeMsg(acct, mimeMsg, body.message.threadId)
+          if (body.message.threadId && !new Data(acct).getThreads().find(t => t.id === body.message.threadId)) {
+            throw new HttpClientErr('The thread you are replying to not found', 404);
+          }
           return { id: 'mockfakesend' };
         }
       }
