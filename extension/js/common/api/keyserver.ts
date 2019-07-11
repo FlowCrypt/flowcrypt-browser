@@ -5,16 +5,9 @@
 import { Rules } from '../rules.js';
 import { Attester } from './attester.js';
 import { Sks } from './sks.js';
-import { Dict } from '../core/common.js';
 
 export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
 export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
-
-export namespace AttesterRes { // responses
-  export type AttTestWelcome = { sent: boolean };
-  export type AttInitialLegacySugmit = { saved: boolean };
-  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
-}
 
 /**
  * Look up public keys.

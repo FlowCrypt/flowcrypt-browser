@@ -22,12 +22,10 @@ export class Sks extends Api {
 
   public static lookupEmail = async (server: string, email: string): Promise<PubkeySearchResult> => {
     const index = await Sks.get(server, `pks/lookup?search=${encodeURIComponent(email)}&fingerprint=on&exact=on&options=mr&op=index`);
-    console.log(index);
     if (!index) {
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
     }
     const match = index.match(/^pub:[A-F0-9]{24}([A-F0-9]{16}):[0-9:]+:$/m); // in particular cannot end with :r, meaning revoked
-    console.log(match);
     if (!match) {
       return { pubkey: null, pgpClient: null }; // tslint:disable-line:no-null-keyword
     }

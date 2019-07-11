@@ -4,7 +4,7 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value } from '../../../js/common/core/common.js';
+import { Value, Dict } from '../../../js/common/core/common.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -13,7 +13,8 @@ import { Attester } from '../../../js/common/api/attester.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { AttesterRes } from '../../../js/common/api/keyserver.js';
+
+type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
 Catch.try(async () => {
 
@@ -25,8 +26,8 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.summary', '<br><br><br><br>Loading from keyserver<br><br>' + Ui.spinner('green'));
 
-  const diagnoseKeyserverPubkeys = async (acctEmail: string): Promise<AttesterRes.AttKeyserverDiagnosis> => {
-    const diagnosis: AttesterRes.AttKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
+  const diagnoseKeyserverPubkeys = async (acctEmail: string): Promise<AttKeyserverDiagnosis> => {
+    const diagnosis: AttKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
     const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
     const storedKeys = await Store.keysGet(acctEmail);
     const storedKeysLongids = storedKeys.map(ki => ki.longid);
@@ -48,7 +49,7 @@ Catch.try(async () => {
     return diagnosis;
   };
 
-  const renderDiagnosis = (diagnosis: AttesterRes.AttKeyserverDiagnosis) => {
+  const renderDiagnosis = (diagnosis: AttKeyserverDiagnosis) => {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
       let note, action, remove, color;

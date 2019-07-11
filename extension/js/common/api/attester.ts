@@ -4,7 +4,7 @@
 
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
-import { PubkeySearchResult, PgpClient, AttesterRes } from './keyserver.js';
+import { PubkeySearchResult, PgpClient } from './keyserver.js';
 
 export class Attester extends Api {
 
@@ -54,11 +54,11 @@ export class Attester extends Api {
     return r.responseText;
   }
 
-  public static initialLegacySubmit = (email: string, pubkey: string): Promise<AttesterRes.AttInitialLegacySugmit> => {
+  public static initialLegacySubmit = (email: string, pubkey: string): Promise<{ saved: boolean }> => {
     return Attester.jsonCall('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   }
 
-  public static testWelcome = (email: string, pubkey: string): Promise<AttesterRes.AttTestWelcome> => {
+  public static testWelcome = (email: string, pubkey: string): Promise<{ sent: boolean }> => {
     return Attester.jsonCall('test/welcome', { email, pubkey });
   }
 
