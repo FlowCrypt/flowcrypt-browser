@@ -16,6 +16,7 @@ import { SendableMsg } from '../../js/common/api/email_provider_api.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { requireOpenpgp } from '../../js/common/platform/require.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -23,6 +24,8 @@ export type DeterminedMsgHeaders = {
 };
 
 Catch.try(async () => {
+
+  const openpgp = requireOpenpgp();
 
   Ui.event.protect();
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
@@ -269,5 +272,7 @@ Catch.try(async () => {
   if (!isReplyBox) { // don't want to deal with resizing the frame
     await Assert.abortAndRenderErrOnUnprotectedKey(acctEmail);
   }
+
+  openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
 
 })();
