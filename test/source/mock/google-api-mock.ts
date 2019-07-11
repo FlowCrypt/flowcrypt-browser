@@ -18,6 +18,7 @@ const isPost = (r: IncomingMessage) => r.method === 'POST';
 const isPut = (r: IncomingMessage) => r.method === 'PUT';
 const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
+const availableEmails: Array<string> = ['human+manualcopypgp@flowcrypt.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com'];
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -151,7 +152,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
           if (!mimeMsg.text) {
             throw new HttpClientErr('Message body is required', 400);
           }
-          if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !existsSync(`/test/samples/${em.address.replace(/[^a-z0-9]+/g, '')}.json`))) {
+          if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !availableEmails.includes(em.address))) {
             throw new HttpClientErr('You can\'t send a message to unexisting email address(es)');
           }
           if (!mimeMsg.from.value.length || mimeMsg.from.value.find(em => em.address !== acct)) {
