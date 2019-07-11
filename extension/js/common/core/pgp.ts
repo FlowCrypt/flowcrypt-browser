@@ -756,15 +756,12 @@ export class PgpMsg {
     return await openpgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
 
-  static verify = async (message: OpenpgpMsgOrCleartext, keysForVerification: OpenPGP.key.Key[], optionalContact?: Contact): Promise<VerifyRes> => {
-    const sig: VerifyRes = { contact: optionalContact, match: null }; // tslint:disable-line:no-null-keyword
+  static verify = async (msgOrVerResults: OpenpgpMsgOrCleartext | OpenPGP.message.Verification[], pubs: OpenPGP.key.Key[], contact?: Contact): Promise<VerifyRes> => {
+    const sig: VerifyRes = { contact, match: null }; // tslint:disable-line:no-null-keyword
     try {
-      const verifyResults = await message.verify(keysForVerification);
-      if (message instanceof openpgp.message.Message) {
-        // read internal stream so that verification doesn't hang
-        // https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-505661474
-        await openpgp.stream.readToEnd(message.getLiteralData()!);
-      }
+      // While this looks like bad method API design, it's here to ensure execution order when 1) reading data, 2) verifying, 3) processing signatures
+      // Else it will hang trying to read a stream: https://github.com/openpgpjs/openpgpjs/issues/916#issuecomment-510620625 
+      const verifyResults = Array.isArray(msgOrVerResults) ? msgOrVerResults : await msgOrVerResults.verify(pubs);
       for (const verifyRes of verifyResults) {
         // todo - a valid signature is a valid signature, and should be surfaced. Currently, if any of the signatures are not valid, it's showing all as invalid
         // .. as it is now this could allow an attacker to append bogus signatures to validly signed messages, making otherwise correct messages seem incorrect
@@ -827,8 +824,10 @@ export class PgpMsg {
       const passwords = msgPwd ? [msgPwd] : undefined;
       const privateKeys = keys.prvForDecryptDecrypted.map(ki => ki.decrypted!);
       const decrypted = await (prepared.message as OpenPGP.message.Message).decrypt(privateKeys, passwords, undefined, false);
-      const content = new Buf(await openpgp.stream.readToEnd(decrypted.getLiteralData()!));
-      const signature = keys.signedBy.length ? await PgpMsg.verify(decrypted, keys.forVerification, keys.verificationContacts[0]) : undefined;
+      await Pgp.internal.cryptoMsgGetSignedBy(decrypted, keys); // we can only figure out who signed the msg once it's decrypted
+      const verifyResults = keys.signedBy.length ? await decrypted.verify(keys.forVerification) : undefined; // verify first to prevent stream hang
+      const content = new Buf(await openpgp.stream.readToEnd(decrypted.getLiteralData()!)); // read content second to prevent stream hang
+      const signature = verifyResults ? await PgpMsg.verify(verifyResults, [], keys.verificationContacts[0]) : undefined; // evaluate verify results third to prevent stream hang
       if (!prepared.isCleartext && (prepared.message as OpenPGP.message.Message).packets.filterByTag(openpgp.enums.packet.symmetricallyEncrypted).length) {
         const noMdc = 'Security threat!\n\nMessage is missing integrity checks (MDC). The sender should update their outdated software.\n\nDisplay the message at your own risk.';
         return { success: false, content, error: { type: DecryptErrTypes.noMdc, message: noMdc }, message: prepared.message, longids, isEncrypted };
