@@ -6,7 +6,6 @@ import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
 import { Api, AjaxError } from '../../common/api/api.js';
-import { Attester } from '../../common/api/attester.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
 import { Ui, Browser } from '../../common/browser.js';
@@ -16,6 +15,7 @@ import { WebmailElementReplacer } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Google, GmailRes } from '../../common/api/google.js';
 import { Xss } from '../../common/platform/xss.js';
+import { Keyserver } from '../../common/api/keyserver.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -500,7 +500,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const { pubkey } = await Attester.lookupEmail(email);
+                  const { pubkey } = await Keyserver.lookupEmail(this.acctEmail, email);
                   this.recipientHasPgpCache[email] = Boolean(pubkey); // true or false
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;

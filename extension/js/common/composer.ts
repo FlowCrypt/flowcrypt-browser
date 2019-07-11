@@ -14,7 +14,6 @@ import { Ui, BrowserEventErrHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth, GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
-import { PubkeySearchResult, Attester } from './api/attester.js';
 import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
 import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js';
 import { AttUI, AttLimits } from './ui/att_ui.js';
@@ -22,6 +21,7 @@ import { Settings } from './settings.js';
 import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { DeterminedMsgHeaders } from '../../chrome/elements/compose.js';
+import { PubkeySearchResult, Keyserver } from './api/keyserver.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -930,7 +930,7 @@ export class Composer {
     }
   }
 
-  private checkAttesterForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
+  private checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
     try {
       if (!contact.pubkey || !contact.longid) {
         return;
@@ -941,7 +941,7 @@ export class Composer {
         await this.app.storageContactUpdate(contact.email, { pubkey_last_sig: lastSig });
       }
       if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
-        const { pubkey: fetchedPubkey } = await Attester.lookupLongid(contact.longid);
+        const { pubkey: fetchedPubkey } = await Keyserver.lookupLongid(this.urlParams.acctEmail, contact.longid);
         if (fetchedPubkey) {
           const fetchedLastSig = await Pgp.key.lastSig(await Pgp.key.read(fetchedPubkey));
           if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
@@ -967,12 +967,12 @@ export class Composer {
       // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
       // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
       //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
-      this.checkAttesterForNewerVersionOfKnownPubkeyIfNeeded(dbContact).catch(Catch.reportErr);
+      this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(dbContact).catch(Catch.reportErr);
       return dbContact;
     } else {
       try {
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
-        const lookupResult = await Attester.lookupEmail(email);
+        const lookupResult = await Keyserver.lookupEmail(this.urlParams.acctEmail, email);
         this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
         if (lookupResult && email) {
           if (lookupResult.pubkey) {
