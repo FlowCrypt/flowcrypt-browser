@@ -6,6 +6,9 @@ import { Api, HttpClientErr, Status } from './api';
 import { IncomingMessage } from 'http';
 import { OauthMock } from './oauth';
 import { Data, GmailMsg } from './data';
+import Parse, { ParseMsgResult } from '../util/parse';
+import { simpleParser } from "mailparser";
+import { existsSync } from 'fs';
 import * as http from 'http';
 
 const oauth = new OauthMock();
@@ -124,11 +127,40 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
       }
-      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/upload/gmail/v1/users/me/messages/send?uploadType=multipart': async (parsedReq, req) => {
-      // todo - parse msg and add to Data store, as if sent
-      return { id: 'mockfakesend' };
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isPost(req)) {
+        if (parsedReq.body && typeof parsedReq.body === 'string') {
+          let parsed: ParseMsgResult;
+          try {
+            parsed = Parse.strictParse(parsedReq.body);
+          } catch (e) {
+            if (e instanceof Error) {
+              throw new HttpClientErr(e.message, 400);
+            }
+            throw new HttpClientErr('Unknown error', 500);
+          }
+          if (parsed.threadId && !new Data(acct).getThreads().find(t => t.id === parsed.threadId)) {
+            throw new HttpClientErr('You are replying with not existing thread id', 4000);
+          }
+          const mimeMsg = await simpleParser(parsed.mimeMsg);
+          if (!mimeMsg.subject) {
+            throw new HttpClientErr('Subject line is required', 400);
+          }
+          if (!mimeMsg.text) {
+            throw new HttpClientErr('Message body is required', 400);
+          }
+          if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !existsSync(`/test/samples/${em.address.replace(/[^a-z0-9]+/g, '')}.json`))) {
+            throw new HttpClientErr('You can\'t send a message to unexisting email address(es)');
+          }
+          if (!mimeMsg.from.value.length || mimeMsg.from.value.find(em => em.address !== acct)) {
+            throw new HttpClientErr('You can\'t send a message from unexisting email address(es)');
+          }
+          return { id: 'mockfakesend' };
+        }
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/gmail/v1/users/me/drafts': async (parsedReq, req) => {
       if (isPost(req)) {
