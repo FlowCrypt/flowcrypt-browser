@@ -12,7 +12,7 @@ import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { GmailRes } from '../api/google.js';
-import { PgpClient } from '../api/attester.js';
+import { PgpClient } from '../api/keyserver.js';
 
 let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;

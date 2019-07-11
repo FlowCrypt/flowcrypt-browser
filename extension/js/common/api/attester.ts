@@ -4,15 +4,7 @@
 
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
-
-export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
-export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
-
-export namespace AttesterRes { // responses
-  export type AttTestWelcome = { sent: boolean };
-  export type AttInitialLegacySugmit = { saved: boolean };
-  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
-}
+import { PubkeySearchResult, PgpClient, AttesterRes } from './keyserver.js';
 
 export class Attester extends Api {
 
@@ -29,7 +21,7 @@ export class Attester extends Api {
       const r = await Attester.pubCall(`pub/${email}`);
       // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back
       // because it had to go through background scripts, and objects are serialized when this happens
-      // the fix would be to send back headers from bg along with response text, and parse it here
+      // the proper fix would be to send back headers from bg along with response text, and parse it here
       if (!r.getResponseHeader) {
         return { pubkey: r.responseText, pgpClient: null }; // tslint:disable-line:no-null-keyword
       }

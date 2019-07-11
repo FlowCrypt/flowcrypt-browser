@@ -11,11 +11,12 @@ import { Pgp } from '../../../js/common/core/pgp.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
 import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
-import { Attester } from '../../../js/common/api/attester.js';
 import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Rules } from '../../../js/common/rules.js';
+import { Keyserver } from '../../../js/common/api/keyserver.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
@@ -24,6 +25,7 @@ Catch.try(async () => {
   const tabId = await BrowserMsg.requiredTabId();
 
   const factory = new XssSafeFactory(acctEmail, tabId, undefined, undefined, { compact: true });
+  const rules = await Rules.newInstance(acctEmail);
 
   const backBtn = '<a href="#" id="page_back_button" data-test="action-back-to-contact-list">back</a>';
   const space = '&nbsp;&nbsp;&nbsp;&nbsp;';
@@ -109,11 +111,11 @@ Catch.try(async () => {
       const normalizedLongid = KeyImportUi.normalizeLongId(value);
       let pubkey: string;
       if (normalizedLongid) {
-        const data = await Attester.lookupLongid(normalizedLongid);
+        const data = await Keyserver.lookupLongid(acctEmail, normalizedLongid);
         if (data.pubkey) {
           pubkey = data.pubkey;
         } else {
-          await Ui.modal.warning('Can\'t lookup your fingerprint');
+          await Ui.modal.warning('Could not find any Public Key in our public records that matches this fingerprint or longid');
           return;
         }
       } else {
@@ -136,23 +138,25 @@ Catch.try(async () => {
 
   const renderContactList = async () => {
     const contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
-
-    const exportAllHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;';
-    Xss.sanitizeRender('.line.actions', exportAllHtml).find('.action_export_all').click(Ui.event.prevent('double', (self) => {
+    let lineActionsHtml = '&nbsp;&nbsp;<a href="#" class="action_export_all">export all</a>&nbsp;&nbsp;' +
+      '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
+    if (rules.canUseCustomKeyserver() && rules.getCustomKeyserver()) {
+      lineActionsHtml += `&nbsp;&nbsp;<br><br><b class="bad">using custom keyserver: ${Xss.escape(rules.getCustomKeyserver()!)}</b>`;
+    } else {
+      lineActionsHtml += '&nbsp;&nbsp;<a href="https://flowcrypt.com/docs/technical/keyserver-integration.html" target="_blank">use custom keyserver</a>&nbsp;&nbsp;';
+    }
+    const actionsLine = Xss.sanitizeRender('.line.actions', lineActionsHtml);
+    actionsLine.find('.action_export_all').click(Ui.event.prevent('double', (self) => {
       const allArmoredPublicKeys = contacts.map(c => (c.pubkey || '').trim()).join('\n');
       const exportFile = new Att({ name: 'public-keys-export.asc', type: 'application/pgp-keys', data: Buf.fromUtfStr(allArmoredPublicKeys) });
       Browser.saveToDownloads(exportFile, Catch.browser().name === 'firefox' ? $('.line.actions') : undefined);
     }));
-
-    const importPublicKeysHtml = '&nbsp;&nbsp;<a href="#" class="action_view_bulk_import">import public keys</a>&nbsp;&nbsp;';
-    Xss.sanitizeAppend('.line.actions', importPublicKeysHtml).find('.action_view_bulk_import').off().click(Ui.event.prevent('double', renderBulkImportPage));
-
+    actionsLine.find('.action_view_bulk_import').off().click(Ui.event.prevent('double', renderBulkImportPage));
     $('table#emails').text('');
     $('div.hide_when_rendering_subpage').css('display', 'block');
     $('table.hide_when_rendering_subpage').css('display', 'table');
     $('h1').text('Contacts and their Public Keys');
     $('#view_contact, #edit_contact, #bulk_import').css('display', 'none');
-
     let tableContents = '';
     for (const c of contacts) {
       const e = Xss.escape(c.email);
@@ -162,13 +166,11 @@ Catch.try(async () => {
       tableContents += `<tr email="${e}"><td>${e}</td><td>${show}</td><td>${change}</td><td>${remove}</td></tr>`;
     }
     Xss.sanitizeReplace('table#emails', `<table id="emails" class="hide_when_rendering_subpage">${tableContents}</table>`);
-
     $('a.action_show').off().click(Ui.event.prevent('double', renderViewPublicKey));
     $('a.action_change').off().click(Ui.event.prevent('double', renderChangePublicKey));
     $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent('double', actionSaveEditedPublicKey));
     $('#bulk_import .action_process').off().click(Ui.event.prevent('double', actionProcessBulkImportTextInput));
     $('a.action_remove').off().click(Ui.event.prevent('double', actionRemovePublicKey));
-
   };
 
   await renderContactList();
