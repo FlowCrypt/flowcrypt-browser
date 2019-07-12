@@ -18,7 +18,7 @@ const isPost = (r: IncomingMessage) => r.method === 'POST';
 const isPut = (r: IncomingMessage) => r.method === 'PUT';
 const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
-const availableEmails: Array<string> = ['human+manualcopypgp@flowcrypt.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com'];
+const allowedRecipients: Array<string> = ['human+manualcopypgp@flowcrypt.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com'];
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -124,7 +124,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
         const id = parseResourceId(req.url!);
         const msgs = new Data(acct).getMessagesByThread(id);
         if (!msgs.length) {
-          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, 404);
+          throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, 400);
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
       }
@@ -200,7 +200,7 @@ const validateMimeMsg = (acct: string, mimeMsg: ParsedMail, threadId?: string) =
   if (!mimeMsg.text) {
     throw new HttpClientErr('Message body is required', 400);
   }
-  if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !availableEmails.includes(em.address))) {
+  if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !allowedRecipients.includes(em.address))) {
     throw new HttpClientErr('You can\'t send a message to unexisting email address(es)');
   }
   const aliases = [acct];
