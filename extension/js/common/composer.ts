@@ -1951,17 +1951,10 @@ export class Composer {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
-    const contacts = (await this.app.storageContactGet(msg.to)).filter(contact => {
-      return contact && contact.name;
-    }) as Array<Contact>; // the filter methods filters not null/undefiend contacts
-    msg.to = msg.to.map(email => {
-      const contact = contacts.find(c => c.email === email);
-      if (contact) {
-        return `${contact.name} <${email}>`;
-      } else {
-        return email;
-      }
-    });
+    msg.to = await Promise.all(msg.to.map(async email => {
+      const [contact] = await this.app.storageContactGet([email]);
+      return contact && contact.name ? `${contact.name} <${email}>` : email;
+    }));
     const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
     if (name) {
       msg.from = `${name} <${this.urlParams.acctEmail}>`;
