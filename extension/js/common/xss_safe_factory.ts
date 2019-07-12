@@ -289,8 +289,10 @@ export class XssSafeFactory {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
     } else if (block.type === 'cryptupVerification') {
       return factory.embeddedVerification(block.content.toString());
+    } else if (block.type === 'encryptedAtt') {
+      return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), true) : '[missing encrypted attachment details]';
     } else {
-      Catch.report(`dunno how to process block type: ${block.type}`);
+      Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
       return '';
     }
   }
