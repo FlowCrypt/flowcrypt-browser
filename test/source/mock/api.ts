@@ -54,6 +54,7 @@ export class Api<REQ, RES> {
           console.error(`url:${request.method}:${request.url}`, e);
           response.statusCode = Status.SERVER_ERROR;
         }
+        response.setHeader('Access-Control-Allow-Origin', '*');
         response.setHeader('content-type', 'application/json');
         const formattedErr = this.fmtErr(e);
         response.end(formattedErr);
