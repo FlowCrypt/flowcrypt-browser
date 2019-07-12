@@ -904,6 +904,7 @@ export class Composer {
     if (this.S.cached('icon_pubkey').is('.active')) {
       msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.urlParams.acctEmail)));
     }
+    await this.addNamesToMsg(msg);
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
@@ -1946,6 +1947,24 @@ export class Composer {
       }
     } else {
       this.S.cached('icon_show_prev_msg').hide();
+    }
+  }
+
+  private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
+    const contacts = (await this.app.storageContactGet(msg.to)).filter(contact => {
+      return contact && contact.name;
+    }) as Array<Contact>; // the filter methods filters not null/undefiend contacts
+    msg.to = msg.to.map(email => {
+      const contact = contacts.find(c => c.email === email);
+      if (contact) {
+        return `${contact.name} <${email}>`;
+      } else {
+        return email;
+      }
+    });
+    const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
+    if (name) {
+      msg.from = `${name} <${this.urlParams.acctEmail}>`;
     }
   }
 
