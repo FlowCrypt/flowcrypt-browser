@@ -18,6 +18,7 @@ import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Keyserver } from '../../js/common/api/keyserver.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -161,7 +162,7 @@ Catch.try(async () => {
   const renderSetupDialog = async (): Promise<void> => {
     let keyserverRes, fetchedKeys;
     try {
-      keyserverRes = await Attester.lookupEmail(acctEmail);
+      keyserverRes = await Keyserver.lookupEmail(acctEmail, acctEmail);
     } catch (e) {
       return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckIfAcctUsesEncryption, () => renderSetupDialog());
     }

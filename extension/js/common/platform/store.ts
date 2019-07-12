@@ -12,7 +12,9 @@ import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
 import { GmailRes } from '../api/google.js';
-import { PgpClient } from '../api/attester.js';
+import { PgpClient } from '../api/keyserver.js';
+
+// tslint:disable:no-null-keyword
 
 let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;
@@ -434,7 +436,7 @@ export class Store {
 
   static authInfo = async (): Promise<StoredAuthInfo> => {
     const storage = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid']);
-    return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null }; // tslint:disable-line:no-null-keyword
+    return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null };
   }
 
   static subscription = async (): Promise<Subscription> => {
@@ -484,18 +486,22 @@ export class Store {
   static dbOpen = (): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
       let openDbReq: IDBOpenDBRequest;
-      openDbReq = indexedDB.open('cryptup', 2);
+      openDbReq = indexedDB.open('cryptup', 3);
       openDbReq.onupgradeneeded = (event) => {
         let contacts: IDBObjectStore;
         if (event.oldVersion < 1) {
-          contacts = openDbReq.result.createObjectStore('contacts', { keyPath: 'email', }); // tslint:disable-line:no-unsafe-any
-          contacts.createIndex('search', 'searchable', { multiEntry: true, });
+          contacts = openDbReq.result.createObjectStore('contacts', { keyPath: 'email' }); // tslint:disable-line:no-unsafe-any
+          contacts.createIndex('search', 'searchable', { multiEntry: true });
           contacts.createIndex('index_has_pgp', 'has_pgp');
           contacts.createIndex('index_pending_lookup', 'pending_lookup');
         }
         if (event.oldVersion < 2) {
           contacts = openDbReq.transaction!.objectStore('contacts');
-          contacts.createIndex('index_longid', 'longid');
+          contacts.createIndex('index_longid', 'longid'); // longid of the first public key packet, no subkeys
+        }
+        if (event.oldVersion < 3) {
+          contacts = openDbReq.transaction!.objectStore('contacts');
+          contacts.createIndex('index_longids', 'longids', { multiEntry: true }); // longids of all public key packets in armored pubkey
         }
       };
       openDbReq.onsuccess = () => resolve(openDbReq.result as IDBDatabase);
@@ -533,7 +539,7 @@ export class Store {
     return index;
   }
 
-  private static storablePgpClient = (rawPgpClient: 'pgp' | 'cryptup' | PgpClient | null): 'pgp' | 'cryptup' | null => { // tslint:disable-line:no-null-keyword
+  private static storablePgpClient = (rawPgpClient: 'pgp' | 'cryptup' | PgpClient | null): 'pgp' | 'cryptup' | null => {
     if (rawPgpClient === 'flowcrypt') {
       return 'cryptup';
     } else if (rawPgpClient === 'pgp-other') {
@@ -544,34 +550,55 @@ export class Store {
   }
 
   static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
-    // @ts-ignore
-    const haveOpenpgp = typeof openpgp !== 'undefined';
-    // if openpgp is mising, relay op through background process
-    if (!haveOpenpgp) {
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }] }) as Contact;
+    // @ts-ignore - if openpgp is mising, relay op through background process
+    if (typeof openpgp === 'undefined') {
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }] }) as Contact;
     } else {
-      const fingerprint = pubkey ? await Pgp.key.fingerprint(pubkey) : undefined;
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
         throw new Error(`Cannot save contact because email is not valid: ${email}`);
       }
-      if (!lastSig && pubkey) {
-        lastSig = await Pgp.key.lastSig(await Pgp.key.read(pubkey));
+      if (!pubkey) {
+        return {
+          email,
+          name: name || null,
+          pending_lookup: (pendingLookup ? 1 : 0),
+          pubkey: null,
+          has_pgp: 0, // number because we use it for sorting
+          searchable: Store.dbCreateSearchIndexList(email, name || null, false),
+          client: null,
+          fingerprint: null,
+          longid: null,
+          longids: [],
+          keywords: null,
+          last_use: lastUse || null,
+          pubkey_last_sig: null,
+          pubkey_last_check: null,
+        };
+      }
+      const k = await Pgp.key.read(pubkey);
+      if (!k) {
+        throw new Error(`Could not read pubkey as valid OpenPGP key for: ${email}`);
+      }
+      const keyDetails = await Pgp.key.details(k);
+      if (!lastSig) {
+        lastSig = await Pgp.key.lastSig(k);
       }
       return {
         email: validEmail,
-        name: name || null, // tslint:disable-line:no-null-keyword
-        pubkey: pubkey || null, // tslint:disable-line:no-null-keyword
-        has_pgp: pubkey ? 1 : 0, // number because we use it for sorting
-        searchable: Store.dbCreateSearchIndexList(email, name || null, Boolean(pubkey)), // tslint:disable-line:no-null-keyword
-        client: Store.storablePgpClient(pubkey ? (client || 'pgp') : null), // tslint:disable-line:no-null-keyword
-        fingerprint: fingerprint || null, // tslint:disable-line:no-null-keyword
-        longid: fingerprint ? (await Pgp.key.longid(fingerprint) || null) : null, // tslint:disable-line:no-null-keyword
-        keywords: fingerprint ? mnemonic(await Pgp.key.longid(fingerprint) || '') || null : null, // tslint:disable-line:no-null-keyword
-        pending_lookup: pubkey ? 0 : (pendingLookup ? 1 : 0),
-        last_use: lastUse || null, // tslint:disable-line:no-null-keyword
-        pubkey_last_sig: lastSig || null, // tslint:disable-line:no-null-keyword
-        pubkey_last_check: lastCheck || null, // tslint:disable-line:no-null-keyword
+        name: name || null,
+        pubkey: keyDetails.public,
+        has_pgp: 1, // number because we use it for sorting
+        searchable: Store.dbCreateSearchIndexList(email, name || null, true),
+        client: Store.storablePgpClient(client || 'pgp'),
+        fingerprint: keyDetails.ids[0].fingerprint,
+        longid: keyDetails.ids[0].longid,
+        longids: keyDetails.ids.map(id => id.longid),
+        keywords: keyDetails.ids[0].keywords,
+        pending_lookup: 0,
+        last_use: lastUse || null,
+        pubkey_last_sig: lastSig || null,
+        pubkey_last_check: lastCheck || null,
       };
     }
   }
@@ -634,18 +661,23 @@ export class Store {
   static dbContactGet = (db: undefined | IDBDatabase, emailOrLongid: string[]): Promise<(Contact | undefined)[]> => {
     return new Promise(async (resolve, reject) => {
       if (!db) { // relay op through background process
-        // todo - currently will silently swallow errors
-        BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(Catch.reportErr);
+        BrowserMsg.send.bg.await.db({ f: 'dbContactGet', args: [emailOrLongid] }).then(resolve).catch(reject);
       } else {
         if (emailOrLongid.length === 1) {
-          let tx: IDBRequest;
-          if (!(/^[A-F0-9]{16}$/g).test(emailOrLongid[0])) { // email
-            tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(emailOrLongid[0]);
-          } else { // longid
-            tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid[0]);
+          // contacts imported before August 2019 may have only primary longid recorded, in index_longid (string)
+          // contacts imported after August 2019 have both index_longid (string) and index_longids (string[] containing all subkeys)
+          // below we search contact by first trying to only search by primary longid
+          // (or by email - such searches are not affected by longid indexing)
+          const contact = await Store.dbContactInternalGetOne(db, emailOrLongid[0], false);
+          if (contact || !/^[A-F0-9]{16}$/.test(emailOrLongid[0])) {
+            // if we found something, return it
+            // or if we were searching by email, return found contact or nothing
+            resolve([contact]);
+          } else {
+            // not found any key by primary longid, and searching by longid -> search by any subkey longid
+            // it may not find pubkeys imported before August 2019, re-importing such pubkeys will make them findable
+            resolve([await Store.dbContactInternalGetOne(db, emailOrLongid[0], true)]);
           }
-          tx.onsuccess = Catch.try(() => resolve([tx.result !== undefined ? tx.result : undefined])); // tslint:disable-line:no-unsafe-any
-          tx.onerror = () => reject(Store.errCategorize(tx.error!)); // todo - added ! after ts3 upgrade - investigate
         } else {
           const results: (Contact | undefined)[] = [];
           for (const singleEmailOrLongid of emailOrLongid) {
@@ -655,6 +687,21 @@ export class Store {
           resolve(results);
         }
       }
+    });
+  }
+
+  private static dbContactInternalGetOne = (db: IDBDatabase, emailOrLongid: string, searchSubkeyLongids: boolean): Promise<Contact | undefined> => {
+    return new Promise(async (resolve, reject) => {
+      let tx: IDBRequest;
+      if (!/^[A-F0-9]{16}$/.test(emailOrLongid)) { // email
+        tx = db.transaction('contacts', 'readonly').objectStore('contacts').get(emailOrLongid);
+      } else if (searchSubkeyLongids) { // search all longids
+        tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longids').get(emailOrLongid);
+      } else { // search primary longid
+        tx = db.transaction('contacts', 'readonly').objectStore('contacts').index('index_longid').get(emailOrLongid);
+      }
+      tx.onsuccess = Catch.try(() => resolve(tx.result)); // tslint:disable-line:no-unsafe-any
+      tx.onerror = () => reject(Store.errCategorize(tx.error || new Error('Unknown db error')));
     });
   }
 

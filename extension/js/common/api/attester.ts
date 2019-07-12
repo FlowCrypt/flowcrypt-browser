@@ -4,15 +4,7 @@
 
 import { Api, ReqMethod } from './api.js';
 import { Dict, Str } from '../core/common.js';
-
-export type PgpClient = 'flowcrypt' | 'pgp-other' | null;
-export type PubkeySearchResult = { pubkey: string | null; pgpClient: PgpClient };
-
-export namespace AttesterRes { // responses
-  export type AttTestWelcome = { sent: boolean };
-  export type AttInitialLegacySugmit = { saved: boolean };
-  export type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
-}
+import { PubkeySearchResult, PgpClient } from './keyserver.js';
 
 export class Attester extends Api {
 
@@ -29,7 +21,7 @@ export class Attester extends Api {
       const r = await Attester.pubCall(`pub/${email}`);
       // when requested from the content script, `getResponseHeader` will be missing because it's not a real XMLHttpRequest we are getting back
       // because it had to go through background scripts, and objects are serialized when this happens
-      // the fix would be to send back headers from bg along with response text, and parse it here
+      // the proper fix would be to send back headers from bg along with response text, and parse it here
       if (!r.getResponseHeader) {
         return { pubkey: r.responseText, pgpClient: null }; // tslint:disable-line:no-null-keyword
       }
@@ -62,11 +54,11 @@ export class Attester extends Api {
     return r.responseText;
   }
 
-  public static initialLegacySubmit = (email: string, pubkey: string): Promise<AttesterRes.AttInitialLegacySugmit> => {
+  public static initialLegacySubmit = (email: string, pubkey: string): Promise<{ saved: boolean }> => {
     return Attester.jsonCall('initial/legacy_submit', { email: Str.parseEmail(email).email, pubkey: pubkey.trim() });
   }
 
-  public static testWelcome = (email: string, pubkey: string): Promise<AttesterRes.AttTestWelcome> => {
+  public static testWelcome = (email: string, pubkey: string): Promise<{ sent: boolean }> => {
     return Attester.jsonCall('test/welcome', { email, pubkey });
   }
 

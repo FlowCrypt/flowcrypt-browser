@@ -91,6 +91,13 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     }));
 
+    ava.test('[standalone] verify encrypted+signed message', testWithNewBrowser(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+      const encryptedSignedMsgUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["Fetched pubkey, click to verify", "Martin@Politick.Ca"]);
+      await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["matching signature", "Martin@Politick.Ca"]);
+    }));
+
     ava.test.todo('[standalone] decrypt - by entering secondary pass phrase');
 
   }
