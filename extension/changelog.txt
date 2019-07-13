@@ -1,5 +1,7 @@
 <div>
 
+version 6.9.1 on Jul 13, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/344?closed=1" target="_blank">Enterprise improvements</a>
+
 version 6.9.0 on Jul 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/343?closed=1" target="_blank">Fix reply threading</a>
 
 version 6.8.9 on Jul 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/342?closed=1" target="_blank">Fix quoting html</a>
