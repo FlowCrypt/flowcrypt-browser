@@ -5,7 +5,7 @@
 import { Str, Dict } from './core/common.js';
 import { Buf } from './core/buf.js';
 
-export type DomainRule = { flags: ('NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'STRICT_GDPR' | 'ALLOW_CUSTOM_KEYSERVER')[] };
+export type DomainRule = { flags: ('NO_PRV_CREATE' | 'NO_PRV_BACKUP' | 'STRICT_GDPR' | 'ALLOW_CUSTOM_KEYSERVER' | 'ENFORCE_ATTESTER_SUBMIT')[] };
 
 export class Rules {
 
@@ -16,8 +16,8 @@ export class Rules {
   private other = 'other';
   private domainHash: string = this.other;
   private rules: Dict<DomainRule> = {
-    'dFEm3KyalKGTGjpeA/Ar44IPUdE=': { flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'STRICT_GDPR'] }, // n
-    'd3VLGOyz8vfFm/IM/gavrCpkWOw=': { flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'STRICT_GDPR'] }, // v
+    'dFEm3KyalKGTGjpeA/Ar44IPUdE=': { flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'STRICT_GDPR', 'ENFORCE_ATTESTER_SUBMIT'] }, // n
+    'd3VLGOyz8vfFm/IM/gavrCpkWOw=': { flags: ['NO_PRV_CREATE', 'NO_PRV_BACKUP', 'STRICT_GDPR', 'ENFORCE_ATTESTER_SUBMIT'] }, // v
     'xKzI/nSDX4g2Wfgih9y0sYIguRU=': { flags: ['NO_PRV_BACKUP', 'ALLOW_CUSTOM_KEYSERVER'] }, // h
     [this.other]: { flags: [] },
   };
@@ -41,6 +41,8 @@ export class Rules {
   canBackupKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_BACKUP');
 
   hasStrictGdpr = () => this.rules[this.domainHash].flags.includes('STRICT_GDPR');
+
+  mustSubmitToAttester = () => this.rules[this.domainHash].flags.includes('ENFORCE_ATTESTER_SUBMIT');
 
   canUseCustomKeyserver = () => this.rules[this.domainHash].flags.includes('ALLOW_CUSTOM_KEYSERVER');
 

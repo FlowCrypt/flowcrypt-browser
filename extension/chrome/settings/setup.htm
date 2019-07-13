@@ -130,7 +130,7 @@
               <span class="labelCopy">Back up encrypted private key in inbox (recommended)</span>
             </div>
 
-            <div class="line left">
+            <div class="line left remove_if_enforce_submit_to_attester">
               <div class="squaredFour">
                 <input type="checkbox" class="input_submit_key" value="" id="c_submitPubkeytoKeyserver" name="check"
                   checked="">
@@ -139,7 +139,7 @@
               </div>
               <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester (recommended)</span>
             </div>
-            <div class="line left display_none">
+            <div class="line left display_none remove_if_enforce_submit_to_attester">
               <div class="squaredFour">
                 <input type="checkbox" class="input_submit_all" disabled="disabled" id="c_submitAll" />
                 <label class="checkboxSquaredOne" for="c_submitAll"></label>
@@ -200,7 +200,7 @@
             </div>
             <span class="labelCopy">Remember Pass Phrase after closing browser</span>
           </div>
-          <div class="line left">
+          <div class="line left remove_if_enforce_submit_to_attester">
             <div class="squaredFour">
               <input type="checkbox" value="" id="e_submitPubkey" name="check" checked="" class="input_submit_key">
               <label class="checkboxSquaredOne" for="e_submitPubkey"
@@ -208,7 +208,7 @@
             </div>
             <span class="labelCopy">Submit corresponding pubkey to FlowCrypt Attester</span>
           </div>
-          <div class="line left" style="visibility: hidden;">
+          <div class="line left remove_if_enforce_submit_to_attester" style="visibility: hidden;">
             <div class="squaredFour">
               <input type="checkbox" class="input_submit_all" disabled="disabled" id="e_submitAll" />
               <label class="checkboxSquaredOne" for="e_submitAll"></label>

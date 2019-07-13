@@ -69,6 +69,9 @@ Catch.try(async () => {
     Xss.sanitizeRender('#step_2a_manual_create, #step_2_easy_generating', `<div class="aligncenter"><div class="line">${forbidden}</div></div>`);
     $('.back').remove(); // back button would allow users to choose other options (eg create - not allowed)
   }
+  if (rules.mustSubmitToAttester()) {
+    $('.remove_if_enforce_submit_to_attester').remove();
+  }
 
   const keyImportUi = new KeyImportUi({ checkEncryption: true });
   keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId); // for step_2b_manual_enter, if user chooses so
@@ -445,6 +448,7 @@ Catch.try(async () => {
   }));
 
   $('.input_submit_key').click(Ui.event.handle(target => {
+    // will be hidden / ignored / forced true when rules.mustSubmitToAttester() === true (for certain orgs)
     const inputSubmitAll = $(target).closest('.manual').find('.input_submit_all').first();
     if ($(target).prop('checked')) {
       if (inputSubmitAll.closest('div.line').css('visibility') === 'visible') {
@@ -463,8 +467,8 @@ Catch.try(async () => {
     const options: SetupOptions = {
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
       key_backup_prompt: false,
-      submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked')),
-      submit_all: Boolean($('#step_2b_manual_enter .input_submit_all').prop('checked')),
+      submit_main: Boolean($('#step_2b_manual_enter .input_submit_key').prop('checked') || rules.mustSubmitToAttester()),
+      submit_all: Boolean($('#step_2b_manual_enter .input_submit_all').prop('checked') || rules.mustSubmitToAttester()),
       passphrase_save: Boolean($('#step_2b_manual_enter .input_passphrase_save').prop('checked')),
       is_newly_created_key: false,
       recovered: false,
@@ -553,8 +557,8 @@ Catch.try(async () => {
       const options: SetupOptions = {
         passphrase: String($('#step_2a_manual_create .input_password').val()),
         passphrase_save: Boolean($('#step_2a_manual_create .input_passphrase_save').prop('checked')),
-        submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked')),
-        submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked')),
+        submit_main: Boolean($('#step_2a_manual_create .input_submit_key').prop('checked') || rules.mustSubmitToAttester()),
+        submit_all: Boolean($('#step_2a_manual_create .input_submit_all').prop('checked') || rules.mustSubmitToAttester()),
         key_backup_prompt: rules.canBackupKeys() ? Date.now() : false,
         recovered: false,
         setup_simple: Boolean($('#step_2a_manual_create .input_backup_inbox').prop('checked')),
