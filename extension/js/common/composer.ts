@@ -1953,7 +1953,7 @@ export class Composer {
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
     msg.to = await Promise.all(msg.to.map(async email => {
       const [contact] = await this.app.storageContactGet([email]);
-      return contact && contact.name ? `${contact.name} <${email}>` : email;
+      return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
     }));
     const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
     if (name) {
