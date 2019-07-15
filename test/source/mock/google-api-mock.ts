@@ -18,7 +18,7 @@ const isPost = (r: IncomingMessage) => r.method === 'POST';
 const isPut = (r: IncomingMessage) => r.method === 'PUT';
 const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
-const allowedRecipients: Array<string> = ['human+manualcopypgp@flowcrypt.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com'];
+const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com'];
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -134,7 +134,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
       if (isPost(req)) {
         if (parsedReq.body && typeof parsedReq.body === 'string') {
           const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
-          validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
+          await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
           return { id: 'mockfakesend', labelIds: ['SENT'], threadId: parseResult.threadId };
         }
       }
@@ -190,9 +190,28 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
   return parsed;
 };
 
-const validateMimeMsg = (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
-  if (threadId && !new Data(acct).getThreads().find(t => t.id === threadId)) {
-    throw new HttpClientErr('The thread you are replying to not found', 404);
+const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
+  if (threadId) {
+    const messages = new Data(acct).getMessagesByThread(threadId);
+    if (!messages || !messages.length) {
+      throw new HttpClientErr('The thread you are replying to not found', 404);
+    }
+    const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
+    if (inReplyToMessageId) {
+      let isMessageExists = false;
+      for (const message of messages) {
+        if (message.raw) {
+          const parsedMimeMsg = await Parse.convertBase64ToMimeMsg(message.raw);
+          if (parsedMimeMsg.messageId === inReplyToMessageId) {
+            isMessageExists = true;
+            break;
+          }
+        }
+      }
+      if (!isMessageExists) {
+        throw new HttpClientErr('You are replying to unexisting message id.', 400);
+      }
+    }
   }
   if (!mimeMsg.subject) {
     throw new HttpClientErr('Subject line is required', 400);
