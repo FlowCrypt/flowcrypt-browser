@@ -1191,6 +1191,8 @@ export class Composer {
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
           this.addExpandingButton(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
         }
+      } else {
+        this.urlParams.threadId = '' ;
       }
     } else {
       Xss.sanitizeRender(this.S.cached('prompt'),
