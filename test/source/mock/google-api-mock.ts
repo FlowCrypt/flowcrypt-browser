@@ -209,8 +209,10 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
         }
       }
       if (!isMessageExists) {
-        throw new HttpClientErr('You are replying to unexisting message id.', 400);
+        throw new HttpClientErr(`Error: suplied In-Reply-To header (${inReplyToMessageId}) does not match any messages present in the mock data for thread ${threadId}`, 400);
       }
+    } else {
+      throw new HttpClientErr(`Error: 'In-Reply-To' must not be empty if there is 'threadId'(${threadId})`, 400);
     }
   }
   if (!mimeMsg.subject) {
