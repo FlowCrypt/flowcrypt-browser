@@ -142,7 +142,7 @@ export class Mime {
   private static retrieveRawSignedContent = (nodes: MimeParserNode[]): string | undefined => {
     for (const node of nodes) {
       if (!node._childNodes || !node._childNodes.length) {
-        continue;
+        continue; // signed nodes tend contain two children: content node, signature node. If no node, then this is not pgp/mime signed content
       }
       const isSigned = node._isMultipart === 'signed';
       const isMixedWithSig = node._isMultipart === 'mixed' && node._childNodes.length === 2 && Mime.getNodeType(node._childNodes[1]) === 'application/pgp-signature';
@@ -154,9 +154,8 @@ export class Mime {
           rawSignedContent += '\r\n'; // emailjs wrongly leaves out the last newline, fix it here
         }
         return rawSignedContent;
-      } else if (node._childNodes) {
-        return Mime.retrieveRawSignedContent(node._childNodes);
       }
+      return Mime.retrieveRawSignedContent(node._childNodes);
     }
     return undefined;
   }
