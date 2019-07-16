@@ -1192,7 +1192,7 @@ export class Composer {
           this.addExpandingButton(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
         }
       } else {
-        this.urlParams.threadId = '' ;
+        this.urlParams.threadId = '';
       }
     } else {
       Xss.sanitizeRender(this.S.cached('prompt'),
@@ -1229,10 +1229,18 @@ export class Composer {
       const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
       this.debug(`parseRenderRecipients(${errsMode}).6 (${email})`);
       if (!email) {
+        this.debug(`parseRenderRecipients(${errsMode}).6-a (${email}|${rawRecipientAddrInput})`);
         if (errsMode === 'gentleRecipientErrs') {
-          gentleErrInvalidEmails += email;
+          gentleErrInvalidEmails += rawRecipientAddrInput;
+          this.debug(`parseRenderRecipients(${errsMode}).6-b (${email}|${rawRecipientAddrInput})`);
+        } else {
+          // maybe there could be:
+          // Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(rawRecipientAddrInput)} ${Ui.spinner('green')}</span>`);
+          // but it seems to work well without it, so not adding until proved needed
+          this.debug(`parseRenderRecipients(${errsMode}).6-c SKIPPING HARSH ERR? (${email}|${rawRecipientAddrInput})`);
         }
       } else {
+        this.debug(`parseRenderRecipients(${errsMode}).6-c (${email})`);
         Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
         isRecipientAdded = true;
       }
