@@ -136,6 +136,7 @@ Catch.try(async () => {
         // TODO:  Find out how to get expiration time of each subkey
         const skn = `${kn} SK ${subKeyIndex} >`;
 
+        appendResult(`${skn} LongId: ${await test(async () => Pgp.key.longid(subKey.getKeyId().bytes))}`);
         appendResult(`${skn} Algo: ${await test(async () => subKey.keyPacket.algorithm)}`);
         // appendResult(`${skn} Valid encryption key?: ${await test(async () => {return subkey.isValidEncryptionKey();})}); // No longer exists on object
         // appendResult(`${skn} Expiration time: ${await test(async () => skExpiration)}`);                       // see error described above
