@@ -1181,13 +1181,13 @@ export class Composer {
   }
 
   private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
-    this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
     this.S.cached('prompt').css({ display: 'none' });
     this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
       if (determined) {
+        this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
         this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
         this.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft

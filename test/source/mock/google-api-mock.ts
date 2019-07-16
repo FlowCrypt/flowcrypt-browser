@@ -124,7 +124,7 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
         const id = parseResourceId(req.url!);
         const msgs = new Data(acct).getMessagesByThread(id);
         if (!msgs.length) { 
-          const statusCode = id === '16804894591b3a4b' ? 404 : 400 ; // intentionally testing missing thread
+          const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400 ; // intentionally testing missing thread
           throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
