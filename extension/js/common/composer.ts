@@ -174,6 +174,7 @@ export class Composer {
     if (!this.urlParams.disableDraftSaving) {
       this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
     }
+    this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
     if (initSubs.active) {
@@ -1186,10 +1187,11 @@ export class Composer {
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
       if (determined) {
+        this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
         this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
         this.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-          this.addExpandingButton(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
+          this.addTripleDotQuoteExpandBtn(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
         }
       } else {
         this.urlParams.threadId = '';
@@ -1915,7 +1917,7 @@ export class Composer {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private addExpandingButton = async (msgId: string, method: ('reply' | 'forward')) => {
+  private addTripleDotQuoteExpandBtn = async (msgId: string, method: ('reply' | 'forward')) => {
     if (!this.messageToReplyOrForward) {
       this.S.cached('icon_show_prev_msg').show().addClass('progress');
       Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
@@ -1934,7 +1936,7 @@ export class Composer {
     if (!this.messageToReplyOrForward) {
       this.S.cached('icon_show_prev_msg').click(Ui.event.handle(async el => {
         this.S.cached('icon_show_prev_msg').unbind('click');
-        await this.addExpandingButton(msgId, method);
+        await this.addTripleDotQuoteExpandBtn(msgId, method);
         if (this.messageToReplyOrForward) {
           this.S.cached('icon_show_prev_msg').click();
         }
@@ -1943,7 +1945,6 @@ export class Composer {
     }
     if (this.messageToReplyOrForward.text) {
       if (method === 'forward') {
-        this.urlParams.subject = 'Fwd: ' + this.urlParams.subject;
         this.S.cached('icon_show_prev_msg').remove();
         await this.appendForwardedMsg(this.messageToReplyOrForward.text);
       } else {
