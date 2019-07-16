@@ -123,7 +123,7 @@ export class XssSafeFactory {
       const headers = this.resolveFromTo(convoParams.addresses || [], convoParams.myEmail || this.acctEmail, convoParams.replyTo);
       params.to = headers.to;
       params.from = headers.from;
-      params.subject = convoParams.subject ? 'Re: ' + convoParams.subject : '';
+      params.subject = convoParams.subject || '';
     }
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   }

@@ -84,7 +84,7 @@ Catch.try(async () => {
     });
     to = reply.to;
     from = reply.from;
-    subject = subject || Google.gmail.findHeader(gmailMsg, 'subject') || '';
+    subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
   })();
 
