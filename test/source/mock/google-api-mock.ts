@@ -191,12 +191,12 @@ const parseMultipartDataAsMimeMsg = async (multipartData: string): Promise<Parse
 };
 
 const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: string) => {
+  const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
   if (threadId) {
     const messages = new Data(acct).getMessagesByThread(threadId);
     if (!messages || !messages.length) {
-      throw new HttpClientErr('The thread you are replying to not found', 404);
+      throw new HttpClientErr(`Error: The thread you are replying (${threadId}) to not found`, 404);
     }
-    const inReplyToMessageId = mimeMsg.headers.get('in-reply-to') ? mimeMsg.headers.get('in-reply-to')!.toString() : '';
     if (inReplyToMessageId) {
       let isMessageExists = false;
       for (const message of messages) {
@@ -216,13 +216,19 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
     }
   }
   if (!mimeMsg.subject) {
-    throw new HttpClientErr('Subject line is required', 400);
+    throw new HttpClientErr('Error: Subject line is required', 400);
+  } else {
+    if (['Re: ', 'Fwd: '].some(e => mimeMsg.subject.startsWith(e)) && (!threadId || !inReplyToMessageId)) {
+      throw new HttpClientErr(`Error: Incorrect subject. Subject can't start from 'Re:' or 'Fwd:'. Current subject is '${mimeMsg.subject}'`, 400);
+    } else if ((threadId || inReplyToMessageId) && !['Re: ', 'Fwd: '].some(e => mimeMsg.subject.startsWith(e))) {
+      throw new HttpClientErr(`Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`, 400);
+    }
   }
   if (!mimeMsg.text) {
-    throw new HttpClientErr('Message body is required', 400);
+    throw new HttpClientErr('Error: Message body is required', 400);
   }
   if (!mimeMsg.to.value.length || mimeMsg.to.value.find(em => !allowedRecipients.includes(em.address))) {
-    throw new HttpClientErr('You can\'t send a message to unexisting email address(es)');
+    throw new HttpClientErr('Error: You can\'t send a message to unexisting email address(es)');
   }
   const aliases = [acct];
   if (acct === 'flowcrypt.compatibility@gmail.com') {
