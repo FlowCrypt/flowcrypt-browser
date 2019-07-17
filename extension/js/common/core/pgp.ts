@@ -284,21 +284,25 @@ export class Pgp {
       const allKeys: OpenPGP.key.Key[] = [];
       const allErrs: Error[] = [];
       const { blocks } = await Pgp.armor.detectBlocks(fileData.toUtfStr());
-      const armoredPublicKeyBlocks = blocks.filter(block => block.type === "publicKey");
-      try {
-        if (armoredPublicKeyBlocks.length) {
-          for (const block of blocks) {
+      const armoredPublicKeyBlocks = blocks.filter(block => block.type === 'publicKey' || block.type === 'privateKey');
+      if (armoredPublicKeyBlocks.length) {
+        for (const block of blocks) {
+          try {
             const { err, keys } = await openpgp.key.readArmored(block.content.toString());
             allErrs.push(...(err || []));
             allKeys.push(...keys);
+          } catch (e) {
+            allErrs.push(e instanceof Error ? e : new Error(String(e)));
           }
-        } else {
+        }
+      } else {
+        try {
           const { err, keys } = await openpgp.key.read(fileData);
           allErrs.push(...(err || []));
           allKeys.push(...keys);
+        } catch (e) {
+          allErrs.push(e instanceof Error ? e : new Error(String(e)));
         }
-      } catch (e) {
-        allErrs.push(e instanceof Error ? e : new Error(String(e)));
       }
       return { keys: allKeys, errs: allErrs };
     },

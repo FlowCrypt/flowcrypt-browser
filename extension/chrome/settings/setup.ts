@@ -57,10 +57,10 @@ Catch.try(async () => {
 
   storage.email_provider = storage.email_provider || 'gmail';
   let acctEmailAttesterFingerprint: string | undefined;
-  let recoveredKeys: OpenPGP.key.Key[] = [];
-  let recoveredKeysMatchingPassphrases: string[] = [];
-  let nRecoveredKeysLongid = 0;
-  let recoveredKeysSuccessfulLongids: string[] = [];
+  let fetchedKeyBackups: OpenPGP.key.Key[] = [];
+  let fetchedKeyBackupsUniqueLongids: string[] = [];
+  let importedKeysUniqueLongids: string[] = [];
+  let mathingPassphrases: string[] = [];
   let allAddrs: string[] = [acctEmail];
 
   const rules = await Rules.newInstance(acctEmail);
@@ -85,6 +85,8 @@ Catch.try(async () => {
     await Ui.modal.info(notification);
   });
   BrowserMsg.listen(tabId);
+
+  const getUniqueLongids = async (keys: OpenPGP.key.Key[]): Promise<string[]> => Value.arr.unique(await Promise.all(keys.map(Pgp.key.longid))).filter(Boolean) as string[];
 
   const renderInitial = async () => {
     $('h1').text('Set Up FlowCrypt');
@@ -157,13 +159,13 @@ Catch.try(async () => {
       $('#' + name).css('display', 'block');
       $('.back').css('visibility', ['step_2b_manual_enter', 'step_2a_manual_create'].includes(name) ? 'visible' : 'hidden');
       if (name === 'step_2_recovery') {
-        $('.backups_count_words').text(recoveredKeys.length > 1 ? recoveredKeys.length + ' backups' : 'a backup');
+        $('.backups_count_words').text(fetchedKeyBackupsUniqueLongids.length > 1 ? `${fetchedKeyBackupsUniqueLongids.length} backups` : 'a backup');
       }
     }
   };
 
   const renderSetupDialog = async (): Promise<void> => {
-    let keyserverRes, fetchedKeys;
+    let keyserverRes;
     try {
       keyserverRes = await Keyserver.lookupEmail(acctEmail, acctEmail);
     } catch (e) {
@@ -176,13 +178,12 @@ Catch.try(async () => {
         displayBlock('step_2b_manual_enter');
       } else if (storage.email_provider === 'gmail' && GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
         try {
-          fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
+          fetchedKeyBackups = await Google.gmail.fetchKeyBackups(acctEmail);
+          fetchedKeyBackupsUniqueLongids = await getUniqueLongids(fetchedKeyBackups);
         } catch (e) {
           return await Settings.promptToRetry('REQUIRED', e, Lang.setup.failedToCheckAccountBackups, () => renderSetupDialog());
         }
-        if (fetchedKeys.length) {
-          recoveredKeys = fetchedKeys;
-          nRecoveredKeysLongid = Value.arr.unique(await Promise.all(recoveredKeys.map(Pgp.key.longid))).length;
+        if (fetchedKeyBackupsUniqueLongids.length) {
           displayBlock('step_2_recovery');
         } else {
           displayBlock('step_0_found_key');
@@ -210,21 +211,19 @@ Catch.try(async () => {
   };
 
   const renderAddKeyFromBackup = async () => { // at this point, account is already set up, and this page is showing in a lightbox after selecting "from backup" in add_key.htm
-    let fetchedKeys;
     $('.profile-row, .skip_recover_remaining, .action_send, .action_account_settings, .action_skip_recovery').css({ display: 'none', visibility: 'hidden', opacity: 0 });
     Xss.sanitizeRender($('h1').parent(), '<h1>Recover key from backup</h1>');
     $('.action_recover_account').text('load key from backup');
     try {
-      fetchedKeys = await Google.gmail.fetchKeyBackups(acctEmail);
+      fetchedKeyBackups = await Google.gmail.fetchKeyBackups(acctEmail);
+      fetchedKeyBackupsUniqueLongids = await getUniqueLongids(fetchedKeyBackups);
     } catch (e) {
       window.location.href = Env.urlCreate('modules/add_key.htm', { acctEmail, parentTabId });
       return;
     }
-    if (fetchedKeys.length) {
-      recoveredKeys = fetchedKeys;
-      nRecoveredKeysLongid = Value.arr.unique(await Promise.all(recoveredKeys.map(Pgp.key.longid))).length;
+    if (fetchedKeyBackupsUniqueLongids.length) {
       const storedKeys = await Store.keysGet(acctEmail);
-      recoveredKeysSuccessfulLongids = storedKeys.map(ki => ki.longid);
+      importedKeysUniqueLongids = storedKeys.map(ki => ki.longid);
       await renderSetupDone();
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
@@ -258,12 +257,12 @@ Catch.try(async () => {
 
   const renderSetupDone = async () => {
     const storedKeys = await Store.keysGet(acctEmail);
-    if (nRecoveredKeysLongid > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
+    if (fetchedKeyBackupsUniqueLongids.length > storedKeys.length) { // recovery where not all keys were processed: some may have other pass phrase
       displayBlock('step_4_more_to_recover');
       $('h1').text('More keys to recover');
       $('.email').text(acctEmail);
       $('.private_key_count').text(storedKeys.length);
-      $('.backups_count').text(recoveredKeys.length);
+      $('.backups_count').text(fetchedKeyBackupsUniqueLongids.length);
     } else { // successful and complete setup
       displayBlock(action !== 'add_key' ? 'step_4_done' : 'step_4_close');
       $('h1').text(action !== 'add_key' ? 'You\'re all set!' : 'Recovered all keys!');
@@ -344,7 +343,7 @@ Catch.try(async () => {
     try {
       const passphrase = String($('#recovery_pasword').val());
       const newlyMatchingKeys: OpenPGP.key.Key[] = [];
-      if (passphrase && recoveredKeysMatchingPassphrases.includes(passphrase)) {
+      if (passphrase && mathingPassphrases.includes(passphrase)) {
         await Ui.modal.warning(Lang.setup.tryDifferentPassPhraseForRemainingBackups);
         return;
       }
@@ -353,16 +352,18 @@ Catch.try(async () => {
         return;
       }
       let matchedPreviouslyRecoveredKey = false;
-      for (const recoveredKey of recoveredKeys) {
-        const longid = await Pgp.key.longid(recoveredKey);
-        const armored = recoveredKey.armor();
-        if (longid) {
-          if (recoveredKeysSuccessfulLongids.includes(longid)) {
-            matchedPreviouslyRecoveredKey = true;
-          } else if (await Pgp.key.decrypt(recoveredKey, [passphrase]) === true) {
-            recoveredKeysSuccessfulLongids.push(longid);
-            const { keys: [prv] } = await openpgp.key.readArmored(armored);
+      for (const fetchedKey of fetchedKeyBackups) {
+        const longid = await Pgp.key.longid(fetchedKey);
+        if (longid && await Pgp.key.decrypt(await Pgp.key.read(fetchedKey.armor()), [passphrase]) === true) { // attempt to decrypt a copy of the key
+          if (!mathingPassphrases.includes(passphrase)) {
+            mathingPassphrases.push(passphrase);
+          }
+          if (!importedKeysUniqueLongids.includes(longid)) {
+            const { keys: [prv] } = await openpgp.key.readArmored(fetchedKey.armor());
             newlyMatchingKeys.push(prv);
+            importedKeysUniqueLongids.push(longid);
+          } else {
+            matchedPreviouslyRecoveredKey = true;
           }
         }
       }
@@ -371,8 +372,8 @@ Catch.try(async () => {
         if (matchedPreviouslyRecoveredKey) {
           $('#recovery_pasword').val('');
           await Ui.modal.warning('This is a correct pass phrase, but it matches a key that was already recovered. Please try another pass phrase.');
-        } else if (recoveredKeys.length > 1) {
-          await Ui.modal.warning(`This pass phrase did not match any of your ${recoveredKeys.length} backups. Please try again.`);
+        } else if (fetchedKeyBackupsUniqueLongids.length > 1) {
+          await Ui.modal.warning(`This pass phrase did not match any of your ${fetchedKeyBackupsUniqueLongids.length} backed up keys. Please try again.`);
         } else {
           await Ui.modal.warning('This pass phrase did not match your original setup. Please try again.');
         }
@@ -388,7 +389,6 @@ Catch.try(async () => {
         setup_simple: true,
         is_newly_created_key: false,
       };
-      recoveredKeysMatchingPassphrases.push(passphrase);
       await saveKeys(newlyMatchingKeys, options);
       const storage = await Store.getAcct(acctEmail, ['setup_done']);
       if (!storage.setup_done) { // normal situation - fresh setup
@@ -409,28 +409,27 @@ Catch.try(async () => {
   $('#step_4_more_to_recover .action_recover_remaining').click(Ui.event.handle(async () => {
     displayBlock('step_2_recovery');
     $('#recovery_pasword').val('');
-    const storedKeys = await Store.keysGet(acctEmail);
-    const nGot = storedKeys.length;
-    const nBups = recoveredKeys.length;
-    const txtTeft = (nBups - nGot > 1) ? 'are ' + (nBups - nGot) + ' backups' : 'is one backup';
+    const nImported = (await Store.keysGet(acctEmail)).length;
+    const nFetched = fetchedKeyBackupsUniqueLongids.length;
+    const txtKeysTeft = (nFetched - nImported > 1) ? `are ${nFetched - nImported} backups` : 'is one backup';
     if (action !== 'add_key') {
-      Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nGot, nBups, txtTeft));
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
       Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
       $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
         window.location.href = Env.urlCreate('index.htm', { acctEmail });
       }));
     } else {
-      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
+      Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
       $('#step_2_recovery .line_skip_recovery').css('display', 'none');
     }
   }));
 
   $('.action_skip_recovery').click(Ui.event.handle(async target => {
     if (await Ui.modal.confirm(Lang.setup.confirmSkipRecovery)) {
-      recoveredKeys = [];
-      recoveredKeysMatchingPassphrases = [];
-      nRecoveredKeysLongid = 0;
-      recoveredKeysSuccessfulLongids = [];
+      fetchedKeyBackups = [];
+      fetchedKeyBackupsUniqueLongids = [];
+      mathingPassphrases = [];
+      importedKeysUniqueLongids = [];
       displayBlock('step_1_easy_or_manual');
     }
   }));

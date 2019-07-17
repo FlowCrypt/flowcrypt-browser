@@ -31,8 +31,6 @@ export type AuthRes = AuthResultSuccess | AuthResultError;
 
 export class GoogleAcctNotConnected extends Error { }
 
-declare const openpgp: typeof OpenPGP;
-
 export namespace GmailRes { // responses
 
   export type GmailUsersMeProfile = { emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string };
@@ -464,15 +462,7 @@ export class Google extends EmailProviderApi {
         atts.push(...Google.gmail.findAtts(msg));
       }
       await Google.gmail.fetchAtts(acctEmail, atts);
-      const keys: OpenPGP.key.Key[] = [];
-      for (const att of atts) {
-        try {
-          const { keys: [prv] } = await openpgp.key.readArmored(att.getData().toUtfStr());
-          if (prv.isPrivate()) {
-            keys.push(prv);
-          }
-        } catch (err) { } // tslint:disable-line:no-empty
-      }
+      const { keys } = await Pgp.key.readMany(Buf.fromUtfStr(atts.map(a => a.getData().toUtfStr()).join('\n')));
       return keys;
     },
   };
