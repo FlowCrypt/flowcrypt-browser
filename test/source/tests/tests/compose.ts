@@ -322,10 +322,11 @@ const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser:
   await replyFrame.waitAndClick('@action-accept-reply-prompt');
 
   return { inboxPage, replyFrame };
-}
+};
 
 const baseQuotingTest = async (composePage: Controllable, textToInclude: string) => {
   await composePage.waitAll(['@action-expand-quoted-text']);
+  await Util.sleep(2); // wait for quote to be loaded and button activated
   expect(await composePage.read('@input-body')).to.not.include(textToInclude);
   await composePage.click('@action-expand-quoted-text');
   await composePage.waitTillGone(['@action-expand-quoted-text']);
