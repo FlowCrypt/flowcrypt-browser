@@ -1968,7 +1968,7 @@ export class Composer {
     }));
     const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
     if (name) {
-      msg.from = `${name} <${this.urlParams.acctEmail}>`;
+      msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;
     }
   }
 
