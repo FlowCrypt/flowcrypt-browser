@@ -36,42 +36,25 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.test('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (t, browser) => {
-      // console.info(`ava.test.timeout.1`);
       const k = Config.key('test.ci.compose');
-      // console.info(`ava.test.timeout.2`);
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
-      // console.info(`ava.test.timeout.3`);
       const settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
-      // console.info(`ava.test.timeout.4`);
       await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
-      // console.info(`ava.test.timeout.5`);
       const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
-      // console.info(`ava.test.timeout.6`);
       await ComposePageRecipe.fillMsg(composeFrame, 'human@flowcrypt.com', 'sign with entered pass phrase');
-      // console.info(`ava.test.timeout.7`);
       await composeFrame.waitAndClick('@action-switch-to-sign', { delay: 0.5 });
-      // console.info(`ava.test.timeout.8`);
       await composeFrame.waitAndClick('@action-send');
-      // console.info(`ava.test.timeout.9`);
+      await settingsPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await settingsPage.getFrame(['passphrase.htm']);
-      // console.info(`ava.test.timeout.10`);
       await passphraseDialog.waitAndType('@input-pass-phrase', k.passphrase);
-      // console.info(`ava.test.timeout.11`);
       await passphraseDialog.waitAndClick('@action-confirm-pass-phrase-entry'); // confirming pass phrase will send the message
-      // console.info(`ava.test.timeout.12`);
       await settingsPage.waitTillGone('@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
-      // console.info(`ava.test.timeout.13`);
       // signed - done, now try to see if it remembered pp in session
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      // console.info(`ava.test.timeout.14`);
       await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'signed message pp in session');
-      // console.info(`ava.test.timeout.15`);
       await composePage.click('@action-switch-to-sign'); // should remember pass phrase in session from previous entry
-      // console.info(`ava.test.timeout.16`);
       await ComposePageRecipe.sendAndClose(composePage);
-      // console.info(`ava.test.timeout.17`);
       await settingsPage.close();
-      // console.info(`ava.test.timeout.18`);
     }));
 
     ava.test('[standalone] compose - can load contact based on name', testWithNewBrowser(async (t, browser) => {
@@ -256,6 +239,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
       // Get Passphrase dialog and write confirm passphrase
+      await inboxPage.waitAll('@dialog-passphrase');
       const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
       await passPhraseFrame.waitAndType('@input-pass-phrase', pp);
       await passPhraseFrame.waitAndClick('@action-confirm-pass-phrase-entry');
@@ -280,6 +264,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
       // Get Passphrase dialog and cancel confirm passphrase
+      await inboxPage.waitAll('@dialog-passphrase');
       const passPhraseFrame = await inboxPage.getFrame(['passphrase.htm']);
       await passPhraseFrame.waitAndClick('@action-cancel-pass-phrase-entry');
       await inboxPage.waitTillGone('@dialog');
