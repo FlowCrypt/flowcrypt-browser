@@ -191,87 +191,67 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&threadMsgId=16b584ed95837510&to=flowcrypt.compatibility%40gmail.com&from=flowcrypt.compatibility%40gmail.com' +
         '&subject=Re%3A%20testing%20quotes';
-      const messageBeginingText =
-        [
-          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
-          '> This is some message',
-          '>',
-          '> and below is the quote',
-          '>',
-          '> > this is the quote',
-          '> > still the quote',
-          '> > third line',
-          '> >> double quote',
-          '> >> again double quote'
-        ].join('\n');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await baseQuotingTest(composePage, messageBeginingText);
+      await baseQuotingTest(composePage, [
+        'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+        '> This is some message',
+        '>',
+        '> and below is the quote',
+        '>',
+        '> > this is the quote',
+        '> > still the quote',
+        '> > third line',
+        '> >> double quote',
+        '> >> again double quote'
+      ].join('\n'));
     }));
 
     ava.test('compose[global:compatibility] - standalone - quote - can load quote from plain/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16402d6dc4342e7f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&threadMsgId=16402d6dc4342e7f&to=Tom%20James%20Holub%20%3Ccensored%40email.com%3E&from=flowcrypt.compatibility%40gmail.com' +
         '&subject=Re%3A%20received%20MMS%20from%20google%20voice%20should%20not%20get%20FlowCrypt%20confused';
-      const messageBeginingText =
-        ['On 2018-06-15 at 09:46, info@nvimp.com wrote:',
-          '> cropping all except for the image below'
-        ].join('\n');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await baseQuotingTest(composePage, messageBeginingText);
+      await baseQuotingTest(composePage, [
+        'On 2018-06-15 at 09:46, info@nvimp.com wrote:',
+        '> cropping all except for the image below'
+      ].join('\n'));
     }));
 
     ava.test('compose[global:compatibility] - reply - can load quote from plain/html email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16b36861a890bb26&skipClickPrompt=___cu_false___' +
         '&ignoreDraft=___cu_false___&threadMsgId=16b36861a890bb26&to=Human%20at%20FlowCrypt%20%3Chuman%40flowcrypt.com%3E' +
         '&from=flowcrypt.compatibility%40gmail.com&subject=Re%3A%20Plain%20text%20html%20utf';
-      const messageBeginingText =
-        [
-          'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
-          '> Used to fail on Android app',
-          '>',
-          '> ---------- Forwarded message ---------',
-          '> From: Mozilla <Mozilla@e.mozilla.org>',
-          '> Date: Thu, 6 Jun 2019, 17:22',
-          '> Subject: Your misinformation questions ... answered.',
-          '> To: <tom@cryptup.org>'
-        ].join('\n');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await baseQuotingTest(composePage, messageBeginingText);
+      await baseQuotingTest(composePage, [
+        'On 2019-06-08 at 09:57, human@flowcrypt.com wrote:',
+        '> Used to fail on Android app',
+        '>',
+        '> ---------- Forwarded message ---------',
+        '> From: Mozilla <Mozilla@e.mozilla.org>',
+        '> Date: Thu, 6 Jun 2019, 17:22',
+        '> Subject: Your misinformation questions ... answered.',
+        '> To: <tom@cryptup.org>'
+      ].join('\n'));
     }));
 
     ava.test('compose[global:compatibility] - reply - can load quote from encrypted/html email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=1663a65bbd73ce1a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
         '&threadMsgId=1663a65bbd73ce1a&to=Henry%20Electrum%20%3Ccensored%40email.com%3E&from=flowcrypt.compatibility%40gmail.com' +
         '&subject=Re%3A%20Encrypted%20Message';
-      const messageBeginingText =
-        [
-          'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
-          '> The following text is bold: this is bold',
-          '>',
-          '> The following text is red: this text is red'
-        ].join('\n');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await baseQuotingTest(composePage, messageBeginingText);
+      await baseQuotingTest(composePage, [
+        'On 2018-10-03 at 14:47, henry.electrum@gmail.com wrote:',
+        '> The following text is bold: this is bold',
+        '>',
+        '> The following text is red: this text is red'
+      ].join('\n'));
     }));
 
     ava.test('compose[global:compatibility] - reply - pass phrase dialog - dialog ok', testWithNewBrowser(async (t, browser) => {
-      const messageBeginingText =
-        [
-          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
-          '> This is some message',
-          '>',
-          '> and below is the quote',
-          '>',
-          '> > this is the quote',
-          '> > still the quote',
-          '> > third line',
-          '> >> double quote',
-          '> >> again double quote'
-        ].join('\n');
       const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
@@ -281,15 +261,21 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await passPhraseFrame.waitAndClick('@action-confirm-pass-phrase-entry');
       await inboxPage.waitTillGone('@dialog');
       // Then we can try to run base test
-      await baseQuotingTest(replyFrame, messageBeginingText);
+      await baseQuotingTest(replyFrame, [
+        'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+        '> This is some message',
+        '>',
+        '> and below is the quote',
+        '>',
+        '> > this is the quote',
+        '> > still the quote',
+        '> > third line',
+        '> >> double quote',
+        '> >> again double quote'
+      ].join('\n'));
     }));
 
     ava.test('compose[global:compatibility] - reply - pass phrase dialog - dialog cancel', testWithNewBrowser(async (t, browser) => {
-      const messageBeginingText =
-        [
-          'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
-          '> (Skipping previous message quote)'
-        ].join('\n');
       const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const { inboxPage, replyFrame } = await setRequirePassPhraseAndOpenRepliedMessage(t, browser, pp);
@@ -300,7 +286,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await replyFrame.waitAll(['@action-expand-quoted-text']);
       // tslint:disable: no-unused-expression
       expect(await replyFrame.read('@input-body')).to.be.empty;
-      await baseQuotingTest(replyFrame, messageBeginingText);
+      await baseQuotingTest(replyFrame, [
+        'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
+        '> (Skipping previous message quote)'
+      ].join('\n'));
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
