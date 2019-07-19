@@ -226,7 +226,7 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
     }
 
     // Special check for 'compose[global:compatibility] - standalone - from alias' test
-    if (mimeMsg.subject === 'from alias' && mimeMsg.from.value[0].address !== 'flowcryptcompatibility@gmail.com') {
+    if (mimeMsg.subject.endsWith('from alias') && mimeMsg.from.value[0].address !== 'flowcryptcompatibility@gmail.com') {
       throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from.value[0].address}'`)
     }
   }
