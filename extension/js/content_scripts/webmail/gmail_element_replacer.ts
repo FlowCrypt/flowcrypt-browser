@@ -16,6 +16,7 @@ import { Catch } from '../../common/platform/catch.js';
 import { Google, GmailRes } from '../../common/api/google.js';
 import { Xss } from '../../common/platform/xss.js';
 import { Keyserver } from '../../common/api/keyserver.js';
+import { Store } from '../../common/platform/store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -66,6 +67,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.replaceStandardReplyBox();
     this.evaluateStandardComposeReceivers().catch(Catch.reportErr);
     this.addSettingsBtn();
+    this.addEndSessionBtnIfNeeded();
   }
 
   setReplyBoxEditable = () => {
@@ -546,6 +548,20 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
         settingsBtnContainer.find('#fc_settings_btn').on('click', Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+      }
+    }
+  }
+
+  private addEndSessionBtnIfNeeded = async () => {
+    const keys = await Store.keysGet(this.acctEmail);
+    for(const key of keys) {
+      // Check if passpharse in the session
+      if (!(await Store.passphraseGet(this.acctEmail, key.longid, true)) &&  
+      (await Store.passphraseGet(this.acctEmail, key.longid, false))) {
+        if (!$('#finish_session').length) {
+          await this.injector.insertEndSessionBtn(this.acctEmail);
+        }
+        break;
       }
     }
   }

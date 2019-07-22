@@ -211,6 +211,10 @@ export class XssSafeFactory {
     return `<div class="${this.destroyableCls} reply_message_button"><img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" /></div>`;
   }
 
+  btnEndPPSession = () => {
+    return `<button id="finish_session">Finish</button>`;
+  }
+
   btnWithoutFc = () => {
     const span = `<span>see original</span>`;
     return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
