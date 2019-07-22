@@ -156,6 +156,7 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
         replyIframe.src = replyIframe.src.replace('/compose.htm?', '/reply_pubkey_mismatch.htm?');
       }
     });
+    BrowserMsg.addListener('add_end_session_btn', () => inject.insertEndSessionBtn(acctEmail));
     BrowserMsg.listen(tabId);
   };
 

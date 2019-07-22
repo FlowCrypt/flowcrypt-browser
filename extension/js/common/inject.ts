@@ -6,6 +6,7 @@ import { ContentScriptWindow } from './extension.js';
 import { Ui, SelCache, WebMailName } from './browser.js';
 import { XssSafeFactory, WebmailVariantString } from './xss_safe_factory.js';
 import { Catch } from './platform/catch.js';
+import { Store } from './platform/store.js';
 
 export class Injector {
 
@@ -53,5 +54,21 @@ export class Injector {
       }
     }
   }
+
+  insertEndSessionBtn = async (acctEmail: string) => {
+    $(this.factory.btnEndPPSession())
+    .insertBefore($('.gb_Zd').children().last())
+    .click(Ui.event.prevent('double', async el => {
+      for(const key of (await Store.keysGet(acctEmail))) {
+        // Check if passpharse in the session
+        if (!(await Store.passphraseGet(acctEmail, key.longid, true)) &&  
+            (await Store.passphraseGet(acctEmail, key.longid, false))) {
+          await Store.passphraseSave('session', acctEmail, key.longid, undefined);
+        }
+      }
+      window.location.reload();
+      el.remove();
+    }));
+  };
 
 }
