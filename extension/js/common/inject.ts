@@ -12,7 +12,7 @@ type Host = {
   gmail: string,
   outlook: string,
   settings: string
-}
+};
 
 export class Injector {
   private factory: XssSafeFactory;
@@ -70,13 +70,13 @@ export class Injector {
     $(this.factory.btnEndPPSession())
     .insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last())
     .click(Ui.event.prevent('double', async el => {
-      const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail); 
+      const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
       if (keysInSession.length) {
         await Promise.all(keysInSession.map(async k => await Store.passphraseSave('session', acctEmail, k.longid, undefined)));
       }
       window.location.reload();
       el.remove();
     }));
-  };
+  }
 
 }

@@ -244,7 +244,7 @@ export class Store {
     const result: Array<KeyInfo> = [];
     for(const key of keys) {
       // Check if passpharse in the session
-      if (!(await Store.passphraseGet(acctEmail, key.longid, true)) &&  
+      if (!(await Store.passphraseGet(acctEmail, key.longid, true)) &&
       (await Store.passphraseGet(acctEmail, key.longid, false))) {
         result.push(key);
       }

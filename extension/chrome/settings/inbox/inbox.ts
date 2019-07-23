@@ -83,7 +83,7 @@ Catch.try(async () => {
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 1000);
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 1500);
-  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);  
+  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
   BrowserMsg.addListener('notification_show', notificationShowHandler);
   BrowserMsg.addListener('close_new_message', async () => {
     $('div.new_message').remove();
@@ -468,7 +468,7 @@ Catch.try(async () => {
         finishSessionBtn.remove();
       }
     }
-  }
+  };
 
   const threadMsgId = (msgId: string) => {
     return 'message_id_' + msgId;

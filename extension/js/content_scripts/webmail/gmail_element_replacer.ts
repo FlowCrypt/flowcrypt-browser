@@ -60,16 +60,10 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   getIntervalFunctions = (): Array<IntervalFunction> => {
     return [
-      {
-        interval: 1000,
-        handler: this.everything
-      },
-      {
-        interval: 30000,
-        handler: () => this.addOrRemoveEndSessionBtnIfNeeded()
-      }
+      { interval: 1000, handler: this.everything },
+      { interval: 30000, handler: () => this.addOrRemoveEndSessionBtnIfNeeded() }
     ];
-  };
+  }
 
   private everything = () => {
     this.replaceArmoredBlocks();
