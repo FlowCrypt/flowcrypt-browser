@@ -553,17 +553,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private addEndSessionBtnIfNeeded = async () => {
-    const keys = await Store.keysGet(this.acctEmail);
-    for(const key of keys) {
-      // Check if passpharse in the session
-      if (!(await Store.passphraseGet(this.acctEmail, key.longid, true)) &&  
-      (await Store.passphraseGet(this.acctEmail, key.longid, false))) {
-        if (!$('#finish_session').length) {
-          await this.injector.insertEndSessionBtn(this.acctEmail);
-        }
-        break;
-      }
+    if (!$('.finish_session').length && (await Store.getKeyCurrentlyInSession(this.acctEmail)).length) {
+      await this.injector.insertEndSessionBtn(this.acctEmail);
     }
   }
-
 }
