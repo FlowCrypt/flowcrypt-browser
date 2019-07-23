@@ -212,7 +212,7 @@ export class XssSafeFactory {
   }
 
   btnEndPPSession = () => {
-    return `<button id="finish_session">Finish</button>`;
+    return `<div class="gb_re gb_pe" id="finish_session"><div class="zo"><a class="gb_ue gb_se gb_pb t6"><img src="${this.srcImg('svgs/reply-icon.svg')}" /></a></div></div>`;
   }
 
   btnWithoutFc = () => {
