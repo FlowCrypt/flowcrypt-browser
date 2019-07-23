@@ -28,7 +28,7 @@ export class Injector {
     finishSesionBtnSel: {
       gmail: 'div.gb_Xd',
       outlook: '#does_not_have',
-      settings: '#does_not_have'
+      settings: '#settings > div.line'
     }
   };
   constructor(webmailName: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {
@@ -70,7 +70,7 @@ export class Injector {
     $(this.factory.btnEndPPSession())
     .insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last())
     .click(Ui.event.prevent('double', async el => {
-      const keysInSession = await Store.getKeyCurrentlyInSession(acctEmail); 
+      const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail); 
       if (keysInSession.length) {
         await Promise.all(keysInSession.map(async k => await Store.passphraseSave('session', acctEmail, k.longid, undefined)));
       }

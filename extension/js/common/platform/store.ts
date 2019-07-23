@@ -239,7 +239,7 @@ export class Store {
     return fromSession && !ignoreSession ? fromSession : undefined;
   }
 
-  static getKeyCurrentlyInSession = async (acctEmail: string) => {
+  static getKeysCurrentlyInSession = async (acctEmail: string) => {
     const keys = await Store.keysGet(acctEmail);
     const result: Array<KeyInfo> = [];
     for(const key of keys) {

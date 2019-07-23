@@ -12,6 +12,7 @@ import { Ui, WebMailName, Env } from '../../common/browser.js';
 import { XssSafeFactory, WebmailVariantString } from '../../common/xss_safe_factory.js';
 
 export type WebmailVariantObject = { newDataLayer: undefined | boolean, newUi: undefined | boolean, email: undefined | string, gmailVariant: WebmailVariantString };
+export type IntervalFunction = { interval: number, handler: () => void };
 type WebmailSpecificInfo = {
   name: WebMailName;
   variant: WebmailVariantString;
@@ -21,7 +22,7 @@ type WebmailSpecificInfo = {
   start: (acctEmail: string, inject: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => Promise<void>;
 };
 export interface WebmailElementReplacer {
-  everything: () => void;
+  getIntervalFunctions: () => Array<IntervalFunction>;
   setReplyBoxEditable: () => void;
   reinsertReplyBox: (subject: string, myEmail: string, replyTo: string[], threadId: string) => void;
   scrollToBottomOfConvo: () => void;

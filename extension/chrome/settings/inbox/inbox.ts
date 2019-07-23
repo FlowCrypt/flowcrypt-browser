@@ -76,10 +76,14 @@ Catch.try(async () => {
     $('body').one('click', Ui.event.handle(notifications.clear));
   };
 
+  const every30Sec = async () => {
+    await addOrRemoveEndSessionBtnIfNeeded();
+  };
+
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 1000);
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 1500);
-  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
+  Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);  
   BrowserMsg.addListener('notification_show', notificationShowHandler);
   BrowserMsg.addListener('close_new_message', async () => {
     $('div.new_message').remove();
@@ -134,6 +138,7 @@ Catch.try(async () => {
   BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
     notifications.showAuthPopupNeeded(acctEmail);
   });
+  BrowserMsg.addListener('add_end_session_btn', () => injector.insertEndSessionBtn(acctEmail));
   BrowserMsg.listen(tabId);
 
   const updateUrlWithoutRedirecting = (title: string, params: UrlParams) => {
@@ -452,6 +457,19 @@ Catch.try(async () => {
     S.cached('thread').append(Ui.e('div', { class: 'reply line', html: factory.embeddedReply(params, false, false) })); // xss-safe-factory
   };
 
+  const addOrRemoveEndSessionBtnIfNeeded = async () => {
+    const finishSessionBtn = $('.finish_session');
+    if ((await Store.getKeysCurrentlyInSession(acctEmail)).length) {
+      if (!finishSessionBtn.length) {
+        await injector.insertEndSessionBtn(acctEmail);
+      }
+    } else {
+      if (finishSessionBtn.length) {
+        finishSessionBtn.remove();
+      }
+    }
+  }
+
   const threadMsgId = (msgId: string) => {
     return 'message_id_' + msgId;
   };
@@ -487,4 +505,7 @@ Catch.try(async () => {
   }
 
   await Settings.populateAccountsMenu('inbox.htm');
+
+  await every30Sec();
+  Catch.setHandledInterval(every30Sec, 30000);
 })();
