@@ -36,6 +36,10 @@ export class Rules {
     }
   }
 
+  public static relaxSubscriptionRequirements = (emailAddr: string) => {
+    return ['gmail.com', 'yahoo.com', 'outlook.com', 'live.com'].includes(emailAddr.split('@')[1] || 'NONE');
+  }
+
   canCreateKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_CREATE');
 
   canBackupKeys = () => !this.rules[this.domainHash].flags.includes('NO_PRV_BACKUP');
