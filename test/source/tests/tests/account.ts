@@ -60,7 +60,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
     ava.test.todo('settings > subscribe > expire > compose > footer > subscribe');
 
   } else {
-    ava.test('compose > large file > gmail account (regular user)', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.test('compose > large file > public domain account (should not prompt to upgrade)', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'a large file test (gmail account)');
       const fileInput = await composePage.target.$('input[type=file]');
