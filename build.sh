@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 OUTDIR=./build/generic-extension-wip
 SRCDIR=./extension
