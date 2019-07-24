@@ -22,6 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { DeterminedMsgHeaders } from '../../chrome/elements/compose.js';
 import { PubkeySearchResult, Keyserver } from './api/keyserver.js';
+import { Rules } from './rules.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -200,7 +201,7 @@ export class Composer {
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await this.app.storageGetSubscription();
-    if (!subscription.active) {
+    if (!Rules.relaxSubscriptionRequirements(this.getSender()) && !subscription.active) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,
