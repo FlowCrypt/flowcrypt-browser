@@ -25,6 +25,23 @@ Catch.try(async () => {
     Xss.sanitizeRender(self, origBtnContent);
   }));
 
+  const formatDate = (date: Date | number, expiresInSecondsFromDate?: number | null) => {
+    if (date === Infinity) {
+      return '-';
+    }
+    if (typeof date === 'number') {
+      return `UNEXPECTED FORMAT: ${date}`;
+    }
+    if (typeof expiresInSecondsFromDate === 'undefined') {
+      return `${date.getTime() / 1000} or ${date.toISOString()}`;
+    }
+    if (expiresInSecondsFromDate === null) {
+      return '-'; // no expiration
+    }
+    const expDate = new Date(date.getTime() + (expiresInSecondsFromDate * 1000));
+    return `${date.getTime() / 1000} + ${expiresInSecondsFromDate} seconds, which is: ${expDate.getTime() / 1000} or ${expDate.toISOString()}`;
+  };
+
   const testEncryptDecrypt = async (key: OpenPGP.key.Key): Promise<string[]> => {
     const output: string[] = [];
     try {
@@ -112,7 +129,8 @@ Catch.try(async () => {
         appendResult(`${kn} Primary key decrypt: ${await test(async () => Pgp.key.decrypt(key, [String($('.input_passphrase').val())]))}`);
       }
       appendResult(`${kn} Primary key verify: ${await test(async () => await key.verifyPrimaryKey())}`);
-      appendResult(`${kn} Primary key expiration? ${await test(async () => await key.getExpirationTime())}`);
+      appendResult(`${kn} Primary key creation? ${await test(async () => formatDate(await key.getCreationTime()))}`);
+      appendResult(`${kn} Primary key expiration? ${await test(async () => formatDate(await key.getExpirationTime()))}`);
       const encryptResult = await testEncryptDecrypt(key);
       encryptResult.map(msg => appendResult(`${kn} Encrypt/Decrypt test: ${msg}`));
       if (key.isPrivate()) {
@@ -120,20 +138,13 @@ Catch.try(async () => {
       }
       for (let subKeyIndex = 0; subKeyIndex < key.subKeys.length; subKeyIndex++) {
         const subKey = key.subKeys[subKeyIndex];
-        // the typings for SubKey are not entirely valid, might need an update
-        // const skExpiration = await (subkey as OpenPGP.key.SubKey | any).getExpirationTime();
-        // TODO:  Find out how to get expiration time of each subkey
         const skn = `${kn} SK ${subKeyIndex} >`;
         appendResult(`${skn} LongId: ${await test(async () => Pgp.key.longid(subKey.getKeyId().bytes))}`);
-        appendResult(`${skn} Algo: ${await test(async () => subKey.keyPacket.algorithm)}`);
-        // appendResult(`${skn} Valid encryption key?: ${await test(async () => {return subkey.isValidEncryptionKey();})}); // No longer exists on object
-        // appendResult(`${skn} Expiration time: ${await test(async () => skExpiration)}`);                       // see error described above
+        appendResult(`${skn} Created: ${await test(async () => formatDate(subKey.keyPacket.created))}`);
+        appendResult(`${skn} Algo: ${await test(async () => `${subKey.getAlgorithmInfo().algorithm}`)}`);
         appendResult(`${skn} Verify: ${await test(async () => await subKey.verify(key.primaryKey))}`);
         appendResult(`${skn} Subkey tag: ${await test(async () => subKey.keyPacket.tag)}`);
-        // appendResult(`${skn} Subkey getBitSize: ${await test(async () => {return subkey.subKey.getBitSize();})}`);       // No longer exists on object
-        // appendResult(`${skn} Valid signing key: ${await test(async () => {return subkey.isValidSigningKey();})}`);       // No longer exists on object
-        // appendResult(`${skn} Decrypt attempt: ${await test(async () => {return subkey.subKey.decrypt(passphrase);})}`);  // No longer exists on object,
-        // seems to be decrypted when parent key is decrypted
+        appendResult(`${skn} Subkey getBitSize: ${await test(async () => subKey.getAlgorithmInfo().bits)}`);       // No longer exists on object
         appendResult(`${skn} Subkey decrypted: ${await test(async () => subKey.isDecrypted())}`);
         appendResult(`${skn} Binding signature length: ${await test(async () => subKey.bindingSignatures.length)}`);
         for (let sigIndex = 0; sigIndex < subKey.bindingSignatures.length; sigIndex++) {
@@ -143,10 +154,18 @@ Catch.try(async () => {
           appendResult(`${sgn} Tag: ${await test(async () => sig.tag)}`);
           appendResult(`${sgn} Version: ${await test(async () => sig.version)}`);
           appendResult(`${sgn} Public key algorithm: ${await test(async () => sig.publicKeyAlgorithm)}`);
-          appendResult(`${sgn} Key expiration time: ${await test(async () => sig.keyExpirationTime)}`);
+          appendResult(`${sgn} Sig creation time: ${await test(async () => formatDate(sig.created))}`);
+          appendResult(`${sgn} Sig expiration time: ${await test(async () => {
+            if (!subKey.keyPacket.created) {
+              return 'unknown key creation time';
+            }
+            return formatDate(subKey.keyPacket.created, sig.keyExpirationTime);
+          })}`);
           appendResult(`${sgn} Verified: ${await test(async () => sig.verified)}`);
         }
       }
+      appendResult(`${kn} internal dateBeforeExpiration: ${await test(async () => Pgp.key.dateBeforeExpiration(key))}`);
+      appendResult(`${kn} internal usableButExpired: ${await test(async () => Pgp.key.usableButExpired(key))}`);
     }
   };
 
