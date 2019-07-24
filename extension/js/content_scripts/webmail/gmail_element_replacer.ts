@@ -63,7 +63,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   getIntervalFunctions = (): Array<IntervalFunction> => {
     return [
       { interval: 1000, handler: this.everything },
-      { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() }
+      { interval: 30000, handler: this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded }
     ];
   }
 
