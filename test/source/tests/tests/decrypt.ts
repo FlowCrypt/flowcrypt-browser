@@ -65,6 +65,8 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent, enterPp: Config.key('flowcrypt.compatibility.1pp1').passphrase });
       // now remembers pp in session
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent });
+      // Finish session and check if it's finished
+      await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
     }));
 
     ava.test('[standalone] protonmail - load pubkey into contact + verify detached msg', testWithNewBrowser(async (t, browser) => {

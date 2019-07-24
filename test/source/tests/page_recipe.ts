@@ -281,12 +281,14 @@ export class InboxPageRecipe extends PageRecipe {
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
     if (enterPp) {
+      await inboxPage.notPresent("@finish-session");
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await inboxPage.waitAll('@dialog-passphrase');
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
       await ppFrame.waitAndType('@input-pass-phrase', enterPp);
       await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
       await pgpBlockFrame.waitForSelTestState('ready');
+      await inboxPage.waitAll('@finish-session');
       await Util.sleep(1);
     }
     const content = await pgpBlockFrame.read('@pgp-block-content');
@@ -294,6 +296,17 @@ export class InboxPageRecipe extends PageRecipe {
       throw new Error(`message did not decrypt`);
     }
     await inboxPage.close();
+  }
+
+  public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
+    const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    await inboxPage.waitAll('iframe');
+    await inboxPage.waitAndClick('@finish-session');
+    const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
+    await pgpBlockFrame.waitAll('@pgp-block-content');
+    await pgpBlockFrame.waitForSelTestState('ready');
+    await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
+    await inboxPage.waitAll('@dialog-passphrase');
   }
 
   public static checkSentMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {

@@ -18,6 +18,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { WebmailCommon } from "../../../js/common/webmail.js";
 
 Catch.try(async () => {
 
@@ -33,6 +34,7 @@ Catch.try(async () => {
   let injector: Injector;
   let notifications: Notifications;
   let allLabels: GmailRes.GmailLabels$label[];
+  let webmailCommon: WebmailCommon;
 
   const S = Ui.buildJquerySels({ // tslint:disable-line:oneliner-object-literal
     threads: '.threads',
@@ -49,6 +51,7 @@ Catch.try(async () => {
   notifications = new Notifications(tabId);
   factory = new XssSafeFactory(acctEmail, tabId);
   injector = new Injector('settings', undefined, factory);
+  webmailCommon = new WebmailCommon(acctEmail, injector);
   const storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'addresses']);
   emailProvider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.metaNotificationContainer()); // xss-safe-factory
@@ -74,6 +77,10 @@ Catch.try(async () => {
   const showNotification = (notification: string, callbacks?: Dict<() => void>) => {
     notifications.show(notification, callbacks);
     $('body').one('click', Ui.event.handle(notifications.clear));
+  };
+
+  const every30Sec = async () => {
+    await webmailCommon.addOrRemoveEndSessionBtnIfNeeded();
   };
 
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
@@ -134,6 +141,7 @@ Catch.try(async () => {
   BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
     notifications.showAuthPopupNeeded(acctEmail);
   });
+  BrowserMsg.addListener('add_end_session_btn', () => injector.insertEndSessionBtn(acctEmail));
   BrowserMsg.listen(tabId);
 
   const updateUrlWithoutRedirecting = (title: string, params: UrlParams) => {
@@ -487,4 +495,7 @@ Catch.try(async () => {
   }
 
   await Settings.populateAccountsMenu('inbox.htm');
+
+  await every30Sec();
+  Catch.setHandledInterval(every30Sec, 30000);
 })();

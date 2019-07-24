@@ -21,7 +21,6 @@ import { XssSafeFactory } from '../../common/xss_safe_factory.js';
 Catch.try(async () => {
 
   const gmailWebmailStartup = async () => {
-    const replacePgElsIntervalMs = 1000;
     let replacePgpElsInterval: number;
     let replacer: GmailElementReplacer;
     let hostPageInfo: WebmailVariantObject;
@@ -90,15 +89,19 @@ Catch.try(async () => {
       injector.btns();
       replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
-      replacer.everything();
-      replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as any).$ === 'function') {
-          replacer.everything();
-        } else { // firefox will unload jquery when extension is restarted or updated
-          clearInterval(replacePgpElsInterval);
-          notifyMurdered();
-        }
-      }, replacePgElsIntervalMs);
+      const intervaliFunctions = replacer.getIntervalFunctions();
+      for(const intervalFunction of intervaliFunctions) {
+        intervalFunction.handler();
+        replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
+          if (typeof (window as any).$ === 'function') {
+            intervalFunction.handler();
+          } else { // firefox will unload jquery when extension is restarted or updated
+            clearInterval(replacePgpElsInterval);
+            notifyMurdered();
+          }
+        }, intervalFunction.interval);
+      }
+
     };
 
     const hijackGmailHotkeys = () => {

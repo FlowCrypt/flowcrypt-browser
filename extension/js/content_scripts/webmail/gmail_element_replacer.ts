@@ -11,16 +11,16 @@ import { BrowserMsg } from '../../common/extension.js';
 import { Ui, Browser } from '../../common/browser.js';
 import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
-import { WebmailElementReplacer } from './setup_webmail_content_script.js';
+import { WebmailElementReplacer, IntervalFunction } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
 import { Google, GmailRes } from '../../common/api/google.js';
 import { Xss } from '../../common/platform/xss.js';
 import { Keyserver } from '../../common/api/keyserver.js';
+import { WebmailCommon } from "../../common/webmail.js";
 
 type JQueryEl = JQuery<HTMLElement>;
 
 export class GmailElementReplacer implements WebmailElementReplacer {
-
   private recipientHasPgpCache: Dict<boolean> = {};
   private addresses: string[];
   private factory: XssSafeFactory;
@@ -29,6 +29,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private injector: Injector;
   private notifications: Notifications;
   private gmailVariant: WebmailVariantString;
+  private webmailCommon: WebmailCommon;
   private cssHidden = `opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important;
   max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
@@ -56,9 +57,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.injector = injector;
     this.gmailVariant = gmailVariant;
     this.notifications = notifications;
+    this.webmailCommon = new WebmailCommon(acctEmail, injector);
   }
 
-  everything = () => {
+  getIntervalFunctions = (): Array<IntervalFunction> => {
+    return [
+      { interval: 1000, handler: this.everything },
+      { interval: 30000, handler: this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded }
+    ];
+  }
+
+  private everything = () => {
     this.replaceArmoredBlocks();
     this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
@@ -549,5 +558,4 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       }
     }
   }
-
 }

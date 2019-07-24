@@ -211,6 +211,14 @@ export class XssSafeFactory {
     return `<div class="${this.destroyableCls} reply_message_button"><img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" /></div>`;
   }
 
+  btnEndPPSession = () => {
+    return `<div class="finish_session gb_qe gb_oe" data-test="finish-session">
+              <div class="zo">
+                <a class="gb_te gb_re gb_pb t6"><img src="${this.srcImg('svgs/unlock.svg')}" /></a>
+              </div>
+            </div>`;
+  }
+
   btnWithoutFc = () => {
     const span = `<span>see original</span>`;
     return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;

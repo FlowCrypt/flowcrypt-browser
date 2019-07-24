@@ -100,6 +100,10 @@ Catch.try(async () => {
         if (await Pgp.key.decrypt(prv, [pass]) === true) {
           await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);
           atLeastOneMatched = true;
+          if (storageType === 'session') {
+            // TODO: change to 'broadcast' when issue with 'broadcast' is fixed
+            BrowserMsg.send.addEndSessionBtn(parentTabId);
+          }
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Unknown s2k type.') {

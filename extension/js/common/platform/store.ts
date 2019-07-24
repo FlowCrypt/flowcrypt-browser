@@ -239,6 +239,19 @@ export class Store {
     return fromSession && !ignoreSession ? fromSession : undefined;
   }
 
+  static getKeysCurrentlyInSession = async (acctEmail: string) => {
+    const keys = await Store.keysGet(acctEmail);
+    const result: Array<KeyInfo> = [];
+    for(const key of keys) {
+      // Check if passpharse in the session
+      if (!(await Store.passphraseGet(acctEmail, key.longid, true)) &&
+      (await Store.passphraseGet(acctEmail, key.longid, false))) {
+        result.push(key);
+      }
+    }
+    return result;
+  }
+
   static waitUntilPassphraseChanged = async (acctEmail: string, missingOrWrongPpKeyLongids: string[], interval = 1000) => {
     const missingOrWrongPassprases: Dict<string | undefined> = {};
     const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
