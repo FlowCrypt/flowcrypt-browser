@@ -213,7 +213,7 @@ export class XssSafeFactory {
 
   btnEndPPSession = () => {
     return `<div class="finish_session gb_qe gb_oe" data-test="finish-session">
-              <div class="zo "data-tooltip="End Current Sesion">
+              <div class="zo">
                 <a class="gb_te gb_re gb_pb t6"><img src="${this.srcImg('svgs/unlock.svg')}" /></a>
               </div>
             </div>`;

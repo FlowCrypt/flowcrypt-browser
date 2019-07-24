@@ -19,7 +19,7 @@ export class Injector {
   private webmailName: WebMailName;
   private webmailVariant: WebmailVariantString;
   private S: SelCache;
-  private container: {[key: string]: Host} = {
+  private container: { [key: string]: Host } = {
     composeBtnSel: {
       'gmail': 'div.aic',
       'outlook': 'div._fce_b',
@@ -68,15 +68,22 @@ export class Injector {
 
   insertEndSessionBtn = async (acctEmail: string) => {
     $(this.factory.btnEndPPSession())
-    .insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last())
-    .click(Ui.event.prevent('double', async el => {
-      const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
-      if (keysInSession.length) {
-        await Promise.all(keysInSession.map(async k => await Store.passphraseSave('session', acctEmail, k.longid, undefined)));
-      }
-      window.location.reload();
-      el.remove();
-    }));
+      .attr(this.webmailName === 'gmail' ? 'data-tooltip' : 'title', 'End Current Session')
+      .insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last())
+      .click(Ui.event.prevent('double', async el => {
+        const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
+        if (keysInSession.length) {
+          await Promise.all(keysInSession.map(async k => await Store.passphraseSave('session', acctEmail, k.longid, undefined)));
+        }
+        if (this.webmailName === 'gmail') {
+          $('.' + (window as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
+            $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
+          });
+        } else {
+          window.location.reload();
+        }
+        el.remove();
+      }));
   }
 
 }

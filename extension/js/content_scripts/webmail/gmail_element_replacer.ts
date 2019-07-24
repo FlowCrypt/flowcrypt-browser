@@ -16,7 +16,7 @@ import { Catch } from '../../common/platform/catch.js';
 import { Google, GmailRes } from '../../common/api/google.js';
 import { Xss } from '../../common/platform/xss.js';
 import { Keyserver } from '../../common/api/keyserver.js';
-import { Store } from '../../common/platform/store.js';
+import { WebmailCommon } from "../../common/webmail.js";
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -29,6 +29,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private injector: Injector;
   private notifications: Notifications;
   private gmailVariant: WebmailVariantString;
+  private webmailCommon: WebmailCommon;
   private cssHidden = `opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important;
   max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
@@ -56,12 +57,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.injector = injector;
     this.gmailVariant = gmailVariant;
     this.notifications = notifications;
+    this.webmailCommon = new WebmailCommon(acctEmail, injector);
   }
 
   getIntervalFunctions = (): Array<IntervalFunction> => {
     return [
       { interval: 1000, handler: this.everything },
-      { interval: 30000, handler: () => this.addOrRemoveEndSessionBtnIfNeeded() }
+      { interval: 30000, handler: () => this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded() }
     ];
   }
 
@@ -553,19 +555,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
         settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
         settingsBtnContainer.find('#fc_settings_btn').on('click', Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
-      }
-    }
-  }
-
-  private addOrRemoveEndSessionBtnIfNeeded = async () => {
-    const finishSessionBtn = $('.finish_session');
-    if ((await Store.getKeysCurrentlyInSession(this.acctEmail)).length) {
-      if (!finishSessionBtn.length) {
-        await this.injector.insertEndSessionBtn(this.acctEmail);
-      }
-    } else {
-      if (finishSessionBtn.length) {
-        finishSessionBtn.remove();
       }
     }
   }

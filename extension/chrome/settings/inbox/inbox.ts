@@ -18,6 +18,7 @@ import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { WebmailCommon } from "../../../js/common/webmail.js";
 
 Catch.try(async () => {
 
@@ -33,6 +34,7 @@ Catch.try(async () => {
   let injector: Injector;
   let notifications: Notifications;
   let allLabels: GmailRes.GmailLabels$label[];
+  let webmailCommon: WebmailCommon;
 
   const S = Ui.buildJquerySels({ // tslint:disable-line:oneliner-object-literal
     threads: '.threads',
@@ -49,6 +51,7 @@ Catch.try(async () => {
   notifications = new Notifications(tabId);
   factory = new XssSafeFactory(acctEmail, tabId);
   injector = new Injector('settings', undefined, factory);
+  webmailCommon = new WebmailCommon(acctEmail, injector);
   const storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'addresses']);
   emailProvider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.metaNotificationContainer()); // xss-safe-factory
@@ -77,7 +80,7 @@ Catch.try(async () => {
   };
 
   const every30Sec = async () => {
-    await addOrRemoveEndSessionBtnIfNeeded();
+    await webmailCommon.addOrRemoveEndSessionBtnIfNeeded();
   };
 
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
@@ -455,19 +458,6 @@ Catch.try(async () => {
       params = { threadId, threadMsgId };
     }
     S.cached('thread').append(Ui.e('div', { class: 'reply line', html: factory.embeddedReply(params, false, false) })); // xss-safe-factory
-  };
-
-  const addOrRemoveEndSessionBtnIfNeeded = async () => {
-    const finishSessionBtn = $('.finish_session');
-    if ((await Store.getKeysCurrentlyInSession(acctEmail)).length) {
-      if (!finishSessionBtn.length) {
-        await injector.insertEndSessionBtn(acctEmail);
-      }
-    } else {
-      if (finishSessionBtn.length) {
-        finishSessionBtn.remove();
-      }
-    }
   };
 
   const threadMsgId = (msgId: string) => {
