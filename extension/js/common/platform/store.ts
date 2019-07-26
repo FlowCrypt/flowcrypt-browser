@@ -33,6 +33,7 @@ export type DbContactObjArg = {
   lastUse?: number | null, // when was this contact last used to send an email
   lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
+  isExpired?: true | null;
 };
 export type EmailProvider = 'gmail';
 
@@ -242,10 +243,10 @@ export class Store {
   static getKeysCurrentlyInSession = async (acctEmail: string) => {
     const keys = await Store.keysGet(acctEmail);
     const result: Array<KeyInfo> = [];
-    for(const key of keys) {
+    for (const key of keys) {
       // Check if passpharse in the session
       if (!(await Store.passphraseGet(acctEmail, key.longid, true)) &&
-      (await Store.passphraseGet(acctEmail, key.longid, false))) {
+        (await Store.passphraseGet(acctEmail, key.longid, false))) {
         result.push(key);
       }
     }
@@ -562,10 +563,10 @@ export class Store {
     }
   }
 
-  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig }: DbContactObjArg): Promise<Contact> => {
+  static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig, isExpired }: DbContactObjArg): Promise<Contact> => {
     // @ts-ignore - if openpgp is mising, relay op through background process
     if (typeof openpgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck }] }) as Contact;
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck, isExpired }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
@@ -587,6 +588,7 @@ export class Store {
           last_use: lastUse || null,
           pubkey_last_sig: null,
           pubkey_last_check: null,
+          isExpired: isExpired || null
         };
       }
       const k = await Pgp.key.read(pubkey);
@@ -612,6 +614,7 @@ export class Store {
         last_use: lastUse || null,
         pubkey_last_sig: lastSig || null,
         pubkey_last_check: lastCheck || null,
+        isExpired: isExpired || null
       };
     }
   }
