@@ -173,7 +173,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await pubFrame.close();
     }));
 
-    ava.test.only('[standalone] load key - unusable key', testWithNewBrowser(async (t, browser) => {
+    ava.test('[standalone] load key - unusable key', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(unusableKey)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
