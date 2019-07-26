@@ -89,8 +89,8 @@ Catch.try(async () => {
       if (fixed !== armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
       } else {
-        $('.line.add_contact').addClass('bad').text('This public key is invalid or has unknown format.');
-        $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
+        $('#pgp_block.pgp_pubkey').empty()
+          .append('<div class="bad">This OpenPGP key is not usable.</div>'); // xss-direct
       }
     }
   };
@@ -102,7 +102,10 @@ Catch.try(async () => {
         const email = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
         if (email) {
           contacts.push(await Store.dbContactObj(
-            { email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey), expiresOn: await Pgp.key.dateBeforeExpiration(pubkey) }
+            {
+              email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey),
+              expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubkey)) || undefined
+            }
           ));
         }
       }
@@ -114,7 +117,7 @@ Catch.try(async () => {
       if (Str.isEmailValid(String($('.input_email').val()))) {
         const contact = await Store.dbContactObj({
           email: String($('.input_email').val()), client: 'pgp', pubkey: pubs[0].armor(), lastUse: Date.now(),
-          lastSig: await Pgp.key.lastSig(pubs[0]), expiresOn: await Pgp.key.dateBeforeExpiration(pubs[0])
+          lastSig: await Pgp.key.lastSig(pubs[0]), expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubs[0])) || undefined
         });
         await Store.dbContactSave(undefined, contact);
         BrowserMsg.send.addToContacts(parentTabId);

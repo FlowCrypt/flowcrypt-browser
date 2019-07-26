@@ -33,7 +33,7 @@ export type DbContactObjArg = {
   lastUse?: number | null, // when was this contact last used to send an email
   lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
-  expiresOn?: Date | null;
+  expiresOn?: number | null;
 };
 export type EmailProvider = 'gmail';
 
