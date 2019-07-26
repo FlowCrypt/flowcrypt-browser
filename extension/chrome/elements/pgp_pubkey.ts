@@ -63,7 +63,6 @@ Catch.try(async () => {
       $('.line.fingerprints').css({ display: 'none' });
     }
     if (typeof pubs[0] !== 'undefined') {
-      console.log(isUsableButExpired);
       if (!isUsableButExpired && ! await pubs[0].getEncryptionKey() && ! await pubs[0].getSigningKey()) {
         $('.line.add_contact').addClass('bad').text('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
         $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
@@ -103,7 +102,7 @@ Catch.try(async () => {
         const email = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
         if (email) {
           contacts.push(await Store.dbContactObj(
-            { email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey) }
+            { email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey), expiresOn: await Pgp.key.dateBeforeExpiration(pubkey) }
           ));
         }
       }
@@ -114,7 +113,8 @@ Catch.try(async () => {
     } else if (pubs.length) {
       if (Str.isEmailValid(String($('.input_email').val()))) {
         const contact = await Store.dbContactObj({
-          email: String($('.input_email').val()), client: 'pgp', pubkey: pubs[0].armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubs[0])
+          email: String($('.input_email').val()), client: 'pgp', pubkey: pubs[0].armor(), lastUse: Date.now(),
+          lastSig: await Pgp.key.lastSig(pubs[0]), expiresOn: await Pgp.key.dateBeforeExpiration(pubs[0])
         });
         await Store.dbContactSave(undefined, contact);
         BrowserMsg.send.addToContacts(parentTabId);
