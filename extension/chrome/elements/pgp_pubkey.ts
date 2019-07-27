@@ -101,12 +101,10 @@ Catch.try(async () => {
       for (const pubkey of pubs) {
         const email = Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
         if (email) {
-          contacts.push(await Store.dbContactObj(
-            {
-              email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey),
-              expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubkey)) || undefined
-            }
-          ));
+          contacts.push(await Store.dbContactObj({
+            email, client: 'pgp', pubkey: pubkey.armor(), lastUse: Date.now(), lastSig: await Pgp.key.lastSig(pubkey),
+            expiresOn: await Pgp.key.dateBeforeExpiration(pubkey)
+          }));
         }
       }
       await Store.dbContactSave(undefined, contacts);
@@ -117,7 +115,7 @@ Catch.try(async () => {
       if (Str.isEmailValid(String($('.input_email').val()))) {
         const contact = await Store.dbContactObj({
           email: String($('.input_email').val()), client: 'pgp', pubkey: pubs[0].armor(), lastUse: Date.now(),
-          lastSig: await Pgp.key.lastSig(pubs[0]), expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubs[0])) || undefined
+          lastSig: await Pgp.key.lastSig(pubs[0]), expiresOn: await Pgp.key.dateBeforeExpiration(pubs[0])
         });
         await Store.dbContactSave(undefined, contact);
         BrowserMsg.send.addToContacts(parentTabId);

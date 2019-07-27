@@ -231,7 +231,7 @@ Catch.try(async () => {
           return;
         } // ---> and longid it matches signature
         await Store.dbContactSave(undefined, await Store.dbContactObj({
-          email: senderEmail, pubkey, client: pgpClient, expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubkey)) || undefined
+          email: senderEmail, pubkey, client: pgpClient, expiresOn: await Pgp.key.dateBeforeExpiration(pubkey)
         })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
@@ -253,7 +253,7 @@ Catch.try(async () => {
         }
         render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
           await Store.dbContactSave(undefined, await Store.dbContactObj({
-            email: pubkeyEmail, pubkey, client: pgpClient, expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubkey)) || undefined
+            email: pubkeyEmail, pubkey, client: pgpClient, expiresOn: await Pgp.key.dateBeforeExpiration(pubkey)
           })); // TOFU manual import
           window.location.reload();
         });

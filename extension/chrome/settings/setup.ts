@@ -307,7 +307,7 @@ Catch.try(async () => {
     for (const email of allAddrs) {
       myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({
         email, name, client: 'cryptup', pubkey: prvs[0].toPublic().armor(), lastUse: Date.now(),
-        lastSig: await Pgp.key.lastSig(prvs[0].toPublic()), expiresOn: Number(Pgp.key.dateBeforeExpiration(prvs[0])) || undefined
+        lastSig: await Pgp.key.lastSig(prvs[0].toPublic()), expiresOn: await Pgp.key.dateBeforeExpiration(prvs[0])
       }));
     }
     await Store.dbContactSave(undefined, myOwnEmailAddrsAsContacts);

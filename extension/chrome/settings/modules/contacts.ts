@@ -81,7 +81,7 @@ Catch.try(async () => {
       await Ui.modal.warning('No public key entered');
     } else if (await Pgp.key.fingerprint(armoredPubkey)) {
       await Store.dbContactSave(undefined, await Store.dbContactObj({
-        email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now(), expiresOn: Number(Pgp.key.dateBeforeExpiration(armoredPubkey)) || undefined
+        email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(armoredPubkey)
       }));
       await renderContactList();
     } else {

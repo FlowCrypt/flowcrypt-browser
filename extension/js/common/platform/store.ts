@@ -33,7 +33,7 @@ export type DbContactObjArg = {
   lastUse?: number | null, // when was this contact last used to send an email
   lastSig?: number | null, // last pubkey signature (when was pubkey last updated by owner)
   lastCheck?: number | null; // when was the local copy of the pubkey last updated (or checked against Attester)
-  expiresOn?: number | null;
+  expiresOn?: Date | null;
 };
 export type EmailProvider = 'gmail';
 
@@ -246,7 +246,7 @@ export class Store {
     for (const key of keys) {
       // Check if passpharse in the session
       if (!(await Store.passphraseGet(acctEmail, key.longid, true)) &&
-        (await Store.passphraseGet(acctEmail, key.longid, false))) {
+        await Store.passphraseGet(acctEmail, key.longid, false)) {
         result.push(key);
       }
     }
@@ -564,9 +564,10 @@ export class Store {
   }
 
   static dbContactObj = async ({ email, name, client, pubkey, pendingLookup, lastUse, lastCheck, lastSig, expiresOn }: DbContactObjArg): Promise<Contact> => {
+    const expiresOnMs = Number(expiresOn) || undefined;
     // @ts-ignore - if openpgp is mising, relay op through background process
     if (typeof openpgp === 'undefined') {
-      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck, expiresOn }] }) as Contact;
+      return await BrowserMsg.send.bg.await.db({ f: 'dbContactObj', args: [{ email, name, client, pubkey, pendingLookup, lastUse, lastSig, lastCheck, expiresOnMs }] }) as Contact;
     } else {
       const validEmail = Str.parseEmail(email).email;
       if (!validEmail) {
@@ -588,7 +589,7 @@ export class Store {
           last_use: lastUse || null,
           pubkey_last_sig: null,
           pubkey_last_check: null,
-          expiresOn: expiresOn || null
+          expiresOn: expiresOnMs || null
         };
       }
       const k = await Pgp.key.read(pubkey);

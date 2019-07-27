@@ -1338,7 +1338,7 @@ export class Composer {
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.has_pgp) {
-          if ((contact.expiresOn || Number.MAX_SAFE_INTEGER) > Date.now()) {
+          if ((contact.expiresOn || Infinity) > Date.now()) {
             ulHtml += '<img src="/img/svgs/locked-icon-green.svg" />';
           } else {
             ulHtml += '<img src="/img/svgs/locked-icon-orange.svg" />';
@@ -1603,7 +1603,9 @@ export class Composer {
       this.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
       $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
       $(emailEl).addClass("wrong");
-    } else if (contact.pubkey && (contact.expiresOn || Number.MAX_SAFE_INTEGER) <= Date.now()) {
+    } else if (contact.pubkey &&
+      ((contact.expiresOn || Infinity) <= Date.now() ||
+        await Pgp.key.usableButExpired((await openpgp.key.readArmored(contact.pubkey)).keys[0]))) {
       $(emailEl).addClass("expired");
       Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(emailEl).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
@@ -1722,7 +1724,7 @@ export class Composer {
           if (!await Store.dbContactGet(undefined, [keyUser.email])) {
             await Store.dbContactSave(undefined, await Store.dbContactObj({
               email: keyUser.email, name: keyUser.name, client: 'pgp',
-              pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: Number(Pgp.key.dateBeforeExpiration(normalizedPub)) || undefined
+              pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(normalizedPub)
             }));
           }
           this.S.cached('input_to').val(keyUser.email).blur().focus(); // Need (blur + focus) to run parseRender function
