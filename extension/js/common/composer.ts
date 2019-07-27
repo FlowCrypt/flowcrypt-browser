@@ -1720,7 +1720,10 @@ export class Composer {
         const keyUser = Str.parseEmail(key.users[0]);
         if (keyUser.email) {
           if (!await Store.dbContactGet(undefined, [keyUser.email])) {
-            await Store.dbContactSave(undefined, await Store.dbContactObj({ email: keyUser.email, name: keyUser.name, client: 'pgp', pubkey: normalizedPub, lastCheck: Date.now() }));
+            await Store.dbContactSave(undefined, await Store.dbContactObj({
+              email: keyUser.email, name: keyUser.name, client: 'pgp',
+              pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: Number(Pgp.key.dateBeforeExpiration(normalizedPub)) || undefined
+            }));
           }
           this.S.cached('input_to').val(keyUser.email).blur().focus(); // Need (blur + focus) to run parseRender function
         } else {

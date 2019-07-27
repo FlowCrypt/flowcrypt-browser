@@ -80,7 +80,9 @@ Catch.try(async () => {
     if (!armoredPubkey || !email) {
       await Ui.modal.warning('No public key entered');
     } else if (await Pgp.key.fingerprint(armoredPubkey)) {
-      await Store.dbContactSave(undefined, await Store.dbContactObj({ email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now() }));
+      await Store.dbContactSave(undefined, await Store.dbContactObj({
+        email, client: 'pgp', pubkey: armoredPubkey, lastUse: Date.now(), expiresOn: Number(Pgp.key.dateBeforeExpiration(armoredPubkey)) || undefined
+      }));
       await renderContactList();
     } else {
       await Ui.modal.warning('Cannot recognize a valid public key, please try again. Let us know at human@flowcrypt.com if you need help.');

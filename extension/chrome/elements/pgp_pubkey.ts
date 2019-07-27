@@ -30,7 +30,7 @@ Catch.try(async () => {
   const minimized = uncheckedUrlParams.minimized === true;
 
   const { keys: pubs } = await openpgp.key.readArmored(armoredPubkey);
-  const isUsableButExpired = await Pgp.key.usableButExpired(pubs[0]) || undefined;
+  const isUsableButExpired = await Pgp.key.usableButExpired(pubs[0]);
 
   const sendResizeMsg = () => {
     const desiredHeight = $('#pgp_block').height()! + (compact ? 10 : 30); // #pgp_block is defined in template

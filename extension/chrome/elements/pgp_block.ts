@@ -10,7 +10,7 @@ import { Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
-import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
+import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg, Pgp } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
@@ -230,7 +230,9 @@ Catch.try(async () => {
           render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
           return;
         } // ---> and longid it matches signature
-        await Store.dbContactSave(undefined, await Store.dbContactObj({ email: senderEmail, pubkey, client: pgpClient })); // <= TOFU auto-import
+        await Store.dbContactSave(undefined, await Store.dbContactObj({
+          email: senderEmail, pubkey, client: pgpClient, expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubkey)) || undefined
+        })); // <= TOFU auto-import
         render('Fetched pubkey, click to verify', () => window.location.reload());
       } else { // don't know who sent it
         const { pubkey, pgpClient } = await Keyserver.lookupLongid(acctEmail, signerLongid);
@@ -250,7 +252,9 @@ Catch.try(async () => {
           return;
         }
         render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
-          await Store.dbContactSave(undefined, await Store.dbContactObj({ email: pubkeyEmail, pubkey, client: pgpClient })); // TOFU manual import
+          await Store.dbContactSave(undefined, await Store.dbContactObj({
+            email: pubkeyEmail, pubkey, client: pgpClient, expiresOn: Number(await Pgp.key.dateBeforeExpiration(pubkey)) || undefined
+          })); // TOFU manual import
           window.location.reload();
         });
       }
