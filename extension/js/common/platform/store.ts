@@ -589,7 +589,7 @@ export class Store {
           last_use: lastUse || null,
           pubkey_last_sig: null,
           pubkey_last_check: null,
-          expiresOn: expiresOnMs || null
+          expiresOn: null
         };
       }
       const k = await Pgp.key.read(pubkey);
