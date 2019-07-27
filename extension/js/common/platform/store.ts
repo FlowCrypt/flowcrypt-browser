@@ -615,7 +615,7 @@ export class Store {
         last_use: lastUse || null,
         pubkey_last_sig: lastSig || null,
         pubkey_last_check: lastCheck || null,
-        expiresOn: expiresOn || null
+        expiresOn: expiresOnMs || null
       };
     }
   }
