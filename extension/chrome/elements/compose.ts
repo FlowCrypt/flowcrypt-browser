@@ -46,12 +46,20 @@ Catch.try(async () => {
   let from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
   let to = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
   let subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
+  let passphraseInterval: number;
 
   const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_keyserver', 'email_footer', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const canReadEmail = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
+  const storagePassphraseGet = async () => {
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    if (!primaryKi) {
+      return undefined; // flowcrypt just uninstalled or reset?
+    }
+    return await Store.passphraseGet(acctEmail, primaryKi.longid);
+  };
 
   await (async () => { // attempt to recover missing params
     if (!isReplyBox || (threadId && threadId !== threadMsgId && to.length && subject)) {
@@ -170,13 +178,7 @@ Catch.try(async () => {
         await Store.setAcct(acctEmail, { drafts_compose: drafts });
       }
     },
-    storagePassphraseGet: async () => {
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      if (!primaryKi) {
-        return undefined; // flowcrypt just uninstalled or reset?
-      }
-      return await Store.passphraseGet(acctEmail, primaryKi.longid);
-    },
+    storagePassphraseGet,
     storageAddAdminCodes: async (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => {
       const adminCodeStorage = await Store.getGlobal(['admin_codes']);
       adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
@@ -256,6 +258,22 @@ Catch.try(async () => {
     renderSendingAddrDialog: () => ($ as JQS).featherlight({ iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500 }),
     closeMsg,
     factoryAtt: (att: Att, isEncrypted: boolean) => factory.embeddedAtta(att, isEncrypted),
+    whenMasterPassphraseEntered: (secondsTimeout?: number): Promise<string | undefined> => {
+      return new Promise(resolve => {
+        clearInterval(passphraseInterval);
+        const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
+        passphraseInterval = Catch.setHandledInterval(async () => {
+          const passphrase = await storagePassphraseGet();
+          if (typeof passphrase !== 'undefined') {
+            clearInterval(passphraseInterval);
+            resolve(passphrase);
+          } else if (timeoutAt && Date.now() > timeoutAt) {
+            clearInterval(passphraseInterval);
+            resolve(undefined);
+          }
+        }, 1000);
+      });
+    }
   }, processedUrlParams, await Store.subscription());
 
   BrowserMsg.addListener('close_dialog', async () => {
@@ -266,7 +284,12 @@ Catch.try(async () => {
     composer.updateFooterIcon();
     $('.featherlight.featherlight-iframe').remove();
   });
-  BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => composer.passphraseEntry(!!entered));
+  BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
+    if (!entered) {
+      clearInterval(passphraseInterval);
+      composer.resetSendBtn();
+    }
+  });
   BrowserMsg.listen(tabId);
 
   if (!isReplyBox) { // don't want to deal with resizing the frame

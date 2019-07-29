@@ -3,13 +3,13 @@
 'use strict';
 
 import { Catch, UnreportableError } from './platform/catch.js';
-import { Store, Subscription, ContactUpdate, DbContactObjArg } from './platform/store.js';
+import { Store, Subscription } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow, Bm } from './extension.js';
-import { Pgp, Pwd, FormatError, Contact, KeyInfo, PgpMsg } from './core/pgp.js';
-import { Api, ProgressCb, ChunkedCb, AjaxError } from './api/api.js';
+import { Pgp, Pwd, FormatError, Contact, PgpMsg } from './core/pgp.js';
+import { Api, ProgressCb } from './api/api.js';
 import { Ui, BrowserEventErrHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
 import { GoogleAuth, GmailRes, Google } from './api/google.js';
@@ -20,78 +20,20 @@ import { AttUI, AttLimits } from './ui/att_ui.js';
 import { Settings } from './settings.js';
 import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
-import { DeterminedMsgHeaders } from '../../chrome/elements/compose.js';
 import { PubkeySearchResult, Keyserver } from './api/keyserver.js';
 import { Rules } from './rules.js';
+import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
+import { ComposerNotReadyError, ComposerUserError, ComposerResetBtnTrigger, RecipientErrsMode } from './composer/composer-errors.js';
+import { ComposerUrlParams } from './composer/interfaces/composer-ur-params.js';
+import { MessageToReplyOrForward } from './composer/interfaces/composer-types.js';
+import { ComposerDraft } from './composer/composer-draft.js';
 
 declare const openpgp: typeof OpenPGP;
-
-interface ComposerAppFunctionsInterface {
-  canReadEmails: () => boolean;
-  doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
-  storageGetAddresses: () => string[];
-  storageGetAddressesKeyserver: () => string[];
-  storageEmailFooterGet: () => string | undefined;
-  storageEmailFooterSet: (footer?: string) => Promise<void>;
-  storageGetHideMsgPassword: () => boolean;
-  storageGetSubscription: () => Promise<Subscription>;
-  storageGetKey: (senderEmail: string) => Promise<KeyInfo>;
-  storageSetDraftMeta: (storeIfTrue: boolean, draftId: string, threadId: string, recipients?: string[], subject?: string) => Promise<void>;
-  storagePassphraseGet: () => Promise<string | undefined>;
-  storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise<void>;
-  storageContactGet: (email: string[]) => Promise<(Contact | undefined)[]>;
-  storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
-  storageContactSave: (contact: Contact) => Promise<void>;
-  storageContactSearch: (query: ProviderContactsQuery) => Promise<Contact[]>;
-  storageContactObj: (o: DbContactObjArg) => Promise<Contact>;
-  emailProviderDraftGet: (draftId: string) => Promise<GmailRes.GmailDraftGet | undefined>;
-  emailProviderDraftCreate: (acctEmail: string, mimeMsg: string, threadId?: string) => Promise<GmailRes.GmailDraftCreate>;
-  emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<GmailRes.GmailDraftUpdate>;
-  emailProviderDraftDelete: (draftId: string) => Promise<GmailRes.GmailDraftDelete>;
-  emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<GmailRes.GmailMsgSend>;
-  emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
-  emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | DeterminedMsgHeaders>;
-  emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
-  renderFooterDialog: () => void;
-  renderAddPubkeyDialog: (emails: string[]) => void;
-  renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
-  renderHelpDialog: () => void;
-  renderSendingAddrDialog: () => void;
-  factoryAtt: (att: Att, isEncrypted: boolean) => string;
-  closeMsg: () => void;
-}
-
-export class ComposerUserError extends Error { }
-class ComposerNotReadyError extends ComposerUserError { }
-class ComposerResetBtnTrigger extends Error { }
-export type ComposerUrlParams = {
-  disableDraftSaving: boolean;
-  isReplyBox: boolean;
-  tabId: string;
-  acctEmail: string;
-  threadId: string;
-  draftId: string;
-  subject: string;
-  from: string | undefined;
-  to: string[];
-  frameId: string;
-  parentTabId: string;
-  skipClickPrompt: boolean;
-  debug: boolean;
-};
-type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
-type MessageToReplyOrForward = {
-  headers: {
-    date?: string,
-    from?: string
-  },
-  text?: string
-};
 
 export class Composer {
   private debugId = Str.sloppyRandom();
 
-  private S = Ui.buildJquerySels({
+  public S = Ui.buildJquerySels({
     body: 'body',
     compose_table: 'table#compose',
     header: '#section_header',
@@ -131,8 +73,8 @@ export class Composer {
 
   private attach: AttUI;
   private app: ComposerAppFunctionsInterface;
+  private composerDraft: ComposerDraft;
 
-  private SAVE_DRAFT_FREQUENCY = 3000;
   private PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
   private PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
   private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
@@ -144,17 +86,12 @@ export class Composer {
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
   private FULL_WINDOW_CLASS = 'full_window';
 
-  private lastDraftBody = '';
-  private lastDraftSubject = '';
   private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private composeWindowIsMinimized = false;
   private composeWindowIsMaximized = false;
   private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
-  private saveDraftInterval?: number;
-  private currentlySavingDraft = false;
-  private passphraseInterval?: number;
   private includePubkeyToggledManually = false;
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
@@ -172,9 +109,7 @@ export class Composer {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
     this.urlParams = urlParams;
-    if (!this.urlParams.disableDraftSaving) {
-      this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
-    }
+    this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
@@ -313,7 +248,7 @@ export class Composer {
       }
     }, this.getErrHandlers(`change footer`)));
     $('.delete_draft').click(Ui.event.handle(async () => {
-      await this.draftDelete();
+      await this.composerDraft.draftDelete();
       if (this.urlParams.isReplyBox) { // reload iframe so we don't leave users without a reply UI
         this.urlParams.skipClickPrompt = false;
         window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
@@ -366,7 +301,7 @@ export class Composer {
       this.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
-      await this.initialDraftLoad();
+      await this.composerDraft.initialDraftLoad();
     } else {
       if (this.urlParams.isReplyBox) {
         if (this.urlParams.skipClickPrompt) {
@@ -392,54 +327,7 @@ export class Composer {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private initialDraftLoad = async () => {
-    if (this.urlParams.isReplyBox) {
-      Xss.sanitizeRender(this.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
-    }
-    const abortAndRenderReplyMsgComposeTableIfIsReplyBox = async (reason: string) => {
-      console.info(`Google.gmail.initialDraftLoad: ${reason}`);
-      if (this.urlParams.isReplyBox) {
-        await this.renderReplyMsgComposeTable();
-      }
-    };
-    try {
-      const draftGetRes = await this.app.emailProviderDraftGet(this.urlParams.draftId);
-      if (!draftGetRes) {
-        return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
-      }
-      const parsedMsg = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
-      const armored = Pgp.armor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
-      if (!armored) {
-        return abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
-      }
-      if (String(parsedMsg.headers.subject)) {
-        this.S.cached('input_subject').val(String(parsedMsg.headers.subject));
-      }
-      if (parsedMsg.to.length) {
-        this.urlParams.to = parsedMsg.to;
-      }
-      await this.decryptAndRenderDraft(armored, parsedMsg);
-    } catch (e) {
-      if (Api.err.isNetErr(e)) {
-        Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
-      } else if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-        Xss.sanitizeRender('body', `Failed to load draft - FlowCrypt needs to be re-connected to Gmail. ${Ui.retryLink()}`);
-      } else if (this.urlParams.isReplyBox && Api.err.isNotFound(e)) {
-        Catch.log('about to reload reply_message automatically: get draft 404', this.urlParams.acctEmail);
-        await Ui.time.sleep(500);
-        await this.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
-        console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
-        this.urlParams.draftId = '';
-        window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
-      } else {
-        Catch.reportErr(e);
-        return abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
-      }
-    }
-  }
-
-  private resetSendBtn = (delay?: number) => {
+  public resetSendBtn = (delay?: number) => {
     const btnText = this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND;
     const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span tabindex="4">${btnText}</span>`);
     if (typeof this.btnUpdateTimeout !== 'undefined') {
@@ -452,13 +340,6 @@ export class Composer {
     }
   }
 
-  passphraseEntry = (entered: boolean) => {
-    if (!entered) {
-      this.resetSendBtn();
-      clearInterval(this.passphraseInterval);
-    }
-  }
-
   private checkReciepientsKeys = async () => {
     for (const recipientEl of $('.recipients span.no_pgp')) {
       const email = $(recipientEl).text().trim();
@@ -468,140 +349,6 @@ export class Composer {
         await this.renderPubkeyResult(recipientEl, email, dbContact);
       }
     }
-  }
-
-  private draftSave = async (forceSave: boolean = false): Promise<void> => {
-    if (this.hasBodyChanged(this.S.cached('input_text').text()) || this.hasSubjectChanged(String(this.S.cached('input_subject').val())) || forceSave) {
-      this.currentlySavingDraft = true;
-      try {
-        this.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.app.storageGetKey(this.urlParams.acctEmail);
-        const plainText = this.extractAsText('input_text');
-        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
-        let body: string;
-        if (this.urlParams.threadId) { // reply draft
-          body = `[cryptup:link:draft_reply:${this.urlParams.threadId}]\n\n${encrypted.data}`;
-        } else if (this.urlParams.draftId) { // new message compose draft with known draftid
-          body = `[cryptup:link:draft_compose:${this.urlParams.draftId}]\n\n${encrypted.data}`;
-        } else { // new message compose draft where draftId is not yet known
-          body = encrypted.data;
-        }
-        const subject = String(this.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
-        const to = this.getRecipientsFromDom().filter(Str.isEmailValid); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-        const mimeMsg = await Mime.encode(body, { To: to, From: this.getSender(), Subject: subject }, []);
-        if (!this.urlParams.draftId) {
-          const { id } = await this.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);
-          this.S.cached('send_btn_note').text('Saved');
-          this.urlParams.draftId = id;
-          await this.app.storageSetDraftMeta(true, id, this.urlParams.threadId, to, String(this.S.cached('input_subject').val()));
-          // recursing one more time, because we need the draftId we get from this reply in the message itself
-          // essentially everytime we save draft for the first time, we have to save it twice
-          // currentlySavingDraft will remain true for now
-          await this.draftSave(true); // forceSave = true
-        } else {
-          await this.app.emailProviderDraftUpdate(this.urlParams.draftId, mimeMsg);
-          this.S.cached('send_btn_note').text('Saved');
-        }
-      } catch (e) {
-        if (Api.err.isNetErr(e)) {
-          this.S.cached('send_btn_note').text('Not saved (network)');
-        } else if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-          this.S.cached('send_btn_note').text('Not saved (reconnect)');
-        } else if (e instanceof Error && e.message.indexOf('Could not find valid key packet for encryption in key') !== -1) {
-          this.S.cached('send_btn_note').text('Not saved (bad key)');
-        } else if (this.urlParams.draftId && (Api.err.isNotFound(e) || (e instanceof AjaxError && e.status === 400 && e.responseText.indexOf('Message not a draft') !== -1))) {
-          // not found - updating draft that was since deleted
-          // not a draft - updating draft that was since sent as a message (in another window), and is not a draft anymore
-          this.urlParams.draftId = ''; // forget there was a draftId - next step will create a new draftId
-          await this.draftSave(true); // forceSave=true to not skip
-        } else if (!this.urlParams.draftId && Api.err.isNotFound(e)) {
-          // not found - creating draft on a thread that does not exist
-          this.urlParams.threadId = ''; // forget there was a threadId
-          await this.draftSave(true); // forceSave=true to not skip
-        } else {
-          Catch.reportErr(e);
-          this.S.cached('send_btn_note').text('Not saved (error)');
-        }
-      }
-      this.currentlySavingDraft = false;
-    }
-  }
-
-  private draftDelete = async () => {
-    clearInterval(this.saveDraftInterval);
-    await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
-    if (this.urlParams.draftId) {
-      await this.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
-      try {
-        await this.app.emailProviderDraftDelete(this.urlParams.draftId);
-        this.urlParams.draftId = '';
-      } catch (e) {
-        if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-        } else if (Api.err.isNotFound(e)) {
-          console.info(`draftDelete: ${e.message}`);
-        } else if (!Api.err.isNetErr(e)) {
-          Catch.reportErr(e);
-        }
-      }
-    }
-  }
-
-  private decryptAndRenderDraft = async (encryptedArmoredDraft: string, headers: { from?: string; to: string[] }) => {
-    const passphrase = await this.app.storagePassphraseGet();
-    if (typeof passphrase !== 'undefined') {
-      const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
-      if (result.success) {
-        this.S.cached('prompt').css({ display: 'none' });
-        Xss.sanitizeRender(this.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
-        if (this.urlParams.isReplyBox) {
-          await this.renderReplyMsgComposeTable();
-        } else if (headers && headers.to && headers.to.length) {
-          this.S.cached('input_to').focus();
-          this.S.cached('input_to').val(headers.to.join(','));
-          this.S.cached('input_text').focus();
-          this.parseRenderRecipients('harshRecipientErrs').catch(Catch.reportErr);
-        }
-        if (headers && headers.from) {
-          this.S.now('input_from').val(headers.from);
-        }
-        this.setInputTextHeightManuallyIfNeeded();
-      } else {
-        this.setInputTextHeightManuallyIfNeeded();
-      }
-    } else {
-      const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
-      if (this.urlParams.isReplyBox) {
-        Xss.sanitizeRender(this.S.cached('prompt'), promptText).css({ display: 'block' });
-        this.resizeComposeBox();
-      } else {
-        Xss.sanitizeRender(this.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
-      }
-      this.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
-        BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'draft', longids: ['primary'] });
-      }));
-      this.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
-      await this.whenMasterPassphraseEntered();
-      await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
-    }
-  }
-
-  private whenMasterPassphraseEntered = (secondsTimeout?: number): Promise<string | undefined> => {
-    return new Promise(resolve => {
-      clearInterval(this.passphraseInterval);
-      const timeoutAt = secondsTimeout ? Date.now() + secondsTimeout * 1000 : undefined;
-      this.passphraseInterval = Catch.setHandledInterval(async () => {
-        const passphrase = await this.app.storagePassphraseGet();
-        if (typeof passphrase !== 'undefined') {
-          clearInterval(this.passphraseInterval);
-          resolve(passphrase);
-        } else if (timeoutAt && Date.now() > timeoutAt) {
-          clearInterval(this.passphraseInterval);
-          resolve(undefined);
-        }
-      }, 1000);
-    });
   }
 
   private collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]): Promise<{ armoredPubkeys: string[], emailsWithoutPubkeys: string[] }> => {
@@ -691,7 +438,7 @@ export class Composer {
     }
   }
 
-  private extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
+  public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
     let html = this.S.cached(elSel)[0].innerHTML;
     if (elSel === 'input_text' && this.msgExpandingHTMLPart && flag !== 'SKIP-ADDONS') {
       html += `<br /><br />${this.msgExpandingHTMLPart}`;
@@ -744,10 +491,9 @@ export class Composer {
       const passphrase = await this.app.storagePassphraseGet();
       if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
-        if ((typeof await this.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+        if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
           await this.signSend(recipients, subject, plaintext);
         } else { // timeout - reset - no passphrase entered
-          clearInterval(this.passphraseInterval);
           this.resetSendBtn();
         }
       } else {
@@ -924,7 +670,7 @@ export class Composer {
     BrowserMsg.send.notificationShow(this.urlParams.parentTabId, {
       notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.`
     });
-    await this.draftDelete();
+    await this.composerDraft.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.urlParams.isReplyBox) {
       this.renderReplySuccess(msg, msgSentRes.id);
@@ -1181,7 +927,7 @@ export class Composer {
     return `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`;
   }
 
-  private renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
     this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
@@ -1211,7 +957,7 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
-  private parseRenderRecipients = async (errsMode: RecipientErrsMode): Promise<boolean> => {
+  public parseRenderRecipients = async (errsMode: RecipientErrsMode): Promise<boolean> => {
     this.debug(`parseRenderRecipients(${errsMode})`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
@@ -1274,7 +1020,7 @@ export class Composer {
       this.debug(`selectContact -> parseRenderRecipients start`);
       const isRecipientAdded = await this.parseRenderRecipients('harshRecipientErrs');
       if (isRecipientAdded) {
-        this.draftSave(true).catch(Catch.reportErr);
+        this.composerDraft.draftSave(true).catch(Catch.reportErr);
       }
       this.debug(`selectContact -> parseRenderRecipients done`);
     }
@@ -1292,7 +1038,7 @@ export class Composer {
     this.resizeInputTo();
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
     this.updatePubkeyIcon();
-    this.draftSave(true).catch(Catch.reportErr);
+    this.composerDraft.draftSave(true).catch(Catch.reportErr);
   }
 
   private refreshReceiver = async () => {
@@ -1615,7 +1361,7 @@ export class Composer {
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  private getRecipientsFromDom = (filter?: "no_pgp"): string[] => {
+  public getRecipientsFromDom = (filter?: "no_pgp"): string[] => {
     let selector;
     if (filter === 'no_pgp') {
       selector = '.recipients span.no_pgp';
@@ -1629,7 +1375,7 @@ export class Composer {
     return recipients;
   }
 
-  private getSender = (): string => {
+  public getSender = (): string => {
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
     }
@@ -1695,7 +1441,7 @@ export class Composer {
       this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
       const isRecipientAdded = await this.parseRenderRecipients('gentleRecipientErrs'); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
       if (isRecipientAdded) {
-        this.draftSave(true).catch(Catch.reportErr);
+        this.composerDraft.draftSave(true).catch(Catch.reportErr);
       }
       this.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
@@ -1839,25 +1585,6 @@ export class Composer {
         }
       }
     }
-  }
-
-  private hasBodyChanged = (msgBody: string) => {
-    if (msgBody && msgBody !== this.lastDraftBody) {
-      this.lastDraftBody = msgBody;
-      return true;
-    }
-    return false;
-  }
-
-  private hasSubjectChanged = (subject: string) => {
-    if (this.urlParams.isReplyBox) { // user cannot change reply subject
-      return false; // this helps prevent unwanted empty drafts
-    }
-    if (subject && subject !== this.lastDraftSubject) {
-      this.lastDraftSubject = subject;
-      return true;
-    }
-    return false;
   }
 
   private fmtPwdProtectedEmail = (shortId: string, encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], lang: 'DE' | 'EN') => {
@@ -2007,6 +1734,7 @@ export class Composer {
       renderSendingAddrDialog: () => undefined,
       closeMsg: () => undefined,
       factoryAtt: (att) => `<div>${att.name}</div>`,
+      whenMasterPassphraseEntered: () => Promise.resolve(undefined)
     };
   }
 
