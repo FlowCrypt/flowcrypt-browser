@@ -64,8 +64,7 @@ Catch.try(async () => {
     }
     if (typeof pubs[0] !== 'undefined') {
       if (!isUsableButExpired && ! await pubs[0].getEncryptionKey() && ! await pubs[0].getSigningKey()) {
-        $('.line.add_contact').addClass('bad').text('This public key looks correctly formatted, but cannot be used for encryption. Email human@flowcrypt.com to get this resolved.');
-        $('.line.fingerprints').css({ display: 'none', visibility: 'hidden' });
+        showKeyNotUsableError();
       } else {
         if (pubs.length === 1) {
           const email = pubs[0].users[0].userId ? Str.parseEmail(pubs[0].users[0].userId ? pubs[0].users[0].userId!.userid : '').email : undefined;
@@ -89,8 +88,7 @@ Catch.try(async () => {
       if (fixed !== armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
       } else {
-        $('#pgp_block.pgp_pubkey').empty()
-          .append('<div class="bad">This OpenPGP key is not usable.</div>'); // xss-direct
+        showKeyNotUsableError();
       }
     }
   };
@@ -127,6 +125,11 @@ Catch.try(async () => {
       }
     }
   }));
+
+  const showKeyNotUsableError = () => {
+    $('#pgp_block.pgp_pubkey').empty()
+      .append('<div class="bad">This OpenPGP key is not usable.</div>'); // xss-direct
+  };
 
   $('.input_email').keyup(() => setBtnText());
 
