@@ -12,10 +12,10 @@ import { Pgp, Pwd, FormatError, Contact, PgpMsg } from './core/pgp.js';
 import { Api, ProgressCb } from './api/api.js';
 import { Ui, BrowserEventErrHandler, Env } from './browser.js';
 import { Mime, SendableMsgBody } from './core/mime.js';
-import { GoogleAuth, GmailRes, Google } from './api/google.js';
+import { GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
-import { SendableMsg, ProviderContactsQuery } from './api/email_provider_api.js';
+import { SendableMsg } from './api/email_provider_api.js';
 import { AttUI, AttLimits } from './ui/att_ui.js';
 import { Settings } from './settings.js';
 import { KeyImportUi } from './ui/key_import_ui.js';
@@ -26,6 +26,7 @@ import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-ap
 import { MessageToReplyOrForward, ComposerUrlParams } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
+import { ComposerContacts } from './composer/composer-contacts.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -80,6 +81,7 @@ export class Composer {
   private app: ComposerAppFunctionsInterface;
   private composerDraft: ComposerDraft;
   private composerQuote: ComposerQuote;
+  private composerContacts: ComposerContacts;
 
   private PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
   private PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
@@ -92,11 +94,9 @@ export class Composer {
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
   private FULL_WINDOW_CLASS = 'full_window';
 
-  private canReadEmails: boolean;
   private lastReplyBoxTableHeight = 0;
   private composeWindowIsMinimized = false;
   private composeWindowIsMaximized = false;
-  private contactSearchInProgress = false;
   private addedPubkeyDbLookupInterval?: number;
   private includePubkeyToggledManually = false;
   private myAddrsOnKeyserver: string[] = [];
@@ -109,12 +109,15 @@ export class Composer {
 
   private isSendMessageInProgress = false;
 
+  public canReadEmails: boolean;
+
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
     this.urlParams = urlParams;
     this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
     this.composerQuote = new ComposerQuote(this);
+    this.composerContacts = new ComposerContacts(appFunctions, urlParams, this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
@@ -133,7 +136,7 @@ export class Composer {
     this.checkEmailAliases().catch(Catch.reportErr);
   }
 
-  private debug = (msg: string) => {
+  public debug = (msg: string) => {
     if (this.urlParams.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
@@ -183,7 +186,7 @@ export class Composer {
     }
   }
 
-  private getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+  public getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail }),
@@ -953,14 +956,13 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
-  public parseRenderRecipients = async (errsMode: RecipientErrsMode): Promise<boolean> => {
+  public parseRenderRecipients = async (errsMode: RecipientErrsMode, updateDraft: boolean = false): Promise<void> => {
     this.debug(`parseRenderRecipients(${errsMode})`);
     const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
     this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
     let gentleErrInvalidEmails = '';
     if (!(inputTo.includes(',') || (!this.S.cached('input_to').is(':focus') && inputTo))) {
       this.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
-      return false;
     }
     this.debug(`parseRenderRecipients(${errsMode}).2`);
     let isRecipientAdded = false;
@@ -999,28 +1001,9 @@ export class Composer {
     this.debug(`parseRenderRecipients(${errsMode}).10`);
     this.setInputTextHeightManuallyIfNeeded();
     this.debug(`parseRenderRecipients(${errsMode}).11`);
-    return isRecipientAdded;
-  }
-
-  private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
-    this.debug(`selectContact 1`);
-    const possiblyBogusRecipient = $('.recipients span.wrong').last();
-    const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
-    this.debug(`selectContact 2`);
-    const q = Str.parseEmail(fromQuery.substring).email;
-    if (possiblyBogusAddr && q && (possiblyBogusAddr === q || possiblyBogusAddr.includes(q))) {
-      possiblyBogusRecipient.remove();
+    if (isRecipientAdded && updateDraft) {
+      this.composerDraft.draftSave(true).catch(Catch.reportErr);
     }
-    if (!this.getRecipientsFromDom().includes(email)) {
-      this.S.cached('input_to').val(Str.parseEmail(email).email || '');
-      this.debug(`selectContact -> parseRenderRecipients start`);
-      const isRecipientAdded = await this.parseRenderRecipients('harshRecipientErrs');
-      if (isRecipientAdded) {
-        this.composerDraft.draftSave(true).catch(Catch.reportErr);
-      }
-      this.debug(`selectContact -> parseRenderRecipients done`);
-    }
-    this.hideContacts();
   }
 
   private resizeInputTo = () => { // below both present in template
@@ -1047,86 +1030,6 @@ export class Composer {
       }
     }
     await this.evaluateRenderedRecipients();
-  }
-
-  private authContacts = async (acctEmail: string) => {
-    const lastRecipient = $('.recipients span').last();
-    this.S.cached('input_to').val(lastRecipient.text());
-    lastRecipient.last().remove();
-    const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
-    if (authRes.result === 'Success') {
-      this.canReadEmails = true;
-      await this.searchContacts();
-    } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
-      await Ui.modal.error('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
-    } else {
-      await Ui.modal.error(Lang.general.somethingWentWrongTryAgain);
-    }
-  }
-
-  private renderSearchResultsLoadingDone = () => {
-    this.S.cached('contacts').find('ul li.loading').remove();
-    if (!this.S.cached('contacts').find('ul li').length) {
-      this.hideContacts();
-    }
-  }
-
-  private renderSearchRes = (contacts: Contact[], query: ProviderContactsQuery) => {
-    const renderableContacts = contacts.slice();
-    renderableContacts.sort((a, b) => (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)); // have pgp on top, no pgp bottom. Sort each groups by last used
-    renderableContacts.splice(8);
-    if (renderableContacts.length > 0 || this.contactSearchInProgress) {
-      let ulHtml = '';
-      for (const contact of renderableContacts) {
-        ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
-        if (contact.has_pgp) {
-          ulHtml += '<img src="/img/svgs/locked-icon-green.svg" />';
-        } else {
-          ulHtml += '<img src="/img/svgs/locked-icon-gray.svg" />';
-        }
-        let displayEmail;
-        if (contact.email.length < 40) {
-          displayEmail = contact.email;
-        } else {
-          const parts = contact.email.split('@');
-          displayEmail = parts[0].replace(/<\/?b>/g, '').substr(0, 10) + '...@' + parts[1];
-        }
-        if (contact.name) {
-          ulHtml += (Xss.escape(contact.name) + ' &lt;' + Xss.escape(displayEmail) + '&gt;');
-        } else {
-          ulHtml += Xss.escape(displayEmail);
-        }
-        ulHtml += '</li>';
-      }
-      if (this.contactSearchInProgress) {
-        ulHtml += '<li class="loading">loading...</li>';
-      }
-      Xss.sanitizeRender(this.S.cached('contacts').find('ul'), ulHtml);
-      this.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', async (target: HTMLElement) => {
-        const email = Str.parseEmail($(target).attr('email') || '').email;
-        if (email) {
-          await this.selectContact(email, query);
-        }
-      }, this.getErrHandlers(`select contact`)));
-      this.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
-      this.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() => this.authContacts(this.urlParams.acctEmail), this.getErrHandlers(`authorize contact search`)));
-      const offset = this.S.cached('input_to').offset()!;
-      const inputToPadding = parseInt(this.S.cached('input_to').css('padding-left'));
-      let leftOffset: number;
-      if (this.S.cached('body').width()! < offset.left + inputToPadding + this.S.cached('contacts').width()!) {
-        // Here we need to align contacts popover by right side
-        leftOffset = offset.left + inputToPadding + this.S.cached('input_to').width()! - this.S.cached('contacts').width()!;
-      } else {
-        leftOffset = offset.left + inputToPadding;
-      }
-      this.S.cached('contacts').css({
-        display: 'block',
-        left: leftOffset,
-        top: `${$('#compose > tbody > tr:first').height()! + offset.top}px`, // both are in the template
-      });
-    } else {
-      this.hideContacts();
-    }
   }
 
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
@@ -1187,55 +1090,6 @@ export class Composer {
       }
       return;
     }
-  }
-
-  private searchContacts = async (dbOnly = false) => {
-    this.debug(`searchContacts`);
-    const substring = Str.parseEmail(String(this.S.cached('input_to').val()), 'DO-NOT-VALIDATE').email;
-    this.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
-    if (substring) {
-      const query = { substring };
-      const contacts = await this.app.storageContactSearch(query);
-      if (dbOnly || !this.canReadEmails) {
-        this.debug(`searchContacts 1`);
-        this.renderSearchRes(contacts, query);
-      } else {
-        this.debug(`searchContacts 2`);
-        this.contactSearchInProgress = true;
-        this.renderSearchRes(contacts, query);
-        this.debug(`searchContacts 3`);
-        this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
-          this.debug(`searchContacts 4`);
-          if (searchContactsRes.new.length) {
-            for (const contact of searchContactsRes.new) {
-              const [inDb] = await this.app.storageContactGet([contact.email]);
-              this.debug(`searchContacts 5`);
-              if (!inDb) {
-                await this.app.storageContactSave(await this.app.storageContactObj({ email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use }));
-              } else if (!inDb.name && contact.name) {
-                const toUpdate = { name: contact.name };
-                await this.app.storageContactUpdate(contact.email, toUpdate);
-                this.debug(`searchContacts 6`);
-              }
-            }
-            this.debug(`searchContacts 7`);
-            await this.searchContacts(true);
-            this.debug(`searchContacts 8`);
-          } else {
-            this.debug(`searchContacts 9`);
-            this.renderSearchResultsLoadingDone();
-            this.contactSearchInProgress = false;
-          }
-        });
-      }
-    } else {
-      this.hideContacts(); // todo - show suggestions of most contacted ppl etc
-      this.debug(`searchContacts 10`);
-    }
-  }
-
-  private hideContacts = () => {
-    this.S.cached('contacts').css('display', 'none');
   }
 
   private updatePubkeyIcon = (include?: boolean) => {
@@ -1419,13 +1273,10 @@ export class Composer {
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
-    this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
+    this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.composerContacts.searchContacts()));
     this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
       this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-      const isRecipientAdded = await this.parseRenderRecipients('gentleRecipientErrs'); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
-      if (isRecipientAdded) {
-        this.composerDraft.draftSave(true).catch(Catch.reportErr);
-      }
+      await this.parseRenderRecipients('gentleRecipientErrs', true); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
       this.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
@@ -1454,7 +1305,7 @@ export class Composer {
       }
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
-    this.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.getErrHandlers(`hide contact box`)));
+    this.S.cached('compose_table').click(Ui.event.handle(() => this.composerContacts.hideContacts(), this.getErrHandlers(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
         this.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
