@@ -23,12 +23,17 @@ import { Xss } from './platform/xss.js';
 import { PubkeySearchResult, Keyserver } from './api/keyserver.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerNotReadyError, ComposerUserError, ComposerResetBtnTrigger, RecipientErrsMode } from './composer/composer-errors.js';
-import { ComposerUrlParams } from './composer/interfaces/composer-ur-params.js';
-import { MessageToReplyOrForward } from './composer/interfaces/composer-types.js';
+import { MessageToReplyOrForward, ComposerUrlParams } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
+import { ComposerQuote } from './composer/composer-quote.js';
 
 declare const openpgp: typeof OpenPGP;
+
+export type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
+
+export class ComposerUserError extends Error { }
+export class ComposerNotReadyError extends ComposerUserError { }
+export class ComposerResetBtnTrigger extends Error { }
 
 export class Composer {
   private debugId = Str.sloppyRandom();
@@ -74,6 +79,7 @@ export class Composer {
   private attach: AttUI;
   private app: ComposerAppFunctionsInterface;
   private composerDraft: ComposerDraft;
+  private composerQuote: ComposerQuote;
 
   private PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
   private PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
@@ -100,8 +106,6 @@ export class Composer {
   private btnUpdateTimeout?: number;
   private refBodyHeight?: number;
   private urlParams: ComposerUrlParams;
-  private messageToReplyOrForward: MessageToReplyOrForward | undefined;
-  private msgExpandingHTMLPart: string | undefined;
 
   private isSendMessageInProgress = false;
 
@@ -110,6 +114,7 @@ export class Composer {
     this.app = appFunctions;
     this.urlParams = urlParams;
     this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
+    this.composerQuote = new ComposerQuote(this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
@@ -440,8 +445,8 @@ export class Composer {
 
   public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
     let html = this.S.cached(elSel)[0].innerHTML;
-    if (elSel === 'input_text' && this.msgExpandingHTMLPart && flag !== 'SKIP-ADDONS') {
-      html += `<br /><br />${this.msgExpandingHTMLPart}`;
+    if (elSel === 'input_text' && this.composerQuote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
+      html += `<br /><br />${this.composerQuote.expandingHTMLPart}`;
     }
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
@@ -918,15 +923,6 @@ export class Composer {
     }
   }
 
-  private appendForwardedMsg = (text: string) => {
-    Xss.sanitizeAppend(this.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${this.quoteText(Xss.escape(text))}`);
-    this.resizeComposeBox();
-  }
-
-  private generateHTMLRepliedPart = (text: string, date: Date, from: string) => {
-    return `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`;
-  }
-
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
     this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
@@ -938,7 +934,7 @@ export class Composer {
         this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
         this.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-          this.addTripleDotQuoteExpandBtn(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
+          this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
         }
       } else {
         this.urlParams.threadId = '';
@@ -1133,8 +1129,6 @@ export class Composer {
     }
   }
 
-  private setQuoteLoaderProgress = (text: string) => this.S.cached('icon_show_prev_msg').find('#loader').text(text);
-
   private decryptMessage = async (encryptedData: Buf): Promise<string> => {
     const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData });
     if (decryptRes.success) {
@@ -1154,7 +1148,7 @@ export class Composer {
     }
   }
 
-  private getAndDecryptMessage = async (msgId: string, progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+  public getAndDecryptMessage = async (msgId: string, progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     try {
       const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw',
         progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
@@ -1193,17 +1187,6 @@ export class Composer {
       }
       return;
     }
-  }
-
-  private setExpandingTextAfterClick = (expandedHTMLText: string) => {
-    this.S.cached('icon_show_prev_msg')
-      .click(Ui.event.handle(el => {
-        el.style.display = 'none';
-        Xss.sanitizeAppend(this.S.cached('input_text'), expandedHTMLText);
-        this.msgExpandingHTMLPart = undefined;
-        this.S.cached('input_text').focus();
-        this.resizeComposeBox();
-      }));
   }
 
   private searchContacts = async (dbOnly = false) => {
@@ -1282,18 +1265,18 @@ export class Composer {
   }
 
   private toggleSignIcon = () => {
+    let method: 'addClass' | 'removeClass';
     if (!this.S.cached('icon_sign').is('.active')) {
-      this.S.cached('icon_sign').addClass('active');
-      this.S.cached('compose_table').addClass('sign');
-      this.S.now('attached_files').addClass('sign');
+      method = 'addClass';
       this.S.cached('title').text(Lang.compose.headerTitleComposeSign);
       this.S.cached('input_password').val('');
     } else {
-      this.S.cached('icon_sign').removeClass('active');
-      this.S.cached('compose_table').removeClass('sign');
-      this.S.now('attached_files').removeClass('sign');
+      method = 'removeClass';
       this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
     }
+    this.S.cached('icon_sign')[method]('active');
+    this.S.cached('compose_table')[method]('sign');
+    this.S.now('attached_files')[method]('sign');
     if ([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND].includes(this.S.now('send_btn_span').text())) {
       this.resetSendBtn();
     }
@@ -1638,54 +1621,6 @@ export class Composer {
     } else {
       this.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
-    }
-  }
-
-  private quoteText(text: string) {
-    return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
-  }
-
-  private addTripleDotQuoteExpandBtn = async (msgId: string, method: ('reply' | 'forward')) => {
-    if (!this.messageToReplyOrForward) {
-      this.S.cached('icon_show_prev_msg').show().addClass('progress');
-      Xss.sanitizeAppend(this.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
-      this.resizeComposeBox();
-      try {
-        this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, (progress) => this.setQuoteLoaderProgress(progress + '%'));
-      } catch (e) {
-        if (Api.err.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
-        await Ui.modal.error(`Could not load quoted content, please try again.\n\n${Api.err.eli5(e)}`);
-      }
-      this.S.cached('icon_show_prev_msg').find('#loader').remove();
-      this.S.cached('icon_show_prev_msg').removeClass('progress');
-    }
-    if (!this.messageToReplyOrForward) {
-      this.S.cached('icon_show_prev_msg').click(Ui.event.handle(async el => {
-        this.S.cached('icon_show_prev_msg').unbind('click');
-        await this.addTripleDotQuoteExpandBtn(msgId, method);
-        if (this.messageToReplyOrForward) {
-          this.S.cached('icon_show_prev_msg').click();
-        }
-      }));
-      return;
-    }
-    if (this.messageToReplyOrForward.text) {
-      if (method === 'forward') {
-        this.S.cached('icon_show_prev_msg').remove();
-        await this.appendForwardedMsg(this.messageToReplyOrForward.text);
-      } else {
-        if (!this.messageToReplyOrForward.headers.from || !this.messageToReplyOrForward.headers.date) {
-          this.S.cached('icon_show_prev_msg').hide();
-          return;
-        }
-        const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
-        this.msgExpandingHTMLPart = '<br><br>' + this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
-        this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
-      }
-    } else {
-      this.S.cached('icon_show_prev_msg').hide();
     }
   }
 

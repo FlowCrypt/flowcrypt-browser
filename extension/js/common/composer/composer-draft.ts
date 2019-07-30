@@ -3,7 +3,6 @@
 'use strict';
 
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
-import { ComposerUrlParams } from './interfaces/composer-ur-params.js';
 import { Ui, Env } from '../browser.js';
 import { Xss } from '../platform/xss.js';
 import { Mime } from '../core/mime.js';
@@ -15,6 +14,7 @@ import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Str } from '../core/common.js';
 import { Composer } from '../composer.js';
+import { ComposerUrlParams } from './interfaces/composer-types.js';
 
 export class ComposerDraft {
     private app: ComposerAppFunctionsInterface;
