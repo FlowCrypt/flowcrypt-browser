@@ -17,10 +17,10 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
     // todo - make a helper method that forces account tests to run in sequence with Semaphore
     ava.test('[standalone] compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
       // delete account
-      await FlowCryptApi.hookCiAcctDelete('test.ci.compose@org.flowcrypt.com');
+      await FlowCryptApi.hookCiAcctDelete('test.ci.trial@org.flowcrypt.com');
       // set up acct and open compose page
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, "test.ci.compose@org.flowcrypt.com");
-      await SetupPageRecipe.recover(settingsPage, 'test.ci.compose', { hasRecoverMore: false });
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, "test.ci.trial@org.flowcrypt.com");
+      await SetupPageRecipe.recover(settingsPage, 'test.ci.trial', { hasRecoverMore: false });
       await browser.closeAllPages();
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       await GmailPageRecipe.closeInitialSetupNotif(gmailPage);

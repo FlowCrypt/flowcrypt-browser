@@ -29,7 +29,7 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     }
 
-    public searchContacts = async (dbOnly = false) => {
+    private searchContacts = async (dbOnly = false) => {
         this.composer.debug(`searchContacts`);
         const substring = Str.parseEmail(String(this.composer.S.cached('input_to').val()), 'DO-NOT-VALIDATE').email;
         this.composer.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);

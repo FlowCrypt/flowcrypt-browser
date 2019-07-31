@@ -54,6 +54,7 @@ export type Contact = {
   last_use: number | null;
   pubkey_last_sig: number | null;
   pubkey_last_check: number | null;
+  expiresOn: number | null;
 };
 
 export interface PrvKeyInfo {
@@ -426,8 +427,9 @@ export class Pgp {
       // try to see if the key was usable just before expiration
       return Boolean(await key.getEncryptionKey(undefined, oneSecondBeforeExpiration));
     },
-    dateBeforeExpiration: async (key: OpenPGP.key.Key): Promise<Date | undefined> => {
-      const expires = await key.getExpirationTime();
+    dateBeforeExpiration: async (key: OpenPGP.key.Key | string): Promise<Date | undefined> => {
+      const openPgpKey = typeof key === 'string' ? await Pgp.key.read(key) : key;
+      const expires = await openPgpKey.getExpirationTime();
       if (expires instanceof Date && expires.getTime() < Date.now()) { // expired
         return new Date(expires.getTime() - 1000);
       }
