@@ -8,7 +8,7 @@ import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
-import { Pgp, Pwd, Contact, PgpMsg } from './core/pgp.js';
+import { Pgp, Pwd, PgpMsg } from './core/pgp.js';
 import { Api } from './api/api.js';
 import { Ui, BrowserEventErrHandler, Env } from './browser.js';
 import { SendableMsgBody } from './core/mime.js';
@@ -26,10 +26,7 @@ import { ComposerUrlParams } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
-import {
-  ComposerNotReadyError, ComposerUserError, ComposerResetBtnTrigger,
-  PUBKEY_LOOKUP_RESULT_WRONG, RecipientErrsMode, PUBKEY_LOOKUP_RESULT_FAIL
-} from './composer/interfaces/comopserr-errors.js';
+import { ComposerNotReadyError, ComposerUserError, ComposerResetBtnTrigger } from './composer/interfaces/comopserr-errors.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -68,6 +65,7 @@ export class Composer {
     reply_msg_successful: '#reply_message_successful_container',
     replied_body: '.replied_body',
     replied_attachments: '#attachments',
+    recipients: 'span.recipients',
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
     input_addresses_container_inner: '#input_addresses_container > div:first',
@@ -84,7 +82,6 @@ export class Composer {
   private BTN_SIGN_AND_SEND = 'Sign and Send';
   private BTN_READY_TEXTS = [this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND];
   private BTN_WRONG_ENTRY = 'Re-enter recipient..';
-  private BTN_LOADING = 'Loading..';
   private BTN_SENDING = 'Sending..';
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
   private FULL_WINDOW_CLASS = 'full_window';
@@ -92,10 +89,6 @@ export class Composer {
   private lastReplyBoxTableHeight = 0;
   private composeWindowIsMinimized = false;
   private composeWindowIsMaximized = false;
-  private addedPubkeyDbLookupInterval?: number;
-  private includePubkeyToggledManually = false;
-  private myAddrsOnKeyserver: string[] = [];
-  private recipientsMissingMyKey: string[] = [];
   private additionalMsgHeaders: { [key: string]: string } = {};
   private btnUpdateTimeout?: number;
   private refBodyHeight?: number;
@@ -111,9 +104,8 @@ export class Composer {
     this.urlParams = urlParams;
     this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
     this.composerQuote = new ComposerQuote(this, urlParams);
-    this.composerContacts = new ComposerContacts(appFunctions, urlParams, this);
+    this.composerContacts = new ComposerContacts(appFunctions, urlParams, openpgp, this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
-    this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
     this.canReadEmails = this.app.canReadEmails();
     if (initSubs.active) {
       this.updateFooterIcon();
@@ -210,22 +202,6 @@ export class Composer {
     this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHidePwdOrPubkeyContainerAndColorSendBtn()));
     this.S.cached('input_password').focus(() => this.showHidePwdOrPubkeyContainerAndColorSendBtn());
     this.S.cached('input_password').blur(() => this.showHidePwdOrPubkeyContainerAndColorSendBtn());
-    this.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
-      const noPgpEmails = this.getRecipientsFromDom('no_pgp');
-      this.app.renderAddPubkeyDialog(noPgpEmails);
-      clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
-      this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
-        for (const email of noPgpEmails) {
-          const [contact] = await this.app.storageContactGet([email]);
-          if (contact && contact.has_pgp) {
-            $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
-            $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
-            clearInterval(this.addedPubkeyDbLookupInterval);
-            await this.evaluateRenderedRecipients();
-          }
-        }
-      }, 1000);
-    }, this.getErrHandlers('add recipient public key')));
     this.S.cached('add_intro').click(Ui.event.handle(target => {
       $(target).css('display', 'none');
       this.S.cached('intro_container').css('display', 'table-row');
@@ -238,10 +214,6 @@ export class Composer {
       // because they might not have a pubkey for the alternative address, and might get confused
     });
     this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
-    this.S.cached('icon_pubkey').click(Ui.event.handle(target => {
-      this.includePubkeyToggledManually = true;
-      this.updatePubkeyIcon(!$(target).is('.active'));
-    }, this.getErrHandlers(`set/unset pubkey attachment`)));
     this.S.cached('icon_footer').click(Ui.event.handle(target => {
       if (!$(target).is('.active')) {
         this.app.renderFooterDialog();
@@ -258,8 +230,6 @@ export class Composer {
         this.minimizeComposerWindow();
       }
     });
-    BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
-    BrowserMsg.listen(this.urlParams.parentTabId);
   }
 
   private inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
@@ -295,7 +265,10 @@ export class Composer {
       this.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
-      await this.composerDraft.initialDraftLoad();
+      const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
+      if (isSuccessfulyLoaded) {
+        await this.composerContacts.parseRenderRecipients('gentleRecipientErrs');
+      }
     } else {
       if (this.urlParams.isReplyBox) {
         if (this.urlParams.skipClickPrompt) {
@@ -334,20 +307,9 @@ export class Composer {
     }
   }
 
-  private checkReciepientsKeys = async () => {
-    for (const recipientEl of $('.recipients span.no_pgp')) {
-      const email = $(recipientEl).text().trim();
-      const [dbContact] = await this.app.storageContactGet([email]);
-      if (dbContact) {
-        $(recipientEl).removeClass('no_pgp');
-        await this.renderPubkeyResult(recipientEl, email, dbContact);
-      }
-    }
-  }
-
   private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
-      await this.parseRenderRecipients('harshRecipientErrs');
+      await this.composerContacts.parseRenderRecipients('harshRecipientErrs');
     }
     if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
@@ -655,24 +617,6 @@ export class Composer {
     }
   }
 
-  private evaluateRenderedRecipients = async () => {
-    this.debug(`evaluateRenderedRecipients`);
-    for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .failed, .expired')) {
-      this.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
-      const email = Str.parseEmail($(emailEl).text()).email;
-      this.debug(`evaluateRenderedRecipients.email(${email})`);
-      if (email) {
-        this.S.now('send_btn_span').text(this.BTN_LOADING);
-        this.setInputTextHeightManuallyIfNeeded();
-        const pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
-        await this.renderPubkeyResult(emailEl, email, pubkeyLookupRes);
-      } else {
-        await this.renderPubkeyResult(emailEl, $(emailEl).text(), PUBKEY_LOOKUP_RESULT_WRONG);
-      }
-    }
-    this.setInputTextHeightManuallyIfNeeded();
-  }
-
   private getPwdValidationWarning = () => {
     if (!this.S.cached('input_password').val()) {
       return 'No password entered';
@@ -710,7 +654,7 @@ export class Composer {
    *
    * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
    */
-  private setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
+  public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
       this.S.cached('input_text').css('height', '0');
       let cellHeightExceptText = 0;
@@ -734,7 +678,7 @@ export class Composer {
     this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private showHidePwdOrPubkeyContainerAndColorSendBtn = () => {
+  public showHidePwdOrPubkeyContainerAndColorSendBtn = () => {
     this.resetSendBtn();
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
@@ -846,94 +790,9 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
-  public parseRenderRecipients = async (errsMode: RecipientErrsMode, updateDraft: boolean = false): Promise<void> => {
-    this.debug(`parseRenderRecipients(${errsMode})`);
-    const inputTo = String(this.S.cached('input_to').val()).toLowerCase();
-    this.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
-    let gentleErrInvalidEmails = '';
-    if (!(inputTo.includes(',') || (!this.S.cached('input_to').is(':focus') && inputTo))) {
-      this.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
-    }
-    this.debug(`parseRenderRecipients(${errsMode}).2`);
-    let isRecipientAdded = false;
-    for (const rawRecipientAddrInput of inputTo.split(',')) {
-      this.debug(`parseRenderRecipients(${errsMode}).3 (${rawRecipientAddrInput})`);
-      if (!rawRecipientAddrInput) {
-        this.debug(`parseRenderRecipients(${errsMode}).4`);
-        continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
-      }
-      this.debug(`parseRenderRecipients(${errsMode}).5`);
-      const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
-      this.debug(`parseRenderRecipients(${errsMode}).6 (${email})`);
-      if (!email) {
-        this.debug(`parseRenderRecipients(${errsMode}).6-a (${email}|${rawRecipientAddrInput})`);
-        if (errsMode === 'gentleRecipientErrs') {
-          gentleErrInvalidEmails += rawRecipientAddrInput;
-          this.debug(`parseRenderRecipients(${errsMode}).6-b (${email}|${rawRecipientAddrInput})`);
-        } else {
-          // maybe there could be:
-          // Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(rawRecipientAddrInput)} ${Ui.spinner('green')}</span>`);
-          // but it seems to work well without it, so not adding until proved needed
-          this.debug(`parseRenderRecipients(${errsMode}).6-c SKIPPING HARSH ERR? (${email}|${rawRecipientAddrInput})`);
-        }
-      } else {
-        this.debug(`parseRenderRecipients(${errsMode}).6-c (${email})`);
-        Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
-        isRecipientAdded = true;
-      }
-    }
-    this.debug(`parseRenderRecipients(${errsMode}).7.gentleErrs(${gentleErrInvalidEmails})`);
-    this.S.cached('input_to').val(gentleErrInvalidEmails);
-    this.debug(`parseRenderRecipients(${errsMode}).8`);
-    this.resizeInputTo();
-    this.debug(`parseRenderRecipients(${errsMode}).9`);
-    await this.evaluateRenderedRecipients();
-    this.debug(`parseRenderRecipients(${errsMode}).10`);
-    this.setInputTextHeightManuallyIfNeeded();
-    this.debug(`parseRenderRecipients(${errsMode}).11`);
-    if (isRecipientAdded && updateDraft) {
-      this.composerDraft.draftSave(true).catch(Catch.reportErr);
-    }
-  }
-
-  private resizeInputTo = () => { // below both present in template
+  public resizeInputTo = () => { // below both present in template
     this.S.cached('input_to').css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
-  }
-
-  private removeReceiver = (element: HTMLElement) => {
-    this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
-    $(element).parent().remove();
-    this.resizeInputTo();
-    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-    this.updatePubkeyIcon();
-    this.composerDraft.draftSave(true).catch(Catch.reportErr);
-  }
-
-  private refreshReceiver = async () => {
-    const failedRecipients = $('.recipients span.failed');
-    failedRecipients.removeClass('failed');
-    for (const recipient of failedRecipients) {
-      if (recipient.textContent) {
-        const { email } = Str.parseEmail(recipient.textContent);
-        Xss.sanitizeReplace(recipient, `<span>${Xss.escape(email || recipient.textContent)} ${Ui.spinner('green')}</span>`);
-      }
-    }
-    await this.evaluateRenderedRecipients();
-  }
-
-  private updatePubkeyIcon = (include?: boolean) => {
-    if (typeof include === 'undefined') { // decide if pubkey should be included
-      if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
-        this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length));
-      }
-    } else { // set icon to specific state
-      if (include) {
-        this.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
-      } else {
-        this.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
-      }
-    }
   }
 
   updateFooterIcon = (include?: boolean) => {
@@ -963,69 +822,6 @@ export class Composer {
     this.S.now('attached_files')[method]('sign');
     if ([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND].includes(this.S.now('send_btn_span').text())) {
       this.resetSendBtn();
-    }
-    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-  }
-
-  private recipientKeyIdText = (contact: Contact) => {
-    if (contact.client === 'cryptup' && contact.keywords) {
-      return '\n\n' + 'Public KeyWords:\n' + contact.keywords;
-    } else if (contact.fingerprint) {
-      return '\n\n' + 'Key fingerprint:\n' + contact.fingerprint;
-    } else {
-      return '';
-    }
-  }
-
-  private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | 'fail' | 'wrong') => {
-    this.debug(`renderPubkeyResult.emailEl(${String(emailEl)})`);
-    this.debug(`renderPubkeyResult.email(${email})`);
-    this.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
-    if ($('body#new_message').length) {
-      if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.getSender());
-        if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
-          // new message, and my key is not uploaded where the recipient would look for it
-          if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
-            this.recipientsMissingMyKey.push(email);
-          }
-          this.updatePubkeyIcon();
-        } else {
-          this.updatePubkeyIcon();
-        }
-      } else {
-        this.updatePubkeyIcon();
-      }
-    }
-    $(emailEl).children('img, i').remove();
-    // tslint:disable-next-line:max-line-length
-    const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-    Xss.sanitizeAppend(emailEl, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.getErrHandlers('remove recipient')));
-    if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
-      $(emailEl).attr('title', 'Loading contact information failed, please try to add their email again.');
-      $(emailEl).addClass("failed");
-      Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
-        '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
-      $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceiver(), this.getErrHandlers('refresh recipient')));
-      $(emailEl).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element), this.getErrHandlers('remove recipient')));
-    } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
-      this.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
-      $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
-      $(emailEl).addClass("wrong");
-    } else if (contact.pubkey &&
-      ((contact.expiresOn || Infinity) <= Date.now() ||
-        await Pgp.key.usableButExpired((await openpgp.key.readArmored(contact.pubkey)).keys[0]))) {
-      $(emailEl).addClass("expired");
-      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
-      $(emailEl).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
-    } else if (contact.pubkey) {
-      $(emailEl).addClass("has_pgp");
-      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
-      $(emailEl).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
-    } else {
-      $(emailEl).addClass("no_pgp");
-      Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
-      $(emailEl).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
@@ -1105,11 +901,6 @@ export class Composer {
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
-    this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
-      this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-      await this.parseRenderRecipients('gentleRecipientErrs', true); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
-      this.debug(`input_to.blur -> parseRenderRecipients done`);
-    }));
     this.composerContacts.initActions();
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
@@ -1168,7 +959,7 @@ export class Composer {
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
+        await this.composerContacts.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
     } else {
@@ -1232,7 +1023,7 @@ export class Composer {
       Xss.sanitizeAppend(inputAddrContainer, selectElHtml);
       inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
-      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.updatePubkeyIcon());
+      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.composerContacts.updatePubkeyIcon());
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
       }

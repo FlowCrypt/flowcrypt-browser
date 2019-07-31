@@ -46,21 +46,26 @@ export class ComposerDraft extends ComposerComponent {
                 this.app.closeMsg();
             }
         }, this.composer.getErrHandlers('delete draft')));
+        this.composer.S.cached('recipients').on('DOMSubtreeModified', Ui.event.prevent('slowspree', async () => {
+            await this.draftSave(true);
+        }));
     }
 
-    public async initialDraftLoad(): Promise<void> {
+    public async initialDraftLoad(): Promise<boolean> {
         if (this.urlParams.isReplyBox) {
             Xss.sanitizeRender(this.composer.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
         }
         try {
             const draftGetRes = await this.app.emailProviderDraftGet(this.urlParams.draftId);
             if (!draftGetRes) {
-                return this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
+                await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
+                return false;
             }
             const parsedMsg = await Mime.decode(Buf.fromBase64UrlStr(draftGetRes.message.raw!));
             const armored = Pgp.armor.clip(parsedMsg.text || Xss.htmlSanitizeAndStripAllTags(parsedMsg.html || '', '\n') || '');
             if (!armored) {
-                return this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
+                await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
+                return false;
             }
             if (String(parsedMsg.headers.subject)) {
                 this.composer.S.cached('input_subject').val(String(parsedMsg.headers.subject));
@@ -68,7 +73,7 @@ export class ComposerDraft extends ComposerComponent {
             if (parsedMsg.to.length) {
                 this.urlParams.to = parsedMsg.to;
             }
-            await this.decryptAndRenderDraft(armored, parsedMsg);
+            return await this.decryptAndRenderDraft(armored, parsedMsg);
         } catch (e) {
             if (Api.err.isNetErr(e)) {
                 Xss.sanitizeRender('body', `Failed to load draft. ${Ui.retryLink()}`);
@@ -84,8 +89,9 @@ export class ComposerDraft extends ComposerComponent {
                 window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
             } else {
                 Catch.reportErr(e);
-                return this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
+                await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');
             }
+            return false;
         }
     }
 
@@ -167,7 +173,7 @@ export class ComposerDraft extends ComposerComponent {
         }
     }
 
-    private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { from?: string; to: string[] }) {
+    private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { from?: string; to: string[] }): Promise<boolean> {
         const passphrase = await this.app.storagePassphraseGet();
         if (typeof passphrase !== 'undefined') {
             const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
@@ -180,11 +186,11 @@ export class ComposerDraft extends ComposerComponent {
                     this.composer.S.cached('input_to').focus();
                     this.composer.S.cached('input_to').val(headers.to.join(','));
                     this.composer.S.cached('input_text').focus();
-                    this.composer.parseRenderRecipients('harshRecipientErrs').catch(Catch.reportErr);
                 }
                 if (headers && headers.from) {
                     this.composer.S.now('input_from').val(headers.from);
                 }
+                return true;
             }
         } else {
             const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
@@ -201,6 +207,7 @@ export class ComposerDraft extends ComposerComponent {
             await this.app.whenMasterPassphraseEntered();
             await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
         }
+        return false;
     }
 
     private hasBodyChanged = (msgBody: string) => {
