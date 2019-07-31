@@ -15,11 +15,11 @@ import { Store } from '../platform/store.js';
 import { Str } from '../core/common.js';
 import { Composer } from '../composer.js';
 import { ComposerUrlParams } from './interfaces/composer-types.js';
+import { ComposerComponent } from './interfaces/comopser-component.js';
 
-export class ComposerDraft {
+export class ComposerDraft extends ComposerComponent {
+
     private app: ComposerAppFunctionsInterface;
-    private composer: Composer;
-    private urlParams: ComposerUrlParams;
 
     private currentlySavingDraft = false;
     private saveDraftInterval?: number;
@@ -29,12 +29,23 @@ export class ComposerDraft {
     private SAVE_DRAFT_FREQUENCY = 3000;
 
     constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
+        super(composer, urlParams);
         this.app = app;
-        this.urlParams = urlParams;
-        this.composer = composer;
         if (!this.urlParams.disableDraftSaving) {
             this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
         }
+    }
+
+    initActions(): void {
+        $('.delete_draft').click(Ui.event.handle(async () => {
+            await this.draftDelete();
+            if (this.urlParams.isReplyBox) { // reload iframe so we don't leave users without a reply UI
+                this.urlParams.skipClickPrompt = false;
+                window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
+            } else { // close new msg
+                this.app.closeMsg();
+            }
+        }, this.composer.getErrHandlers('delete draft')));
     }
 
     public async initialDraftLoad(): Promise<void> {

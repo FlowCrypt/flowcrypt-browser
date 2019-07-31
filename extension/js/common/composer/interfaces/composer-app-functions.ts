@@ -44,4 +44,6 @@ export interface ComposerAppFunctionsInterface {
     factoryAtt: (att: Att, isEncrypted: boolean) => string;
     closeMsg: () => void;
     whenMasterPassphraseEntered: (secondsTimeout?: number) => Promise<string | undefined>;
+    lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: (email: string) => Promise<Contact | "fail">;
+    collectAllAvailablePublicKeys: (acctEmail: string, recipients: string[]) => Promise<{ armoredPubkeys: string[], emailsWithoutPubkeys: string[] }>;
 }

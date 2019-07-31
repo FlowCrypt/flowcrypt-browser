@@ -11,12 +11,14 @@ import { Composer } from '../../js/common/composer.js';
 import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
-import { KeyInfo, Contact } from '../../js/common/core/pgp.js';
+import { KeyInfo, Contact, Pgp } from '../../js/common/core/pgp.js';
 import { SendableMsg } from '../../js/common/api/email_provider_api.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { requireOpenpgp } from '../../js/common/platform/require.js';
+import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/comopserr-errors.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -28,6 +30,9 @@ Catch.try(async () => {
   const openpgp = requireOpenpgp();
 
   Ui.event.protect();
+
+  const ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
+
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
     'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
@@ -101,6 +106,85 @@ Catch.try(async () => {
   }
 
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
+  const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
+    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    return primaryKi;
+  };
+  const storageContactGet = (email: string[]) => Store.dbContactGet(undefined, email);
+  const checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
+    try {
+      if (!contact.pubkey || !contact.longid) {
+        return;
+      }
+      if (!contact.pubkey_last_sig) {
+        const lastSig = await Pgp.key.lastSig(await Pgp.key.read(contact.pubkey));
+        contact.pubkey_last_sig = lastSig;
+        await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_sig: lastSig });
+      }
+      if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
+        const { pubkey: fetchedPubkey } = await Keyserver.lookupLongid(acctEmail, contact.longid);
+        if (fetchedPubkey) {
+          const fetchedLastSig = await Pgp.key.lastSig(await Pgp.key.read(fetchedPubkey));
+          if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
+            console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
+            await Store.dbContactUpdate(undefined, contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
+            return;
+          }
+        }
+        // we checked for newer key and it did not result in updating the key, don't check again for another week
+        await Store.dbContactUpdate(undefined, contact.email, { pubkey_last_check: Date.now() });
+      }
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        throw e; // insignificant (temporary) errors ignored
+      }
+    }
+  };
+  const lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
+    const [dbContact] = await storageContactGet([email]);
+    if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
+      // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
+      // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
+      //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
+      checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(dbContact).catch(Catch.reportErr);
+      return dbContact;
+    } else {
+      try {
+        const lookupResult = await Keyserver.lookupEmail(acctEmail, email);
+        if (lookupResult && email) {
+          if (lookupResult.pubkey) {
+            const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
+            if (!parsed.keys[0]) {
+              Catch.log('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
+              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
+            } else if (! await parsed.keys[0].getEncryptionKey()) {
+              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
+              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
+            }
+          }
+          const ksContact = await Store.dbContactObj({
+            email,
+            name: dbContact && dbContact.name ? dbContact.name : undefined,
+            client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
+            pubkey: lookupResult.pubkey,
+            lastUse: Date.now(),
+            lastCheck: Date.now(),
+          });
+          ksLookupsByEmail[email] = ksContact;
+          await Store.dbContactSave(undefined, ksContact);
+          return ksContact;
+        } else {
+          return PUBKEY_LOOKUP_RESULT_FAIL;
+        }
+      } catch (e) {
+        if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
+          Catch.reportErr(e);
+        }
+        return PUBKEY_LOOKUP_RESULT_FAIL;
+      }
+    }
+  };
   const closeMsg = () => {
     $('body').attr('data-test-state', 'closed'); // used by automated tests
     if (isReplyBox) {
@@ -110,6 +194,23 @@ Catch.try(async () => {
     } else {
       BrowserMsg.send.closeNewMessage(parentTabId);
     }
+  };
+  const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]) => {
+    const contacts = await storageContactGet(recipients);
+    const { public: armoredPublicKey } = await storageGetKey(acctEmail);
+    const armoredPubkeys = [armoredPublicKey];
+    const emailsWithoutPubkeys = [];
+    for (const i of contacts.keys()) {
+      const contact = contacts[i];
+      if (contact && contact.has_pgp && contact.pubkey) {
+        armoredPubkeys.push(contact.pubkey);
+      } else if (contact && ksLookupsByEmail[contact.email] && ksLookupsByEmail[contact.email].pubkey) {
+        armoredPubkeys.push(ksLookupsByEmail[contact.email].pubkey!); // checked !null right above. Null evaluates to false.
+      } else {
+        emailsWithoutPubkeys.push(recipients[i]);
+      }
+    }
+    return { armoredPubkeys, emailsWithoutPubkeys };
   };
   const composer = new Composer({
     canReadEmails: () => canReadEmail,
@@ -153,11 +254,7 @@ Catch.try(async () => {
     },
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
-    storageGetKey: async (senderEmail: string): Promise<KeyInfo> => {
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-      return primaryKi;
-    },
+    storageGetKey,
     storageSetDraftMeta: async (storeIfTrue: boolean, draftId: string, threadId: string, recipients: string[], subject: string) => {
       const draftStorage = await Store.getAcct(acctEmail, ['drafts_reply', 'drafts_compose']);
       if (threadId) { // it's a reply
@@ -188,7 +285,7 @@ Catch.try(async () => {
       };
       await Store.setGlobal(adminCodeStorage);
     },
-    storageContactGet: (email: string[]) => Store.dbContactGet(undefined, email),
+    storageContactGet,
     storageContactUpdate: (email: string[] | string, update: ContactUpdate) => Store.dbContactUpdate(undefined, email, update),
     storageContactSave: (contact: Contact) => Store.dbContactSave(undefined, contact),
     storageContactSearch: (query: DbContactFilter) => Store.dbContactSearch(undefined, query),
@@ -273,7 +370,9 @@ Catch.try(async () => {
           }
         }, 1000);
       });
-    }
+    },
+    lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded,
+    collectAllAvailablePublicKeys
   }, processedUrlParams, await Store.subscription());
 
   BrowserMsg.addListener('close_dialog', async () => {
@@ -297,5 +396,4 @@ Catch.try(async () => {
   }
 
   openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
-
 })();

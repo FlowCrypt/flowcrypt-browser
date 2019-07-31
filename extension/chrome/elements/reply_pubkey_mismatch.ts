@@ -12,6 +12,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Google } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { ComposerAppFunctionsInterface } from '../../js/common/composer/interfaces/composer-app-functions.js';
 
 Catch.try(async () => {
 
@@ -30,7 +31,43 @@ Catch.try(async () => {
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
-  const appFunctions = Composer.defaultAppFunctions();
+  const appFunctions: ComposerAppFunctionsInterface = {
+    canReadEmails: () => false,
+    doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
+    storageGetAddresses: () => [],
+    storageGetAddressesKeyserver: () => [],
+    storageEmailFooterGet: () => undefined,
+    storageEmailFooterSet: () => Promise.resolve(),
+    storageGetHideMsgPassword: () => false,
+    storageGetSubscription: () => Promise.resolve(new Subscription(undefined)),
+    storageSetDraftMeta: () => Promise.resolve(),
+    storageGetKey: () => { throw new Error('storage_get_key not implemented'); },
+    storagePassphraseGet: () => Promise.resolve(undefined),
+    storageAddAdminCodes: () => Promise.resolve(),
+    storageContactGet: () => Promise.resolve([]),
+    storageContactUpdate: () => Promise.resolve(),
+    storageContactSave: () => Promise.resolve(),
+    storageContactSearch: () => Promise.resolve([]),
+    storageContactObj: Store.dbContactObj,
+    emailProviderDraftGet: () => Promise.resolve(undefined),
+    emailProviderDraftCreate: () => Promise.reject(undefined),
+    emailProviderDraftUpdate: () => Promise.resolve({}),
+    emailProviderDraftDelete: () => Promise.resolve({}),
+    emailProviderMsgSend: () => Promise.reject({ message: 'not implemented' }),
+    emailEroviderSearchContacts: (query, knownContacts, multiCb) => multiCb({ new: [], all: [] }),
+    emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
+    emailProviderExtractArmoredBlock: () => Promise.resolve(''),
+    renderReinsertReplyBox: () => Promise.resolve(),
+    renderFooterDialog: () => undefined,
+    renderAddPubkeyDialog: () => undefined,
+    renderHelpDialog: () => undefined,
+    renderSendingAddrDialog: () => undefined,
+    closeMsg: () => undefined,
+    factoryAtt: (att) => `<div>${att.name}</div>`,
+    whenMasterPassphraseEntered: () => Promise.resolve(undefined),
+    collectAllAvailablePublicKeys: () => Promise.reject(undefined),
+    lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: () => Promise.reject(undefined)
+  };
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
     acctEmail, draftId: '', threadId, subject, from, to, frameId, tabId, debug,

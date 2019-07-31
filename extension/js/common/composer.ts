@@ -7,11 +7,11 @@ import { Store, Subscription } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Value, Str } from './core/common.js';
 import { Att } from './core/att.js';
-import { BrowserMsg, Extension, BrowserWidnow, Bm } from './extension.js';
-import { Pgp, Pwd, FormatError, Contact, PgpMsg } from './core/pgp.js';
-import { Api, ProgressCb } from './api/api.js';
+import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
+import { Pgp, Pwd, Contact, PgpMsg } from './core/pgp.js';
+import { Api } from './api/api.js';
 import { Ui, BrowserEventErrHandler, Env } from './browser.js';
-import { Mime, SendableMsgBody } from './core/mime.js';
+import { SendableMsgBody } from './core/mime.js';
 import { GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
 import { Backend, AwsS3UploadItem, BackendRes } from './api/backend.js';
@@ -20,21 +20,18 @@ import { AttUI, AttLimits } from './ui/att_ui.js';
 import { Settings } from './settings.js';
 import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
-import { PubkeySearchResult, Keyserver } from './api/keyserver.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { MessageToReplyOrForward, ComposerUrlParams } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
+import {
+  ComposerNotReadyError, ComposerUserError, ComposerResetBtnTrigger,
+  PUBKEY_LOOKUP_RESULT_WRONG, RecipientErrsMode, PUBKEY_LOOKUP_RESULT_FAIL
+} from './composer/interfaces/comopserr-errors.js';
 
 declare const openpgp: typeof OpenPGP;
-
-export type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
-
-export class ComposerUserError extends Error { }
-export class ComposerNotReadyError extends ComposerUserError { }
-export class ComposerResetBtnTrigger extends Error { }
 
 export class Composer {
   private debugId = Str.sloppyRandom();
@@ -83,8 +80,6 @@ export class Composer {
   private composerQuote: ComposerQuote;
   private composerContacts: ComposerContacts;
 
-  private PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
-  private PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
   private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
   private BTN_SIGN_AND_SEND = 'Sign and Send';
   private BTN_READY_TEXTS = [this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND];
@@ -101,7 +96,6 @@ export class Composer {
   private includePubkeyToggledManually = false;
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
-  private ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
   private additionalMsgHeaders: { [key: string]: string } = {};
   private btnUpdateTimeout?: number;
   private refBodyHeight?: number;
@@ -116,7 +110,7 @@ export class Composer {
     this.app = appFunctions;
     this.urlParams = urlParams;
     this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
-    this.composerQuote = new ComposerQuote(this);
+    this.composerQuote = new ComposerQuote(this, urlParams);
     this.composerContacts = new ComposerContacts(appFunctions, urlParams, this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
@@ -255,15 +249,7 @@ export class Composer {
         this.updateFooterIcon(!$(target).is('.active'));
       }
     }, this.getErrHandlers(`change footer`)));
-    $('.delete_draft').click(Ui.event.handle(async () => {
-      await this.composerDraft.draftDelete();
-      if (this.urlParams.isReplyBox) { // reload iframe so we don't leave users without a reply UI
-        this.urlParams.skipClickPrompt = false;
-        window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
-      } else { // close new msg
-        this.app.closeMsg();
-      }
-    }, this.getErrHandlers('delete draft')));
+    this.composerDraft.initActions();
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
     $("body").click(event => {
@@ -359,24 +345,6 @@ export class Composer {
     }
   }
 
-  private collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]): Promise<{ armoredPubkeys: string[], emailsWithoutPubkeys: string[] }> => {
-    const contacts = await this.app.storageContactGet(recipients);
-    const { public: armoredPublicKey } = await this.app.storageGetKey(acctEmail);
-    const armoredPubkeys = [armoredPublicKey];
-    const emailsWithoutPubkeys = [];
-    for (const i of contacts.keys()) {
-      const contact = contacts[i];
-      if (contact && contact.has_pgp && contact.pubkey) {
-        armoredPubkeys.push(contact.pubkey);
-      } else if (contact && this.ksLookupsByEmail[contact.email] && this.ksLookupsByEmail[contact.email].pubkey) {
-        armoredPubkeys.push(this.ksLookupsByEmail[contact.email].pubkey!); // checked !null right above. Null evaluates to false.
-      } else {
-        emailsWithoutPubkeys.push(recipients[i]);
-      }
-    }
-    return { armoredPubkeys, emailsWithoutPubkeys };
-  }
-
   private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       await this.parseRenderRecipients('harshRecipientErrs');
@@ -464,7 +432,7 @@ export class Composer {
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
-      const { armoredPubkeys, emailsWithoutPubkeys } = await this.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipients);
+      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipients);
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
       await this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
@@ -687,84 +655,6 @@ export class Composer {
     }
   }
 
-  private checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
-    try {
-      if (!contact.pubkey || !contact.longid) {
-        return;
-      }
-      if (!contact.pubkey_last_sig) {
-        const lastSig = await Pgp.key.lastSig(await Pgp.key.read(contact.pubkey));
-        contact.pubkey_last_sig = lastSig;
-        await this.app.storageContactUpdate(contact.email, { pubkey_last_sig: lastSig });
-      }
-      if (!contact.pubkey_last_check || new Date(contact.pubkey_last_check).getTime() < Date.now() - (1000 * 60 * 60 * 24 * 7)) { // last update > 7 days ago, or never
-        const { pubkey: fetchedPubkey } = await Keyserver.lookupLongid(this.urlParams.acctEmail, contact.longid);
-        if (fetchedPubkey) {
-          const fetchedLastSig = await Pgp.key.lastSig(await Pgp.key.read(fetchedPubkey));
-          if (fetchedLastSig > contact.pubkey_last_sig) { // fetched pubkey has newer signature, update
-            console.info(`Updating key ${contact.longid} for ${contact.email}: newer signature found: ${new Date(fetchedLastSig)} (old ${new Date(contact.pubkey_last_sig)})`);
-            await this.app.storageContactUpdate(contact.email, { pubkey: fetchedPubkey, pubkey_last_sig: fetchedLastSig, pubkey_last_check: Date.now() });
-            return;
-          }
-        }
-        // we checked for newer key and it did not result in updating the key, don't check again for another week
-        await this.app.storageContactUpdate(contact.email, { pubkey_last_check: Date.now() });
-      }
-    } catch (e) {
-      if (Api.err.isSignificant(e)) {
-        throw e; // insignificant (temporary) errors ignored
-      }
-    }
-  }
-
-  private lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded = async (email: string): Promise<Contact | "fail"> => {
-    this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.0`);
-    const [dbContact] = await this.app.storageContactGet([email]);
-    if (dbContact && dbContact.has_pgp && dbContact.pubkey) {
-      // Potentially check if pubkey was updated - async. By the time user finishes composing, newer version would have been updated in db.
-      // If sender didn't pull a particular pubkey for a long time and it has since expired, but there actually is a newer version on attester, this may unnecessarily show "bad pubkey",
-      //      -> until next time user tries to pull it. This could be fixed by attempting to fix up the rendered recipient inside the async function below.
-      this.checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded(dbContact).catch(Catch.reportErr);
-      return dbContact;
-    } else {
-      try {
-        this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.1`);
-        const lookupResult = await Keyserver.lookupEmail(this.urlParams.acctEmail, email);
-        this.debug(`lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded.2`);
-        if (lookupResult && email) {
-          if (lookupResult.pubkey) {
-            const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
-            if (!parsed.keys[0]) {
-              Catch.log('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
-              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            } else if (! await parsed.keys[0].getEncryptionKey()) {
-              Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
-              lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            }
-          }
-          const ksContact = await this.app.storageContactObj({
-            email,
-            name: dbContact && dbContact.name ? dbContact.name : undefined,
-            client: lookupResult.pgpClient === 'flowcrypt' ? 'cryptup' : 'pgp', // todo - clean up as "flowcrypt|pgp-other'. Already in storage, fixing involves migration
-            pubkey: lookupResult.pubkey,
-            lastUse: Date.now(),
-            lastCheck: Date.now(),
-          });
-          this.ksLookupsByEmail[email] = ksContact;
-          await this.app.storageContactSave(ksContact);
-          return ksContact;
-        } else {
-          return this.PUBKEY_LOOKUP_RESULT_FAIL;
-        }
-      } catch (e) {
-        if (!Api.err.isNetErr(e) && !Api.err.isServerErr(e)) {
-          Catch.reportErr(e);
-        }
-        return this.PUBKEY_LOOKUP_RESULT_FAIL;
-      }
-    }
-  }
-
   private evaluateRenderedRecipients = async () => {
     this.debug(`evaluateRenderedRecipients`);
     for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .failed, .expired')) {
@@ -774,10 +664,10 @@ export class Composer {
       if (email) {
         this.S.now('send_btn_span').text(this.BTN_LOADING);
         this.setInputTextHeightManuallyIfNeeded();
-        const pubkeyLookupRes = await this.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
+        const pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
         await this.renderPubkeyResult(emailEl, email, pubkeyLookupRes);
       } else {
-        await this.renderPubkeyResult(emailEl, $(emailEl).text(), this.PUBKEY_LOOKUP_RESULT_WRONG);
+        await this.renderPubkeyResult(emailEl, $(emailEl).text(), PUBKEY_LOOKUP_RESULT_WRONG);
       }
     }
     this.setInputTextHeightManuallyIfNeeded();
@@ -1032,66 +922,6 @@ export class Composer {
     await this.evaluateRenderedRecipients();
   }
 
-  private decryptMessage = async (encryptedData: Buf): Promise<string> => {
-    const decryptRes = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData });
-    if (decryptRes.success) {
-      return decryptRes.content.toUtfStr();
-    } else if (decryptRes.error && decryptRes.error.type === 'need_passphrase') {
-      BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'quote', longids: decryptRes.longids.needPassphrase });
-      const wasPpEntered: boolean = await new Promise(resolve => {
-        BrowserMsg.addListener('passphrase_entry', async (response: Bm.PassphraseEntry) => resolve(response.entered));
-        BrowserMsg.listen(this.urlParams.parentTabId);
-      });
-      if (wasPpEntered) {
-        return await this.decryptMessage(encryptedData); // retry with pp
-      }
-      return `\n(Skipping previous message quote)\n`;
-    } else {
-      return `\n(Failed to decrypt quote from previous message because: ${decryptRes.error.type}: ${decryptRes.error.message})\n`;
-    }
-  }
-
-  public getAndDecryptMessage = async (msgId: string, progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
-    try {
-      const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw',
-        progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
-      const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
-      const readableBlocks = message.blocks
-        .filter(b => b.type === 'encryptedMsg' || b.type === 'plainText' || b.type === 'plainHtml');
-      const encryptedCount = readableBlocks.filter(b => b.type === 'encryptedMsg').length;
-      const decryptedAndFormatedContent: string[] = [];
-      for (const [index, block] of readableBlocks.entries()) {
-        const stringContent = String(block.content);
-        if (block.type === 'encryptedMsg') {
-          const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
-          const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
-          const htmlBlock = msgBlocks.find(b => b.type === 'decryptedHtml');
-          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(htmlBlock ? htmlBlock.content.toString() : 'No Content', '\n');
-          decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
-          if (progressCb) {
-            progressCb(60 + (40 / encryptedCount) * (index + 1));
-          }
-        } else if (block.type === 'plainHtml') {
-          decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
-        } else {
-          decryptedAndFormatedContent.push(stringContent);
-        }
-      }
-      return { headers: { date: String(message.headers.date), from: message.from }, text: decryptedAndFormatedContent.join('\n').trim(), };
-    } catch (e) {
-      if (e instanceof FormatError) {
-        Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
-      } else if (Api.err.isNetErr(e)) {
-        // todo: retry
-      } else if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-      } else {
-        Catch.reportErr(e);
-      }
-      return;
-    }
-  }
-
   private updatePubkeyIcon = (include?: boolean) => {
     if (typeof include === 'undefined') { // decide if pubkey should be included
       if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
@@ -1171,14 +1001,14 @@ export class Composer {
     // tslint:disable-next-line:max-line-length
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
     Xss.sanitizeAppend(emailEl, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.getErrHandlers('remove recipient')));
-    if (contact === this.PUBKEY_LOOKUP_RESULT_FAIL) {
+    if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       $(emailEl).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(emailEl).addClass("failed");
       Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
       $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceiver(), this.getErrHandlers('refresh recipient')));
       $(emailEl).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element), this.getErrHandlers('remove recipient')));
-    } else if (contact === this.PUBKEY_LOOKUP_RESULT_WRONG) {
+    } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       this.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
       $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
       $(emailEl).addClass("wrong");
@@ -1273,12 +1103,12 @@ export class Composer {
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
-    this.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.composerContacts.searchContacts()));
     this.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
       this.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
       await this.parseRenderRecipients('gentleRecipientErrs', true); // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
       this.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
+    this.composerContacts.initActions();
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
         const textData = event.originalEvent.clipboardData.getData('text/plain');
@@ -1305,7 +1135,6 @@ export class Composer {
       }
     }));
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
-    this.S.cached('compose_table').click(Ui.event.handle(() => this.composerContacts.hideContacts(), this.getErrHandlers(`hide contact box`)));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
         this.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
@@ -1485,43 +1314,4 @@ export class Composer {
       msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;
     }
   }
-
-  static defaultAppFunctions = (): ComposerAppFunctionsInterface => {
-    return {
-      canReadEmails: () => false,
-      doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
-      storageGetAddresses: () => [],
-      storageGetAddressesKeyserver: () => [],
-      storageEmailFooterGet: () => undefined,
-      storageEmailFooterSet: () => Promise.resolve(),
-      storageGetHideMsgPassword: () => false,
-      storageGetSubscription: () => Promise.resolve(new Subscription(undefined)),
-      storageSetDraftMeta: () => Promise.resolve(),
-      storageGetKey: () => { throw new Error('storage_get_key not implemented'); },
-      storagePassphraseGet: () => Promise.resolve(undefined),
-      storageAddAdminCodes: () => Promise.resolve(),
-      storageContactGet: () => Promise.resolve([]),
-      storageContactUpdate: () => Promise.resolve(),
-      storageContactSave: () => Promise.resolve(),
-      storageContactSearch: () => Promise.resolve([]),
-      storageContactObj: Store.dbContactObj,
-      emailProviderDraftGet: () => Promise.resolve(undefined),
-      emailProviderDraftCreate: () => Promise.reject(undefined),
-      emailProviderDraftUpdate: () => Promise.resolve({}),
-      emailProviderDraftDelete: () => Promise.resolve({}),
-      emailProviderMsgSend: () => Promise.reject({ message: 'not implemented' }),
-      emailEroviderSearchContacts: (query, knownContacts, multiCb) => multiCb({ new: [], all: [] }),
-      emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
-      emailProviderExtractArmoredBlock: () => Promise.resolve(''),
-      renderReinsertReplyBox: () => Promise.resolve(),
-      renderFooterDialog: () => undefined,
-      renderAddPubkeyDialog: () => undefined,
-      renderHelpDialog: () => undefined,
-      renderSendingAddrDialog: () => undefined,
-      closeMsg: () => undefined,
-      factoryAtt: (att) => `<div>${att.name}</div>`,
-      whenMasterPassphraseEntered: () => Promise.resolve(undefined)
-    };
-  }
-
 }

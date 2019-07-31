@@ -12,18 +12,21 @@ import { Ui } from '../browser.js';
 import { GoogleAuth } from '../api/google.js';
 import { Lang } from '../lang.js';
 import { ComposerUrlParams } from './interfaces/composer-types.js';
+import { ComposerComponent } from './interfaces/comopser-component.js';
 
-export class ComposerContacts {
+export class ComposerContacts extends ComposerComponent {
     private app: ComposerAppFunctionsInterface;
-    private composer: Composer;
-    private urlParams: ComposerUrlParams;
 
     private contactSearchInProgress = false;
 
     constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
+        super(composer, urlParams);
         this.app = app;
-        this.urlParams = urlParams;
-        this.composer = composer;
+    }
+
+    initActions(): void {
+        this.composer.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
+        this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     }
 
     public searchContacts = async (dbOnly = false) => {
