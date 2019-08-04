@@ -85,6 +85,7 @@ type MessageToReplyOrForward = {
     date?: string,
     from?: string
   },
+  isSigned?: boolean,
   text?: string
 };
 
@@ -1192,7 +1193,12 @@ export class Composer {
         this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
         this.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-          this.addTripleDotQuoteExpandBtn(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
+          (async () => { // not awaited because can take a long time & blocks rendering
+            await this.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
+            if (this.messageToReplyOrForward && this.messageToReplyOrForward.isSigned) {
+              this.S.cached('icon_sign').click();
+            }
+          })().catch(Catch.reportErr);
         }
       } else {
         this.urlParams.threadId = '';
@@ -1418,12 +1424,12 @@ export class Composer {
         progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
       const readableBlocks = message.blocks
-        .filter(b => b.type === 'encryptedMsg' || b.type === 'plainText' || b.type === 'plainHtml');
-      const encryptedCount = readableBlocks.filter(b => b.type === 'encryptedMsg').length;
+        .filter(b => ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'].includes(b.type));
+      const encryptedCount = readableBlocks.filter(b => ['encryptedMsg', 'signedMsg'].includes(b.type)).length;
       const decryptedAndFormatedContent: string[] = [];
       for (const [index, block] of readableBlocks.entries()) {
         const stringContent = String(block.content);
-        if (block.type === 'encryptedMsg') {
+        if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
           const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
           const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           const htmlBlock = msgBlocks.find(b => b.type === 'decryptedHtml');
@@ -1438,7 +1444,11 @@ export class Composer {
           decryptedAndFormatedContent.push(stringContent);
         }
       }
-      return { headers: { date: String(message.headers.date), from: message.from }, text: decryptedAndFormatedContent.join('\n').trim(), };
+      return {
+        headers: { date: String(message.headers.date), from: message.from },
+        text: decryptedAndFormatedContent.join('\n').trim(),
+        isSigned: readableBlocks.length === 1 && readableBlocks[0].type === 'signedMsg'
+      };
     } catch (e) {
       if (e instanceof FormatError) {
         Xss.sanitizeAppend(this.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
