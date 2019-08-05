@@ -26,7 +26,7 @@ export class Injector {
       'settings': '#does_not_have',
     },
     finishSesionBtnSel: {
-      gmail: 'div.gb_Xd',
+      gmail: 'div.gb_Xd .gb_Me',
       outlook: '#does_not_have',
       settings: '#settings > div.line'
     }
