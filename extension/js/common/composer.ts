@@ -97,6 +97,7 @@ export class Composer {
   private isSendMessageInProgress = false;
 
   public canReadEmails: boolean;
+  public initialized: Promise<void>;
 
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
@@ -117,9 +118,11 @@ export class Composer {
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initComposeBox().catch(Catch.reportErr);
-    this.initActions();
-    this.checkEmailAliases().catch(Catch.reportErr);
+    this.initialized = new Promise<void>(async (resolve, reject) => {
+      await this.initComposeBox();
+      await this.initActions();
+      await this.checkEmailAliases();
+    });
   }
 
   public debug = (msg: string) => {
@@ -221,7 +224,7 @@ export class Composer {
         this.updateFooterIcon(!$(target).is('.active'));
       }
     }, this.getErrHandlers(`change footer`)));
-    this.composerDraft.initActions();
+    this.composerDraft.initActions().catch(Catch.reportErr);
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
     $("body").click(event => {

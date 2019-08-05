@@ -36,7 +36,7 @@ export class ComposerDraft extends ComposerComponent {
         }
     }
 
-    initActions(): void {
+    async initActions(): Promise<void> {
         $('.delete_draft').click(Ui.event.handle(async () => {
             await this.draftDelete();
             if (this.urlParams.isReplyBox) { // reload iframe so we don't leave users without a reply UI
@@ -46,6 +46,7 @@ export class ComposerDraft extends ComposerComponent {
                 this.app.closeMsg();
             }
         }, this.composer.getErrHandlers('delete draft')));
+        await this.composer.initialized;
         this.composer.S.cached('recipients').on('DOMSubtreeModified', Ui.event.prevent('slowspree', async () => {
             await this.draftSave(true);
         }));
