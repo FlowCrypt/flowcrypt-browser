@@ -277,6 +277,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
+    ava.test('compose[global:compatibility] - reply - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
+        '&threadMsgId=15f7f5face7101db&to=censored%40email.com&from=flowcrypt.compatibility%40gmail.com&subject=signed%20utf8%20(inline)';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await Util.sleep(3);
+      const iconSign = await composePage.waitAny('@action-switch-to-sign');
+      expect(await composePage.attr(iconSign!, 'className')).to.include('active');
+    }));
+
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.test.todo('compose[global:compose] - reply - skip click prompt');

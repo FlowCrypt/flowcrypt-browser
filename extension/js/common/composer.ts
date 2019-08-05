@@ -1425,7 +1425,7 @@ export class Composer {
       const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
       const readableBlocks = message.blocks
         .filter(b => ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'].includes(b.type));
-      const encryptedCount = readableBlocks.filter(b => ['encryptedMsg', 'signedMsg'].includes(b.type)).length;
+      const pgpBlockCount = readableBlocks.filter(b => ['encryptedMsg', 'signedMsg'].includes(b.type)).length;
       const decryptedAndFormatedContent: string[] = [];
       for (const [index, block] of readableBlocks.entries()) {
         const stringContent = String(block.content);
@@ -1436,7 +1436,7 @@ export class Composer {
           const htmlParsed = Xss.htmlSanitizeAndStripAllTags(htmlBlock ? htmlBlock.content.toString() : 'No Content', '\n');
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
           if (progressCb) {
-            progressCb(60 + (40 / encryptedCount) * (index + 1));
+            progressCb(60 + (40 / pgpBlockCount) * (index + 1));
           }
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
