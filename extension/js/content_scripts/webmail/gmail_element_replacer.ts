@@ -17,6 +17,7 @@ import { Google, GmailRes } from '../../common/api/google.js';
 import { Xss } from '../../common/platform/xss.js';
 import { Keyserver } from '../../common/api/keyserver.js';
 import { WebmailCommon } from "../../common/webmail.js";
+import { Store } from '../../common/platform/store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
@@ -509,8 +510,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const { pubkey } = await Keyserver.lookupEmail(this.acctEmail, email);
-                  this.recipientHasPgpCache[email] = Boolean(pubkey); // true or false
+                  const contact = await Store.dbContactGet(undefined, [email]);
+                  const pubkeyExists = Boolean(contact[0] || (await Keyserver.lookupEmail(this.acctEmail, email)).pubkey);
+                  this.recipientHasPgpCache[email] = pubkeyExists;
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;
                     break;
