@@ -26,7 +26,7 @@ import { ComposerUrlParams } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
-import { ComposerNotReadyError, ComposerUserError, ComposerResetBtnTrigger } from './composer/interfaces/comopserr-errors.js';
+import { ComposerNotReadyError, ComposerUserError, ComposerResetBtnTrigger } from './composer/interfaces/composer-errors.js';
 
 declare const openpgp: typeof OpenPGP;
 

@@ -2,14 +2,13 @@
 
 'use strict';
 
-import { Composer } from '../composer.js';
-import { MessageToReplyOrForward, ComposerUrlParams } from './interfaces/composer-types.js';
+import { MessageToReplyOrForward } from './interfaces/composer-types.js';
 import { Xss } from '../platform/xss.js';
 import { Str } from '../core/common.js';
 import { Ui } from '../browser.js';
 import { Api, ProgressCb } from '../api/api.js';
 import { Catch } from '../platform/catch.js';
-import { ComposerComponent } from './interfaces/comopser-component.js';
+import { ComposerComponent } from './interfaces/composer-component.js';
 import { Google } from '../api/google.js';
 import { Mime } from '../core/mime.js';
 import { Buf } from '../core/buf.js';
@@ -23,10 +22,6 @@ export class ComposerQuote extends ComposerComponent {
 
     get expandingHTMLPart(): string | undefined {
         return this.msgExpandingHTMLPart;
-    }
-
-    constructor(composer: Composer, urlParams: ComposerUrlParams) {
-        super(composer, urlParams);
     }
 
     initActions(): void {

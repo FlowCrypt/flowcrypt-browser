@@ -15,7 +15,7 @@ import { Store } from '../platform/store.js';
 import { Str } from '../core/common.js';
 import { Composer } from '../composer.js';
 import { ComposerUrlParams } from './interfaces/composer-types.js';
-import { ComposerComponent } from './interfaces/comopser-component.js';
+import { ComposerComponent } from './interfaces/composer-component.js';
 
 export class ComposerDraft extends ComposerComponent {
 

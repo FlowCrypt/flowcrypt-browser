@@ -12,9 +12,9 @@ import { Ui } from '../browser.js';
 import { GoogleAuth } from '../api/google.js';
 import { Lang } from '../lang.js';
 import { ComposerUrlParams } from './interfaces/composer-types.js';
-import { ComposerComponent } from './interfaces/comopser-component.js';
+import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG, RecipientErrsMode } from './interfaces/comopserr-errors.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG, RecipientErrsMode } from './interfaces/composer-errors.js';
 import { Catch } from '../platform/catch.js';
 
 export class ComposerContacts extends ComposerComponent {

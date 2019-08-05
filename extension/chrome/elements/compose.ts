@@ -18,7 +18,7 @@ import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { requireOpenpgp } from '../../js/common/platform/require.js';
 import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/comopserr-errors.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/composer-errors.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
