@@ -69,7 +69,7 @@ Catch.try(async () => {
     await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
     if (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
       try {
-        await Ui.modal.info(await Attester.updatePubkey(primaryKi.longid, updatedPrv.armor()));
+        await Ui.modal.info(await Attester.updatePubkey(primaryKi.longid, updatedPrv.toPublic().armor()));
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);

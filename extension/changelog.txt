@@ -1,4 +1,6 @@
 <div>
+version 6.9.3 on Aug 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/346?closed=1" target="_blank">Security fix</a>
+
 version 6.9.2 on Jul 18, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/345?closed=1" target="_blank">Send-from alias fix</a>
 
 version 6.9.1 on Jul 13, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/344?closed=1" target="_blank">Enterprise improvements</a>
