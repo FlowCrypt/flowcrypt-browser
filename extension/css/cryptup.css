@@ -456,7 +456,7 @@ body#new_message { overflow-y: hidden; }
 body#new_message.full_window { background-color: rgba(0,0,0,.5); padding: 20px 150px;  }
 body#new_message.full_window table#compose { box-shadow: 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12), 0 5px 5px -3px rgba(0,0,0,0.2); }
 div#reply_message_table_container { display: none; }
-div#initial_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; min-height: 72px; padding: 8px 0 0 8px; }
+div#initial_prompt { border: 1px solid #d9d9d9 !important; border-top: 1px solid #c0c0c0 !important; background-color: #fff; min-height: 72px; padding: 8px 0 0 8px; }
 div#initial_prompt #reply_click_area { width: 95%; height: 50px; margin-top: 3px; position: absolute; }
 p#reply_links { margin: 0; }
 div#reply_message_table_container table#compose { border-top: 1px solid #cfcfcf; width: 100%; }
