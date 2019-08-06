@@ -188,6 +188,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         '> >> double quote',
         '> >> again double quote'
       ].join('\n'));
+      await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.test('compose[global:compatibility] - standalone - quote - can load quote from plain/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

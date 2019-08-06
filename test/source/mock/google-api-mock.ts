@@ -10,6 +10,8 @@ import { ParsedMail } from "mailparser";
 import * as http from 'http';
 import Parse, { ParseMsgResult } from '../util/parse';
 import { DraftSaveModel } from './types';
+import { TestBySubjectStrategyContext } from './strategies/send-message-strategy';
+import { UnsuportableStrategyError } from './strategies/strategy-base';
 
 const oauth = new OauthMock();
 
@@ -123,8 +125,8 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
       if (isGet(req) && (format === 'metadata' || format === 'full')) {
         const id = parseResourceId(req.url!);
         const msgs = new Data(acct).getMessagesByThread(id);
-        if (!msgs.length) { 
-          const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400 ; // intentionally testing missing thread
+        if (!msgs.length) {
+          const statusCode = id === '16841ce0ce5cb74d' ? 404 : 400; // intentionally testing missing thread
           throw new HttpClientErr(`MOCK thread not found for ${acct}: ${id}`, statusCode);
         }
         return { id, historyId: msgs[0].historyId, messages: msgs.map(m => Data.fmtMsg(m, format)) };
@@ -136,6 +138,14 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
         if (parsedReq.body && typeof parsedReq.body === 'string') {
           const parseResult = await parseMultipartDataAsMimeMsg(parsedReq.body);
           await validateMimeMsg(acct, parseResult.mimeMsg, parseResult.threadId);
+          try {
+            const testingStrategyContext = new TestBySubjectStrategyContext(parseResult.mimeMsg.subject);
+            await testingStrategyContext.test(parseResult.mimeMsg);
+          } catch (e) {
+            if (!(e instanceof UnsuportableStrategyError)) { // No such strategy for test
+              throw e;
+            }
+          }
           return { id: 'mockfakesend', labelIds: ['SENT'], threadId: parseResult.threadId };
         }
       }
@@ -222,12 +232,12 @@ const validateMimeMsg = async (acct: string, mimeMsg: ParsedMail, threadId?: str
     if (['Re: ', 'Fwd: '].some(e => mimeMsg.subject.startsWith(e)) && (!threadId || !inReplyToMessageId)) {
       throw new HttpClientErr(`Error: Incorrect subject. Subject can't start from 'Re:' or 'Fwd:'. Current subject is '${mimeMsg.subject}'`, 400);
     } else if ((threadId || inReplyToMessageId) && !['Re: ', 'Fwd: '].some(e => mimeMsg.subject.startsWith(e))) {
-      throw new HttpClientErr(`Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`, 400);
+      throw new HttpClientErr("Error: Incorrect subject. Subject must start from 'Re:' or 'Fwd:' " +
+        `if the message has threaId or 'In-Reply-To' header. Current subject is '${mimeMsg.subject}'`, 400);
     }
-
     // Special check for 'compose[global:compatibility] - standalone - from alias' test
     if (mimeMsg.subject.endsWith('from alias') && mimeMsg.from.value[0].address !== 'flowcryptcompatibility@gmail.com') {
-      throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from.value[0].address}'`)
+      throw new HttpClientErr(`Error: Incorrect Email Alias. Should be 'flowcryptcompatibility@gmail.com'. Current '${mimeMsg.from.value[0].address}'`);
     }
   }
   if (!mimeMsg.text) {

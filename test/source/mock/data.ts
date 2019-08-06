@@ -1,5 +1,7 @@
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { KeyInfo } from '../core/pgp';
+import { Config } from '../util';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
@@ -15,7 +17,6 @@ type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide
 type AcctDataFile = { messages: GmailMsg[]; attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
 
 const DATA: { [acct: string]: AcctDataFile } = {};
-
 export class Data {
 
   private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
