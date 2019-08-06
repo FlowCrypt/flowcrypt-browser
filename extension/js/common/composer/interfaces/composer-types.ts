@@ -7,6 +7,7 @@ export type MessageToReplyOrForward = {
         date?: string,
         from?: string
     },
+    isSigned?: boolean,
     text?: string
 };
 

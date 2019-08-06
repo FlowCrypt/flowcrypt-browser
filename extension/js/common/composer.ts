@@ -774,7 +774,12 @@ export class Composer {
         this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
         this.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-          this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method).catch(Catch.reportErr); // not awaited because can take a long time & blocks rendering
+          (async () => { // not awaited because can take a long time & blocks rendering
+            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
+            if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
+              this.S.cached('icon_sign').click();
+            }
+          })().catch(Catch.reportErr);
         }
       } else {
         this.urlParams.threadId = '';

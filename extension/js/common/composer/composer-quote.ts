@@ -17,7 +17,7 @@ import { BrowserMsg, Bm } from '../extension.js';
 import { Store } from '../platform/store.js';
 
 export class ComposerQuote extends ComposerComponent {
-    private messageToReplyOrForward: MessageToReplyOrForward | undefined;
+    public messageToReplyOrForward: MessageToReplyOrForward | undefined;
     private msgExpandingHTMLPart: string | undefined;
 
     get expandingHTMLPart(): string | undefined {
@@ -78,19 +78,19 @@ export class ComposerQuote extends ComposerComponent {
                 progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
             const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
             const readableBlocks = message.blocks
-                .filter(b => b.type === 'encryptedMsg' || b.type === 'plainText' || b.type === 'plainHtml');
-            const encryptedCount = readableBlocks.filter(b => b.type === 'encryptedMsg').length;
+                .filter(b => ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'].includes(b.type));
+            const pgpBlockCount = readableBlocks.filter(b => ['encryptedMsg', 'signedMsg'].includes(b.type)).length;
             const decryptedAndFormatedContent: string[] = [];
             for (const [index, block] of readableBlocks.entries()) {
                 const stringContent = String(block.content);
-                if (block.type === 'encryptedMsg') {
+                if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
                     const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
                     const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
                     const htmlBlock = msgBlocks.find(b => b.type === 'decryptedHtml');
                     const htmlParsed = Xss.htmlSanitizeAndStripAllTags(htmlBlock ? htmlBlock.content.toString() : 'No Content', '\n');
                     decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
                     if (progressCb) {
-                        progressCb(60 + (40 / encryptedCount) * (index + 1));
+                        progressCb(60 + (40 / pgpBlockCount) * (index + 1));
                     }
                 } else if (block.type === 'plainHtml') {
                     decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
@@ -98,7 +98,11 @@ export class ComposerQuote extends ComposerComponent {
                     decryptedAndFormatedContent.push(stringContent);
                 }
             }
-            return { headers: { date: String(message.headers.date), from: message.from }, text: decryptedAndFormatedContent.join('\n').trim(), };
+            return {
+                headers: { date: String(message.headers.date), from: message.from },
+                text: decryptedAndFormatedContent.join('\n').trim(),
+                isSigned: readableBlocks.length === 1 && readableBlocks[0].type === 'signedMsg'
+            };
         } catch (e) {
             if (e instanceof FormatError) {
                 Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/>\n<br/>\n<br/>\n${Xss.escape(e.data)}`);
