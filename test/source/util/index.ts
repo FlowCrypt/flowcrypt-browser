@@ -1,5 +1,6 @@
 
 import * as fs from 'fs';
+import { KeyInfo } from '../core/pgp.js';
 
 export type TestVariant = 'CONSUMER-MOCK' | 'ENTERPRISE-MOCK' | 'CONSUMER-LIVE-GMAIL';
 
@@ -33,6 +34,7 @@ interface TestSecretsInterface {
   proxy?: { enabled: boolean, server: string, auth: { username: string, password: string } };
   auth: { google: { email: string, password: string, backup: string }[], };
   keys: { title: string, passphrase: string, armored: string | null, keywords: string | null }[];
+  keyInfo: Array<{ email: string, key: KeyInfo[] }>;
 }
 
 export class Config {

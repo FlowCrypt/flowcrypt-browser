@@ -4,6 +4,7 @@ import { HttpClientErr } from '../api.js';
 import { Pgp, PgpMsg } from "../../core/pgp.js";
 import { Buf } from '../../core/buf.js';
 import { Data } from '../data.js';
+import { Config } from '../../util/index.js';
 
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     private readonly quotedContent: string = [
@@ -20,7 +21,7 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
     ].join('\n');
 
     async test(mimeMsg: ParsedMail) {
-        const keyInfo = new Data('flowcrypt.compatibility@gmail.com').getKeyInfo();
+        const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
         const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
         if (!decrypted.success) {
             throw new HttpClientErr(`Error: can't decrypt message`);

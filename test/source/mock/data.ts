@@ -1,6 +1,7 @@
 
 import { readFileSync, existsSync } from 'fs';
 import { KeyInfo } from '../core/pgp';
+import { Config } from '../util';
 
 type GmailMsg$header = { name: string, value: string };
 type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
@@ -16,7 +17,6 @@ type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide
 type AcctDataFile = { messages: GmailMsg[]; attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
 
 const DATA: { [acct: string]: AcctDataFile } = {};
-const KEYS: { [acct: string]: KeyInfo[] | null } = {};
 export class Data {
 
   private exludePplSearchQuery = /(?:-from|-to):"?([a-zA-Z0-9@.\-_]+)"?/g;
@@ -25,15 +25,6 @@ export class Data {
   constructor(private acct: string) {
     if (!DATA[acct]) {
       DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
-    }
-    if (typeof KEYS[acct] === 'undefined') {
-      const path = `./test/samples/keys/${acct.replace(/[^a-z0-9]+/g, '')}.keyinfo.json`;
-      if (existsSync(path)) {
-        KEYS[acct] = JSON.parse(readFileSync(path, { encoding: 'UTF-8' })) as KeyInfo[];
-      } else {
-        // tslint:disable-next-line: no-null-keyword
-        KEYS[acct] = null; // We don't need to store all the keys
-      }
     }
   }
 
@@ -47,10 +38,6 @@ export class Data {
 
   public getMessagesByThread = (threadId: string) => {
     return DATA[this.acct].messages.filter(m => m.threadId === threadId);
-  }
-
-  public getKeyInfo = () => {
-    return KEYS[this.acct];
   }
 
   public searchMessages = (q: string) => {
