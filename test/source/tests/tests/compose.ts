@@ -288,6 +288,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await composePage.attr(iconSign!, 'className')).to.include('active');
     }));
 
+    ava.test('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, 'test.no.pgp@test.com', 'Signed Message');
+      expect(await composePage.isElementPresent('@add-intro')).to.be.true;
+      expect(await composePage.isElementPresent('@password-or-pubkey-container')).to.be.true;
+      await composePage.waitAndClick('@action-switch-to-sign', { delay: 0.5 });
+      await composePage.notPresent('@add-intro');
+      await composePage.notPresent('@password-or-pubkey-container');
+    }));
+
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.test.todo('compose[global:compose] - reply - skip click prompt');

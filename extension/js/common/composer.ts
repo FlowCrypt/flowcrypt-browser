@@ -686,10 +686,8 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!$('.recipients span').length) {
-      this.hideMsgPwdUi();
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-    } else if (this.S.cached('icon_sign').is('.active')) {
+    this.hideMsgPwdUi();
+    if (this.S.cached('icon_sign').is('.active')) {
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     } else if ($('.recipients span.no_pgp').length) {
       this.showMsgPwdUiAndColorBtn();
@@ -698,7 +696,6 @@ export class Composer {
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.S.cached('send_btn').removeClass('green').addClass('gray');
     } else {
-      this.hideMsgPwdUi();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     }
     if (this.urlParams.isReplyBox) {
