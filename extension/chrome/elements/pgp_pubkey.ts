@@ -44,7 +44,7 @@ Catch.try(async () => {
       const [contact] = await Store.dbContactGet(undefined, [String($('.input_email').val())]);
       $('.action_add_contact')
         .text(contact && contact.has_pgp ? 'update key' : `import ${isUsableButExpired ? 'expired ' : ''}key`)
-        .css('background-color', isUsableButExpired ? '#989898' : 'inherit');
+        .css('background-color', isUsableButExpired ? '#989898' : '');
     }
   };
 
