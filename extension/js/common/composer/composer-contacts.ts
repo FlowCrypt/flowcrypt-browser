@@ -11,16 +11,16 @@ import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
 import { GoogleAuth } from '../api/google.js';
 import { Lang } from '../lang.js';
-import { ComposerUrlParams } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG, RecipientErrsMode } from './interfaces/composer-errors.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
 import { Catch } from '../platform/catch.js';
 
 export class ComposerContacts extends ComposerComponent {
     private app: ComposerAppFunctionsInterface;
     private openPGP: typeof OpenPGP;
-
+    private addedRecipients: RecipientElement[] = [];
     private BTN_LOADING = 'Loading..';
 
     private contactSearchInProgress = false;
@@ -29,6 +29,10 @@ export class ComposerContacts extends ComposerComponent {
 
     private myAddrsOnKeyserver: string[] = [];
     private recipientsMissingMyKey: string[] = [];
+
+    public get Recipients() {
+        return [...this.addedRecipients];
+    }
 
     constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, openPGP: typeof OpenPGP, composer: Composer) {
         super(composer, urlParams);
@@ -41,19 +45,20 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
         this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
         this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
-            const noPgpEmails = this.composer.getRecipientsFromDom('no_pgp');
-            this.app.renderAddPubkeyDialog(noPgpEmails);
+            const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
+            this.app.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
             clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
             this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
-                for (const email of noPgpEmails) {
-                    const [contact] = await this.app.storageContactGet([email]);
+                const recipientsHasPgp: RecipientElement[] = [];
+                for (const recipient of noPgpRecipients) {
+                    const [contact] = await this.app.storageContactGet([recipient.email]);
                     if (contact && contact.has_pgp) {
-                        $("span.recipients span.no_pgp:contains('" + email + "') i").remove();
-                        $("span.recipients span.no_pgp:contains('" + email + "')").removeClass('no_pgp');
+                        $(recipient.element).removeClass('no_pgp').find('i').remove();
                         clearInterval(this.addedPubkeyDbLookupInterval);
-                        await this.evaluateRenderedRecipients();
+                        recipientsHasPgp.push(recipient);
                     }
                 }
+                await this.evaluateRecipients(recipientsHasPgp);
             }, 1000);
         }, this.composer.getErrHandlers('add recipient public key')));
         this.composer.S.cached('icon_pubkey').click(Ui.event.handle(target => {
@@ -63,7 +68,7 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
             this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
             // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
-            await this.parseRenderRecipients('gentleRecipientErrs');
+            await this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
             this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
         }));
         BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
@@ -185,60 +190,46 @@ export class ComposerContacts extends ComposerComponent {
         if (possiblyBogusAddr && q && (possiblyBogusAddr === q || possiblyBogusAddr.includes(q))) {
             possiblyBogusRecipient.remove();
         }
-        if (!this.composer.getRecipientsFromDom().includes(email)) {
-            this.composer.S.cached('input_to').val(Str.parseEmail(email).email || '');
-            this.composer.debug(`selectContact -> parseRenderRecipients start`);
-            this.parseRenderRecipients('harshRecipientErrs').catch(Catch.reportErr);
+        if (!this.addedRecipients.find(r => r.email === email)) {
+            this.parseRenderRecipients(this.composer.S.cached('input_to_container'), [email]);
         }
         this.hideContacts();
     }
-    public parseRenderRecipients = async (errsMode: RecipientErrsMode): Promise<boolean> => {
-        this.composer.debug(`parseRenderRecipients(${errsMode})`);
-        const inputTo = String(this.composer.S.cached('input_to').val()).toLowerCase();
-        this.composer.debug(`parseRenderRecipients(${errsMode}).inputTo(${String(inputTo)})`);
-        let gentleErrInvalidEmails = '';
-        if (!(inputTo.includes(',') || (!this.composer.S.cached('input_to').is(':focus') && inputTo))) {
-            this.composer.debug(`parseRenderRecipients(${errsMode}).1-a early exit`);
-            return false;
-        }
-        this.composer.debug(`parseRenderRecipients(${errsMode}).2`);
-        let isRecipientAdded = false;
-        for (const rawRecipientAddrInput of inputTo.split(',')) {
-            this.composer.debug(`parseRenderRecipients(${errsMode}).3 (${rawRecipientAddrInput})`);
-            if (!rawRecipientAddrInput) {
-                this.composer.debug(`parseRenderRecipients(${errsMode}).4`);
-                continue; // users or scripts may append `,` to trigger evaluation - causes last entry to be "empty" - should be skipped
-            }
-            this.composer.debug(`parseRenderRecipients(${errsMode}).5`);
-            const { email } = Str.parseEmail(rawRecipientAddrInput); // raw may be `Human at Flowcrypt <Human@FlowCrypt.com>` but we only want `human@flowcrypt.com`
-            this.composer.debug(`parseRenderRecipients(${errsMode}).6 (${email})`);
-            if (!email) {
-                this.composer.debug(`parseRenderRecipients(${errsMode}).6-a (${email}|${rawRecipientAddrInput})`);
-                if (errsMode === 'gentleRecipientErrs') {
-                    gentleErrInvalidEmails += rawRecipientAddrInput;
-                    this.composer.debug(`parseRenderRecipients(${errsMode}).6-b (${email}|${rawRecipientAddrInput})`);
-                } else {
-                    // maybe there could be:
-                    // Xss.sanitizeAppend(this.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(rawRecipientAddrInput)} ${Ui.spinner('green')}</span>`);
-                    // but it seems to work well without it, so not adding until proved needed
-                    this.composer.debug(`parseRenderRecipients(${errsMode}).6-c SKIPPING HARSH ERR? (${email}|${rawRecipientAddrInput})`);
-                }
+
+    public validateEmails = (uncheckedEmails: string[]): { valid: string[], notValid: string[] } => {
+        const valid: string[] = [];
+        const notValid: string[] = [];
+        for (const email of uncheckedEmails) {
+            const parsed = Str.parseEmail(email).email;
+            if (parsed) {
+                valid.push(parsed);
             } else {
-                this.composer.debug(`parseRenderRecipients(${errsMode}).6-c (${email})`);
-                Xss.sanitizeAppend(this.composer.S.cached('input_to').siblings('.recipients'), `<span>${Xss.escape(email)} ${Ui.spinner('green')}</span>`);
-                isRecipientAdded = true;
+                notValid.push(email);
             }
         }
-        this.composer.debug(`parseRenderRecipients(${errsMode}).7.gentleErrs(${gentleErrInvalidEmails})`);
-        this.composer.S.cached('input_to').val(gentleErrInvalidEmails);
-        this.composer.debug(`parseRenderRecipients(${errsMode}).8`);
+        return { valid, notValid };
+    }
+
+    public parseRenderRecipients = (container: JQuery<HTMLElement>, uncheckedEmails?: string[]): boolean => {
+        const inputTo = container.find('#input_to');
+        uncheckedEmails = uncheckedEmails || String(inputTo.val()).split(',');
+        const validationResult = this.validateEmails(uncheckedEmails);
+        if (validationResult.valid.length) {
+            const newRecipients: RecipientElement[] = [];
+            for (const email of validationResult.valid) {
+                const recipientId = this.generateRecipientId();
+                const recipientsHtml = `<span id="${recipientId}">${Xss.escape(email)} ${Ui.spinner('green')}</span>`;
+                Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
+                const element = document.getElementById(recipientId)!;
+                newRecipients.push({ email, element, id: recipientId });
+            }
+            this.evaluateRecipients(newRecipients).catch(Catch.reportErr);
+            this.addedRecipients = [...this.addedRecipients, ...newRecipients];
+        }
+        inputTo.val(validationResult.notValid.join(','));
         this.composer.resizeInputTo();
-        this.composer.debug(`parseRenderRecipients(${errsMode}).9`);
-        await this.evaluateRenderedRecipients();
-        this.composer.debug(`parseRenderRecipients(${errsMode}).10`);
         this.composer.setInputTextHeightManuallyIfNeeded();
-        this.composer.debug(`parseRenderRecipients(${errsMode}).11`);
-        return isRecipientAdded;
+        return !!validationResult.valid.length;
     }
 
     public hideContacts = () => {
@@ -267,9 +258,9 @@ export class ComposerContacts extends ComposerComponent {
     }
 
     private authContacts = async (acctEmail: string) => {
-        const lastRecipient = $('.recipients span').last();
-        this.composer.S.cached('input_to').val(lastRecipient.text());
-        lastRecipient.last().remove();
+        const lastRecipient = this.addedRecipients[this.addedRecipients.length - 1];
+        this.composer.S.cached('input_to').val(lastRecipient.email);
+        this.removeReceiver(lastRecipient.element);
         const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authRes.result === 'Success') {
             this.composer.canReadEmails = true;
@@ -282,12 +273,12 @@ export class ComposerContacts extends ComposerComponent {
     }
 
     private checkReciepientsKeys = async () => {
-        for (const recipientEl of $('.recipients span.no_pgp')) {
+        for (const recipientEl of this.addedRecipients.filter(r => r.element.className.includes('no_pgp'))) {
             const email = $(recipientEl).text().trim();
             const [dbContact] = await this.app.storageContactGet([email]);
             if (dbContact) {
-                $(recipientEl).removeClass('no_pgp');
-                await this.renderPubkeyResult(recipientEl, email, dbContact);
+                recipientEl.element.classList.remove('no_pgp');
+                await this.renderPubkeyResult(recipientEl.element, email, dbContact);
             }
         }
     }
@@ -310,14 +301,16 @@ export class ComposerContacts extends ComposerComponent {
         $(emailEl).children('img, i').remove();
         // tslint:disable-next-line:max-line-length
         const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-        Xss.sanitizeAppend(emailEl, contentHtml).find('img.close-icon').click(Ui.event.handle(target => this.removeReceiver(target), this.composer.getErrHandlers('remove recipient')));
+        Xss.sanitizeAppend(emailEl, contentHtml)
+            .find('img.close-icon')
+            .click(Ui.event.handle(target => this.removeReceiver(target.parentElement!), this.composer.getErrHandlers('remove recipient')));
         if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
             $(emailEl).attr('title', 'Loading contact information failed, please try to add their email again.');
             $(emailEl).addClass("failed");
             Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
                 '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
-            $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceiver(), this.composer.getErrHandlers('refresh recipient')));
-            $(emailEl).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element), this.composer.getErrHandlers('remove recipient')));
+            $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceivers(), this.composer.getErrHandlers('refresh recipient')));
+            $(emailEl).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element.parentElement!), this.composer.getErrHandlers('remove recipient')));
         } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
             this.composer.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
             $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
@@ -342,38 +335,30 @@ export class ComposerContacts extends ComposerComponent {
 
     private removeReceiver = (element: HTMLElement) => {
         this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
-        $(element).parent().remove();
+        const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
+        this.addedRecipients[index].element.remove();
+        this.addedRecipients.splice(index, 1);
         this.composer.resizeInputTo();
         this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
         this.updatePubkeyIcon();
     }
 
-    private refreshReceiver = async () => {
-        const failedRecipients = $('.recipients span.failed');
-        failedRecipients.removeClass('failed');
+    private refreshReceivers = async () => {
+        const failedRecipients = this.addedRecipients.filter(r => r.element.className.includes('failed'));
         for (const recipient of failedRecipients) {
-            if (recipient.textContent) {
-                const { email } = Str.parseEmail(recipient.textContent);
-                Xss.sanitizeReplace(recipient, `<span>${Xss.escape(email || recipient.textContent)} ${Ui.spinner('green')}</span>`);
-            }
+            Xss.sanitizeReplace(recipient.element, `<span id="${recipient.id}">${Xss.escape(recipient.email)} ${Ui.spinner('green')}</span>`);
+            recipient.element = document.getElementById(recipient.id)!;
         }
-        await this.evaluateRenderedRecipients();
+        await this.evaluateRecipients(failedRecipients);
     }
 
-    private evaluateRenderedRecipients = async () => {
+    private evaluateRecipients = async (recipients: RecipientElement[]) => {
         this.composer.debug(`evaluateRenderedRecipients`);
-        for (const emailEl of $('.recipients span').not('.working, .has_pgp, .no_pgp, .wrong, .failed, .expired')) {
-            this.composer.debug(`evaluateRenderedRecipients.emailEl(${String(emailEl)})`);
-            const email = Str.parseEmail($(emailEl).text()).email;
-            this.composer.debug(`evaluateRenderedRecipients.email(${email})`);
-            if (email) {
-                this.composer.S.now('send_btn_span').text(this.BTN_LOADING);
-                this.composer.setInputTextHeightManuallyIfNeeded();
-                const pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(email);
-                await this.renderPubkeyResult(emailEl, email, pubkeyLookupRes);
-            } else {
-                await this.renderPubkeyResult(emailEl, $(emailEl).text(), PUBKEY_LOOKUP_RESULT_WRONG);
-            }
+        for (const recipient of recipients) {
+            this.composer.S.now('send_btn_span').text(this.BTN_LOADING);
+            this.composer.setInputTextHeightManuallyIfNeeded();
+            const pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
+            await this.renderPubkeyResult(recipient.element, recipient.email, pubkeyLookupRes);
         }
         this.composer.setInputTextHeightManuallyIfNeeded();
     }
@@ -386,5 +371,9 @@ export class ComposerContacts extends ComposerComponent {
         } else {
             return '';
         }
+    }
+
+    private generateRecipientId = (): string => {
+        return `recipient_${this.addedRecipients.length}`;
     }
 }

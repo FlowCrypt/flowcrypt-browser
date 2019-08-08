@@ -2,6 +2,12 @@
 
 'use strict';
 
+export type RecipientElement = {
+    email: string,
+    element: HTMLElement
+    id: string;
+};
+
 export type MessageToReplyOrForward = {
     headers: {
         date?: string,

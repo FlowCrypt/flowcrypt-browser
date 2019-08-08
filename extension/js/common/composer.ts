@@ -41,6 +41,7 @@ export class Composer {
     title: 'table#compose th h1',
     input_text: 'div#input_text',
     input_to: '#input_to',
+    input_to_container: '#input-to-container',
     input_from: '#input_from',
     input_subject: '#input_subject',
     input_password: '#input_password',
@@ -98,6 +99,10 @@ export class Composer {
 
   public canReadEmails: boolean;
   public initialized: Promise<void>;
+
+  public get Recipients() {
+    return this.composerContacts.Recipients;
+  }
 
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
@@ -270,7 +275,7 @@ export class Composer {
     if (this.urlParams.draftId) {
       const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
       if (isSuccessfulyLoaded) {
-        await this.composerContacts.parseRenderRecipients('gentleRecipientErrs');
+        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'));
       }
     } else {
       if (this.urlParams.isReplyBox) {
@@ -312,7 +317,7 @@ export class Composer {
 
   private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
-      await this.composerContacts.parseRenderRecipients('harshRecipientErrs');
+      await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'));
     }
     if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
@@ -389,7 +394,7 @@ export class Composer {
 
   private extractProcessSendMsg = async () => {
     try {
-      const recipients = this.getRecipientsFromDom();
+      const recipients = this.composerContacts.Recipients.map(r => r.email);
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
       await this.throwIfFormNotReady(recipients);
@@ -834,20 +839,6 @@ export class Composer {
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  public getRecipientsFromDom = (filter?: "no_pgp"): string[] => {
-    let selector;
-    if (filter === 'no_pgp') {
-      selector = '.recipients span.no_pgp';
-    } else {
-      selector = '.recipients span';
-    }
-    const recipients: string[] = [];
-    for (const recipientEl of $(selector)) {
-      recipients.push($(recipientEl).text().trim());
-    }
-    return recipients;
-  }
-
   public getSender = (): string => {
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
@@ -967,7 +958,7 @@ export class Composer {
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.composerContacts.parseRenderRecipients('harshRecipientErrs'); // this will force firefox to render them on load
+        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
     } else {
