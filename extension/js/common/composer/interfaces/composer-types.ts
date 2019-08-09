@@ -6,6 +6,7 @@ export type RecipientElement = {
     email: string,
     element: HTMLElement
     id: string;
+    isWrong?: boolean;
 };
 
 export type MessageToReplyOrForward = {

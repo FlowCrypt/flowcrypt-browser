@@ -113,7 +113,7 @@ export class ComposerDraft extends ComposerComponent {
                 }
                 const subject = String(this.composer.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
                 const to = this.composer.Recipients.map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-                const mimeMsg = await Mime.encode(body, { To: to, From: this.composer.getSender(), Subject: subject }, []);
+                const mimeMsg = await Mime.encode(body, { To: to.join(','), From: this.composer.getSender(), Subject: subject }, []);
                 if (!this.urlParams.draftId) {
                     const { id } = await this.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);
                     this.composer.S.cached('send_btn_note').text('Saved');
@@ -205,7 +205,7 @@ export class ComposerDraft extends ComposerComponent {
             }));
             this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
             await this.app.whenMasterPassphraseEntered();
-            await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
+            return await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
         }
         return false;
     }

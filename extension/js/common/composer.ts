@@ -127,6 +127,7 @@ export class Composer {
       await this.initComposeBox();
       await this.initActions();
       await this.checkEmailAliases();
+      resolve();
     });
   }
 
@@ -275,7 +276,7 @@ export class Composer {
     if (this.urlParams.draftId) {
       const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
       if (isSuccessfulyLoaded) {
-        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'));
+        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'), true);
       }
     } else {
       if (this.urlParams.isReplyBox) {

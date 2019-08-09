@@ -42,7 +42,19 @@ export class ComposerContacts extends ComposerComponent {
     }
 
     initActions(): void {
-        this.composer.S.cached('input_to').keyup(Ui.event.prevent('veryslowspree', () => this.searchContacts()));
+        this.composer.S.cached('input_to').on('keyup', Ui.event.prevent('veryslowspree', () => this.searchContacts()));
+        this.composer.S.cached('input_to').on('keydown blur', Ui.event.handle(async (target, e) => {
+            if (e.type === 'keydown' && e.which === 13) {
+                this.hideContacts();
+                this.parseRenderRecipients(this.composer.S.cached('input_to_container'), true);
+                this.composer.S.cached('input_to').focus();
+                return;
+            } else if (e.type === 'blur') {
+                this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+                this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
+                this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
+            }
+        }));
         this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
         this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
             const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -65,12 +77,6 @@ export class ComposerContacts extends ComposerComponent {
             this.includePubkeyToggledManually = true;
             this.updatePubkeyIcon(!$(target).is('.active'));
         }, this.composer.getErrHandlers(`set/unset pubkey attachment`)));
-        this.composer.S.cached('input_to').blur(Ui.event.handle(async (target, e) => {
-            this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-            // gentle because sometimes blur can happen by accident, it can get annoying (plus affects CI)
-            await this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
-            this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
-        }));
         BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
         BrowserMsg.listen(this.urlParams.parentTabId);
     }
@@ -191,45 +197,58 @@ export class ComposerContacts extends ComposerComponent {
             possiblyBogusRecipient.remove();
         }
         if (!this.addedRecipients.find(r => r.email === email)) {
-            this.parseRenderRecipients(this.composer.S.cached('input_to_container'), [email]);
+            this.parseRenderRecipients(this.composer.S.cached('input_to_container'), false, [email]);
         }
         this.hideContacts();
     }
 
-    public validateEmails = (uncheckedEmails: string[]): { valid: string[], notValid: string[] } => {
+    public validateEmails = (uncheckedEmails: string[]): { valid: string[], invalid: string[] } => {
         const valid: string[] = [];
-        const notValid: string[] = [];
+        const invalid: string[] = [];
         for (const email of uncheckedEmails) {
             const parsed = Str.parseEmail(email).email;
             if (parsed) {
                 valid.push(parsed);
             } else {
-                notValid.push(email);
+                invalid.push(email);
             }
         }
-        return { valid, notValid };
+        return { valid, invalid };
     }
 
-    public parseRenderRecipients = (container: JQuery<HTMLElement>, uncheckedEmails?: string[]): boolean => {
+    public parseRenderRecipients = (container: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): boolean => {
         const inputTo = container.find('#input_to');
         uncheckedEmails = uncheckedEmails || String(inputTo.val()).split(',');
         const validationResult = this.validateEmails(uncheckedEmails);
+        let recipientsToEvaluate: RecipientElement[] = [];
         if (validationResult.valid.length) {
-            const newRecipients: RecipientElement[] = [];
-            for (const email of validationResult.valid) {
-                const recipientId = this.generateRecipientId();
-                const recipientsHtml = `<span id="${recipientId}">${Xss.escape(email)} ${Ui.spinner('green')}</span>`;
-                Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
-                const element = document.getElementById(recipientId)!;
-                newRecipients.push({ email, element, id: recipientId });
-            }
-            this.evaluateRecipients(newRecipients).catch(Catch.reportErr);
-            this.addedRecipients = [...this.addedRecipients, ...newRecipients];
+            recipientsToEvaluate = [...this.createRecipientsElements(container, validationResult.valid)];
         }
-        inputTo.val(validationResult.notValid.join(','));
+        const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
+        if (force && invalidEmails.length) {
+            recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, true)];
+            inputTo.val('');
+        } else {
+            inputTo.val(validationResult.invalid.join(','));
+        }
+        this.evaluateRecipients(recipientsToEvaluate).catch(Catch.reportErr);
         this.composer.resizeInputTo();
         this.composer.setInputTextHeightManuallyIfNeeded();
         return !!validationResult.valid.length;
+    }
+
+    private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], isWrong?: boolean): RecipientElement[] => {
+        const result = [];
+        for (const email of emails) {
+            const recipientId = this.generateRecipientId();
+            const recipientsHtml = `<span id="${recipientId}">${Xss.escape(email)} ${Ui.spinner('green')}</span>`;
+            Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
+            const element = document.getElementById(recipientId)!;
+            const recipient = { email, element, id: recipientId, isWrong };
+            this.addedRecipients.push(recipient);
+            result.push(recipient);
+        }
+        return result;
     }
 
     public hideContacts = () => {
@@ -278,57 +297,58 @@ export class ComposerContacts extends ComposerComponent {
             const [dbContact] = await this.app.storageContactGet([email]);
             if (dbContact) {
                 recipientEl.element.classList.remove('no_pgp');
-                await this.renderPubkeyResult(recipientEl.element, email, dbContact);
+                await this.renderPubkeyResult(recipientEl, dbContact);
             }
         }
     }
-    private renderPubkeyResult = async (emailEl: HTMLElement, email: string, contact: Contact | 'fail' | 'wrong') => {
-        this.composer.debug(`renderPubkeyResult.emailEl(${String(emailEl)})`);
-        this.composer.debug(`renderPubkeyResult.email(${email})`);
+    private renderPubkeyResult = async (recipient: RecipientElement, contact: Contact | 'fail' | 'wrong') => {
+        this.composer.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
+        this.composer.debug(`renderPubkeyResult.email(${recipient.email})`);
         this.composer.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
         if ($('body#new_message').length) {
             if (typeof contact === 'object' && contact.has_pgp) {
                 const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.composer.getSender());
                 if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
                     // new message, and my key is not uploaded where the recipient would look for it
-                    if (await this.app.doesRecipientHaveMyPubkey(email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
-                        this.recipientsMissingMyKey.push(email);
+                    if (await this.app.doesRecipientHaveMyPubkey(recipient.email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
+                        this.recipientsMissingMyKey.push(recipient.email);
                     }
                 }
             }
             this.updatePubkeyIcon();
         }
-        $(emailEl).children('img, i').remove();
+        $(recipient.element).children('img, i').remove();
         // tslint:disable-next-line:max-line-length
         const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-        Xss.sanitizeAppend(emailEl, contentHtml)
+        Xss.sanitizeAppend(recipient.element, contentHtml)
             .find('img.close-icon')
             .click(Ui.event.handle(target => this.removeReceiver(target.parentElement!), this.composer.getErrHandlers('remove recipient')));
         if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
-            $(emailEl).attr('title', 'Loading contact information failed, please try to add their email again.');
-            $(emailEl).addClass("failed");
-            Xss.sanitizeReplace($(emailEl).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
+            $(recipient.element).attr('title', 'Loading contact information failed, please try to add their email again.');
+            $(recipient.element).addClass("failed");
+            Xss.sanitizeReplace($(recipient.element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
                 '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
-            $(emailEl).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceivers(), this.composer.getErrHandlers('refresh recipient')));
-            $(emailEl).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element.parentElement!), this.composer.getErrHandlers('remove recipient')));
+            $(recipient.element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceivers(), this.composer.getErrHandlers('refresh recipient')));
+            $(recipient.element).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element.parentElement!), this.composer.getErrHandlers('remove recipient')));
         } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
-            this.composer.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${email}`);
-            $(emailEl).attr('title', 'This email address looks misspelled. Please try again.');
-            $(emailEl).addClass("wrong");
+            this.composer.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
+            $(recipient.element).attr('title', 'This email address looks misspelled. Please try again.');
+            $(recipient.element).addClass("wrong");
         } else if (contact.pubkey &&
             ((contact.expiresOn || Infinity) <= Date.now() ||
                 await Pgp.key.usableButExpired((await this.openPGP.key.readArmored(contact.pubkey)).keys[0]))) {
-            $(emailEl).addClass("expired");
-            Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
-            $(emailEl).attr('title', 'Does use encryption but their public key is expired. You should ask them to send you an updated public key.' + this.recipientKeyIdText(contact));
+            $(recipient.element).addClass("expired");
+            Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
+            $(recipient.element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send ' +
+                'you an updated public key.' + this.recipientKeyIdText(contact));
         } else if (contact.pubkey) {
-            $(emailEl).addClass("has_pgp");
-            Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
-            $(emailEl).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
+            $(recipient.element).addClass("has_pgp");
+            Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/locked-icon.svg" />');
+            $(recipient.element).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
         } else {
-            $(emailEl).addClass("no_pgp");
-            Xss.sanitizePrepend(emailEl, '<img src="/img/svgs/locked-icon.svg" />');
-            $(emailEl).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
+            $(recipient.element).addClass("no_pgp");
+            Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/locked-icon.svg" />');
+            $(recipient.element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
         }
         this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
     }
@@ -357,8 +377,13 @@ export class ComposerContacts extends ComposerComponent {
         for (const recipient of recipients) {
             this.composer.S.now('send_btn_span').text(this.BTN_LOADING);
             this.composer.setInputTextHeightManuallyIfNeeded();
-            const pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
-            await this.renderPubkeyResult(recipient.element, recipient.email, pubkeyLookupRes);
+            let pubkeyLookupRes: Contact | 'fail' | 'wrong';
+            if (!recipient.isWrong) {
+                pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
+            } else {
+                pubkeyLookupRes = 'wrong';
+            }
+            await this.renderPubkeyResult(recipient, pubkeyLookupRes);
         }
         this.composer.setInputTextHeightManuallyIfNeeded();
     }
