@@ -197,6 +197,7 @@ export class ComposerContacts extends ComposerComponent {
             possiblyBogusRecipient.remove();
         }
         if (!this.addedRecipients.find(r => r.email === email)) {
+            this.composer.debug(`selectContact -> parseRenderRecipients start`);
             this.parseRenderRecipients(this.composer.S.cached('input_to_container'), false, [email]);
         }
         this.hideContacts();
@@ -217,23 +218,33 @@ export class ComposerContacts extends ComposerComponent {
     }
 
     public parseRenderRecipients = (container: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): boolean => {
+        this.composer.debug(`parseRenderRecipients(force: ${force})`);
         const inputTo = container.find('#input_to');
         uncheckedEmails = uncheckedEmails || String(inputTo.val()).split(',');
+        this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
         const validationResult = this.validateEmails(uncheckedEmails);
         let recipientsToEvaluate: RecipientElement[] = [];
         if (validationResult.valid.length) {
+            this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
             recipientsToEvaluate = [...this.createRecipientsElements(container, validationResult.valid)];
         }
         const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
+        this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
         if (force && invalidEmails.length) {
+            this.composer.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
             recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, true)];
             inputTo.val('');
         } else {
+            this.composer.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
             inputTo.val(validationResult.invalid.join(','));
         }
+        this.composer.debug(`parseRenderRecipients(force: ${force}).2`);
         this.evaluateRecipients(recipientsToEvaluate).catch(Catch.reportErr);
+        this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
         this.composer.resizeInputTo();
+        this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
         this.composer.setInputTextHeightManuallyIfNeeded();
+        this.composer.debug(`parseRenderRecipients(force: ${force}).5`);
         return !!validationResult.valid.length;
     }
 
@@ -375,6 +386,7 @@ export class ComposerContacts extends ComposerComponent {
     private evaluateRecipients = async (recipients: RecipientElement[]) => {
         this.composer.debug(`evaluateRenderedRecipients`);
         for (const recipient of recipients) {
+            this.composer.debug(`evaluateRenderedRecipients.email(${String(recipient.email)})`);
             this.composer.S.now('send_btn_span').text(this.BTN_LOADING);
             this.composer.setInputTextHeightManuallyIfNeeded();
             let pubkeyLookupRes: Contact | 'fail' | 'wrong';
