@@ -123,12 +123,11 @@ export class Composer {
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
-    this.initialized = new Promise<void>(async (resolve, reject) => {
+    this.initialized = (async () => {
       await this.initComposeBox();
       await this.initActions();
       await this.checkEmailAliases();
-      resolve();
-    });
+    })();
   }
 
   public debug = (msg: string) => {
