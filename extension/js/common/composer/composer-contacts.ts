@@ -290,7 +290,7 @@ export class ComposerContacts extends ComposerComponent {
     private authContacts = async (acctEmail: string) => {
         const lastRecipient = this.addedRecipients[this.addedRecipients.length - 1];
         this.composer.S.cached('input_to').val(lastRecipient.email);
-        this.removeReceiver(lastRecipient.element);
+        this.removeRecipient(lastRecipient.element);
         const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authRes.result === 'Success') {
             this.composer.canReadEmails = true;
@@ -333,14 +333,14 @@ export class ComposerContacts extends ComposerComponent {
         const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
         Xss.sanitizeAppend(recipient.element, contentHtml)
             .find('img.close-icon')
-            .click(Ui.event.handle(target => this.removeReceiver(target.parentElement!), this.composer.getErrHandlers('remove recipient')));
+            .click(Ui.event.handle(target => this.removeRecipient(target.parentElement!), this.composer.getErrHandlers('remove recipient')));
         if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
             $(recipient.element).attr('title', 'Loading contact information failed, please try to add their email again.');
             $(recipient.element).addClass("failed");
             Xss.sanitizeReplace($(recipient.element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
                 '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
             $(recipient.element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshReceivers(), this.composer.getErrHandlers('refresh recipient')));
-            $(recipient.element).find('.remove-reciepient').click(Ui.event.handle(element => this.removeReceiver(element.parentElement!), this.composer.getErrHandlers('remove recipient')));
+            $(recipient.element).find('.remove-reciepient').click(Ui.event.handle(element => this.removeRecipient(element.parentElement!), this.composer.getErrHandlers('remove recipient')));
         } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
             this.composer.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
             $(recipient.element).attr('title', 'This email address looks misspelled. Please try again.');
@@ -364,7 +364,7 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
     }
 
-    private removeReceiver = (element: HTMLElement) => {
+    private removeRecipient = (element: HTMLElement) => {
         this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
         const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
         this.addedRecipients[index].element.remove();
