@@ -24,7 +24,7 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const armoredPubkey = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey');
+  const armoredPubkey = Pgp.armor.normalize(Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey'), 'publicKey');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const compact = uncheckedUrlParams.compact === true;
   const minimized = uncheckedUrlParams.minimized === true;
@@ -88,6 +88,7 @@ Catch.try(async () => {
       if (fixed !== armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
       } else {
+        console.log(armoredPubkey);
         showKeyNotUsableError();
       }
     }

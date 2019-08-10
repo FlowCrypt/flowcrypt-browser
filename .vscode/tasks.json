@@ -41,6 +41,11 @@
       "type": "npm",
       "script": "test_local_chrome_enterprise_mock",
       "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "run_firefox",
+      "problemMatcher": []
     }
   ]
 }
