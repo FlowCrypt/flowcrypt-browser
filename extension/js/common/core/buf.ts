@@ -6,6 +6,16 @@ import { base64encode, base64decode } from '../platform/util.js';
 
 export class Buf extends Uint8Array {
 
+  public static concat = (arrays: Uint8Array[]): Buf => {
+    const result = new Uint8Array(arrays.reduce((totalLen, arr) => totalLen + arr.length, 0));
+    let offset = 0;
+    for (const array of arrays) {
+      result.set(array, offset);
+      offset += array.length;
+    }
+    return Buf.fromUint8(result);
+  }
+
   public static with = (input: Uint8Array | Buf | string): Buf => { // utf8 string or Typed Array bytes
     if (input instanceof Buf) {
       return input;
