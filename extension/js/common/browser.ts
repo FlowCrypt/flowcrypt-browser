@@ -414,8 +414,10 @@ export class Ui {
         html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-info',
-        confirmButtonClass: 'ui-modal-info-confirm',
+        customClass: {
+          popup: 'ui-modal-info',
+          confirmButton: 'ui-modal-info-confirm',
+        },
       });
     },
     warning: async (text: string): Promise<void> => {
@@ -423,8 +425,10 @@ export class Ui {
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-warning',
-        confirmButtonClass: 'ui-modal-warning-confirm',
+        customClass: {
+          popup: 'ui-modal-warning',
+          confirmButton: 'ui-modal-warning-confirm',
+        },
       });
     },
     error: async (text: string): Promise<void> => {
@@ -432,8 +436,10 @@ export class Ui {
         html: `<span class="red">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-error',
-        confirmButtonClass: 'ui-modal-error-confirm',
+        customClass: {
+          popup: 'ui-modal-error',
+          confirmButton: 'ui-modal-error-confirm',
+        },
       });
     },
     confirm: async (text: string): Promise<boolean> => {
@@ -441,10 +447,12 @@ export class Ui {
         html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-confirm',
-        confirmButtonClass: 'ui-modal-confirm-confirm',
         showCancelButton: true,
-        cancelButtonClass: 'ui-modal-confirm-cancel',
+        customClass: {
+          popup: 'ui-modal-confirm',
+          confirmButton: 'ui-modal-confirm-confirm',
+          cancelButton: 'ui-modal-confirm-cancel',
+        },
       });
       return typeof dismiss === 'undefined';
     },
