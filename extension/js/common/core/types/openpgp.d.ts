@@ -182,6 +182,7 @@ declare namespace OpenPGP {
       isDecrypted(): boolean;
       encrypt(passphrase: string): Promise<boolean>;
       decrypt(passphrase: string): Promise<true>;
+      encrypted: null | unknown[]; // Encrypted secret-key data, not meant for public use
     }
 
     export class Userid extends BasePacket {
