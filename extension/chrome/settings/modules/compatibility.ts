@@ -25,12 +25,15 @@ Catch.try(async () => {
     Xss.sanitizeRender(self, origBtnContent);
   }));
 
-  const formatDate = (date: Date | number, expiresInSecondsFromDate?: number | null) => {
+  const formatDate = (date: Date | number | null, expiresInSecondsFromDate?: number | null) => {
     if (date === Infinity) {
       return '-';
     }
     if (typeof date === 'number') {
       return `UNEXPECTED FORMAT: ${date}`;
+    }
+    if (date === null) {
+      return `null (not applicable)`;
     }
     if (typeof expiresInSecondsFromDate === 'undefined') {
       return `${date.getTime() / 1000} or ${date.toISOString()}`;

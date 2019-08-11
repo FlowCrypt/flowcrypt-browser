@@ -802,7 +802,7 @@ declare namespace OpenPGP {
       armor(): string;
       decrypt(passphrase: string | string[], keyId?: Keyid): Promise<boolean>;
       encrypt(passphrase: string | string[]): Promise<void>;
-      getExpirationTime(): Promise<Date | typeof Infinity>;
+      getExpirationTime(capability?: 'encrypt' | 'encrypt_sign' | 'sign' | null, keyId?: Keyid | null, userId?: UserId | null): Promise<Date | typeof Infinity | null>; // Returns null if `capabilities` is passed and the key does not have the specified capabilities or is revoked or invalid.
       getKeyIds(): Keyid[];
       getPrimaryUser(): Promise<PrimaryUser | null>;
       getUserIds(): string[];
@@ -812,7 +812,7 @@ declare namespace OpenPGP {
       update(key: Key): void;
       verifyPrimaryKey(): Promise<enums.keyStatus>;
       isRevoked(): Promise<boolean>;
-      getEncryptionKey(keyid?: Keyid | null, date?: Date, userid?: UserId | null): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
+      getEncryptionKey(keyid?: Keyid | null, date?: Date, userId?: UserId | null): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
       getSigningKey(): Promise<packet.PublicSubkey | packet.SecretSubkey | packet.SecretKey | packet.PublicKey | null>;
       getKeys(keyId?: Keyid): (Key | SubKey)[];
       isDecrypted(): boolean;

@@ -31,6 +31,7 @@ Catch.try(async () => {
 
   const { keys: pubs } = await openpgp.key.readArmored(armoredPubkey);
   const isUsableButExpired = await Pgp.key.usableButExpired(pubs[0]);
+  const isExpired = await Pgp.key.expired(pubs[0]);
 
   const sendResizeMsg = () => {
     const desiredHeight = $('#pgp_block').height()! + (compact ? 10 : 30); // #pgp_block is defined in template
@@ -43,8 +44,8 @@ Catch.try(async () => {
     } else {
       const [contact] = await Store.dbContactGet(undefined, [String($('.input_email').val())]);
       $('.action_add_contact')
-        .text(contact && contact.has_pgp ? 'update key' : `import ${isUsableButExpired ? 'expired ' : ''}key`)
-        .css('background-color', isUsableButExpired ? '#989898' : '');
+        .text(contact && contact.has_pgp ? 'update key' : `import ${isExpired ? 'expired ' : ''}key`)
+        .css('background-color', isExpired ? '#989898' : '');
     }
   };
 
