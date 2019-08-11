@@ -413,6 +413,19 @@ export class Pgp {
       }
       return await Pgp.key.usableButExpired(pubkey);
     },
+    expired: async (key: OpenPGP.key.Key): Promise<boolean> => {
+      if (!key) {
+        return false;
+      }
+      const exp = await key.getExpirationTime("encrypt");
+      if (exp === Infinity || !exp) {
+        return false;
+      }
+      if (exp instanceof Date) {
+        return Date.now() > exp.getTime();
+      }
+      throw new Error(`Got unexpected value for expiration: ${exp}`); // exp must be either null, Infinity or a Date
+    },
     usableButExpired: async (key: OpenPGP.key.Key): Promise<boolean> => {
       if (!key) {
         return false;

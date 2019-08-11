@@ -25,12 +25,15 @@ Catch.try(async () => {
     Xss.sanitizeRender(self, origBtnContent);
   }));
 
-  const formatDate = (date: Date | number, expiresInSecondsFromDate?: number | null) => {
+  const formatDate = (date: Date | number | null, expiresInSecondsFromDate?: number | null) => {
     if (date === Infinity) {
       return '-';
     }
     if (typeof date === 'number') {
       return `UNEXPECTED FORMAT: ${date}`;
+    }
+    if (date === null) {
+      return `null (not applicable)`;
     }
     if (typeof expiresInSecondsFromDate === 'undefined') {
       return `${date.getTime() / 1000} or ${date.toISOString()}`;
@@ -128,7 +131,11 @@ Catch.try(async () => {
       if (key.isPrivate()) {
         appendResult(`${kn} Primary key decrypt: ${await test(async () => Pgp.key.decrypt(key, [String($('.input_passphrase').val())]))}`);
       }
-      appendResult(`${kn} Primary key verify: ${await test(async () => await key.verifyPrimaryKey())}`);
+      appendResult(`${kn} Primary key verify: ${await test(async () => {
+        const verifyResNum = await key.verifyPrimaryKey();
+        const veryfyResWord = openpgp.enums.read(openpgp.enums.keyStatus, 1);
+        return `${verifyResNum}: ${veryfyResWord}`;
+      })}`);
       appendResult(`${kn} Primary key creation? ${await test(async () => formatDate(await key.getCreationTime()))}`);
       appendResult(`${kn} Primary key expiration? ${await test(async () => formatDate(await key.getExpirationTime()))}`);
       const encryptResult = await testEncryptDecrypt(key);
@@ -142,7 +149,11 @@ Catch.try(async () => {
         appendResult(`${skn} LongId: ${await test(async () => Pgp.key.longid(subKey.getKeyId().bytes))}`);
         appendResult(`${skn} Created: ${await test(async () => formatDate(subKey.keyPacket.created))}`);
         appendResult(`${skn} Algo: ${await test(async () => `${subKey.getAlgorithmInfo().algorithm}`)}`);
-        appendResult(`${skn} Verify: ${await test(async () => await subKey.verify(key.primaryKey))}`);
+        appendResult(`${skn} Verify: ${await test(async () => {
+          const verifyResNum = await subKey.verify(key.primaryKey);
+          const veryfyResWord = openpgp.enums.read(openpgp.enums.keyStatus, 1);
+          return `${verifyResNum}: ${veryfyResWord}`;
+        })}`);
         appendResult(`${skn} Subkey tag: ${await test(async () => subKey.keyPacket.tag)}`);
         appendResult(`${skn} Subkey getBitSize: ${await test(async () => subKey.getAlgorithmInfo().bits)}`);       // No longer exists on object
         appendResult(`${skn} Subkey decrypted: ${await test(async () => subKey.isDecrypted())}`);
