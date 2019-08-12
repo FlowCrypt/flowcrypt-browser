@@ -144,7 +144,7 @@ export class Composer {
     }
   }
 
-  public getRecipients = this.composerContacts.getRecipients;
+  public getRecipients = () => this.composerContacts.getRecipients();
 
   public getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
