@@ -85,7 +85,9 @@ export class Mime {
       } else if (treatAs === 'encryptedFile') {
         blocks.push(Pgp.internal.msgBlockAttObj('encryptedAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
       } else if (treatAs === 'plainFile') {
-        blocks.push(Pgp.internal.msgBlockAttObj('plainAtt', '', { name: file.name, type: file.type, length: file.getData().length, data: file.getData() }));
+        blocks.push(Pgp.internal.msgBlockAttObj('plainAtt', '', {
+          name: file.name, type: file.type, length: file.getData().length, data: file.getData(), inline: file.inline, cid: file.cid
+        }));
       }
     }
     if (decoded.signature) {
@@ -103,6 +105,10 @@ export class Mime {
       }
     }
     return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to, rawSignedContent: decoded.rawSignedContent };
+  }
+
+  public static isPlainInlineImg = (b: MsgBlock) => {
+    return b.type === 'plainAtt' && b.attMeta && b.attMeta.inline && b.attMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attMeta.type);
   }
 
   private static headersToFrom = (parsedMimeMsg: MimeContent) => {

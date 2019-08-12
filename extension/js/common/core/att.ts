@@ -69,9 +69,6 @@ export class Att {
   }
 
   public treatAs = (): Att$treatAs => {
-    // todo - should return a probability in the range of certain-likely-maybe
-    // could also return possible types as an array - which makes basic usage more difficult - to think through
-    // better option - add an "unknown" type: when encountered, code consuming this should inspect a chunk of contents
     if (this.treatAsValue) { // pre-set
       return this.treatAsValue;
     } else if (['PGPexch.htm.pgp', 'PGPMIME version identification', 'Version.txt', 'PGPMIME Versions Identification'].includes(this.name)) {
@@ -80,6 +77,8 @@ export class Att {
       return 'signature';
     } else if (!this.name && !this.type.startsWith('image/')) { // this.name may be '' or undefined - catch either
       return this.length < 100 ? 'hidden' : 'encryptedMsg';
+    } else if (this.name === 'msg.asc' && this.length < 100 && this.type === 'application/pgp-encrypted') {
+      return 'hidden'; // mail.ch does this - although it looks like encrypted msg, it will just contain PGP version eg "Version: 1"
     } else if (['message', 'msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp', 'Message.pgp'].includes(this.name)) {
       return 'encryptedMsg';
     } else if (this.name.match(/(\.pgp$)|(\.gpg$)|(\.[a-zA-Z0-9]{3,4}\.asc$)/g)) { // ends with one of .gpg, .pgp, .???.asc, .????.asc
