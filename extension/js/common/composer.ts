@@ -100,10 +100,6 @@ export class Composer {
   public canReadEmails: boolean;
   public initialized: Promise<void>;
 
-  public get Recipients() {
-    return this.composerContacts.Recipients;
-  }
-
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
@@ -130,10 +126,172 @@ export class Composer {
     })();
   }
 
+  updateFooterIcon = (include?: boolean) => {
+    if (typeof include === 'undefined') { // decide if pubkey should be included
+      this.updateFooterIcon(!!this.app.storageEmailFooterGet());
+    } else { // set icon to specific state
+      if (include) {
+        this.S.cached('icon_footer').addClass('active');
+      } else {
+        this.S.cached('icon_footer').removeClass('active');
+      }
+    }
+  }
+
   public debug = (msg: string) => {
     if (this.urlParams.debug) {
       console.log(`[${this.debugId}] ${msg}`);
     }
+  }
+
+  public getRecipients = this.composerContacts.getRecipients;
+
+  public getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+    return {
+      network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
+      authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail }),
+      auth: async () => {
+        if (await Ui.modal.confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
+          BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
+        }
+      },
+      other: async (e: any) => {
+        if (e instanceof Error) {
+          e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
+        } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
+          try {
+            (e as any).stack = `[compose action: ${couldNotDoWhat}]`;
+          } catch (e) {
+            // no need
+          }
+        }
+        Catch.reportErr(e);
+        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
+      },
+    };
+  }
+
+  public resetSendBtn = (delay?: number) => {
+    const btnText = this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND;
+    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span tabindex="4">${btnText}</span>`);
+    if (typeof this.btnUpdateTimeout !== 'undefined') {
+      clearTimeout(this.btnUpdateTimeout);
+    }
+    if (!delay) {
+      doReset();
+    } else {
+      Catch.setHandledTimeout(doReset, delay);
+    }
+  }
+
+  public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
+    let html = this.S.cached(elSel)[0].innerHTML;
+    if (elSel === 'input_text' && this.composerQuote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
+      html += `<br /><br />${this.composerQuote.expandingHTMLPart}`;
+    }
+    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
+  }
+
+  /**
+ * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
+ * (else ff will keep expanding body element beyond frame view)
+ * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
+ *
+ * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
+ */
+  public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
+    if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
+      this.S.cached('input_text').css('height', '0');
+      let cellHeightExceptText = 0;
+      for (const cell of this.S.cached('all_cells_except_text')) {
+        cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
+      }
+      if (updateRefBodyHeight || !this.refBodyHeight) {
+        this.refBodyHeight = this.S.cached('body').height() || 605;
+      }
+      const attListHeight = $("#att_list").height() || 0;
+      this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight);
+    }
+  }
+
+  public showHidePwdOrPubkeyContainerAndColorSendBtn = () => {
+    this.resetSendBtn();
+    this.S.cached('send_btn_note').text('');
+    this.S.cached('send_btn').removeAttr('title');
+    const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
+    if (!$('.recipients span').length) {
+      this.hideMsgPwdUi();
+      this.S.cached('send_btn').removeClass('gray').addClass('green');
+    } else if (this.S.cached('icon_sign').is('.active')) {
+      this.S.cached('send_btn').removeClass('gray').addClass('green');
+    } else if ($('.recipients span.no_pgp').length) {
+      this.showMsgPwdUiAndColorBtn();
+    } else if ($('.recipients span.failed, .recipients span.wrong').length) {
+      this.S.now('send_btn_span').text(this.BTN_WRONG_ENTRY);
+      this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
+      this.S.cached('send_btn').removeClass('green').addClass('gray');
+    } else {
+      this.hideMsgPwdUi();
+      this.S.cached('send_btn').removeClass('gray').addClass('green');
+    }
+    if (this.urlParams.isReplyBox) {
+      if (!wasPreviouslyVisible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {
+        this.resizeComposeBox((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
+      } else {
+        this.resizeComposeBox();
+      }
+    }
+    this.setInputTextHeightManuallyIfNeeded();
+  }
+
+  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+    this.S.cached('prompt').css({ display: 'none' });
+    this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
+    await this.renderComposeTable();
+    if (this.canReadEmails) {
+      const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
+      if (determined) {
+        this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
+        this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
+        this.additionalMsgHeaders.References = determined.headers.References;
+        if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+          (async () => { // not awaited because can take a long time & blocks rendering
+            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
+            if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
+              this.S.cached('icon_sign').click();
+            }
+          })().catch(Catch.reportErr);
+        }
+      } else {
+        this.urlParams.threadId = '';
+      }
+    } else {
+      Xss.sanitizeRender(this.S.cached('prompt'),
+        `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
+        <div class="button green auth_settings">${Lang.compose.addMissingPermission}</div><br/><br/>
+        Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
+      `);
+      this.S.cached('prompt').attr('style', 'border:none !important');
+      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
+      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
+    }
+    this.resizeComposeBox();
+    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
+  }
+
+  public resizeInputTo = () => { // below both present in template
+    this.S.cached('input_to').css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
+    this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
+  }
+
+  public getSender = (): string => {
+    if (this.S.now('input_from').length) {
+      return String(this.S.now('input_from').val());
+    }
+    if (this.urlParams.from) {
+      return this.urlParams.from;
+    }
+    return this.urlParams.acctEmail;
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
@@ -178,31 +336,6 @@ export class Composer {
         },
       };
     }
-  }
-
-  public getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
-    return {
-      network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail }),
-      auth: async () => {
-        if (await Ui.modal.confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
-        }
-      },
-      other: async (e: any) => {
-        if (e instanceof Error) {
-          e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
-        } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
-          try {
-            (e as any).stack = `[compose action: ${couldNotDoWhat}]`;
-          } catch (e) {
-            // no need
-          }
-        }
-        Catch.reportErr(e);
-        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
-      },
-    };
   }
 
   private initActions = () => {
@@ -302,19 +435,6 @@ export class Composer {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  public resetSendBtn = (delay?: number) => {
-    const btnText = this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND;
-    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span tabindex="4">${btnText}</span>`);
-    if (typeof this.btnUpdateTimeout !== 'undefined') {
-      clearTimeout(this.btnUpdateTimeout);
-    }
-    if (!delay) {
-      doReset();
-    } else {
-      Catch.setHandledTimeout(doReset, delay);
-    }
-  }
-
   private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'));
@@ -384,17 +504,9 @@ export class Composer {
     }
   }
 
-  public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
-    let html = this.S.cached(elSel)[0].innerHTML;
-    if (elSel === 'input_text' && this.composerQuote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
-      html += `<br /><br />${this.composerQuote.expandingHTMLPart}`;
-    }
-    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
-  }
-
   private extractProcessSendMsg = async () => {
     try {
-      const recipients = this.composerContacts.Recipients.map(r => r.email);
+      const recipients = this.getRecipients().map(r => r.email);
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
       await this.throwIfFormNotReady(recipients);
@@ -655,64 +767,12 @@ export class Composer {
     this.setInputTextHeightManuallyIfNeeded();
   }
 
-  /**
-   * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
-   * (else ff will keep expanding body element beyond frame view)
-   * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
-   *
-   * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
-   */
-  public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
-    if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
-      this.S.cached('input_text').css('height', '0');
-      let cellHeightExceptText = 0;
-      for (const cell of this.S.cached('all_cells_except_text')) {
-        cellHeightExceptText += $(cell).is(':visible') ? ($(cell).parent('tr').height() || 0) + 1 : 0; // add a 1px border height for each table row
-      }
-      if (updateRefBodyHeight || !this.refBodyHeight) {
-        this.refBodyHeight = this.S.cached('body').height() || 605;
-      }
-      const attListHeight = $("#att_list").height() || 0;
-      this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight);
-    }
-  }
-
   private hideMsgPwdUi = () => {
     this.S.cached('password_or_pubkey').css('display', 'none');
     this.S.cached('input_password').val('');
     this.S.cached('add_intro').css('display', 'none');
     this.S.cached('input_intro').text('');
     this.S.cached('intro_container').css('display', 'none');
-    this.setInputTextHeightManuallyIfNeeded();
-  }
-
-  public showHidePwdOrPubkeyContainerAndColorSendBtn = () => {
-    this.resetSendBtn();
-    this.S.cached('send_btn_note').text('');
-    this.S.cached('send_btn').removeAttr('title');
-    const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!$('.recipients span').length) {
-      this.hideMsgPwdUi();
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-    } else if (this.S.cached('icon_sign').is('.active')) {
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-    } else if ($('.recipients span.no_pgp').length) {
-      this.showMsgPwdUiAndColorBtn();
-    } else if ($('.recipients span.failed, .recipients span.wrong').length) {
-      this.S.now('send_btn_span').text(this.BTN_WRONG_ENTRY);
-      this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
-      this.S.cached('send_btn').removeClass('green').addClass('gray');
-    } else {
-      this.hideMsgPwdUi();
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-    }
-    if (this.urlParams.isReplyBox) {
-      if (!wasPreviouslyVisible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {
-        this.resizeComposeBox((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
-      } else {
-        this.resizeComposeBox();
-      }
-    }
     this.setInputTextHeightManuallyIfNeeded();
   }
 
@@ -768,58 +828,6 @@ export class Composer {
     }
   }
 
-  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
-    this.S.cached('prompt').css({ display: 'none' });
-    this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
-    await this.renderComposeTable();
-    if (this.canReadEmails) {
-      const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
-      if (determined) {
-        this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
-        this.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
-        this.additionalMsgHeaders.References = determined.headers.References;
-        if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-          (async () => { // not awaited because can take a long time & blocks rendering
-            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
-            if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
-              this.S.cached('icon_sign').click();
-            }
-          })().catch(Catch.reportErr);
-        }
-      } else {
-        this.urlParams.threadId = '';
-      }
-    } else {
-      Xss.sanitizeRender(this.S.cached('prompt'),
-        `${Lang.compose.needReadAccessToReply}<br/><br/><br/>
-        <div class="button green auth_settings">${Lang.compose.addMissingPermission}</div><br/><br/>
-        Alternatively, <a href="#" class="new_message_button">compose a new secure message</a> to respond.<br/><br/>
-      `);
-      this.S.cached('prompt').attr('style', 'border:none !important');
-      $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
-      $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
-    }
-    this.resizeComposeBox();
-    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
-  }
-
-  public resizeInputTo = () => { // below both present in template
-    this.S.cached('input_to').css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
-    this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
-  }
-
-  updateFooterIcon = (include?: boolean) => {
-    if (typeof include === 'undefined') { // decide if pubkey should be included
-      this.updateFooterIcon(!!this.app.storageEmailFooterGet());
-    } else { // set icon to specific state
-      if (include) {
-        this.S.cached('icon_footer').addClass('active');
-      } else {
-        this.S.cached('icon_footer').removeClass('active');
-      }
-    }
-  }
-
   private toggleSignIcon = () => {
     let method: 'addClass' | 'removeClass';
     if (!this.S.cached('icon_sign').is('.active')) {
@@ -837,16 +845,6 @@ export class Composer {
       this.resetSendBtn();
     }
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-  }
-
-  public getSender = (): string => {
-    if (this.S.now('input_from').length) {
-      return String(this.S.now('input_from').val());
-    }
-    if (this.urlParams.from) {
-      return this.urlParams.from;
-    }
-    return this.urlParams.acctEmail;
   }
 
   private renderReplySuccess = (msg: SendableMsg, msgId: string) => {

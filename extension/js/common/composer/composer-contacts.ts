@@ -30,10 +30,6 @@ export class ComposerContacts extends ComposerComponent {
     private myAddrsOnKeyserver: string[] = [];
     private recipientsMissingMyKey: string[] = [];
 
-    public get Recipients() {
-        return [...this.addedRecipients];
-    }
-
     constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, openPGP: typeof OpenPGP, composer: Composer) {
         super(composer, urlParams);
         this.app = app;
@@ -79,6 +75,71 @@ export class ComposerContacts extends ComposerComponent {
         }, this.composer.getErrHandlers(`set/unset pubkey attachment`)));
         BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
         BrowserMsg.listen(this.urlParams.parentTabId);
+    }
+
+    public getRecipients = () => this.addedRecipients;
+
+    public validateEmails = (uncheckedEmails: string[]): { valid: string[], invalid: string[] } => {
+        const valid: string[] = [];
+        const invalid: string[] = [];
+        for (const email of uncheckedEmails) {
+            const parsed = Str.parseEmail(email).email;
+            if (parsed) {
+                valid.push(parsed);
+            } else {
+                invalid.push(email);
+            }
+        }
+        return { valid, invalid };
+    }
+
+    public parseRenderRecipients = (container: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): boolean => {
+        this.composer.debug(`parseRenderRecipients(force: ${force})`);
+        const inputTo = container.find('#input_to');
+        uncheckedEmails = uncheckedEmails || String(inputTo.val()).split(',');
+        this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
+        const validationResult = this.validateEmails(uncheckedEmails);
+        let recipientsToEvaluate: RecipientElement[] = [];
+        if (validationResult.valid.length) {
+            this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
+            recipientsToEvaluate = [...this.createRecipientsElements(container, validationResult.valid)];
+        }
+        const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
+        this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
+        if (force && invalidEmails.length) {
+            this.composer.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
+            recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, true)];
+            inputTo.val('');
+        } else {
+            this.composer.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
+            inputTo.val(validationResult.invalid.join(','));
+        }
+        this.composer.debug(`parseRenderRecipients(force: ${force}).2`);
+        this.evaluateRecipients(recipientsToEvaluate).catch(Catch.reportErr);
+        this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
+        this.composer.resizeInputTo();
+        this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
+        this.composer.setInputTextHeightManuallyIfNeeded();
+        this.composer.debug(`parseRenderRecipients(force: ${force}).5`);
+        return !!validationResult.valid.length;
+    }
+
+    public hideContacts = () => {
+        this.composer.S.cached('contacts').css('display', 'none');
+    }
+
+    public updatePubkeyIcon = (include?: boolean) => {
+        if (typeof include === 'undefined') { // decide if pubkey should be included
+            if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
+                this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length));
+            }
+        } else { // set icon to specific state
+            if (include) {
+                this.composer.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
+            } else {
+                this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
+            }
+        }
     }
 
     private searchContacts = async (dbOnly = false) => {
@@ -203,51 +264,6 @@ export class ComposerContacts extends ComposerComponent {
         this.hideContacts();
     }
 
-    public validateEmails = (uncheckedEmails: string[]): { valid: string[], invalid: string[] } => {
-        const valid: string[] = [];
-        const invalid: string[] = [];
-        for (const email of uncheckedEmails) {
-            const parsed = Str.parseEmail(email).email;
-            if (parsed) {
-                valid.push(parsed);
-            } else {
-                invalid.push(email);
-            }
-        }
-        return { valid, invalid };
-    }
-
-    public parseRenderRecipients = (container: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): boolean => {
-        this.composer.debug(`parseRenderRecipients(force: ${force})`);
-        const inputTo = container.find('#input_to');
-        uncheckedEmails = uncheckedEmails || String(inputTo.val()).split(',');
-        this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
-        const validationResult = this.validateEmails(uncheckedEmails);
-        let recipientsToEvaluate: RecipientElement[] = [];
-        if (validationResult.valid.length) {
-            this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
-            recipientsToEvaluate = [...this.createRecipientsElements(container, validationResult.valid)];
-        }
-        const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
-        this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
-        if (force && invalidEmails.length) {
-            this.composer.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
-            recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, true)];
-            inputTo.val('');
-        } else {
-            this.composer.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
-            inputTo.val(validationResult.invalid.join(','));
-        }
-        this.composer.debug(`parseRenderRecipients(force: ${force}).2`);
-        this.evaluateRecipients(recipientsToEvaluate).catch(Catch.reportErr);
-        this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
-        this.composer.resizeInputTo();
-        this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
-        this.composer.setInputTextHeightManuallyIfNeeded();
-        this.composer.debug(`parseRenderRecipients(force: ${force}).5`);
-        return !!validationResult.valid.length;
-    }
-
     private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], isWrong?: boolean): RecipientElement[] => {
         const result = [];
         for (const email of emails) {
@@ -260,24 +276,6 @@ export class ComposerContacts extends ComposerComponent {
             result.push(recipient);
         }
         return result;
-    }
-
-    public hideContacts = () => {
-        this.composer.S.cached('contacts').css('display', 'none');
-    }
-
-    public updatePubkeyIcon = (include?: boolean) => {
-        if (typeof include === 'undefined') { // decide if pubkey should be included
-            if (!this.includePubkeyToggledManually) { // leave it as is if toggled manually before
-                this.updatePubkeyIcon(Boolean(this.recipientsMissingMyKey.length));
-            }
-        } else { // set icon to specific state
-            if (include) {
-                this.composer.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
-            } else {
-                this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
-            }
-        }
     }
 
     private renderSearchResultsLoadingDone = () => {
@@ -312,6 +310,7 @@ export class ComposerContacts extends ComposerComponent {
             }
         }
     }
+
     private renderPubkeyResult = async (recipient: RecipientElement, contact: Contact | 'fail' | 'wrong') => {
         this.composer.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
         this.composer.debug(`renderPubkeyResult.email(${recipient.email})`);
