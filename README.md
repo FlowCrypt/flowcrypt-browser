@@ -11,7 +11,7 @@ Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.
 ```js
 let you = new TeamMember();
 
-if(you.know(TS | SWIFT) && you.write(READABLE_CODE) && you.hate('9-5') && you.areFrom(EARTH)) {
+if(you.know(TS || SWIFT) && you.write(READABLE_CODE) && you.hate('9-5') && you.areFrom(EARTH)) {
   await you.email('tom@flowcrypt.com');
 }
 ```
