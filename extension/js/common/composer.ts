@@ -123,7 +123,7 @@ export class Composer {
       await this.initComposeBox();
       await this.initActions();
       await this.checkEmailAliases();
-    })();
+    })(); // this is awaited later. Otherwise normally we would have added .catch here
   }
 
   public debug = (msg: string) => {
