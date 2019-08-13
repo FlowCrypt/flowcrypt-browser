@@ -299,6 +299,8 @@ export class XssSafeFactory {
       return factory.embeddedVerification(block.content.toString());
     } else if (block.type === 'encryptedAtt') {
       return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), true) : '[missing encrypted attachment details]';
+    } else if (block.type === 'signedHtml') {
+      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, false, true); // empty msg so it re-fetches from api. True at the and for "signature"
     } else {
       Catch.report(`don't know how to process block type: ${block.type} (not a hard fail)`);
       return '';

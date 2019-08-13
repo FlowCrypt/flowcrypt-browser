@@ -30,7 +30,8 @@ Catch.try(async () => {
   const hasChallengePassword = uncheckedUrlParams.hasPassword === true;
   const isOutgoing = uncheckedUrlParams.isOutgoing === true;
   const short = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
-  const senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
+  let senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
+  senderEmail = senderEmail ? Str.parseEmail(senderEmail).email : undefined;
   const msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const heightHistory: number[] = [];
   const encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;

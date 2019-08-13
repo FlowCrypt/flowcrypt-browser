@@ -89,6 +89,7 @@ Catch.try(async () => {
       if (fixed !== armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
       } else {
+        console.log(armoredPubkey);
         showKeyNotUsableError();
       }
     }
