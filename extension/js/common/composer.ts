@@ -900,9 +900,6 @@ export class Composer {
   private renderComposeTable = async () => {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
-    if (Catch.browser().name === 'firefox') { // the padding cause issues in firefox where user cannot click on the message password
-      this.S.cached('input_text').css({ 'padding-top': 0, 'padding-bottom': 0 });
-    }
     this.S.cached('body').keydown(Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click()));
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
