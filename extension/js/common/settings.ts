@@ -63,9 +63,8 @@ export class Settings {
   }
 
   static openpgpKeyEncrypt = async (key: OpenPGP.key.Key, passphrase: string) => {
-    // todo: remove. new versions of OpenPGP.js check this, so this function is probably unnecessary
-    if (!passphrase) {
-      throw new Error("Encryption passphrase should not be empty");
+    if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
+      throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
     }
     await key.encrypt(passphrase);
   }
