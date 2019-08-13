@@ -241,6 +241,12 @@ export class Ui {
     });
   }
 
+  public static escape = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
+      callback();
+    }
+  }
+
   public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
     if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
       callback();
