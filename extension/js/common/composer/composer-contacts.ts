@@ -224,7 +224,7 @@ export class ComposerContacts extends ComposerComponent {
         let recipientsToEvaluate: RecipientElement[] = [];
         if (validationResult.valid.length) {
             this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
-            recipientsToEvaluate = [...this.createRecipientsElements(container, validationResult.valid)];
+            recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid);
         }
         const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
         this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
