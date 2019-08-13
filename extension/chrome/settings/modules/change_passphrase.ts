@@ -94,7 +94,13 @@ Catch.try(async () => {
       $('#password2').focus();
       return;
     }
-    await Settings.openpgpKeyEncrypt(primaryPrv, newPp);
+    try {
+      await Settings.openpgpKeyEncrypt(primaryPrv, newPp);
+    } catch (e) {
+      Catch.reportErr(e);
+      await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
+      return;
+    }
     await Store.keysAdd(acctEmail, primaryPrv.armor());
     const persistentlyStoredPp = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
     await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof persistentlyStoredPp === 'undefined' ? undefined : newPp);
