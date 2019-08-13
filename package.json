@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "6.9.3",
+  "version": "6.9.4",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -21,7 +21,7 @@
     "openpgp": "4.5.4",
     "mailparser": "2.7.1",
     "puppeteer": "1.11.0",
-    "sweetalert2": "8.0.7",
+    "sweetalert2": "8.15.3",
     "tslint": "5.11.0",
     "typescript": "3.4.1",
     "web-ext": "3.0.0"

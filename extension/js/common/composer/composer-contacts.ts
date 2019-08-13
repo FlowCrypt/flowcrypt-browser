@@ -30,10 +30,6 @@ export class ComposerContacts extends ComposerComponent {
     private myAddrsOnKeyserver: string[] = [];
     private recipientsMissingMyKey: string[] = [];
 
-    public get Recipients() {
-        return [...this.addedRecipients];
-    }
-
     constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, openPGP: typeof OpenPGP, composer: Composer) {
         super(composer, urlParams);
         this.app = app;
@@ -80,6 +76,8 @@ export class ComposerContacts extends ComposerComponent {
         BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
         BrowserMsg.listen(this.urlParams.parentTabId);
     }
+
+    public getRecipients = () => this.addedRecipients;
 
     private searchContacts = async (dbOnly = false) => {
         this.composer.debug(`searchContacts`);
@@ -312,6 +310,7 @@ export class ComposerContacts extends ComposerComponent {
             }
         }
     }
+
     private renderPubkeyResult = async (recipient: RecipientElement, contact: Contact | 'fail' | 'wrong') => {
         this.composer.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
         this.composer.debug(`renderPubkeyResult.email(${recipient.email})`);

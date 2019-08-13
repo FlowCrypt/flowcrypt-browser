@@ -24,13 +24,14 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const armoredPubkey = Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey');
+  const armoredPubkey = Pgp.armor.normalize(Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey'), 'publicKey');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const compact = uncheckedUrlParams.compact === true;
   const minimized = uncheckedUrlParams.minimized === true;
 
   const { keys: pubs } = await openpgp.key.readArmored(armoredPubkey);
   const isUsableButExpired = await Pgp.key.usableButExpired(pubs[0]);
+  const isExpired = await Pgp.key.expired(pubs[0]);
 
   const sendResizeMsg = () => {
     const desiredHeight = $('#pgp_block').height()! + (compact ? 10 : 30); // #pgp_block is defined in template
@@ -43,8 +44,8 @@ Catch.try(async () => {
     } else {
       const [contact] = await Store.dbContactGet(undefined, [String($('.input_email').val())]);
       $('.action_add_contact')
-        .text(contact && contact.has_pgp ? 'update key' : `import ${isUsableButExpired ? 'expired ' : ''}key`)
-        .css('background-color', isUsableButExpired ? '#989898' : 'inherit');
+        .text(contact && contact.has_pgp ? 'update key' : `import ${isExpired ? 'expired ' : ''}key`)
+        .css('background-color', isExpired ? '#989898' : '');
     }
   };
 

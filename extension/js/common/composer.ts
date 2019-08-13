@@ -100,10 +100,6 @@ export class Composer {
   public canReadEmails: boolean;
   public initialized: Promise<void>;
 
-  public get Recipients() {
-    return this.composerContacts.Recipients;
-  }
-
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
@@ -135,6 +131,8 @@ export class Composer {
       console.log(`[${this.debugId}] ${msg}`);
     }
   }
+
+  public getRecipients = () => this.composerContacts.getRecipients();
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await this.app.storageGetSubscription();
@@ -394,7 +392,7 @@ export class Composer {
 
   private extractProcessSendMsg = async () => {
     try {
-      const recipients = this.composerContacts.Recipients.map(r => r.email);
+      const recipients = this.getRecipients().map(r => r.email);
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
       await this.throwIfFormNotReady(recipients);
@@ -656,12 +654,12 @@ export class Composer {
   }
 
   /**
-   * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
-   * (else ff will keep expanding body element beyond frame view)
-   * A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
-   *
-   * @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
-   */
+* On Firefox, we have to manage textbox height manually. Only applies to composing new messages
+* (else ff will keep expanding body element beyond frame view)
+* A decade old firefox bug is the culprit: https://bugzilla.mozilla.org/show_bug.cgi?id=202081
+*
+* @param updateRefBodyHeight - set to true to take a new snapshot of intended html body height
+*/
   public setInputTextHeightManuallyIfNeeded = (updateRefBodyHeight: boolean = false) => {
     if (!this.urlParams.isReplyBox && Catch.browser().name === 'firefox') {
       this.S.cached('input_text').css('height', '0');
@@ -691,10 +689,8 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!$('.recipients span').length) {
+    if (!$('.recipients span').length || this.S.cached('icon_sign').is('.active')) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
       this.hideMsgPwdUi();
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-    } else if (this.S.cached('icon_sign').is('.active')) {
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     } else if ($('.recipients span.no_pgp').length) {
       this.showMsgPwdUiAndColorBtn();
