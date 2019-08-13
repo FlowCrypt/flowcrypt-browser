@@ -417,7 +417,7 @@ export class Pgp {
       if (!key) {
         return false;
       }
-      const exp = await key.getExpirationTime("encrypt");
+      const exp = await key.getExpirationTime('encrypt');
       if (exp === Infinity || !exp) {
         return false;
       }
@@ -442,7 +442,7 @@ export class Pgp {
     },
     dateBeforeExpiration: async (key: OpenPGP.key.Key | string): Promise<Date | undefined> => {
       const openPgpKey = typeof key === 'string' ? await Pgp.key.read(key) : key;
-      const expires = await openPgpKey.getExpirationTime();
+      const expires = await openPgpKey.getExpirationTime('encrypt');
       if (expires instanceof Date && expires.getTime() < Date.now()) { // expired
         return new Date(expires.getTime() - 1000);
       }
