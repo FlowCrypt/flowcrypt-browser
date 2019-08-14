@@ -45,6 +45,7 @@ export class Composer {
     input_subject: '#input_subject',
     input_password: '#input_password',
     input_intro: '.input_intro',
+    collapsed: '.collapsed',
     all_cells_except_text: 'table#compose > tbody > tr > :not(.text)',
     add_intro: '.action_add_intro',
     add_their_pubkey: '.add_pubkey',
@@ -272,7 +273,7 @@ export class Composer {
     if (this.urlParams.draftId) {
       const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
       if (isSuccessfulyLoaded) {
-        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'), true);
+        this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'), true).catch(Catch.reportErr);
       }
     } else {
       if (this.urlParams.isReplyBox) {
@@ -314,7 +315,7 @@ export class Composer {
 
   private throwIfFormNotReady = async (recipients: BaseRecipient[]): Promise<void> => {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
-      await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'));
+      this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')).catch(Catch.reportErr);
     }
     if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
@@ -800,12 +801,14 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
-  public resizeInput = (input?: JQuery<HTMLElement>) => { // below both present in template
-    if (!input) {
-      input = this.S.cached('input_addresses_container_outer').find('input'); // Resize All Inputs
+  public resizeInput = (inputs?: JQuery<HTMLElement>) => { // below both present in template
+    if (!inputs) {
+      inputs = this.S.cached('input_addresses_container_outer').find('input'); // Resize All Inputs
     }
-    input.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
-    input.css('width', (Math.max(150, input.parent().width()! - input.siblings('.recipients').width()! - 50)) + 'px');
+    inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
+    for (const inputElement of inputs) {
+      inputElement.style.width = (Math.max(150, inputElement.parentElement!.clientWidth! - inputElement.previousElementSibling!.clientWidth - 50)) + 'px';
+    }
   }
 
   updateFooterIcon = (include?: boolean) => {
@@ -934,7 +937,6 @@ export class Composer {
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
-    this.resizeInput();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => {
       this.setInputTextHeightManuallyIfNeeded();
@@ -958,7 +960,7 @@ export class Composer {
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')); // this will force firefox to render them on load
+        this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')).catch(Catch.reportErr); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
     } else {

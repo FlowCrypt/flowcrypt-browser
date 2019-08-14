@@ -43,15 +43,33 @@ export class ComposerContacts extends ComposerComponent {
       .on('keydown blur', Ui.event.handle(async (target, e) => {
         if (e.type === 'keydown' && e.which === 13) {
           this.hideContacts();
-          this.parseRenderRecipients($(target), true);
+          this.parseRenderRecipients($(target), true).catch(Catch.reportErr);
           target.focus();
           return;
         } else if (e.type === 'blur') {
           this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-          this.parseRenderRecipients($(target));
+          await this.parseRenderRecipients($(target));
+          if (!this.composer.S.cached('input_addresses_container_outer')[0].contains(e.relatedTarget)) { // TODO: Fix issue when clicking on some contact from dropdown
+            this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
+            if (this.addedRecipients.length) {
+              const emailsHTML = this.addedRecipients.map(r => `<span>${r.email}</span>`).join();
+              this.composer.S.cached('collapsed').find('.email_preview').html(emailsHTML); // xss-direct
+              this.composer.S.cached('collapsed').find('.placeholder').css('display', 'none');
+            } else {
+              this.composer.S.cached('collapsed').find('.placeholder').css('display', 'block');
+            }
+            this.composer.S.cached('collapsed').css('display', 'block');
+            this.composer.S.cached('body').off('click');
+          }
           this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
         }
       }));
+    this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
+      target.style.display = 'none';
+      this.composer.S.cached('input_addresses_container_outer').css('display', 'block');
+      this.composer.resizeInput();
+      this.composer.S.cached('input_to').focus();
+    }));
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -197,7 +215,7 @@ export class ComposerContacts extends ComposerComponent {
     }
     if (!this.addedRecipients.find(r => r.email === email)) {
       this.composer.debug(`selectContact -> parseRenderRecipients start`);
-      this.parseRenderRecipients(container, false, [email]);
+      this.parseRenderRecipients(container, false, [email]).catch(Catch.reportErr);
     }
     this.hideContacts();
   }
@@ -216,37 +234,40 @@ export class ComposerContacts extends ComposerComponent {
     return { valid, invalid };
   }
 
-  public parseRenderRecipients = (input: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): boolean => {
+  public parseRenderRecipients = async (inputs: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): Promise<void> => {
     this.composer.debug(`parseRenderRecipients(force: ${force})`);
-    const sendingType = input.data('sending-type') as SendingType;
-    this.composer.debug(`parseRenderRecipients(force: ${force}) - sending type - ${sendingType}`);
-    uncheckedEmails = uncheckedEmails || String(input.val()).split(',');
-    this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
-    const validationResult = this.validateEmails(uncheckedEmails);
-    let recipientsToEvaluate: RecipientElement[] = [];
-    const container = input.parent();
-    if (validationResult.valid.length) {
-      this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
-      recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType);
+    for (const inputElem of inputs) {
+      const input = $(inputElem);
+      const sendingType = input.data('sending-type') as SendingType;
+      this.composer.debug(`parseRenderRecipients(force: ${force}) - sending type - ${sendingType}`);
+      uncheckedEmails = uncheckedEmails || String(input.val()).split(',');
+      this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
+      const validationResult = this.validateEmails(uncheckedEmails);
+      let recipientsToEvaluate: RecipientElement[] = [];
+      const container = input.parent();
+      if (validationResult.valid.length) {
+        this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
+        recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType);
+      }
+      const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
+      this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
+      if (force && invalidEmails.length) {
+        this.composer.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
+        recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, true)];
+        input.val('');
+      } else {
+        this.composer.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
+        input.val(validationResult.invalid.join(','));
+      }
+      this.composer.debug(`parseRenderRecipients(force: ${force}).2`);
+      this.composer.resizeInput(input);
+      await this.evaluateRecipients(recipientsToEvaluate);
+      this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
+      this.composer.resizeInput(input);
+      this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
+      this.composer.setInputTextHeightManuallyIfNeeded();
+      this.composer.debug(`parseRenderRecipients(force: ${force}).5`);
     }
-    const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
-    this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
-    if (force && invalidEmails.length) {
-      this.composer.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
-      recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, true)];
-      input.val('');
-    } else {
-      this.composer.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
-      input.val(validationResult.invalid.join(','));
-    }
-    this.composer.debug(`parseRenderRecipients(force: ${force}).2`);
-    this.evaluateRecipients(recipientsToEvaluate).catch(Catch.reportErr);
-    this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
-    this.composer.resizeInput(input);
-    this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
-    this.composer.setInputTextHeightManuallyIfNeeded();
-    this.composer.debug(`parseRenderRecipients(force: ${force}).5`);
-    return !!validationResult.valid.length;
   }
 
   private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: SendingType, isWrong?: boolean): RecipientElement[] => {
