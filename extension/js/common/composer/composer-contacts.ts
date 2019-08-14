@@ -38,25 +38,25 @@ export class ComposerContacts extends ComposerComponent {
   }
 
   initActions(): void {
-    let preventSearchContacts = false
+    let preventSearchContacts = false;
     this.composer.S.cached('input_to').on('keyup', Ui.event.prevent('veryslowspree', () => {
       if (!preventSearchContacts) {
-        this.searchContacts()
+        this.searchContacts();
       }
     }));
     this.composer.S.cached('input_to').on('keydown blur', Ui.event.handle(async (target, e) => {
       if (e.type === 'keydown') {
-        preventSearchContacts = true
-        const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active')
+        preventSearchContacts = true;
+        const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
 
         // Enter
         if (e.key === 'Enter') {
-          currentActive.click()
+          currentActive.click();
 
         // Escape
         } else if (e.key === 'Escape') {
           if (this.composer.S.cached('contacts').is(':visible')) {
-            e.stopPropagation()
+            e.stopPropagation();
             this.hideContacts();
             this.composer.S.cached('input_to').focus();
           }
@@ -65,23 +65,23 @@ export class ComposerContacts extends ComposerComponent {
         } else if (e.key === 'ArrowUp') {
           let prev = currentActive.prev()
           if (!prev.length) {
-            prev = this.composer.S.cached('contacts').find('ul li.select_contact').last()
+            prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
           }
-          currentActive.removeClass('active')
-          prev.addClass('active')
+          currentActive.removeClass('active');
+          prev.addClass('active');
 
         // Arrow Down
         } else if (e.key === 'ArrowDown') {
-          let next = currentActive.next()
+          let next = currentActive.next();
           if (!next.length) {
-            next = this.composer.S.cached('contacts').find('ul li.select_contact').first()
+            next = this.composer.S.cached('contacts').find('ul li.select_contact').first();
           }
-          currentActive.removeClass('active')
-          next.addClass('active')
+          currentActive.removeClass('active');
+          next.addClass('active');
 
         // Everyting else
         } else {
-          preventSearchContacts = false
+          preventSearchContacts = false;
         }
       } else if (e.type === 'blur') {
         this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
