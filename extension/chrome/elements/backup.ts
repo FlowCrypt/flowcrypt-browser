@@ -56,7 +56,7 @@ Catch.try(async () => {
   };
 
   $('.action_test_pass').click(Ui.event.handle(async () => {
-    if (await Pgp.key.decrypt(await Pgp.key.read(armoredPrvBackup), [String($('#pass_phrase').val())]) === true) {
+    if (await Pgp.key.decrypt(await Pgp.key.read(armoredPrvBackup), String($('#pass_phrase').val())) === true) {
       await Ui.modal.info('Success - your pass phrase matches this backup!');
     } else {
       await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get' +

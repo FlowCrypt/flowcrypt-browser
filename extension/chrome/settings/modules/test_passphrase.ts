@@ -41,7 +41,7 @@ Catch.try(async () => {
 
   $('.action_verify').click(Ui.event.handle(async () => {
 
-    if (await Pgp.key.decrypt(key, [String($('#password').val())]) === true) {
+    if (await Pgp.key.decrypt(key, String($('#password').val())) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
         <div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>

@@ -41,7 +41,7 @@ Catch.try(async () => {
     $(`#${name}`).css('display', 'block');
   };
 
-  if (primaryPrv.isDecrypted() || (storedOrSessionPp && await Pgp.key.decrypt(primaryPrv, [storedOrSessionPp]))) {
+  if (primaryPrv.isDecrypted() || (storedOrSessionPp && await Pgp.key.decrypt(primaryPrv, storedOrSessionPp))) {
     displayBlock('step_1_enter_new'); // current pp is already known
   } else {
     displayBlock('step_0_enter_current');
@@ -49,7 +49,7 @@ Catch.try(async () => {
 
   $('#step_0_enter_current .action_test_current_passphrase').click(Ui.event.handle(async () => {
     const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-    if (await Pgp.key.decrypt(prv, [String($('#original_password').val())]) === true) {
+    if (await Pgp.key.decrypt(prv, String($('#original_password').val())) === true) {
       primaryPrv = prv;
       displayBlock('step_1_enter_new');
     } else {

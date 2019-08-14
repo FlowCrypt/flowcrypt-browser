@@ -309,12 +309,9 @@ export class Pgp {
       return { keys: allKeys, errs: allErrs };
     },
     isPacketPrivate: (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => p.tag === openpgp.enums.packet.secretKey || p.tag === openpgp.enums.packet.secretSubkey,
-    decrypt: async (prv: OpenPGP.key.Key, passphrases: string[], optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+    decrypt: async (prv: OpenPGP.key.Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
       if (!prv.isPrivate()) {
         throw new Error("Nothing to decrypt in a public key");
-      }
-      if (passphrases.length !== 1) { // todo - do not accept an array anymore
-        throw new Error("Can only work with one pass phrase at a time");
       }
       const chosenPrvPackets = prv.getKeys(optionalKeyid).map(k => k.keyPacket).filter(Pgp.key.isPacketPrivate) as PrvPacket[];
       if (!chosenPrvPackets.length) {
@@ -329,7 +326,7 @@ export class Pgp {
           }
         }
         try {
-          await prvPacket.decrypt(passphrases[0]); // throws on password mismatch
+          await prvPacket.decrypt(passphrase); // throws on password mismatch
         } catch (e) {
           if (e instanceof Error && e.message.toLowerCase().includes('passphrase')) {
             return false;
@@ -690,7 +687,7 @@ export class Pgp {
         if (cachedDecryptedKey && (cachedDecryptedKey.isDecrypted() || (optionalMatchingKeyid && cachedDecryptedKey.getKeys(optionalMatchingKeyid).every(k => k.isDecrypted() === true)))) {
           ki.decrypted = cachedDecryptedKey;
           keys.prvForDecryptDecrypted.push(ki);
-        } else if (ki.parsed!.isDecrypted() || await Pgp.key.decrypt(ki.parsed!, [ki.passphrase!], optionalMatchingKeyid, 'OK-IF-ALREADY-DECRYPTED') === true) {
+        } else if (ki.parsed!.isDecrypted() || await Pgp.key.decrypt(ki.parsed!, ki.passphrase!, optionalMatchingKeyid, 'OK-IF-ALREADY-DECRYPTED') === true) {
           Store.decryptedKeyCacheSet(ki.parsed!);
           ki.decrypted = ki.parsed!;
           keys.prvForDecryptDecrypted.push(ki);

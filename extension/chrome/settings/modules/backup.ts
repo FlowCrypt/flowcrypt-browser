@@ -213,7 +213,7 @@ Catch.try(async () => {
         return false;
       }
     }
-    if (await Pgp.key.decrypt(prv, ['']) === true) {
+    if (await Pgp.key.decrypt(prv, '') === true) {
       return false;
     }
     return true;
@@ -317,7 +317,7 @@ Catch.try(async () => {
       if (!pp) {
         return false;
       }
-      if (await Pgp.key.decrypt(prv, [pp]) !== true) {
+      if (await Pgp.key.decrypt(prv, pp) !== true) {
         await Ui.modal.warning('Pass phrase did not match, please try again.');
         return false;
       }
