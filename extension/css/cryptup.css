@@ -29,11 +29,11 @@ a:focus { outline: none !important; }
 .orange_label { color: white; background-color: #d18826; }
 .red_label { color: white; background-color: #d14836; }
 .gray_label { color: white; background-color: #B7B7B7; }
-.swal2-popup .swal2-styled.swal2-confirm.ui-modal-error-confirm, .button.red { 
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-error-confirm, .button.red {
   background: initial; background-color: #d14836; color: white; }
-.swal2-popup .swal2-styled.swal2-confirm.ui-modal-info-confirm, .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-confirm, .button.green { 
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-info-confirm, .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-confirm, .button.green {
   background-color: #31A217; color: white; }
-.swal2-popup .swal2-styled.swal2-confirm.ui-modal-warning-confirm, .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-cancel, .button.gray { 
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-warning-confirm, .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-cancel, .button.gray {
   background-color: #B7B7B7; background-image: -webkit-linear-gradient(top, #C5C5C5, #B7B7B7); color: white; }
 .button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444;}
 .button.small { padding: 0 7px; margin-top: 0; }
@@ -415,7 +415,7 @@ table#compose #fineuploader .qq-upload-list {overflow-x: hidden; }
 table#compose #fineuploader .qq-upload-list::-webkit-scrollbar {  width: 0 !important;}
 table#compose #fineuploader .qq-upload-list li { border: none; background: #fff; opacity: 1; margin-left: 12px; padding: 5px 30px 5px 24px; }
 table#compose #fineuploader .qq-upload-list li .qq-upload-file { line-height: 18px; color: black; }
-table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px 0px 3px 10px ; position: relative; 
+table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px 0px 3px 10px ; position: relative;
   border-left: 4px solid #31A217; background-image: url("/img/svgs/locked-icon-green.svg"); background-repeat: no-repeat; background-size: 9px;
   background-position-x: 8px; background-position-y: 8px; }
 table#compose #fineuploader .qq-upload-list .sign { border-left: 1px solid #ccc !important; background-image: none !important; padding-left: 8px; }
@@ -426,8 +426,8 @@ body.full_window table#compose { position: relative;}
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   padding: 6px 0; z-index: 1; }
 body#reply_message div#contacts { top: 39px; }
-div#contacts ul { padding: 0; margin: 0; min-width: 320px; }
-div#contacts ul li { padding: 13px; height: 16px; list-style: none; }
+div#contacts ul { padding: 0; margin: 0; width: 320px; }
+div#contacts ul li { padding: 13px; height: 16px; list-style: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 div#contacts ul li img { padding-left: 6px; padding-right: 12px; height: 13px; position: relative; top: 1px; }
 div#contacts ul li:first-child { background: #eee; }
 div#contacts ul li.auth_contacts { background: #fff !important; height: 24px; }
@@ -497,7 +497,7 @@ body.attachment #name { padding: 7px 12px; background: #f3f3f3; position: absolu
   text-overflow: ellipsis; top: 92px; width: 154px; left: 0; }
 body.attachment .file-format-holder { display: inline-block; border-radius: 120px; position: absolute; left: 7px; margin-top: 10px; margin-bottom: 5px;}
 body.attachment .file-format-holder img#file-format { width: 45px; height: auto; margin-top: 12px; opacity: .2; margin-left: 10px;}
-body.attachment .file-download-right-click-link { font-size: 14px; font-weight: bold; display: flex; align-items: center; 
+body.attachment .file-download-right-click-link { font-size: 14px; font-weight: bold; display: flex; align-items: center;
   height: 100%; width: 100%; text-decoration: none; color: #31A217; }
 
 /* Select Account */
@@ -524,7 +524,7 @@ div#cryptup_dialog iframe.medium { height: 500px; margin-top: -300px; }
 div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
 
 .featherlight { z-index: 8 !important; }
-.featherlight .featherlight-close-icon { background: none !important; border: none !important; width: 30px !important; 
+.featherlight .featherlight-close-icon { background: none !important; border: none !important; width: 30px !important;
   font-size: 24px !important; opacity: 0.5 !important; line-height: 36px !important; }
 .featherlight.new_message_featherlight .featherlight-content { background: none !important; }
 .featherlight .featherlight-content > .line { color: white; text-align: center; font-weight: 200; letter-spacing: 0.25px;}
