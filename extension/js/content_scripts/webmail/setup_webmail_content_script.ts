@@ -104,6 +104,9 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('close_new_message', async () => {
       $('div.new_message').remove();
     });
+    BrowserMsg.addListener('focus_new_message', async ({ frameId }: Bm.FocusNewMessage) => {
+      $(`iframe#${frameId}`).focus();
+    });
     BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
       $(`iframe#${frameId}`).remove();
     });

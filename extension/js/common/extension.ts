@@ -31,6 +31,7 @@ export namespace Bm {
   export type NotificationShowAuthPopupNeeded = { acctEmail: string };
   export type RenderPublicKeys = { afterFrameId: string, publicKeys: string[], traverseUp?: number };
   export type SubscribeDialog = { isAuthErr?: boolean };
+  export type FocusNewMessage = { frameId: string };
   export type CloseReplyMessage = { frameId: string, threadId: string };
   export type ReinsertReplyBox = { acctEmail: string, myEmail: string, subject: string, theirEmail: string[], threadId: string, threadMsgId: string };
   export type AddPubkeyDialog = { emails: string[] };
@@ -89,7 +90,7 @@ export namespace Bm {
     AddPubkeyDialog | ReinsertReplyBox | CloseReplyMessage | SubscribeDialog | RenderPublicKeys | NotificationShowAuthPopupNeeded |
     NotificationShow | PassphraseDialog | PassphraseDialog | Settings | SetCss | AddOrRemoveClass | SetFooter | ReconnectAcctAuthPopup |
     PgpKeyDetails | Db | StoreSessionSet | StoreSessionGet | StoreGlobalGet | StoreGlobalSet | StoreAcctGet | StoreAcctSet |
-    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax;
+    PgpMsgType | PgpMsgDecrypt | PgpMsgDiagnoseMsgPubkeys | PgpMsgVerifyDetached | PgpHashChallengeAnswer | Ajax | FocusNewMessage;
 
   // export type RawResponselessHandler = (req: AnyRequest) => Promise<void>;
   // export type RawRespoHandler = (req: AnyRequest) => Promise<void>;
@@ -213,6 +214,7 @@ export class BrowserMsg {
     closeDialog: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_dialog', {}),
     closePage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_page', {}),
     closeNewMessage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'close_new_message', {}),
+    focusNewMessage: (dest: Bm.Dest, bm: Bm.FocusNewMessage) => BrowserMsg.sendCatch(dest, 'focus_new_message', bm),
     closeReplyMessage: (dest: Bm.Dest, bm: Bm.CloseReplyMessage) => BrowserMsg.sendCatch(dest, 'close_reply_message', bm),
     setFooter: (dest: Bm.Dest, bm: Bm.SetFooter) => BrowserMsg.sendCatch(dest, 'set_footer', bm),
     openNewMessage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'open_new_message', {}),
