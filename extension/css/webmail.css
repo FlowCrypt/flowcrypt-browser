@@ -12,13 +12,13 @@ body.cryptup_outlook div.webmail_notifications div.webmail_notification { margin
 
 /* buttons body.cryptup_inbox */
 body.cryptup_gmail_new .new_message_button:before { background-image: url("/img/logo/logo.svg");}
-body.cryptup_inbox div.new_message_button { position: relative; width: 40px; box-sizing: content-box; cursor: pointer; outline: none; 
+body.cryptup_inbox div.new_message_button { position: relative; width: 40px; box-sizing: content-box; cursor: pointer; outline: none;
   border: none; -webkit-user-drag: none; margin-right: 8px; background: white; }
 body.cryptup_inbox div.new_message_button > img { width: 28px; padding: 6px; padding-top: 10px; }
 body.cryptup_inbox .pgp_message_container .nk .tq:first-child { display: none !important; } /* reply, reply all, forward in menu next to encrypted messages */
 
 /* buttons body.cryptup_gmail */
-body.cryptup_gmail .inserted div.reply_message_button { position: relative; display: inline-flex; padding: 20px 12px 4px 10px; opacity: 0.75; 
+body.cryptup_gmail .inserted div.reply_message_button { position: relative; display: inline-flex; padding: 20px 12px 4px 10px; opacity: 0.75;
   margin-left: 18px; margin-right: 8px }
 body.cryptup_gmail.firefox .inserted div.reply_message_button { padding-top: 16px; } /* else buttons misaligned vertically on FF */
 body.cryptup_gmail .inserted div.reply_message_button:hover { opacity: 0.9; cursor: pointer; }
