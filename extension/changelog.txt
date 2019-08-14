@@ -1,5 +1,7 @@
 <div>
 
+version 6.9.5 on Aug 14, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/348?closed=1" target="_blank">UX Fixes</a>
+
 version 6.9.4 on Aug 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/347?closed=1" target="_blank">Import contact button bugfix</a>
 
 version 6.9.3 on Aug 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/346?closed=1" target="_blank">Security fix</a>
