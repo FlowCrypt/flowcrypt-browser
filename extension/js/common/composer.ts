@@ -1002,7 +1002,7 @@ export class Composer {
     }
     BrowserMsg.send.setCss(this.urlParams.parentTabId, {
       selector: `iframe#${this.urlParams.frameId}, div#new_message`,
-      css: { height: this.composeWindowIsMinimized ? '' : '36px' },
+      css: { height: this.composeWindowIsMinimized ? '' : this.S.cached('header').css('height') },
     });
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
   }
