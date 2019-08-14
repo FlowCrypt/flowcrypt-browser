@@ -181,7 +181,7 @@ Catch.try(async () => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-      await Settings.openpgpKeyEncrypt(prv, newPassphrase);
+      await Pgp.key.encrypt(prv, newPassphrase);
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
       await Store.keysAdd(acctEmail, prv.armor());
       try {

@@ -95,7 +95,7 @@ Catch.try(async () => {
       return;
     }
     try {
-      await Settings.openpgpKeyEncrypt(primaryPrv, newPp);
+      await Pgp.key.encrypt(primaryPrv, newPp);
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an unexpected error. Please ask for help at human@flowcrypt.com:\n\n${e instanceof Error ? e.stack : String(e)}`);
