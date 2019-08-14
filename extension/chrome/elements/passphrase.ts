@@ -97,7 +97,7 @@ Catch.try(async () => {
     for (const keyinfo of selectedPrivateKeys) { // if passphrase matches more keys, it will save the pass phrase for all keys
       const { keys: [prv] } = await openpgp.key.readArmored(keyinfo.private);
       try {
-        if (await Pgp.key.decrypt(prv, [pass]) === true) {
+        if (await Pgp.key.decrypt(prv, pass) === true) {
           await Store.passphraseSave(storageType, acctEmail, keyinfo.longid, pass);
           atLeastOneMatched = true;
           if (storageType === 'session') {

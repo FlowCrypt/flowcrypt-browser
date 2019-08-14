@@ -454,7 +454,7 @@ export class Composer {
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
         if (!prv.isDecrypted()) {
-          await Pgp.key.decrypt(prv, [passphrase!]); // checked !== undefined above
+          await Pgp.key.decrypt(prv, passphrase!); // checked !== undefined above
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments

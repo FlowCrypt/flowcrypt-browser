@@ -243,7 +243,7 @@ export class Settings {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
           const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
-          await Pgp.key.decrypt(origPrv, [passphrase]);
+          await Pgp.key.decrypt(origPrv, passphrase);
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {

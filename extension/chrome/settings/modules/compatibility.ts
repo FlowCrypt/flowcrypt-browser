@@ -129,7 +129,7 @@ Catch.try(async () => {
       appendResult(`${kn} Subkeys: ${await test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       appendResult(`${kn} Primary key algo: ${await test(async () => key.primaryKey.algorithm)}`);
       if (key.isPrivate()) {
-        appendResult(`${kn} Primary key decrypt: ${await test(async () => Pgp.key.decrypt(key, [String($('.input_passphrase').val())]))}`);
+        appendResult(`${kn} Primary key decrypt: ${await test(async () => Pgp.key.decrypt(key, String($('.input_passphrase').val())))}`);
       }
       appendResult(`${kn} Primary key verify: ${await test(async () => {
         const verifyResNum = await key.verifyPrimaryKey();
