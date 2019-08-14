@@ -2,12 +2,18 @@
 
 'use strict';
 
-export type RecipientElement = {
-  email: string,
-  element: HTMLElement
+export type SendingType = 'to' | 'cc' | 'bcc';
+
+export interface BaseRecipient {
+  email: string;
+  sendingType: SendingType;
+}
+
+export interface RecipientElement extends BaseRecipient {
+  element: HTMLElement;
   id: string;
   isWrong?: boolean;
-};
+}
 
 export type MessageToReplyOrForward = {
   headers: {

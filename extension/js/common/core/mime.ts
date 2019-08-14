@@ -215,7 +215,7 @@ export class Mime {
   }
 
   public static encode = async (body: string | SendableMsgBody, headers: RichHeaders, atts: Att[] = []): Promise<string> => {
-    const rootNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
+    const rootNode = new MimeBuilder('multipart/mixed', { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
     }

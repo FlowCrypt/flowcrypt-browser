@@ -37,8 +37,10 @@
               <span class="action_feedback" title="Feedback or Help"><img src="/img/svgs/question-icon-white.svg"
                   class="" alt="Help"></span>
               <span class="minimize_new_message" title="Minimize"></span>
-              <span class="popout maximize_composer" title="Full-screen"><img src="/img/svgs/maximize.svg" tabindex="-1"></span>
-              <span class="close_new_message" title="Save & close"><img src="/img/svgs/close-icon.svg" tabindex="-1"></span>
+              <span class="popout maximize_composer" title="Full-screen"><img src="/img/svgs/maximize.svg"
+                  tabindex="-1"></span>
+              <span class="close_new_message" title="Save & close"><img src="/img/svgs/close-icon.svg"
+                  tabindex="-1"></span>
             </div>
           </div>
         </th>
@@ -46,10 +48,21 @@
       <tr>
         <td class="input" id="input_addresses_container">
           <!-- to -->
-          <div id="input-to-container">
-            <span class="recipients"></span>
-            <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Add Recipient"
-              data-test="input-to" />
+          <div id="input-container-to">
+            <span class="recipients recipients-to"></span>
+            <input id="input_to" spellcheck="false" tabindex="1" placeholder="Add Recipient" data-test="input-to"
+              data-sending-type="to" />
+          </div>
+          <!-- cc -->
+          <div id="input-container-cc">
+            <span class="recipients recipients-cc"></span>
+            <input spellcheck="false" tabindex="1" placeholder="Add CC" data-test="input-cc" data-sending-type="cc" />
+          </div>
+          <!-- bcc -->
+          <div id="input-container-bcc">
+            <span class="recipients recipients-bcc"></span>
+            <input spellcheck="false" tabindex="1" placeholder="Add BCC" data-test="input-bcc"
+              data-sending-type="bcc" />
           </div>
         </td>
       </tr>

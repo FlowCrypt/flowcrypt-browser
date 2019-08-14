@@ -22,7 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams, BaseRecipient } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
@@ -41,7 +41,6 @@ export class Composer {
     title: 'table#compose th h1',
     input_text: 'div#input_text',
     input_to: '#input_to',
-    input_to_container: '#input-to-container',
     input_from: '#input_from',
     input_subject: '#input_subject',
     input_password: '#input_password',
@@ -123,7 +122,7 @@ export class Composer {
       await this.initComposeBox();
       await this.initActions();
       await this.checkEmailAliases();
-    })(); // this is awaited later. Otherwise normally we would have added .catch here
+    })();
   }
 
   public debug = (msg: string) => {
@@ -313,7 +312,7 @@ export class Composer {
     }
   }
 
-  private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
+  private throwIfFormNotReady = async (recipients: BaseRecipient[]): Promise<void> => {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'));
     }
@@ -332,7 +331,7 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throwIfFormValsInvalid = async (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
+  private throwIfFormValsInvalid = async (recipients: BaseRecipient[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
     const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -392,7 +391,7 @@ export class Composer {
 
   private extractProcessSendMsg = async () => {
     try {
-      const recipients = this.getRecipients().map(r => r.email);
+      const recipients = this.getRecipients();
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
       await this.throwIfFormNotReady(recipients);
@@ -400,7 +399,7 @@ export class Composer {
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
-      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipients);
+      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipients.map(r => r.email));
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
       await this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
@@ -413,11 +412,11 @@ export class Composer {
     }
   }
 
-  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private encryptSend = async (recipients: BaseRecipient[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
-    plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients, subject, plaintext, pwd, subscription);
+    plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients.map(r => r.email), subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
-    if (atts.length && pwd) { // these will be password encrypted attachments
+    if (atts.length && pwd) { // these will be password encryaddReplyTokenToMsgBodyIfNeededpted attachments
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
@@ -427,7 +426,7 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: string[], subject: string, plaintext: string) => {
+  private signSend = async (recipients: BaseRecipient[], subject: string, plaintext: string) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
     if (primaryKi) {
@@ -458,7 +457,7 @@ export class Composer {
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
-        this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.reportErr);
+        this.app.storageContactUpdate(recipients.map(r => r.email), { last_use: Date.now() }).catch(Catch.reportErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
         await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
@@ -565,11 +564,12 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
+  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: BaseRecipient[],
+    subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
     const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
-    await this.app.storageContactUpdate(to, { last_use: Date.now() });
+    await this.app.storageContactUpdate(recipients.map(r => r.email), { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
@@ -579,10 +579,10 @@ export class Composer {
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId));
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subj, encryptedBody, atts, this.urlParams.threadId));
     } else {
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
-      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId));
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subj, encryptedBody, atts, this.urlParams.threadId));
     }
   }
 
@@ -760,7 +760,7 @@ export class Composer {
       }
     } else {
       this.S.cached('input_text').css('max-width', '');
-      this.resizeInputTo();
+      this.resizeInput();
       this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
   }
@@ -800,9 +800,12 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
-  public resizeInputTo = () => { // below both present in template
-    this.S.cached('input_to').css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
-    this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
+  public resizeInput = (input?: JQuery<HTMLElement>) => { // below both present in template
+    if (!input) {
+      input = this.S.cached('input_addresses_container_outer').find('input'); // Resize All Inputs
+    }
+    input.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
+    input.css('width', (Math.max(150, input.parent().width()! - input.siblings('.recipients').width()! - 50)) + 'px');
   }
 
   updateFooterIcon = (include?: boolean) => {
@@ -931,7 +934,7 @@ export class Composer {
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
-    this.resizeInputTo();
+    this.resizeInput();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => {
       this.setInputTextHeightManuallyIfNeeded();
@@ -1097,10 +1100,15 @@ export class Composer {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
-    msg.to = await Promise.all(msg.to.map(async email => {
-      const [contact] = await this.app.storageContactGet([email]);
-      return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
-    }));
+    const addNameToEmail = async (emails: string[]): Promise<string[]> => {
+      return await Promise.all(await emails.map(async email => {
+        const [contact] = await this.app.storageContactGet([email]);
+        return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
+      }));
+    };
+    msg.to = await addNameToEmail(msg.to);
+    msg.cc = await addNameToEmail(msg.cc);
+    msg.bcc = await addNameToEmail(msg.bcc);
     const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
     if (name) {
       msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;

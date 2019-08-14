@@ -182,6 +182,8 @@ export class Google extends EmailProviderApi {
     msgSend: async (acctEmail: string, message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
       message.headers.From = message.from;
       message.headers.To = message.to.join(',');
+      message.headers.Cc = message.cc.join(',');
+      message.headers.Bcc = message.bcc.join(',');
       message.headers.Subject = message.subject;
       const mimeMsg = await Mime.encode(message.body, message.headers, message.atts);
       const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });

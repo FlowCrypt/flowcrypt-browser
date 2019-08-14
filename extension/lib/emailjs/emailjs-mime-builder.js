@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-(function(root, factory) {
+(function (root, factory) {
     'use strict';
 
     if (typeof define === 'function' && define.amd) {
@@ -28,7 +28,7 @@
     } else {
         root['emailjs-mime-builder'] = factory(root['emailjs-mime-codec'], root['emailjs-mime-types'], root.punycode, root['emailjs-addressparser']);
     }
-}(this, function(mimecodec, mimetypes, punycode, addressparser) {
+}(this, function (mimecodec, mimetypes, punycode, addressparser) {
     'use strict';
 
     /**
@@ -42,6 +42,7 @@
      * @param {Object} [options.parentNode] immediate parent for this node
      * @param {Object} [options.filename] filename for an attachment node
      * @param {String} [options.baseBoundary] shared part of the unique multipart boundary
+     * @param {Boolean} [options.includeBccInHeader] include BCC in the Mime Message
      */
     function MimeNode(contentType, options) {
         this.nodeCounter = 0;
@@ -103,6 +104,8 @@
         if (contentType) {
             this.setHeader('content-type', contentType);
         }
+
+        this.includeBccInHeader = options.includeBccInHeader || false;
     }
 
     /////// PUBLIC METHODS
@@ -114,7 +117,7 @@
      * @param {Object} [options] Optional options object
      * @return {Object} Created node object
      */
-    MimeNode.prototype.createChild = function(contentType, options) {
+    MimeNode.prototype.createChild = function (contentType, options) {
         if (!options && typeof contentType === 'object') {
             options = contentType;
             contentType = undefined;
@@ -131,7 +134,7 @@
      * @param {Object} childNode node to be appended
      * @return {Object} Appended node object
      */
-    MimeNode.prototype.appendChild = function(childNode) {
+    MimeNode.prototype.appendChild = function (childNode) {
 
         if (childNode.rootNode !== this.rootNode) {
             childNode.rootNode = this.rootNode;
@@ -150,12 +153,12 @@
      * @param {Object} node Replacement node
      * @return {Object} Replacement node
      */
-    MimeNode.prototype.replace = function(node) {
+    MimeNode.prototype.replace = function (node) {
         if (node === this) {
             return this;
         }
 
-        this.parentNode._childNodes.forEach(function(childNode, i) {
+        this.parentNode._childNodes.forEach(function (childNode, i) {
             if (childNode === this) {
 
                 node.rootNode = this.rootNode;
@@ -177,7 +180,7 @@
      *
      * @return {Object} removed node
      */
-    MimeNode.prototype.remove = function() {
+    MimeNode.prototype.remove = function () {
         if (!this.parentNode) {
             return this;
         }
@@ -201,7 +204,7 @@
      * @param {String} value Header value
      * @return {Object} current node
      */
-    MimeNode.prototype.setHeader = function(key, value) {
+    MimeNode.prototype.setHeader = function (key, value) {
         var added = false,
             headerValue;
 
@@ -213,13 +216,13 @@
             }
             // allow [{key:'content-type', value: 'text/plain'}]
             else if (Array.isArray(key)) {
-                key.forEach(function(i) {
+                key.forEach(function (i) {
                     this.setHeader(i.key, i.value);
                 }.bind(this));
             }
             // allow {'content-type': 'text/plain'}
             else {
-                Object.keys(key).forEach(function(i) {
+                Object.keys(key).forEach(function (i) {
                     this.setHeader(i, key[i]);
                 }.bind(this));
             }
@@ -267,7 +270,7 @@
      * @param {String} value Header value
      * @return {Object} current node
      */
-    MimeNode.prototype.addHeader = function(key, value) {
+    MimeNode.prototype.addHeader = function (key, value) {
 
         // Allow setting multiple headers at once
         if (!value && key && typeof key === 'object') {
@@ -277,13 +280,13 @@
             }
             // allow [{key:'content-type', value: 'text/plain'}]
             else if (Array.isArray(key)) {
-                key.forEach(function(i) {
+                key.forEach(function (i) {
                     this.addHeader(i.key, i.value);
                 }.bind(this));
             }
             // allow {'content-type': 'text/plain'}
             else {
-                Object.keys(key).forEach(function(i) {
+                Object.keys(key).forEach(function (i) {
                     this.addHeader(i, key[i]);
                 }.bind(this));
             }
@@ -304,7 +307,7 @@
      * @param {String} key Key to search for
      * @retun {String} Value for the key
      */
-    MimeNode.prototype.getHeader = function(key) {
+    MimeNode.prototype.getHeader = function (key) {
         key = this._normalizeHeaderKey(key);
         for (var i = 0, len = this._headers.length; i < len; i++) {
             if (this._headers[i].key === key) {
@@ -321,7 +324,7 @@
      * @param (String|Uint8Array) content Body content
      * @return {Object} current node
      */
-    MimeNode.prototype.setContent = function(content) {
+    MimeNode.prototype.setContent = function (content) {
         this.content = content;
         return this;
     };
@@ -332,7 +335,7 @@
      *
      * @return {String} Compiled message
      */
-    MimeNode.prototype.build = function() {
+    MimeNode.prototype.build = function () {
         var lines = [],
             contentType = (this.getHeader('Content-Type') || '').toString().toLowerCase().trim(),
             transferEncoding, flowed;
@@ -365,7 +368,7 @@
             this.setHeader('Content-Disposition', 'attachment');
         }
 
-        this._headers.forEach(function(header) {
+        this._headers.forEach(function (header) {
             var key = header.key,
                 value = header.value,
                 structured;
@@ -397,8 +400,10 @@
                     value = this._buildHeaderValue(structured);
                     break;
                 case 'Bcc':
-                    // skip BCC values
-                    return;
+                    if (this.includeBccInHeader === false) {
+                        // skip BCC values
+                        return;
+                    }
             }
 
             // skip empty lines
@@ -420,10 +425,10 @@
                 lines.push('Message-Id: <' +
                     // crux to generate random strings like this:
                     // "1401391905590-58aa8c32-d32a065c-c1a2aad2"
-                    [0, 0, 0].reduce(function(prev) {
+                    [0, 0, 0].reduce(function (prev) {
                         return prev + '-' + Math.floor((1 + Math.random()) * 0x100000000).
-                        toString(16).
-                        substring(1);
+                            toString(16).
+                            substring(1);
                     }, Date.now()) +
                     '@' +
                     // try to use the domain of the FROM address or fallback localhost
@@ -461,7 +466,7 @@
         }
 
         if (this.multipart) {
-            this._childNodes.forEach(function(node) {
+            this._childNodes.forEach(function (node) {
                 lines.push('--' + this.boundary);
                 lines.push(node.build());
             }.bind(this));
@@ -477,12 +482,12 @@
      *
      * @return {Object} SMTP envelope in the form of {from: 'from@example.com', to: ['to@example.com']}
      */
-    MimeNode.prototype.getEnvelope = function() {
+    MimeNode.prototype.getEnvelope = function () {
         var envelope = {
             from: false,
             to: []
         };
-        this._headers.forEach(function(header) {
+        this._headers.forEach(function (header) {
             var list = [];
             if (header.key === 'From' || (!envelope.from && ['Reply-To', 'Sender'].indexOf(header.key) >= 0)) {
                 this._convertAddresses(this._parseAddresses(header.value), list);
@@ -506,8 +511,8 @@
      * @param {Mixed} addresses Addresses to be parsed
      * @return {Array} An array of address objects
      */
-    MimeNode.prototype._parseAddresses = function(addresses) {
-        return [].concat.apply([], [].concat(addresses).map(function(address) {
+    MimeNode.prototype._parseAddresses = function (addresses) {
+        return [].concat.apply([], [].concat(addresses).map(function (address) {
             if (address && address.address) {
                 address = this._convertAddresses(address);
             }
@@ -521,15 +526,15 @@
      * @param {String} key Key to be normalized
      * @return {String} key in Camel-Case form
      */
-    MimeNode.prototype._normalizeHeaderKey = function(key) {
+    MimeNode.prototype._normalizeHeaderKey = function (key) {
         return (key || '').toString().
             // no newlines in keys
-        replace(/\r?\n|\r/g, ' ').
-        trim().toLowerCase().
-        // use uppercase words, except MIME
-        replace(/^MIME\b|^[a-z]|\-[a-z]/ig, function(c) {
-            return c.toUpperCase();
-        });
+            replace(/\r?\n|\r/g, ' ').
+            trim().toLowerCase().
+            // use uppercase words, except MIME
+            replace(/^MIME\b|^[a-z]|\-[a-z]/ig, function (c) {
+                return c.toUpperCase();
+            });
     };
 
     /**
@@ -538,13 +543,13 @@
      * @param {Object} structured Parsed header value
      * @return {String} joined header value
      */
-    MimeNode.prototype._buildHeaderValue = function(structured) {
+    MimeNode.prototype._buildHeaderValue = function (structured) {
         var paramsArray = [];
 
-        Object.keys(structured.params || {}).forEach(function(param) {
+        Object.keys(structured.params || {}).forEach(function (param) {
             // filename might include unicode characters so it is a special case
             if (param === 'filename') {
-                mimecodec.continuationEncode(param, structured.params[param], 50).forEach(function(encodedParam) {
+                mimecodec.continuationEncode(param, structured.params[param], 50).forEach(function (encodedParam) {
                     // continuation encoded strings are always escaped, so no need to use enclosing quotes
                     // in fact using quotes might end up with invalid filenames in some clients
                     paramsArray.push(encodedParam.key + '=' + encodedParam.value);
@@ -564,7 +569,7 @@
      * @param {String} value Header argument value
      * @return {String} escaped and quoted (if needed) argument value
      */
-    MimeNode.prototype._escapeHeaderArgument = function(value) {
+    MimeNode.prototype._escapeHeaderArgument = function (value) {
         if (value.match(/[\s'"\\;\/=]|^\-/g)) {
             return '"' + value.replace(/(["\\])/g, "\\$1") + '"';
         } else {
@@ -578,10 +583,10 @@
      *
      * @param {Object} structured Parsed header value for 'Content-Type' key
      */
-    MimeNode.prototype._handleContentType = function(structured) {
+    MimeNode.prototype._handleContentType = function (structured) {
         this.contentType = structured.value.trim().toLowerCase();
 
-        this.multipart = this.contentType.split('/').reduce(function(prev, value) {
+        this.multipart = this.contentType.split('/').reduce(function (prev, value) {
             return prev === 'multipart' ? value : false;
         });
 
@@ -597,7 +602,7 @@
      *
      * @return {String} boundary value
      */
-    MimeNode.prototype._generateBoundary = function() {
+    MimeNode.prototype._generateBoundary = function () {
         return '----sinikael-?=_' + this._nodeId + '-' + this.rootNode.baseBoundary;
     };
 
@@ -607,7 +612,7 @@
      * @param {String} key Header key
      * @param {String} value Header value
      */
-    MimeNode.prototype._encodeHeaderValue = function(key, value) {
+    MimeNode.prototype._encodeHeaderValue = function (key, value) {
         key = this._normalizeHeaderKey(key);
 
         switch (key) {
@@ -634,12 +639,12 @@
                 return value;
 
             case 'References':
-                value = [].concat.apply([], [].concat(value || '').map(function(elm) {
+                value = [].concat.apply([], [].concat(value || '').map(function (elm) {
                     elm = (elm || '').toString().replace(/\r?\n|\r/g, ' ').trim();
-                    return elm.replace(/<[^>]*>/g, function(str) {
+                    return elm.replace(/<[^>]*>/g, function (str) {
                         return str.replace(/\s/g, '');
                     }).split(/\s+/);
-                })).map(function(elm) {
+                })).map(function (elm) {
                     if (elm.charAt(0) !== '<') {
                         elm = '<' + elm;
                     }
@@ -665,16 +670,16 @@
      * @param {Array} [uniqueList] An array to be populated with addresses
      * @return {String} address string
      */
-    MimeNode.prototype._convertAddresses = function(addresses, uniqueList) {
+    MimeNode.prototype._convertAddresses = function (addresses, uniqueList) {
         var values = [];
 
         uniqueList = uniqueList || [];
 
-        [].concat(addresses || []).forEach(function(address) {
+        [].concat(addresses || []).forEach(function (address) {
             if (address.address) {
-                address.address = address.address.replace(/^.*?(?=\@)/, function(user) {
+                address.address = address.address.replace(/^.*?(?=\@)/, function (user) {
                     return mimecodec.mimeWordsEncode(user, 'Q', 52);
-                }).replace(/@.+$/, function(domain) {
+                }).replace(/@.+$/, function (domain) {
                     return '@' + punycode.toASCII(domain.substr(1));
                 });
 
@@ -701,7 +706,7 @@
      * @param {String} name Name part of an address
      * @returns {String} Mime word encoded string if needed
      */
-    MimeNode.prototype._encodeAddressName = function(name) {
+    MimeNode.prototype._encodeAddressName = function (name) {
         if (!/^[\w ']*$/.test(name)) {
             if (/^[\x20-\x7e]*$/.test(name)) {
                 return '"' + name.replace(/([\\"])/g, '\\$1') + '"';
@@ -718,7 +723,7 @@
      * @param {String} value String to be tested
      * @returns {Boolean} true if it is a plaintext string
      */
-    MimeNode.prototype._isPlainText = function(value) {
+    MimeNode.prototype._isPlainText = function (value) {
         if (typeof value !== 'string' || /[\x00-\x08\x0b\x0c\x0e-\x1f\u0080-\uFFFF]/.test(value)) {
             return false;
         } else {

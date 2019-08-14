@@ -11,7 +11,7 @@ import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
 import { GoogleAuth } from '../api/google.js';
 import { Lang } from '../lang.js';
-import { ComposerUrlParams, RecipientElement } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, SendingType } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
@@ -38,19 +38,20 @@ export class ComposerContacts extends ComposerComponent {
   }
 
   initActions(): void {
-    this.composer.S.cached('input_to').on('keyup', Ui.event.prevent('veryslowspree', () => this.searchContacts()));
-    this.composer.S.cached('input_to').on('keydown blur', Ui.event.handle(async (target, e) => {
-      if (e.type === 'keydown' && e.which === 13) {
-        this.hideContacts();
-        this.parseRenderRecipients(this.composer.S.cached('input_to_container'), true);
-        this.composer.S.cached('input_to').focus();
-        return;
-      } else if (e.type === 'blur') {
-        this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-        this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
-        this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
-      }
-    }));
+    this.composer.S.cached('input_addresses_container_outer').find('input')
+      .on('keyup', Ui.event.prevent('veryslowspree', (target) => this.searchContacts($(target))))
+      .on('keydown blur', Ui.event.handle(async (target, e) => {
+        if (e.type === 'keydown' && e.which === 13) {
+          this.hideContacts();
+          this.parseRenderRecipients($(target), true);
+          target.focus();
+          return;
+        } else if (e.type === 'blur') {
+          this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+          this.parseRenderRecipients($(target));
+          this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
+        }
+      }));
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -79,20 +80,20 @@ export class ComposerContacts extends ComposerComponent {
 
   public getRecipients = () => this.addedRecipients;
 
-  private searchContacts = async (dbOnly = false) => {
+  private searchContacts = async (input: JQuery<HTMLElement>, dbOnly = false) => {
     this.composer.debug(`searchContacts`);
-    const substring = Str.parseEmail(String(this.composer.S.cached('input_to').val()), 'DO-NOT-VALIDATE').email;
+    const substring = Str.parseEmail(String(input.val()), 'DO-NOT-VALIDATE').email;
     this.composer.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
     if (substring) {
       const query = { substring };
       const contacts = await this.app.storageContactSearch(query);
       if (dbOnly || !this.composer.canReadEmails) {
         this.composer.debug(`searchContacts 1`);
-        this.renderSearchRes(contacts, query);
+        this.renderSearchRes(input, contacts, query);
       } else {
         this.composer.debug(`searchContacts 2`);
         this.contactSearchInProgress = true;
-        this.renderSearchRes(contacts, query);
+        this.renderSearchRes(input, contacts, query);
         this.composer.debug(`searchContacts 3`);
         this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
           this.composer.debug(`searchContacts 4`);
@@ -111,7 +112,7 @@ export class ComposerContacts extends ComposerComponent {
               }
             }
             this.composer.debug(`searchContacts 7`);
-            await this.searchContacts(true);
+            await this.searchContacts(input, true);
             this.composer.debug(`searchContacts 8`);
           } else {
             this.composer.debug(`searchContacts 9`);
@@ -126,7 +127,7 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private renderSearchRes = (contacts: Contact[], query: ProviderContactsQuery) => {
+  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
     const renderableContacts = contacts.slice();
     renderableContacts.sort((a, b) =>
       (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(8); // have pgp on top, no pgp bottom. Sort each groups by last used
@@ -160,18 +161,18 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
         if (email) {
-          await this.selectContact(email, query);
+          await this.selectContact(input, email, query);
         }
       }, this.composer.getErrHandlers(`select contact`)));
       this.composer.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
       this.composer.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() =>
         this.authContacts(this.urlParams.acctEmail), this.composer.getErrHandlers(`authorize contact search`)));
-      const offset = this.composer.S.cached('input_to').offset()!;
-      const inputToPadding = parseInt(this.composer.S.cached('input_to').css('padding-left'));
+      const offset = input.offset()!;
+      const inputToPadding = parseInt(input.css('padding-left'));
       let leftOffset: number;
       if (this.composer.S.cached('body').width()! < offset.left + inputToPadding + this.composer.S.cached('contacts').width()!) {
         // Here we need to align contacts popover by right side
-        leftOffset = offset.left + inputToPadding + this.composer.S.cached('input_to').width()! - this.composer.S.cached('contacts').width()!;
+        leftOffset = offset.left + inputToPadding + input.width()! - this.composer.S.cached('contacts').width()!;
       } else {
         leftOffset = offset.left + inputToPadding;
       }
@@ -185,9 +186,9 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private selectContact = async (email: string, fromQuery: ProviderContactsQuery) => {
+  private selectContact = async (container: JQuery<HTMLElement>, email: string, fromQuery: ProviderContactsQuery) => {
     this.composer.debug(`selectContact 1`);
-    const possiblyBogusRecipient = $('.recipients span.wrong').last();
+    const possiblyBogusRecipient = container.find('.recipients span.wrong').last();
     const possiblyBogusAddr = Str.parseEmail(possiblyBogusRecipient.text()).email;
     this.composer.debug(`selectContact 2`);
     const q = Str.parseEmail(fromQuery.substring).email;
@@ -196,7 +197,7 @@ export class ComposerContacts extends ComposerComponent {
     }
     if (!this.addedRecipients.find(r => r.email === email)) {
       this.composer.debug(`selectContact -> parseRenderRecipients start`);
-      this.parseRenderRecipients(this.composer.S.cached('input_to_container'), false, [email]);
+      this.parseRenderRecipients(container, false, [email]);
     }
     this.hideContacts();
   }
@@ -215,45 +216,47 @@ export class ComposerContacts extends ComposerComponent {
     return { valid, invalid };
   }
 
-  public parseRenderRecipients = (container: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): boolean => {
+  public parseRenderRecipients = (input: JQuery<HTMLElement>, force?: boolean, uncheckedEmails?: string[]): boolean => {
     this.composer.debug(`parseRenderRecipients(force: ${force})`);
-    const inputTo = container.find('#input_to');
-    uncheckedEmails = uncheckedEmails || String(inputTo.val()).split(',');
+    const sendingType = input.data('sending-type') as SendingType;
+    this.composer.debug(`parseRenderRecipients(force: ${force}) - sending type - ${sendingType}`);
+    uncheckedEmails = uncheckedEmails || String(input.val()).split(',');
     this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
     const validationResult = this.validateEmails(uncheckedEmails);
     let recipientsToEvaluate: RecipientElement[] = [];
+    const container = input.parent();
     if (validationResult.valid.length) {
       this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
-      recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid);
+      recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType);
     }
     const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
     this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
     if (force && invalidEmails.length) {
       this.composer.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
-      recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, true)];
-      inputTo.val('');
+      recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, true)];
+      input.val('');
     } else {
       this.composer.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
-      inputTo.val(validationResult.invalid.join(','));
+      input.val(validationResult.invalid.join(','));
     }
     this.composer.debug(`parseRenderRecipients(force: ${force}).2`);
     this.evaluateRecipients(recipientsToEvaluate).catch(Catch.reportErr);
     this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
-    this.composer.resizeInputTo();
+    this.composer.resizeInput(input);
     this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
     this.composer.setInputTextHeightManuallyIfNeeded();
     this.composer.debug(`parseRenderRecipients(force: ${force}).5`);
     return !!validationResult.valid.length;
   }
 
-  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], isWrong?: boolean): RecipientElement[] => {
+  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: SendingType, isWrong?: boolean): RecipientElement[] => {
     const result = [];
     for (const email of emails) {
       const recipientId = this.generateRecipientId();
       const recipientsHtml = `<span id="${recipientId}">${Xss.escape(email)} ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId)!;
-      const recipient = { email, element, id: recipientId, isWrong };
+      const recipient = { email, element, id: recipientId, sendingType, isWrong };
       this.addedRecipients.push(recipient);
       result.push(recipient);
     }
@@ -292,7 +295,7 @@ export class ComposerContacts extends ComposerComponent {
     const authRes = await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
     if (authRes.result === 'Success') {
       this.composer.canReadEmails = true;
-      await this.searchContacts();
+      await this.searchContacts(this.composer.S.cached('input_to'));
     } else if (authRes.result === 'Denied' || authRes.result === 'Closed') {
       await Ui.modal.error('FlowCrypt needs this permission to search your contacts on Gmail. Without it, FlowCrypt will keep a separate contact list.');
     } else {
@@ -366,9 +369,10 @@ export class ComposerContacts extends ComposerComponent {
   private removeRecipient = (element: HTMLElement) => {
     this.recipientsMissingMyKey = Value.arr.withoutVal(this.recipientsMissingMyKey, $(element).parent().text());
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
+    const container = element.parentElement!.parentElement!; // Get Container, e.g. '.input-container-cc'
     this.addedRecipients[index].element.remove();
     this.addedRecipients.splice(index, 1);
-    this.composer.resizeInputTo();
+    this.composer.resizeInput($(container).find('input'));
     this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
     this.updatePubkeyIcon();
   }
@@ -396,6 +400,7 @@ export class ComposerContacts extends ComposerComponent {
       }
       await this.renderPubkeyResult(recipient, pubkeyLookupRes);
     }
+    console.log(this.addedRecipients);
     this.composer.setInputTextHeightManuallyIfNeeded();
   }
 
