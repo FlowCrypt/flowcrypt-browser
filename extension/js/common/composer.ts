@@ -724,19 +724,6 @@ export class Composer {
       this.showHidePwdOrPubkeyContainerAndColorSendBtn();
       return;
     }
-    if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
-      this.debug(`respondToInputHotkeys.value:enter|tab`);
-      this.S.cached('input_to').blur();
-      if (this.S.cached('contacts').css('display') === 'block') {
-        if (this.S.cached('contacts').find('.select_contact.hover').length) {
-          this.S.cached('contacts').find('.select_contact.hover').click();
-        } else {
-          this.S.cached('contacts').find('.select_contact').first().click();
-        }
-      }
-      this.S.cached('input_to').focus().blur();
-      return false;
-    }
     this.debug(`respondToInputHotkeys.value:none`);
     return;
   }
