@@ -945,6 +945,8 @@ export class Composer {
       // focus on recipients, but only if empty (user has not started typing yet)
       // this is particularly important to skip if CI tests are already typing the recipient in
       this.debug(`renderComposeTable -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
+      // Firefox needs an iframe to be focused before focusing its content
+      BrowserMsg.send.focusFrame(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
       this.S.cached('input_to').focus();
     }
     if (this.urlParams.isReplyBox) {
