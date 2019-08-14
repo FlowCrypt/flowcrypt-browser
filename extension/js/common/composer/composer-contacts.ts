@@ -51,7 +51,7 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
       this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
       this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
-    }))
+    }));
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -90,12 +90,10 @@ export class ComposerContacts extends ComposerComponent {
    */
   private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
     const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
-
     // Enter
     if (e.key === 'Enter') {
       currentActive.click();
       return true;
-
     // Escape
     } else if (e.key === 'Escape') {
       if (this.composer.S.cached('contacts').is(':visible')) {
@@ -104,17 +102,15 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.S.cached('input_to').focus();
       }
       return true;
-
     // Arrow Up
     } else if (e.key === 'ArrowUp') {
-      let prev = currentActive.prev()
+      let prev = currentActive.prev();
       if (!prev.length) {
         prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
       }
       currentActive.removeClass('active');
       prev.addClass('active');
       return true;
-
     // Arrow Down
     } else if (e.key === 'ArrowDown') {
       let next = currentActive.next();
@@ -125,9 +121,8 @@ export class ComposerContacts extends ComposerComponent {
       next.addClass('active');
       return true;
     }
-
     return false;
-  };
+  }
 
   public getRecipients = () => this.addedRecipients;
 
@@ -209,7 +204,7 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
-      this.composer.S.cached('contacts').find('ul li.select_contact').first().addClass('active')
+      this.composer.S.cached('contacts').find('ul li.select_contact').first().addClass('active');
       this.composer.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
         if (email) {
