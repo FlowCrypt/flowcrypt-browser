@@ -39,56 +39,19 @@ export class ComposerContacts extends ComposerComponent {
 
   initActions(): void {
     let preventSearchContacts = false;
-    this.composer.S.cached('input_to').on('keyup', Ui.event.prevent('veryslowspree', () => {
+    this.composer.S.cached('input_to').on('keyup', Ui.event.prevent('veryslowspree', async () => {
       if (!preventSearchContacts) {
-        this.searchContacts();
+        await this.searchContacts();
       }
     }));
-    this.composer.S.cached('input_to').on('keydown blur', Ui.event.handle(async (target, e) => {
-      if (e.type === 'keydown') {
-        preventSearchContacts = true;
-        const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
-
-        // Enter
-        if (e.key === 'Enter') {
-          currentActive.click();
-
-        // Escape
-        } else if (e.key === 'Escape') {
-          if (this.composer.S.cached('contacts').is(':visible')) {
-            e.stopPropagation();
-            this.hideContacts();
-            this.composer.S.cached('input_to').focus();
-          }
-
-        // Arrow Up
-        } else if (e.key === 'ArrowUp') {
-          let prev = currentActive.prev()
-          if (!prev.length) {
-            prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
-          }
-          currentActive.removeClass('active');
-          prev.addClass('active');
-
-        // Arrow Down
-        } else if (e.key === 'ArrowDown') {
-          let next = currentActive.next();
-          if (!next.length) {
-            next = this.composer.S.cached('contacts').find('ul li.select_contact').first();
-          }
-          currentActive.removeClass('active');
-          next.addClass('active');
-
-        // Everyting else
-        } else {
-          preventSearchContacts = false;
-        }
-      } else if (e.type === 'blur') {
-        this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-        this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
-        this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
-      }
+    this.composer.S.cached('input_to').on('keydown', Ui.event.handle(async (target, e) => {
+      preventSearchContacts = this.recipientInputKeydownHandler(e);
     }));
+    this.composer.S.cached('input_to').on('blur', Ui.event.handle(async (target, e) => {
+      this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+      this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
+      this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
+    }))
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -114,6 +77,57 @@ export class ComposerContacts extends ComposerComponent {
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.listen(this.urlParams.parentTabId);
   }
+
+  /**
+   * Keyboard navigation in search results.
+   *
+   * Arrows: select next/prev result
+   * Enter: choose result
+   * Esc: close search results dropdown
+   *
+   * Returns the boolean value which indicates if this.searchContacts() should be
+   * prevented from triggering (in keyup handler)
+   */
+  private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
+    const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
+
+    // Enter
+    if (e.key === 'Enter') {
+      currentActive.click();
+      return true;
+
+    // Escape
+    } else if (e.key === 'Escape') {
+      if (this.composer.S.cached('contacts').is(':visible')) {
+        e.stopPropagation();
+        this.hideContacts();
+        this.composer.S.cached('input_to').focus();
+      }
+      return true;
+
+    // Arrow Up
+    } else if (e.key === 'ArrowUp') {
+      let prev = currentActive.prev()
+      if (!prev.length) {
+        prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
+      }
+      currentActive.removeClass('active');
+      prev.addClass('active');
+      return true;
+
+    // Arrow Down
+    } else if (e.key === 'ArrowDown') {
+      let next = currentActive.next();
+      if (!next.length) {
+        next = this.composer.S.cached('contacts').find('ul li.select_contact').first();
+      }
+      currentActive.removeClass('active');
+      next.addClass('active');
+      return true;
+    }
+
+    return false;
+  };
 
   public getRecipients = () => this.addedRecipients;
 
