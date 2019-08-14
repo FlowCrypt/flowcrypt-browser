@@ -90,11 +90,9 @@ export class ComposerContacts extends ComposerComponent {
    */
   private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
     const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
-    // Enter
     if (e.key === 'Enter') {
       currentActive.click();
       return true;
-    // Escape
     } else if (e.key === 'Escape') {
       if (this.composer.S.cached('contacts').is(':visible')) {
         e.stopPropagation();
@@ -102,7 +100,6 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.S.cached('input_to').focus();
       }
       return true;
-    // Arrow Up
     } else if (e.key === 'ArrowUp') {
       let prev = currentActive.prev();
       if (!prev.length) {
@@ -111,7 +108,6 @@ export class ComposerContacts extends ComposerComponent {
       currentActive.removeClass('active');
       prev.addClass('active');
       return true;
-    // Arrow Down
     } else if (e.key === 'ArrowDown') {
       let next = currentActive.next();
       if (!next.length) {
