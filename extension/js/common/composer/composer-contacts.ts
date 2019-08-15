@@ -127,7 +127,7 @@ export class ComposerContacts extends ComposerComponent {
   }
 
   private renderSearchRes = (contacts: Contact[], query: ProviderContactsQuery) => {
-    const renderableContacts = contacts.slice();
+    const renderableContacts = contacts.slice(0, 10);
     renderableContacts.sort((a, b) =>
       (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(8); // have pgp on top, no pgp bottom. Sort each groups by last used
     if (renderableContacts.length > 0 || this.contactSearchInProgress) {
