@@ -383,8 +383,8 @@ table#compose .bottom .icon:focus { outline: none !important; }
 table#compose .bottom .icon:active { border-color: #4d90fe; }
 table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: middle; padding: 0; display: inline-block; margin-top: 4px }
 table#compose .bottom .icon.active { opacity: 1; }
-table#compose .bottom .icon.action_include_pubkey i { background-image: url(/img/pubkey-icon-16-16-standard.png); }
-table#compose .bottom .icon.action_include_pubkey.active i { background-image: url(/img/pubkey-icon-16-16-active.png); }
+table#compose .bottom .icon.action_include_pubkey i { background-image: url(/img/footer-icon-pubkey-standard.png); }
+table#compose .bottom .icon.action_include_pubkey.active i { background-image: url(/img/footer-icon-pubkey-active.png); }
 table#compose .bottom .icon.action_include_footer i { background-image: url(/img/footer-icon.png); }
 table#compose .bottom .icon.action_include_footer.active i { background-image: url(/img/footer-icon-active.png); }
 table#compose .bottom .icon.action_sign i { background-image: url(/img/svgs/signature.svg); background-size: 20px; }
