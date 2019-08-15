@@ -207,7 +207,7 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
-      const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact')
+      const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact');
       contactItems.first().addClass('active');
       contactItems.click(Ui.event.prevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
