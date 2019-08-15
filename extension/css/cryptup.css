@@ -315,7 +315,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 
 table#compose { min-height: 260px; border-spacing: 0; border-collapse: collapse; width: 100%; background-color: white; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0; border: 1px solid #31A217; background-color: #31A217; }
-table#compose th div.header h1 { font-size: 15px; font-weight: normal; color: #FFF; text-align: left;}
+table#compose th div.header h1 { display: flex; align-items: center; margin: 0; font-size: 15px; font-weight: normal; color: #FFF; text-align: left; cursor: pointer; padding: 0 10px; flex-grow: 1; }
 table#compose.sign th { background-color: #808080; border-color: #808080; }
 table#compose td.input { height: 42px; vertical-align: middle; }
 table#compose td#input_addresses_container { vertical-align: middle; }
@@ -350,7 +350,7 @@ table#compose.sign .recipients img, table#compose.sign .recipients i { display: 
 table#compose.sign .recipients img.display_when_sign { display: inline-block !important; }
 table#compose.sign #password_or_pubkey_container { display: none !important; }
 
-table#compose th div.header { display: flex; justify-content: space-between; padding: 0px 1px 0px 10px; }
+table#compose th div.header { display: flex; height: 36px; }
 table#compose th div.header > div.actions_container { display: flex; align-items: center; }
 table#compose th div.header > div.actions_container span, table#compose th div.header > div.actions_container span img { color: #fff; fill: #fff; width: 15px; height: 15px; }
 table#compose th div.header > div.actions_container span { display: inline-block; cursor: pointer; margin-right: 10px; opacity: .7 }
