@@ -108,6 +108,7 @@ export class ComposerContacts extends ComposerComponent {
       currentActive.click(); // select contact
       return true;
     } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
       let prev = currentActive.prev();
       if (!prev.length) {
         prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
@@ -116,6 +117,7 @@ export class ComposerContacts extends ComposerComponent {
       prev.addClass('active');
       return true;
     } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
       let next = currentActive.next();
       if (!next.length) {
         next = this.composer.S.cached('contacts').find('ul li.select_contact').first();
