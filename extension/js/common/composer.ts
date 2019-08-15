@@ -22,7 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams, BaseRecipient } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
@@ -313,7 +313,7 @@ export class Composer {
     }
   }
 
-  private throwIfFormNotReady = async (recipients: BaseRecipient[]): Promise<void> => {
+  private throwIfFormNotReady = async (recipients: RecipientElement[]): Promise<void> => {
     if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
       this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')).catch(Catch.reportErr);
     }
@@ -332,7 +332,7 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throwIfFormValsInvalid = async (recipients: BaseRecipient[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
+  private throwIfFormValsInvalid = async (recipients: RecipientElement[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
     const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -413,7 +413,7 @@ export class Composer {
     }
   }
 
-  private encryptSend = async (recipients: BaseRecipient[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private encryptSend = async (recipients: RecipientElement[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients.map(r => r.email), subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
@@ -427,7 +427,7 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: BaseRecipient[], subject: string, plaintext: string) => {
+  private signSend = async (recipients: RecipientElement[], subject: string, plaintext: string) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
     if (primaryKi) {
@@ -565,7 +565,7 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: BaseRecipient[],
+  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: RecipientElement[],
     subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
     const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
@@ -1108,9 +1108,9 @@ export class Composer {
         return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
       }));
     };
-    msg.to = await addNameToEmail(msg.to);
-    msg.cc = await addNameToEmail(msg.cc);
-    msg.bcc = await addNameToEmail(msg.bcc);
+    msg.recipients.to = await addNameToEmail(msg.recipients.to);
+    msg.recipients.cc = await addNameToEmail(msg.recipients.cc);
+    msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc);
     const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
     if (name) {
       msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;

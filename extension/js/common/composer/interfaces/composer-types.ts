@@ -4,6 +4,12 @@
 
 export type SendingType = 'to' | 'cc' | 'bcc';
 
+export type Recipients = {
+  to: string[],
+  cc: string[],
+  bcc: string[]
+};
+
 export interface BaseRecipient {
   email: string;
   sendingType: SendingType;
