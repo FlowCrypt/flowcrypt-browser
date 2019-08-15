@@ -207,14 +207,18 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
-      this.composer.S.cached('contacts').find('ul li.select_contact').first().addClass('active');
-      this.composer.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', async (target: HTMLElement) => {
+      const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact')
+      contactItems.first().addClass('active');
+      contactItems.click(Ui.event.prevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
         if (email) {
           await this.selectContact(email, query);
         }
       }, this.composer.getErrHandlers(`select contact`)));
-      this.composer.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('active'); }, function () { $(this).removeClass('active'); });
+      contactItems.hover(function () {
+        contactItems.removeClass('active');
+        $(this).addClass('active');
+      });
       this.composer.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() =>
         this.authContacts(this.urlParams.acctEmail), this.composer.getErrHandlers(`authorize contact search`)));
       const offset = this.composer.S.cached('input_to').offset()!;
