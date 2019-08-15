@@ -724,19 +724,6 @@ export class Composer {
       this.showHidePwdOrPubkeyContainerAndColorSendBtn();
       return;
     }
-    if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
-      this.debug(`respondToInputHotkeys.value:enter|tab`);
-      this.S.cached('input_to').blur();
-      if (this.S.cached('contacts').css('display') === 'block') {
-        if (this.S.cached('contacts').find('.select_contact.hover').length) {
-          this.S.cached('contacts').find('.select_contact.hover').click();
-        } else {
-          this.S.cached('contacts').find('.select_contact').first().click();
-        }
-      }
-      this.S.cached('input_to').focus().blur();
-      return false;
-    }
     this.debug(`respondToInputHotkeys.value:none`);
     return;
   }
@@ -890,8 +877,7 @@ export class Composer {
   private renderComposeTable = async () => {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
-    // waiting for https://github.com/FlowCrypt/flowcrypt-browser/issues/1924 and https://github.com/FlowCrypt/flowcrypt-browser/issues/1934
-    // this.S.cached('body').keydown(Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click()));
+    this.S.cached('body').keydown(Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click()));
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));

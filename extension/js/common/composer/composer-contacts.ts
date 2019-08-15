@@ -38,18 +38,19 @@ export class ComposerContacts extends ComposerComponent {
   }
 
   initActions(): void {
-    this.composer.S.cached('input_to').on('keyup', Ui.event.prevent('veryslowspree', () => this.searchContacts()));
-    this.composer.S.cached('input_to').on('keydown blur', Ui.event.handle(async (target, e) => {
-      if (e.type === 'keydown' && e.which === 13) {
-        this.hideContacts();
-        this.parseRenderRecipients(this.composer.S.cached('input_to_container'), true);
-        this.composer.S.cached('input_to').focus();
-        return;
-      } else if (e.type === 'blur') {
-        this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
-        this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
-        this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
+    let preventSearchContacts = false;
+    this.composer.S.cached('input_to').on('keyup', Ui.event.prevent('veryslowspree', async () => {
+      if (!preventSearchContacts) {
+        await this.searchContacts();
       }
+    }));
+    this.composer.S.cached('input_to').on('keydown', Ui.event.handle(async (target, e) => {
+      preventSearchContacts = this.recipientInputKeydownHandler(e);
+    }));
+    this.composer.S.cached('input_to').on('blur', Ui.event.handle(async (target, e) => {
+      this.composer.debug(`input_to.blur -> parseRenderRecipients start causedBy(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`);
+      this.parseRenderRecipients(this.composer.S.cached('input_to_container'));
+      this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
@@ -75,6 +76,57 @@ export class ComposerContacts extends ComposerComponent {
     }, this.composer.getErrHandlers(`set/unset pubkey attachment`)));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.listen(this.urlParams.parentTabId);
+  }
+
+  /**
+   * Keyboard navigation in search results.
+   *
+   * Arrows: select next/prev result
+   * Enter: choose result
+   * Esc: close search results dropdown
+   *
+   * Returns the boolean value which indicates if this.searchContacts() should be
+   * prevented from triggering (in keyup handler)
+   */
+  private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
+    const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
+    if (e.key === 'Escape') {
+      if (this.composer.S.cached('contacts').is(':visible')) {
+        e.stopPropagation();
+        this.hideContacts();
+        this.composer.S.cached('input_to').focus();
+      }
+      return true;
+    } else if (!currentActive.length) {
+      return false; // all following code operates on selected currentActive element
+    } else if (e.key === 'Tab') {
+      e.preventDefault(); // don't switch inputs
+      e.stopPropagation(); // don't switch inputs
+      currentActive.click(); // select contact
+      return true;
+    } else if (e.key === 'Enter') {
+      currentActive.click(); // select contact
+      return true;
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      let prev = currentActive.prev();
+      if (!prev.length) {
+        prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
+      }
+      currentActive.removeClass('active');
+      prev.addClass('active');
+      return true;
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      let next = currentActive.next();
+      if (!next.length) {
+        next = this.composer.S.cached('contacts').find('ul li.select_contact').first();
+      }
+      currentActive.removeClass('active');
+      next.addClass('active');
+      return true;
+    }
+    return false;
   }
 
   public getRecipients = () => this.addedRecipients;
@@ -157,13 +209,18 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
-      this.composer.S.cached('contacts').find('ul li.select_contact').click(Ui.event.prevent('double', async (target: HTMLElement) => {
+      const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact');
+      contactItems.first().addClass('active');
+      contactItems.click(Ui.event.prevent('double', async (target: HTMLElement) => {
         const email = Str.parseEmail($(target).attr('email') || '').email;
         if (email) {
           await this.selectContact(email, query);
         }
       }, this.composer.getErrHandlers(`select contact`)));
-      this.composer.S.cached('contacts').find('ul li.select_contact').hover(function () { $(this).addClass('hover'); }, function () { $(this).removeClass('hover'); });
+      contactItems.hover(function () {
+        contactItems.removeClass('active');
+        $(this).addClass('active');
+      });
       this.composer.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() =>
         this.authContacts(this.urlParams.acctEmail), this.composer.getErrHandlers(`authorize contact search`)));
       const offset = this.composer.S.cached('input_to').offset()!;
