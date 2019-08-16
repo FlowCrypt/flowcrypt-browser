@@ -883,7 +883,7 @@ export class Composer {
       return -1;
     }
     return 0;
-  });
+  })
 
   private renderComposeTable = async () => {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
