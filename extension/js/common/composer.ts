@@ -1000,7 +1000,7 @@ export class Composer {
     if (addresses.length > 1) {
       const inputAddrContainer = $('#input_addresses_container');
       inputAddrContainer.addClass('show_send_from');
-      let selectElHtml = '<select id="input_from" tabindex="-1" data-test="input-from"></select>';
+      let selectElHtml = '<select id="input_from" tabindex="1" data-test="input-from"></select>';
       if (!this.urlParams.isReplyBox) {
         selectElHtml += '<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">';
       }
