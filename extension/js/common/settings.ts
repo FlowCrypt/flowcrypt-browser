@@ -62,22 +62,6 @@ export class Settings {
     }
   }
 
-  static openpgpKeyEncrypt = async (key: OpenPGP.key.Key, passphrase: string) => {
-    if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
-      throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
-    }
-    // the checks below will be unnecessary once https://github.com/openpgpjs/openpgpjs/issues/943 lands
-    const privateKeyPackets = key.getKeys().filter(k => k.keyPacket.tag === openpgp.enums.packet.secretKey);
-    const encryptedPackets = privateKeyPackets.filter(p => !p.isDecrypted());
-    if (!privateKeyPackets.length) {
-      throw new Error(`No private key packets in key to encrypt. Is this a private key?`);
-    }
-    if (encryptedPackets.length) {
-      throw new Error(`Cannot encrypt a key that has ${encryptedPackets.length} of ${privateKeyPackets.length} private packets still encrypted`);
-    }
-    await key.encrypt(passphrase);
-  }
-
   private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
     const pageParams: UrlParams = { placement: 'settings', parentTabId };
     if (acctEmail) {
@@ -259,7 +243,7 @@ export class Settings {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
           const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
-          await Pgp.key.decrypt(origPrv, [passphrase]);
+          await Pgp.key.decrypt(origPrv, passphrase);
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {

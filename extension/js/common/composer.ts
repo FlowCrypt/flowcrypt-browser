@@ -273,7 +273,7 @@ export class Composer {
     if (this.urlParams.draftId) {
       const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
       if (isSuccessfulyLoaded) {
-        this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'), true).catch(Catch.reportErr);
+        this.composerContacts.parseRenderRecipients(this.S.cached('input_addresses_container_outer').find('input'), true).catch(Catch.reportErr);
       }
     } else {
       if (this.urlParams.isReplyBox) {
@@ -314,8 +314,8 @@ export class Composer {
   }
 
   private throwIfFormNotReady = async (recipients: RecipientElement[]): Promise<void> => {
-    if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
-      this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')).catch(Catch.reportErr);
+    if (this.hasValue(this.S.cached('input_addresses_container_outer').find('input'))) {
+      this.composerContacts.parseRenderRecipients(this.S.cached('input_addresses_container_outer').find('input')).catch(Catch.reportErr);
     }
     if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
@@ -454,7 +454,7 @@ export class Composer {
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
         if (!prv.isDecrypted()) {
-          await Pgp.key.decrypt(prv, [passphrase!]); // checked !== undefined above
+          await Pgp.key.decrypt(prv, passphrase!); // checked !== undefined above
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
@@ -960,7 +960,7 @@ export class Composer {
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')).catch(Catch.reportErr); // this will force firefox to render them on load
+        this.composerContacts.parseRenderRecipients(this.S.cached('input_to')).catch(Catch.reportErr); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
     } else {
@@ -1115,5 +1115,9 @@ export class Composer {
     if (name) {
       msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;
     }
+  }
+
+  private hasValue(inputs: JQuery<HTMLElement>): boolean {
+    return !!inputs.filter((index, elem) => !!$(elem).val()).length;
   }
 }

@@ -180,7 +180,7 @@ export class KeyImportUi {
       if (toDecrypt.isDecrypted()) {
         return;
       }
-      decryptResult = await Pgp.key.decrypt(toDecrypt, [passphrase]);
+      decryptResult = await Pgp.key.decrypt(toDecrypt, passphrase);
     } catch (e) {
       throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
     }

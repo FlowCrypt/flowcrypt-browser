@@ -181,7 +181,7 @@ Catch.try(async () => {
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-      await Settings.openpgpKeyEncrypt(prv, newPassphrase);
+      await Pgp.key.encrypt(prv, newPassphrase);
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
       await Store.keysAdd(acctEmail, prv.armor());
       try {
@@ -213,7 +213,7 @@ Catch.try(async () => {
         return false;
       }
     }
-    if (await Pgp.key.decrypt(prv, ['']) === true) {
+    if (await Pgp.key.decrypt(prv, '') === true) {
       return false;
     }
     return true;
@@ -317,7 +317,7 @@ Catch.try(async () => {
       if (!pp) {
         return false;
       }
-      if (await Pgp.key.decrypt(prv, [pp]) !== true) {
+      if (await Pgp.key.decrypt(prv, pp) !== true) {
         await Ui.modal.warning('Pass phrase did not match, please try again.');
         return false;
       }

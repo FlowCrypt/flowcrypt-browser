@@ -118,6 +118,7 @@ type PreparedForDecrypt = { isArmored: boolean, isCleartext: true, message: Open
   | { isArmored: boolean, isCleartext: false, message: OpenPGP.message.Message };
 
 type OpenpgpMsgOrCleartext = OpenPGP.message.Message | OpenPGP.cleartext.CleartextMessage;
+type PrvPacket = (OpenPGP.packet.SecretKey | OpenPGP.packet.SecretSubkey);
 
 export type Pwd = { question?: string; answer: string; };
 export type VerifyRes = { signer?: string; contact?: Contact; match: boolean | null; error?: string; };
@@ -307,34 +308,47 @@ export class Pgp {
       }
       return { keys: allKeys, errs: allErrs };
     },
-    decrypt: async (key: OpenPGP.key.Key, passphrases: string[], optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
-      try {
-        return await key.decrypt(passphrases, optionalKeyid); // when no keyid intersection found, it will decrypt all
-      } catch (e) {
-        if (e instanceof Error && e.message.toLowerCase().includes('passphrase')) {
-          return false;
-        } else if (e instanceof Error && e.message.toLowerCase().includes('already decrypted') && optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
-          // OpenPGP.js will say key.isDecrypted() -> false, but still throw 'already decrypted', if some packets were already decrypted, but not others
-          // below we can gracefully decrypt the remaining required packets, if a flag was provided to do so
-          if (passphrases.length !== 1) {
-            throw new Error(`Key packet is already decrypted + cannot gracefully decrypt with more than one pass phrase`);
-          }
-          for (const { keyPacket } of key.getKeys(optionalKeyid)) {
-            if (keyPacket.isDecrypted() === false && (keyPacket as OpenPGP.packet.SecretKey).encrypted) {
-              try {
-                await (keyPacket as OpenPGP.packet.SecretKey).decrypt(passphrases[0]);
-              } catch (e) {
-                if (e instanceof Error && e.message.includes('passphrase')) {
-                  return false;
-                }
-                throw e;
-              }
-            }
-          }
-          return true;
-        }
-        throw e;
+    isPacketPrivate: (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => p.tag === openpgp.enums.packet.secretKey || p.tag === openpgp.enums.packet.secretSubkey,
+    decrypt: async (prv: OpenPGP.key.Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
+      if (!prv.isPrivate()) {
+        throw new Error("Nothing to decrypt in a public key");
       }
+      const chosenPrvPackets = prv.getKeys(optionalKeyid).map(k => k.keyPacket).filter(Pgp.key.isPacketPrivate) as PrvPacket[];
+      if (!chosenPrvPackets.length) {
+        throw new Error(`No private key packets selected of ${prv.getKeys().map(k => k.keyPacket).filter(Pgp.key.isPacketPrivate).length} prv packets available`);
+      }
+      for (const prvPacket of chosenPrvPackets) {
+        if (prvPacket.isDecrypted()) {
+          if (optionalBehaviorFlag === 'OK-IF-ALREADY-DECRYPTED') {
+            continue;
+          } else {
+            throw new Error("Decryption failed - key packet was already decrypted");
+          }
+        }
+        try {
+          await prvPacket.decrypt(passphrase); // throws on password mismatch
+        } catch (e) {
+          if (e instanceof Error && e.message.toLowerCase().includes('passphrase')) {
+            return false;
+          }
+          throw e;
+        }
+      }
+      return true;
+    },
+    encrypt: async (prv: OpenPGP.key.Key, passphrase: string) => {
+      if (!passphrase || passphrase === 'undefined' || passphrase === 'null') {
+        throw new Error(`Encryption passphrase should not be empty:${typeof passphrase}:${passphrase}`);
+      }
+      const secretPackets = prv.getKeys().map(k => k.keyPacket).filter(Pgp.key.isPacketPrivate);
+      const encryptedPacketCount = secretPackets.filter(p => p.isDecrypted() === false).length;
+      if (!secretPackets.length) {
+        throw new Error(`No private key packets in key to encrypt. Is this a private key?`);
+      }
+      if (encryptedPacketCount) {
+        throw new Error(`Cannot encrypt a key that has ${encryptedPacketCount} of ${secretPackets.length} private packets still encrypted`);
+      }
+      await prv.encrypt(passphrase);
     },
     normalize: async (armored: string): Promise<{ normalized: string, keys: OpenPGP.key.Key[] }> => {
       try {
@@ -673,7 +687,7 @@ export class Pgp {
         if (cachedDecryptedKey && (cachedDecryptedKey.isDecrypted() || (optionalMatchingKeyid && cachedDecryptedKey.getKeys(optionalMatchingKeyid).every(k => k.isDecrypted() === true)))) {
           ki.decrypted = cachedDecryptedKey;
           keys.prvForDecryptDecrypted.push(ki);
-        } else if (ki.parsed!.isDecrypted() || await Pgp.key.decrypt(ki.parsed!, [ki.passphrase!], optionalMatchingKeyid, 'OK-IF-ALREADY-DECRYPTED') === true) {
+        } else if (ki.parsed!.isDecrypted() || await Pgp.key.decrypt(ki.parsed!, ki.passphrase!, optionalMatchingKeyid, 'OK-IF-ALREADY-DECRYPTED') === true) {
           Store.decryptedKeyCacheSet(ki.parsed!);
           ki.decrypted = ki.parsed!;
           keys.prvForDecryptDecrypted.push(ki);

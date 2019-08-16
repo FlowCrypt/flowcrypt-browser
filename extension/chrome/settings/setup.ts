@@ -355,7 +355,7 @@ Catch.try(async () => {
       let matchedPreviouslyRecoveredKey = false;
       for (const fetchedKey of fetchedKeyBackups) {
         const longid = await Pgp.key.longid(fetchedKey);
-        if (longid && await Pgp.key.decrypt(await Pgp.key.read(fetchedKey.armor()), [passphrase]) === true) { // attempt to decrypt a copy of the key
+        if (longid && await Pgp.key.decrypt(await Pgp.key.read(fetchedKey.armor()), passphrase) === true) { // attempt to decrypt a copy of the key
           if (!mathingPassphrases.includes(passphrase)) {
             mathingPassphrases.push(passphrase);
           }
