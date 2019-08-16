@@ -247,6 +247,18 @@ export class Ui {
     }
   }
 
+  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
+    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
+      callback(e);
+    }
+  }
+
+  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
+    if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
+      callback(e);
+    }
+  }
+
   public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
     if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
       callback();
