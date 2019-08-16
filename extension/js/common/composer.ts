@@ -890,10 +890,9 @@ export class Composer {
     this.S.cached('compose_table').css('display', 'table');
     this.S.cached('body').keydown(Ui.event.handle((_, e) => {
       Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
-      // Focus trap (Tab, Shift+Tab)
       const focusableEls = this.getFocusableEls();
       const focusIndex = focusableEls.indexOf(e.target);
-      if (focusIndex !== -1) {
+      if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)
         Ui.tab((e) => { // rollover to first item or focus next
           focusableEls[focusIndex === focusableEls.length - 1 ? 0 : focusIndex + 1].focus();
           e.preventDefault();
