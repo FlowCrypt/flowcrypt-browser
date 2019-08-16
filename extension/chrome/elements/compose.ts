@@ -343,9 +343,9 @@ Catch.try(async () => {
       iframeHeight: 230,
       variant: 'noscroll',
       afterContent: () => {
-        const iframe = $('.featherlight.noscroll > .featherlight-content > iframe')
-        iframe.attr('scrolling', 'no').focus()
-        iframe.contents().find('textarea').focus()
+        const iframe = $('.featherlight.noscroll > .featherlight-content > iframe');
+        iframe.attr('scrolling', 'no').focus();
+        iframe.contents().find('textarea').focus();
       },
     }),
     renderAddPubkeyDialog: (emails: string[]) => {
