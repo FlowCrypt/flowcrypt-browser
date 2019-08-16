@@ -886,7 +886,7 @@ export class Composer {
           return -1;
         }
         return 0;
-      })
+      });
   }
 
   private renderComposeTable = async () => {
@@ -895,28 +895,28 @@ export class Composer {
     this.S.cached('body').keydown((e) => {
       Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
       // Focus trap (Tab, Shift+Tab)
-      const focusableElements = this.getFocusableElements()
-      const currentFocusIndex = focusableElements.indexOf(e.target)
+      const focusableElements = this.getFocusableElements();
+      const currentFocusIndex = focusableElements.indexOf(e.target);
       if (currentFocusIndex !== -1) {
         Ui.tab((e) => {
           // rollover to first item
           if (currentFocusIndex === focusableElements.length - 1) {
-            focusableElements[0].focus()
+            focusableElements[0].focus();
           // focus next
           } else {
-            focusableElements[currentFocusIndex + 1].focus()
+            focusableElements[currentFocusIndex + 1].focus();
           }
-          e.preventDefault()
+          e.preventDefault();
         })(e);
         Ui.shiftTab((e) => {
           // rollover to last item
           if (currentFocusIndex === 0) {
-            focusableElements[focusableElements.length - 1].focus()
+            focusableElements[focusableElements.length - 1].focus();
           // focus prev
           } else {
-            focusableElements[currentFocusIndex - 1].focus()
+            focusableElements[currentFocusIndex - 1].focus();
           }
-          e.preventDefault()
+          e.preventDefault();
         })(e);
       }
     });
