@@ -874,10 +874,52 @@ export class Composer {
     }
   }
 
+  private getFocusableElements = () => {
+    return this.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray()
+      // sort according to tabindex
+      .sort((a, b) => {
+        const tabindexA = parseInt(a.getAttribute('tabindex') || '');
+        const tabindexB = parseInt(b.getAttribute('tabindex') || '');
+        if (tabindexA > tabindexB) {
+          return 1;
+        } else if (tabindexA < tabindexB) {
+          return -1;
+        }
+        return 0;
+      })
+  }
+
   private renderComposeTable = async () => {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
-    this.S.cached('body').keydown(Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click()));
+    this.S.cached('body').keydown((e) => {
+      Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
+      // Focus trap (Tab, Shift+Tab)
+      const focusableElements = this.getFocusableElements()
+      const currentFocusIndex = focusableElements.indexOf(e.target)
+      if (currentFocusIndex !== -1) {
+        Ui.tab((e) => {
+          // rollover to first item
+          if (currentFocusIndex === focusableElements.length - 1) {
+            focusableElements[0].focus()
+          // focus next
+          } else {
+            focusableElements[currentFocusIndex + 1].focus()
+          }
+          e.preventDefault()
+        })(e);
+        Ui.shiftTab((e) => {
+          // rollover to last item
+          if (currentFocusIndex === 0) {
+            focusableElements[focusableElements.length - 1].focus()
+          // focus prev
+          } else {
+            focusableElements[currentFocusIndex - 1].focus()
+          }
+          e.preventDefault()
+        })(e);
+      }
+    });
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
