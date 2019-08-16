@@ -874,20 +874,16 @@ export class Composer {
     }
   }
 
-  private getFocusableElements = () => {
-    return this.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray()
-      // sort according to tabindex
-      .sort((a, b) => {
-        const tabindexA = parseInt(a.getAttribute('tabindex') || '');
-        const tabindexB = parseInt(b.getAttribute('tabindex') || '');
-        if (tabindexA > tabindexB) {
-          return 1;
-        } else if (tabindexA < tabindexB) {
-          return -1;
-        }
-        return 0;
-      });
-  }
+  private getFocusableEls = () => this.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
+    const tabindexA = parseInt(a.getAttribute('tabindex') || '');
+    const tabindexB = parseInt(b.getAttribute('tabindex') || '');
+    if (tabindexA > tabindexB) { // sort according to tabindex
+      return 1;
+    } else if (tabindexA < tabindexB) {
+      return -1;
+    }
+    return 0;
+  });
 
   private renderComposeTable = async () => {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
@@ -895,7 +891,7 @@ export class Composer {
     this.S.cached('body').keydown(Ui.event.handle((_, e) => {
       Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
       // Focus trap (Tab, Shift+Tab)
-      const focusableEls = this.getFocusableElements();
+      const focusableEls = this.getFocusableEls();
       const focusIndex = focusableEls.indexOf(e.target);
       if (focusIndex !== -1) {
         Ui.tab((e) => { // rollover to first item or focus next
