@@ -342,7 +342,11 @@ Catch.try(async () => {
       iframeWidth: 490,
       iframeHeight: 230,
       variant: 'noscroll',
-      afterContent: () => $('.featherlight.noscroll > .featherlight-content > iframe').attr('scrolling', 'no'),
+      afterContent: () => {
+        const iframe = $('.featherlight.noscroll > .featherlight-content > iframe');
+        iframe.attr('scrolling', 'no').focus();
+        iframe.contents().find('textarea').focus();
+      },
     }),
     renderAddPubkeyDialog: (emails: string[]) => {
       if (placement !== 'settings') {
