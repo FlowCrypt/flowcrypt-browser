@@ -892,34 +892,22 @@ export class Composer {
   private renderComposeTable = async () => {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
-    this.S.cached('body').keydown((e) => {
+    this.S.cached('body').keydown(Ui.event.handle((_, e) => {
       Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
       // Focus trap (Tab, Shift+Tab)
-      const focusableElements = this.getFocusableElements();
-      const currentFocusIndex = focusableElements.indexOf(e.target);
-      if (currentFocusIndex !== -1) {
-        Ui.tab((e) => {
-          // rollover to first item
-          if (currentFocusIndex === focusableElements.length - 1) {
-            focusableElements[0].focus();
-          // focus next
-          } else {
-            focusableElements[currentFocusIndex + 1].focus();
-          }
+      const focusableEls = this.getFocusableElements();
+      const focusIndex = focusableEls.indexOf(e.target);
+      if (focusIndex !== -1) {
+        Ui.tab((e) => { // rollover to first item or focus next
+          focusableEls[focusIndex === focusableEls.length - 1 ? 0 : focusIndex + 1].focus();
           e.preventDefault();
         })(e);
-        Ui.shiftTab((e) => {
-          // rollover to last item
-          if (currentFocusIndex === 0) {
-            focusableElements[focusableElements.length - 1].focus();
-          // focus prev
-          } else {
-            focusableElements[currentFocusIndex - 1].focus();
-          }
+        Ui.shiftTab((e) => { // rollover to last item or focus prev
+          focusableEls[focusIndex === 0 ? focusableEls.length - 1 : focusIndex - 1].focus();
           e.preventDefault();
         })(e);
       }
-    });
+    }));
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
