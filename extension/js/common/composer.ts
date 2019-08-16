@@ -230,9 +230,9 @@ export class Composer {
     this.composerDraft.initActions().catch(Catch.reportErr);
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
-    $("body").click(event => {
+    $('body').click(event => {
       const target = $(event.target);
-      if (this.composeWindowIsMaximized && (!target.closest(".container").length)) {
+      if (this.composeWindowIsMaximized && target.is($('body'))) {
         this.minimizeComposerWindow();
       }
     });
