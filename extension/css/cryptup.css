@@ -379,7 +379,7 @@ table#compose .bottom .icon { padding: 3px 4px; display: inline-block; border: 1
 table#compose .bottom .icon::-moz-focus-inner { border: 0; } /* remove dotted outline in Firefox */
 table#compose .bottom .icon img, table#compose .bottom .icon i { height: 20px; width: 20px; display: block; background-repeat: no-repeat; background-position: center; }
 table#compose .bottom .icon.right { float:right; margin-top: 3px; }
-table#compose .bottom .icon:hover, table#compose .bottom .icon:focus { outline: none !important; border-color: #dadada; opacity: 1; }
+table#compose .bottom .icon:hover, table#compose .bottom .icon:focus, table#compose .bottom .icon:focus-within { outline: none !important; border-color: #dadada; opacity: 1; }
 table#compose .bottom .icon:active { border-color: #4d90fe; }
 table#compose .bottom .icon div { height: 21px; width: 21px; vertical-align: middle; padding: 0; display: inline-block; margin-top: 4px }
 table#compose .bottom .icon.active { opacity: 1; }
