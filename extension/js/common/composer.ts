@@ -889,7 +889,10 @@ export class Composer {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
     this.S.cached('body').keydown(Ui.event.handle((_, e) => {
-      Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
+      if (this.composeWindowIsMinimized) {
+        return e.preventDefault();
+      }
+      Ui.escape(() => !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
       const focusableEls = this.getFocusableEls();
       const focusIndex = focusableEls.indexOf(e.target);
       if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)
