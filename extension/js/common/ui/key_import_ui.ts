@@ -64,7 +64,7 @@ export class KeyImportUi {
     $('.input_private_key').change(Ui.event.handle(async target => {
       const { keys: [prv] } = await openpgp.key.readArmored(String($(target).val()));
       $('.input_passphrase').val('');
-      if (prv && prv.isPrivate() && prv.isDecrypted()) {
+      if (prv && prv.isPrivate() && !prv.isFullyDecrypted()) {
         $('.line.pass_phrase_needed').show();
       } else {
         $('.line.pass_phrase_needed').hide();
@@ -174,10 +174,13 @@ export class KeyImportUi {
     }
     let decryptResult;
     try {
-      if (toEncrypt.isDecrypted()) {
+      if (!toEncrypt.isFullyEncrypted()) {
+        if (!toDecrypt.isFullyDecrypted()) {
+          throw new UserAlert("This key seems to be only partially encrypted - please provide a fully decrypted or fully encrypted key");
+        }
         await toEncrypt.encrypt(passphrase);
       }
-      if (toDecrypt.isDecrypted()) {
+      if (toDecrypt.isFullyDecrypted()) {
         return;
       }
       decryptResult = await Pgp.key.decrypt(toDecrypt, passphrase);

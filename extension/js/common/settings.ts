@@ -252,7 +252,7 @@ export class Settings {
             reject(e);
             return;
           }
-          if (reformatted.key.isDecrypted()) {
+          if (!reformatted.key.isFullyEncrypted()) {
             await reformatted.key.encrypt(passphrase); // this is a security precaution, in case OpenPGP.js library changes in the future
           }
           if (await reformatted.key.getEncryptionKey()) {

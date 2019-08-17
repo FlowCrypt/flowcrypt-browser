@@ -41,7 +41,7 @@ Catch.try(async () => {
     $(`#${name}`).css('display', 'block');
   };
 
-  if (primaryPrv.isDecrypted() || (storedOrSessionPp && await Pgp.key.decrypt(primaryPrv, storedOrSessionPp))) {
+  if (primaryPrv.isFullyDecrypted() || (storedOrSessionPp && await Pgp.key.decrypt(primaryPrv, storedOrSessionPp))) {
     displayBlock('step_1_enter_new'); // current pp is already known
   } else {
     displayBlock('step_0_enter_current');
