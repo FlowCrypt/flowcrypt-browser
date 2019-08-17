@@ -41,7 +41,15 @@ export class AttUI {
         },
       };
       this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
+      this.setInputAttributes();
     });
+  }
+
+  setInputAttributes = () => {
+    const input = this.uploader._buttons[0].getInput();
+    input.setAttribute('title', 'Attach a file');
+    input.setAttribute('tabindex', '8');
+    return input;
   }
 
   setAttAddedCb = (cb: (r: Att) => Promise<void>) => {
@@ -117,6 +125,8 @@ export class AttUI {
       if (typeof this.attAddedCb === 'function') {
         const a = await this.collectAtt(uploadFileId);
         await this.attAddedCb(a);
+        const input = this.setInputAttributes();
+        input.focus();
       }
     }
   }
