@@ -45,8 +45,8 @@ export class AttUI {
     });
   }
 
-  setInputAttributes = () => {
-    const input = this.uploader._buttons[0].getInput();
+  setInputAttributes = (): HTMLInputElement => {
+    const input: HTMLInputElement = this.uploader._buttons[0].getInput(); // tslint:disable-line:no-unsafe-any
     input.setAttribute('title', 'Attach a file');
     input.setAttribute('tabindex', '8');
     return input;
