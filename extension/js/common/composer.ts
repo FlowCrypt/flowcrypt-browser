@@ -433,7 +433,7 @@ export class Composer {
     if (primaryKi) {
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
       const passphrase = await this.app.storagePassphraseGet();
-      if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
+      if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
           await this.signSend(recipients, subject, plaintext);
@@ -453,7 +453,7 @@ export class Composer {
         // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
-        if (!prv.isDecrypted()) {
+        if (!prv.isFullyDecrypted()) {
           await Pgp.key.decrypt(prv, passphrase!); // checked !== undefined above
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');

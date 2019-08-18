@@ -27,7 +27,7 @@ Catch.try(async () => {
   Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
-  if (key.isDecrypted()) {
+  if (!key.isFullyEncrypted()) {
     const setUpPpUrl = Env.urlCreate('change_passphrase.htm', { acctEmail, parentTabId });
     Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
     return;
