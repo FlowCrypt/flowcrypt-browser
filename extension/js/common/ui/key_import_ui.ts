@@ -67,6 +67,7 @@ export class KeyImportUi {
       $('.input_passphrase').val('');
       if (!prv || !prv.isPrivate()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
+        return;
       }
       if (prv.isFullyDecrypted()) {
         $('.line.unprotected_key_create_pass_phrase').show();
