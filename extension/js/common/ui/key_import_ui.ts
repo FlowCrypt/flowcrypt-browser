@@ -179,29 +179,30 @@ export class KeyImportUi {
     if (!passphrase) {
       throw new UserAlert('Please enter a pass phrase to use with this key');
     }
-    let decryptResult;
     try {
-      if (!toEncrypt.isFullyEncrypted()) {
-        if (!toDecrypt.isFullyDecrypted()) {
-          throw new UserAlert("This key seems to be only partially encrypted - please provide a fully decrypted or fully encrypted key");
-        }
+      if (toEncrypt.isFullyDecrypted()) {
         await toEncrypt.encrypt(passphrase);
+      } else if (!toEncrypt.isFullyEncrypted()) {
+        throw new UserAlert(Lang.setup.partiallyEncryptedKeyUnsupported);
       }
-      if (toDecrypt.isFullyDecrypted()) {
-        return;
+      if (toDecrypt.isFullyEncrypted()) {
+        if (! await Pgp.key.decrypt(toDecrypt, passphrase)) {
+          this.onBadPassphrase();
+          if (this.expectedLongid) { // todo - double check this line, should it not say `this.expectedLongid === Pgp.key.longid() ? Or is that checked elsewhere beforehand?
+            // tslint:disable-next-line:max-line-length
+            throw new UserAlert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
+          } else {
+            throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
+          }
+        }
+      } else if (!toDecrypt.isFullyDecrypted()) {
+        throw new UserAlert(Lang.setup.partiallyEncryptedKeyUnsupported);
       }
-      decryptResult = await Pgp.key.decrypt(toDecrypt, passphrase);
     } catch (e) {
-      throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
-    }
-    if (!decryptResult) {
-      this.onBadPassphrase();
-      if (this.expectedLongid) {
-        // tslint:disable-next-line:max-line-length
-        throw new UserAlert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
-      } else {
-        throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
+      if (e instanceof UserAlert) {
+        throw e;
       }
+      throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
     }
   }
 
