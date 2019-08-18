@@ -8,6 +8,7 @@ import { Pgp } from '../core/pgp.js';
 import { KeyBlockType } from '../core/mime.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { AttUI } from './att_ui.js';
+import { Lang } from '../lang.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -46,17 +47,17 @@ export class KeyImportUi {
       if ((this as HTMLInputElement).value === 'file') {
         $('.input_private_key').val('').change().prop('disabled', true);
         $('.source_paste_container').css('display', 'none');
-        $('.source_paste_container .pass_phrase_needed').hide();
+        $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
         $('#fineuploader_button > input').click();
       } else if ((this as HTMLInputElement).value === 'paste') {
         $('.input_private_key').val('').change().prop('disabled', false);
         $('.source_paste_container').css('display', 'block');
-        $('.source_paste_container .pass_phrase_needed').hide();
+        $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
       } else if ((this as HTMLInputElement).value === 'backup') {
         window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
     });
-    $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(Ui.event.handle(target => {
+    $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(target => {
       $('.source_paste_container .input_passphrase').val(Pgp.password.random());
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
@@ -64,10 +65,16 @@ export class KeyImportUi {
     $('.input_private_key').change(Ui.event.handle(async target => {
       const { keys: [prv] } = await openpgp.key.readArmored(String($(target).val()));
       $('.input_passphrase').val('');
-      if (prv && prv.isPrivate() && !prv.isFullyDecrypted()) {
-        $('.line.pass_phrase_needed').show();
+      if (!prv || !prv.isPrivate()) {
+        $('.line.unprotected_key_create_pass_phrase').hide();
+      }
+      if (prv.isFullyDecrypted()) {
+        $('.line.unprotected_key_create_pass_phrase').show();
+      } else if (prv.isFullyEncrypted()) {
+        $('.line.unprotected_key_create_pass_phrase').hide();
       } else {
-        $('.line.pass_phrase_needed').hide();
+        await Ui.modal.error(Lang.setup.partiallyEncryptedKeyUnsupported);
+        $('.line.unprotected_key_create_pass_phrase').hide();
       }
     }));
     const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
