@@ -320,7 +320,20 @@ table#compose.sign th { background-color: #808080; border-color: #808080; }
 table#compose td.input { height: 42px; vertical-align: middle; }
 table#compose td.input .collapsed { padding: 6px 9px; cursor: text; }
 table#compose td.input .collapsed .placeholder { color: #636c72 }
+table#compose td.input .collapsed .email_preview { white-space: nowrap; }
+table#compose td.input .collapsed .email_preview .email_address { margin-right: 5px; border-bottom: 2px dotted; }
+table#compose td.input .collapsed .email_preview .rest { background-color: #f5f5f5; border: 1px solid; padding: 2px; border-radius: 2px; }
+table#compose td.input .collapsed .email_preview .rest,
+table#compose td.input .collapsed .email_preview .email_address.wrong,
+table#compose td.input .collapsed .email_preview .email_address.failed  { border-color: #A44;}
+table#compose td.input .collapsed .email_preview .rest,
+table#compose td.input .collapsed .email_preview .email_address.has_pgp { border-color: #31A217; }
+table#compose td.input .collapsed .email_preview .rest,
+table#compose td.input .collapsed .email_preview .email_address.expired { border-color: #d18826; }
+table#compose td.input .collapsed .email_preview .rest,
+table#compose td.input .collapsed .email_preview .email_address.no_pgp { border-color: #989898; }
 table#compose td.recipients-inputs { vertical-align: middle; }
+table#compose td.recipients-inputs > div#input_addresses_container { outline: none; }
 table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
 table#compose td.recipients-inputs > div#input_addresses_container div input#input_to { vertical-align: middle; height: 25px; margin: 1px 0;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;

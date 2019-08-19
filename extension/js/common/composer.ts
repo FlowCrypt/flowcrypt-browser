@@ -70,6 +70,7 @@ export class Composer {
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
     input_addresses_container_inner: '#input_addresses_container > div:first',
+    recipients_inputs: '#input_addresses_container input',
     attached_files: 'table#compose #fineuploader .qq-upload-list li'
   });
 
@@ -273,7 +274,7 @@ export class Composer {
     if (this.urlParams.draftId) {
       const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
       if (isSuccessfulyLoaded) {
-        this.composerContacts.parseRenderRecipients(this.S.cached('input_addresses_container_outer').find('input'), true).catch(Catch.reportErr);
+        this.composerContacts.parseRenderRecipients(this.S.cached('recipients_inputs'), true).catch(Catch.reportErr);
       }
     } else {
       if (this.urlParams.isReplyBox) {
@@ -314,8 +315,8 @@ export class Composer {
   }
 
   private throwIfFormNotReady = async (recipients: RecipientElement[]): Promise<void> => {
-    if (this.hasValue(this.S.cached('input_addresses_container_outer').find('input'))) {
-      this.composerContacts.parseRenderRecipients(this.S.cached('input_addresses_container_outer').find('input')).catch(Catch.reportErr);
+    if (this.hasValue(this.S.cached('recipients_inputs'))) {
+      this.composerContacts.parseRenderRecipients(this.S.cached('recipients_inputs')).catch(Catch.reportErr);
     }
     if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
@@ -801,13 +802,15 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
-  public resizeInput = (inputs?: JQuery<HTMLElement>) => { // below both present in template
+  public resizeInput = (inputs?: JQuery<HTMLElement>) => {
     if (!inputs) {
-      inputs = this.S.cached('input_addresses_container_outer').find('input'); // Resize All Inputs
+      inputs = this.S.cached('recipients_inputs'); // Resize All Inputs
     }
     inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     for (const inputElement of inputs) {
-      inputElement.style.width = (Math.max(150, inputElement.parentElement!.clientWidth! - inputElement.previousElementSibling!.clientWidth - 50)) + 'px';
+      const jqueryElem = $(inputElement);
+      jqueryElem.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
+      jqueryElem.css('width', (Math.max(150, jqueryElem.parent().width()! - jqueryElem.siblings('.recipients').width()! - 50)) + 'px');
     }
   }
 
@@ -989,6 +992,7 @@ export class Composer {
   private windowResized = () => {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
+    this.composerContacts.setEmailsPreview(this.S.cached('collapsed').find('.email_preview'), this.getRecipients());
   }
 
   private renderSenderAliasesOptionsToggle() {
@@ -1087,6 +1091,9 @@ export class Composer {
       this.S.cached('icon_popout').attr('src', '/img/svgs/minimize.svg');
     } else {
       this.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
+    }
+    if (this.S.cached('collapsed').is(':visible')) {
+      this.composerContacts.setEmailsPreview(this.S.cached('collapsed').find('.email_preview'), this.composerContacts.getRecipients());
     }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   }

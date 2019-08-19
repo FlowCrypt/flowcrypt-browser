@@ -47,28 +47,29 @@
       </tr>
       <tr>
         <td class="input recipients-inputs">
-          <div id="input_addresses_container" style="display: none;">
+          <div id="input_addresses_container" tabindex="0" style="display: none;">
             <!-- to -->
             <div id="input-container-to">
               <span class="recipients recipients-to"></span>
               <input id="input_to" spellcheck="false" tabindex="1" placeholder="Add Recipient" data-test="input-to"
-                data-sending-type="to" />
+                data-sending-type="to" autocomplete="false" />
             </div>
             <!-- cc -->
             <div id="input-container-cc">
               <span class="recipients recipients-cc"></span>
-              <input spellcheck="false" tabindex="1" placeholder="Add CC" data-test="input-cc" data-sending-type="cc" />
+              <input spellcheck="false" tabindex="1" placeholder="Add CC" data-test="input-cc" data-sending-type="cc"
+                autocomplete="false" />
             </div>
             <!-- bcc -->
             <div id="input-container-bcc">
               <span class="recipients recipients-bcc"></span>
-              <input spellcheck="false" tabindex="1" placeholder="Add BCC" data-test="input-bcc"
-                data-sending-type="bcc" />
+              <input spellcheck="false" tabindex="1" placeholder="Add BCC" data-test="input-bcc" data-sending-type="bcc"
+                autocomplete="false" />
             </div>
           </div>
           <div class="collapsed">
             <span class="placeholder">Recipients</span>
-            <span class="email_preview"></span>
+            <div class="email_preview"></div>
           </div>
         </td>
       </tr>
@@ -121,7 +122,8 @@
           <div id="send_btn_note"></div>
           <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img
               src="/img/svgs/trash-can-icon.svg" class="delete-draft" alt="Delete Email"></button>
-          <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i alt="pubkey"></i></button>
+          <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i
+              alt="pubkey"></i></button>
           <button class="icon right action_include_footer" tabindex="9" title="Include email footer (not encrypted)"><i
               alt="footer"></i></button>
         </td>

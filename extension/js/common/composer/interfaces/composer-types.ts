@@ -19,6 +19,7 @@ export interface RecipientElement extends BaseRecipient {
   element: HTMLElement;
   id: string;
   isWrong?: boolean;
+  evaluating?: Promise<void>;
 }
 
 export type MessageToReplyOrForward = {
