@@ -118,15 +118,16 @@ export class ComposerContacts extends ComposerComponent {
    * prevented from triggering (in keyup handler)
    */
   private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
-    if (this.composer.S.cached('contacts').is(':hidden')) {
-      return false;
-    }
     const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      this.hideContacts();
-      this.composer.S.cached('input_to').focus();
-      return true;
+    if (e.key === 'Backspace') {
+      if (!$(e.target).val()) {
+        const sendingType = e.target.getAttribute('data-sending-type') as SendingType;
+        const lastRecipient = this.addedRecipients.reverse().find(r => r.sendingType === sendingType);
+        if (lastRecipient) {
+          this.removeRecipient(lastRecipient.element);
+        }
+      }
+      return false;
     } else if (e.key === 'Enter') {
       if (currentActive.length) { // If he pressed enter when contacts popover is shown
         currentActive.click(); // select contact
@@ -135,6 +136,13 @@ export class ComposerContacts extends ComposerComponent {
         this.parseRenderRecipients($(e.target), true).catch(Catch.reportErr);
       }
       e.target.focus();
+      return true;
+    } else if (this.composer.S.cached('contacts').is(':hidden')) { // Next will affect contacts popover
+      return false;
+    } else if (e.key === 'Escape') {
+      e.stopPropagation();
+      this.hideContacts();
+      this.composer.S.cached('input_to').focus();
       return true;
     } else if (!currentActive.length) {
       return false; // all following code operates on selected currentActive element

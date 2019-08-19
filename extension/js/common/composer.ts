@@ -10,7 +10,7 @@ import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, PgpMsg } from './core/pgp.js';
 import { Api } from './api/api.js';
-import { Ui, BrowserEventErrHandler, Env } from './browser.js';
+import { Ui, BrowserEventErrHandler } from './browser.js';
 import { SendableMsgBody } from './core/mime.js';
 import { GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
@@ -715,34 +715,6 @@ export class Composer {
     this.setInputTextHeightManuallyIfNeeded();
   }
 
-  private respondToInputHotkeys = (inputToKeydownEvent: JQuery.Event<HTMLElement, null>) => {
-    this.debug(`respondToInputHotkeys`);
-    const value = this.S.cached('input_to').val();
-    this.debug(`respondToInputHotkeys.value(${value})`);
-    const keys = Env.keyCodes();
-    if (!value && inputToKeydownEvent.which === keys.backspace) {
-      this.debug(`respondToInputHotkeys.value:del`);
-      $('.recipients span').last().remove();
-      this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-      return;
-    }
-    if (value && (inputToKeydownEvent.which === keys.enter || inputToKeydownEvent.which === keys.tab)) {
-      this.debug(`respondToInputHotkeys.value:enter|tab`);
-      this.S.cached('input_to').blur();
-      if (this.S.cached('contacts').css('display') === 'block') {
-        if (this.S.cached('contacts').find('.select_contact.hover').length) {
-          this.S.cached('contacts').find('.select_contact.hover').click();
-        } else {
-          this.S.cached('contacts').find('.select_contact').first().click();
-        }
-      }
-      this.S.cached('input_to').focus().blur();
-      return false;
-    }
-    this.debug(`respondToInputHotkeys.value:none`);
-    return;
-  }
-
   resizeComposeBox = (addExtra: number = 0) => {
     if (this.urlParams.isReplyBox) {
       this.S.cached('input_text').css('max-width', (this.S.cached('body').width()! - 20) + 'px'); // body should always be present
@@ -931,7 +903,6 @@ export class Composer {
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
-    this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.composerContacts.initActions();
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
