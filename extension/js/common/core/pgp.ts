@@ -22,6 +22,35 @@ if (typeof openpgp !== 'undefined') { // in certain environments, eg browser con
   openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
   openpgp.config.ignore_mdc_error = true; // we manually check for missing MDC and show loud warning to user (no auto-decrypt)
   // openpgp.config.require_uid_self_cert = false;
+  const getPrvPackets = (k: OpenPGP.key.Key) => {
+    if (!k.isPrivate()) {
+      throw new Error("Cannot check encryption status of secret keys in a Public Key");
+    }
+    const prvPackets = k.getKeys().map(k => k.keyPacket).filter(Pgp.key.isPacketPrivate) as PrvPacket[];
+    if (!prvPackets.length) {
+      throw new Error("This key has no private packets. Is it a Private Key?");
+    }
+    return prvPackets;
+  };
+  openpgp.key.Key.prototype.isFullyDecrypted = function () {
+    return getPrvPackets(this).every(p => p.isDecrypted() === true);
+  };
+  openpgp.key.Key.prototype.isFullyEncrypted = function () {
+    return getPrvPackets(this).every(p => p.isDecrypted() === false);
+  };
+  openpgp.key.Key.prototype.isPacketDecrypted = function (keyId: OpenPGP.Keyid) {
+    if (!this.isPrivate()) {
+      throw new Error("Cannot check packet encryption status of secret key in a Public Key");
+    }
+    if (!keyId) {
+      throw new Error("No Keyid provided to isPacketDecrypted");
+    }
+    const [key] = this.getKeys(keyId);
+    if (!key) {
+      throw new Error("Keyid not found in Private Key");
+    }
+    return key.keyPacket.isDecrypted() === true;
+  };
 }
 
 export namespace PgpMsgMethod {
@@ -82,7 +111,8 @@ type KeyDetails$ids = {
 export interface KeyDetails {
   private?: string;
   public: string;
-  isDecrypted: boolean | null;
+  isFullyEncrypted: boolean | undefined;
+  isFullyDecrypted: boolean | undefined;
   ids: KeyDetails$ids[];
   users: string[];
   created: number;
@@ -484,7 +514,8 @@ export class Pgp {
       }
       return {
         private: k.isPrivate() ? k.armor() : undefined,
-        isDecrypted: k.isDecrypted(),
+        isFullyDecrypted: k.isPrivate() ? k.isFullyDecrypted() : undefined,
+        isFullyEncrypted: k.isPrivate() ? k.isFullyEncrypted() : undefined,
         public: k.toPublic().armor(),
         users: k.getUserIds(),
         ids,
@@ -684,10 +715,17 @@ export class Pgp {
       for (const ki of keys.prvForDecrypt) {
         const optionalMatchingKeyid = Pgp.internal.cryptoKeyOptionalMatchingKeyid(ki.parsed!, encryptedForKeyids);
         const cachedDecryptedKey = Store.decryptedKeyCacheGet(ki.longid);
-        if (cachedDecryptedKey && (cachedDecryptedKey.isDecrypted() || (optionalMatchingKeyid && cachedDecryptedKey.getKeys(optionalMatchingKeyid).every(k => k.isDecrypted() === true)))) {
+        if (
+          cachedDecryptedKey &&
+          (cachedDecryptedKey.isFullyDecrypted() || (optionalMatchingKeyid && cachedDecryptedKey.isPacketDecrypted(optionalMatchingKeyid)))
+        ) {
           ki.decrypted = cachedDecryptedKey;
           keys.prvForDecryptDecrypted.push(ki);
-        } else if (ki.parsed!.isDecrypted() || await Pgp.key.decrypt(ki.parsed!, ki.passphrase!, optionalMatchingKeyid, 'OK-IF-ALREADY-DECRYPTED') === true) {
+        } else if (
+          ki.parsed!.isFullyDecrypted() ||
+          (optionalMatchingKeyid && ki.parsed!.isPacketDecrypted(optionalMatchingKeyid)) ||
+          await Pgp.key.decrypt(ki.parsed!, ki.passphrase!, optionalMatchingKeyid, 'OK-IF-ALREADY-DECRYPTED') === true
+        ) {
           Store.decryptedKeyCacheSet(ki.parsed!);
           ki.decrypted = ki.parsed!;
           keys.prvForDecryptDecrypted.push(ki);

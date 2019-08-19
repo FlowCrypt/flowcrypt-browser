@@ -434,7 +434,7 @@ export class Composer {
     if (primaryKi) {
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
       const passphrase = await this.app.storagePassphraseGet();
-      if (typeof passphrase === 'undefined' && !prv.isDecrypted()) {
+      if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
           await this.signSend(recipients, subject, plaintext);
@@ -454,7 +454,7 @@ export class Composer {
         // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
-        if (!prv.isDecrypted()) {
+        if (!prv.isFullyDecrypted()) {
           await Pgp.key.decrypt(prv, passphrase!); // checked !== undefined above
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
@@ -896,10 +896,38 @@ export class Composer {
     }
   }
 
+  private getFocusableEls = () => this.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
+    const tabindexA = parseInt(a.getAttribute('tabindex') || '');
+    const tabindexB = parseInt(b.getAttribute('tabindex') || '');
+    if (tabindexA > tabindexB) { // sort according to tabindex
+      return 1;
+    } else if (tabindexA < tabindexB) {
+      return -1;
+    }
+    return 0;
+  })
+
   private renderComposeTable = async () => {
     this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
-    this.S.cached('body').keydown(Ui.escape(() => !this.composeWindowIsMinimized && !this.urlParams.isReplyBox && $('.close_new_message').click()));
+    this.S.cached('body').keydown(Ui.event.handle((_, e) => {
+      if (this.composeWindowIsMinimized) {
+        return e.preventDefault();
+      }
+      Ui.escape(() => !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
+      const focusableEls = this.getFocusableEls();
+      const focusIndex = focusableEls.indexOf(e.target);
+      if (focusIndex !== -1) { // Focus trap (Tab, Shift+Tab)
+        Ui.tab((e) => { // rollover to first item or focus next
+          focusableEls[focusIndex === focusableEls.length - 1 ? 0 : focusIndex + 1].focus();
+          e.preventDefault();
+        })(e);
+        Ui.shiftTab((e) => { // rollover to last item or focus prev
+          focusableEls[focusIndex === 0 ? focusableEls.length - 1 : focusIndex - 1].focus();
+          e.preventDefault();
+        })(e);
+      }
+    }));
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));

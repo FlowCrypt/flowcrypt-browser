@@ -252,8 +252,11 @@ export class Settings {
             reject(e);
             return;
           }
-          if (reformatted.key.isDecrypted()) {
-            await reformatted.key.encrypt(passphrase); // this is a security precaution, in case OpenPGP.js library changes in the future
+          if (!reformatted.key.isFullyEncrypted()) { // this is a security precaution, in case OpenPGP.js library changes in the future
+            Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.key.isFullyEncrypted(), isFullyDecrypted: reformatted.key.isFullyDecrypted() });
+            await Ui.modal.error('Key update:Key not fully encrypted after update. Please contact human@flowcrypt.com');
+            Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
+            return;
           }
           if (await reformatted.key.getEncryptionKey()) {
             resolve(reformatted.key);

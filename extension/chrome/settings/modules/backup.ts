@@ -205,18 +205,10 @@ Catch.try(async () => {
 
   const isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
     const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
-    if (prv.primaryKey.isDecrypted()) {
+    if (await Pgp.key.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }
-    for (const packet of prv.getKeys()) {
-      if (packet.isDecrypted() === true) {
-        return false;
-      }
-    }
-    if (await Pgp.key.decrypt(prv, '') === true) {
-      return false;
-    }
-    return true;
+    return prv.isFullyEncrypted();
   };
 
   const asBackupFile = (acctEmail: string, armoredKey: string) => {
@@ -309,7 +301,7 @@ Catch.try(async () => {
 
   const isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
     const prv = await Pgp.key.read(ki.private);
-    if (prv.isDecrypted()) {
+    if (!prv.isFullyEncrypted()) {
       return false;
     }
     if (!passphrase) {
@@ -332,7 +324,7 @@ Catch.try(async () => {
 
   const setupCreateSimpleAutomaticInboxBackup = async () => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if ((await Pgp.key.read(primaryKi.private)).isDecrypted()) {
+    if (!(await Pgp.key.read(primaryKi.private)).isFullyEncrypted()) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }

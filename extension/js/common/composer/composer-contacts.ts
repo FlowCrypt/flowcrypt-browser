@@ -118,13 +118,14 @@ export class ComposerContacts extends ComposerComponent {
    * prevented from triggering (in keyup handler)
    */
   private recipientInputKeydownHandler = (e: JQuery.Event<HTMLElement, null>): boolean => {
+    if (this.composer.S.cached('contacts').is(':hidden')) {
+      return false;
+    }
     const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
     if (e.key === 'Escape') {
-      if (this.composer.S.cached('contacts').is(':visible')) {
-        e.stopPropagation();
-        this.hideContacts();
-        this.composer.S.cached('input_to').focus();
-      }
+      e.stopPropagation();
+      this.hideContacts();
+      this.composer.S.cached('input_to').focus();
       return true;
     } else if (e.key === 'Enter') {
       if (currentActive.length) { // If he pressed enter when contacts popover is shown

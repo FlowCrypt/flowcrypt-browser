@@ -55,7 +55,7 @@ Catch.try(async () => {
         passwords: [encryptionPassphrase]
       });
       output.push(`Encryption with key was successful`);
-      if (key.isPrivate() && key.isDecrypted()) {
+      if (key.isPrivate() && key.isFullyDecrypted()) {
         const decryptedMsg = await openpgp.decrypt({
           message: await openpgp.message.readArmored(encryptedMsg.data),
           privateKeys: key,
@@ -63,7 +63,7 @@ Catch.try(async () => {
         });
         output.push(`Decryption with key ${decryptedMsg.data === encryptionText ? 'succeeded' : 'failed!'}`);
       } else {
-        output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isDecrypted:${key.isDecrypted()}`);
+        output.push(`Skipping decryption because isPrivate:${key.isPrivate()} isFullyDecrypted:${key.isFullyDecrypted()}`);
       }
     } catch (err) {
       output.push(`Got error performing encryption/decryption test: ${err}`);
@@ -74,8 +74,8 @@ Catch.try(async () => {
   const testSignVerify = async (key: OpenPGP.key.Key): Promise<string> => {
     const output: string[] = [];
     try {
-      if (!key.isDecrypted()) {
-        return 'skiped, not decrypted';
+      if (!key.isFullyDecrypted()) {
+        return 'skiped, not fully decrypted';
       }
       const signedMessage = await openpgp.message.fromText(encryptionText).sign([key]);
       output.push('sign msg ok');
@@ -129,7 +129,9 @@ Catch.try(async () => {
       appendResult(`${kn} Subkeys: ${await test(async () => key.subKeys ? key.subKeys.length : key.subKeys)}`);
       appendResult(`${kn} Primary key algo: ${await test(async () => key.primaryKey.algorithm)}`);
       if (key.isPrivate()) {
-        appendResult(`${kn} Primary key decrypt: ${await test(async () => Pgp.key.decrypt(key, String($('.input_passphrase').val())))}`);
+        appendResult(`${kn} key decrypt: ${await test(async () => Pgp.key.decrypt(key, String($('.input_passphrase').val())))}`);
+        appendResult(`${kn} isFullyDecrypted: ${await test(async () => key.isFullyDecrypted())}`);
+        appendResult(`${kn} isFullyEncrypted: ${await test(async () => key.isFullyEncrypted())}`);
       }
       appendResult(`${kn} Primary key verify: ${await test(async () => {
         const verifyResNum = await key.verifyPrimaryKey();

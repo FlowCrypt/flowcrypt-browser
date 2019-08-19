@@ -1,5 +1,7 @@
 <div>
 
+version 6.9.8 on Aug 17, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/351?closed=1" target="_blank">UX Improvements II</a>
+
 version 6.9.7 on Aug 14, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/350?closed=1" target="_blank">Defensive key encrypt/decrypt</a>
 
 version 6.9.6 on Aug 14, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/349?closed=1" target="_blank">Fix ESC close window bug</a>
