@@ -11,7 +11,7 @@ import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
 import { GoogleAuth } from '../api/google.js';
 import { Lang } from '../lang.js';
-import { ComposerUrlParams, RecipientElement, SendingType } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, SendingType, RecipientStatus, RecipientStatuses } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
@@ -331,13 +331,13 @@ export class ComposerContacts extends ComposerComponent {
       const container = input.parent();
       if (validationResult.valid.length) {
         this.composer.debug(`parseRenderRecipients(force: ${force}) - valid emails(${validationResult.valid.join(',')})`);
-        recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType);
+        recipientsToEvaluate = this.createRecipientsElements(container, validationResult.valid, sendingType, RecipientStatuses.EVALUATING);
       }
       const invalidEmails = validationResult.invalid.filter(em => !!em); // remove empty strings
       this.composer.debug(`parseRenderRecipients(force: ${force}) - invalid emails(${validationResult.invalid.join(',')})`);
       if (force && invalidEmails.length) {
         this.composer.debug(`parseRenderRecipients(force: ${force}) - force add invalid recipients`);
-        recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, true)];
+        recipientsToEvaluate = [...recipientsToEvaluate, ...this.createRecipientsElements(container, invalidEmails, sendingType, RecipientStatuses.WRONG)];
         input.val('');
       } else {
         this.composer.debug(`parseRenderRecipients(force: ${force}) - setting inputTo with invalid emails`);
@@ -345,23 +345,23 @@ export class ComposerContacts extends ComposerComponent {
       }
       this.composer.debug(`parseRenderRecipients(force: ${force}).2`);
       this.composer.resizeInput(input);
-      await this.evaluateRecipients(recipientsToEvaluate);
-      this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
-      this.composer.resizeInput(input);
-      this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
-      this.composer.setInputTextHeightManuallyIfNeeded();
-      this.composer.debug(`parseRenderRecipients(force: ${force}).5`);
+      if (recipientsToEvaluate.length) {
+        await this.evaluateRecipients(recipientsToEvaluate);
+        this.composer.debug(`parseRenderRecipients(force: ${force}).3`);
+        this.composer.resizeInput(input);
+        this.composer.debug(`parseRenderRecipients(force: ${force}).4`);
+      }
     }
   }
 
-  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: SendingType, isWrong?: boolean): RecipientElement[] => {
+  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: SendingType, status: RecipientStatus): RecipientElement[] => {
     const result = [];
     for (const email of emails) {
       const recipientId = this.generateRecipientId();
       const recipientsHtml = `<span tabindex="0" id="${recipientId}">${Xss.escape(email)} ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId)!;
-      const recipient = { email, element, id: recipientId, sendingType, isWrong };
+      const recipient = { email, element, id: recipientId, sendingType, status };
       this.addedRecipients.push(recipient);
       result.push(recipient);
     }
@@ -442,6 +442,7 @@ export class ComposerContacts extends ComposerComponent {
       .find('img.close-icon')
       .click(Ui.event.handle(target => this.removeRecipient(target.parentElement!), this.composer.getErrHandlers('remove recipient')));
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
+      recipient.status = RecipientStatuses.FAILED;
       $(recipient.element).attr('title', 'Loading contact information failed, please try to add their email again.');
       $(recipient.element).addClass("failed");
       Xss.sanitizeReplace($(recipient.element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
@@ -449,21 +450,25 @@ export class ComposerContacts extends ComposerComponent {
       $(recipient.element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshRecipients(), this.composer.getErrHandlers('refresh recipient')));
       $(recipient.element).find('.remove-reciepient').click(Ui.event.handle(element => this.removeRecipient(element.parentElement!), this.composer.getErrHandlers('remove recipient')));
     } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
+      recipient.status = RecipientStatuses.WRONG;
       this.composer.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(recipient.element).attr('title', 'This email address looks misspelled. Please try again.');
       $(recipient.element).addClass("wrong");
     } else if (contact.pubkey &&
       ((contact.expiresOn || Infinity) <= Date.now() ||
         await Pgp.key.usableButExpired((await this.openPGP.key.readArmored(contact.pubkey)).keys[0]))) {
+      recipient.status = RecipientStatuses.EXPIRED;
       $(recipient.element).addClass("expired");
       Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
       $(recipient.element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send ' +
         'you an updated public key.' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
+      recipient.status = RecipientStatuses.HAS_PGP;
       $(recipient.element).addClass("has_pgp");
       Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/locked-icon.svg" />');
       $(recipient.element).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {
+      recipient.status = RecipientStatuses.NO_PGP;
       $(recipient.element).addClass("no_pgp");
       Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/locked-icon.svg" />');
       $(recipient.element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
@@ -501,7 +506,7 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
-        if (!recipient.isWrong) {
+        if (recipient.status !== RecipientStatuses.WRONG) {
           pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
         } else {
           pubkeyLookupRes = 'wrong';
@@ -537,9 +542,9 @@ export class ComposerContacts extends ComposerComponent {
   * @param recipients - Recipients that should be previewed
   */
   public setEmailsPreview = (container: JQuery<HTMLElement>, recipients: RecipientElement[]): void => {
-    const MAX_WIDTH = container.width()!;
     const restHTML = `<span class="rest"><span id="rest_number"></span> others</span>`;
     container.html(restHTML);
+    const MAX_WIDTH = container.width()!;
     const rest = container.find('.rest');
     let processed = 0;
     while (container.width()! - 40 <= MAX_WIDTH && recipients.length >= processed + 1) {
@@ -548,9 +553,14 @@ export class ComposerContacts extends ComposerComponent {
       $(emailHTML).insertBefore(rest); // xss-direct
       processed++;
     }
-    if (container.width()! > MAX_WIDTH) {
+    if (container.width()! - 40 > MAX_WIDTH) {
       container.find('.email_address').last().remove();
       rest.find('#rest_number').text(recipients.length - processed + 1);
+      const orderedByStatus = recipients.sort((a: RecipientElement, b: RecipientElement) => {
+        return a.status - b.status;
+      });
+      const last = orderedByStatus[orderedByStatus.length - 1]; // Last element has the worst status
+      rest.addClass(last.element.className);
     } else {
       rest.remove();
     }
