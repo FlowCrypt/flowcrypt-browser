@@ -339,7 +339,7 @@ table#compose td.recipients-inputs > div#input_addresses_container div { width: 
 table#compose td.recipients-inputs > div#input_addresses_container div input#input_to { vertical-align: middle; height: 25px; margin: 1px 0;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;
   -webkit-transition: .25s; transition: .25s;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients { height: auto; position: relative; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients { height: auto; position: relative; cursor: move; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span { padding: 5px 15px 6px 15px; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span > img.repeat-icon { right: -6px; top: 1px; cursor: pointer;}
@@ -358,6 +358,7 @@ table#compose td.recipients-inputs > div#input_addresses_container div .recipien
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.no_pgp { background: #989898; color: white;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.failed { border: 1px dashed #A44; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.failed .close-icon { opacity: 1; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients i.drag-cursor { width: 2px; height: 20px; display: inline-block; vertical-align: middle; margin-left: 3px; background-color: #5588EE; }
 table#compose.sign .recipients span { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
 table#compose.sign .recipients span.wrong { background: #A44 !important; color: white !important; }
 table#compose.sign .recipients span.wrong .close-icon { display: inline-block !important; }
