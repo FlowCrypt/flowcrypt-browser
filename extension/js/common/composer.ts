@@ -78,7 +78,7 @@ export class Composer {
   private app: ComposerAppFunctionsInterface;
   private composerDraft: ComposerDraft;
   private composerQuote: ComposerQuote;
-  private composerContacts: ComposerContacts;
+  public composerContacts: ComposerContacts;
 
   private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
   private BTN_SIGN_AND_SEND = 'Sign and Send';
@@ -272,9 +272,9 @@ export class Composer {
       this.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
-      const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
-      if (isSuccessfulyLoaded) {
-        this.composerContacts.parseRenderRecipients(this.S.cached('recipients_inputs'), true).catch(Catch.reportErr);
+      const msgMimeContent = await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
+      if (msgMimeContent) {
+        this.composerContacts.evaluateRecipients(this.getRecipients()).catch(Catch.reportErr);
       }
     } else {
       if (this.urlParams.isReplyBox) {
@@ -283,9 +283,11 @@ export class Composer {
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             if ($(target).attr('id') === 'a_reply') {
-              this.urlParams.to = [this.urlParams.to[0]];
-            } else if ($(target).attr('id') === 'a_forward') {
-              this.urlParams.to = [];
+              const toAddress = Str.parseEmail(this.urlParams.to[0]).email;
+              if (toAddress) {
+                this.composerContacts.addRecipients({ to: [toAddress], cc: [], bcc: [] }).catch(Catch.reportErr);
+                this.composerContacts.setEmailsPreview(this.getRecipients()).catch(Catch.reportErr);
+              }
             }
             await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.getErrHandlers(`activate repply box`)));
@@ -741,7 +743,6 @@ export class Composer {
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
-    this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
@@ -983,15 +984,17 @@ export class Composer {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized()));
-      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized()));
+      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
+      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
     }, 1000);
   }
 
-  private windowResized = () => {
+  private windowResized = async () => {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
-    this.composerContacts.setEmailsPreview(this.S.cached('collapsed').find('.email_preview'), this.getRecipients());
+    if (this.S.cached('collapsed').is(':visible')) {
+      await this.composerContacts.setEmailsPreview(this.getRecipients());
+    }
   }
 
   private renderSenderAliasesOptionsToggle() {
@@ -1092,7 +1095,7 @@ export class Composer {
       this.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
     }
     if (this.S.cached('collapsed').is(':visible')) {
-      this.composerContacts.setEmailsPreview(this.S.cached('collapsed').find('.email_preview'), this.composerContacts.getRecipients());
+      await this.composerContacts.setEmailsPreview(this.composerContacts.getRecipients());
     }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   }

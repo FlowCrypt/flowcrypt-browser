@@ -11,7 +11,7 @@ import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
 import { GoogleAuth } from '../api/google.js';
 import { Lang } from '../lang.js';
-import { ComposerUrlParams, RecipientElement, SendingType, RecipientStatus, RecipientStatuses } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, SendingType, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
@@ -67,13 +67,7 @@ export class ComposerContacts extends ComposerComponent {
         }
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
         this.composer.S.cached('collapsed').css('display', 'block');
-        if (this.addedRecipients.length) { // Generate recipients preview line
-          this.setEmailsPreview(this.composer.S.cached('collapsed').find('.email_preview'), this.addedRecipients);
-          this.composer.S.cached('collapsed').find('.placeholder').css('display', 'none');
-        } else { // Just show placeholder and clear emails preview
-          this.composer.S.cached('collapsed').find('.placeholder').css('display', 'block');
-          this.composer.S.cached('collapsed').find('.email_preview').empty();
-        }
+        await this.setEmailsPreview(this.addedRecipients);
         this.hideContacts();
         this.composer.setInputTextHeightManuallyIfNeeded();
         this.composer.S.cached('body').off('click');
@@ -113,7 +107,7 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
       target.style.display = 'none';
       this.composer.S.cached('input_addresses_container_outer').css('display', 'block');
-      this.composer.resizeInput();
+      this.composer.resizeComposeBox();
       this.composer.S.cached('input_to').focus();
       this.composer.setInputTextHeightManuallyIfNeeded();
     }));
@@ -405,6 +399,21 @@ export class ComposerContacts extends ComposerComponent {
     return result;
   }
 
+  public addRecipients = async (recipients: Recipients) => {
+    let newRecipients: RecipientElement[] = [];
+    for (const key in recipients) {
+      if (recipients.hasOwnProperty(key)) {
+        const sendingType = key as SendingType;
+        if (recipients[sendingType].length) {
+          newRecipients = newRecipients.concat(this.createRecipientsElements(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`),
+            recipients[sendingType], sendingType, RecipientStatuses.EVALUATING));
+          this.composer.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
+        }
+      }
+    }
+    await this.evaluateRecipients(newRecipients);
+  }
+
   public hideContacts = () => {
     this.composer.S.cached('contacts').css('display', 'none');
   }
@@ -535,10 +544,10 @@ export class ComposerContacts extends ComposerComponent {
     await this.evaluateRecipients(failedRecipients);
   }
 
-  private evaluateRecipients = async (recipients: RecipientElement[]) => {
-    this.composer.debug(`evaluateRenderedRecipients`);
+  public evaluateRecipients = async (recipients: RecipientElement[]) => {
+    this.composer.debug(`evaluateRecipients`);
     for (const recipient of recipients) {
-      this.composer.debug(`evaluateRenderedRecipients.email(${String(recipient.email)})`);
+      this.composer.debug(`evaluateRecipients.email(${String(recipient.email)})`);
       this.composer.S.now('send_btn_span').text(this.BTN_LOADING);
       this.composer.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
@@ -551,8 +560,8 @@ export class ComposerContacts extends ComposerComponent {
         await this.renderPubkeyResult(recipient, pubkeyLookupRes);
         recipient.evaluating = undefined; // Clear promise when it finished
       })();
-      await recipient.evaluating;
     }
+    await Promise.all(recipients.map(r => r.evaluating));
     this.composer.setInputTextHeightManuallyIfNeeded();
   }
 
@@ -578,7 +587,20 @@ export class ComposerContacts extends ComposerComponent {
   * @param container - HTMLElement where emails have to be inserted
   * @param recipients - Recipients that should be previewed
   */
-  public setEmailsPreview = (container: JQuery<HTMLElement>, recipients: RecipientElement[]): void => {
+  public setEmailsPreview = async (recipients: RecipientElement[]): Promise<void> => {
+    if (recipients.length) {
+      this.composer.S.cached('collapsed').find('.placeholder').css('display', 'none');
+    } else {
+      this.composer.S.cached('collapsed').find('.placeholder').css('display', 'block');
+      this.composer.S.cached('collapsed').find('.email_preview').empty();
+      return;
+    }
+    const container = this.composer.S.cached('collapsed').find('.email_preview');
+    if (recipients.find(r => r.status === RecipientStatuses.EVALUATING)) {
+      container.append(`<span id="r_loader">Loading Reciepients ${Ui.spinner('green')}</span>`); // xss-direct
+      await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
+      container.find('r_loader').remove();
+    }
     const restHTML = `<span class="rest"><span id="rest_number"></span> others</span>`;
     container.html(restHTML);
     const MAX_WIDTH = container.width()!;

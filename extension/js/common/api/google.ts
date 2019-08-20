@@ -20,6 +20,7 @@ import { Buf } from '../core/buf.js';
 import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
 import { Xss } from '../platform/xss.js';
+import { SendingType } from '../composer/interfaces/composer-types.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -181,9 +182,14 @@ export class Google extends EmailProviderApi {
     }),
     msgSend: async (acctEmail: string, message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
       message.headers.From = message.from;
-      message.headers.To = message.recipients.to.join(',');
-      message.headers.Cc = message.recipients.cc.join(',');
-      message.headers.Bcc = message.recipients.bcc.join(',');
+      for (const key in message.recipients) {
+        if (message.recipients.hasOwnProperty(key)) {
+          const sendingType = key as SendingType;
+          if (message.recipients[sendingType] && message.recipients[sendingType]!.length) {
+            message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.join(',');
+          }
+        }
+      }
       message.headers.Subject = message.subject;
       const mimeMsg = await Mime.encode(message.body, message.headers, message.atts);
       const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });

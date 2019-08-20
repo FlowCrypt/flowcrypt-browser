@@ -9,13 +9,14 @@ import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
 import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
+import { SendingType } from '../composer/interfaces/composer-types.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
 const Iso88592 = requireIso88592();  // tslint:disable-line:variable-name
 
 type MimeContentHeader = string | { address: string; name: string; }[];
-type MimeContent = {
+export type MimeContent = {
   headers: Dict<MimeContentHeader>;
   atts: Att[];
   signature?: string;
@@ -25,6 +26,8 @@ type MimeContent = {
   text?: string;
   from?: string;
   to: string[];
+  cc: string[];
+  bcc: string[];
 };
 
 export type RichHeaders = Dict<string | string[]>;
@@ -111,20 +114,16 @@ export class Mime {
     return b.type === 'plainAtt' && b.attMeta && b.attMeta.inline && b.attMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attMeta.type);
   }
 
-  private static headersToFrom = (parsedMimeMsg: MimeContent) => {
-    const headerTo: string[] = [];
-    let headerFrom;
-    if (Array.isArray(parsedMimeMsg.headers.from) && parsedMimeMsg.headers.from[0] && parsedMimeMsg.headers.from[0].address) {
-      headerFrom = parsedMimeMsg.headers.from[0].address;
-    }
-    if (Array.isArray(parsedMimeMsg.headers.to)) {
-      for (const to of parsedMimeMsg.headers.to) {
-        if (to.address) {
-          headerTo.push(String(to.address));
+  private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
+    const result: { from: string[], to: string[], cc: string[], bcc: string[] } = { from: [], to: [], cc: [], bcc: [] };
+    for (const hdrName of headersNames) {
+      if (Array.isArray(parsedMimeMsg.headers[hdrName])) {
+        for (const value of parsedMimeMsg.headers[hdrName]) {
+          result[hdrName].push(typeof value === 'string' ? value : value.address);
         }
       }
     }
-    return { from: headerFrom, to: headerTo };
+    return result;
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
@@ -168,7 +167,7 @@ export class Mime {
 
   public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
     return new Promise(async resolve => {
-      const mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
+      let mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
       try {
         const parser = new MimeParser();
         const leafNodes: { [key: string]: MimeParserNode } = {};
@@ -200,9 +199,9 @@ export class Mime {
               mimeContent.atts.push(Mime.getNodeAsAtt(node));
             }
           }
-          const { from, to } = Mime.headersToFrom(mimeContent);
-          mimeContent.from = from;
-          mimeContent.to = to;
+          const { from, to, cc, bcc } = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
+          mimeContent.from = from.length ? from[0] : undefined;
+          mimeContent = Object.assign(mimeContent, { to, cc, bcc });
           resolve(mimeContent);
         };
         parser.write(mimeMsg);
