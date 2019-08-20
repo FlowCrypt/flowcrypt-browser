@@ -68,8 +68,6 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
         this.composer.S.cached('collapsed').css('display', 'block');
         if (this.addedRecipients.length) { // Generate recipients preview line
-          // const emailsHTML = this.addedRecipients.map(r => `<span>${r.email}</span>`).join();
-          // this.composer.S.cached('collapsed').find('.email_preview').html(emailsHTML); // xss-direct
           this.setEmailsPreview(this.composer.S.cached('collapsed').find('.email_preview'), this.addedRecipients);
           this.composer.S.cached('collapsed').find('.placeholder').css('display', 'none');
         } else { // Just show placeholder and clear emails preview
@@ -77,17 +75,29 @@ export class ComposerContacts extends ComposerComponent {
           this.composer.S.cached('collapsed').find('.email_preview').empty();
         }
         this.hideContacts();
+        this.composer.setInputTextHeightManuallyIfNeeded();
         this.composer.S.cached('body').off('click');
       }
       this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
-    inputs.on('dragenter', Ui.event.handle((target) => {
-      target.focus();
+    inputs.on('dragenter', Ui.event.handle((target, e) => {
+      if (Catch.browser().name === 'firefox') {
+        this.insertCursorBefore(target.previousElementSibling!, true);
+      } else {
+        target.focus();
+      }
     }));
     inputs.on('dragleave', Ui.event.handle((target) => {
-      target.blur();
+      if (Catch.browser().name === 'firefox') {
+        this.removeCursor(target.previousElementSibling! as HTMLElement);
+      } else {
+        target.blur();
+      }
     }));
-    inputs.on('drop', Ui.event.handle((target, event) => {
+    inputs.on('drop', Ui.event.handle((target) => {
+      if (Catch.browser().name === 'firefox') {
+        this.removeCursor(target.previousElementSibling as HTMLElement);
+      }
       if (this.dragged) {
         this.dragged.parentElement!.removeChild(this.dragged);
         const sendingType = target.getAttribute('data-sending-type') as SendingType;
@@ -96,8 +106,8 @@ export class ComposerContacts extends ComposerComponent {
         const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
         this.addedRecipients[draggableElementIndex].sendingType = sendingType;
         this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.length - 1);
-        console.log(this.addedRecipients);
         this.composer.resizeInput(jqueryTarget);
+        target.focus();
       }
     }));
     this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
@@ -105,6 +115,7 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.S.cached('input_addresses_container_outer').css('display', 'block');
       this.composer.resizeInput();
       this.composer.S.cached('input_to').focus();
+      this.composer.setInputTextHeightManuallyIfNeeded();
     }));
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
@@ -594,7 +605,8 @@ export class ComposerContacts extends ComposerComponent {
 
   private addDraggableEvents = (element: HTMLElement) => {
     element.draggable = true;
-    element.ondragstart = () => {
+    element.ondragstart = (event) => {
+      event.dataTransfer!.setData('text/plain', 'Flowcrpypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
       this.dragged = element;
     };
     element.ondragend = () => {
@@ -602,28 +614,16 @@ export class ComposerContacts extends ComposerComponent {
     };
     element.ondragenter = () => {
       if (this.dragged !== element) {
-        const cursor = document.createElement('i');
-        cursor.classList.add('drag-cursor');
-        element.parentElement!.insertBefore(cursor, element);
+        this.insertCursorBefore(element);
       }
     };
     element.ondragleave = () => {
       if (this.dragged !== element) {
-        for (const child of element.parentElement!.children) {
-          if (child.classList.contains('drag-cursor')) {
-            child.parentElement!.removeChild(child);
-            return;
-          }
-        }
+        this.removeCursor(element.parentElement!);
       }
     };
-    element.ondrop = () => {
-      for (const child of element.parentElement!.children) {
-        if (child.classList.contains('drag-cursor')) {
-          child.parentElement!.removeChild(child);
-          break;
-        }
-      }
+    element.ondrop = (event) => {
+      this.removeCursor(element.parentElement!);
       // The position won't be changed so we don't need to do any manipulations
       if (!this.dragged || this.dragged === element || this.dragged.nextElementSibling === element) {
         return;
@@ -639,5 +639,28 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
       this.dragged = undefined;
     };
+  }
+
+  private insertCursorBefore = (element: HTMLElement | Element, append?: boolean) => {
+    const cursor = document.createElement('i');
+    cursor.classList.add('drag-cursor');
+    if (!append) {
+      if (!element.parentElement) {
+        return false;
+      }
+      element.parentElement!.insertBefore(cursor, element);
+    } else {
+      element.appendChild(cursor);
+    }
+    return true;
+  }
+
+  private removeCursor = (element: HTMLElement) => {
+    for (const child of element.children) {
+      if (child.classList.contains('drag-cursor')) {
+        child.parentElement!.removeChild(child);
+        break;
+      }
+    }
   }
 }
