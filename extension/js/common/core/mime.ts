@@ -9,7 +9,6 @@ import { Catch } from '../platform/catch.js';
 import { requireMimeParser, requireMimeBuilder, requireIso88592 } from '../platform/require.js';
 import { Buf } from './buf.js';
 import { MimeParserNode } from './types/emailjs';
-import { SendingType } from '../composer/interfaces/composer-types.js';
 
 const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
@@ -53,6 +52,7 @@ export type MimeProccesedMsg = {
   from: string | undefined,
   to: string[]
 };
+type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
 

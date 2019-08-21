@@ -31,4 +31,4 @@ export const moveElementInArray = <T>(arr: Array<T>, oldIndex: number, newIndex:
   }
   arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
   return arr;
-}
+};

@@ -72,7 +72,7 @@ export class ComposerContacts extends ComposerComponent {
           element.parentElement!.style.display = 'none';
           copyActionsContainer.find(`span.${sendingType}`).css('display', ''); // Unset values
         }
-        this.composer.S.cached('input_addresses_container_outer').children().filter(':visible').last().append(copyActionsContainer);
+        this.composer.S.cached('input_addresses_container_outer').children().filter(':visible').last().append(copyActionsContainer); // xss-safe-value
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
         this.composer.S.cached('collapsed').css('display', 'block');
         await this.setEmailsPreview(this.addedRecipients);
@@ -104,7 +104,7 @@ export class ComposerContacts extends ComposerComponent {
         this.dragged.parentElement!.removeChild(this.dragged);
         const sendingType = target.getAttribute('data-sending-type') as SendingType;
         const jqueryTarget = $(target);
-        jqueryTarget.siblings('.recipients').append(this.dragged);
+        jqueryTarget.siblings('.recipients').append(this.dragged); // xss-safe-value
         const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
         this.addedRecipients[draggableElementIndex].sendingType = sendingType;
         this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.length - 1);
@@ -119,7 +119,7 @@ export class ComposerContacts extends ComposerComponent {
         const curentContainer = buttonsContainer.parentElement!;
         const input = newContainer.find('input');
         curentContainer.removeChild(buttonsContainer);
-        newContainer.append(buttonsContainer);
+        newContainer.append(buttonsContainer); // xss-safe-value
         newContainer.css('display', 'block');
         target.style.display = 'none';
         input.focus();
@@ -623,7 +623,7 @@ export class ComposerContacts extends ComposerComponent {
       container.find('r_loader').remove();
     }
     const restHTML = `<span class="rest"><span id="rest_number"></span> others</span>`;
-    container.html(restHTML);
+    container.html(restHTML); // xss-direct
     const MAX_WIDTH = container.width()!;
     const rest = container.find('.rest');
     let processed = 0;
