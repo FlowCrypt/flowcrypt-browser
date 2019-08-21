@@ -302,7 +302,7 @@ export class Composer {
 
   public resetSendBtn = (delay?: number) => {
     const btnText = this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND;
-    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span tabindex="4">${btnText}</span>`);
+    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span>${btnText}</span>`);
     if (typeof this.btnUpdateTimeout !== 'undefined') {
       clearTimeout(this.btnUpdateTimeout);
     }
