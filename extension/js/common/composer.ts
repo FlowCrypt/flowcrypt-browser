@@ -71,7 +71,8 @@ export class Composer {
     input_addresses_container_outer: '#input_addresses_container',
     input_addresses_container_inner: '#input_addresses_container > div:first',
     recipients_inputs: '#input_addresses_container input',
-    attached_files: 'table#compose #fineuploader .qq-upload-list li'
+    attached_files: 'table#compose #fineuploader .qq-upload-list li',
+    email_copy_actions: '#input_addresses_container .email_copy_actions'
   });
 
   private attach: AttUI;
@@ -781,9 +782,13 @@ export class Composer {
     }
     inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     for (const inputElement of inputs) {
+      let additionalWidth = 0;
       const jqueryElem = $(inputElement);
+      if (jqueryElem.next().length) {
+        additionalWidth = jqueryElem.next().width()!;
+      }
       jqueryElem.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
-      jqueryElem.css('width', (Math.max(150, jqueryElem.parent().width()! - jqueryElem.siblings('.recipients').width()! - 50)) + 'px');
+      jqueryElem.css('width', (Math.max(150, jqueryElem.parent().width()! - jqueryElem.siblings('.recipients').width()! - additionalWidth - 50)) + 'px');
     }
   }
 

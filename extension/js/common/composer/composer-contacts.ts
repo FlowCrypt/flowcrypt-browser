@@ -65,6 +65,14 @@ export class ComposerContacts extends ComposerComponent {
         if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We need to colapse it if some input is on focus again.
           return;
         }
+        const copyActionsContainer = this.composer.S.cached('email_copy_actions');
+        copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
+        for (const element of this.composer.S.cached('input_addresses_container_outer').find('.recipients:not(.recipients-to):empty')) {
+          const sendingType = element.parentElement!.getAttribute('data-sending-type') as SendingType;
+          element.parentElement!.style.display = 'none';
+          copyActionsContainer.find(`span.${sendingType}`).css('display', ''); // Unset values
+        }
+        this.composer.S.cached('input_addresses_container_outer').children().filter(':visible').last().append(copyActionsContainer);
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
         this.composer.S.cached('collapsed').css('display', 'block');
         await this.setEmailsPreview(this.addedRecipients);
@@ -104,6 +112,19 @@ export class ComposerContacts extends ComposerComponent {
         target.focus();
       }
     }));
+    this.composer.S.cached('email_copy_actions').find('span')
+      .on('click', Ui.event.handle((target, event) => {
+        const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`div#input-container-${target.className}`);
+        const buttonsContainer = target.parentElement!;
+        const curentContainer = buttonsContainer.parentElement!;
+        const input = newContainer.find('input');
+        curentContainer.removeChild(buttonsContainer);
+        newContainer.append(buttonsContainer);
+        newContainer.css('display', 'block');
+        target.style.display = 'none';
+        input.focus();
+        this.composer.resizeInput(input.add($(curentContainer).find('input')));
+      }));
     this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
       target.style.display = 'none';
       this.composer.S.cached('input_addresses_container_outer').css('display', 'block');
