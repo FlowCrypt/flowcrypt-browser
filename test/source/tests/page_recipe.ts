@@ -338,7 +338,7 @@ export class ComposePageRecipe extends PageRecipe {
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!hasReplyPrompt) {
-      await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+      await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
     } else {
       await composePage.waitAll(['@action-accept-reply-prompt']);
     }
@@ -368,9 +368,9 @@ export class ComposePageRecipe extends PageRecipe {
   public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
     await Util.sleep(0.5);
     if (to) {
-      await composePageOrFrame.click('@input-to');
+      await composePageOrFrame.click('@action-expand-cc-bcc-fields');
       await Util.sleep(0.5);
-      await composePageOrFrame.type('@input-to', to);
+      await composePageOrFrame.waitAndType('@input-to', to);
       await Util.sleep(0.5);
     }
     await composePageOrFrame.click('@input-subject');
