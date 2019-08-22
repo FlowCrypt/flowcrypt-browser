@@ -60,6 +60,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.test('[standalone] compose - can load contact based on name', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.click('@action-expand-cc-bcc-fields');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     }));
@@ -176,7 +177,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         '&threadMsgId=16b584ed95837510&to=flowcrypt.compatibility%40gmail.com&from=flowcrypt.compatibility%40gmail.com' +
         '&subject=Re%3A%20testing%20quotes';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 5 });
       await baseQuotingTest(composePage, [
         'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
         '> This is some message',

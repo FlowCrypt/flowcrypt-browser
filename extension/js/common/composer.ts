@@ -22,7 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams, RecipientElement } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
@@ -279,18 +279,16 @@ export class Composer {
       }
     } else {
       if (this.urlParams.isReplyBox) {
+        const toAddress = Str.parseEmail(this.urlParams.to[0]).email;
+        let to = toAddress ? [toAddress] : [];
         if (this.urlParams.skipClickPrompt) {
-          await this.renderReplyMsgComposeTable();
+          await this.renderReplyMsgComposeTable({ to, cc: [], bcc: [] });
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
-            if ($(target).attr('id') === 'a_reply') {
-              const toAddress = Str.parseEmail(this.urlParams.to[0]).email;
-              if (toAddress) {
-                this.composerContacts.addRecipients({ to: [toAddress], cc: [], bcc: [] }).catch(Catch.reportErr);
-                this.composerContacts.setEmailsPreview(this.getRecipients()).catch(Catch.reportErr);
-              }
+            if ($(target).attr('id') !== 'a_reply') {
+              to = [];
             }
-            await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
+            await this.renderReplyMsgComposeTable({ to, cc: [], bcc: [] }, (($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.getErrHandlers(`activate repply box`)));
         }
       }
@@ -742,8 +740,14 @@ export class Composer {
     }
   }
 
-  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  public renderReplyMsgComposeTable = async (recipients?: Recipients, method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
+    if (recipients) {
+      (async () => {
+        this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
+        await this.composerContacts.setEmailsPreview(this.getRecipients());
+      })().catch(Catch.reportErr);
+    }
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
