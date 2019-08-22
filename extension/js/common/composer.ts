@@ -1026,7 +1026,7 @@ export class Composer {
   private renderSenderAliasesOptions() {
     const addresses = this.app.storageGetAddresses();
     if (addresses.length > 1) {
-      const inputAddrContainer = $('#input_addresses_container');
+      const inputAddrContainer = $('.recipients-inputs');
       inputAddrContainer.addClass('show_send_from');
       let selectElHtml = '<select id="input_from" tabindex="1" data-test="input-from"></select>';
       if (!this.urlParams.isReplyBox) {

@@ -68,6 +68,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // composePage.enable_debugging('choose-contact');
+      await composePage.click('@action-expand-cc-bcc-fields');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)'], { timeout: 30 });
       await composePage.waitAndClick('@action-select-contact(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });

@@ -350,7 +350,7 @@ export class ComposePageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
-    await composeFrame.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await composeFrame.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
     await composeFrame.waitForSelTestState('ready');
     return composeFrame;
   }
