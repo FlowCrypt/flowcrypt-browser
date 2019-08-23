@@ -637,8 +637,9 @@ export class ComposerContacts extends ComposerComponent {
     }
     if (container.width()! > MAX_WIDTH) {
       container.find('.email_address').last().remove();
-      rest.find('#rest_number').text(recipients.length - processed + 1);
-      const orderedByStatus = recipients.sort((a: RecipientElement, b: RecipientElement) => {
+      const restRecipients = recipients.slice(processed - 1);
+      rest.find('#rest_number').text(restRecipients.length);
+      const orderedByStatus = restRecipients.sort((a: RecipientElement, b: RecipientElement) => {
         return a.status - b.status;
       });
       const last = orderedByStatus[orderedByStatus.length - 1]; // Last element has the worst status
