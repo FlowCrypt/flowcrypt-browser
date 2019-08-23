@@ -379,12 +379,11 @@ table#compose th div.header > div.actions_container span:hover { opacity: 1 }
 
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none; color: inherit;}
-table#compose td.input.show_send_from { height: 84px; }
 table#compose td.input.show_send_from input#input_to { height: 50%; }
-table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; margin-top: 10px;
+table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px;
   margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
-table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 13px; opacity: 0.4; }
-table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; cursor: pointer; }
+table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 4px; opacity: 0.4;  cursor: pointer; }
+table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; }
 table#compose td.input #show_sender_aliases_options { position: absolute; top: 16px; right: 16px; width: 6px; opacity: 0.4; transform: rotate(-90deg); cursor: pointer; }
 table#compose td.input.show_send_from #show_sender_aliases_options { display: none; }
 table#compose tr.bottom { background-color: #f5f5f5; }

@@ -124,6 +124,7 @@ export class ComposerContacts extends ComposerComponent {
         target.style.display = 'none';
         input.focus();
         this.composer.resizeInput(input.add($(curentContainer).find('input')));
+        this.composer.setInputTextHeightManuallyIfNeeded();
       }));
     this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
       target.style.display = 'none';
