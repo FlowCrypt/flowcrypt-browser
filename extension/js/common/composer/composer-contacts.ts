@@ -40,6 +40,9 @@ export class ComposerContacts extends ComposerComponent {
     this.app = app;
     this.openPGP = openPGP;
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
+    if (Catch.browser().name === 'firefox') {
+      this.composer.S.cached('collapsed').css('font-size', '15px');
+    }
   }
 
   initActions(): void {
@@ -69,7 +72,7 @@ export class ComposerContacts extends ComposerComponent {
         }
         this.hideCCAndBCCInputsIfNeeded();
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
-        this.composer.S.cached('collapsed').css('display', 'block');
+        this.composer.S.cached('collapsed').css('display', 'flex');
         await this.setEmailsPreview(this.addedRecipients);
         this.hideContacts();
         this.composer.setInputTextHeightManuallyIfNeeded();

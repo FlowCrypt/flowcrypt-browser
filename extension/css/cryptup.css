@@ -317,8 +317,8 @@ table#compose { min-height: 260px; border-spacing: 0; border-collapse: collapse;
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0; border: 1px solid #31A217; background-color: #31A217; }
 table#compose th div.header h1 { display: flex; align-items: center; margin: 0; font-size: 15px; font-weight: normal; color: #FFF; text-align: left; cursor: pointer; padding: 0 10px; flex-grow: 1; }
 table#compose.sign th { background-color: #808080; border-color: #808080; }
-table#compose td.input { height: 42px; vertical-align: middle; }
-table#compose td.input .collapsed { padding: 6px 9px; cursor: text; }
+table#compose td.input { height: 36px; vertical-align: middle; }
+table#compose td.input .collapsed { padding: 8px 9px 8px 9px; cursor: text; height: 18px; align-items: center; }
 table#compose td.input .collapsed .placeholder { color: #636c72 }
 table#compose td.input .collapsed .email_preview { display: inline-block; white-space: nowrap; }
 table#compose td.input .collapsed .email_preview .email_address { margin-right: 5px; border-bottom: 2px dotted; }
@@ -337,7 +337,7 @@ table#compose td.recipients-inputs { vertical-align: middle; }
 table#compose td.recipients-inputs > div#input_addresses_container { outline: none; }
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
 table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
-table#compose td.recipients-inputs > div#input_addresses_container div input#input_to { vertical-align: middle; height: 25px; margin: 1px 0;}
+table#compose td.recipients-inputs > div#input_addresses_container div input { vertical-align: middle; height: 33px; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;
   -webkit-transition: .25s; transition: .25s;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients { height: auto; position: relative; cursor: move; }
@@ -381,11 +381,9 @@ table#compose th div.header > div.actions_container span:hover { opacity: 1 }
 
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none; color: inherit;}
-table#compose td.input.show_send_from { height: 65px;;}
-table#compose td.input.show_send_from input#input_to { height: 50%; }
-table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; cursor: pointer;
-  margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
-table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 4px; opacity: 0.4;  cursor: pointer; }
+table#compose td.input.show_send_from select#input_from { height: 30px; margin-top: -6px; border: none; background: none; padding: 0 6px 6px 6px; cursor: pointer;
+  margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; outline: none; }
+table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: -4px; opacity: 0.4;  cursor: pointer; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; }
 table#compose td.input #show_sender_aliases_options { position: absolute; top: 16px; right: 16px; width: 6px; opacity: 0.4; transform: rotate(-90deg); cursor: pointer; }
 table#compose td.input.show_send_from #show_sender_aliases_options { display: none; }

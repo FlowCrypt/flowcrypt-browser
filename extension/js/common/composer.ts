@@ -1049,9 +1049,6 @@ export class Composer {
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
       }
-      if (Catch.browser().name === 'firefox') {
-        inputAddrContainer.find('#input_from_settings').css('margin-top', '11px');
-      }
     }
   }
 
