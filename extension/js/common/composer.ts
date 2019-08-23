@@ -22,7 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams, RecipientElement, Recipients } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients, RecipientStatuses } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
@@ -693,12 +693,12 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!$('.recipients span').length || this.S.cached('icon_sign').is('.active')) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
+    if (!this.getRecipients().length || this.S.cached('icon_sign').is('.active')) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
       this.hideMsgPwdUi();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
-    } else if ($('.recipients span.no_pgp').length) {
+    } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
       this.showMsgPwdUiAndColorBtn();
-    } else if ($('.recipients span.failed, .recipients span.wrong').length) {
+    } else if (this.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
       this.S.now('send_btn_span').text(this.BTN_WRONG_ENTRY);
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.S.cached('send_btn').removeClass('green').addClass('gray');
@@ -786,13 +786,19 @@ export class Composer {
     }
     inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     for (const inputElement of inputs) {
-      let additionalWidth = 0;
       const jqueryElem = $(inputElement);
+      const CONTAINER_WIDTH = Math.floor(jqueryElem.parent().innerWidth()!);
+      let additionalWidth = Math.ceil(Number(jqueryElem.css('padding-left').replace('px', '')) + Number(jqueryElem.css('padding-right').replace('px', '')));
+      const minInputWidth = 150;
+      let offset = 0;
       if (jqueryElem.next().length) {
-        additionalWidth = jqueryElem.next().width()!;
+        additionalWidth += Math.ceil(jqueryElem.next().outerWidth()!);
       }
-      jqueryElem.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
-      jqueryElem.css('width', (Math.max(150, jqueryElem.parent().width()! - jqueryElem.siblings('.recipients').width()! - additionalWidth - 50)) + 'px');
+      const lastRecipient = jqueryElem.siblings('.recipients').children().last();
+      if (lastRecipient.length && lastRecipient.position().left + lastRecipient.outerWidth()! + minInputWidth + additionalWidth < CONTAINER_WIDTH) {
+        offset = Math.ceil(lastRecipient.position().left + lastRecipient.outerWidth()!);
+      }
+      jqueryElem.css('width', (CONTAINER_WIDTH - offset - additionalWidth - 11) + 'px');
     }
   }
 

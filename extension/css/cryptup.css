@@ -320,7 +320,7 @@ table#compose.sign th { background-color: #808080; border-color: #808080; }
 table#compose td.input { height: 42px; vertical-align: middle; }
 table#compose td.input .collapsed { padding: 6px 9px; cursor: text; }
 table#compose td.input .collapsed .placeholder { color: #636c72 }
-table#compose td.input .collapsed .email_preview { white-space: nowrap; }
+table#compose td.input .collapsed .email_preview { display: inline-block; white-space: nowrap; }
 table#compose td.input .collapsed .email_preview .email_address { margin-right: 5px; border-bottom: 2px dotted; }
 table#compose td.input .collapsed .email_preview .rest { background-color: #f5f5f5; border: 1px solid; padding: 2px; border-radius: 2px; }
 table#compose td.input .collapsed .email_preview .rest.wrong,
@@ -335,31 +335,33 @@ table#compose td.input .collapsed .email_preview .rest.no_pgp,
 table#compose td.input .collapsed .email_preview .email_address.no_pgp { border-color: #989898; }
 table#compose td.recipients-inputs { vertical-align: middle; }
 table#compose td.recipients-inputs > div#input_addresses_container { outline: none; }
+table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
 table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
 table#compose td.recipients-inputs > div#input_addresses_container div input#input_to { vertical-align: middle; height: 25px; margin: 1px 0;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;
   -webkit-transition: .25s; transition: .25s;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients { height: auto; position: relative; cursor: move; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span { padding: 5px 15px 6px 15px; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span > img.repeat-icon { right: -6px; top: 1px; cursor: pointer;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span > img.close-icon-black { margin-left: 5px; top: 1px; right: -8px; cursor: pointer;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span > img.expired-time { opacity: 1; };
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { padding: 5px 15px 6px 15px; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.repeat-icon { right: -6px; top: 1px; cursor: pointer;}
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.close-icon-black { margin-left: 5px; top: 1px; right: -8px; cursor: pointer;}
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.expired-time { opacity: 1; };
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span .close-icon { right: -7px; height: 9px; width: 9px; top:0; cursor: pointer; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span .close-icon:hover { opacity: 1; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span .close-icon.display_when_sign { display: none; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.wrong { background: #A44; color: white;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.wrong .close-icon { opacity: 1; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.has_pgp { background: #31A217; color: white;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.has_pgp img { opacity: 1; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.expired { background: #d18826; color: white;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.no_pgp { background: #989898; color: white;}
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.failed { border: 1px dashed #A44; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients span.failed .close-icon { opacity: 1; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon { right: -7px; height: 9px; width: 9px; top:0; cursor: pointer; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon:hover { opacity: 1; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon.display_when_sign { display: none; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.wrong { background: #A44; color: white;}
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.wrong .close-icon { opacity: 1; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.has_pgp { background: #31A217; color: white;}
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.has_pgp img { opacity: 1; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.expired { background: #d18826; color: white;}
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.no_pgp { background: #989898; color: white;}
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.failed { border: 1px dashed #A44; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.failed .close-icon { opacity: 1; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients i.drag-cursor { width: 2px; height: 20px; display: inline-block; vertical-align: middle; margin-left: 3px; background-color: #5588EE; }
-table#compose td.recipients-inputs > div#input_addresses_container div span.email_copy_actions { white-space: nowrap; color: #636c72; }
+table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
+table#compose td.recipients-inputs > div#input_addresses_container div span.email_copy_actions { position: absolute; right: 6px; bottom: 6px; white-space: nowrap; color: #636c72; }
 table#compose td.recipients-inputs > div#input_addresses_container div span.email_copy_actions span { cursor: pointer; }
 table#compose td.recipients-inputs > div#input_addresses_container div span.email_copy_actions span:hover { text-decoration: underline; }
 table#compose.sign .recipients span { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
@@ -379,8 +381,9 @@ table#compose th div.header > div.actions_container span:hover { opacity: 1 }
 
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 6px; padding-left: 9px; background: none; outline: none; color: inherit;}
+table#compose td.input.show_send_from { height: 65px;;}
 table#compose td.input.show_send_from input#input_to { height: 50%; }
-table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px;
+table#compose td.input.show_send_from select#input_from { height: 50%; border: none; background: none; padding: 6px; cursor: pointer;
   margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
 table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; margin-top: 4px; opacity: 0.4;  cursor: pointer; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; }

@@ -46,9 +46,9 @@ export class ComposerDraft extends ComposerComponent {
       }
     }, this.composer.getErrHandlers('delete draft')));
     await this.composer.initialized;
-    this.composer.S.cached('recipients').on('DOMSubtreeModified', Ui.event.prevent('slowspree', async () => {
+    this.composer.composerContacts.onRecipientAdded(async () => {
       await this.draftSave(true);
-    }));
+    });
   }
 
   public async initialDraftLoad(draftId: string): Promise<boolean> {

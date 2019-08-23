@@ -31,6 +31,8 @@ export class ComposerContacts extends ComposerComponent {
   private myAddrsOnKeyserver: string[] = [];
   private recipientsMissingMyKey: string[] = [];
 
+  private onRecipientAddedCallbacks: ((rec: RecipientElement[]) => void)[] = [];
+
   private dragged: Element | undefined = undefined;
 
   constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, openPGP: typeof OpenPGP, composer: Composer) {
@@ -65,14 +67,7 @@ export class ComposerContacts extends ComposerComponent {
         if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We need to colapse it if some input is on focus again.
           return;
         }
-        const copyActionsContainer = this.composer.S.cached('email_copy_actions');
-        copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
-        for (const element of this.composer.S.cached('input_addresses_container_outer').find('.recipients:not(.recipients-to):empty')) {
-          const sendingType = element.parentElement!.getAttribute('data-sending-type') as SendingType;
-          element.parentElement!.style.display = 'none';
-          copyActionsContainer.find(`span.${sendingType}`).css('display', ''); // Unset values
-        }
-        this.composer.S.cached('input_addresses_container_outer').children().filter(':visible').last().append(copyActionsContainer); // xss-safe-value
+        this.hideCCAndBCCInputsIfNeeded();
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
         this.composer.S.cached('collapsed').css('display', 'block');
         await this.setEmailsPreview(this.addedRecipients);
@@ -410,7 +405,7 @@ export class ComposerContacts extends ComposerComponent {
     const result = [];
     for (const email of emails) {
       const recipientId = this.generateRecipientId();
-      const recipientsHtml = `<span tabindex="0" id="${recipientId}">${Xss.escape(email)} ${Ui.spinner('green')}</span>`;
+      const recipientsHtml = `<span tabindex="0" id="${recipientId}"><span>${Xss.escape(email)}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId)!;
       this.addDraggableEvents(element);
@@ -584,6 +579,9 @@ export class ComposerContacts extends ComposerComponent {
       })();
     }
     await Promise.all(recipients.map(r => r.evaluating));
+    for (const callback of this.onRecipientAddedCallbacks) {
+      callback(recipients);
+    }
     this.composer.setInputTextHeightManuallyIfNeeded();
   }
 
@@ -625,16 +623,16 @@ export class ComposerContacts extends ComposerComponent {
     }
     const restHTML = `<span class="rest"><span id="rest_number"></span> others</span>`;
     container.html(restHTML); // xss-direct
-    const MAX_WIDTH = container.width()!;
+    const MAX_WIDTH = container.parent().width()!;
     const rest = container.find('.rest');
     let processed = 0;
-    while (container.width()! - 40 <= MAX_WIDTH && recipients.length >= processed + 1) {
+    while (container.width()! <= MAX_WIDTH && recipients.length >= processed + 1) {
       const recipient = recipients[processed];
       const emailHTML = `<span class="email_address ${recipient.element.className}"">${recipient.email}</span>`;
       $(emailHTML).insertBefore(rest); // xss-direct
       processed++;
     }
-    if (container.width()! - 40 > MAX_WIDTH) {
+    if (container.width()! > MAX_WIDTH) {
       container.find('.email_address').last().remove();
       rest.find('#rest_number').text(recipients.length - processed + 1);
       const orderedByStatus = recipients.sort((a: RecipientElement, b: RecipientElement) => {
@@ -706,5 +704,31 @@ export class ComposerContacts extends ComposerComponent {
         break;
       }
     }
+  }
+
+  private hideCCAndBCCInputsIfNeeded = () => {
+    const isThere = { cc: false, bcc: false };
+    for (const recipient of this.addedRecipients) {
+      if (isThere.cc && isThere.bcc) {
+        break;
+      }
+      isThere.cc = recipient.sendingType === 'cc';
+      isThere.bcc = recipient.sendingType === 'bcc';
+    }
+    const copyActionsContainer = this.composer.S.cached('email_copy_actions');
+    copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
+    if (!isThere.cc) {
+      this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', 'none');
+      copyActionsContainer.find(`span.cc`).css('display', '');
+    }
+    if (!isThere.bcc) {
+      this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', 'none');
+      copyActionsContainer.find(`span.bcc`).css('display', '');
+    }
+    this.composer.S.cached('input_addresses_container_outer').children().filter(':visible').last().append(copyActionsContainer); // xss-safe-value
+  }
+
+  public onRecipientAdded = (callback: (rec: RecipientElement[]) => void) => {
+    this.onRecipientAddedCallbacks.push(callback);
   }
 }
