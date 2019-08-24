@@ -9,9 +9,7 @@ import { Assert } from '../../js/common/assert.js';
 import { Api } from '../../js/common/api/api.js';
 import { Att } from '../../js/common/core/att.js';
 import { Buf } from '../../js/common/core/buf.js';
-import { requireOpenpgp } from '../../js/common/platform/require.js';
-
-const openpgp = requireOpenpgp();
+import { openpgp } from '../../js/common/core/pgp.js';
 
 Catch.try(async () => {
 
