@@ -3,9 +3,7 @@ import { startGoogleApiMock } from './mock/google-api-mock';
 import { Config } from './util';
 import * as request from 'fc-node-requests';
 import { writeFileSync, existsSync } from 'fs';
-import { requireOpenpgp } from './platform/require';
-
-const openpgp = requireOpenpgp();
+import { openpgp } from './core/pgp';
 
 export const mock = async (logger: (line: string) => void) => {
   const start = Date.now();
