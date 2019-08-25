@@ -621,7 +621,7 @@ export class ComposerContacts extends ComposerComponent {
       await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
       container.find('r_loader').remove();
     }
-    const restHTML = `<span class="rest"><span id="rest_number"></span> others</span>`;
+    const restHTML = `<span class="rest"><span id="rest_number"></span> more</span>`;
     container.html(restHTML); // xss-direct
     const MAX_WIDTH = container.parent().width()!;
     const rest = container.find('.rest');

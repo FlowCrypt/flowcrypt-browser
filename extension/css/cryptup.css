@@ -321,34 +321,34 @@ table#compose td.input { height: 36px; vertical-align: middle; }
 table#compose td.input .collapsed { padding: 8px 9px 8px 9px; cursor: text; height: 18px; align-items: center; }
 table#compose td.input .collapsed .placeholder { color: #636c72 }
 table#compose td.input .collapsed .email_preview { display: inline-block; white-space: nowrap; }
-table#compose td.input .collapsed .email_preview .email_address { margin-right: 5px; padding: 3px 4px; color: #fff; border-radius: 4px; }
-table#compose td.input .collapsed .email_preview .rest { background-color: #f5f5f5; border: 1px solid; padding: 2px; border-radius: 2px; }
+table#compose td.input .collapsed .email_preview .email_address { margin-right: 5px; padding: 2px 4px; color: #fff; border-radius: 4px; }
+table#compose td.input .collapsed .email_preview .rest { background-color: #f5f5f5; border: 1px solid; padding: 2px; border-radius: 4px; cursor: pointer; }
 table#compose td.input .collapsed .email_preview .rest.wrong,
-table#compose td.input .collapsed .email_preview .rest.failed { border-color: #A44;}
+table#compose td.input .collapsed .email_preview .rest.failed { border-color: #A44; color: #A44; }
 table#compose td.input .collapsed .email_preview .email_address.wrong,
 table#compose td.input .collapsed .email_preview .email_address.failed  { background-color: #A44;}
-table#compose td.input .collapsed .email_preview .rest.has_pgp { border-color: #31A217;}
+table#compose td.input .collapsed .email_preview .rest.has_pgp { border-color: #31A217; color: #31A217; }
 table#compose td.input .collapsed .email_preview .email_address.has_pgp { background-color: #31A217; }
-table#compose td.input .collapsed .email_preview .rest.expired { border-color: #d18826;}
+table#compose td.input .collapsed .email_preview .rest.expired { border-color: #d18826; color: #d18826; }
 table#compose td.input .collapsed .email_preview .email_address.expired { background-color: #d18826; }
-table#compose td.input .collapsed .email_preview .rest.no_pgp { border-color: #989898;}
+table#compose td.input .collapsed .email_preview .rest.no_pgp { border-color: #989898; }
 table#compose td.input .collapsed .email_preview .email_address.no_pgp { background-color: #989898; }
 table#compose td.recipients-inputs { vertical-align: middle; }
 table#compose td.recipients-inputs > div#input_addresses_container { outline: none; }
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
 table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
 table#compose td.recipients-inputs > div#input_addresses_container div input { vertical-align: middle; height: 34px; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 6px; position: relative;
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { margin-top: 2px; margin-left: 5px; display: inline-block; border-radius: 4px; position: relative;
   -webkit-transition: .25s; transition: .25s;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients { height: auto; position: relative; cursor: move; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { padding: 5px 15px 6px 15px; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img { width: 10px; height: 10px; opacity: 0.7; position: relative; right: 5px; top: 1px; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { padding: 2px 8px 2px 8px; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img { width: 9px; height: 9px; opacity: 0.7; position: relative; right: 3px; top: 0px; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.repeat-icon { right: -6px; top: 1px; cursor: pointer;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.close-icon-black { margin-left: 5px; top: 1px; right: -8px; cursor: pointer;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.expired-time { opacity: 1; };
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon { right: -7px; height: 9px; width: 9px; top:0; cursor: pointer; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon { right: -1px; height: 9px; width: 9px; top:0; cursor: pointer; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon:hover { opacity: 1; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon.display_when_sign { display: none; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.wrong { background: #A44; color: white;}
