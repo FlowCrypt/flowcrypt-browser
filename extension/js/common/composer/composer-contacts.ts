@@ -70,7 +70,7 @@ export class ComposerContacts extends ComposerComponent {
         if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We need to colapse it if some input is on focus again.
           return;
         }
-        this.hideCCAndBCCInputsIfNeeded();
+        this.hideCcAndBccInputsIfNeeded();
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
         this.composer.S.cached('collapsed').css('display', 'flex');
         await this.setEmailsPreview(this.addedRecipients);
@@ -710,7 +710,7 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private hideCCAndBCCInputsIfNeeded = () => {
+  private hideCcAndBccInputsIfNeeded = () => {
     const isThere = { cc: false, bcc: false };
     for (const recipient of this.addedRecipients) {
       if (isThere.cc && isThere.bcc) {
