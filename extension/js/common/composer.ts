@@ -108,7 +108,7 @@ export class Composer {
     this.urlParams = urlParams;
     this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
     this.composerQuote = new ComposerQuote(this, urlParams);
-    this.composerContacts = new ComposerContacts(appFunctions, urlParams, openpgp, this);
+    this.composerContacts = new ComposerContacts(appFunctions, urlParams, this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     this.canReadEmails = this.app.canReadEmails();
     if (initSubs.active) {

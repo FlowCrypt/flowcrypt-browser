@@ -20,7 +20,6 @@ import { moveElementInArray } from '../platform/util.js';
 
 export class ComposerContacts extends ComposerComponent {
   private app: ComposerAppFunctionsInterface;
-  private openPGP: typeof OpenPGP;
   private addedRecipients: RecipientElement[] = [];
   private BTN_LOADING = 'Loading..';
 
@@ -35,10 +34,9 @@ export class ComposerContacts extends ComposerComponent {
 
   private dragged: Element | undefined = undefined;
 
-  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, openPGP: typeof OpenPGP, composer: Composer) {
+  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
     super(composer, urlParams);
     this.app = app;
-    this.openPGP = openPGP;
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
   }
 
@@ -517,9 +515,7 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(recipient.element).attr('title', 'This email address looks misspelled. Please try again.');
       $(recipient.element).addClass("wrong");
-    } else if (contact.pubkey &&
-      ((contact.expiresOn || Infinity) <= Date.now() ||
-        await Pgp.key.usableButExpired((await this.openPGP.key.readArmored(contact.pubkey)).keys[0]))) {
+    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || await Pgp.key.usableButExpired(await Pgp.key.read(contact.pubkey)))) {
       recipient.status = RecipientStatuses.EXPIRED;
       $(recipient.element).addClass("expired");
       Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
