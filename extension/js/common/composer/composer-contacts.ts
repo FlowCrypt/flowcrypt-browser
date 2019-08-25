@@ -40,9 +40,6 @@ export class ComposerContacts extends ComposerComponent {
     this.app = app;
     this.openPGP = openPGP;
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
-    if (Catch.browser().name === 'firefox') {
-      this.composer.S.cached('collapsed').css('font-size', '15px');
-    }
   }
 
   initActions(): void {
