@@ -59,19 +59,7 @@ export class ComposerContacts extends ComposerComponent {
       await this.parseRenderRecipients($(target));
       // If thereis no related target or related target isn't in recipients functionality
       // then we need to collapse inputs
-      if (!e.relatedTarget || (!this.composer.S.cached('input_addresses_container_outer')[0].contains(e.relatedTarget)
-        && !this.composer.S.cached('contacts')[0].contains(e.relatedTarget))) {
-        await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.
-        if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We don't need to colapse it if some input is on focus again.
-          return;
-        }
-        this.hideCcAndBccInputsIfNeeded();
-        this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
-        this.composer.S.cached('collapsed').css('display', 'flex');
-        await this.setEmailsPreview(this.addedRecipients);
-        this.hideContacts();
-        this.composer.setInputTextHeightManuallyIfNeeded();
-      }
+      await this.collapseIpnutsIfNeeded(e.relatedTarget);
       this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
     inputs.on('dragenter', Ui.event.handle((target, e) => {
@@ -172,6 +160,15 @@ export class ComposerContacts extends ComposerComponent {
         }
       }
       return false;
+    } else if (e.keyCode === 32) { // Handle 'Space' key
+      const target = $(e.target);
+      const emails = String(target.val()).split(/[,\s]/g).filter(e => !!e);
+      if (!emails.find(e => !Str.isEmailValid(e))) {
+        this.parseRenderRecipients($(e.target), false, emails).catch(Catch.reportErr);
+        e.preventDefault();
+      } else if (target.val() === '') {
+        e.preventDefault();
+      }
     } else if (e.key === 'Enter') {
       if (currentActive.length) { // If he pressed enter when contacts popover is shown
         currentActive.click(); // select contact
@@ -368,7 +365,7 @@ export class ComposerContacts extends ComposerComponent {
       const input = $(inputElem);
       const sendingType = input.data('sending-type') as SendingType;
       this.composer.debug(`parseRenderRecipients(force: ${force}) - sending type - ${sendingType}`);
-      uncheckedEmails = uncheckedEmails || String(input.val()).split(',');
+      uncheckedEmails = uncheckedEmails || String(input.val()).split(/,/g);
       this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
       const validationResult = this.validateEmails(uncheckedEmails);
       let recipientsToEvaluate: RecipientElement[] = [];
@@ -405,6 +402,9 @@ export class ComposerContacts extends ComposerComponent {
       const recipientsHtml = `<span tabindex="0" id="${recipientId}"><span>${Xss.escape(email)}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId)!;
+      $(element).on('blur', Ui.event.handle(async (elem, event) => {
+        await this.collapseIpnutsIfNeeded(event.relatedTarget);
+      }));
       this.addDraggableEvents(element);
       const recipient = { email, element, id: recipientId, sendingType, status };
       this.addedRecipients.push(recipient);
@@ -725,6 +725,22 @@ export class ComposerContacts extends ComposerComponent {
       copyActionsContainer.find(`span.bcc`).css('display', '');
     }
     this.composer.S.cached('input_addresses_container_outer').children().filter(':visible').last().append(copyActionsContainer); // xss-safe-value
+  }
+
+  private collapseIpnutsIfNeeded = async (relatedTarget: HTMLElement | null) => {
+    if (!relatedTarget || (!this.composer.S.cached('input_addresses_container_outer')[0].contains(relatedTarget)
+      && !this.composer.S.cached('contacts')[0].contains(relatedTarget))) {
+      await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.
+      if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We don't need to colapse it if some input is on focus again.
+        return;
+      }
+      this.hideCcAndBccInputsIfNeeded();
+      this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
+      this.composer.S.cached('collapsed').css('display', 'flex');
+      await this.setEmailsPreview(this.addedRecipients);
+      this.hideContacts();
+      this.composer.setInputTextHeightManuallyIfNeeded();
+    }
   }
 
   public onRecipientAdded = (callback: (rec: RecipientElement[]) => void) => {
