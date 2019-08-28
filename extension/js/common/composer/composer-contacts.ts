@@ -62,7 +62,7 @@ export class ComposerContacts extends ComposerComponent {
       if (!e.relatedTarget || (!this.composer.S.cached('input_addresses_container_outer')[0].contains(e.relatedTarget)
         && !this.composer.S.cached('contacts')[0].contains(e.relatedTarget))) {
         await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.
-        if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We need to colapse it if some input is on focus again.
+        if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We don't need to colapse it if some input is on focus again.
           return;
         }
         this.hideCcAndBccInputsIfNeeded();
@@ -71,7 +71,6 @@ export class ComposerContacts extends ComposerComponent {
         await this.setEmailsPreview(this.addedRecipients);
         this.hideContacts();
         this.composer.setInputTextHeightManuallyIfNeeded();
-        this.composer.S.cached('body').off('click');
       }
       this.composer.debug(`input_to.blur -> parseRenderRecipients done`);
     }));
