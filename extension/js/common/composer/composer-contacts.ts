@@ -282,9 +282,9 @@ export class ComposerContacts extends ComposerComponent {
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
         if (contact.has_pgp) {
-          ulHtml += '<img src="/img/svgs/locked-icon-green.svg" />';
+          ulHtml += '<img class="lock-icon" src="/img/svgs/locked-icon-green.svg" />';
         } else {
-          ulHtml += '<img src="/img/svgs/locked-icon-gray.svg" />';
+          ulHtml += '<img class="lock-icon" src="/img/svgs/locked-icon-gray.svg" />';
         }
         let displayEmail;
         if (contact.email.length < 40) {
@@ -531,12 +531,12 @@ export class ComposerContacts extends ComposerComponent {
     } else if (contact.pubkey) {
       recipient.status = RecipientStatuses.HAS_PGP;
       $(recipient.element).addClass("has_pgp");
-      Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/locked-icon.svg" />');
+      Xss.sanitizePrepend(recipient.element, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(recipient.element).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {
       recipient.status = RecipientStatuses.NO_PGP;
       $(recipient.element).addClass("no_pgp");
-      Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/locked-icon.svg" />');
+      Xss.sanitizePrepend(recipient.element, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(recipient.element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
@@ -716,8 +716,11 @@ export class ComposerContacts extends ComposerComponent {
       if (isThere.cc && isThere.bcc) {
         break;
       }
-      isThere.cc = recipient.sendingType === 'cc';
-      isThere.bcc = recipient.sendingType === 'bcc';
+      if (recipient.sendingType === 'cc') {
+        isThere.cc = true;
+      } else if (recipient.sendingType === 'bcc') {
+        isThere.bcc = true;
+      }
     }
     const copyActionsContainer = this.composer.S.cached('email_copy_actions');
     copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
