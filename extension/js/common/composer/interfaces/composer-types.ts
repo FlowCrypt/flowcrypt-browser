@@ -16,9 +16,9 @@ export class RecipientStatuses {
 }
 
 export type Recipients = {
-  to: string[],
-  cc: string[],
-  bcc: string[]
+  to?: string[],
+  cc?: string[],
+  bcc?: string[]
 };
 
 export interface BaseRecipient {

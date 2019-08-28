@@ -218,7 +218,7 @@ Catch.try(async () => {
   const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [asBackupFile(acctEmail, armoredKey)];
-    const msg = await Google.createMsgObj(acctEmail, acctEmail, [{ email: acctEmail, sendingType: 'to' }], GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    const msg = await Google.createMsgObj(acctEmail, acctEmail, { to: [acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
       return await Google.gmail.msgSend(acctEmail, msg);
     } else {

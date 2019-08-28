@@ -9,7 +9,7 @@ import { Value, Dict, Str } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
-import { Recipients, BaseRecipient } from '../composer/interfaces/composer-types.js';
+import { Recipients } from '../composer/interfaces/composer-types.js';
 
 export type ProviderContactsQuery = { substring: string };
 export type SendableMsg = { headers: Dict<string>; from: string; recipients: Recipients; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
@@ -18,19 +18,17 @@ type LastMsgHeaders = { lmSender: string | undefined, lmRecipients: string[], lm
 export class EmailProviderApi extends Api {
 
   public static createMsgObj = async (
-    acctEmail: string, from: string = '', recipientElements: BaseRecipient[] = [], subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string
+    acctEmail: string, from: string = '', recipients: Recipients, subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string
   ): Promise<SendableMsg> => {
+    const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if (!recipientElements.length) {
+    if (!allEmails.length) {
       throw new Error('The To: field is empty. Please add recipients and try again');
     }
-    const invalidEmails = recipientElements.filter(r => !Str.isEmailValid(r.email));
+    const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email));
     if (invalidEmails.length) {
       throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
-    const recipients: Recipients = { to: [], cc: [], bcc: [] };
-    // tslint:disable-next-line: standard-loops
-    recipientElements.forEach(r => recipients[r.sendingType].push(r.email));
     return {
       headers: primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {},
       from,

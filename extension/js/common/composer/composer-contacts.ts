@@ -419,9 +419,9 @@ export class ComposerContacts extends ComposerComponent {
     for (const key in recipients) {
       if (recipients.hasOwnProperty(key)) {
         const sendingType = key as SendingType;
-        if (recipients[sendingType].length) {
+        if (recipients[sendingType] && recipients[sendingType]!.length) {
           newRecipients = newRecipients.concat(this.createRecipientsElements(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`),
-            recipients[sendingType], sendingType, RecipientStatuses.EVALUATING));
+            recipients[sendingType]!, sendingType, RecipientStatuses.EVALUATING));
           this.composer.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
         }
       }

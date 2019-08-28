@@ -394,17 +394,18 @@ export class Composer {
 
   private extractProcessSendMsg = async () => {
     try {
-      const recipients = this.getRecipients();
+      const recipientElements = this.getRecipients();
+      const recipients = this.mapRecipients(recipientElements);
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
-      await this.throwIfFormNotReady(recipients);
+      await this.throwIfFormNotReady(recipientElements);
       this.S.now('send_btn_span').text('Loading');
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
-      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipients.map(r => r.email));
+      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipientElements.map(r => r.email));
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
-      await this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
+      await this.throwIfFormValsInvalid(recipientElements, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
         await this.signSend(recipients, subject, plaintext);
       } else {
@@ -415,9 +416,9 @@ export class Composer {
     }
   }
 
-  private encryptSend = async (recipients: RecipientElement[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private encryptSend = async (recipients: Recipients, armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
-    plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients.map(r => r.email), subject, plaintext, pwd, subscription);
+    plaintext = await this.addReplyTokenToMsgBodyIfNeeded([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
     if (atts.length && pwd) { // these will be password encryaddReplyTokenToMsgBodyIfNeededpted attachments
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
@@ -429,7 +430,7 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: RecipientElement[], subject: string, plaintext: string) => {
+  private signSend = async (recipients: Recipients, subject: string, plaintext: string) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
     if (primaryKi) {
@@ -460,7 +461,7 @@ export class Composer {
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
-        this.app.storageContactUpdate(recipients.map(r => r.email), { last_use: Date.now() }).catch(Catch.reportErr);
+        this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() }).catch(Catch.reportErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
         await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
@@ -567,12 +568,12 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: RecipientElement[],
+  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients,
     subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
     const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
-    await this.app.storageContactUpdate(recipients.map(r => r.email), { last_use: Date.now() });
+    await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
@@ -978,7 +979,7 @@ export class Composer {
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        this.composerContacts.parseRenderRecipients(this.S.cached('input_to')).catch(Catch.reportErr); // this will force firefox to render them on load
+        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to')); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
     } else {
@@ -1129,9 +1130,9 @@ export class Composer {
         return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
       }));
     };
-    msg.recipients.to = await addNameToEmail(msg.recipients.to);
-    msg.recipients.cc = await addNameToEmail(msg.recipients.cc);
-    msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc);
+    msg.recipients.to = await addNameToEmail(msg.recipients.to || []);
+    msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
+    msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
     const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
     if (name) {
       msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;
@@ -1140,5 +1141,23 @@ export class Composer {
 
   private hasValue(inputs: JQuery<HTMLElement>): boolean {
     return !!inputs.filter((index, elem) => !!$(elem).val()).length;
+  }
+
+  private mapRecipients = (recipients: RecipientElement[]) => {
+    const result: Recipients = { to: [], cc: [], bcc: [] };
+    for (const recipient of recipients) {
+      switch (recipient.sendingType) {
+        case "to":
+          result.to!.push(recipient.email);
+          break;
+        case "cc":
+          result.cc!.push(recipient.email);
+          break;
+        case "bcc":
+          result.bcc!.push(recipient.email);
+          break;
+      }
+    }
+    return result;
   }
 }

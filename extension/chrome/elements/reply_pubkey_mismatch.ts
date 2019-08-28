@@ -13,7 +13,7 @@ import { Google } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { ComposerAppFunctionsInterface } from '../../js/common/composer/interfaces/composer-app-functions.js';
-import { BaseRecipient } from '../../js/common/composer/interfaces/composer-types.js';
+import { Recipients } from '../../js/common/composer/interfaces/composer-types.js';
 
 Catch.try(async () => {
 
@@ -108,10 +108,7 @@ Catch.try(async () => {
   $('#send_btn').off().click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
     const body = { 'text/plain': $('#input_text').get(0).innerText };
-    const recipients: BaseRecipient[] = to.map(email => {
-      const recipient: BaseRecipient = { email, sendingType: 'to' };
-      return recipient;
-    });
+    const recipients: Recipients = { to };
     const message = await Google.createMsgObj(acctEmail, from, recipients, subject, body, [att], threadId);
     const replyHeaders = await determineReplyHeaders();
     message.headers['In-Reply-To'] = replyHeaders['In-Reply-To'];
