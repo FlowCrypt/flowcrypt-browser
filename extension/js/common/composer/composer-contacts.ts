@@ -20,7 +20,6 @@ import { moveElementInArray } from '../platform/util.js';
 
 export class ComposerContacts extends ComposerComponent {
   private app: ComposerAppFunctionsInterface;
-  private openPGP: typeof OpenPGP;
   private addedRecipients: RecipientElement[] = [];
   private BTN_LOADING = 'Loading..';
 
@@ -35,14 +34,10 @@ export class ComposerContacts extends ComposerComponent {
 
   private dragged: Element | undefined = undefined;
 
-  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, openPGP: typeof OpenPGP, composer: Composer) {
+  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
     super(composer, urlParams);
     this.app = app;
-    this.openPGP = openPGP;
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
-    if (Catch.browser().name === 'firefox') {
-      this.composer.S.cached('collapsed').css('font-size', '15px');
-    }
   }
 
   initActions(): void {
@@ -70,7 +65,7 @@ export class ComposerContacts extends ComposerComponent {
         if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We need to colapse it if some input is on focus again.
           return;
         }
-        this.hideCCAndBCCInputsIfNeeded();
+        this.hideCcAndBccInputsIfNeeded();
         this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
         this.composer.S.cached('collapsed').css('display', 'flex');
         await this.setEmailsPreview(this.addedRecipients);
@@ -520,9 +515,7 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
       $(recipient.element).attr('title', 'This email address looks misspelled. Please try again.');
       $(recipient.element).addClass("wrong");
-    } else if (contact.pubkey &&
-      ((contact.expiresOn || Infinity) <= Date.now() ||
-        await Pgp.key.usableButExpired((await this.openPGP.key.readArmored(contact.pubkey)).keys[0]))) {
+    } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || await Pgp.key.usableButExpired(await Pgp.key.read(contact.pubkey)))) {
       recipient.status = RecipientStatuses.EXPIRED;
       $(recipient.element).addClass("expired");
       Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
@@ -624,7 +617,7 @@ export class ComposerContacts extends ComposerComponent {
       await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
       container.find('r_loader').remove();
     }
-    const restHTML = `<span class="rest"><span id="rest_number"></span> others</span>`;
+    const restHTML = `<span class="rest"><span id="rest_number"></span> more</span>`;
     container.html(restHTML); // xss-direct
     const MAX_WIDTH = container.parent().width()!;
     const rest = container.find('.rest');
@@ -710,7 +703,7 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private hideCCAndBCCInputsIfNeeded = () => {
+  private hideCcAndBccInputsIfNeeded = () => {
     const isThere = { cc: false, bcc: false };
     for (const recipient of this.addedRecipients) {
       if (isThere.cc && isThere.bcc) {
