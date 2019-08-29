@@ -446,14 +446,8 @@ Catch.try(async () => {
   const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: GmailRes.GmailMsg) => {
     let params: FactoryReplyParams;
     if (lastMsg) {
-      const to = Google.gmail.findHeader(lastMsg, 'to');
-      const headers = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], {
-        lmSender: Google.gmail.findHeader(lastMsg, 'from'),
-        lmRecipients: to ? to.split(',').map(e => Str.parseEmail(e)).map(e => e.email).filter(e => !!e) as string[] : [],
-        lmReplyTo: Google.gmail.findHeader(lastMsg, 'reply-to'),
-      });
       const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
-      params = { subject, replyTo: headers.to, addresses: storage.addresses || [], myEmail: headers.from, threadId, threadMsgId };
+      params = { subject, addresses: storage.addresses || [], threadId, threadMsgId };
     } else {
       params = { threadId, threadMsgId };
     }

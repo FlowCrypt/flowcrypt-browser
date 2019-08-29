@@ -71,7 +71,7 @@ Catch.try(async () => {
   };
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
-    acctEmail, draftId: '', threadId, subject, from, to, frameId, tabId, debug,
+    acctEmail, draftId: '', threadId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true
   };

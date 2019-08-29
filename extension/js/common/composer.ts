@@ -280,15 +280,21 @@ export class Composer {
     } else {
       if (this.urlParams.isReplyBox) {
         const toAddress = Str.parseEmail(this.urlParams.to[0]).email;
-        let to = toAddress ? [toAddress] : [];
-        if (this.urlParams.skipClickPrompt) {
-          await this.renderReplyMsgComposeTable({ to, cc: [], bcc: [] });
+        const recipients: Recipients = { to: toAddress ? [toAddress] : [], cc: this.urlParams.cc, bcc: this.urlParams.bcc };
+        if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
+          await this.renderReplyMsgComposeTable(recipients);
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
-            if ($(target).attr('id') !== 'a_reply') {
-              to = [];
+            switch ($(target).attr('id')) {
+              case 'a_forward':
+                recipients.to = [];
+              case 'reply_click_area':
+              case 'a_reply':
+                recipients.cc = [];
+                recipients.bcc = [];
+                break;
             }
-            await this.renderReplyMsgComposeTable({ to, cc: [], bcc: [] }, (($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
+            await this.renderReplyMsgComposeTable(recipients, (($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.getErrHandlers(`activate repply box`)));
         }
       }
@@ -734,11 +740,10 @@ export class Composer {
         this.lastReplyBoxTableHeight = currentHeight;
         BrowserMsg.send.setCss(this.urlParams.parentTabId, { selector: `iframe#${this.urlParams.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
-    } else {
-      this.S.cached('input_text').css('max-width', '');
-      this.resizeInput();
-      this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
+    this.S.cached('input_text').css('max-width', '');
+    this.resizeInput();
+    this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
   }
 
   public renderReplyMsgComposeTable = async (recipients?: Recipients, method: 'forward' | 'reply' = 'reply'): Promise<void> => {
@@ -747,6 +752,7 @@ export class Composer {
       (async () => {
         this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
         await this.composerContacts.setEmailsPreview(this.getRecipients());
+        this.composerContacts.showHideCcAndBccInputsIfNeeded();
       })().catch(Catch.reportErr);
     }
     await this.renderComposeTable();
@@ -1017,7 +1023,7 @@ export class Composer {
     const addresses = this.app.storageGetAddresses();
     if (addresses.length > 1) {
       const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-      const inputAddrContainer = $('#input_addresses_container');
+      const inputAddrContainer = $('.input.recipients-inputs');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle(() => this.renderSenderAliasesOptions(), this.getErrHandlers(`show sending address options`)));
     }

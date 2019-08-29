@@ -89,7 +89,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    const params: FactoryReplyParams = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMsgId: threadId };
+    const params: FactoryReplyParams = { subject, addresses: this.addresses, threadId, threadMsgId: threadId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
@@ -424,29 +424,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  private domGetMsgSender = (convoRootEl: JQueryEl) => {
-    return (convoRootEl.find('h3.iw span[email]').last().attr('email') || '').trim().toLowerCase();
-  }
-
-  private domGetMsgRecipients = (convoRootEl: JQueryEl) => {
-    return convoRootEl.find('span.hb').last().find('span.g2').toArray().map(el => ($(el).attr('email') || '').toLowerCase()); // add all recipients including me
-  }
-
   private domGetMsgSubject = (convoRootEl: JQueryEl) => {
     return $(convoRootEl).find(this.sel.subject).text();
   }
 
   private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
-    const headers = Google.determineReplyCorrespondents(this.acctEmail, this.addresses, {
-      lmSender: this.domGetMsgSender(convoRootEl),
-      lmRecipients: this.domGetMsgRecipients(convoRootEl),
-      lmReplyTo: undefined, // cannot get this info from DOM, will be later added from API
-    });
     return {
       subject: this.domGetMsgSubject(convoRootEl),
-      replyTo: headers.to,
       addresses: this.addresses,
-      myEmail: headers.from,
       threadId: this.determineThreadId(convoRootEl),
       threadMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),
     };

@@ -2,7 +2,7 @@
 
 'use strict';
 
-export type SendingType = 'to' | 'cc' | 'bcc';
+import { SendingType } from '../../api/api';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -52,6 +52,8 @@ export type ComposerUrlParams = {
   subject: string;
   from: string | undefined;
   to: string[];
+  cc: string[];
+  bcc: string[];
   frameId: string;
   parentTabId: string;
   skipClickPrompt: boolean;

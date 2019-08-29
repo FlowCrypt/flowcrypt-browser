@@ -11,12 +11,13 @@ import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
 import { GoogleAuth } from '../api/google.js';
 import { Lang } from '../lang.js';
-import { ComposerUrlParams, RecipientElement, SendingType, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
 import { Catch } from '../platform/catch.js';
 import { moveElementInArray } from '../platform/util.js';
+import { SendingType } from '../api/api.js';
 
 export class ComposerContacts extends ComposerComponent {
   private app: ComposerAppFunctionsInterface;
@@ -103,7 +104,7 @@ export class ComposerContacts extends ComposerComponent {
         newContainer.css('display', 'block');
         target.style.display = 'none';
         input.focus();
-        this.composer.resizeInput(input.add($(curentContainer).find('input')));
+        this.composer.resizeComposeBox();
         this.composer.setInputTextHeightManuallyIfNeeded();
       }));
     this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
@@ -421,6 +422,7 @@ export class ComposerContacts extends ComposerComponent {
         if (recipients[sendingType] && recipients[sendingType]!.length) {
           newRecipients = newRecipients.concat(this.createRecipientsElements(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`),
             recipients[sendingType]!, sendingType, RecipientStatuses.EVALUATING));
+          this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`).css('display', '');
           this.composer.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
         }
       }
@@ -702,7 +704,7 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private hideCcAndBccInputsIfNeeded = () => {
+  public showHideCcAndBccInputsIfNeeded = () => {
     const isThere = { cc: false, bcc: false };
     for (const recipient of this.addedRecipients) {
       if (isThere.cc && isThere.bcc) {
@@ -716,15 +718,11 @@ export class ComposerContacts extends ComposerComponent {
     }
     const copyActionsContainer = this.composer.S.cached('email_copy_actions');
     copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
-    if (!isThere.cc) {
-      this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', 'none');
-      copyActionsContainer.find(`span.cc`).css('display', '');
-    }
-    if (!isThere.bcc) {
-      this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', 'none');
-      copyActionsContainer.find(`span.bcc`).css('display', '');
-    }
-    this.composer.S.cached('input_addresses_container_outer').children().filter(':visible').last().append(copyActionsContainer); // xss-safe-value
+    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
+    copyActionsContainer.find(`span.cc`).css('display', isThere.cc ? 'none' : '');
+    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
+    copyActionsContainer.find(`span.bcc`).css('display', isThere.bcc ? 'none' : '');
+    this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(copyActionsContainer); // xss-safe-value
   }
 
   private collapseIpnutsIfNeeded = async (relatedTarget: HTMLElement | null) => {
@@ -734,7 +732,7 @@ export class ComposerContacts extends ComposerComponent {
       if (this.composer.S.cached('recipients_inputs').is(':focus')) { // We don't need to colapse it if some input is on focus again.
         return;
       }
-      this.hideCcAndBccInputsIfNeeded();
+      this.showHideCcAndBccInputsIfNeeded();
       this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
       this.composer.S.cached('collapsed').css('display', 'flex');
       await this.setEmailsPreview(this.addedRecipients);

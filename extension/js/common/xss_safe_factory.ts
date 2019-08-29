@@ -19,8 +19,6 @@ export type FactoryReplyParams = {
   threadId?: string,
   threadMsgId?: string,
   addresses?: string[],
-  replyTo?: string[],
-  myEmail?: string,
   subject?: string,
 };
 
@@ -39,7 +37,6 @@ export class XssSafeFactory {
   private setParams: UrlParams;
   private reloadableCls: string;
   private destroyableCls: string;
-  private acctEmail: string;
   private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
 
   constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
@@ -48,7 +45,6 @@ export class XssSafeFactory {
     this.setParams = setParams;
     this.setParams.acctEmail = acctEmail;
     this.setParams.parentTabId = parentTabId;
-    this.acctEmail = acctEmail;
   }
 
   srcImg = (relPath: string) => this.extUrl(`img/${relPath}`);
@@ -119,12 +115,6 @@ export class XssSafeFactory {
       ignoreDraft: Boolean(ignoreDraft),
       threadMsgId: convoParams.threadMsgId,
     };
-    if (convoParams.replyTo) { // for gmail and inbox. Outlook gets this from API
-      const headers = this.resolveFromTo(convoParams.addresses || [], convoParams.myEmail || this.acctEmail, convoParams.replyTo);
-      params.to = headers.to;
-      params.from = headers.from;
-      params.subject = convoParams.subject || '';
-    }
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   }
 
@@ -249,14 +239,6 @@ export class XssSafeFactory {
   private extUrl = (s: string) => chrome.runtime.getURL(s);
 
   private newId = () => `frame_${Str.sloppyRandom(10)}`;
-
-  private resolveFromTo = (secondaryEmails: string[], myEmail: string, theirEmails: string[]) => {
-    // when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-    if (theirEmails.length === 1 && secondaryEmails.includes(theirEmails[0])) {
-      return { from: theirEmails[0], to: myEmail }; // replying to myself, reverse the values to actually write to them
-    }
-    return { to: theirEmails, from: myEmail };
-  }
 
   private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
     const id = String(Env.urlParams(['frameId'], src).frameId);
