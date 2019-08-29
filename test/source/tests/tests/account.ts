@@ -25,7 +25,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       await GmailPageRecipe.closeInitialSetupNotif(gmailPage);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'a large file to trigger trial');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file to trigger trial');
       // add a large file
       let fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/large.jpg');
@@ -62,7 +62,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
   } else {
     ava.test('compose > large file > public domain account (should not prompt to upgrade)', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'a large file test (gmail account)');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/large.jpg');
       await Util.sleep(2);

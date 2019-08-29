@@ -5,10 +5,16 @@ import { expect } from 'chai';
 import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
 import { FlowCryptApi } from './api';
+import { ElementHandle } from 'puppeteer';
 
 export class PageRecipe {
 
 }
+
+type SendingType = "to" | "cc" | "bcc";
+type Recipients = {
+  [key in SendingType]?: string;
+};
 
 type ManualEnterOpts = { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey?: boolean, naked?: boolean, genPp?: boolean, simulateRetryOffline?: boolean };
 
@@ -365,14 +371,9 @@ export class ComposePageRecipe extends PageRecipe {
     await composePage.waitTillGone('@dialog');
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
+  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject: string) => {
     await Util.sleep(0.5);
-    if (to) {
-      await composePageOrFrame.click('@action-expand-cc-bcc-fields');
-      await Util.sleep(0.5);
-      await composePageOrFrame.waitAndType('@input-to', to);
-      await Util.sleep(0.5);
-    }
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
     await composePageOrFrame.click('@input-subject');
     await Util.sleep(1);
     subject = `Automated puppeteer test: ${subject}`;
@@ -380,6 +381,23 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.type('@input-subject', subject);
     await composePageOrFrame.type('@input-body', body);
     return { subject, body };
+  }
+
+  private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients) => {
+    await composePageOrFrame.click('@action-expand-cc-bcc-fields');
+    for (const key in recipients) {
+      if (recipients.hasOwnProperty(key)) {
+        const sendingType = key as SendingType;
+        const email = recipients[sendingType] as string | undefined;
+        if (email) {
+          if (sendingType !== 'to') { // input-to is always visible
+            const elem = await composePageOrFrame.target.$('.email_copy_actions .' + sendingType);
+            await elem!.click();
+          }
+          await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+        }
+      }
+    }
   }
 
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {

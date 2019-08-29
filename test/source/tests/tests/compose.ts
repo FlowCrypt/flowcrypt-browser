@@ -41,7 +41,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
       const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
-      await ComposePageRecipe.fillMsg(composeFrame, 'human@flowcrypt.com', 'sign with entered pass phrase');
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase');
       await composeFrame.waitAndClick('@action-switch-to-sign', { delay: 0.5 });
       await composeFrame.waitAndClick('@action-send');
       await settingsPage.waitAll('@dialog-passphrase');
@@ -51,7 +51,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await settingsPage.waitTillGone('@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
       // signed - done, now try to see if it remembered pp in session
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'signed message pp in session');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session');
       await composePage.click('@action-switch-to-sign'); // should remember pass phrase in session from previous entry
       await ComposePageRecipe.sendAndClose(composePage);
       await settingsPage.close();
@@ -83,33 +83,33 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.test(`[standalone] compose - freshly loaded pubkey`, testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'freshly loaded pubkey');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'freshly loaded pubkey');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.test('[standalone] compose - recipient pasted including name', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'Human at Flowcrypt <Human@FlowCrypt.com>', 'recipient pasted including name');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'Human at Flowcrypt <Human@FlowCrypt.com>' }, 'recipient pasted including name');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.test('compose[global:compose] - standalone - nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'human+nopgp@flowcrypt.com', 'unknown pubkey');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'unknown pubkey');
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
     }));
 
     ava.test('compose[global:compatibility] - standalone - from alias', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'from alias');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'from alias');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.test('compose[global:compose] - standalone - with attachments', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'with files');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'with files');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       await ComposePageRecipe.sendAndClose(composePage);
@@ -117,7 +117,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.test('compose[global:compose] - standalone - with attachments + nopgp', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'human+nopgp@flowcrypt.com', 'with files + nonppg');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human+nopgp@flowcrypt.com' }, 'with files + nonppg');
       const fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/small.txt', 'test/samples/small.png', 'test/samples/small.pdf');
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass', 90);
@@ -125,7 +125,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.test('compose[global:compose] - signed message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'signed message');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message');
       await composePage.click('@action-switch-to-sign');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
@@ -133,12 +133,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.test('compose[global:compose] - settings - manually copied pubkey', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       let settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       let composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
-      await ComposePageRecipe.fillMsg(composeFrame, 'human@flowcrypt.com', 'just to load - will close this page');
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'just to load - will close this page');
       await Util.sleep(1); // todo: should wait until actually loaded
       await settingsPage.close();
       settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
-      await ComposePageRecipe.fillMsg(composeFrame, 'human+manualcopypgp@flowcrypt.com', 'manual copied key');
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human+manualcopypgp@flowcrypt.com' }, 'manual copied key');
       await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
       await composeFrame.waitAll('@dialog');
       const addPubkeyDialog = await composeFrame.getFrame(['add_pubkey.htm']);
@@ -292,12 +292,18 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.test('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, 'test.no.pgp@test.com', 'Signed Message');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message');
       expect(await composePage.isElementPresent('@add-intro')).to.be.true;
       expect(await composePage.isElementPresent('@password-or-pubkey-container')).to.be.true;
       await composePage.waitAndClick('@action-switch-to-sign', { delay: 0.5 });
       await composePage.notPresent('@add-intro');
       await composePage.notPresent('@password-or-pubkey-container');
+    }));
+
+    ava.test.only('compose[global:compose] - standalone - CC&BCC new message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com', cc: 'human@flowcrypt.com', bcc: 'human@flowcrypt.com' }, 'Testing CC And BCC');
+      await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
