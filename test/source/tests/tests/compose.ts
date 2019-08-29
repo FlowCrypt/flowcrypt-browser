@@ -300,11 +300,13 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.notPresent('@password-or-pubkey-container');
     }));
 
-    ava.test.only('compose[global:compose] - standalone - CC&BCC new message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.test('compose[global:compose] - standalone - CC&BCC new message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com', cc: 'human@flowcrypt.com', bcc: 'human@flowcrypt.com' }, 'Testing CC And BCC');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
+
+    ava.test.todo('compose[global:compose] - standalone - CC&BCC test reply');
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
