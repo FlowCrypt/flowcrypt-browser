@@ -382,10 +382,9 @@ table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 8px; background: none; outline: none; color: inherit;}
 table#compose td.input.show_send_from select#input_from { border: none; background: none; margin: -3px 4px 9px 4px; cursor: pointer;
   margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; outline: none; }
+.reply_box table#compose td.input.show_send_from select#input_from { margin-right: 4px; }
 table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; opacity: 0.4; margin-top: -5px;  cursor: pointer; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; }
-table#compose td.input #show_sender_aliases_options { position: absolute; top: 16px; right: 16px; width: 6px; opacity: 0.4; transform: rotate(-90deg); cursor: pointer; }
-table#compose td.input.show_send_from #show_sender_aliases_options { display: none; }
 table#compose tr.bottom { background-color: #f5f5f5; }
 table#compose td.bottom { padding: 7px 12px 1px 12px; height: 47px; border-top: 1px solid #cfcfcf;}
 table#compose td.bottom div#send_btn { text-transform: initial; white-space: nowrap; min-width: 120px;

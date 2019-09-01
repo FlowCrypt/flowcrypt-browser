@@ -371,20 +371,24 @@ export class ComposePageRecipe extends PageRecipe {
     await composePage.waitTillGone('@dialog');
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject: string) => {
+  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined) => {
     await Util.sleep(0.5);
     await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
-    await composePageOrFrame.click('@input-subject');
-    await Util.sleep(1);
-    subject = `Automated puppeteer test: ${subject}`;
-    const body = `This is an automated puppeteer test: ${subject}`;
-    await composePageOrFrame.type('@input-subject', subject);
+    if (subject) {
+      await composePageOrFrame.click('@input-subject');
+      await Util.sleep(1);
+      subject = `Automated puppeteer test: ${subject}`;
+      await composePageOrFrame.type('@input-subject', subject);
+    }
+    const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
     return { subject, body };
   }
 
   private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients) => {
-    await composePageOrFrame.click('@action-expand-cc-bcc-fields');
+    if (!await composePageOrFrame.isElementPresent('@input-to')) {
+      await composePageOrFrame.click('@action-expand-cc-bcc-fields');
+    }
     for (const key in recipients) {
       if (recipients.hasOwnProperty(key)) {
         const sendingType = key as SendingType;

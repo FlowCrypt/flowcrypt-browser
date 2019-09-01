@@ -111,6 +111,9 @@ export class ComposerContacts extends ComposerComponent {
       target.style.display = 'none';
       this.composer.S.cached('input_addresses_container_outer').css('display', 'block');
       this.composer.resizeComposeBox();
+      if (this.urlParams.isReplyBox) {
+        this.composer.resizeInput();
+      }
       this.composer.S.cached('input_to').focus();
       this.composer.setInputTextHeightManuallyIfNeeded();
     }));
@@ -725,7 +728,7 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(copyActionsContainer); // xss-safe-value
   }
 
-  private collapseIpnutsIfNeeded = async (relatedTarget: HTMLElement | null) => {
+  public collapseIpnutsIfNeeded = async (relatedTarget?: HTMLElement | null) => { // TODO: fix issue when loading no-pgp email and user starts typing
     if (!relatedTarget || (!this.composer.S.cached('input_addresses_container_outer')[0].contains(relatedTarget)
       && !this.composer.S.cached('contacts')[0].contains(relatedTarget))) {
       await Promise.all(this.addedRecipients.map(r => r.evaluating)); // Wait untill all recipients loaded.

@@ -261,6 +261,7 @@ export class Composer {
 
   private initComposeBox = async () => {
     if (this.urlParams.isReplyBox) {
+      this.S.cached('body').addClass('reply_box');
       this.S.cached('header').remove();
       this.S.cached('subject').remove();
       this.S.cached('contacts').css('top', '39px');
@@ -740,10 +741,11 @@ export class Composer {
         this.lastReplyBoxTableHeight = currentHeight;
         BrowserMsg.send.setCss(this.urlParams.parentTabId, { selector: `iframe#${this.urlParams.frameId}`, css: { height: `${(Math.max(minHeight, currentHeight) + addExtra)}px` } });
       }
+    } else {
+      this.S.cached('input_text').css('max-width', '');
+      this.resizeInput();
+      this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
-    this.S.cached('input_text').css('max-width', '');
-    this.resizeInput();
-    this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
   }
 
   public renderReplyMsgComposeTable = async (recipients?: Recipients, method: 'forward' | 'reply' = 'reply'): Promise<void> => {
@@ -751,8 +753,8 @@ export class Composer {
     if (recipients) {
       (async () => {
         this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
-        await this.composerContacts.setEmailsPreview(this.getRecipients());
         this.composerContacts.showHideCcAndBccInputsIfNeeded();
+        await this.composerContacts.setEmailsPreview(this.getRecipients());
       })().catch(Catch.reportErr);
     }
     await this.renderComposeTable();
@@ -987,7 +989,6 @@ export class Composer {
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composerContacts.parseRenderRecipients(this.S.cached('input_to')); // this will force firefox to render them on load
       }
-      this.renderSenderAliasesOptionsToggle();
     } else {
       $('.close_new_message').click(Ui.event.handle(async () => {
         if (!this.isSendMessageInProgress || await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
@@ -1000,9 +1001,9 @@ export class Composer {
         await this.toggleFullScreen();
         this.S.cached('body').show();
       }));
-      this.renderSenderAliasesOptions();
       this.setInputTextHeightManuallyIfNeeded();
     }
+    this.renderSenderAliasesOptions();
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
@@ -1016,16 +1017,6 @@ export class Composer {
     this.setInputTextHeightManuallyIfNeeded(true);
     if (this.S.cached('collapsed').is(':visible')) {
       await this.composerContacts.setEmailsPreview(this.getRecipients());
-    }
-  }
-
-  private renderSenderAliasesOptionsToggle() {
-    const addresses = this.app.storageGetAddresses();
-    if (addresses.length > 1) {
-      const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-      const inputAddrContainer = $('.input.recipients-inputs');
-      Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-      inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle(() => this.renderSenderAliasesOptions(), this.getErrHandlers(`show sending address options`)));
     }
   }
 

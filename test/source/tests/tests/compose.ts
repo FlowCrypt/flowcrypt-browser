@@ -1,7 +1,7 @@
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
-import { Url, Controllable, BrowserHandle } from '../../browser';
+import { Url, Controllable, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { TestVariant } from '../../util';
@@ -306,7 +306,16 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.test.todo('compose[global:compose] - standalone - CC&BCC test reply');
+    ava.test('compose[global:compose] - standalone - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 3 });
+      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
+      await isRecipientElementsExists(composePage, { to: true, cc: true });
+      await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" });
+      await Util.sleep(3);
+      await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+    }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
@@ -336,4 +345,21 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
   await composePage.click('@action-expand-quoted-text');
   await composePage.waitTillGone(['@action-expand-quoted-text']);
   expect(await composePage.read('@input-body')).to.include(textToInclude);
+};
+
+const isRecipientElementsExists = async (controllable: ControllablePage, exists: { to: boolean, cc: boolean }) => {
+  const containerTo = await controllable.waitAny('@container-to', { visible: false });
+  const containerCc = await controllable.waitAny('@container-cc', { visible: false });
+  const recipientsTo = await containerTo.$$('.recipients span');
+  const recipientsCc = await containerCc.$$('.recipients span');
+  if (exists.to) {
+    expect(recipientsTo.length).to.not.equal(0);
+  } else {
+    expect(recipientsTo.length).to.equal(0);
+  }
+  if (exists.cc) {
+    expect(recipientsCc.length).to.not.equal(0);
+  } else {
+    expect(recipientsCc.length).to.equal(0);
+  }
 };

@@ -39,14 +39,14 @@ class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
         const to = Lodash.get(mimeMsg, ['to', 'value', 0, 'address']) as string | undefined;
         const cc = Lodash.get(mimeMsg, ['cc', 'value', 0, 'address']) as string | undefined;
         const bcc = Lodash.get(mimeMsg, ['bcc', 'value', 0, 'address']) as string | undefined;
-        if (to !== 'human@flowcrypt.com') {
-            throw new HttpClientErr(`Error: Incorrect 'To' header. Found '${to}' but shoud be 'human@flowcrypt.com'`, 400);
+        if (!to) {
+            throw new HttpClientErr(`Error: There is no 'To' header.`, 400);
         }
-        if (cc !== 'human@flowcrypt.com') {
-            throw new HttpClientErr(`Error: Incorrect 'Cc' header. Found '${cc}' but shoud be 'human@flowcrypt.com'`, 400);
+        if (!cc) {
+            throw new HttpClientErr(`Error: There is no 'Cc' header.`, 400);
         }
-        if (bcc !== 'human@flowcrypt.com') {
-            throw new HttpClientErr(`Error: Incorrect 'Bcc' header. Found '${bcc}' but shoud be 'human@flowcrypt.com'`, 400);
+        if (!bcc) {
+            throw new HttpClientErr(`Error: There is no 'Bcc' header.`, 400);
         }
     }
 }
