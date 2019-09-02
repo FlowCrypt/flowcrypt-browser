@@ -117,11 +117,12 @@ export class Mime {
 
   private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
     const result: { from?: string, to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
-    const getHeaderValueAsArray = (header: MimeContentHeader) => typeof header === 'string' ? [header] : header.map(h => h.address);
+    const getHdrValAsArr = (hdr: MimeContentHeader) => typeof hdr === 'string' ? [hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[] : hdr.map(h => h.address);
+    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? (hdr[0] || {}).address : String(hdr || '')) || '').email;
     for (const hdrName of headersNames) {
       if (parsedMimeMsg.headers[hdrName]) {
         const header = parsedMimeMsg.headers[hdrName];
-        result[hdrName] = hdrName === 'from' ? String(header || '') : [...result[hdrName], ...getHeaderValueAsArray(header)];
+        result[hdrName] = hdrName === 'from' ? getHdrValAsStr(header) : [...result[hdrName], ...getHdrValAsArr(header)];
       }
     }
     return result;
