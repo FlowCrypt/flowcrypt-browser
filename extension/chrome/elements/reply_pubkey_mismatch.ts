@@ -13,7 +13,6 @@ import { Google } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { ComposerAppFunctionsInterface } from '../../js/common/composer/interfaces/composer-app-functions.js';
-import { Recipients } from '../../js/common/composer/interfaces/composer-types.js';
 
 Catch.try(async () => {
 
