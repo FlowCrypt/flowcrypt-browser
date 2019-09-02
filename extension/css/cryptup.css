@@ -347,9 +347,10 @@ table#compose td.recipients-inputs > div#input_addresses_container div .recipien
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.expired-time { opacity: 1; };
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .lock-icon { left: 8.5px; top: 7px; cursor: pointer; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .lock-icon,
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .expired-time { left: 8.5px; top: 7px; cursor: pointer; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon { right: 8.5px; top: 7px; cursor: pointer; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon:hover { opacity: 1; }
+table#compose td.recipients-inputs > div#input_addrexpired-timeesses_container div .recipients > span .close-icon:hover { opacity: 1; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon.display_when_sign { display: none; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.wrong { background: #A44; color: white;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.wrong .close-icon { opacity: 1; }
