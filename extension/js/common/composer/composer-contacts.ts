@@ -622,18 +622,17 @@ export class ComposerContacts extends ComposerComponent {
       await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
       container.find('r_loader').remove();
     }
-    const restHTML = `<span class="rest"><span id="rest_number"></span> more</span>`;
-    container.html(restHTML); // xss-direct
-    const MAX_WIDTH = container.parent().width()!;
+    Xss.sanitizeRender(container, '<span class="rest"><span id="rest_number"></span> more</span>');
+    const maxWidth = container.parent().width()!;
     const rest = container.find('.rest');
     let processed = 0;
-    while (container.width()! <= MAX_WIDTH && recipients.length >= processed + 1) {
+    while (container.width()! <= maxWidth && recipients.length >= processed + 1) {
       const recipient = recipients[processed];
-      const emailHTML = `<span class="email_address ${recipient.element.className}">${recipient.email}</span>`;
-      $(emailHTML).insertBefore(rest); // xss-direct
+      const emailHtml = `<span class="email_address ${recipient.element.className}">${recipient.email}</span>`;
+      $(emailHtml).insertBefore(rest); // xss-direct
       processed++;
     }
-    if (container.width()! > MAX_WIDTH) {
+    if (container.width()! > maxWidth) {
       container.find('.email_address').last().remove();
       const restRecipients = recipients.slice(processed - 1);
       rest.find('#rest_number').text(restRecipients.length);
@@ -650,7 +649,7 @@ export class ComposerContacts extends ComposerComponent {
   private addDraggableEvents = (element: HTMLElement) => {
     element.draggable = true;
     element.ondragstart = (event) => {
-      event.dataTransfer!.setData('text/plain', 'Flowcrpypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
+      event.dataTransfer!.setData('text/plain', 'FlowCrypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
       this.dragged = element;
     };
     element.ondragend = () => {

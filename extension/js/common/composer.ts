@@ -125,7 +125,7 @@ export class Composer {
       await this.initComposeBox();
       await this.initActions();
       await this.checkEmailAliases();
-    })();
+    })().catch(Catch.reportErr);
   }
 
   public debug = (msg: string) => {
@@ -427,7 +427,7 @@ export class Composer {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
-    if (atts.length && pwd) { // these will be password encryaddReplyTokenToMsgBodyIfNeededpted attachments
+    if (atts.length && pwd) { // these will be password encrypted attachments
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
@@ -796,7 +796,7 @@ export class Composer {
     inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
     for (const inputElement of inputs) {
       const jqueryElem = $(inputElement);
-      const CONTAINER_WIDTH = Math.floor(jqueryElem.parent().innerWidth()!);
+      const containerWidth = Math.floor(jqueryElem.parent().innerWidth()!);
       let additionalWidth = Math.ceil(Number(jqueryElem.css('padding-left').replace('px', '')) + Number(jqueryElem.css('padding-right').replace('px', '')));
       const minInputWidth = 150;
       let offset = 0;
@@ -804,10 +804,10 @@ export class Composer {
         additionalWidth += Math.ceil(jqueryElem.next().outerWidth()!);
       }
       const lastRecipient = jqueryElem.siblings('.recipients').children().last();
-      if (lastRecipient.length && lastRecipient.position().left + lastRecipient.outerWidth()! + minInputWidth + additionalWidth < CONTAINER_WIDTH) {
+      if (lastRecipient.length && lastRecipient.position().left + lastRecipient.outerWidth()! + minInputWidth + additionalWidth < containerWidth) {
         offset = Math.ceil(lastRecipient.position().left + lastRecipient.outerWidth()!);
       }
-      jqueryElem.css('width', (CONTAINER_WIDTH - offset - additionalWidth - 11) + 'px');
+      jqueryElem.css('width', (containerWidth - offset - additionalWidth - 11) + 'px');
     }
   }
 
