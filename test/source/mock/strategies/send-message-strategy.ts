@@ -1,5 +1,5 @@
 import { UnsuportableStrategyError, ITestMsgStrategy } from './strategy-base.js';
-import { ParsedMail } from 'mailparser';
+import { ParsedMail, AddressObject } from 'mailparser';
 import { HttpClientErr } from '../api.js';
 import { PgpMsg } from "../../core/pgp.js";
 import { Buf } from '../../core/buf.js';
@@ -34,16 +34,14 @@ class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
 
 class NewMessageCCAndBCCTestStrategy implements ITestMsgStrategy {
   async test(mimeMsg: ParsedMail) {
-    const to = mimeMsg.to.value.length ? mimeMsg.to.value[0].address : undefined;
-    const cc = mimeMsg.cc.value.length ? mimeMsg.cc.value[0].address : undefined;
-    const bcc = mimeMsg.bcc.value.length ? mimeMsg.bcc.value[0].address : undefined;
-    if (!to) {
+    const hasAddr = (ao?: AddressObject) => ao && ao.value && ao.value.length && ao.value[0].address;
+    if (!hasAddr(mimeMsg.to)) {
       throw new HttpClientErr(`Error: There is no 'To' header.`, 400);
     }
-    if (!cc) {
+    if (!hasAddr(mimeMsg.cc)) {
       throw new HttpClientErr(`Error: There is no 'Cc' header.`, 400);
     }
-    if (!bcc) {
+    if (!hasAddr(mimeMsg.bcc)) {
       throw new HttpClientErr(`Error: There is no 'Bcc' header.`, 400);
     }
   }
