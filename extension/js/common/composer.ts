@@ -280,7 +280,7 @@ export class Composer {
       }
     } else {
       if (this.urlParams.isReplyBox) {
-        const toAddress = Str.parseEmail(this.urlParams.to[0]).email;
+        const toAddress = this.urlParams.to && this.urlParams.to[0] && Str.parseEmail(this.urlParams.to[0]).email;
         const recipients: Recipients = { to: toAddress ? [toAddress] : [], cc: this.urlParams.cc, bcc: this.urlParams.bcc };
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable(recipients);
