@@ -5,7 +5,7 @@
 'use strict';
 
 import { Api, SendingType } from './api.js';
-import { Dict, Str } from '../core/common.js';
+import { Dict, Str, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
@@ -40,16 +40,15 @@ export class EmailProviderApi extends Api {
     };
   }
 
-  public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], gmailMsg: GmailRes.GmailMsg) => {
-    // Array.from(new Set(...)) will remove duplicates.
+  public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg) => {
     const headers = {
-      from: Str.parseEmail(Google.gmail.findHeader(gmailMsg, 'from') || '').email,
-      to: EmailProviderApi.getAddressesHeader(gmailMsg, 'to'),
+      from: Str.parseEmail(Google.gmail.findHeader(lastGmailMsg, 'from') || '').email,
+      to: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'to'),
       // Do not add your emails and aliases to CC and BCC, maybe it's incorrect to filter them here,
       // maybe would be better to return from this method all emails addresses and then filter them in another place
-      cc: EmailProviderApi.getAddressesHeader(gmailMsg, 'cc').filter(e => !addresses.includes(e)),
-      bcc: EmailProviderApi.getAddressesHeader(gmailMsg, 'bcc').filter(e => !addresses.includes(e)),
-      replyTo: Google.gmail.findHeader(gmailMsg, 'reply-to')
+      cc: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'cc').filter(e => !addresses.includes(e)),
+      bcc: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
+      replyTo: Google.gmail.findHeader(lastGmailMsg, 'reply-to')
     };
     if (headers.from) {
       headers.to.unshift(headers.from);
@@ -70,7 +69,7 @@ export class EmailProviderApi extends Api {
   }
 
   private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: SendingType) => {
-    return Array.from(new Set((Google.gmail.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e)));
+    return Value.arr.unique((Google.gmail.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
   }
 
 }
