@@ -205,7 +205,7 @@ export class Mime {
             }
           }
           const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
-          mimeContent.subject = mimeContent.subject || (mimeContent.headers.subject as string);
+          mimeContent.subject = String(mimeContent.subject || mimeContent.headers.subject || '(no subject)');
           mimeContent = Object.assign(mimeContent, headers);
           resolve(mimeContent);
         };
