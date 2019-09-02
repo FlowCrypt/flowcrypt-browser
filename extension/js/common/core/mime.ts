@@ -14,7 +14,8 @@ const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
 const Iso88592 = requireIso88592();  // tslint:disable-line:variable-name
 
-type MimeContentHeader = string | { address: string; name: string; }[];
+type AddressHeader = { address: string; name: string; };
+type MimeContentHeader = string | AddressHeader[];
 export type MimeContent = {
   headers: Dict<MimeContentHeader>;
   atts: Att[];
@@ -115,11 +116,15 @@ export class Mime {
   }
 
   private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
-    const result: { from: string[], to: string[], cc: string[], bcc: string[] } = { from: [], to: [], cc: [], bcc: [] };
+    const result: { from?: string, to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
+    const getHeaderValueAsArray = (header: MimeContentHeader) => typeof (header) === 'string' ? [header] : header.map(h => h.address);
     for (const hdrName of headersNames) {
-      if (Array.isArray(parsedMimeMsg.headers[hdrName])) {
-        for (const value of parsedMimeMsg.headers[hdrName]) {
-          result[hdrName].push(typeof value === 'string' ? value : value.address);
+      if (parsedMimeMsg.headers[hdrName]) {
+        const header = parsedMimeMsg.headers[hdrName];
+        if (hdrName === 'from') { // we have string | undefined here
+          result[hdrName] = typeof (header) === 'string' ? header : header.map(h => h.address).join(',');
+        } else {
+          result[hdrName] = [...result[hdrName], ...getHeaderValueAsArray(header)];
         }
       }
     }
@@ -199,9 +204,9 @@ export class Mime {
               mimeContent.atts.push(Mime.getNodeAsAtt(node));
             }
           }
-          const { from, to, cc, bcc } = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
-          mimeContent.from = from.length ? from[0] : undefined;
-          mimeContent = Object.assign(mimeContent, { to, cc, bcc });
+          const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
+          mimeContent.subject = mimeContent.subject || (mimeContent.headers.subject as string);
+          mimeContent = Object.assign(mimeContent, headers);
           resolve(mimeContent);
         };
         parser.write(mimeMsg);

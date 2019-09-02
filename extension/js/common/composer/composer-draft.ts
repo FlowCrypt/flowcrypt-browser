@@ -67,7 +67,6 @@ export class ComposerDraft extends ComposerComponent {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
         return false;
       }
-      parsedMsg.subject = parsedMsg.subject || (parsedMsg.headers.subject as string);
       return await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
       if (Api.err.isNetErr(e)) {
