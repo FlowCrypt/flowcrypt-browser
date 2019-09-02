@@ -121,11 +121,7 @@ export class Mime {
     for (const hdrName of headersNames) {
       if (parsedMimeMsg.headers[hdrName]) {
         const header = parsedMimeMsg.headers[hdrName];
-        if (hdrName === 'from') { // we have string | undefined here
-          result[hdrName] = typeof header === 'string' ? header : header.map(h => h.address).join(',');
-        } else {
-          result[hdrName] = [...result[hdrName], ...getHeaderValueAsArray(header)];
-        }
+        result[hdrName] = hdrName === 'from' ? String(header || '') : [...result[hdrName], ...getHeaderValueAsArray(header)];
       }
     }
     return result;
