@@ -17,7 +17,7 @@ import { BrowserMsg } from '../extension.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
 import { Catch } from '../platform/catch.js';
 import { moveElementInArray } from '../platform/util.js';
-import { SendingType } from '../api/api.js';
+import { RecipientType } from '../api/api.js';
 
 export class ComposerContacts extends ComposerComponent {
   private app: ComposerAppFunctionsInterface;
@@ -83,7 +83,7 @@ export class ComposerContacts extends ComposerComponent {
       }
       if (this.dragged) {
         this.dragged.parentElement!.removeChild(this.dragged);
-        const sendingType = target.getAttribute('data-sending-type') as SendingType;
+        const sendingType = target.getAttribute('data-sending-type') as RecipientType;
         const jqueryTarget = $(target);
         jqueryTarget.siblings('.recipients').append(this.dragged); // xss-safe-value
         const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
@@ -158,7 +158,7 @@ export class ComposerContacts extends ComposerComponent {
     const currentActive = this.composer.S.cached('contacts').find('ul li.select_contact.active');
     if (e.key === 'Backspace') {
       if (!$(e.target).val()) {
-        const sendingType = e.target.getAttribute('data-sending-type') as SendingType;
+        const sendingType = e.target.getAttribute('data-sending-type') as RecipientType;
         const lastRecipient = this.addedRecipients.reverse().find(r => r.sendingType === sendingType);
         if (lastRecipient) {
           this.removeRecipient(lastRecipient.element);
@@ -368,7 +368,7 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.debug(`parseRenderRecipients(force: ${force})`);
     for (const inputElem of inputs) {
       const input = $(inputElem);
-      const sendingType = input.data('sending-type') as SendingType;
+      const sendingType = input.data('sending-type') as RecipientType;
       this.composer.debug(`parseRenderRecipients(force: ${force}) - sending type - ${sendingType}`);
       uncheckedEmails = uncheckedEmails || String(input.val()).split(/,/g);
       this.composer.debug(`parseRenderRecipients(force: ${force}) - emails to check(${uncheckedEmails.join(',')})`);
@@ -400,7 +400,7 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: SendingType, status: RecipientStatus): RecipientElement[] => {
+  private createRecipientsElements = (container: JQuery<HTMLElement>, emails: string[], sendingType: RecipientType, status: RecipientStatus): RecipientElement[] => {
     const result = [];
     for (const email of emails) {
       const recipientId = this.generateRecipientId();
@@ -422,7 +422,7 @@ export class ComposerContacts extends ComposerComponent {
     let newRecipients: RecipientElement[] = [];
     for (const key in recipients) {
       if (recipients.hasOwnProperty(key)) {
-        const sendingType = key as SendingType;
+        const sendingType = key as RecipientType;
         if (recipients[sendingType] && recipients[sendingType]!.length) {
           newRecipients = newRecipients.concat(this.createRecipientsElements(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`),
             recipients[sendingType]!, sendingType, RecipientStatuses.EVALUATING));

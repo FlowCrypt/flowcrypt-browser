@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { SendingType } from '../../api/api';
+import { RecipientType } from '../../api/api';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -23,7 +23,7 @@ export type Recipients = {
 
 export interface BaseRecipient {
   email: string;
-  sendingType: SendingType;
+  sendingType: RecipientType;
 }
 
 export interface RecipientElement extends BaseRecipient {

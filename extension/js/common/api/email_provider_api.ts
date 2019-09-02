@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { Api, SendingType } from './api.js';
+import { Api, RecipientType } from './api.js';
 import { Dict, Str, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Att } from '../core/att.js';
@@ -68,7 +68,7 @@ export class EmailProviderApi extends Api {
     return { to: headers.to, cc: headers.cc, bcc: headers.bcc, from: myEmail };
   }
 
-  private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: SendingType) => {
+  private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {
     return Value.arr.unique((Google.gmail.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
   }
 

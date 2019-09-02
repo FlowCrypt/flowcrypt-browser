@@ -8,7 +8,7 @@ const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
-import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError, SendingType } from './api.js';
+import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError, RecipientType } from './api.js';
 import { Env, Ui } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult, BrowserMsg } from '../extension.js';
@@ -183,7 +183,7 @@ export class Google extends EmailProviderApi {
       message.headers.From = message.from;
       for (const key in message.recipients) {
         if (message.recipients.hasOwnProperty(key)) {
-          const sendingType = key as SendingType;
+          const sendingType = key as RecipientType;
           if (message.recipients[sendingType] && message.recipients[sendingType]!.length) {
             message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.join(',');
           }
