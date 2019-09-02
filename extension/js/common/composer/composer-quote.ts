@@ -74,11 +74,9 @@ export class ComposerQuote extends ComposerComponent {
 
   public getAndDecryptMessage = async (msgId: string, progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     try {
-      const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw',
-        progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
+      const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
-      const readableBlocks = message.blocks
-        .filter(b => ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'].includes(b.type));
+      const readableBlocks = message.blocks.filter(b => ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'].includes(b.type));
       const pgpBlockCount = readableBlocks.filter(b => ['encryptedMsg', 'signedMsg'].includes(b.type)).length;
       const decryptedAndFormatedContent: string[] = [];
       for (const [index, block] of readableBlocks.entries()) {
