@@ -338,18 +338,18 @@ table#compose td.recipients-inputs > div#input_addresses_container { outline: no
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
 table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
 table#compose td.recipients-inputs > div#input_addresses_container div input { vertical-align: middle; height: 34px; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { margin: 2px -4px 0 8px; display: inline-block; border-radius: 6px; position: relative;
-  -webkit-transition: .25s; transition: .25s; padding:  5px 26px; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { margin: 2px -4px 0 8px; display: inline-block; border-radius: 4px; position: relative;
+  -webkit-transition: .25s; transition: .25s; padding: 2px 6px; top: 2px; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients { height: auto; position: relative; cursor: move; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img { width: 11px; height: 11px; opacity: 0.7; position: absolute; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img { width: 9px; height: 9px; opacity: 0.7; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.repeat-icon { right: -6px; top: 1px; cursor: pointer;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.close-icon-black { margin-left: 5px; top: 1px; right: -8px; cursor: pointer;}
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span > img.expired-time { opacity: 1; };
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span i { padding-left: 4px; position: relative; top: 1px; right:-2px; opacity: 0.85;
   cursor: pointer; color: black; font-size: 90%; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .lock-icon,
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .expired-time { left: 8.5px; top: 7px; cursor: pointer; }
-table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon { right: 8.5px; top: 7px; cursor: pointer; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .expired-time { margin-right: 4px; }
+table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon { cursor: pointer; }
 table#compose td.recipients-inputs > div#input_addrexpired-timeesses_container div .recipients > span .close-icon:hover { opacity: 1; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span .close-icon.display_when_sign { display: none; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span.wrong { background: #A44; color: white;}
