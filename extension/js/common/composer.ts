@@ -427,7 +427,7 @@ export class Composer {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
-    if (atts.length && pwd) { // these will be password encryaddReplyTokenToMsgBodyIfNeededpted attachments
+    if (atts.length && pwd) { // these will be password encrypted attachments
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
