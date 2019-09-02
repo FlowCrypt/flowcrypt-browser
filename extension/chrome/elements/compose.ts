@@ -11,12 +11,11 @@ import { Composer } from '../../js/common/composer.js';
 import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
-import { KeyInfo, Contact, Pgp } from '../../js/common/core/pgp.js';
+import { KeyInfo, Contact, Pgp, openpgp } from '../../js/common/core/pgp.js';
 import { SendableMsg } from '../../js/common/api/email_provider_api.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
-import { requireOpenpgp } from '../../js/common/platform/require.js';
 import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/composer-errors.js';
 
@@ -26,8 +25,6 @@ export type DeterminedMsgHeaders = {
 };
 
 Catch.try(async () => {
-
-  const openpgp = requireOpenpgp();
 
   Ui.event.protect();
 

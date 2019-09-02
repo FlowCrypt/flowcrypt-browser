@@ -23,7 +23,6 @@
  *  - add < script > tags to appropriate .htm files pointing to the js using ABSOLUTE path, unless this dep can be imported as es6 module tag, in which case use RELATIVE path
  */
 
-import { VERSION } from '../../../js/common/core/const.js';
 import { MimeParser } from '../core/types/emailjs.js';
 
 const loadedTags: string[] = [];
@@ -34,7 +33,7 @@ type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode:
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   try {
-    openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
+    openpgp.config.versionstring = `FlowCrypt Gmail Encryption`;
     openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
     // openpgp.config.require_uid_self_cert = false;
     return openpgp;

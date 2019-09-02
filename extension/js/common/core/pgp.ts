@@ -15,7 +15,7 @@ import { FcAttLinkData } from './att.js';
 import { Buf } from './buf.js';
 import { Xss } from '../platform/xss.js';
 
-const openpgp = requireOpenpgp();
+export const openpgp = requireOpenpgp();
 
 if (typeof openpgp !== 'undefined') { // in certain environments, eg browser content scripts, openpgp is not included (not all functions below need it)
   openpgp.config.versionstring = `FlowCrypt ${VERSION} Gmail Encryption`;
@@ -30,7 +30,14 @@ if (typeof openpgp !== 'undefined') { // in certain environments, eg browser con
     if (!prvPackets.length) {
       throw new Error("This key has no private packets. Is it a Private Key?");
     }
-    return prvPackets;
+    // only encrypted keys have s2k (decrypted keys don't needed, already decrypted)
+    // if s2k is present and it indicates it's a dummy key, filter it out
+    // if s2k is not present, it's a decrypted real key (not dummy)
+    const nonDummyPrvPackets = prvPackets.filter(p => !p.s2k || p.s2k.type !== 'gnu-dummy');
+    if (!nonDummyPrvPackets.length) {
+      throw new Error("This key only has a gnu-dummy private packet, with no actual secret keys.");
+    }
+    return nonDummyPrvPackets;
   };
   openpgp.key.Key.prototype.isFullyDecrypted = function () {
     return getPrvPackets(this).every(p => p.isDecrypted() === true);
