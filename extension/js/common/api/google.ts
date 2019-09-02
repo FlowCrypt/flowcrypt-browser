@@ -181,12 +181,10 @@ export class Google extends EmailProviderApi {
     }),
     msgSend: async (acctEmail: string, message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
       message.headers.From = message.from;
-      for (const key in message.recipients) {
-        if (message.recipients.hasOwnProperty(key)) {
-          const sendingType = key as RecipientType;
-          if (message.recipients[sendingType] && message.recipients[sendingType]!.length) {
-            message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.join(',');
-          }
+      for (const key of Object.keys(message.recipients)) {
+        const sendingType = key as RecipientType;
+        if (message.recipients[sendingType] && message.recipients[sendingType]!.length) {
+          message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.join(',');
         }
       }
       message.headers.Subject = message.subject;
