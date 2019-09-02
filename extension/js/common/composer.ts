@@ -125,7 +125,7 @@ export class Composer {
       await this.initComposeBox();
       await this.initActions();
       await this.checkEmailAliases();
-    })();
+    })().catch(Catch.reportErr);
   }
 
   public debug = (msg: string) => {
