@@ -22,7 +22,6 @@
     "openpgp": "4.5.4",
     "mailparser": "2.7.1",
     "puppeteer": "1.11.0",
-    "lodash": "4.17.15",
     "sweetalert2": "8.15.3",
     "tslint": "5.11.0",
     "typescript": "3.4.1",
