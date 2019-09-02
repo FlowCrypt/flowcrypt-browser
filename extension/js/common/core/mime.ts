@@ -117,12 +117,12 @@ export class Mime {
 
   private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
     const result: { from?: string, to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
-    const getHeaderValueAsArray = (header: MimeContentHeader) => typeof (header) === 'string' ? [header] : header.map(h => h.address);
+    const getHeaderValueAsArray = (header: MimeContentHeader) => typeof header === 'string' ? [header] : header.map(h => h.address);
     for (const hdrName of headersNames) {
       if (parsedMimeMsg.headers[hdrName]) {
         const header = parsedMimeMsg.headers[hdrName];
         if (hdrName === 'from') { // we have string | undefined here
-          result[hdrName] = typeof (header) === 'string' ? header : header.map(h => h.address).join(',');
+          result[hdrName] = typeof header === 'string' ? header : header.map(h => h.address).join(',');
         } else {
           result[hdrName] = [...result[hdrName], ...getHeaderValueAsArray(header)];
         }
@@ -205,7 +205,7 @@ export class Mime {
             }
           }
           const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
-          mimeContent.subject = mimeContent.subject || (mimeContent.headers.subject as string);
+          mimeContent.subject = String(mimeContent.subject || mimeContent.headers.subject || '(no subject)');
           mimeContent = Object.assign(mimeContent, headers);
           resolve(mimeContent);
         };
