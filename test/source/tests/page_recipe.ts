@@ -5,15 +5,14 @@ import { expect } from 'chai';
 import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
 import { FlowCryptApi } from './api';
-import { ElementHandle } from 'puppeteer';
 
-export class PageRecipe {
+class PageRecipe {
 
 }
 
-type SendingType = "to" | "cc" | "bcc";
+type RecipientType = "to" | "cc" | "bcc";
 type Recipients = {
-  [key in SendingType]?: string;
+  [key in RecipientType]?: string;
 };
 
 type ManualEnterOpts = { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey?: boolean, naked?: boolean, genPp?: boolean, simulateRetryOffline?: boolean };
@@ -389,7 +388,7 @@ export class ComposePageRecipe extends PageRecipe {
     await composePageOrFrame.click('@action-expand-cc-bcc-fields');
     for (const key in recipients) {
       if (recipients.hasOwnProperty(key)) {
-        const sendingType = key as SendingType;
+        const sendingType = key as RecipientType;
         const email = recipients[sendingType] as string | undefined;
         if (email) {
           if (sendingType !== 'to') { // input-to is always visible
