@@ -8,7 +8,7 @@ const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
-import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError } from './api.js';
+import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError, RecipientType } from './api.js';
 import { Env, Ui } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult, BrowserMsg } from '../extension.js';
@@ -181,7 +181,12 @@ export class Google extends EmailProviderApi {
     }),
     msgSend: async (acctEmail: string, message: SendableMsg, progressCb?: ProgressCb): Promise<GmailRes.GmailMsgSend> => {
       message.headers.From = message.from;
-      message.headers.To = message.to.join(',');
+      for (const key of Object.keys(message.recipients)) {
+        const sendingType = key as RecipientType;
+        if (message.recipients[sendingType] && message.recipients[sendingType]!.length) {
+          message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.join(',');
+        }
+      }
       message.headers.Subject = message.subject;
       const mimeMsg = await Mime.encode(message.body, message.headers, message.atts);
       const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });

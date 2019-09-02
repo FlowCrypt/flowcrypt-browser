@@ -4,33 +4,35 @@
 
 'use strict';
 
-import { Api } from './api.js';
-import { Value, Dict, Str } from '../core/common.js';
+import { Api, RecipientType } from './api.js';
+import { Dict, Str, Value } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { Att } from '../core/att.js';
 import { SendableMsgBody } from '../core/mime.js';
+import { Recipients } from '../composer/interfaces/composer-types.js';
+import { GmailRes, Google } from './google.js';
 
 export type ProviderContactsQuery = { substring: string };
-export type SendableMsg = { headers: Dict<string>; from: string; to: string[]; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
-type LastMsgHeaders = { lmSender: string | undefined, lmRecipients: string[], lmReplyTo: string | undefined };
+export type SendableMsg = { headers: Dict<string>; from: string; recipients: Recipients; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
 
 export class EmailProviderApi extends Api {
 
   public static createMsgObj = async (
-    acctEmail: string, from: string = '', to: string[] = [], subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string
+    acctEmail: string, from: string = '', recipients: Recipients, subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string
   ): Promise<SendableMsg> => {
+    const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if (!to.length) {
+    if (!allEmails.length) {
       throw new Error('The To: field is empty. Please add recipients and try again');
     }
-    const invalidEmails = to.filter(email => !Str.isEmailValid(email));
+    const invalidEmails = allEmails.filter(email => !Str.isEmailValid(email));
     if (invalidEmails.length) {
       throw new Error(`The To: field contains invalid emails: ${invalidEmails.join(', ')}\n\nPlease check recipients and try again.`);
     }
     return {
       headers: primaryKi ? { OpenPGP: `id=${primaryKi.fingerprint}` } : {},
       from,
-      to,
+      recipients,
       subject,
       body: typeof by === 'object' ? by : { 'text/plain': by },
       atts: atts || [],
@@ -38,27 +40,36 @@ export class EmailProviderApi extends Api {
     };
   }
 
-  public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], { lmSender, lmRecipients, lmReplyTo }: LastMsgHeaders) => {
-    const replyToEstimate = lmRecipients.map(e => Str.parseEmail(e).email!).filter(e => !!e); // the ! is due to a QS quirk, we filter it after
-    if (lmSender) {
-      replyToEstimate.unshift(lmSender);
+  public static determineReplyCorrespondents = (acctEmail: string, addresses: string[], lastGmailMsg: GmailRes.GmailMsg) => {
+    const headers = {
+      from: Str.parseEmail(Google.gmail.findHeader(lastGmailMsg, 'from') || '').email,
+      to: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'to'),
+      // Do not add your emails and aliases to CC and BCC, maybe it's incorrect to filter them here,
+      // maybe would be better to return from this method all emails addresses and then filter them in another place
+      cc: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'cc').filter(e => !addresses.includes(e)),
+      bcc: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
+      replyTo: Google.gmail.findHeader(lastGmailMsg, 'reply-to')
+    };
+    if (headers.from) {
+      headers.to.unshift(headers.from);
     }
-    let replyTo: string[] = [];
+    const acctEmailAliasesInMsg = [...headers.to, ...headers.cc, ...headers.bcc].filter(e => addresses.includes(e));
     let myEmail = acctEmail;
-    for (const email of replyToEstimate) {
-      if (addresses.includes(email)) { // my email
-        myEmail = email;
-      } else if (!replyTo.includes(email)) { // skip duplicates
-        replyTo.push(email); // reply to all except my emails
-      }
+    if (acctEmailAliasesInMsg.length && !acctEmailAliasesInMsg.includes(acctEmail)) {
+      myEmail = acctEmailAliasesInMsg[0];
     }
-    if (!replyTo.length) { // happens when user sends email to itself - all reply_to_estimage contained his own emails and got removed
-      replyTo = Value.arr.unique(replyToEstimate);
+    if (headers.replyTo) {
+      return { to: [headers.replyTo], cc: [], bcc: [], from: myEmail };
     }
-    if (lmReplyTo) {
-      return { to: [lmReplyTo], from: myEmail };
+    const replyTowWithoutMyEmail = headers.to.filter(e => myEmail !== e); // thinking about moving it in another place
+    if (replyTowWithoutMyEmail.length) { // when user sends emails it itself here will be 0 elements
+      headers.to = replyTowWithoutMyEmail;
     }
-    return { to: replyTo, from: myEmail };
+    return { to: headers.to, cc: headers.cc, bcc: headers.bcc, from: myEmail };
+  }
+
+  private static getAddressesHeader = (gmailMsg: GmailRes.GmailMsg, headerName: RecipientType) => {
+    return Value.arr.unique((Google.gmail.findHeader(gmailMsg, headerName) || '').split(',').map(e => Str.parseEmail(e).email!).filter(e => !!e));
   }
 
 }

@@ -14,8 +14,9 @@ const MimeParser = requireMimeParser();  // tslint:disable-line:variable-name
 const MimeBuilder = requireMimeBuilder();  // tslint:disable-line:variable-name
 const Iso88592 = requireIso88592();  // tslint:disable-line:variable-name
 
-type MimeContentHeader = string | { address: string; name: string; }[];
-type MimeContent = {
+type AddressHeader = { address: string; name: string; };
+type MimeContentHeader = string | AddressHeader[];
+export type MimeContent = {
   headers: Dict<MimeContentHeader>;
   atts: Att[];
   signature?: string;
@@ -25,6 +26,8 @@ type MimeContent = {
   text?: string;
   from?: string;
   to: string[];
+  cc: string[];
+  bcc: string[];
 };
 
 export type RichHeaders = Dict<string | string[]>;
@@ -50,6 +53,7 @@ export type MimeProccesedMsg = {
   from: string | undefined,
   to: string[]
 };
+type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
 
@@ -111,20 +115,17 @@ export class Mime {
     return b.type === 'plainAtt' && b.attMeta && b.attMeta.inline && b.attMeta.type && ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png', 'image/svg+xml'].includes(b.attMeta.type);
   }
 
-  private static headersToFrom = (parsedMimeMsg: MimeContent) => {
-    const headerTo: string[] = [];
-    let headerFrom;
-    if (Array.isArray(parsedMimeMsg.headers.from) && parsedMimeMsg.headers.from[0] && parsedMimeMsg.headers.from[0].address) {
-      headerFrom = parsedMimeMsg.headers.from[0].address;
-    }
-    if (Array.isArray(parsedMimeMsg.headers.to)) {
-      for (const to of parsedMimeMsg.headers.to) {
-        if (to.address) {
-          headerTo.push(String(to.address));
-        }
+  private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
+    const result: { from?: string, to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
+    const getHdrValAsArr = (hdr: MimeContentHeader) => typeof hdr === 'string' ? [hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[] : hdr.map(h => h.address);
+    const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? (hdr[0] || {}).address : String(hdr || '')) || '').email;
+    for (const hdrName of headersNames) {
+      if (parsedMimeMsg.headers[hdrName]) {
+        const header = parsedMimeMsg.headers[hdrName];
+        result[hdrName] = hdrName === 'from' ? getHdrValAsStr(header) : [...result[hdrName], ...getHdrValAsArr(header)];
       }
     }
-    return { from: headerFrom, to: headerTo };
+    return result;
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
@@ -168,7 +169,7 @@ export class Mime {
 
   public static decode = (mimeMsg: Uint8Array): Promise<MimeContent> => {
     return new Promise(async resolve => {
-      const mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [] };
+      let mimeContent: MimeContent = { atts: [], headers: {}, subject: undefined, text: undefined, html: undefined, signature: undefined, from: undefined, to: [], cc: [], bcc: [] };
       try {
         const parser = new MimeParser();
         const leafNodes: { [key: string]: MimeParserNode } = {};
@@ -200,9 +201,9 @@ export class Mime {
               mimeContent.atts.push(Mime.getNodeAsAtt(node));
             }
           }
-          const { from, to } = Mime.headersToFrom(mimeContent);
-          mimeContent.from = from;
-          mimeContent.to = to;
+          const headers = Mime.headerGetAddress(mimeContent, ['from', 'to', 'cc', 'bcc']);
+          mimeContent.subject = String(mimeContent.subject || mimeContent.headers.subject || '(no subject)');
+          mimeContent = Object.assign(mimeContent, headers);
           resolve(mimeContent);
         };
         parser.write(mimeMsg);
@@ -215,7 +216,7 @@ export class Mime {
   }
 
   public static encode = async (body: string | SendableMsgBody, headers: RichHeaders, atts: Att[] = []): Promise<string> => {
-    const rootNode = new MimeBuilder('multipart/mixed'); // tslint:disable-line:no-unsafe-any
+    const rootNode = new MimeBuilder('multipart/mixed', { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
     }

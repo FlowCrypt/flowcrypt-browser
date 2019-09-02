@@ -6,9 +6,14 @@ import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
 import { FlowCryptApi } from './api';
 
-export class PageRecipe {
+class PageRecipe {
 
 }
+
+type RecipientType = "to" | "cc" | "bcc";
+type Recipients = {
+  [key in RecipientType]?: string;
+};
 
 type ManualEnterOpts = { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey?: boolean, naked?: boolean, genPp?: boolean, simulateRetryOffline?: boolean };
 
@@ -338,7 +343,7 @@ export class ComposePageRecipe extends PageRecipe {
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!hasReplyPrompt) {
-      await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+      await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
     } else {
       await composePage.waitAll(['@action-accept-reply-prompt']);
     }
@@ -350,7 +355,7 @@ export class ComposePageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
-    await composeFrame.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await composeFrame.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
     await composeFrame.waitForSelTestState('ready');
     return composeFrame;
   }
@@ -365,21 +370,35 @@ export class ComposePageRecipe extends PageRecipe {
     await composePage.waitTillGone('@dialog');
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
+  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined) => {
     await Util.sleep(0.5);
-    if (to) {
-      await composePageOrFrame.click('@input-to');
-      await Util.sleep(0.5);
-      await composePageOrFrame.type('@input-to', to);
-      await Util.sleep(0.5);
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
+    if (subject) {
+      await composePageOrFrame.click('@input-subject');
+      await Util.sleep(1);
+      subject = `Automated puppeteer test: ${subject}`;
+      await composePageOrFrame.type('@input-subject', subject);
     }
-    await composePageOrFrame.click('@input-subject');
-    await Util.sleep(1);
-    subject = `Automated puppeteer test: ${subject}`;
-    const body = `This is an automated puppeteer test: ${subject}`;
-    await composePageOrFrame.type('@input-subject', subject);
+    const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
     return { subject, body };
+  }
+
+  private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients) => {
+    await composePageOrFrame.click('@action-expand-cc-bcc-fields');
+    for (const key in recipients) {
+      if (recipients.hasOwnProperty(key)) {
+        const sendingType = key as RecipientType;
+        const email = recipients[sendingType] as string | undefined;
+        if (email) {
+          if (sendingType !== 'to') { // input-to is always visible
+            const elem = await composePageOrFrame.target.$('.email_copy_actions .' + sendingType);
+            await elem!.click();
+          }
+          await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+        }
+      }
+    }
   }
 
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {

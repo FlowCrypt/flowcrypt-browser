@@ -18,12 +18,11 @@
   <div class="container">
     <div id="initial_prompt" class="display_none" data-test="action-accept-reply-prompt">
       <p id="reply_links">
-        Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all">Reply to all</a>, or <a href="#"
-          id="a_forward">Forward</a> encrypted
+        Click here to <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all" data-test="action-accept-reply-all-prompt">Reply to all</a>, or <a href="#" id="a_forward">Forward</a> encrypted
         <div id="reply_click_area"></div>
       </p>
     </div>
-    <div id="contacts" data-test="container-contacts">
+    <div id="contacts" data-test="container-contacts" tabindex="0">
       <ul></ul>
     </div>
 
@@ -37,19 +36,43 @@
               <span class="action_feedback" title="Feedback or Help"><img src="/img/svgs/question-icon-white.svg"
                   class="" alt="Help"></span>
               <span class="minimize_new_message" title="Minimize"></span>
-              <span class="popout maximize_composer" title="Full-screen"><img src="/img/svgs/maximize.svg" tabindex="-1"></span>
-              <span class="close_new_message" title="Save & close"><img src="/img/svgs/close-icon.svg" tabindex="-1"></span>
+              <span class="popout maximize_composer" title="Full-screen"><img src="/img/svgs/maximize.svg"
+                  tabindex="-1"></span>
+              <span class="close_new_message" title="Save & close"><img src="/img/svgs/close-icon.svg"
+                  tabindex="-1"></span>
             </div>
           </div>
         </th>
       </tr>
       <tr>
-        <td class="input" id="input_addresses_container">
-          <!-- to -->
-          <div id="input-to-container">
-            <span class="recipients"></span>
-            <input id="input_to" id="" spellcheck="false" tabindex="1" placeholder="Add Recipient"
-              data-test="input-to" />
+        <td class="input recipients-inputs">
+          <div id="input_addresses_container" tabindex="0" style="display: none;">
+            <!-- to -->
+            <div id="input-container-to" data-sending-type="to" data-test="container-to">
+              <span class="recipients recipients-to"></span>
+              <input id="input_to" spellcheck="false" tabindex="1" placeholder="Add Recipient" data-test="input-to"
+                data-sending-type="to" autocomplete="false" />
+              <span class="email_copy_actions" data-test="action_open_input">
+                <span class="cc">cc</span>
+                <span class="bcc">bcc</span>
+              </span>
+            </div>
+            <!-- cc -->
+            <div id="input-container-cc" style="display: none;" data-sending-type="cc" data-test="container-cc">
+              <span class="recipients recipients-cc"></span>
+              <input spellcheck="false" tabindex="1" placeholder="Add cc" data-test="input-cc" data-sending-type="cc"
+                autocomplete="false" />
+            </div>
+            <!-- bcc -->
+            <div id="input-container-bcc" style="display: none;" data-sending-type="bcc">
+              <span class="recipients recipients-bcc"></span>
+              <input spellcheck="false" tabindex="1" placeholder="Add bcc" data-test="input-bcc" data-sending-type="bcc"
+                autocomplete="false" />
+            </div>
+          </div>
+          <div class="collapsed" data-test="action-expand-cc-bcc-fields" style="display: flex;">
+            <span class="placeholder">Recipients</span>
+            <div class="email_preview"></div>
           </div>
         </td>
       </tr>
@@ -97,11 +120,13 @@
               Send</span></div>
           <button class="icon action_sign" data-test="action-switch-to-sign" tabindex="7"
             title="Sign this message instead of encrypting it"><i alt="sign"></i></button>
-          <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file" alt="Attach File"></div>
+          <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
+              alt="Attach File"></div>
           <div id="send_btn_note"></div>
           <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img
               src="/img/svgs/trash-can-icon.svg" class="delete-draft" alt="Delete Email"></button>
-          <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i alt="pubkey"></i></button>
+          <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i
+              alt="pubkey"></i></button>
           <button class="icon right action_include_footer" tabindex="9" title="Include email footer (not encrypted)"><i
               alt="footer"></i></button>
         </td>

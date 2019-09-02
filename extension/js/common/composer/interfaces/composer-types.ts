@@ -2,12 +2,36 @@
 
 'use strict';
 
-export type RecipientElement = {
-  email: string,
-  element: HTMLElement
-  id: string;
-  isWrong?: boolean;
+import { RecipientType } from '../../api/api';
+
+export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
+
+export class RecipientStatuses {
+  static EVALUATING: RecipientStatus = 0;
+  static HAS_PGP: RecipientStatus = 1;
+  static NO_PGP: RecipientStatus = 2;
+  static EXPIRED: RecipientStatus = 3;
+  static WRONG: RecipientStatus = 4;
+  static FAILED: RecipientStatus = 5;
+}
+
+export type Recipients = {
+  to?: string[],
+  cc?: string[],
+  bcc?: string[]
 };
+
+export interface BaseRecipient {
+  email: string;
+  sendingType: RecipientType;
+}
+
+export interface RecipientElement extends BaseRecipient {
+  element: HTMLElement;
+  id: string;
+  status: RecipientStatus;
+  evaluating?: Promise<void>;
+}
 
 export type MessageToReplyOrForward = {
   headers: {
@@ -28,6 +52,8 @@ export type ComposerUrlParams = {
   subject: string;
   from: string | undefined;
   to: string[];
+  cc: string[];
+  bcc: string[];
   frameId: string;
   parentTabId: string;
   skipClickPrompt: boolean;

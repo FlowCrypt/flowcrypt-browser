@@ -116,7 +116,8 @@ export class Data {
   }
 
   private static msgSubject = (m: GmailMsg): string => {
-    return m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject')!.value || '(no subject)';
+    const subjectHeader = m.payload && m.payload.headers && m.payload.headers.find(h => h.name === 'Subject');
+    return (subjectHeader && subjectHeader.value) || '(no subject)';
   }
 
   private static msgPeople = (m: GmailMsg): string => {

@@ -10,7 +10,7 @@ import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, PgpMsg } from './core/pgp.js';
 import { Api } from './api/api.js';
-import { Ui, BrowserEventErrHandler, Env } from './browser.js';
+import { Ui, BrowserEventErrHandler } from './browser.js';
 import { SendableMsgBody } from './core/mime.js';
 import { GmailRes, Google } from './api/google.js';
 import { Buf } from './core/buf.js';
@@ -22,7 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients, RecipientStatuses } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
@@ -41,11 +41,11 @@ export class Composer {
     title: 'table#compose th h1',
     input_text: 'div#input_text',
     input_to: '#input_to',
-    input_to_container: '#input-to-container',
     input_from: '#input_from',
     input_subject: '#input_subject',
     input_password: '#input_password',
     input_intro: '.input_intro',
+    collapsed: '.collapsed',
     all_cells_except_text: 'table#compose > tbody > tr > :not(.text)',
     add_intro: '.action_add_intro',
     add_their_pubkey: '.add_pubkey',
@@ -70,14 +70,16 @@ export class Composer {
     contacts: '#contacts',
     input_addresses_container_outer: '#input_addresses_container',
     input_addresses_container_inner: '#input_addresses_container > div:first',
-    attached_files: 'table#compose #fineuploader .qq-upload-list li'
+    recipients_inputs: '#input_addresses_container input',
+    attached_files: 'table#compose #fineuploader .qq-upload-list li',
+    email_copy_actions: '#input_addresses_container .email_copy_actions'
   });
 
   private attach: AttUI;
   private app: ComposerAppFunctionsInterface;
   private composerDraft: ComposerDraft;
   private composerQuote: ComposerQuote;
-  private composerContacts: ComposerContacts;
+  public composerContacts: ComposerContacts;
 
   private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
   private BTN_SIGN_AND_SEND = 'Sign and Send';
@@ -106,7 +108,7 @@ export class Composer {
     this.urlParams = urlParams;
     this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
     this.composerQuote = new ComposerQuote(this, urlParams);
-    this.composerContacts = new ComposerContacts(appFunctions, urlParams, openpgp, this);
+    this.composerContacts = new ComposerContacts(appFunctions, urlParams, this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     this.canReadEmails = this.app.canReadEmails();
     if (initSubs.active) {
@@ -123,7 +125,7 @@ export class Composer {
       await this.initComposeBox();
       await this.initActions();
       await this.checkEmailAliases();
-    })(); // this is awaited later. Otherwise normally we would have added .catch here
+    })().catch(Catch.reportErr);
   }
 
   public debug = (msg: string) => {
@@ -259,6 +261,7 @@ export class Composer {
 
   private initComposeBox = async () => {
     if (this.urlParams.isReplyBox) {
+      this.S.cached('body').addClass('reply_box');
       this.S.cached('header').remove();
       this.S.cached('subject').remove();
       this.S.cached('contacts').css('top', '39px');
@@ -271,22 +274,28 @@ export class Composer {
       this.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
-      const isSuccessfulyLoaded = await this.composerDraft.initialDraftLoad();
-      if (isSuccessfulyLoaded) {
-        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'), true);
+      const msgMimeContent = await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
+      if (msgMimeContent) {
+        this.composerContacts.evaluateRecipients(this.getRecipients()).catch(Catch.reportErr);
       }
     } else {
       if (this.urlParams.isReplyBox) {
-        if (this.urlParams.skipClickPrompt) {
-          await this.renderReplyMsgComposeTable();
+        const toAddress = this.urlParams.to && this.urlParams.to[0] && Str.parseEmail(this.urlParams.to[0]).email;
+        const recipients: Recipients = { to: toAddress ? [toAddress] : [], cc: this.urlParams.cc, bcc: this.urlParams.bcc };
+        if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
+          await this.renderReplyMsgComposeTable(recipients);
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
-            if ($(target).attr('id') === 'a_reply') {
-              this.urlParams.to = [this.urlParams.to[0]];
-            } else if ($(target).attr('id') === 'a_forward') {
-              this.urlParams.to = [];
+            switch ($(target).attr('id')) {
+              case 'a_forward':
+                recipients.to = [];
+              case 'reply_click_area':
+              case 'a_reply':
+                recipients.cc = [];
+                recipients.bcc = [];
+                break;
             }
-            await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
+            await this.renderReplyMsgComposeTable(recipients, (($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.getErrHandlers(`activate repply box`)));
         }
       }
@@ -313,9 +322,9 @@ export class Composer {
     }
   }
 
-  private throwIfFormNotReady = async (recipients: string[]): Promise<void> => {
-    if (String(this.S.cached('input_to').val()).length) { // evaluate any recipient errors earlier treated as gentle
-      await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container'));
+  private throwIfFormNotReady = async (recipients: RecipientElement[]): Promise<void> => {
+    if (this.hasValue(this.S.cached('recipients_inputs'))) {
+      this.composerContacts.parseRenderRecipients(this.S.cached('recipients_inputs')).catch(Catch.reportErr);
     }
     if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
@@ -332,7 +341,7 @@ export class Composer {
     throw new ComposerNotReadyError('Still working, please wait.');
   }
 
-  private throwIfFormValsInvalid = async (recipients: string[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
+  private throwIfFormValsInvalid = async (recipients: RecipientElement[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
     const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
@@ -392,17 +401,18 @@ export class Composer {
 
   private extractProcessSendMsg = async () => {
     try {
-      const recipients = this.getRecipients().map(r => r.email);
+      const recipientElements = this.getRecipients();
+      const recipients = this.mapRecipients(recipientElements);
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
-      await this.throwIfFormNotReady(recipients);
+      await this.throwIfFormNotReady(recipientElements);
       this.S.now('send_btn_span').text('Loading');
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
-      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipients);
+      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipientElements.map(r => r.email));
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
-      await this.throwIfFormValsInvalid(recipients, emailsWithoutPubkeys, subject, plaintext, pwd);
+      await this.throwIfFormValsInvalid(recipientElements, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.S.cached('icon_sign').is('.active')) {
         await this.signSend(recipients, subject, plaintext);
       } else {
@@ -413,9 +423,9 @@ export class Composer {
     }
   }
 
-  private encryptSend = async (recipients: string[], armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private encryptSend = async (recipients: Recipients, armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
-    plaintext = await this.addReplyTokenToMsgBodyIfNeeded(recipients, subject, plaintext, pwd, subscription);
+    plaintext = await this.addReplyTokenToMsgBodyIfNeeded([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
     if (atts.length && pwd) { // these will be password encrypted attachments
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
@@ -427,7 +437,7 @@ export class Composer {
     }
   }
 
-  private signSend = async (recipients: string[], subject: string, plaintext: string) => {
+  private signSend = async (recipients: Recipients, subject: string, plaintext: string) => {
     this.S.now('send_btn_span').text('Signing');
     const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
     if (primaryKi) {
@@ -458,7 +468,7 @@ export class Composer {
         }
         const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
         const atts = await this.attach.collectAtts(); // todo - not signing attachments
-        this.app.storageContactUpdate(recipients, { last_use: Date.now() }).catch(Catch.reportErr);
+        this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() }).catch(Catch.reportErr);
         this.S.now('send_btn_span').text(this.BTN_SENDING);
         const body = { 'text/plain': signedData };
         await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
@@ -565,11 +575,12 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], to: string[], subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
+  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients,
+    subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
     const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
-    await this.app.storageContactUpdate(to, { last_use: Date.now() });
+    await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
@@ -579,10 +590,10 @@ export class Composer {
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
-      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId));
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subj, encryptedBody, atts, this.urlParams.threadId));
     } else {
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
-      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), to, subj, encryptedBody, atts, this.urlParams.threadId));
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subj, encryptedBody, atts, this.urlParams.threadId));
     }
   }
 
@@ -690,12 +701,12 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!$('.recipients span').length || this.S.cached('icon_sign').is('.active')) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
+    if (!this.getRecipients().length || this.S.cached('icon_sign').is('.active')) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
       this.hideMsgPwdUi();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
-    } else if ($('.recipients span.no_pgp').length) {
+    } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
       this.showMsgPwdUiAndColorBtn();
-    } else if ($('.recipients span.failed, .recipients span.wrong').length) {
+    } else if (this.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
       this.S.now('send_btn_span').text(this.BTN_WRONG_ENTRY);
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.S.cached('send_btn').removeClass('green').addClass('gray');
@@ -711,21 +722,6 @@ export class Composer {
       }
     }
     this.setInputTextHeightManuallyIfNeeded();
-  }
-
-  private respondToInputHotkeys = (inputToKeydownEvent: JQuery.Event<HTMLElement, null>) => {
-    this.debug(`respondToInputHotkeys`);
-    const value = this.S.cached('input_to').val();
-    this.debug(`respondToInputHotkeys.value(${value})`);
-    const keys = Env.keyCodes();
-    if (!value && inputToKeydownEvent.which === keys.backspace) {
-      this.debug(`respondToInputHotkeys.value:del`);
-      $('.recipients span').last().remove();
-      this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-      return;
-    }
-    this.debug(`respondToInputHotkeys.value:none`);
-    return;
   }
 
   resizeComposeBox = (addExtra: number = 0) => {
@@ -747,14 +743,20 @@ export class Composer {
       }
     } else {
       this.S.cached('input_text').css('max-width', '');
-      this.resizeInputTo();
+      this.resizeInput();
       this.S.cached('input_text').css('max-width', $('.text_container').width()! - 8 + 'px');
     }
   }
 
-  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  public renderReplyMsgComposeTable = async (recipients?: Recipients, method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
-    this.S.cached('input_to').val(this.urlParams.to.join(',') + (this.urlParams.to.length ? ',' : '')); // the comma causes the last email to be get evaluated
+    if (recipients) {
+      (async () => {
+        this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
+        this.composerContacts.showHideCcAndBccInputsIfNeeded();
+        await this.composerContacts.setEmailsPreview(this.getRecipients());
+      })().catch(Catch.reportErr);
+    }
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
@@ -787,9 +789,26 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 
-  public resizeInputTo = () => { // below both present in template
-    this.S.cached('input_to').css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
-    this.S.cached('input_to').css('width', (Math.max(150, this.S.cached('input_to').parent().width()! - this.S.cached('input_to').siblings('.recipients').width()! - 50)) + 'px');
+  public resizeInput = (inputs?: JQuery<HTMLElement>) => {
+    if (!inputs) {
+      inputs = this.S.cached('recipients_inputs'); // Resize All Inputs
+    }
+    inputs.css('width', '100%'); // this indeed seems to effect the line below (noticeable when maximizing / back to default)
+    for (const inputElement of inputs) {
+      const jqueryElem = $(inputElement);
+      const containerWidth = Math.floor(jqueryElem.parent().innerWidth()!);
+      let additionalWidth = Math.ceil(Number(jqueryElem.css('padding-left').replace('px', '')) + Number(jqueryElem.css('padding-right').replace('px', '')));
+      const minInputWidth = 150;
+      let offset = 0;
+      if (jqueryElem.next().length) {
+        additionalWidth += Math.ceil(jqueryElem.next().outerWidth()!);
+      }
+      const lastRecipient = jqueryElem.siblings('.recipients').children().last();
+      if (lastRecipient.length && lastRecipient.position().left + lastRecipient.outerWidth()! + minInputWidth + additionalWidth < containerWidth) {
+        offset = Math.ceil(lastRecipient.position().left + lastRecipient.outerWidth()!);
+      }
+      jqueryElem.css('width', (containerWidth - offset - additionalWidth - 11) + 'px');
+    }
   }
 
   updateFooterIcon = (include?: boolean) => {
@@ -909,7 +928,6 @@ export class Composer {
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
     this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
-    this.S.cached('input_to').keydown(ke => this.respondToInputHotkeys(ke));
     this.composerContacts.initActions();
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
@@ -946,7 +964,6 @@ export class Composer {
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
-    this.resizeInputTo();
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => {
       this.setInputTextHeightManuallyIfNeeded();
@@ -970,7 +987,7 @@ export class Composer {
         document.getElementById('input_text')!.focus(); // #input_text is in the template
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to_container')); // this will force firefox to render them on load
+        await this.composerContacts.parseRenderRecipients(this.S.cached('input_to')); // this will force firefox to render them on load
       }
       this.renderSenderAliasesOptionsToggle();
     } else {
@@ -979,7 +996,6 @@ export class Composer {
           this.app.closeMsg();
         }
       }, this.getErrHandlers(`close message`)));
-      this.S.cached('header').find('h1').click(() => $('.minimize_new_message').click());
       $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
       $('.popout').click(Ui.event.handle(async () => {
         this.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
@@ -992,23 +1008,29 @@ export class Composer {
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows
-      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized()));
-      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized()));
+      $(window).resize(Ui.event.prevent(this.urlParams.isReplyBox ? 'veryslowspree' : 'spree', () => this.windowResized().catch(Catch.reportErr)));
+      this.S.cached('input_text').keyup(Ui.event.prevent('slowspree', () => this.windowResized().catch(Catch.reportErr)));
     }, 1000);
   }
 
-  private windowResized = () => {
+  private windowResized = async () => {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
+    if (this.S.cached('collapsed').is(':visible')) {
+      await this.composerContacts.setEmailsPreview(this.getRecipients());
+    }
   }
 
   private renderSenderAliasesOptionsToggle() {
     const addresses = this.app.storageGetAddresses();
     if (addresses.length > 1) {
       const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-      const inputAddrContainer = $('#input_addresses_container');
+      const inputAddrContainer = this.S.cached('email_copy_actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-      inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle(() => this.renderSenderAliasesOptions(), this.getErrHandlers(`show sending address options`)));
+      inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
+        this.renderSenderAliasesOptions();
+        el.remove();
+      }, this.getErrHandlers(`show sending address options`)));
     }
   }
 
@@ -1026,7 +1048,7 @@ export class Composer {
   private renderSenderAliasesOptions() {
     const addresses = this.app.storageGetAddresses();
     if (addresses.length > 1) {
-      const inputAddrContainer = $('#input_addresses_container');
+      const inputAddrContainer = $('.recipients-inputs');
       inputAddrContainer.addClass('show_send_from');
       let selectElHtml = '<select id="input_from" tabindex="1" data-test="input-from"></select>';
       if (!this.urlParams.isReplyBox) {
@@ -1038,9 +1060,6 @@ export class Composer {
       Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.composerContacts.updatePubkeyIcon());
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
-      }
-      if (Catch.browser().name === 'firefox') {
-        inputAddrContainer.find('#input_from_settings').css('margin-top', '20px');
       }
     }
   }
@@ -1099,6 +1118,9 @@ export class Composer {
     } else {
       this.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
     }
+    if (this.S.cached('collapsed').is(':visible')) {
+      await this.composerContacts.setEmailsPreview(this.composerContacts.getRecipients());
+    }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
   }
 
@@ -1113,13 +1135,40 @@ export class Composer {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
-    msg.to = await Promise.all(msg.to.map(async email => {
-      const [contact] = await this.app.storageContactGet([email]);
-      return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
-    }));
+    const addNameToEmail = async (emails: string[]): Promise<string[]> => {
+      return await Promise.all(await emails.map(async email => {
+        const [contact] = await this.app.storageContactGet([email]);
+        return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
+      }));
+    };
+    msg.recipients.to = await addNameToEmail(msg.recipients.to || []);
+    msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
+    msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
     const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
     if (name) {
       msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;
     }
+  }
+
+  private hasValue(inputs: JQuery<HTMLElement>): boolean {
+    return !!inputs.filter((index, elem) => !!$(elem).val()).length;
+  }
+
+  private mapRecipients = (recipients: RecipientElement[]) => {
+    const result: Recipients = { to: [], cc: [], bcc: [] };
+    for (const recipient of recipients) {
+      switch (recipient.sendingType) {
+        case "to":
+          result.to!.push(recipient.email);
+          break;
+        case "cc":
+          result.cc!.push(recipient.email);
+          break;
+        case "bcc":
+          result.bcc!.push(recipient.email);
+          break;
+      }
+    }
+    return result;
   }
 }

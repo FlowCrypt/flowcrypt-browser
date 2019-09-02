@@ -13,7 +13,7 @@ import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Composer } from '../composer.js';
-import { ComposerUrlParams } from './interfaces/composer-types.js';
+import { ComposerUrlParams, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 
 export class ComposerDraft extends ComposerComponent {
@@ -46,17 +46,17 @@ export class ComposerDraft extends ComposerComponent {
       }
     }, this.composer.getErrHandlers('delete draft')));
     await this.composer.initialized;
-    this.composer.S.cached('recipients').on('DOMSubtreeModified', Ui.event.prevent('slowspree', async () => {
+    this.composer.composerContacts.onRecipientAdded(async () => {
       await this.draftSave(true);
-    }));
+    });
   }
 
-  public async initialDraftLoad(): Promise<boolean> {
+  public async initialDraftLoad(draftId: string): Promise<boolean> {
     if (this.urlParams.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
-      const draftGetRes = await this.app.emailProviderDraftGet(this.urlParams.draftId);
+      const draftGetRes = await this.app.emailProviderDraftGet(draftId);
       if (!draftGetRes) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
         return false;
@@ -66,12 +66,6 @@ export class ComposerDraft extends ComposerComponent {
       if (!armored) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!armored');
         return false;
-      }
-      if (String(parsedMsg.headers.subject)) {
-        this.composer.S.cached('input_subject').val(String(parsedMsg.headers.subject));
-      }
-      if (parsedMsg.to.length) {
-        this.urlParams.to = parsedMsg.to;
       }
       return await this.decryptAndRenderDraft(armored, parsedMsg);
     } catch (e) {
@@ -113,7 +107,14 @@ export class ComposerDraft extends ComposerComponent {
         }
         const subject = String(this.composer.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
         const to = this.composer.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
-        const mimeMsg = await Mime.encode(body, { To: to.join(','), From: this.composer.getSender(), Subject: subject }, []);
+        const recipients: Recipients = { to: [], cc: [], bcc: [] };
+        for (const recipient of this.composer.getRecipients()) {
+          recipients[recipient.sendingType]!.push(recipient.email);
+        }
+        const mimeMsg = await Mime.encode(body, {
+          To: recipients.to!.join(','), Cc: recipients.cc!.join(','), Bcc: recipients.bcc!.join(','),
+          From: this.composer.getSender(), Subject: subject
+        }, []);
         if (!this.urlParams.draftId) {
           const { id } = await this.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');
@@ -173,38 +174,30 @@ export class ComposerDraft extends ComposerComponent {
     }
   }
 
-  private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { from?: string; to: string[] }): Promise<boolean> {
+  private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<boolean> {
     const passphrase = await this.app.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
       if (result.success) {
+        if (headers.subject) {
+          this.composer.S.cached('input_subject').val(headers.subject);
+        }
         this.composer.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
         if (this.urlParams.isReplyBox) {
-          await this.composer.renderReplyMsgComposeTable();
-        } else if (headers && headers.to && headers.to.length) {
-          this.composer.S.cached('input_to').focus();
-          this.composer.S.cached('input_to').val(headers.to.join(','));
-          this.composer.S.cached('input_text').focus();
+          await this.composer.renderReplyMsgComposeTable({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
+        } else {
+          this.composer.composerContacts.addRecipients({ to: headers.to, cc: headers.cc, bcc: headers.bcc }).catch(Catch.reportErr);
+          await this.composer.composerContacts.setEmailsPreview(this.composer.getRecipients());
         }
-        if (headers && headers.from) {
+        if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
         }
+        this.composer.S.cached('input_text').focus();
         return true;
       }
     } else {
-      const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
-      if (this.urlParams.isReplyBox) {
-        Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });
-        this.composer.resizeComposeBox();
-      } else {
-        Xss.sanitizeRender(this.composer.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
-      }
-      this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
-        BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'draft', longids: ['primary'] });
-      }));
-      this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
-      await this.app.whenMasterPassphraseEntered();
+      await this.renderPPDialogAndWaitWhenPPEntered();
       return await this.decryptAndRenderDraft(encryptedArmoredDraft, headers);
     }
     return false;
@@ -227,6 +220,21 @@ export class ComposerDraft extends ComposerComponent {
       return true;
     }
     return false;
+  }
+
+  private renderPPDialogAndWaitWhenPPEntered = async () => {
+    const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
+    if (this.urlParams.isReplyBox) {
+      Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });
+      this.composer.resizeComposeBox();
+    } else {
+      Xss.sanitizeRender(this.composer.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
+    }
+    this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
+      BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'draft', longids: ['primary'] });
+    }));
+    this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
+    await this.app.whenMasterPassphraseEntered();
   }
 
   private async abortAndRenderReplyMsgComposeTableIfIsReplyBox(reason: string) {

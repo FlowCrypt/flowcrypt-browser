@@ -16,6 +16,7 @@ import { Xss } from '../platform/xss.js';
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };
 export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
+export type RecipientType = 'to' | 'cc' | 'bcc';
 type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export type ProviderContactsResults = { new: Contact[], all: Contact[] };

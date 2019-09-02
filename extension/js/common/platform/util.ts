@@ -21,3 +21,14 @@ export const base64encode = (binary: string): string => {
 export const base64decode = (b64tr: string): string => {
   return atob(b64tr);
 };
+
+export const moveElementInArray = <T>(arr: Array<T>, oldIndex: number, newIndex: number) => {
+  while (oldIndex < 0) {
+    oldIndex += arr.length;
+  }
+  while (newIndex < 0) {
+    newIndex += arr.length;
+  }
+  arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
+  return arr;
+};

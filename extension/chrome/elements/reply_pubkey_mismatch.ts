@@ -70,7 +70,7 @@ Catch.try(async () => {
   };
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
-    acctEmail, draftId: '', threadId, subject, from, to, frameId, tabId, debug,
+    acctEmail, draftId: '', threadId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true
   };
@@ -103,10 +103,11 @@ Catch.try(async () => {
     return { 'In-Reply-To': '', 'References': '' };
   };
 
+  // TODO: Test this method before merging
   $('#send_btn').off().click(Ui.event.prevent('double', async target => {
     $(target).text('sending..');
     const body = { 'text/plain': $('#input_text').get(0).innerText };
-    const message = await Google.createMsgObj(acctEmail, from, to, subject, body, [att], threadId);
+    const message = await Google.createMsgObj(acctEmail, from, { to }, subject, body, [att], threadId);
     const replyHeaders = await determineReplyHeaders();
     message.headers['In-Reply-To'] = replyHeaders['In-Reply-To'];
     message.headers.References = replyHeaders.References;
