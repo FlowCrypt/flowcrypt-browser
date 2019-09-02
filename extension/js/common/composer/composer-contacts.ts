@@ -649,7 +649,7 @@ export class ComposerContacts extends ComposerComponent {
   private addDraggableEvents = (element: HTMLElement) => {
     element.draggable = true;
     element.ondragstart = (event) => {
-      event.dataTransfer!.setData('text/plain', 'Flowcrpypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
+      event.dataTransfer!.setData('text/plain', 'FlowCrypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
       this.dragged = element;
     };
     element.ondragend = () => {
