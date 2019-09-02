@@ -108,8 +108,8 @@ export class ComposerDraft extends ComposerComponent {
         const subject = String(this.composer.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
         const to = this.composer.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         const recipients: Recipients = { to: [], cc: [], bcc: [] };
-        for (const r of this.composer.getRecipients()) {
-          recipients[r.sendingType]!.push(r.email);
+        for (const recipient of this.composer.getRecipients()) {
+          recipients[recipient.sendingType]!.push(recipient.email);
         }
         const mimeMsg = await Mime.encode(body, {
           To: recipients.to!.join(','), Cc: recipients.cc!.join(','), Bcc: recipients.bcc!.join(','),

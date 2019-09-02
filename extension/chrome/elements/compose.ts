@@ -81,6 +81,7 @@ Catch.try(async () => {
       } else if (Api.err.isSignificant(e)) {
         Catch.reportErr(e);
       }
+      // notFound errors will also get down here, and cause a blank reply form to be rendered
       $('#loader').remove();
       return;
     }
