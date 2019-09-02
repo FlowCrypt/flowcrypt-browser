@@ -386,9 +386,7 @@ export class ComposePageRecipe extends PageRecipe {
   }
 
   private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients) => {
-    if (!await composePageOrFrame.isElementPresent('@input-to')) {
-      await composePageOrFrame.click('@action-expand-cc-bcc-fields');
-    }
+    await composePageOrFrame.click('@action-expand-cc-bcc-fields');
     for (const key in recipients) {
       if (recipients.hasOwnProperty(key)) {
         const sendingType = key as SendingType;

@@ -310,9 +310,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 3 });
-      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
-      await isRecipientElementsExists(composePage, { to: true, cc: true });
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" });
+      await isRecipientElementsExists(composePage, { to: true, cc: true });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
     }));

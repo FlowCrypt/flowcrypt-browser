@@ -133,6 +133,7 @@ export class ComposerContacts extends ComposerComponent {
           }
         }
         await this.evaluateRecipients(recipientsHasPgp);
+        await this.setEmailsPreview(this.getRecipients());
       }, 1000);
     }, this.composer.getErrHandlers('add recipient public key')));
     this.composer.S.cached('icon_pubkey').click(Ui.event.handle(target => {
