@@ -55,16 +55,17 @@ export class ComposerQuote extends ComposerComponent {
       return;
     }
     if (this.messageToReplyOrForward.text) {
+      const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
+      if (!this.messageToReplyOrForward.headers.from || !this.messageToReplyOrForward.headers.date) {
+        this.composer.S.cached('icon_show_prev_msg').hide();
+        return;
+      }
+      const safeRepliedPart = this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
       if (method === 'forward') {
         this.composer.S.cached('icon_show_prev_msg').remove();
-        await this.appendForwardedMsg(this.messageToReplyOrForward.text);
+        await this.appendForwardedMsg(safeRepliedPart, false, true);
       } else {
-        if (!this.messageToReplyOrForward.headers.from || !this.messageToReplyOrForward.headers.date) {
-          this.composer.S.cached('icon_show_prev_msg').hide();
-          return;
-        }
-        const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
-        this.msgExpandingHTMLPart = '<br><br>' + this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
+        this.msgExpandingHTMLPart = '<br><br>' + safeRepliedPart;
         this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
       }
     } else {
@@ -138,8 +139,10 @@ export class ComposerQuote extends ComposerComponent {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private appendForwardedMsg = (text: string) => {
-    Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/><br/>Forwarded message:<br/><br/>&gt; ${this.quoteText(Xss.escape(text))}`);
+  private appendForwardedMsg = (text: string, qoute: boolean = true, isTextSafe?: boolean) => {
+    text = isTextSafe ? text : Xss.escape(text);
+    text = qoute ? '<br/>&gt; ' + this.quoteText(text) : text;
+    Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/><br/>Forwarded message:<br/>${text}`);
     this.composer.resizeComposeBox();
   }
 
