@@ -169,6 +169,20 @@ export class Env {
     return link;
   }
 
+  public static removeParamsFromUrl = (url: string, paramsToDelete: string[]) => {
+    const urlParts = url.split('?');
+    if (!urlParts[1]) { // Nothing to remove
+      return url;
+    }
+    let queryParams = urlParts[1];
+    queryParams = queryParams[queryParams.length - 1] === '#' ? queryParams.slice(0, -1) : queryParams;
+    const params = new URLSearchParams(queryParams);
+    for (const p of paramsToDelete) {
+      params.delete(p);
+    }
+    return `${urlParts[0]}?${params.toString()}`;
+  }
+
   public static keyCodes = () => { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
