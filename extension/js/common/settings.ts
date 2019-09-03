@@ -79,6 +79,10 @@ export class Settings {
   static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
+    const beforeClose = () => {
+      const urlWithoutPageParam = Env.removeParamsFromUrl(window.location.href, ['page']);
+      window.history.pushState('', '', urlWithoutPageParam);
+    };
     if (page !== '/chrome/elements/compose.htm') {
       iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
@@ -90,12 +94,7 @@ export class Settings {
       closeOnClick = false;
       newLocation += `&frameId=${Str.sloppyRandom(5)}`; // does not get added to <iframe>
     }
-    ($ as JQS).featherlight({
-      beforeClose: () => {
-        const urlWithoutPageParam = Env.removeParamsFromUrl(window.location.href, ['page']);
-        window.history.pushState('', '', urlWithoutPageParam);
-      }, closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant
-    });
+    ($ as JQS).featherlight({ beforeClose, closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant });
     // todo - deprecate this - because we don't want to use this compose module this way, only on webmail or in settings/inbox
     // for now some tests rely on it, so cannot be removed yet
     Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
