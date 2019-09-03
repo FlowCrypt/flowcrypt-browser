@@ -193,8 +193,8 @@ Catch.try(async () => {
   };
   const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]) => {
     const contacts = await storageContactGet(recipients);
-    const { public: armoredPublicKey } = await storageGetKey(acctEmail);
-    const armoredPubkeys = [armoredPublicKey];
+    const { public: senderArmoredPubkey } = await storageGetKey(acctEmail);
+    const armoredPubkeys = [senderArmoredPubkey];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
