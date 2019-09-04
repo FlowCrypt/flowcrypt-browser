@@ -346,6 +346,8 @@ export class Pgp {
       return { keys: allKeys, errs: allErrs };
     },
     isPacketPrivate: (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => p.tag === openpgp.enums.packet.secretKey || p.tag === openpgp.enums.packet.secretSubkey,
+    isPossiblePrivate: (stringToTest: string) => stringToTest.startsWith(Pgp.ARMOR_HEADER_DICT.privateKey.begin) && stringToTest.endsWith(Pgp.ARMOR_HEADER_DICT.privateKey.end as string),
+    isPossiblePublic: (stringToTest: string) => stringToTest.startsWith(Pgp.ARMOR_HEADER_DICT.publicKey.begin) && stringToTest.endsWith(Pgp.ARMOR_HEADER_DICT.publicKey.end as string),
     decrypt: async (prv: OpenPGP.key.Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
       if (!prv.isPrivate()) {
         throw new Error("Nothing to decrypt in a public key");

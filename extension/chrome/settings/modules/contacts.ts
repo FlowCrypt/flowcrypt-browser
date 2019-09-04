@@ -17,6 +17,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { Str } from '../../../js/common/core/common.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
@@ -109,26 +110,32 @@ Catch.try(async () => {
 
   const actionProcessBulkImportTextInput = async () => {
     try {
-      const value = String($('#bulk_import .input_pubkey').val());
+      const value = Str.normalize(String($('#bulk_import .input_pubkey').val())).trim();
       const normalizedLongid = KeyImportUi.normalizeLongId(value);
-      let pubkey: string;
+      let key: string;
       if (normalizedLongid) {
         const data = await Keyserver.lookupLongid(acctEmail, normalizedLongid);
         if (data.pubkey) {
-          pubkey = data.pubkey;
+          key = data.pubkey;
         } else {
           await Ui.modal.warning('Could not find any Public Key in our public records that matches this fingerprint or longid');
           return;
         }
       } else {
-        pubkey = value;
+        key = value;
       }
-      const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, pubkey);
-      if (replacedHtmlSafe && replacedHtmlSafe !== value) {
-        $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
-        $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+      if (Pgp.key.isPossiblePublic(key)) {
+        const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, key);
+        if (replacedHtmlSafe && replacedHtmlSafe !== value) {
+          $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
+          $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
+        } else {
+          await Ui.modal.warning('Could not find any new public keys');
+        }
+      } else if (Pgp.key.isPossiblePrivate(key)) {
+        await Ui.modal.warning('Found Private Key.\nTo import Private Keys, see Additional Settings -> My Keys.');
       } else {
-        await Ui.modal.warning('Could not find any new public keys');
+        await Ui.modal.warning('Incorrect Public Key. Please check and try again.');
       }
     } catch (e) {
       if (Api.err.isSignificant(e)) {
