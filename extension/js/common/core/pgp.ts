@@ -289,6 +289,46 @@ export class Pgp {
     },
   };
 
+  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => {
+    if (type === 'privateKey') {
+      return 'Private Key';
+    } else if (type === 'publicKey') {
+      return 'Public Key';
+    } else if (type === 'plainHtml') {
+      return 'Plain HTML';
+    } else if (type === 'plainAtt') {
+      return 'Plain Attachment';
+    } else if (type === 'plainText') {
+      return 'Plain Text';
+    } else if (type === 'cryptupVerification') {
+      return 'Cryptup Verification';
+    } else if (type === 'decryptErr') {
+      return 'Decrypt Error';
+    } else if (type === 'decryptedAtt') {
+      return 'Decrypted Attachment';
+    } else if (type === 'decryptedHtml') {
+      return 'Decrypted HTML';
+    } else if (type === 'decryptedText') {
+      return 'Decrypted Text';
+    } else if (type === 'encryptedAtt') {
+      return 'Encrypted Attachment';
+    } else if (type === 'encryptedAttLink') {
+      return 'Encrypted Attachment Link';
+    } else if (type === 'encryptedMsg') {
+      return 'Encrypted Message';
+    } else if (type === 'encryptedMsgLink') {
+      return 'Encrypted Message Link';
+    } else if (type === 'signedMsg') {
+      return 'Signed Message';
+    } else if (type === 'signedHtml') {
+      return 'Signed HTML';
+    } else if (type === 'verifiedMsg') {
+      return 'Verified Message';
+    } else {
+      return 'Undefined Type';
+    }
+  }
+
   public static key = {
     create: async (userIds: { name: string, email: string }[], variant: 'rsa2048' | 'rsa4096' | 'curve25519', passphrase: string): Promise<{ private: string, public: string }> => {
       const opt: OpenPGP.KeyOptions = { userIds, passphrase };
@@ -346,8 +386,6 @@ export class Pgp {
       return { keys: allKeys, errs: allErrs };
     },
     isPacketPrivate: (p: OpenPGP.packet.AnyKeyPacket): p is PrvPacket => p.tag === openpgp.enums.packet.secretKey || p.tag === openpgp.enums.packet.secretSubkey,
-    isPossiblePrivate: (stringToTest: string) => stringToTest.startsWith(Pgp.ARMOR_HEADER_DICT.privateKey.begin) && stringToTest.endsWith(Pgp.ARMOR_HEADER_DICT.privateKey.end as string),
-    isPossiblePublic: (stringToTest: string) => stringToTest.startsWith(Pgp.ARMOR_HEADER_DICT.publicKey.begin) && stringToTest.endsWith(Pgp.ARMOR_HEADER_DICT.publicKey.end as string),
     decrypt: async (prv: OpenPGP.key.Key, passphrase: string, optionalKeyid?: OpenPGP.Keyid, optionalBehaviorFlag?: 'OK-IF-ALREADY-DECRYPTED'): Promise<boolean> => {
       if (!prv.isPrivate()) {
         throw new Error("Nothing to decrypt in a public key");
