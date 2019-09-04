@@ -60,7 +60,7 @@ export class ComposerQuote extends ComposerComponent {
         this.composer.S.cached('icon_show_prev_msg').hide();
         return;
       }
-      const safePreviousMsg = `<br><br>${this.generateHTMLPrevusMsgPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
+      const safePreviousMsg = `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
       if (method === 'forward') {
         this.composer.S.cached('icon_show_prev_msg').remove();
         Xss.sanitizeAppend(this.composer.S.cached('input_text'), safePreviousMsg);
@@ -140,7 +140,7 @@ export class ComposerQuote extends ComposerComponent {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private generateHTMLPrevusMsgPart = (text: string, date: Date, from: string) => {
+  private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
     return Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
   }
 
