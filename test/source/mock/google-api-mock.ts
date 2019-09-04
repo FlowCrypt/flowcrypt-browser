@@ -173,9 +173,15 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
     '/gmail/v1/users/me/drafts/?': async (parsedReq, req) => {
-      const id = parseResourceId(req.url!);
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
-        throw new HttpClientErr(`MOCK drafts not recorded, giving fake 404`, Status.NOT_FOUND);
+        const id = parseResourceId(req.url!);
+        const data = new Data(acct);
+        const draft = data.getDraft(id);
+        if (draft) {
+          return draft;
+        }
+        throw new HttpClientErr(`MOCK draft not found for ${acct} (draftId: ${id})`, Status.NOT_FOUND);
       } else if (isPut(req)) {
         return {};
       } else if (isDelete(req)) {

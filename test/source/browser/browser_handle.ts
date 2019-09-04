@@ -1,4 +1,4 @@
-import { Page, Browser, Target } from 'puppeteer';
+import { Page, Browser, Target, EvaluateFn } from 'puppeteer';
 import { Semaphore } from './browser_pool';
 import { ControllablePage } from './controllable';
 import { Util, Config } from '../util';
@@ -19,7 +19,7 @@ export class BrowserHandle {
     this.viewport = { height, width };
   }
 
-  newPage = async (t: AvaContext, url?: string): Promise<ControllablePage> => {
+  newPage = async (t: AvaContext, url?: string, initialScript?: EvaluateFn): Promise<ControllablePage> => {
     const page = await this.browser.newPage();
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       await page.authenticate(Config.secrets.proxy.auth);
@@ -27,6 +27,9 @@ export class BrowserHandle {
     await page.setViewport(this.viewport);
     const controllablePage = new ControllablePage(t, page);
     if (url) {
+      if (initialScript) {
+        await page.evaluateOnNewDocument(initialScript);
+      }
       await controllablePage.goto(url);
     }
     this.pages.push(controllablePage);

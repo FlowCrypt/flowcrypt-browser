@@ -12,9 +12,13 @@ export type GmailMsg = {
   id: string; historyId: string; threadId?: string | null; payload: GmailMsg$payload; internalDate?: number | string;
   labelIds?: GmailMsg$labelId[]; snippet?: string; raw?: string;
 };
+type GmailDraft = {
+  id: string,
+  message: GmailMsg
+};
 type GmailThread = { historyId: string; id: string; snippet: string; };
 type Label = { id: string, name: "CATEGORY_SOCIAL", messageListVisibility: "hide", labelListVisibility: "labelHide", type: 'system' };
-type AcctDataFile = { messages: GmailMsg[]; attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
+type AcctDataFile = { messages: GmailMsg[]; drafts: GmailDraft[], attachments: { [id: string]: { data: string, size: number } }, labels: Label[] };
 
 const DATA: { [acct: string]: AcctDataFile } = {};
 export class Data {
@@ -25,6 +29,7 @@ export class Data {
   constructor(private acct: string) {
     if (!DATA[acct]) {
       DATA[acct] = JSON.parse(readFileSync(`./test/samples/${acct.replace(/[^a-z0-9]+/g, '')}.json`, { encoding: 'UTF-8' })) as AcctDataFile;
+      DATA[acct].drafts = DATA[acct].drafts || []; // backward compatibility
     }
   }
 
@@ -95,6 +100,10 @@ export class Data {
       }
       return shouldInclude && !shouldExclude;
     });
+  }
+
+  public getDraft = (id: string): GmailDraft | undefined => {
+    return DATA[this.acct].drafts.find(d => d.id === id);
   }
 
   public getAttachment = (attachmentId: string) => {

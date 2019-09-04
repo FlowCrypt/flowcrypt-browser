@@ -7,6 +7,7 @@ import { Util, Config } from '../../util';
 import { TestVariant } from '../../util';
 import { expect } from "chai";
 import { AvaContext } from '..';
+import { ElementHandle } from 'puppeteer';
 
 // tslint:disable:no-blank-lines-func
 
@@ -311,9 +312,31 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 3 });
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" });
-      await isRecipientElementsExists(composePage, { to: true, cc: true });
+      await isRecipientElementsExists(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+    }));
+
+    ava.test('compose[global:comaptibility] - loading drafts - new message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'draftId=r300954446589633295';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
+      await composePage.click('@action-expand-cc-bcc-fields');
+      await isRecipientElementsExists(composePage, { to: ['flowcryptcompatibility@gmail.com'] }); // to: flowcryptcompatibility@gmail.com
+      const subjectElem = await composePage.waitAny('@input-subject');
+      expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
+      expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
+    }));
+
+    ava.test('compose[global:compatibility] - loading drafts - reply', testWithNewBrowser(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16cfa9001baaac0a';
+      const initialScript = () => {
+        chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'r-1543309186581841785' } });
+      };
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
+      await composePage.click('@action-expand-cc-bcc-fields');
+      await isRecipientElementsExists(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
+      expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
@@ -346,19 +369,20 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
   expect(await composePage.read('@input-body')).to.include(textToInclude);
 };
 
-const isRecipientElementsExists = async (controllable: ControllablePage, exists: { to: boolean, cc: boolean }) => {
+const isRecipientElementsExists = async (controllable: ControllablePage, exists: { to?: string[], cc?: string[] }) => {
   const containerTo = await controllable.waitAny('@container-to', { visible: false });
   const containerCc = await controllable.waitAny('@container-cc', { visible: false });
   const recipientsTo = await containerTo.$$('.recipients span');
   const recipientsCc = await containerCc.$$('.recipients span');
-  if (exists.to) {
-    expect(recipientsTo.length).to.not.equal(0);
-  } else {
-    expect(recipientsTo.length).to.equal(0);
-  }
-  if (exists.cc) {
-    expect(recipientsCc.length).to.not.equal(0);
-  } else {
-    expect(recipientsCc.length).to.equal(0);
-  }
+  const checkIfRecipientsContains = async (emails: string[] | undefined, recipientElements: ElementHandle<Element>[]) => {
+    if (!emails || !emails.length) {
+      return;
+    }
+    for (const recipientElement of recipientElements) {
+      const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
+      expect(emails).to.include(textContent.trim());
+    }
+  };
+  await checkIfRecipientsContains(exists.to, recipientsTo);
+  await checkIfRecipientsContains(exists.cc, recipientsCc);
 };
