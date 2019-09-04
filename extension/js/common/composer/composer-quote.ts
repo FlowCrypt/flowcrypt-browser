@@ -60,12 +60,13 @@ export class ComposerQuote extends ComposerComponent {
         this.composer.S.cached('icon_show_prev_msg').hide();
         return;
       }
-      const safeRepliedPart = this.generateHTMLRepliedPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from);
+      const safePreviousMsg = `<br><br>${this.generateHTMLPrevusMsgPart(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
       if (method === 'forward') {
         this.composer.S.cached('icon_show_prev_msg').remove();
-        await this.appendForwardedMsg(safeRepliedPart, false, true);
+        Xss.sanitizeAppend(this.composer.S.cached('input_text'), safePreviousMsg);
+        this.composer.resizeComposeBox();
       } else {
-        this.msgExpandingHTMLPart = '<br><br>' + safeRepliedPart;
+        this.msgExpandingHTMLPart = safePreviousMsg;
         this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
       }
     } else {
@@ -139,15 +140,15 @@ export class ComposerQuote extends ComposerComponent {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  private appendForwardedMsg = (text: string, qoute: boolean = true, isTextSafe?: boolean) => {
-    text = isTextSafe ? text : Xss.escape(text);
-    text = qoute ? '<br/>&gt; ' + this.quoteText(text) : text;
-    Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/><br/>Forwarded message:<br/>${text}`);
-    this.composer.resizeComposeBox();
-  }
+  // private appendForwardedMsg = (text: string, qoute: boolean = true, isTextSafe?: boolean) => {
+  //   text = isTextSafe ? text : Xss.escape(text);
+  //   text = qoute ? '<br/>&gt; ' + this.quoteText(text) : text;
+  //   Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/><br/>Forwarded message:<br/>${text}`);
+  //   this.composer.resizeComposeBox();
+  // }
 
-  private generateHTMLRepliedPart = (text: string, date: Date, from: string) => {
-    return `On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`;
+  private generateHTMLPrevusMsgPart = (text: string, date: Date, from: string) => {
+    return Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
   }
 
   private setExpandingTextAfterClick = (expandedHTMLText: string) => {
