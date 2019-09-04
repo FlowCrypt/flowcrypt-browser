@@ -5,7 +5,7 @@
 import { VERSION } from './const.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
-import { Str, Value, Dict } from './common.js';
+import { Str, Value } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
