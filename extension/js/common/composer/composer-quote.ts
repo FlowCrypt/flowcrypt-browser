@@ -140,13 +140,6 @@ export class ComposerQuote extends ComposerComponent {
     return text.split('\n').map(l => '<br>&gt; ' + l).join('\n');
   }
 
-  // private appendForwardedMsg = (text: string, qoute: boolean = true, isTextSafe?: boolean) => {
-  //   text = isTextSafe ? text : Xss.escape(text);
-  //   text = qoute ? '<br/>&gt; ' + this.quoteText(text) : text;
-  //   Xss.sanitizeAppend(this.composer.S.cached('input_text'), `<br/><br/>Forwarded message:<br/>${text}`);
-  //   this.composer.resizeComposeBox();
-  // }
-
   private generateHTMLPrevusMsgPart = (text: string, date: Date, from: string) => {
     return Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
   }
