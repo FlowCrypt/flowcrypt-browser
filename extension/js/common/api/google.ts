@@ -58,6 +58,8 @@ export namespace GmailRes { // responses
   export type GmailDraftDelete = {};
   export type GmailDraftUpdate = {};
   export type GmailDraftGet = { id: string, message: GmailMsg };
+  export type GmailDraftMeta = { id: string, message: { id: string, threadId: string } };
+  export type GmailDraftList = { drafts: GmailDraftMeta[], nextPageToken: string };
   export type GmailDraftSend = {};
   export type GmailAliases = { sendAs: GmailAliases$sendAs[] };
   type GmailAliases$sendAs = { sendAsEmail: string, displayName: string, replyToAddress: string, signature: string, isDefault: boolean, treatAsAlias: boolean, verificationStatus: string };
@@ -176,6 +178,7 @@ export class Google extends EmailProviderApi {
     draftGet: (acctEmail: string, id: string, format: GmailResponseFormat = 'full'): Promise<GmailRes.GmailDraftGet> => Google.gmailCall(acctEmail, 'GET', `drafts/${id}`, {
       format,
     }),
+    draftList: (acctEmail: string): Promise<GmailRes.GmailDraftList> => Google.gmailCall(acctEmail, 'GET', 'drafts', undefined),
     draftSend: (acctEmail: string, id: string): Promise<GmailRes.GmailDraftSend> => Google.gmailCall(acctEmail, 'POST', 'drafts/send', {
       id,
     }),

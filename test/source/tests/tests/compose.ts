@@ -316,6 +316,28 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
     }));
 
+    ava.test('compose[global:comaptibility] - loading drafts - new message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'draftId=r300954446589633295';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
+      await composePage.click('@action-expand-cc-bcc-fields');
+      await isRecipientElementsExists(composePage, { to: true, cc: false });
+      const subjectElem = await composePage.waitAny('@input-subject');
+      expect(await subjectElem.getProperty('value')).not.to.be.empty;
+      expect(await composePage.read('@input-body')).not.to.be.empty;
+    }));
+
+    ava.test('compose[global:compatibility] - loading drafts - reply', testWithNewBrowser(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=16cfa9001baaac0a&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16cfa9001baaac0a';
+      const initialScript = () => {
+        chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'r-1543309186581841785' } });
+      };
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
+      await composePage.click('@action-expand-cc-bcc-fields');
+      await isRecipientElementsExists(composePage, { to: true, cc: false });
+      expect(await composePage.read('@input-body')).not.to.be.empty;
+    }));
+
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.test.todo('compose[global:compose] - reply - skip click prompt');

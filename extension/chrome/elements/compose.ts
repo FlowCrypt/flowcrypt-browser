@@ -96,7 +96,6 @@ Catch.try(async () => {
     subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
   })();
-
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
