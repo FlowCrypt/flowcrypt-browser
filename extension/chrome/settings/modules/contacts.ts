@@ -143,7 +143,7 @@ Catch.try(async () => {
               container.append(replacedHtmlSafe); // xss-safe-factory
             }
           } else {
-            Xss.sanitizeAppend(container, `<div class="bad">Skipping found '${Pgp.friendlyMsgBlockTypeName(block.type)}'</div>`)
+            Xss.sanitizeAppend(container, `<div class="bad">Skipping found '${Pgp.friendlyMsgBlockTypeName(block.type)}'</div>`);
           }
         }
         container.css('display', 'block');
