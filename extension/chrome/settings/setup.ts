@@ -42,6 +42,7 @@ Catch.try(async () => {
   if (action === 'add_key') {
     parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
+  const emailDomainsToSkip = ['yahoo', 'live', 'outlook'];
 
   if (acctEmail) {
     BrowserMsg.send.bg.updateUninstallUrl();
@@ -61,7 +62,7 @@ Catch.try(async () => {
   let fetchedKeyBackupsUniqueLongids: string[] = [];
   let importedKeysUniqueLongids: string[] = [];
   let mathingPassphrases: string[] = [];
-  let allAddrs: string[] = [acctEmail];
+  let submitKeyForAddrs: string[] = [acctEmail];
 
   const rules = await Rules.newInstance(acctEmail);
   if (!rules.canCreateKeys()) {
@@ -138,7 +139,9 @@ Catch.try(async () => {
   };
 
   const saveAndFillSubmitOption = async (addresses: string[]) => {
-    allAddrs = Value.arr.unique(addresses.concat(acctEmail));
+    const filterAddrRegEx = new RegExp(`@(${emailDomainsToSkip.join('|')})`);
+    const allAddrs = Value.arr.unique(addresses.concat(acctEmail));
+    submitKeyForAddrs = allAddrs.filter(e => !filterAddrRegEx.test(e));
     await Store.setAcct(acctEmail, { addresses: allAddrs });
     showSubmitAllAddrsOption(allAddrs);
   };
@@ -304,7 +307,7 @@ Catch.try(async () => {
     }
     const myOwnEmailAddrsAsContacts: Contact[] = [];
     const { full_name: name } = await Store.getAcct(acctEmail, ['full_name']);
-    for (const email of allAddrs) {
+    for (const email of submitKeyForAddrs) {
       myOwnEmailAddrsAsContacts.push(await Store.dbContactObj({
         email, name, client: 'cryptup', pubkey: prvs[0].toPublic().armor(), lastUse: Date.now(),
         lastSig: await Pgp.key.lastSig(prvs[0].toPublic()), expiresOn: await Pgp.key.dateBeforeExpiration(prvs[0])
