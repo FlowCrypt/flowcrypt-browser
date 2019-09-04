@@ -546,7 +546,7 @@ div#cryptup_dialog iframe.tall { height: 780px; margin-top: -390px; }
 
 .featherlight { z-index: 8 !important; }
 .featherlight .featherlight-close-icon { background: none !important; border: none !important; width: 30px !important;
-  font-size: 24px !important; opacity: 0.5 !important; line-height: 36px !important; }
+  font-size: 24px !important; opacity: 0.5 !important; line-height: 36px !important; right: 15px !important; top: 15px !important; }
 .featherlight.new_message_featherlight .featherlight-content { background: none !important; }
 .featherlight .featherlight-content > .line { color: white; text-align: center; font-weight: 200; letter-spacing: 0.25px;}
 .featherlight.white .featherlight-content > .line { color: black; }
