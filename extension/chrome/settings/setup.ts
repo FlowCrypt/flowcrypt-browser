@@ -104,7 +104,8 @@ Catch.try(async () => {
           saveAndFillSubmitOption([acctEmail]).catch(Catch.reportErr);
         }
       } else {
-        showSubmitAllAddrsOption(storage.addresses || []);
+        submitKeyForAddrs = filterAddressesForSubmittingKeys(storage.addresses || []);
+        showSubmitAddrsOption(submitKeyForAddrs);
       }
     }
     if (storage.setup_done) {
@@ -131,7 +132,7 @@ Catch.try(async () => {
     }
   };
 
-  const showSubmitAllAddrsOption = (addrs: string[]) => {
+  const showSubmitAddrsOption = (addrs: string[]) => {
     if (addrs && addrs.length > 1) {
       $('.addresses').text(Value.arr.withoutVal(addrs, acctEmail).join(', '));
       $('.manual .input_submit_all').prop({ checked: true, disabled: false }).closest('div.line').css('display', 'block');
@@ -139,11 +140,10 @@ Catch.try(async () => {
   };
 
   const saveAndFillSubmitOption = async (addresses: string[]) => {
-    const filterAddrRegEx = new RegExp(`@(${emailDomainsToSkip.join('|')})`);
     const allAddrs = Value.arr.unique(addresses.concat(acctEmail));
-    submitKeyForAddrs = allAddrs.filter(e => !filterAddrRegEx.test(e));
+    submitKeyForAddrs = filterAddressesForSubmittingKeys(allAddrs);
     await Store.setAcct(acctEmail, { addresses: allAddrs });
-    showSubmitAllAddrsOption(allAddrs);
+    showSubmitAddrsOption(submitKeyForAddrs);
   };
 
   const displayBlock = (name: string) => {
@@ -235,7 +235,6 @@ Catch.try(async () => {
   };
 
   const submitPublicKeyIfNeeded = async (armoredPubkey: string, options: { submit_main: boolean, submit_all: boolean }) => {
-    const storage = await Store.getAcct(acctEmail, ['addresses']);
     if (!options.submit_main) {
       return;
     }
@@ -245,8 +244,8 @@ Catch.try(async () => {
       }
     });
     let addresses;
-    if (typeof storage.addresses !== 'undefined' && storage.addresses.length > 1 && options.submit_all) {
-      addresses = storage.addresses.concat(acctEmail);
+    if (submitKeyForAddrs.length && options.submit_all) {
+      addresses = [...submitKeyForAddrs];
     } else {
       addresses = [acctEmail];
     }
@@ -599,6 +598,11 @@ Catch.try(async () => {
       Catch.report('setup.ts missing parentTabId');
     }
   }));
+
+  const filterAddressesForSubmittingKeys = (addresses: string[]): string[] => {
+    const filterAddrRegEx = new RegExp(`@(${emailDomainsToSkip.join('|')})`);
+    return addresses.filter(e => !filterAddrRegEx.test(e));
+  };
 
   await renderInitial();
 
