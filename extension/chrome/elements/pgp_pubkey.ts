@@ -83,7 +83,7 @@ Catch.try(async () => {
           const pubToEmail = (pubkey: OpenPGP.key.Key) => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
           Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubs.map(pubToEmail).filter(e => !!e).join(', ')));
         }
-        Xss.sanitizePrepend('#pgp_block.pgp_pubkey .result', `<span>This message includes a Public Key for <span class= "email">${emailText}</span>.</span>`);
+        Xss.sanitizePrepend('#pgp_block.pgp_pubkey .result', `<span>This message includes a Public Key for <span class= "email">${Xss.escape(emailText)}</span>.</span>`);
         $('.pubkey').addClass('good');
         setBtnText().catch(Catch.reportErr);
       }
