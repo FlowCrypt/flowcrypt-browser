@@ -13,9 +13,8 @@
 <body class="pgp_neutral">
 
   <div id="pgp_block" class="pgp_pubkey">
-    <div class="line hide_if_compact">
-      This message includes a Public Key for <span class="email"></span>. <a href="#"
-        class="action_show_full">Details</a>
+    <div class="line hide_if_compact_and_not_error result">
+      <a href="#" class="action_show_full hide_if_compact">Details</a>
     </div>
     <div class="line fingerprints hide_if_compact">
       KeyWords: <span class="keywords good"></span>
@@ -25,7 +24,7 @@
       <input class="input_email" value="..." />
       <div class="button green action_add_contact" data-test="action-add-contact"></div>
     </div>
-    <pre class="pubkey good hide_if_compact"></pre>
+    <pre class="pubkey hide_if_compact"></pre>
   </div>
 
   <script src="/lib/purify.min.js"></script>
