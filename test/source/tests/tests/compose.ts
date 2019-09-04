@@ -336,7 +336,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
       await composePage.click('@action-expand-cc-bcc-fields');
       await isRecipientElementsExists(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
-      expect(await composePage.read('@input-body')).not.to.be.empty;
+      expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
@@ -380,8 +380,6 @@ const isRecipientElementsExists = async (controllable: ControllablePage, exists:
     }
     for (const recipientElement of recipientElements) {
       const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
-      console.log(textContent);
-      console.log(emails);
       expect(emails).to.include(textContent.trim());
     }
   };
