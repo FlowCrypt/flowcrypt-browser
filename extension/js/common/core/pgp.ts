@@ -5,7 +5,7 @@
 import { VERSION } from './const.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
-import { Str, Value } from './common.js';
+import { Str, Value, Dict } from './common.js';
 import { ReplaceableMsgBlockType, MsgBlock, MsgBlockType, Mime } from './mime.js';
 import { AttMeta } from './att.js';
 import { mnemonic } from './mnemonic.js';
@@ -205,6 +205,26 @@ export class Pgp {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
+  private static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = {
+    privateKey: 'Private Key',
+    publicKey: 'Public Key',
+    cryptupVerification: 'Cryptup Verification',
+    decryptErr: 'Decrypt Error',
+    decryptedAtt: 'Decrypted Attachment',
+    decryptedHtml: 'Decrypted HTML',
+    decryptedText: 'Decrypted Text',
+    encryptedAtt: 'Encrypted Attachment',
+    encryptedAttLink: 'Encrypted Attachment Link',
+    encryptedMsg: 'Encrypted Message',
+    encryptedMsgLink: 'Encrypted Message Link',
+    plainAtt: 'Plain Attachment',
+    plainHtml: 'Plain HTML',
+    plainText: 'Plain Text',
+    signedHtml: 'Signed HTML',
+    signedMsg: 'Signed Message',
+    verifiedMsg: 'Verified Message'
+  };
+
   public static armor = {
     clip: (text: string): string | undefined => {
       if (text && text.includes(Pgp.ARMOR_HEADER_DICT.null.begin) && text.includes(String(Pgp.ARMOR_HEADER_DICT.null.end))) {
@@ -290,43 +310,7 @@ export class Pgp {
   };
 
   public static friendlyMsgBlockTypeName = (type: MsgBlockType) => {
-    if (type === 'privateKey') {
-      return 'Private Key';
-    } else if (type === 'publicKey') {
-      return 'Public Key';
-    } else if (type === 'plainHtml') {
-      return 'Plain HTML';
-    } else if (type === 'plainAtt') {
-      return 'Plain Attachment';
-    } else if (type === 'plainText') {
-      return 'Plain Text';
-    } else if (type === 'cryptupVerification') {
-      return 'Cryptup Verification';
-    } else if (type === 'decryptErr') {
-      return 'Decrypt Error';
-    } else if (type === 'decryptedAtt') {
-      return 'Decrypted Attachment';
-    } else if (type === 'decryptedHtml') {
-      return 'Decrypted HTML';
-    } else if (type === 'decryptedText') {
-      return 'Decrypted Text';
-    } else if (type === 'encryptedAtt') {
-      return 'Encrypted Attachment';
-    } else if (type === 'encryptedAttLink') {
-      return 'Encrypted Attachment Link';
-    } else if (type === 'encryptedMsg') {
-      return 'Encrypted Message';
-    } else if (type === 'encryptedMsgLink') {
-      return 'Encrypted Message Link';
-    } else if (type === 'signedMsg') {
-      return 'Signed Message';
-    } else if (type === 'signedHtml') {
-      return 'Signed HTML';
-    } else if (type === 'verifiedMsg') {
-      return 'Verified Message';
-    } else {
-      return 'Undefined Type';
-    }
+    return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
   }
 
   public static key = {
