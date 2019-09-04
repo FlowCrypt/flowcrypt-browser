@@ -205,6 +205,26 @@ export class Pgp {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
+  private static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = {
+    privateKey: 'Private Key',
+    publicKey: 'Public Key',
+    cryptupVerification: 'Cryptup Verification',
+    decryptErr: 'Decrypt Error',
+    decryptedAtt: 'Decrypted Attachment',
+    decryptedHtml: 'Decrypted HTML',
+    decryptedText: 'Decrypted Text',
+    encryptedAtt: 'Encrypted Attachment',
+    encryptedAttLink: 'Encrypted Attachment Link',
+    encryptedMsg: 'Encrypted Message',
+    encryptedMsgLink: 'Encrypted Message Link',
+    plainAtt: 'Plain Attachment',
+    plainHtml: 'Plain HTML',
+    plainText: 'Plain Text',
+    signedHtml: 'Signed HTML',
+    signedMsg: 'Signed Message',
+    verifiedMsg: 'Verified Message'
+  };
+
   public static armor = {
     clip: (text: string): string | undefined => {
       if (text && text.includes(Pgp.ARMOR_HEADER_DICT.null.begin) && text.includes(String(Pgp.ARMOR_HEADER_DICT.null.end))) {
@@ -288,6 +308,10 @@ export class Pgp {
       return await Pgp.internal.cryptoHashSha256Loop(answer);
     },
   };
+
+  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => {
+    return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
+  }
 
   public static key = {
     create: async (userIds: { name: string, email: string }[], variant: 'rsa2048' | 'rsa4096' | 'curve25519', passphrase: string): Promise<{ private: string, public: string }> => {
