@@ -88,7 +88,9 @@ Catch.try(async () => {
       $('#loader').remove();
       return;
     }
-    const reply = Google.determineReplyCorrespondents(acctEmail, [], gmailMsg);
+    const reply = Google.determineReplyCorrespondents(acctEmail, [acctEmail], gmailMsg);
+    console.log(reply);
+    console.log(gmailMsg);
     to = reply.to;
     subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
