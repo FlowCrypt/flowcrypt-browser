@@ -50,7 +50,7 @@ export class EmailProviderApi extends Api {
       bcc: EmailProviderApi.getAddressesHeader(lastGmailMsg, 'bcc').filter(e => !addresses.includes(e)),
       replyTo: Google.gmail.findHeader(lastGmailMsg, 'reply-to')
     };
-    if (headers.from) {
+    if (headers.from && !headers.to.includes(headers.from)) {
       headers.to.unshift(headers.from);
     }
     const acctEmailAliasesInMsg = [...headers.to, ...headers.cc, ...headers.bcc].filter(e => addresses.includes(e));
