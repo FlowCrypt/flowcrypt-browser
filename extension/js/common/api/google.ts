@@ -362,7 +362,7 @@ export class Google extends EmailProviderApi {
       const loadedAr: Array<number> = [];
       // 1.33 is a coefficient we need to multiply because total size we need to download is larger than all files together
       const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-      const responses = await Promise.all(atts.map((a, index) => Google.gmail.attGet(acctEmail, a.msgId!, a.id!, (progress, loaded, s) => {
+      const responses = await Promise.all(atts.map((a, index) => Google.gmail.attGet(acctEmail, a.msgId!, a.id!, (_, loaded, s) => {
         if (progressCb) {
           loadedAr[index] = loaded || 0;
           const totalLoaded = loadedAr.reduce((a, b) => a + b);
@@ -493,7 +493,7 @@ export class Google extends EmailProviderApi {
     const rawParsedResults: AddrParserResult[] = [];
     toHeaders = Value.arr.unique(toHeaders);
     for (const to of toHeaders) {
-      rawParsedResults.push(...(window as BrowserWidnow)['emailjs-addressparser'].parse(to));
+      rawParsedResults.push(...(window as unknown as BrowserWidnow)['emailjs-addressparser'].parse(to));
     }
     for (const rawParsedRes of rawParsedResults) {
       if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {

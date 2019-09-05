@@ -223,6 +223,7 @@ export class Store {
         await Store.remove(acctEmail, [storageKey]);
       } else {
         const toSave: AccountStore = {};
+        // @ts-ignore - this is too dynamic for TS
         toSave[storageKey] = passphrase;
         await Store.setAcct(acctEmail, toSave);
       }

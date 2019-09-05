@@ -57,7 +57,7 @@ export class Injector {
 
   btns = () => {
     if (this.S.now('compose_button_container').length === 0) { // don't inject too early
-      (window as ContentScriptWindow).TrySetDestroyableTimeout(this.btns, 300);
+      (window as unknown as ContentScriptWindow).TrySetDestroyableTimeout(this.btns, 300);
     } else {
       if (this.S.now('compose_button').length === 0) {
         const container = this.S.now('compose_button_container').prepend(this.factory.btnCompose(this.webmailName)); // xss-safe-factory
@@ -76,7 +76,7 @@ export class Injector {
           await Promise.all(keysInSession.map(async k => await Store.passphraseSave('session', acctEmail, k.longid, undefined)));
         }
         if (this.webmailName === 'gmail') {
-          $('.' + (window as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
+          $('.' + (window as unknown as ContentScriptWindow).reloadable_class).each((i, reloadableEl) => {
             $(reloadableEl).replaceWith($(reloadableEl)[0].outerHTML); // xss-reinsert - inserting code that was already present should not be dangerous
           });
         } else {
