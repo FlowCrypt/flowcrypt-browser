@@ -6,7 +6,7 @@ import { VERSION } from '../common/core/const.js';
 import { Catch } from '../common/platform/catch.js';
 import { Store, GlobalStore } from '../common/platform/store.js';
 import { BrowserMsg, Bm } from '../common/extension.js';
-import { injectFcIntoWebmailIfNeeded } from './inject.js';
+import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
 import { GoogleAuth } from '../common/api/google.js';
 import { BgUtils } from './bgutils.js';
@@ -79,7 +79,7 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgListen();
 
   await BgHandlers.updateUninstallUrl({}, {});
-  injectFcIntoWebmailIfNeeded();
+  injectFcIntoWebmail();
   scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100

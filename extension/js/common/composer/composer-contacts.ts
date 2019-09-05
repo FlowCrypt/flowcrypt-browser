@@ -628,7 +628,7 @@ export class ComposerContacts extends ComposerComponent {
     let processed = 0;
     while (container.width()! <= maxWidth && recipients.length >= processed + 1) {
       const recipient = recipients[processed];
-      const emailHtml = `<span class="email_address ${recipient.element.className}">${recipient.email}</span>`;
+      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${recipient.element.getAttribute('title')}">${recipient.email}</span>`;
       $(emailHtml).insertBefore(rest); // xss-direct
       processed++;
     }

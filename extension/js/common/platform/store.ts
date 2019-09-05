@@ -661,6 +661,11 @@ export class Store {
               return;
             }
           }
+          if (update.pubkey && update.pubkey.includes(Pgp.armor.headers('privateKey').begin)) { // wrongly saving prv instead of pub
+            Catch.report('Wrongly saving prv as contact - converting to pubkey');
+            const key = await Pgp.key.read(update.pubkey);
+            update.pubkey = key.toPublic().armor();
+          }
           for (const k of Object.keys(update)) {
             // @ts-ignore - may be saving any of the provided values - could do this one by one while ensuring proper types
             contact[k] = update[k];

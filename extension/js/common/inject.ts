@@ -28,7 +28,7 @@ export class Injector {
     finishSesionBtnSel: {
       gmail: 'div.gb_Xd .gb_Me',
       outlook: '#does_not_have',
-      settings: '#settings > div.line'
+      settings: '#settings > div.header'
     }
   };
   constructor(webmailName: WebMailName, webmailVariant: WebmailVariantString, factory: XssSafeFactory) {

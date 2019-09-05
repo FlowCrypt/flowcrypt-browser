@@ -96,7 +96,6 @@ Catch.try(async () => {
     subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
   })();
-
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
@@ -193,8 +192,8 @@ Catch.try(async () => {
   };
   const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]) => {
     const contacts = await storageContactGet(recipients);
-    const { public: armoredPublicKey } = await storageGetKey(acctEmail);
-    const armoredPubkeys = [armoredPublicKey];
+    const { public: senderArmoredPubkey } = await storageGetKey(acctEmail);
+    const armoredPubkeys = [senderArmoredPubkey];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];

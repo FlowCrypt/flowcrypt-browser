@@ -5,6 +5,7 @@ import { expect } from 'chai';
 import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
 import { FlowCryptApi } from './api';
+import { EvaluateFn } from 'puppeteer';
 
 class PageRecipe {
 
@@ -337,15 +338,21 @@ export class InboxPageRecipe extends PageRecipe {
 export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (
-    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
+    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, options:
+      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, initialScript?: EvaluateFn } = {}
   ): Promise<ControllablePage> => {
     const email = (group === 'compose') ? 'test.ci.compose%40org.flowcrypt.com' : 'flowcrypt.compatibility%40gmail.com';
-    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
+    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
+      options.initialScript);
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
-    if (!hasReplyPrompt) {
+    if (!options.hasReplyPrompt) {
       await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
     } else {
-      await composePage.waitAll(['@action-accept-reply-prompt']);
+      if (options.skipClickPropt) {
+        await Util.sleep(2);
+      } else {
+        await composePage.waitAll(['@action-accept-reply-prompt']);
+      }
     }
     await composePage.waitForSelTestState('ready');
     return composePage;
