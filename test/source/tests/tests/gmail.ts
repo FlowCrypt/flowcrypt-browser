@@ -32,7 +32,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       return gmialPage;
     };
 
-    ava.test('[standalone] gmail setup prompt notification shows up + goes away when close clicked + shows up again + setup link opens settings', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] gmail setup prompt notification + hides when close clicked + reappears + setup link opens settings', testWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.compatibility@gmail.com');
       await settingsPage.close();
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
@@ -45,7 +45,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await newSettingsPage.waitAll('@action-connect-to-gmail');
     }));
 
-    ava.test('[standalone] gmail shows success notification after setup + goes away after click + does not re-appear', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] gmail shows success notification after setup + goes away after click + does not re-appear', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-successfully-setup-action-close']);
@@ -55,7 +55,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-close', '@notification-successfully-setup-action-close']);
     }));
 
-    ava.test('[standalone] gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] gmail setup prompt notification shows up + dismiss hides it + does not reappear if dismissed', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.openSettingsLoginButCloseOauthWindowBeforeGrantingPermission(t, browser, 'flowcrypt.compatibility@gmail.com');
       let gmailPage = await BrowserRecipe.openGmailPage(t, browser);
       await gmailPage.waitAll(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
@@ -65,12 +65,12 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await gmailPage.notPresent(['@webmail-notification', '@notification-setup-action-open-settings', '@notification-setup-action-dismiss', '@notification-setup-action-close']);
     }));
 
-    ava.test('mail.google.com[global:compatibility] - compose window opens', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com[global:compatibility] - compose window opens', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
     }));
 
-    ava.test('mail.google.com[global:compatibility] - msg.asc message content renders', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com[global:compatibility] - msg.asc message content renders', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrdTXcmgcCRgXDpVnfjJNnjjLzSvcMDczxWPMsBTTfPxRDMrKCJClzDHtbXlhnwtV');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_block.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
@@ -78,14 +78,14 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
       await pageHasReplyContainer(gmailPage);
     }));
 
-    ava.test('mail.google.com[global:compatibility] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com[global:compatibility] - pubkey file gets rendered', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJTrSJzzjsZVrGcLhhcDLKCJKVrrHNMDLqTMbSjRZZftfDQWbjDWWDsmrpJVHWDblwg');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);
       await pageHasReplyContainer(gmailPage);
     }));
 
-    ava.test('mail.google.com[global:compatibility] - pubkey gets rendered when using quoted-printable mime', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('mail.google.com[global:compatibility] - pubkey gets rendered when using quoted-printable mime', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const gmailPage = await openGmailPage(t, browser, '/WhctKJVRFztXGwvSbwcrbDshGTnLWMFvhwJmhqllRWwvpKnlpblQMXVZLTsKfWdPWKhPFBV');
       const urls = await gmailPage.getFramesUrls(['/chrome/elements/pgp_pubkey.htm'], { sleep: 10, appearIn: 20 });
       expect(urls.length).to.equal(1);

@@ -110,12 +110,12 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
     for (const m of Config.tests.messages) {
-      ava.test(`decrypt[global:compatibility] - ${m.name}`, testWithSemaphoredBrowser('compatibility', async (t, browser) => {
+      ava.default(`decrypt[global:compatibility] - ${m.name}`, testWithSemaphoredBrowser('compatibility', async (t, browser) => {
         await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, `chrome/elements/pgp_block.htm${m.params}`, m.content, m.password, m.quoted);
       }));
     }
 
-    ava.test('[standalone] decrypt - by entering pass phrase + remember in session', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] decrypt - by entering pass phrase + remember in session', testWithNewBrowser(async (t, browser) => {
       const pp = Config.key('flowcrypt.compatibility.1pp1').passphrase;
       const threadId = '15f7f5630573be2d';
       const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
@@ -131,7 +131,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await InboxPageRecipe.checkFinishingSession(t, browser, acctEmail, threadId);
     }));
 
-    ava.test('[standalone] protonmail - load pubkey into contact + verify detached msg', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] protonmail - load pubkey into contact + verify detached msg', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=mismatch%40mail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
@@ -147,7 +147,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, htmlMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     }));
 
-    ava.test('[standalone] protonmail - auto TOFU load matching pubkey first time', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] protonmail - auto TOFU load matching pubkey first time', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const textMsgFrameUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=16a9c109bc51687d&` +
         `senderEmail=flowcrypt.compatibility%40protonmail.com&isOutgoing=___cu_false___&signature=___cu_true___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
@@ -155,14 +155,14 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, textMsgFrameUrl, ["1234"], undefined, false, ["matching signature", "Flowcrypt.Compatibility@Protonmail.Com"]);
     }));
 
-    ava.test('[standalone] verify encrypted+signed message', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] verify encrypted+signed message', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const encryptedSignedMsgUrl = `chrome/elements/pgp_block.htm?frameId=none&message=&hasPassword=___cu_false___&msgId=1617429dc55600db&senderEmail=martin%40politick.ca&isOutgoing=___cu_false___&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["Fetched pubkey, click to verify", "Martin@Politick.Ca"]);
       await BrowserRecipe.pgpBlockVerifyDecryptedContent(t, browser, encryptedSignedMsgUrl, ['4) signed + encrypted email if supported'], undefined, false, ["matching signature", "Martin@Politick.Ca"]);
     }));
 
-    ava.test('[standalone] load key - expired key', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] load key - expired key', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(expiredPub)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
@@ -173,7 +173,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await pubFrame.close();
     }));
 
-    ava.test('[standalone] load key - unusable key', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] load key - unusable key', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const pubFrameUrl = `chrome/elements/pgp_pubkey.htm?frameId=none&armoredPubkey=${encodeURIComponent(unusableKey)}&acctEmail=flowcrypt.compatibility%40gmail.com&parentTabId=0`;
       const pubFrame = await browser.newPage(t, pubFrameUrl);
@@ -183,7 +183,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await pubFrame.close();
     }));
 
-    ava.test.todo('[standalone] decrypt - by entering secondary pass phrase');
+    ava.todo('[standalone] decrypt - by entering secondary pass phrase');
 
   }
 
