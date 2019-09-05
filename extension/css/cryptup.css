@@ -300,7 +300,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_signature.bad > .cursive > span { border-bottom: 1px dotted #A44; }
 #pgp_signature.good > .cursive > span { border-bottom: 1px dotted #088447; }
 
-#pgp_block.pgp_pubkey { padding-top: 7px; text-align: center; }
+#pgp_block.pgp_pubkey { padding-top: 7px; }
 #pgp_block.pgp_pubkey .line { margin: 0; }
 #pgp_block.pgp_pubkey pre.pubkey { display: none; }
 
@@ -333,6 +333,7 @@ table#compose td.input .collapsed .email_preview .rest.expired { border-color: #
 table#compose td.input .collapsed .email_preview .email_address.expired { background-color: #d18826; }
 table#compose td.input .collapsed .email_preview .rest.no_pgp { border-color: #989898; }
 table#compose td.input .collapsed .email_preview .email_address.no_pgp { background-color: #989898; }
+table#compose.sign td.input .collapsed .email_preview .email_address { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
 table#compose td.recipients-inputs { vertical-align: middle; }
 table#compose td.recipients-inputs > div#input_addresses_container { outline: none; }
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
