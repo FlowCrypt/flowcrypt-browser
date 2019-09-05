@@ -220,7 +220,7 @@ export class Catch {
       env = 'ex';
     } else if (url.indexOf('l.flowcrypt.com') !== -1 || url.indexOf('127.0.0.1') !== -1) {
       env = 'web:local';
-    } else if (url.indexOf('cryptup.org') !== -1 || url.indexOf('flowcrypt.com') !== -1) {
+    } else if (url.indexOf('flowcrypt.com') !== -1) {
       env = 'web:prod';
     } else if (url.indexOf('mail.google.com') !== -1) {
       env = 'ex:script:gmail';

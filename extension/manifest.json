@@ -48,8 +48,7 @@
     },
     {
       "matches": [
-        "https://flowcrypt.com/stripe*",
-        "https://cryptup.org/stripe*"
+        "https://flowcrypt.com/stripe*"
       ],
       "js": [
         "/lib/purify.min.js",
