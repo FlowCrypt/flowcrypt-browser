@@ -90,7 +90,7 @@ Catch.try(async () => {
     }
     const reply = Google.determineReplyCorrespondents(acctEmail, [acctEmail], gmailMsg);
     to = reply.to;
-    subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
+    subject = 'Re: ' + Google.gmail.findHeader(gmailMsg, 'subject') || '';
     $('#loader').remove();
   })();
   const tabId = await BrowserMsg.requiredTabId();
@@ -139,7 +139,7 @@ Catch.try(async () => {
     try {
       await Google.gmail.msgSend(acctEmail, message);
       BrowserMsg.send.notificationShow(parentTabId, { notification: 'Message sent' });
-      Xss.sanitizeReplace('#compose', 'Message sent. The other person should use this information to send a new message.');
+      Xss.sanitizeReplace('#compose', '<div data-test="container-reply-msg-successful">Message sent. The other person should use this information to send a new message.</div>');
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         $(target).text(sendBtnText);

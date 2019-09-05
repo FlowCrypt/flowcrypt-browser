@@ -340,18 +340,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.test('key-mismatch[global:compatibility] - standalone - key mismatch loading', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'isReplyBox=___cu_true___&threadId=16b584ed95837510&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
-        '&threadMsgId=16b584ed95837510';
+      const appendUrl = 'isReplyBox=___cu_true___&threadId=15f7f5630573be2d&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___' +
+        '&threadMsgId=15f7f5630573be2d';
       const replyMismatchPage = await ComposePageRecipe.openReplyKeyMismatch(t, browser, 'compatibility', appendUrl);
       await Util.sleep(3);
       const emailsPreview = await replyMismatchPage.waitAny('@email-preview');
       const recipients = await emailsPreview.$$('span');
       expect(recipients.length).to.equal(1);
       const recipientEmail = await (await recipients[0].getProperty('textContent')).jsonValue() as string;
-      expect(recipientEmail).to.equal('flowcrypt.compatibility@gmail.com');
+      expect(recipientEmail).to.equal('censored@email.com');
       const text = await replyMismatchPage.read('@input-body');
       expect(text).to.include('I was not able to read your encrypted message because it was encrypted for a wrong key.');
       expect(await replyMismatchPage.isElementPresent('@attachment')).to.be.true;
+      await ComposePageRecipe.sendAndClose(replyMismatchPage);
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
