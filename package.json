@@ -13,7 +13,7 @@
     "@types/puppeteer": "1.11.1",
     "@types/request": "2.47.1",
     "@types/mailparser": "2.4.0",
-    "ava": "1.0.0-beta.4",
+    "ava": "1.4.1",
     "chai": "4.1.2",
     "del": "3.0.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
@@ -24,7 +24,7 @@
     "sweetalert2": "8.15.3",
     "tslint": "5.11.0",
     "typescript": "3.4.1",
-    "web-ext": "3.0.0"
+    "web-ext": "3.1.1"
   },
   "scripts": {
     "build": "./build.sh",
