@@ -12,7 +12,7 @@ export let defineUnitTests = (testVariant: TestVariant, testWithNewBrowser: Test
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
     for (const ut of Config.tests.unit_tests) {
-      ava.test(`[standalone] unit ${ut.name}`, testWithNewBrowser(async (t, browser) => {
+      ava.default(`[standalone] unit ${ut.name}`, testWithNewBrowser(async (t, browser) => {
         const page = await browser.newPage(t, `chrome/dev/unit_test.htm?f=${ut.f}&args=${encodeURIComponent(JSON.stringify(ut.args))}`);
         await page.waitForSelTestState('ready');
         const content = await page.read('@unit-test-result');

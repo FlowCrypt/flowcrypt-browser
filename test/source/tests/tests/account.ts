@@ -15,7 +15,7 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
   if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 
     // todo - make a helper method that forces account tests to run in sequence with Semaphore
-    ava.test('[standalone] compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
       // delete account
       await FlowCryptApi.hookCiAcctDelete('test.ci.trial@org.flowcrypt.com');
       // set up acct and open compose page
@@ -47,20 +47,20 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       await gmailPage.waitTillGone('@container-new-message');
     }));
 
-    ava.test.todo('compose > footer > subscribe > trial');
+    ava.todo('compose > footer > subscribe > trial');
 
-    ava.test.todo('settings > subscribe > trial');
+    ava.todo('settings > subscribe > trial');
 
-    ava.test.todo('settings will recognize expired subscription');
+    ava.todo('settings will recognize expired subscription');
 
-    ava.test.todo('settings will recognize / sync subscription');
+    ava.todo('settings will recognize / sync subscription');
 
-    ava.test.todo('settings > subscribe > expire > compose > large file > subscribe');
+    ava.todo('settings > subscribe > expire > compose > large file > subscribe');
 
-    ava.test.todo('settings > subscribe > expire > compose > footer > subscribe');
+    ava.todo('settings > subscribe > expire > compose > footer > subscribe');
 
   } else {
-    ava.test('compose > large file > public domain account (should not prompt to upgrade)', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose > large file > public domain account (should not prompt to upgrade)', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
       const fileInput = await composePage.target.$('input[type=file]');
