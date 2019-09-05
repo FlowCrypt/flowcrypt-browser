@@ -23,7 +23,7 @@ import { Xss } from '../platform/xss.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
-export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string };
+export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
 type AuthResultSuccess = { result: 'Success', acctEmail: string, error?: undefined };
 type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string };
@@ -362,7 +362,7 @@ export class Google extends EmailProviderApi {
       const loadedAr: Array<number> = [];
       // 1.33 is a coefficient we need to multiply because total size we need to download is larger than all files together
       const total = atts.map(x => x.length).reduce((a, b) => a + b) * 1.33;
-      const responses = await Promise.all(atts.map((a, index) => Google.gmail.attGet(acctEmail, a.msgId!, a.id!, (progress, loaded, s) => {
+      const responses = await Promise.all(atts.map((a, index) => Google.gmail.attGet(acctEmail, a.msgId!, a.id!, (_, loaded, s) => {
         if (progressCb) {
           loadedAr[index] = loaded || 0;
           const totalLoaded = loadedAr.reduce((a, b) => a + b);
@@ -493,7 +493,7 @@ export class Google extends EmailProviderApi {
     const rawParsedResults: AddrParserResult[] = [];
     toHeaders = Value.arr.unique(toHeaders);
     for (const to of toHeaders) {
-      rawParsedResults.push(...(window as BrowserWidnow)['emailjs-addressparser'].parse(to));
+      rawParsedResults.push(...(window as unknown as BrowserWidnow)['emailjs-addressparser'].parse(to));
     }
     for (const rawParsedRes of rawParsedResults) {
       if (rawParsedRes.address && allRawEmails.indexOf(rawParsedRes.address) === -1) {
@@ -644,14 +644,14 @@ export class GoogleAuth {
       acctEmail = acctEmail.toLowerCase();
     }
     scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
-    const authRequest: AuthReq = { acctEmail, scopes };
+    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Pgp.password.random()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
       return { result: 'Error', error: 'No oauth window renturned after initiating it', acctEmail };
     }
     const authRes = await Promise.race([
-      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes),
+      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken),
       GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
     ]);
     try {
@@ -674,14 +674,20 @@ export class GoogleAuth {
     chrome.windows.onRemoved.addListener(onOauthWinClosed);
   })
 
-  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string } => {
+  private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
     const parts = title.split(' ', 2);
-    const result = parts[0];
+    const result = parts[0] as GoogleAuthWindowResult$result;
     const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
+    let authReq: AuthReq;
+    try {
+      authReq = GoogleAuth.apiGoogleAuthStateUnpack(String(params.state));
+    } catch (e) {
+      return { result: 'Error', error: `Wrong oauth state response: ${e}` };
+    }
     if (!['Success', 'Denied', 'Error'].includes(result)) {
       return { result: 'Error', error: `Unknown google auth result '${result}'` };
     }
-    return { result: result as GoogleAuthWindowResult$result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined };
+    return { result, code: params.code ? String(params.code) : undefined, error: params.error ? String(params.error) : undefined, csrf: authReq.csrfToken };
   }
 
   /**
@@ -691,15 +697,18 @@ export class GoogleAuth {
 
   private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
 
-  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[]): Promise<AuthRes> => {
+  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string): Promise<AuthRes> => {
     while (true) {
       const [oauth] = await tabsQuery({ windowId });
       if (oauth && oauth.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
-        const { result, error, code } = GoogleAuth.processOauthResTitle(oauth.title);
+        const { result, error, code, csrf } = GoogleAuth.processOauthResTitle(oauth.title);
         if (error === 'access_denied') {
           return { acctEmail, result: 'Denied', error }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
         }
         if (result === 'Success') {
+          if (!csrf || csrf !== csrfToken) {
+            return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.` };
+          }
           if (code) {
             const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(code, scopes);
             return { acctEmail: authorizedAcctEmail, result: 'Success' };
@@ -723,6 +732,13 @@ export class GoogleAuth {
   })
 
   private static apiGoogleAuthStatePack = (authReq: AuthReq) => GoogleAuth.OAUTH.state_header + JSON.stringify(authReq);
+
+  private static apiGoogleAuthStateUnpack = (state: string): AuthReq => {
+    if (!state.startsWith(GoogleAuth.OAUTH.state_header)) {
+      throw new Error('Missing oauth state header');
+    }
+    return JSON.parse(state.replace(GoogleAuth.OAUTH.state_header, '')) as AuthReq;
+  }
 
   private static googleAuthSaveTokens = async (acctEmail: string, tokensObj: GoogleAuthTokensResponse, scopes: string[]) => {
     const openid = GoogleAuth.parseIdToken(tokensObj.id_token);
