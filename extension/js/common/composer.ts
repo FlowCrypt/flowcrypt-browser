@@ -459,7 +459,7 @@ export class Composer {
         //  - don't require text to be sent as an attachment
         //  - don't require all other clients to support PGP/MIME
         // then please const me know. Eagerly waiting! In the meanwhile..
-        plaintext = (window as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
+        plaintext = (window as unknown as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
         // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();

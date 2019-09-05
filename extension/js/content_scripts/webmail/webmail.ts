@@ -90,9 +90,9 @@ Catch.try(async () => {
       replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
       const intervaliFunctions = replacer.getIntervalFunctions();
-      for(const intervalFunction of intervaliFunctions) {
+      for (const intervalFunction of intervaliFunctions) {
         intervalFunction.handler();
-        replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
+        replacePgpElsInterval = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
           if (typeof (window as any).$ === 'function') {
             intervalFunction.handler();
           } else { // firefox will unload jquery when extension is restarted or updated

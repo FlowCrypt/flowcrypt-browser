@@ -116,16 +116,21 @@ export class Mime {
   }
 
   private static headerGetAddress = (parsedMimeMsg: MimeContent, headersNames: Array<SendingType | 'from'>) => {
-    const result: { from?: string, to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
+    const result: { to: string[], cc: string[], bcc: string[] } = { to: [], cc: [], bcc: [] };
+    let from: string | undefined;
     const getHdrValAsArr = (hdr: MimeContentHeader) => typeof hdr === 'string' ? [hdr].map(h => Str.parseEmail(h).email).filter(e => !!e) as string[] : hdr.map(h => h.address);
     const getHdrValAsStr = (hdr: MimeContentHeader) => Str.parseEmail((Array.isArray(hdr) ? (hdr[0] || {}).address : String(hdr || '')) || '').email;
     for (const hdrName of headersNames) {
-      if (parsedMimeMsg.headers[hdrName]) {
-        const header = parsedMimeMsg.headers[hdrName];
-        result[hdrName] = hdrName === 'from' ? getHdrValAsStr(header) : [...result[hdrName], ...getHdrValAsArr(header)];
+      const header = parsedMimeMsg.headers[hdrName];
+      if (header) {
+        if (hdrName === 'from') {
+          from = getHdrValAsStr(header);
+        } else {
+          result[hdrName] = [...result[hdrName], ...getHdrValAsArr(header)];
+        }
       }
     }
-    return result;
+    return { ...result, from };
   }
 
   public static replyHeaders = (parsedMimeMsg: MimeContent) => {
