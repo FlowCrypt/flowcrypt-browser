@@ -1066,12 +1066,20 @@ export class Composer {
 
   private async checkEmailAliases() {
     if (!this.urlParams.isReplyBox) {
-      const addresses = Value.arr.unique((await Settings.fetchAcctAliasesFromGmail(this.urlParams.acctEmail)).concat(this.urlParams.acctEmail));
-      const storedAdresses = (await Store.getAcct(this.urlParams.acctEmail, ['addresses'])).addresses || [];
-      if (addresses.sort().join() !== storedAdresses.sort().join()) { // This way of comparation two arrays works only for not object arrays
-        await Store.setAcct(this.urlParams.acctEmail, { addresses });
-        if (await Ui.modal.confirm('Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?')) {
-          window.location.reload();
+      try {
+        const addresses = Value.arr.unique((await Settings.fetchAcctAliasesFromGmail(this.urlParams.acctEmail)).concat(this.urlParams.acctEmail));
+        const storedAdresses = (await Store.getAcct(this.urlParams.acctEmail, ['addresses'])).addresses || [];
+        if (addresses.sort().join() !== storedAdresses.sort().join()) { // This way of comparation two arrays works only for not object arrays
+          await Store.setAcct(this.urlParams.acctEmail, { addresses });
+          if (await Ui.modal.confirm('Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?')) {
+            window.location.reload();
+          }
+        }
+      } catch (e) {
+        if (Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+        } else if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
         }
       }
     }
