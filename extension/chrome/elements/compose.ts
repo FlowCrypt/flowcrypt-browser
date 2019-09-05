@@ -154,7 +154,7 @@ Catch.try(async () => {
             if (!parsed.keys[0]) {
               Catch.log('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            } else if (! await parsed.keys[0].getEncryptionKey()) {
+            } else if (! await parsed.keys[0].getEncryptionKey() && !Pgp.key.usableButExpired(parsed.keys[0])) { // Not to skip expired keys
               Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
