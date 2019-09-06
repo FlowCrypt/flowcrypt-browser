@@ -8,12 +8,12 @@ import { Att } from '../../../js/common/core/att.js';
 import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
 import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Backend } from '../../../js/common/api/backend.js';
 
 Catch.try(async () => {
 
@@ -43,28 +43,17 @@ Catch.try(async () => {
 
     $('.action_open_decrypt').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt.htm')));
 
-    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.reportErr)));
-
-    $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
-      Xss.sanitizeRender(self, Ui.spinner('white'));
-      try {
-        const all = await Settings.refreshAcctAliases(acctEmail);
-        await Ui.modal.info('Updated to: ' + all.join(', '));
-      } catch (e) {
-        if (Api.err.isNetErr(e)) {
-          await Ui.modal.error('Network error, please try again');
-        } else if (Api.err.isAuthPopupNeeded(e)) {
-          await Ui.modal.warning('Error: account needs to be re-connected first.');
-          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-        } else {
-          Catch.reportErr(e);
-          await Ui.modal.error(`Error happened: ${String(e)}`);
-        }
+    $('.action_openid_login').click(Ui.event.handle(async () => {
+      const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+      if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
+        await Backend.accountLoginWithOpenid(authRes.acctEmail, authRes.id_token);
+        await Ui.modal.info(`Sucessfully logged in as ${authRes.acctEmail}`);
+      } else {
+        await Ui.modal.error(`Could not log in:\n\n${authRes.error}`);
       }
-      await Ui.time.sleep(100);
-      window.location.reload();
-      done();
     }));
+
+    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.reportErr)));
 
     $('.action_throw_unchecked').click(() => Catch.test('error'));
 
