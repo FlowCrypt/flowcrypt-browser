@@ -7,6 +7,7 @@ import { Util, Config } from '../../util';
 import { TestVariant } from '../../util';
 import { expect } from "chai";
 import { AvaContext } from '..';
+import { ElementHandle } from 'puppeteer';
 
 // tslint:disable:no-blank-lines-func
 
@@ -306,7 +307,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.test('compose[global:compose] - standalone - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.test('compose[global:compose] - reply - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 3 });
@@ -314,6 +315,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await isRecipientElementsExists(composePage, { to: true, cc: true });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+    }));
+
+    ava.test('compose[global:compose] - standalone - expired for too long email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
+      const expandContainer = await composePage.waitAny('@action-expand-cc-bcc-fields');
+      const recipient = await expandContainer.$('.email_preview span');
+      expect(await getElementPropertyJson(recipient!, 'className')).to.include('expired');
+      await composePage.click('@action-send');
+      await Util.sleep(3);
+      const modalErrorContent = await composePage.target.$('.ui-modal-confirm .swal2-content');
+      expect(await getElementPropertyJson(modalErrorContent!, 'textContent')).to.include('The public key of one of your recipients is expired.');
+      await (await composePage.target.$('.swal2-confirm'))!.click();
     }));
 
     ava.test.todo('compose[global:compose] - reply - new gmail threadId fmt');
@@ -362,3 +376,5 @@ const isRecipientElementsExists = async (controllable: ControllablePage, exists:
     expect(recipientsCc.length).to.equal(0);
   }
 };
+
+const getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
