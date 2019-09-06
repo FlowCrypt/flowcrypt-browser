@@ -403,7 +403,7 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
 
 const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
   for (const type of ['to', 'cc', 'bcc']) {
-    const expectedEmails: string[] = expected[type] || []; // tslint:disable-line:no-unsafe-any
+    const expectedEmails: string[] = (expected as Dict<string[]>)[type] || []; // tslint:disable-line:no-unsafe-any
     const container = await controllable.waitAny('@container-to', { visible: false });
     const recipientElements = await container.$$('.recipients span');
     expect(recipientElements.length).to.not.equal(expectedEmails.length);
