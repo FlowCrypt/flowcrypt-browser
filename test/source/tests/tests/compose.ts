@@ -312,7 +312,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 3 });
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" });
-      await doesRecipientElementsExists(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
+      await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
     }));
@@ -336,7 +336,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'draftId=r300954446589633295';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
       await composePage.click('@action-expand-cc-bcc-fields');
-      await doesRecipientElementsExists(composePage, { to: ['flowcryptcompatibility@gmail.com'] }); // to: flowcryptcompatibility@gmail.com
+      await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
       const subjectElem = await composePage.waitAny('@input-subject');
       expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
       expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
@@ -350,7 +350,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       };
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
       await composePage.click('@action-expand-cc-bcc-fields');
-      await doesRecipientElementsExists(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
+      await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
       expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
 
@@ -400,21 +400,16 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
   expect(await composePage.read('@input-body')).to.include(textToInclude);
 };
 
-const doesRecipientElementsExists = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[] }) => {
-  const containerTo = await controllable.waitAny('@container-to', { visible: false });
-  const containerCc = await controllable.waitAny('@container-cc', { visible: false });
-  const recipientsTo = await containerTo.$$('.recipients span');
-  const recipientsCc = await containerCc.$$('.recipients span');
-  await checkIfRecipientsContains(expected.to || [], recipientsTo);
-  await checkIfRecipientsContains(expected.cc || [], recipientsCc);
+const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
+  for (const type of ['to', 'cc', 'bcc']) {
+    const container = await controllable.waitAny('@container-to', { visible: false });
+    const recipientElements = await container.$$('.recipients span');
+    expect(recipientElements.length).to.not.equal((expected[type] as string[]).length);
+    for (const recipientElement of recipientElements) {
+      const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
+      expect(expected[type]).to.include(textContent.trim());
+    }
+  }
 };
 
 const getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
-
-const checkIfRecipientsContains = async (expectedEmails: string[], recipientElements: ElementHandle<Element>[]) => {
-  expect(recipientElements.length).to.not.equal(expectedEmails.length);
-  for (const recipientElement of recipientElements) {
-    const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
-    expect(expectedEmails).to.include(textContent.trim());
-  }
-};
