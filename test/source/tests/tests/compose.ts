@@ -317,8 +317,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
     }));
 
-
-    ava.default('compose[global:compose] - standalone - expired for too long email', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone - expired can still send', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
       const expandContainer = await composePage.waitAny('@action-expand-cc-bcc-fields');
@@ -329,6 +328,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const modalErrorContent = await composePage.target.$('.ui-modal-confirm .swal2-content');
       expect(await getElementPropertyJson(modalErrorContent!, 'textContent')).to.include('The public key of one of your recipients is expired.');
       await (await composePage.target.$('.swal2-confirm'))!.click();
+      await composePage.waitForSelTestState('closed', 20); // succesfully sent
+      await composePage.close();
     }));
 
     ava.default('compose[global:comaptibility] - loading drafts - new message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
@@ -414,18 +415,18 @@ const isRecipientElementsExists = async (controllable: ControllablePage, exists:
   } else {
     expect(recipientsCc.length).to.equal(0);
   }
+  await checkIfRecipientsContains(exists.to, recipientsTo);
+  await checkIfRecipientsContains(exists.cc, recipientsCc);
 };
 
 const getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
-  const checkIfRecipientsContains = async (emails: string[] | undefined, recipientElements: ElementHandle<Element>[]) => {
-    if (!emails || !emails.length) {
-      return;
-    }
-    for (const recipientElement of recipientElements) {
-      const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
-      expect(emails).to.include(textContent.trim());
-    }
-  };
-  await checkIfRecipientsContains(exists.to, recipientsTo);
-  await checkIfRecipientsContains(exists.cc, recipientsCc);
+
+const checkIfRecipientsContains = async (emails: string[] | undefined, recipientElements: ElementHandle<Element>[]) => {
+  if (!emails || !emails.length) {
+    return;
+  }
+  for (const recipientElement of recipientElements) {
+    const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
+    expect(emails).to.include(textContent.trim());
+  }
 };
