@@ -25,15 +25,14 @@ type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string,
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
 export type AuthReq = { acctEmail?: string, scopes: string[], messageId?: string, csrfToken: string };
 export type GmailResponseFormat = 'raw' | 'full' | 'metadata';
-type AuthResultSuccess = { result: 'Success', acctEmail: string, error?: undefined };
-type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string };
+type AuthResultSuccess = { result: 'Success', acctEmail: string, id_token: string, error?: undefined };
+type AuthResultError = { result: GoogleAuthWindowResult$result, acctEmail?: string, error?: string, id_token: undefined };
 export type AuthRes = AuthResultSuccess | AuthResultError;
 
 export class GoogleAcctNotConnected extends Error { }
 
 export namespace GmailRes { // responses
 
-  export type GmailUsersMeProfile = { emailAddress: string, historyId: string, messagesTotal: number, threadsTotal: string };
   export type GmailMsg$header = { name: string, value: string };
   export type GmailMsg$payload$body = { attachmentId: string, size: number, data?: string };
   export type GmailMsg$payload$part = { body?: GmailMsg$payload$body, filename?: string, mimeType?: string, headers?: GmailMsg$header[] };
@@ -62,11 +61,15 @@ export namespace GmailRes { // responses
   export type GmailDraftList = { drafts: GmailDraftMeta[], nextPageToken: string };
   export type GmailDraftSend = {};
   export type GmailAliases = { sendAs: GmailAliases$sendAs[] };
-  type GmailAliases$sendAs = { sendAsEmail: string, displayName: string, replyToAddress: string, signature: string, isDefault: boolean, treatAsAlias: boolean, verificationStatus: string };
+  type GmailAliases$sendAs = {
+    sendAsEmail: string, displayName: string, replyToAddress: string, signature: string,
+    isDefault: boolean, treatAsAlias: boolean, verificationStatus: string, isPrimary?: true
+  };
 
   export type OpenId = { // 'name' is the full name, picture is url
     at_hash: string; exp: number; iat: number; sub: string; aud: string; azp: string; iss: "https://accounts.google.com";
     name: string; picture: string; locale: 'en' | string; family_name: string; given_name: string;
+    email?: string, email_verified?: boolean;
   };
 
 }
@@ -77,13 +80,6 @@ export class Google extends EmailProviderApi {
   private static GMAIL_SEARCH_QUERY_LENGTH_LIMIT = 1400;
 
   public static webmailUrl = (acctEmail: string) => `https://mail.google.com/mail/u/${acctEmail}`;
-
-  private static call = async (acctEmail: string, method: ReqMethod, url: string, parameters: Dict<Serializable> | string): Promise<any> => {
-    const data = method === 'GET' || method === 'DELETE' ? parameters : JSON.stringify(parameters);
-    const headers = { Authorization: await GoogleAuth.googleApiAuthHeader(acctEmail) };
-    const request = { url, method, data, headers, crossDomain: true, contentType: 'application/json; charset=UTF-8', async: true };
-    return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
-  }
 
   public static gmailCall = async (acctEmail: string, method: ReqMethod, path: string, params: Dict<Serializable> | string | undefined, progress?: ProgressCbs, contentType?: string) => {
     progress = progress || {};
@@ -132,21 +128,6 @@ export class Google extends EmailProviderApi {
           return '(' + arr.join(') OR (') + ')';
         }
       },
-    },
-    usersMeProfile: async (acctEmail: string | undefined, accessToken?: string): Promise<GmailRes.GmailUsersMeProfile> => {
-      const url = `${GOOGLE_API_HOST}/gmail/v1/users/me/profile`;
-      let r: GmailRes.GmailUsersMeProfile;
-      if (acctEmail && !accessToken) {
-        r = await Google.call(acctEmail, 'GET', url, {}) as GmailRes.GmailUsersMeProfile;
-      } else if (!acctEmail && accessToken) {
-        const contentType = 'application/json; charset=UTF-8';
-        const headers = { 'Authorization': `Bearer ${accessToken}` };
-        r = await Api.ajax({ url, method: 'GET', headers, crossDomain: true, contentType, async: true }, Catch.stackTrace()) as GmailRes.GmailUsersMeProfile;
-      } else {
-        throw new Error('Google.gmail.users_me_profile: need either account_email or access_token');
-      }
-      r.emailAddress = r.emailAddress.toLowerCase();
-      return r;
     },
     threadGet: (acctEmail: string, threadId: string, format?: GmailResponseFormat, progressCb?: ProgressCb): Promise<GmailRes.GmailThread> =>
       Google.gmailCall(acctEmail, 'GET', `threads/${threadId}`, {
@@ -562,44 +543,48 @@ export class Google extends EmailProviderApi {
 export class GoogleAuth {
 
   public static OAUTH = {
-    client_id: "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
+    client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${GOOGLE_API_HOST}/oauth2/v4/token`,
-    url_redirect: "urn:ietf:wg:oauth:2.0:oob:auto",
-    state_header: "CRYPTUP_STATE_",
+    url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
+    state_header: 'CRYPTUP_STATE_',
     scopes: {
-      profile: "https://www.googleapis.com/auth/userinfo.profile", // needed for openid
-      compose: "https://www.googleapis.com/auth/gmail.compose",
+      email: 'email',
+      openid: 'openid',
+      compose: 'https://www.googleapis.com/auth/gmail.compose',
       modify: 'https://www.googleapis.com/auth/gmail.modify',
       contacts: 'https://www.google.com/m8/feeds/',
     },
     legacy_scopes: {
       read: 'https://www.googleapis.com/auth/gmail.readonly', // deprecated in favor of modify, which also includes read
       gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
+      profile: 'https://www.googleapis.com/auth/userinfo.profile', // originally used for openid, now using `openid` and `email`
     }
   };
 
   public static hasReadScope = (scopes: string[]) => scopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1 || scopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1;
 
-  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' = 'default') => {
-    const { profile, contacts, compose, modify } = GoogleAuth.OAUTH.scopes;
+  public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
+    const { contacts, compose, modify, openid, email } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
-    if (group === 'default') {
+    if (group === 'openid') {
+      return [openid, email];
+    } else if (group === 'default') {
       if (BUILD === 'consumer') {
         // todo - replace "read" with "modify" when approved by google
-        return [profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
+        return [openid, email, compose, read]; // consumer may freak out that extension asks for their contacts early on
       } else if (BUILD === 'enterprise') {
         // todo - replace "read" with "modify" when approved by google
-        return [profile, compose, read, contacts]; // enterprise expects their contact search to work properly
+        return [openid, email, compose, read, contacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${BUILD}`);
       }
     } else if (group === 'contacts') {
       // todo - replace "read" with "modify" when approved by google
-      return [profile, compose, read, contacts];
+      return [openid, email, compose, read, contacts];
     } else if (group === 'compose_only') {
-      return [profile, compose]; // consumer may freak out that the extension asks for read email permission
+      return [openid, email, compose]; // consumer may freak out that the extension asks for read email permission
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }
@@ -639,19 +624,24 @@ export class GoogleAuth {
     }
   }
 
-  public static newAuthPopup = async ({ acctEmail, scopes }: { acctEmail?: string, scopes?: string[] }): Promise<AuthRes> => {
+  public static newAuthPopup = async ({ acctEmail, scopes, save }: { acctEmail?: string, scopes?: string[], save?: boolean }): Promise<AuthRes> => {
     if (acctEmail) {
       acctEmail = acctEmail.toLowerCase();
     }
-    scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
+    if (typeof save === 'undefined') {
+      save = true;
+    }
+    if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
+      scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
+    }
     const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Pgp.password.random()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
-      return { result: 'Error', error: 'No oauth window renturned after initiating it', acctEmail };
+      return { result: 'Error', error: 'No oauth window renturned after initiating it', acctEmail, id_token: undefined };
     }
     const authRes = await Promise.race([
-      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken),
+      GoogleAuth.waitForAndProcessOauthWindowResult(oauthWin.id, acctEmail, scopes, authRequest.csrfToken, save),
       GoogleAuth.waitForOauthWindowClosed(oauthWin.id, acctEmail),
     ]);
     try {
@@ -664,11 +654,15 @@ export class GoogleAuth {
     return authRes;
   }
 
+  public static newOpenidAuthPopup = async ({ acctEmail }: { acctEmail?: string }): Promise<AuthRes> => {
+    return await GoogleAuth.newAuthPopup({ acctEmail, scopes: GoogleAuth.defaultScopes('openid'), save: false });
+  }
+
   private static waitForOauthWindowClosed = (oauthWinId: number, acctEmail: string | undefined): Promise<AuthRes> => new Promise(resolve => {
     const onOauthWinClosed = (closedWinId: number) => {
       if (closedWinId === oauthWinId) {
         chrome.windows.onRemoved.removeListener(onOauthWinClosed);
-        resolve({ result: 'Closed', acctEmail });
+        resolve({ result: 'Closed', acctEmail, id_token: undefined });
       }
     };
     chrome.windows.onRemoved.addListener(onOauthWinClosed);
@@ -697,25 +691,29 @@ export class GoogleAuth {
 
   private static isForwarding = (title: string) => title.match(/^Forwarding /) !== null;
 
-  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string): Promise<AuthRes> => {
+  private static waitForAndProcessOauthWindowResult = async (windowId: number, acctEmail: string | undefined, scopes: string[], csrfToken: string, save: boolean): Promise<AuthRes> => {
     while (true) {
       const [oauth] = await tabsQuery({ windowId });
       if (oauth && oauth.title && oauth.title.includes(GoogleAuth.OAUTH.state_header) && !GoogleAuth.isAuthUrl(oauth.title) && !GoogleAuth.isForwarding(oauth.title)) {
         const { result, error, code, csrf } = GoogleAuth.processOauthResTitle(oauth.title);
         if (error === 'access_denied') {
-          return { acctEmail, result: 'Denied', error }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
+          return { acctEmail, result: 'Denied', error, id_token: undefined }; // sometimes it was coming in as {"result":"Error","error":"access_denied"}
         }
         if (result === 'Success') {
           if (!csrf || csrf !== csrfToken) {
-            return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.` };
+            return { acctEmail, result: 'Error', error: `Wrong oauth CSRF token. Please try again.`, id_token: undefined };
           }
           if (code) {
-            const authorizedAcctEmail = await GoogleAuth.retrieveAndSaveAuthToken(code, scopes);
-            return { acctEmail: authorizedAcctEmail, result: 'Success' };
+            const { id_token } = save ? await GoogleAuth.retrieveAndSaveAuthToken(code, scopes) : await GoogleAuth.googleAuthGetTokens(code);
+            const { email } = GoogleAuth.parseIdToken(id_token);
+            if (!email) {
+              throw new Error('Missing email address in id_token');
+            }
+            return { acctEmail: email, result: 'Success', id_token };
           }
-          return { acctEmail, result: 'Error', error: `Google auth result was 'Success' but no auth code` };
+          return { acctEmail, result: 'Error', error: `Google auth result was 'Success' but no auth code`, id_token: undefined };
         }
-        return { acctEmail, result, error: error ? error : '(no error provided)' };
+        return { acctEmail, result, error: error ? error : '(no error provided)', id_token: undefined };
       }
       await Ui.time.sleep(250);
     }
@@ -784,14 +782,26 @@ export class GoogleAuth {
 
   // todo - would be better to use a TS type guard instead of the type cast when checking OpenId
   // check for things we actually use: photo/name/locale
-  private static parseIdToken = (idToken: string): GmailRes.OpenId => JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
+  private static parseIdToken = (idToken: string): GmailRes.OpenId => {
+    const claims = JSON.parse(Buf.fromBase64UrlStr(idToken.split(/\./g)[1]).toUtfStr()) as GmailRes.OpenId;
+    if (claims.email) {
+      claims.email = claims.email.toLowerCase();
+      if (!claims.email_verified) {
+        throw new Error(`id_token email_verified is false for email ${claims.email}`);
+      }
+    }
+    return claims;
+  }
 
-  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<string> => {
+  private static retrieveAndSaveAuthToken = async (authCode: string, scopes: string[]): Promise<{ id_token: string }> => {
     const tokensObj = await GoogleAuth.googleAuthGetTokens(authCode);
     await GoogleAuth.googleAuthCheckAccessToken(tokensObj.access_token); // https://groups.google.com/forum/#!topic/oauth2-dev/QOFZ4G7Ktzg
-    const { emailAddress } = await Google.gmail.usersMeProfile(undefined, tokensObj.access_token);
-    await GoogleAuth.googleAuthSaveTokens(emailAddress, tokensObj, scopes);
-    return emailAddress;
+    const claims = GoogleAuth.parseIdToken(tokensObj.id_token);
+    if (!claims.email) {
+      throw new Error('Missing email address in id_token');
+    }
+    await GoogleAuth.googleAuthSaveTokens(claims.email, tokensObj, scopes);
+    return { id_token: tokensObj.id_token };
   }
 
   private static apiGoogleAuthPopupPrepareAuthReqScopes = async (acctEmail: string | undefined, addScopes: string[]): Promise<string[]> => {
@@ -803,7 +813,16 @@ export class GoogleAuth {
     if (addScopes.includes(GoogleAuth.OAUTH.legacy_scopes.read) && addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
       addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.legacy_scopes.read); // modify scope is a superset of read scope
     }
-    // todo - removed these following lines once "modify" scope is verified
+    if (addScopes.includes(GoogleAuth.OAUTH.legacy_scopes.profile)) {
+      addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.legacy_scopes.profile); // profile scope no longer in use, but still in storage
+    }
+    if (!addScopes.includes(GoogleAuth.OAUTH.scopes.email)) {
+      addScopes.push(GoogleAuth.OAUTH.scopes.email);
+    }
+    if (!addScopes.includes(GoogleAuth.OAUTH.scopes.openid)) {
+      addScopes.push(GoogleAuth.OAUTH.scopes.openid);
+    }
+    // todo - remove these following lines once "modify" scope is verified
     if (addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
       addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.scopes.modify);
       addScopes.push(GoogleAuth.OAUTH.legacy_scopes.read);
