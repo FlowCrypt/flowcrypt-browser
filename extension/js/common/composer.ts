@@ -545,8 +545,10 @@ export class Composer {
     });
   }
 
-  private encryptMsgAsOfDateIfSomeAreExpired = async (armoredPubkeys: string[]): Promise<Date | undefined> => {
-    // todo - disallow in certain situations
+  /**
+   * Try to find an intersection of time that public keys of all recipients were usable (if user confirms this with a modal)
+   */
+  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (armoredPubkeys: string[]): Promise<Date | undefined> => {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of armoredPubkeys) {
@@ -575,9 +577,10 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients,
-    subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
+  private doEncryptFmtSend = async (
+    pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = []
+  ) => {
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pubkeys);
     const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
