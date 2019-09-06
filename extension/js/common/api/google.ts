@@ -562,14 +562,16 @@ export class Google extends EmailProviderApi {
 export class GoogleAuth {
 
   public static OAUTH = {
-    client_id: "717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com",
+    client_id: '717284730244-ostjo2fdtr3ka4q9td69tdr9acmmru2p.apps.googleusercontent.com',
     url_code: `${GOOGLE_OAUTH_SCREEN_HOST}/o/oauth2/auth`,
     url_tokens: `${GOOGLE_API_HOST}/oauth2/v4/token`,
-    url_redirect: "urn:ietf:wg:oauth:2.0:oob:auto",
-    state_header: "CRYPTUP_STATE_",
+    url_redirect: 'urn:ietf:wg:oauth:2.0:oob:auto',
+    state_header: 'CRYPTUP_STATE_',
     scopes: {
-      profile: "https://www.googleapis.com/auth/userinfo.profile", // needed for openid
-      compose: "https://www.googleapis.com/auth/gmail.compose",
+      email: 'email',
+      openid: 'openid',
+      profile: 'https://www.googleapis.com/auth/userinfo.profile', // todo - originally used for openid, but ever since we added `openid` and `email`, this could be deprecated?
+      compose: 'https://www.googleapis.com/auth/gmail.compose',
       modify: 'https://www.googleapis.com/auth/gmail.modify',
       contacts: 'https://www.google.com/m8/feeds/',
     },
@@ -582,24 +584,24 @@ export class GoogleAuth {
   public static hasReadScope = (scopes: string[]) => scopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1 || scopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1;
 
   public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' = 'default') => {
-    const { profile, contacts, compose, modify } = GoogleAuth.OAUTH.scopes;
+    const { profile, contacts, compose, modify, openid, email } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
     if (group === 'default') {
       if (BUILD === 'consumer') {
         // todo - replace "read" with "modify" when approved by google
-        return [profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
+        return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
       } else if (BUILD === 'enterprise') {
         // todo - replace "read" with "modify" when approved by google
-        return [profile, compose, read, contacts]; // enterprise expects their contact search to work properly
+        return [openid, email, profile, compose, read, contacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${BUILD}`);
       }
     } else if (group === 'contacts') {
       // todo - replace "read" with "modify" when approved by google
-      return [profile, compose, read, contacts];
+      return [openid, email, profile, compose, read, contacts];
     } else if (group === 'compose_only') {
-      return [profile, compose]; // consumer may freak out that the extension asks for read email permission
+      return [openid, email, profile, compose]; // consumer may freak out that the extension asks for read email permission
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }
