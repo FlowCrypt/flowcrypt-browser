@@ -9,6 +9,7 @@ import { GmailRes } from '../../api/google.js';
 import { ProgressCb, ChunkedCb } from '../../api/api.js';
 import { DeterminedMsgHeaders } from '../../../../chrome/elements/compose.js';
 import { Att } from '../../core/att.js';
+import { PubkeyResult } from './composer-types.js';
 
 export interface ComposerAppFunctionsInterface {
   canReadEmails: () => boolean;
@@ -45,5 +46,5 @@ export interface ComposerAppFunctionsInterface {
   closeMsg: () => void;
   whenMasterPassphraseEntered: (secondsTimeout?: number) => Promise<string | undefined>;
   lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: (email: string) => Promise<Contact | "fail">;
-  collectAllAvailablePublicKeys: (acctEmail: string, recipients: string[]) => Promise<{ armoredPubkeys: string[], emailsWithoutPubkeys: string[] }>;
+  collectAllAvailablePublicKeys: (acctEmail: string, recipients: string[]) => Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }>;
 }
