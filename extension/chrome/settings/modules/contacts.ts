@@ -17,6 +17,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
+import { Str } from '../../../js/common/core/common.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
@@ -109,26 +110,44 @@ Catch.try(async () => {
 
   const actionProcessBulkImportTextInput = async () => {
     try {
-      const value = String($('#bulk_import .input_pubkey').val());
+      const value = Str.normalize(String($('#bulk_import .input_pubkey').val())).trim();
+      if (!value) {
+        await Ui.modal.warning('Please paste public key(s).');
+        return;
+      }
       const normalizedLongid = KeyImportUi.normalizeLongId(value);
-      let pubkey: string;
+      let pub: string;
       if (normalizedLongid) {
         const data = await Keyserver.lookupLongid(acctEmail, normalizedLongid);
         if (data.pubkey) {
-          pubkey = data.pubkey;
+          pub = data.pubkey;
         } else {
           await Ui.modal.warning('Could not find any Public Key in our public records that matches this fingerprint or longid');
           return;
         }
       } else {
-        pubkey = value;
+        pub = value;
       }
-      const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, pubkey);
-      if (replacedHtmlSafe && replacedHtmlSafe !== value) {
-        $('#bulk_import #processed').html(replacedHtmlSafe).css('display', 'block'); // xss-safe-factory
+      let { blocks } = Pgp.armor.detectBlocks(pub);
+      blocks = blocks.filter((b, i) => blocks.findIndex(f => f.content === b.content) === i); // remove duplicates
+      if (!blocks.length) {
+        await Ui.modal.warning('Could not find any new public keys.');
+      } else if (blocks.length === 1 && blocks[0].type === 'plainText') { // Show modal because users could make a mistake
+        await Ui.modal.warning('Incorrect public key. Please check and try again.');
+      } else { // Render Results
+        const container = $('#bulk_import #processed');
+        for (const block of blocks) {
+          if (block.type === 'publicKey') {
+            const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, String(block.content));
+            if (replacedHtmlSafe && replacedHtmlSafe !== value) {
+              container.append(replacedHtmlSafe); // xss-safe-factory
+            }
+          } else {
+            Xss.sanitizeAppend(container, `<div class="bad">Skipping found '${Pgp.friendlyMsgBlockTypeName(block.type)}'</div>`);
+          }
+        }
+        container.css('display', 'block');
         $('#bulk_import .input_pubkey, #bulk_import .action_process, #file_import #fineuploader_button').css('display', 'none');
-      } else {
-        await Ui.modal.warning('Could not find any new public keys');
       }
     } catch (e) {
       if (Api.err.isSignificant(e)) {

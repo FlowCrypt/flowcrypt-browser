@@ -30,7 +30,7 @@ addManifest('chrome-enterprise', manifest => {
   manifest.permissions = ["storage", "tabs", "https://*.google.com/*", "https://*.flowcrypt.com/*", "unlimitedStorage"];
   for (const csDef of manifest.content_scripts) {
     // do not change!!
-    csDef.matches = csDef.matches.filter((host: string) => host === '*://mail.google.com/*' || host === '*://accounts.google.com/o/oauth2/approval*');
+    csDef.matches = csDef.matches.filter((host: string) => host === 'https://mail.google.com/*' || host === '*://accounts.google.com/o/oauth2/approval*');
   }
   manifest.content_scripts = manifest.content_scripts.filter((csDef: { matches: string[] }) => csDef.matches.length); // remove empty defs
   if (!manifest.content_scripts.length) {

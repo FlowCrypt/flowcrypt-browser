@@ -51,7 +51,7 @@ Catch.try(async () => {
 
   $('.action_add_footer').click(Ui.event.prevent('double', async self => {
     let footer = `${String($('.input_email_footer').val())}`;
-    footer = (window as BrowserWidnow)['emailjs-mime-codec'].foldLines(footer, 72, true); // tslint:disable-line:no-unsafe-any
+    footer = (window as unknown as BrowserWidnow)['emailjs-mime-codec'].foldLines(footer, 72, true); // tslint:disable-line:no-unsafe-any
     footer = footer.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
     await saveFooterIfAppropriate(Boolean($('.input_remember').prop('checked')), footer);
     BrowserMsg.send.setFooter(parentTabId, { footer });

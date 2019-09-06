@@ -22,13 +22,12 @@ Catch.try(async () => {
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;
-  const subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
-  const to = uncheckedUrlParams.to ? String(uncheckedUrlParams.to).split(',') : [];
   const debug = uncheckedUrlParams.debug === true;
-
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  let to = uncheckedUrlParams.to ? String(uncheckedUrlParams.to).split(',') : [];
+  let subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   const appFunctions: ComposerAppFunctionsInterface = {
@@ -68,6 +67,32 @@ Catch.try(async () => {
     collectAllAvailablePublicKeys: () => Promise.reject(undefined),
     lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: () => Promise.reject(undefined)
   };
+  await (async () => {
+    if (!threadId) {
+      return; // either not a reply box, or reply box & has all needed params
+    }
+    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
+    let gmailMsg;
+    try {
+      const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
+      gmailMsg = await Google.gmail.msgGet(acctEmail, thread.messages[thread.messages.length - 1].id, 'metadata');
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
+      } else if (Api.err.isInsufficientPermission(e)) {
+        console.info(`skipping attempt to recover missing params due to insufficient permission`);
+      } else if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
+      }
+      // notFound errors will also get down here, and cause a blank reply form to be rendered
+      $('#loader').remove();
+      return;
+    }
+    const reply = Google.determineReplyCorrespondents(acctEmail, [acctEmail], gmailMsg);
+    to = reply.to;
+    subject = 'Re: ' + Google.gmail.findHeader(gmailMsg, 'subject') || '';
+    $('#loader').remove();
+  })();
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
     acctEmail, draftId: '', threadId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
@@ -80,7 +105,7 @@ Catch.try(async () => {
 
   const renderInitial = async () => {
     for (const recipient of to) {
-      Xss.sanitizeAppend('.recipients', Ui.e('span', { text: recipient }));
+      Xss.sanitizeAppend('.email_preview', Ui.e('span', { class: 'email_address display_when_sign', text: recipient }));
     }
     $('.pubkey_file_name').text(att.name);
     composer.resizeComposeBox();
@@ -114,7 +139,7 @@ Catch.try(async () => {
     try {
       await Google.gmail.msgSend(acctEmail, message);
       BrowserMsg.send.notificationShow(parentTabId, { notification: 'Message sent' });
-      Xss.sanitizeReplace('#compose', 'Message sent. The other person should use this information to send a new message.');
+      Xss.sanitizeReplace('#compose', '<div data-test="container-reply-msg-successful">Message sent. The other person should use this information to send a new message.</div>');
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         $(target).text(sendBtnText);

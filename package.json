@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "6.9.9",
+  "version": "7.0.1",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -9,11 +9,11 @@
     "@types/chai": "4.1.4",
     "@types/chrome": "0.0.65",
     "@types/dompurify": "0.0.31",
-    "@types/jquery": "3.3.5",
+    "@types/jquery": "3.3.31",
     "@types/puppeteer": "1.11.1",
     "@types/request": "2.47.1",
     "@types/mailparser": "2.4.0",
-    "ava": "1.0.0-beta.4",
+    "ava": "1.4.1",
     "chai": "4.1.2",
     "del": "3.0.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
@@ -23,8 +23,8 @@
     "puppeteer": "1.11.0",
     "sweetalert2": "8.15.3",
     "tslint": "5.11.0",
-    "typescript": "3.4.1",
-    "web-ext": "3.0.0"
+    "typescript": "3.6.2",
+    "web-ext": "3.1.1"
   },
   "scripts": {
     "build": "./build.sh",

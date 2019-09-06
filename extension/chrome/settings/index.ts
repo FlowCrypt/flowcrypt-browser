@@ -223,13 +223,19 @@ Catch.try(async () => {
 
   const checkGoogleAcct = async () => {
     try {
-      const me = await Google.gmail.usersMeProfile(acctEmail!);
-      $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
-      if (me.emailAddress !== acctEmail) {
-        $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
-        if (me.emailAddress && acctEmail) {
-          if (await Ui.modal.confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
-            await resolveChangedGoogleAcct(me.emailAddress);
+      const { sendAs } = await Google.gmail.fetchAcctAliases(acctEmail!);
+      const primary = sendAs.find(addr => addr.isPrimary === true);
+      if (!primary) {
+        await Ui.modal.warning(`Your account sendAs does not have any primary sendAsEmail`);
+        return;
+      }
+      const googleAcctEmailAddr = primary.sendAsEmail;
+      $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:ok`);
+      if (googleAcctEmailAddr !== acctEmail) {
+        $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:changed`).addClass('bad').attr('title', 'Account email address has changed');
+        if (googleAcctEmailAddr && acctEmail) {
+          if (await Ui.modal.confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${googleAcctEmailAddr}. FlowCrypt Settings need to be updated accordingly.`)) {
+            await resolveChangedGoogleAcct(googleAcctEmailAddr);
           }
         }
       }

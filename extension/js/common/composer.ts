@@ -459,7 +459,7 @@ export class Composer {
         //  - don't require text to be sent as an attachment
         //  - don't require all other clients to support PGP/MIME
         // then please const me know. Eagerly waiting! In the meanwhile..
-        plaintext = (window as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
+        plaintext = (window as unknown as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
         // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
         // Removing them here will prevent Gmail from screwing up the signature
         plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
@@ -1066,12 +1066,20 @@ export class Composer {
 
   private async checkEmailAliases() {
     if (!this.urlParams.isReplyBox) {
-      const addresses = Value.arr.unique((await Settings.fetchAcctAliasesFromGmail(this.urlParams.acctEmail)).concat(this.urlParams.acctEmail));
-      const storedAdresses = (await Store.getAcct(this.urlParams.acctEmail, ['addresses'])).addresses || [];
-      if (addresses.sort().join() !== storedAdresses.sort().join()) { // This way of comparation two arrays works only for not object arrays
-        await Store.setAcct(this.urlParams.acctEmail, { addresses });
-        if (await Ui.modal.confirm('Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?')) {
-          window.location.reload();
+      try {
+        const addresses = Value.arr.unique((await Settings.fetchAcctAliasesFromGmail(this.urlParams.acctEmail)).concat(this.urlParams.acctEmail));
+        const storedAdresses = (await Store.getAcct(this.urlParams.acctEmail, ['addresses'])).addresses || [];
+        if (addresses.sort().join() !== storedAdresses.sort().join()) { // This way of comparation two arrays works only for not object arrays
+          await Store.setAcct(this.urlParams.acctEmail, { addresses });
+          if (await Ui.modal.confirm('Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?')) {
+            window.location.reload();
+          }
+        }
+      } catch (e) {
+        if (Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+        } else if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
         }
       }
     }

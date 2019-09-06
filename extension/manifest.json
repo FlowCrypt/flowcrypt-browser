@@ -34,7 +34,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://mail.google.com/*"
+        "https://mail.google.com/*"
       ],
       "css": [
         "/css/webmail.css"
@@ -48,8 +48,7 @@
     },
     {
       "matches": [
-        "https://flowcrypt.com/stripe*",
-        "https://cryptup.org/stripe*"
+        "https://flowcrypt.com/stripe*"
       ],
       "js": [
         "/lib/purify.min.js",

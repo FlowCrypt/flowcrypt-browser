@@ -67,18 +67,24 @@ Catch.try(async () => {
       if (!isUsableButExpired && ! await pubs[0].getEncryptionKey() && ! await pubs[0].getSigningKey()) {
         showKeyNotUsableError();
       } else {
+        if (compact) {
+          $('.hide_if_compact_and_not_error').remove();
+        }
+        let emailText = '';
         if (pubs.length === 1) {
           const email = pubs[0].users[0].userId ? Str.parseEmail(pubs[0].users[0].userId ? pubs[0].users[0].userId!.userid : '').email : undefined;
           if (email) {
+            emailText = email;
             $('.input_email').val(email); // checked above
-            $('.email').text(email);
           }
         } else {
-          $('.email').text('more than one person');
+          emailText = 'more than one person';
           $('.input_email').css({ display: 'none' });
           const pubToEmail = (pubkey: OpenPGP.key.Key) => Str.parseEmail(pubkey.users[0].userId ? pubkey.users[0].userId!.userid : '').email;
           Xss.sanitizeAppend('.add_contact', Xss.escape(' for ' + pubs.map(pubToEmail).filter(e => !!e).join(', ')));
         }
+        Xss.sanitizePrepend('#pgp_block.pgp_pubkey .result', `<span>This message includes a Public Key for <span class= "email">${Xss.escape(emailText)}</span>.</span>`);
+        $('.pubkey').addClass('good');
         setBtnText().catch(Catch.reportErr);
       }
     } else {
@@ -89,7 +95,6 @@ Catch.try(async () => {
       if (fixed !== armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
         window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
       } else {
-        console.log(armoredPubkey);
         showKeyNotUsableError();
       }
     }
@@ -129,8 +134,10 @@ Catch.try(async () => {
   }));
 
   const showKeyNotUsableError = () => {
-    $('#pgp_block.pgp_pubkey').empty()
-      .append('<div class="bad">This OpenPGP key is not usable.</div>'); // xss-direct
+    $('.fingerprints, .add_contact').remove();
+    $('#pgp_block.pgp_pubkey .result')
+      .prepend('<span class="bad">This OpenPGP key is not usable.</span>'); // xss-direct
+    $('.pubkey').addClass('bad');
   };
 
   $('.input_email').keyup(() => setBtnText());
