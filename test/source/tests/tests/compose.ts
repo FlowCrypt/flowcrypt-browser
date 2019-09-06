@@ -415,18 +415,6 @@ const isRecipientElementsExists = async (controllable: ControllablePage, exists:
   } else {
     expect(recipientsCc.length).to.equal(0);
   }
-  await checkIfRecipientsContains(exists.to, recipientsTo);
-  await checkIfRecipientsContains(exists.cc, recipientsCc);
 };
 
 const getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
-
-const checkIfRecipientsContains = async (emails: string[] | undefined, recipientElements: ElementHandle<Element>[]) => {
-  if (!emails || !emails.length) {
-    return;
-  }
-  for (const recipientElement of recipientElements) {
-    const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
-    expect(emails).to.include(textContent.trim());
-  }
-};
