@@ -8,6 +8,7 @@ import { TestVariant } from '../../util';
 import { expect } from "chai";
 import { AvaContext } from '..';
 import { ElementHandle } from 'puppeteer';
+import { Dict } from '../../core/common';
 
 // tslint:disable:no-blank-lines-func
 
@@ -402,12 +403,13 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
 
 const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
   for (const type of ['to', 'cc', 'bcc']) {
+    const expectedEmails: string[] = expected[type] || []; // tslint:disable-line:no-unsafe-any
     const container = await controllable.waitAny('@container-to', { visible: false });
     const recipientElements = await container.$$('.recipients span');
-    expect(recipientElements.length).to.not.equal((expected[type] as string[]).length);
+    expect(recipientElements.length).to.not.equal(expectedEmails.length);
     for (const recipientElement of recipientElements) {
       const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
-      expect(expected[type]).to.include(textContent.trim());
+      expect(expectedEmails).to.include(textContent.trim());
     }
   }
 };
