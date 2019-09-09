@@ -463,9 +463,14 @@ export class Ui {
         },
       });
     },
-    error: async (text: string): Promise<void> => {
+    error: async (text: string, isHTML: boolean = false): Promise<void> => {
+      if (isHTML) {
+        text = Xss.htmlSanitize(text);
+      } else {
+        text = Xss.escape(text).replace(/\n/g, '<br>');
+      }
       await Swal.fire({
-        html: `<span class="red">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        html: `<span class="red">${text}</span>`,
         animation: false,
         allowOutsideClick: false,
         customClass: {

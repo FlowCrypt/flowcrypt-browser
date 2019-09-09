@@ -561,11 +561,12 @@ export class Composer {
       }
     }
     if (myKey && await Pgp.key.expired(await Pgp.key.read(myKey.pubkey))) {
+      const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(acctEmail)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
       await Ui.modal.error(
         ['This message could not be encrypted because your own Private Key is expired.',
           '',
           'You can extend expiration of this key in other OpenPGP software (such as gnupg), then re-import updated key ' +
-          'in FlowCrypt Settings -> Additional Settings -> Public Key -> Show Private -> Update Key.'].join('\n'));
+          `<a href="${path}" id="action_update_prv" target="_blank">here</a>.`].join('\n'), true);
       throw new ComposerResetBtnTrigger();
     }
     if (!usableUntil.length) { // none of the keys expire
@@ -586,19 +587,12 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-<<<<<<< HEAD
-  private doEncryptFmtSend = async (pubkeys: PubkeyResult[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients,
-    subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
-    const pubkeysOnly = pubkeys.map(p => p.pubkey);
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(this.urlParams.acctEmail, pubkeys);
-    const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
-=======
   private doEncryptFmtSend = async (
-    pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = []
+    pubkeys: PubkeyResult[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = []
   ) => {
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pubkeys);
-    const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
->>>>>>> 3a20cb492002df81b7704e6148e0c4fb16bab6b8
+    const pubkeysOnly = pubkeys.map(p => p.pubkey);
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(this.urlParams.acctEmail, pubkeys);
+    const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
