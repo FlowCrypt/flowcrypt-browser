@@ -545,8 +545,10 @@ export class Composer {
     });
   }
 
-  private encryptMsgAsOfDateIfSomeAreExpired = async (acctEmail: string, armoredPubkeys: PubkeyResult[]): Promise<Date | undefined> => {
-    // todo - disallow in certain situations
+  /**
+   * Try to find an intersection of time that public keys of all recipients were usable (if user confirms this with a modal)
+   */
+  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (acctEmail: string, armoredPubkeys: PubkeyResult[]): Promise<Date | undefined> => {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     const myKey = armoredPubkeys.find(a => a.email === acctEmail);
@@ -584,11 +586,19 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
+<<<<<<< HEAD
   private doEncryptFmtSend = async (pubkeys: PubkeyResult[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients,
     subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
     const pubkeysOnly = pubkeys.map(p => p.pubkey);
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(this.urlParams.acctEmail, pubkeys);
     const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
+=======
+  private doEncryptFmtSend = async (
+    pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = []
+  ) => {
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pubkeys);
+    const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
+>>>>>>> 3a20cb492002df81b7704e6148e0c4fb16bab6b8
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);

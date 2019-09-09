@@ -21,7 +21,7 @@ const isPut = (r: IncomingMessage) => r.method === 'PUT';
 const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
-  'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com'];
+  'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com'];
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
