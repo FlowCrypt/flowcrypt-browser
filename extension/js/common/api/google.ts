@@ -551,6 +551,7 @@ export class GoogleAuth {
     scopes: {
       email: 'email',
       openid: 'openid',
+      profile: 'https://www.googleapis.com/auth/userinfo.profile', // needed so that `name` is present in `id_token`, which is required for key-server auth when in use
       compose: 'https://www.googleapis.com/auth/gmail.compose',
       modify: 'https://www.googleapis.com/auth/gmail.modify',
       contacts: 'https://www.google.com/m8/feeds/',
@@ -558,33 +559,32 @@ export class GoogleAuth {
     legacy_scopes: {
       read: 'https://www.googleapis.com/auth/gmail.readonly', // deprecated in favor of modify, which also includes read
       gmail: 'https://mail.google.com/', // causes a freakish oauth warn: "can permannently delete all your email" ...
-      profile: 'https://www.googleapis.com/auth/userinfo.profile', // originally used for openid, now using `openid` and `email`
     }
   };
 
   public static hasReadScope = (scopes: string[]) => scopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1 || scopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1;
 
   public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
-    const { contacts, compose, modify, openid, email } = GoogleAuth.OAUTH.scopes;
+    const { contacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
     if (group === 'openid') {
-      return [openid, email];
+      return [openid, email, profile];
     } else if (group === 'default') {
       if (BUILD === 'consumer') {
         // todo - replace "read" with "modify" when approved by google
-        return [openid, email, compose, read]; // consumer may freak out that extension asks for their contacts early on
+        return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
       } else if (BUILD === 'enterprise') {
         // todo - replace "read" with "modify" when approved by google
-        return [openid, email, compose, read, contacts]; // enterprise expects their contact search to work properly
+        return [openid, email, profile, compose, read, contacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${BUILD}`);
       }
     } else if (group === 'contacts') {
       // todo - replace "read" with "modify" when approved by google
-      return [openid, email, compose, read, contacts];
+      return [openid, email, profile, compose, read, contacts];
     } else if (group === 'compose_only') {
-      return [openid, email, compose]; // consumer may freak out that the extension asks for read email permission
+      return [openid, email, profile, compose]; // consumer may freak out that the extension asks for read email permission
     } else {
       throw new Error(`Unknown scope group ${group}`);
     }
@@ -813,14 +813,14 @@ export class GoogleAuth {
     if (addScopes.includes(GoogleAuth.OAUTH.legacy_scopes.read) && addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
       addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.legacy_scopes.read); // modify scope is a superset of read scope
     }
-    if (addScopes.includes(GoogleAuth.OAUTH.legacy_scopes.profile)) {
-      addScopes = Value.arr.withoutVal(addScopes, GoogleAuth.OAUTH.legacy_scopes.profile); // profile scope no longer in use, but still in storage
-    }
     if (!addScopes.includes(GoogleAuth.OAUTH.scopes.email)) {
       addScopes.push(GoogleAuth.OAUTH.scopes.email);
     }
     if (!addScopes.includes(GoogleAuth.OAUTH.scopes.openid)) {
       addScopes.push(GoogleAuth.OAUTH.scopes.openid);
+    }
+    if (!addScopes.includes(GoogleAuth.OAUTH.scopes.profile)) {
+      addScopes.push(GoogleAuth.OAUTH.scopes.profile);
     }
     // todo - remove these following lines once "modify" scope is verified
     if (addScopes.includes(GoogleAuth.OAUTH.scopes.modify)) {
