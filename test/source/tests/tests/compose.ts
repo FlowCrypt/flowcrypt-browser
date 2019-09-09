@@ -8,6 +8,7 @@ import { TestVariant } from '../../util';
 import { expect } from "chai";
 import { AvaContext } from '..';
 import { ElementHandle } from 'puppeteer';
+import { Dict } from '../../core/common';
 
 // tslint:disable:no-blank-lines-func
 
@@ -307,21 +308,36 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compatibility] - standalone - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - standalone - cc & bcc test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 3 });
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" });
-      await isRecipientElementsExists(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
+      await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+    }));
+
+    ava.default('compose[global:compose] - standalone - expired can still send', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
+      const expandContainer = await composePage.waitAny('@action-expand-cc-bcc-fields');
+      const recipient = await expandContainer.$('.email_preview span');
+      expect(await getElementPropertyJson(recipient!, 'className')).to.include('expired');
+      await composePage.click('@action-send');
+      await Util.sleep(3);
+      const modalErrorContent = await composePage.target.$('.ui-modal-confirm .swal2-content');
+      expect(await getElementPropertyJson(modalErrorContent!, 'textContent')).to.include('The public key of one of your recipients is expired.');
+      await (await composePage.target.$('.swal2-confirm'))!.click();
+      await composePage.waitForSelTestState('closed', 20); // succesfully sent
+      await composePage.close();
     }));
 
     ava.default('compose[global:comaptibility] - loading drafts - new message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'draftId=r300954446589633295';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
       await composePage.click('@action-expand-cc-bcc-fields');
-      await isRecipientElementsExists(composePage, { to: ['flowcryptcompatibility@gmail.com'] }); // to: flowcryptcompatibility@gmail.com
+      await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
       const subjectElem = await composePage.waitAny('@input-subject');
       expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
       expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
@@ -335,7 +351,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       };
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
       await composePage.click('@action-expand-cc-bcc-fields');
-      await isRecipientElementsExists(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
+      await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
       expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
 
@@ -385,20 +401,17 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
   expect(await composePage.read('@input-body')).to.include(textToInclude);
 };
 
-const isRecipientElementsExists = async (controllable: ControllablePage, exists: { to?: string[], cc?: string[] }) => {
-  const containerTo = await controllable.waitAny('@container-to', { visible: false });
-  const containerCc = await controllable.waitAny('@container-cc', { visible: false });
-  const recipientsTo = await containerTo.$$('.recipients span');
-  const recipientsCc = await containerCc.$$('.recipients span');
-  const checkIfRecipientsContains = async (emails: string[] | undefined, recipientElements: ElementHandle<Element>[]) => {
-    if (!emails || !emails.length) {
-      return;
-    }
+const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
+  for (const type of ['to', 'cc', 'bcc']) {
+    const expectedEmails: string[] = (expected as Dict<string[]>)[type] || []; // tslint:disable-line:no-unsafe-any
+    const container = await controllable.waitAny(`@container-${type}`, { visible: false });
+    const recipientElements = await container.$$('.recipients > span');
+    expect(recipientElements.length).to.equal(expectedEmails.length);
     for (const recipientElement of recipientElements) {
       const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
-      expect(emails).to.include(textContent.trim());
+      expect(expectedEmails).to.include(textContent.trim());
     }
-  };
-  await checkIfRecipientsContains(exists.to, recipientsTo);
-  await checkIfRecipientsContains(exists.cc, recipientsCc);
+  }
 };
+
+const getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;

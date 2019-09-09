@@ -55,6 +55,8 @@ declare namespace OpenPGP {
     signature?: signature.Signature;
     /** (optional) if the unencrypted session key should be added to returned object */
     returnSessionKey?: boolean;
+    /** (optional) encrypt as of a certain date */
+    date?: Date;
     /** (optional) use a key ID of 0 instead of the public key IDs */
     wildcard?: boolean;
     /** (optional) user ID to sign with, e.g. { name:'Steve Sender', email:'steve@openpgp.org' } */
