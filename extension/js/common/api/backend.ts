@@ -45,8 +45,8 @@ export namespace BackendRes {
 
 export class Backend extends Api {
 
-  private static call = (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON'): Promise<any> => {
-    return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3' });
+  private static call = (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> => {
+    return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
   public static url = (type: string, variable = '') => {
@@ -84,6 +84,23 @@ export class Backend extends Api {
     }
     await Store.setGlobal({ cryptup_account_email: account, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription });
     return { verified: response.verified === true, subscription: response.subscription };
+  }
+
+  public static accountLoginWithOpenid = async (acctEmail: string, idToken: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
+    const uuid = await Pgp.hash.sha1UtfStr(Pgp.password.random());
+    const response = await Backend.call('account/login', {
+      account: acctEmail,
+      uuid,
+      token: null, // tslint:disable-line:no-null-keyword
+    }, undefined, { Authorization: `Bearer ${idToken}` }) as BackendRes.FcAccountLogin;
+    if (response.registered !== true) {
+      throw new Error('account_login with id_token did not result in successful registration');
+    }
+    if (response.verified !== true) {
+      throw new Error('account_login with id_token did not result in successful verificaion');
+    }
+    await Store.setGlobal({ cryptup_account_email: acctEmail, cryptup_account_uuid: uuid, cryptup_account_subscription: response.subscription });
+    return { verified: true, subscription: response.subscription };
   }
 
   public static accountCheck = (emails: string[]) => Backend.call('account/check', {

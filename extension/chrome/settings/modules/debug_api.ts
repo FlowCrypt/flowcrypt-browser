@@ -23,10 +23,10 @@ Catch.try(async () => {
 
   if (which === 'google_account') {
     try {
-      const r = await Google.gmail.usersMeProfile(acctEmail);
-      renderCallRes('gmail.users_me_profile', { acctEmail }, r);
+      const r = await Google.gmail.fetchAcctAliases(acctEmail);
+      renderCallRes('gmail.fetchAcctAliases', { acctEmail }, r);
     } catch (e) {
-      renderCallRes('gmail.users_me_profile', { acctEmail }, undefined, e);
+      renderCallRes('gmail.fetchAcctAliases', { acctEmail }, undefined, e);
     }
     renderCallRes('Store.getAcct.openid', { acctEmail }, await Store.getAcct(acctEmail, ['openid']));
   } else if (which === 'flowcrypt_account') {
