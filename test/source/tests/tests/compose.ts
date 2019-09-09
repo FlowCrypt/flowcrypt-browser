@@ -404,9 +404,9 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
 const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
   for (const type of ['to', 'cc', 'bcc']) {
     const expectedEmails: string[] = (expected as Dict<string[]>)[type] || []; // tslint:disable-line:no-unsafe-any
-    const container = await controllable.waitAny('@container-to', { visible: false });
-    const recipientElements = await container.$$('.recipients span');
-    expect(recipientElements.length).to.not.equal(expectedEmails.length);
+    const container = await controllable.waitAny(`@container-${type}`, { visible: false });
+    const recipientElements = await container.$$('.recipients > span');
+    expect(recipientElements.length).to.equal(expectedEmails.length);
     for (const recipientElement of recipientElements) {
       const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
       expect(expectedEmails).to.include(textContent.trim());
