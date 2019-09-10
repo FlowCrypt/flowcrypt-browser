@@ -489,7 +489,7 @@ div#reply_message_successful_container > table tr.first { margin-bottom: 20px; }
 div#reply_message_successful_container > table td.right { text-align: right; }
 div#reply_message_successful_container > table div.replied_from { font-weight: bold; margin-bottom: 4px; }
 div#reply_message_successful_container > table div.replied_to { color: #777; margin-bottom: 10px; }
-div#reply_message_successful_container > table div.replied_body { min-height: 48px; }
+div#reply_message_successful_container > table div.replied_body { min-height: 48px; white-space: pre; }
 div#reply_message_successful_container > #attachments { border-top: 1px dotted #CACACA; padding-top: 16px; margin-top: 22px; display: none; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment { margin-right: 16px; margin-bottom: 16px; display: inline-block; }
 div#reply_message_successful_container > #attachments > span.pgp_attachment > iframe { height: 120px; width: 180px; margin: 0; padding: 0; border: none; overflow: hidden; }
