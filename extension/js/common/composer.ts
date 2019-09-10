@@ -548,11 +548,11 @@ export class Composer {
   /**
    * Try to find an intersection of time that public keys of all recipients were usable (if user confirms this with a modal)
    */
-  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (acctEmail: string, armoredPubkeys: PubkeyResult[]): Promise<Date | undefined> => {
+  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (armoredPubkeys: PubkeyResult[]): Promise<Date | undefined> => {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
-    const myKey = armoredPubkeys.find(a => a.email === acctEmail);
-    for (const armoredPubkey of armoredPubkeys.filter(k => k !== myKey)) {
+    const myKeys = armoredPubkeys.filter(ap => ap.isMine);
+    for (const armoredPubkey of armoredPubkeys.filter(k => !myKeys.includes(k))) {
       const { keys: [pub] } = await openpgp.key.readArmored(armoredPubkey.pubkey);
       const oneSecondBeforeExpiration = await Pgp.key.dateBeforeExpiration(pub);
       usableFrom.push(pub.getCreationTime().getTime());
@@ -560,14 +560,16 @@ export class Composer {
         usableUntil.push(oneSecondBeforeExpiration.getTime());
       }
     }
-    if (myKey && await Pgp.key.expired(await Pgp.key.read(myKey.pubkey))) {
-      const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(acctEmail)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
-      await Ui.modal.error(
-        ['This message could not be encrypted because your own Private Key is expired.',
-          '',
-          'You can extend expiration of this key in other OpenPGP software (such as gnupg), then re-import updated key ' +
-          `<a href="${path}" id="action_update_prv" target="_blank">here</a>.`].join('\n'), true);
-      throw new ComposerResetBtnTrigger();
+    for (const key of myKeys) {
+      if (await Pgp.key.expired(await Pgp.key.read(key.pubkey))) {
+        const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(key.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
+        await Ui.modal.error(
+          ['This message could not be encrypted because your own Private Key is expired.',
+            '',
+            'You can extend expiration of this key in other OpenPGP software (such as gnupg), then re-import updated key ' +
+            `<a href="${path}" id="action_update_prv" target="_blank">here</a>.`].join('\n'), true);
+        throw new ComposerResetBtnTrigger();
+      }
     }
     if (!usableUntil.length) { // none of the keys expire
       return undefined;
@@ -591,7 +593,7 @@ export class Composer {
     pubkeys: PubkeyResult[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = []
   ) => {
     const pubkeysOnly = pubkeys.map(p => p.pubkey);
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(this.urlParams.acctEmail, pubkeys);
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pubkeys);
     const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });

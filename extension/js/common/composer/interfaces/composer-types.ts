@@ -60,4 +60,4 @@ export type ComposerUrlParams = {
   debug: boolean;
 };
 
-export type PubkeyResult = { pubkey: string, email: string };
+export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };

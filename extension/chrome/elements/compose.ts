@@ -195,14 +195,14 @@ Catch.try(async () => {
   const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]): Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }> => {
     const contacts = await storageContactGet(recipients);
     const { public: senderArmoredPubkey } = await storageGetKey(acctEmail);
-    const armoredPubkeys = [{ pubkey: senderArmoredPubkey, email: acctEmail }];
+    const armoredPubkeys = [{ pubkey: senderArmoredPubkey, email: acctEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
       if (contact && contact.has_pgp && contact.pubkey) {
-        armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email });
+        armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
       } else if (contact && ksLookupsByEmail[contact.email] && ksLookupsByEmail[contact.email].pubkey) {
-        armoredPubkeys.push({ pubkey: ksLookupsByEmail[contact.email].pubkey!, email: contact.email }); // checked !null right above. Null evaluates to false.
+        armoredPubkeys.push({ pubkey: ksLookupsByEmail[contact.email].pubkey!, email: contact.email, isMine: false }); // checked !null right above. Null evaluates to false.
       } else {
         emailsWithoutPubkeys.push(recipients[i]);
       }
