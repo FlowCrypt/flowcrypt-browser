@@ -274,7 +274,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
   -webkit-border-horizontal-spacing: 0; -webkit-border-vertical-spacing: 0; vertical-align: top; }
 
 .pgp_secure { background: white; border: 1px solid #f0f0f0; border-left: 4px solid #31A217;
-  background-image: url(/img/lock-seamless-bg-alpha.png); padding: 6px 10px; }
+  background-image: url(/img/lock-seamless-bg-alpha.png); padding: 6px 10px; white-space: pre; }
 .pgp_neutral, .backup_neutral { border:none; border-left: 4px solid #989898; padding-left:10px; }
 .pgp_insecure { border:none; border-left: 4px solid #d14836; padding-left:10px; }
 #pgp_block, #backup_block { height: auto; min-height: 50px; }
