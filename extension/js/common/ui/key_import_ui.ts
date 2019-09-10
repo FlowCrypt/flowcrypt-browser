@@ -210,7 +210,9 @@ export class KeyImportUi {
 
   private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
     if (this.checkEncryption && ! await k.getEncryptionKey()) {
-      if (await Pgp.key.usableButExpired(k)) {
+      if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
+        throw new KeyCanBeFixed(encrypted);
+      } else if (await Pgp.key.usableButExpired(k)) {
         // Maybe would be better to give user 3 abilities:
         // 1) Confirm importing expired key
         // 2) Fix expired key
@@ -220,8 +222,6 @@ export class KeyImportUi {
         if (!isConfirmed) {
           throw new ResetForm();
         }
-      } else if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert) { // known issues - key can be fixed
-        throw new KeyCanBeFixed(encrypted);
       } else {
         throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
       }
