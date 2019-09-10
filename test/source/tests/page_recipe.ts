@@ -354,8 +354,10 @@ export class ComposePageRecipe extends PageRecipe {
     t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
       { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, initialScript?: EvaluateFn } = {}
   ): Promise<ControllablePage> => {
-    if (['compatibility', 'compose'].includes(group)) { // Most common accounts
-      group = group === 'compatibility' ? 'flowcrypt.compatibility@gmail.com' : 'test.ci.compose@org.flowcrypt.com';
+    if (group === 'compatibility') { // More common accounts
+      group = 'flowcrypt.compatibility@gmail.com';
+    } else if (group === 'compose') {
+      group = 'test.ci.compose@org.flowcrypt.com';
     }
     const email = encodeURIComponent(group);
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,

@@ -15,7 +15,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';
 import { Assert } from '../../js/common/assert.js';
-import { KeyImportUi, UserAlert, KeyCanBeFixed, ResetForm } from '../../js/common/ui/key_import_ui.js';
+import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
@@ -488,9 +488,6 @@ Catch.try(async () => {
         return await Ui.modal.warning(e.message);
       } else if (e instanceof KeyCanBeFixed) {
         return await renderCompatibilityFixBlockAndFinalizeSetup(e.encrypted, options);
-      } else if (e instanceof ResetForm) {
-        $('.input_private_key, .input_passphrase').val('').removeAttr('disabled');
-        $('#source_paste').click();
       } else {
         Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);

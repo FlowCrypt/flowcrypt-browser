@@ -25,7 +25,6 @@ export class KeyCanBeFixed extends Error {
   }
 }
 
-export class ResetForm extends Error { }
 export class UserAlert extends Error { }
 
 export class KeyImportUi {
@@ -220,7 +219,7 @@ export class KeyImportUi {
         const isConfirmed = await Ui.modal.confirm('You are importing a key that is expired. You can still import it to read messages from the past, ' +
           'but you will not be able to send new messages using this key. You can add more keys in the settings later.\n\nProceed with expired key?');
         if (!isConfirmed) {
-          throw new ResetForm();
+          throw new UserAlert('You chose to not import expired key.\n\nPlease import another key, or edit the expired key in another OpenPGP software to extend key validity.');
         }
       } else {
         throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
