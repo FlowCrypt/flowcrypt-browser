@@ -30,12 +30,11 @@ Catch.try(async () => {
 
   const ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'isReplyBox', 'from', 'to', 'subject', 'threadId', 'threadMsgId',
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'threadId', 'threadMsgId',
     'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-  const isReplyBox = uncheckedUrlParams.isReplyBox === true;
   const skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
   const ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
   const placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
@@ -43,12 +42,8 @@ Catch.try(async () => {
   const debug = uncheckedUrlParams.debug === true;
   let draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
   let threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
-  // todo - stop getting these 3 below from url params and stop parsing them from dom https://github.com/FlowCrypt/flowcrypt-browser/issues/1493
-  let from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from');
-  let to = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to') ? Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'to')!.split(',') : [];
-  let cc: string[] = [];
-  let bcc: string[] = [];
-  let subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
+  let threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
+  const isReplyBox = !!threadId;
   let passphraseInterval: number;
 
   const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_keyserver', 'email_footer', 'email_provider',
@@ -63,43 +58,45 @@ Catch.try(async () => {
     }
     return await Store.passphraseGet(acctEmail, primaryKi.longid);
   };
-
-  await (async () => { // attempt to recover missing params
-    if (!isReplyBox || !threadId) {
-      return; // either not a reply box, or reply box & has all needed params
-    }
-    Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
-    let gmailMsg;
-    try {
-      const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
-      gmailMsg = await Google.gmail.msgGet(acctEmail, thread.messages[thread.messages.length - 1].id, 'metadata');
-    } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-      } else if (Api.err.isInsufficientPermission(e)) {
-        console.info(`skipping attempt to recover missing params due to insufficient permission`);
-      } else if (Api.err.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
-      // notFound errors will also get down here, and cause a blank reply form to be rendered
-      $('#loader').remove();
-      return;
-    }
-    if (gmailMsg.threadId) {
-      threadId = gmailMsg.threadId;
-    }
-    const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], gmailMsg);
-    to = reply.to;
-    from = reply.from;
-    cc = reply.cc;
-    bcc = reply.bcc;
-    subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
-    $('#loader').remove();
-  })();
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
-
+  let from: string = '';
+  let subject: string = '';
+  let to: string[] = [];
+  let cc: string[] = [];
+  let bcc: string[] = [];
+  if (threadId) {
+    await (async () => {
+      Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
+      try {
+        if (!threadMsgId) {
+          const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
+          threadMsgId = thread.messages[thread.messages.length - 1].id;
+        }
+        const gmailMsg = await Google.gmail.msgGet(acctEmail, threadMsgId, 'metadata');
+        const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], gmailMsg);
+        from = reply.from;
+        to = reply.to;
+        cc = reply.cc;
+        bcc = reply.bcc;
+        subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
+        threadId = gmailMsg.threadId ? gmailMsg.threadId : threadId;
+      } catch (e) {
+        if (Api.err.isAuthPopupNeeded(e)) {
+          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
+        } else if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
+        }
+        Xss.sanitizePrepend('#new_message', `<div>Cannot get a reply data for the message you are replying to. <a class="action_retry" href="#">Retry</a></div>`);
+        $('.action_retry').on('click', Ui.event.handle(async (elem) => {
+          location.reload();
+        }));
+      } finally {
+        $('#loader').remove();
+      }
+    });
+  }
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, cc, bcc, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
   const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
