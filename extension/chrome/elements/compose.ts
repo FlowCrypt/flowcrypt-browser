@@ -95,7 +95,7 @@ Catch.try(async () => {
       } finally {
         $('#loader').remove();
       }
-    });
+    })();
   }
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, cc, bcc, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
   const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
