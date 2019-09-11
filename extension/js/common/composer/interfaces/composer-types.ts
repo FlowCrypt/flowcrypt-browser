@@ -59,3 +59,5 @@ export type ComposerUrlParams = {
   skipClickPrompt: boolean;
   debug: boolean;
 };
+
+export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
