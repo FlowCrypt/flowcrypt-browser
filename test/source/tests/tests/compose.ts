@@ -154,20 +154,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('compose[global:compatibility] - reply - old gmail threadId fmt', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16841ce0ce5cb74d&threadMsgId=16841ce0ce5cb74d';
-      const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await replyFrame.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await replyFrame.waitAndType('@input-body', `This is an automated puppeteer test: old gmail threadId fmt reply`, { delay: 1 });
-      await Util.sleep(3); // todo: should wait until actually loaded
-      await ComposePageRecipe.sendAndClose(replyFrame);
+      const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true });
+      await Util.sleep(1);
+      // tslint:disable-next-line: no-unused-expression
+      expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
+      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get a reply data for the message you are replying to.');
     }));
 
     ava.default('compose[global:compatibility] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadId=16804894591b3a4b&threadMsgId=16804894591b3a4b';
-      const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await replyFrame.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await replyFrame.waitAndType('@input-body', `This is an automated puppeteer test: thread id does not exist reply`, { delay: 1 });
-      await Util.sleep(3); // todo: should wait until actually loaded
-      await ComposePageRecipe.sendAndClose(replyFrame);
+      const replyFrame = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, skipValidation: true, });
+      await Util.sleep(1);
+      // tslint:disable-next-line: no-unused-expression
+      expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
+      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get a reply data for the message you are replying to.');
     }));
 
     ava.default('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

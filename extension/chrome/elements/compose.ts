@@ -31,8 +31,7 @@ Catch.try(async () => {
 
   const ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'threadId', 'threadMsgId',
-    'skipClickPrompt', 'ignoreDraft', 'debug']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'threadId', 'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -43,7 +42,6 @@ Catch.try(async () => {
   const debug = uncheckedUrlParams.debug === true;
   let draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
   let threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
-  let threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
   const isReplyBox = !!threadId;
   let passphraseInterval: number;
 
@@ -68,14 +66,11 @@ Catch.try(async () => {
   let cc: string[] = [];
   let bcc: string[] = [];
   if (threadId) {
-    await (async () => {
+    const fetchSuccess = await (async () => {
       Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
       try {
-        if (!threadMsgId) {
-          const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
-          threadMsgId = thread.messages[thread.messages.length - 1].id;
-        }
-        const gmailMsg = await Google.gmail.msgGet(acctEmail, threadMsgId, 'metadata');
+        const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
+        const gmailMsg = await Google.gmail.msgGet(acctEmail, thread.messages[thread.messages.length - 1].id, 'metadata');
         const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], gmailMsg);
         from = reply.from;
         to = reply.to;
@@ -93,10 +88,15 @@ Catch.try(async () => {
         $('.action_retry').on('click', Ui.event.handle(async (elem) => {
           location.reload();
         }));
+        return false;
       } finally {
         $('#loader').remove();
       }
+      return true;
     })();
+    if (!fetchSuccess) {
+      return;
+    }
   }
   const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, cc, bcc, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
   const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
