@@ -74,7 +74,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.replaceFcTags();
     this.replaceConvoBtns();
     this.replaceStandardReplyBox();
-    this.evaluateStandardComposeReceivers().catch(Catch.reportErr);
+    this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
   }
 
@@ -476,7 +476,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private evaluateStandardComposeReceivers = async () => {
+  private evaluateStandardComposeRecipients = async () => {
     if (!this.currentlyEvaluatingStandardComposeBoxRecipients) {
       this.currentlyEvaluatingStandardComposeBoxRecipients = true;
       for (const standardComposeWinEl of $(this.sel.standardComposeWin)) {
@@ -495,9 +495,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const contact = await Store.dbContactGet(undefined, [email]);
-                  const pubkeyExists = Boolean(contact[0] || (await Keyserver.lookupEmail(this.acctEmail, email)).pubkey);
-                  this.recipientHasPgpCache[email] = pubkeyExists;
+                  const [contact] = await Store.dbContactGet(undefined, [email]);
+                  if (contact && contact.pubkey) {
+                    this.recipientHasPgpCache[email] = true;
+                  } else if ((await Keyserver.lookupEmail(this.acctEmail, email)).pubkey) {
+                    this.recipientHasPgpCache[email] = true;
+                  } else {
+                    this.recipientHasPgpCache[email] = false;
+                  }
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;
                     break;
