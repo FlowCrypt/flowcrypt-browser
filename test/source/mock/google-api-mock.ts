@@ -21,7 +21,7 @@ const isPut = (r: IncomingMessage) => r.method === 'PUT';
 const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
-  'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com'];
+  'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com'];
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -59,20 +59,15 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
-    '/gmail/v1/users/me/profile': async (parsedReq, req) => {
-      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
-      if (isGet(req)) {
-        return { emailAddress: acct, historyId: 'historyId', messagesTotal: 100, threadsTotal: 20 };
-      }
-      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
-    },
     '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {
-        const sendAs = [{ sendAsEmail: acct, displayName: 'First Last', replyToAddress: acct, signature: '', isDefault: true, treatAsAlias: false, verificationStatus: 'accepted' }];
+        // tslint:disable-next-line:max-line-length
+        const sendAs = [{ sendAsEmail: acct, displayName: 'First Last', replyToAddress: acct, signature: '', isDefault: true, isPrimary: true, treatAsAlias: false, verificationStatus: 'accepted' }];
         if (acct === 'flowcrypt.compatibility@gmail.com') {
           const alias = 'flowcryptcompatibility@gmail.com';
-          sendAs.push({ sendAsEmail: alias, displayName: 'An Alias', replyToAddress: alias, signature: '', isDefault: false, treatAsAlias: false, verificationStatus: 'accepted' });
+          // tslint:disable-next-line:max-line-length
+          sendAs.push({ sendAsEmail: alias, displayName: 'An Alias', replyToAddress: alias, signature: '', isDefault: false, isPrimary: false, treatAsAlias: false, verificationStatus: 'accepted' });
         }
         return { sendAs };
       }

@@ -5,10 +5,23 @@ import { expect } from 'chai';
 import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
 import { FlowCryptApi } from './api';
-import { EvaluateFn } from 'puppeteer';
+import { EvaluateFn, ElementHandle } from 'puppeteer';
 
-class PageRecipe {
+export class PageRecipe {
+  public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
 
+  public static waitForModalAndRespond = async (controllable: Controllable, name: 'confirm' | 'error', { contentToCheck, clickOn }:
+    { contentToCheck?: string, clickOn?: 'confirm' | 'cancel' }) => {
+    const modalContainer = await controllable.waitAny(`.ui-modal-${name}`);
+    if (typeof contentToCheck !== 'undefined') {
+      const contentElement = await modalContainer.$('#swal2-content');
+      expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);
+    }
+    if (clickOn) {
+      const button = await modalContainer.$(`button.ui-modal-${name}-${clickOn}`);
+      await button!.click();
+    }
+  }
 }
 
 type RecipientType = "to" | "cc" | "bcc";
@@ -338,10 +351,15 @@ export class InboxPageRecipe extends PageRecipe {
 export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (
-    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, options:
+    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
       { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, initialScript?: EvaluateFn } = {}
   ): Promise<ControllablePage> => {
-    const email = (group === 'compose') ? 'test.ci.compose%40org.flowcrypt.com' : 'flowcrypt.compatibility%40gmail.com';
+    if (group === 'compatibility') { // More common accounts
+      group = 'flowcrypt.compatibility@gmail.com';
+    } else if (group === 'compose') {
+      group = 'test.ci.compose@org.flowcrypt.com';
+    }
+    const email = encodeURIComponent(group);
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
       options.initialScript);
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));

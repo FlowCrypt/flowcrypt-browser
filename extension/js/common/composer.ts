@@ -22,7 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams, RecipientElement, Recipients, RecipientStatuses } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients, RecipientStatuses, PubkeyResult } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
@@ -423,10 +423,10 @@ export class Composer {
     }
   }
 
-  private encryptSend = async (recipients: Recipients, armoredPubkeys: string[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private encryptSend = async (recipients: Recipients, armoredPubkeys: PubkeyResult[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], subject, plaintext, pwd, subscription);
-    const atts = await this.attach.collectEncryptAtts(armoredPubkeys, pwd);
+    const atts = await this.attach.collectEncryptAtts(armoredPubkeys.map(p => p.pubkey), pwd);
     if (atts.length && pwd) { // these will be password encrypted attachments
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
@@ -545,12 +545,14 @@ export class Composer {
     });
   }
 
-  private encryptMsgAsOfDateIfSomeAreExpired = async (armoredPubkeys: string[]): Promise<Date | undefined> => {
-    // todo - disallow in certain situations
+  /**
+   * Try to find an intersection of time that public keys of all recipients were usable (if user confirms this with a modal)
+   */
+  private encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal = async (armoredPubkeys: PubkeyResult[]): Promise<Date | undefined> => {
     const usableUntil: number[] = [];
     const usableFrom: number[] = [];
     for (const armoredPubkey of armoredPubkeys) {
-      const { keys: [pub] } = await openpgp.key.readArmored(armoredPubkey);
+      const { keys: [pub] } = await openpgp.key.readArmored(armoredPubkey.pubkey);
       const oneSecondBeforeExpiration = await Pgp.key.dateBeforeExpiration(pub);
       usableFrom.push(pub.getCreationTime().getTime());
       if (typeof oneSecondBeforeExpiration !== 'undefined') { // key does expire
@@ -562,6 +564,17 @@ export class Composer {
     }
     if (Math.max(...usableUntil) > Date.now()) { // all keys either don't expire or expire in the future
       return undefined;
+    }
+    for (const myKey of armoredPubkeys.filter(ap => ap.isMine)) {
+      if (await Pgp.key.usableButExpired(await Pgp.key.read(myKey.pubkey))) {
+        const path = chrome.runtime.getURL(`chrome/settings/index.htm?acctEmail=${encodeURIComponent(myKey.email)}&page=%2Fchrome%2Fsettings%2Fmodules%2Fmy_key_update.htm`);
+        await Ui.modal.error(
+          ['This message could not be encrypted because your own Private Key is expired.',
+            '',
+            'You can extend expiration of this key in other OpenPGP software (such as gnupg), then re-import updated key ' +
+            `<a href="${path}" id="action_update_prv" target="_blank">here</a>.`].join('\n'), true);
+        throw new ComposerResetBtnTrigger();
+      }
     }
     const usableTimeFrom = Math.max(...usableFrom);
     const usableTimeUntil = Math.min(...usableUntil);
@@ -575,10 +588,12 @@ export class Composer {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private doEncryptFmtSend = async (pubkeys: string[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients,
-    subj: string, subs: Subscription, attAdminCodes: string[] = []) => {
-    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpired(pubkeys);
-    const encrypted = await PgpMsg.encrypt({ pubkeys, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
+  private doEncryptFmtSend = async (
+    pubkeys: PubkeyResult[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = []
+  ) => {
+    const pubkeysOnly = pubkeys.map(p => p.pubkey);
+    const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pubkeys);
+    const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
@@ -587,7 +602,7 @@ export class Composer {
       // admin_code stays locally and helps the sender extend life of the message or delete it
       const { short, admin_code } = await Backend.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
       const storage = await Store.getAcct(this.urlParams.acctEmail, ['outgoing_language']);
-      encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeys, atts, storage.outgoing_language || 'EN');
+      encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeysOnly, atts, storage.outgoing_language || 'EN');
       encryptedBody = this.formatEmailTextFooter(encryptedBody);
       await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
       await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subj, encryptedBody, atts, this.urlParams.threadId));

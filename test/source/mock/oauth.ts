@@ -45,16 +45,18 @@ export class OauthMock {
   public getRefreshTokenResponse = (code: string) => {
     const refresh_token = this.refreshTokenByAuthCode[code];
     const access_token = this.getAccessToken(refresh_token);
-    this.checkKnownAcct(this.acctByAccessToken[access_token]);
-    const id_token = this.getIdToken();
+    const acct = this.acctByAccessToken[access_token];
+    this.checkKnownAcct(acct);
+    const id_token = this.getIdToken(acct);
     return { access_token, refresh_token, expires_in: this.expiresIn, id_token, token_type: 'refresh_token' }; // guessed the token_type
   }
 
   public getAccessTokenResponse = (refreshToken: string) => {
     try {
       const access_token = this.getAccessToken(refreshToken);
-      this.checkKnownAcct(this.acctByAccessToken[access_token]);
-      const id_token = this.getIdToken();
+      const acct = this.acctByAccessToken[access_token];
+      this.checkKnownAcct(acct);
+      const id_token = this.getIdToken(acct);
       return { access_token, expires_in: this.expiresIn, id_token, token_type: 'Bearer' };
     } catch (e) {
       throw new HttpClientErr('invalid_grant', Status.BAD_REQUEST);
@@ -91,7 +93,7 @@ export class OauthMock {
     }
   }
 
-  private getIdToken = () => {
+  private getIdToken = (email: string) => {
     const data = {
       at_hash: 'at_hash',
       exp: this.expiresIn,
@@ -103,7 +105,9 @@ export class OauthMock {
       locale: 'en',
       family_name: 'Last',
       given_name: 'First',
+      email,
+      email_verified: true,
     };
-    return `dunnowhatgoeshere.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}`;
+    return `fakeheader.${Buf.fromUtfStr(JSON.stringify(data)).toBase64UrlStr()}.fakesignature`;
   }
 }

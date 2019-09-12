@@ -18,6 +18,7 @@ import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/composer-errors.js';
+import { PubkeyResult } from '../../js/common/composer/interfaces/composer-types.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -147,10 +148,11 @@ Catch.try(async () => {
         if (lookupResult && email) {
           if (lookupResult.pubkey) {
             const parsed = await openpgp.key.readArmored(lookupResult.pubkey);
-            if (!parsed.keys[0]) {
+            const key = parsed.keys[0];
+            if (!key) {
               Catch.log('Dropping found but incompatible public key', { for: email, err: parsed.err ? ' * ' + parsed.err.join('\n * ') : undefined });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
-            } else if (! await parsed.keys[0].getEncryptionKey()) {
+            } else if (! await Pgp.key.usable(lookupResult.pubkey) && ! await Pgp.key.expired(key)) { // Not to skip expired keys
               Catch.log('Dropping found+parsed key because getEncryptionKeyPacket===null', { for: email, fingerprint: await Pgp.key.fingerprint(parsed.keys[0]) });
               lookupResult.pubkey = null; // tslint:disable-line:no-null-keyword
             }
@@ -187,17 +189,17 @@ Catch.try(async () => {
       BrowserMsg.send.closeNewMessage(parentTabId);
     }
   };
-  const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]) => {
+  const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]): Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }> => {
     const contacts = await storageContactGet(recipients);
     const { public: senderArmoredPubkey } = await storageGetKey(acctEmail);
-    const armoredPubkeys = [senderArmoredPubkey];
+    const armoredPubkeys = [{ pubkey: senderArmoredPubkey, email: acctEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
       if (contact && contact.has_pgp && contact.pubkey) {
-        armoredPubkeys.push(contact.pubkey);
+        armoredPubkeys.push({ pubkey: contact.pubkey, email: contact.email, isMine: false });
       } else if (contact && ksLookupsByEmail[contact.email] && ksLookupsByEmail[contact.email].pubkey) {
-        armoredPubkeys.push(ksLookupsByEmail[contact.email].pubkey!); // checked !null right above. Null evaluates to false.
+        armoredPubkeys.push({ pubkey: ksLookupsByEmail[contact.email].pubkey!, email: contact.email, isMine: false }); // checked !null right above. Null evaluates to false.
       } else {
         emailsWithoutPubkeys.push(recipients[i]);
       }
