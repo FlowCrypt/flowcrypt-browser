@@ -52,7 +52,7 @@ Catch.try(async () => {
   let subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
   let passphraseInterval: number;
 
-  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_keyserver', 'email_footer', 'email_provider',
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'sendAs', 'addresses_keyserver', 'email_footer', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const canReadEmail = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
   const tabId = await BrowserMsg.requiredTabId();
@@ -89,7 +89,7 @@ Catch.try(async () => {
     if (gmailMsg.threadId) {
       threadId = gmailMsg.threadId;
     }
-    const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], gmailMsg);
+    const reply = Google.determineReplyCorrespondents(acctEmail, Object.keys(storage.sendAs || {}), gmailMsg);
     to = reply.to;
     from = reply.from;
     cc = reply.cc;
@@ -242,7 +242,7 @@ Catch.try(async () => {
         return undefined;
       }
     },
-    storageGetAddresses: () => storage.addresses || [acctEmail],
+    storageGetAddresses: () => storage.sendAs,
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageEmailFooterGet: () => storage.email_footer || undefined,
     storageEmailFooterSet: async (footer: string | undefined) => {

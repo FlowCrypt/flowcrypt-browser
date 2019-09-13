@@ -52,7 +52,7 @@ Catch.try(async () => {
   factory = new XssSafeFactory(acctEmail, tabId);
   injector = new Injector('settings', undefined, factory);
   webmailCommon = new WebmailCommon(acctEmail, injector);
-  const storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'addresses']);
+  const storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'sendAs']);
   emailProvider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.metaNotificationContainer()); // xss-safe-factory
   if (storage.picture) {
@@ -416,11 +416,11 @@ Catch.try(async () => {
           r += '<br><br>';
         }
         if (block.type === 'encryptedAtt') {
-          renderedAtts += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.addresses && storage.addresses.includes(from));
+          renderedAtts += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.sendAs && !!storage.sendAs[from]);
         } else if (showOriginal) {
           r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
-          r += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.addresses && storage.addresses.includes(from));
+          r += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.sendAs && !!storage.sendAs[from]);
         }
       }
       if (renderedAtts) {
@@ -447,7 +447,7 @@ Catch.try(async () => {
     let params: FactoryReplyParams;
     if (lastMsg) {
       const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
-      params = { subject, addresses: storage.addresses || [], threadId, threadMsgId };
+      params = { subject, sendAs: storage.sendAs, threadId, threadMsgId };
     } else {
       params = { threadId, threadMsgId };
     }

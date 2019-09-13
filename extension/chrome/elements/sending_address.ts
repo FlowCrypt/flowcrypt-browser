@@ -4,7 +4,6 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Value } from '../../js/common/core/common.js';
 import { Ui, Env } from '../../js/common/browser.js';
 import { Settings } from '../../js/common/settings.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -20,24 +19,27 @@ Catch.try(async () => {
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const container = $('.emails');
 
-  const storage = await Store.getAcct(acctEmail, ['addresses']);
-  const addresses = storage.addresses || [acctEmail];
+  const storage = await Store.getAcct(acctEmail, ['sendAs']);
+  const addresses = storage.sendAs ? Object.keys(storage.sendAs) : [acctEmail];
 
   const renderInitial = () => {
     const emailAddrToHtmlRadio = (a: string) => {
       a = Xss.escape(a);
+      const isChecked = storage.sendAs && storage.sendAs[a] && storage.sendAs[a].isDefault;
       const b64 = Buf.fromUtfStr(a).toBase64Str();
-      return `<input type="radio" name="a" value="${a}" id="${b64}"> <label data-test="action-choose-address" for="${b64}">${a}</label><br>`;
+      return `<input type="radio" name="a" ${isChecked ? 'checked' : ''} value="${a}" id="${b64}"> <label data-test="action-choose-address" for="${b64}">${a}</label><br>`;
     };
 
     Xss.sanitizeRender(container, addresses.map(emailAddrToHtmlRadio).join(''));
-    container.find('input').first().prop('checked', true);
     container.find('input').click(Ui.event.handle(async target => {
       const chosenSendingAddr = String($(target).val());
-      if (chosenSendingAddr !== addresses[0]) {
-        const orderedAddrs = Value.arr.unique([chosenSendingAddr].concat(storage.addresses || []));
-        await Store.setAcct(acctEmail, { addresses: orderedAddrs });
-        window.location.reload();
+      if (storage.sendAs && !storage.sendAs[chosenSendingAddr].isDefault) {
+        for (const email of Object.keys(storage.sendAs)) {
+          if (storage.sendAs[email]) {
+            storage.sendAs[email].isDefault = email === chosenSendingAddr;
+          }
+        }
+        await Store.setAcct(acctEmail, { sendAs: storage.sendAs });
       }
     }));
   };
@@ -45,8 +47,7 @@ Catch.try(async () => {
   $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (target, done) => {
     try {
       Xss.sanitizeRender(target, Ui.spinner('green'));
-      const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-      await Store.setAcct(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
+      await Settings.refreshAcctAliases(acctEmail);
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
@@ -64,6 +65,6 @@ Catch.try(async () => {
 
   $('.action_close').click(Ui.event.handle(() => BrowserMsg.send.closeDialog(parentTabId)));
 
-  await renderInitial();
+  renderInitial();
 
 })();

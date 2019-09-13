@@ -4,7 +4,7 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value, Dict } from '../../../js/common/core/common.js';
+import { Dict } from '../../../js/common/core/common.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -28,10 +28,10 @@ Catch.try(async () => {
 
   const diagnoseKeyserverPubkeys = async (acctEmail: string): Promise<AttKeyserverDiagnosis> => {
     const diagnosis: AttKeyserverDiagnosis = { hasPubkeyMissing: false, hasPubkeyMismatch: false, results: {} };
-    const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
+    const { sendAs } = await Store.getAcct(acctEmail, ['sendAs']);
     const storedKeys = await Store.keysGet(acctEmail);
     const storedKeysLongids = storedKeys.map(ki => ki.longid);
-    const results = await Attester.lookupEmails(Value.arr.unique([acctEmail].concat(addresses || [])));
+    const results = await Attester.lookupEmails(Object.keys(sendAs || {}));
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
       if (!pubkeySearchResult.pubkey) {
@@ -113,8 +113,11 @@ Catch.try(async () => {
     }));
 
     $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
-      const { addresses } = await Store.getAcct(acctEmail, ['addresses']);
-      await Store.setAcct(acctEmail, { 'addresses': Value.arr.withoutVal(addresses || [], $(self).attr('email')!) });
+      const { sendAs } = await Store.getAcct(acctEmail, ['sendAs']);
+      if (sendAs) {
+        delete sendAs[$(self).attr('email')!];
+        await Store.setAcct(acctEmail, { sendAs });
+      }
       window.location.reload();
     }));
 
@@ -122,8 +125,7 @@ Catch.try(async () => {
     contentEl.find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
       Xss.sanitizeRender(self, Ui.spinner('green'));
       try {
-        const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-        await Store.setAcct(acctEmail, { addresses: Value.arr.unique(addresses.concat(acctEmail)) });
+        await Settings.refreshAcctAliases(acctEmail);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');

@@ -35,7 +35,7 @@ Catch.try(async () => {
     Xss.sanitizeAppend('#content', `Unsupported which: ${Xss.escape(which)} (not implemented)`);
   } else if (which === 'local_store') {
     const storage = await Store.getAcct(acctEmail, [
-      'notification_setup_needed_dismissed', 'email_provider', 'google_token_scopes', 'hide_message_password', 'addresses', 'outgoing_language',
+      'notification_setup_needed_dismissed', 'email_provider', 'google_token_scopes', 'hide_message_password', 'sendAs', 'outgoing_language',
       'email_footer', 'full_name', 'cryptup_enabled', 'setup_done', 'setup_simple', 'is_newly_created_key', 'key_backup_method',
       'key_backup_prompt', 'successfully_received_at_leat_one_message', 'notification_setup_done_seen', 'openid',
     ]);

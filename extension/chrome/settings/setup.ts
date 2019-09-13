@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Store } from '../../js/common/platform/store.js';
-import { Value } from '../../js/common/core/common.js';
+import { Store, SendAsAlias } from '../../js/common/platform/store.js';
+import { Value, Dict } from '../../js/common/core/common.js';
 import { Ui, Env } from '../../js/common/browser.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Rules } from '../../js/common/rules.js';
@@ -54,7 +54,7 @@ Catch.try(async () => {
   await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
   await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
-  const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'addresses']);
+  const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'sendAs']);
 
   storage.email_provider = storage.email_provider || 'gmail';
   let acctEmailAttesterFingerprint: string | undefined;
@@ -97,14 +97,14 @@ Catch.try(async () => {
       if (!GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
         $('.auth_denied_warning').css('display', 'block');
       }
-      if (typeof storage.addresses === 'undefined') {
+      if (typeof storage.sendAs === 'undefined') {
         if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
-          Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.reportErr);
+          Settings.fetchAcctAliasesFromGmail(acctEmail, true).then(saveAndFillSubmitOption).catch(Catch.reportErr);
         } else { // cannot read emails, don't fetch alternative addresses
-          saveAndFillSubmitOption([acctEmail]).catch(Catch.reportErr);
+          saveAndFillSubmitOption({}).catch(Catch.reportErr);
         }
       } else {
-        submitKeyForAddrs = filterAddressesForSubmittingKeys(storage.addresses || []);
+        submitKeyForAddrs = filterAddressesForSubmittingKeys(Object.keys(storage.sendAs));
         showSubmitAddrsOption(submitKeyForAddrs);
       }
     }
@@ -139,10 +139,9 @@ Catch.try(async () => {
     }
   };
 
-  const saveAndFillSubmitOption = async (addresses: string[]) => {
-    const allAddrs = Value.arr.unique(addresses.concat(acctEmail));
-    submitKeyForAddrs = filterAddressesForSubmittingKeys(allAddrs);
-    await Store.setAcct(acctEmail, { addresses: allAddrs });
+  const saveAndFillSubmitOption = async (sendAsAliases: Dict<SendAsAlias>) => {
+    submitKeyForAddrs = filterAddressesForSubmittingKeys(Object.keys(sendAsAliases));
+    await Store.setAcct(acctEmail, { sendAs: sendAsAliases });
     showSubmitAddrsOption(submitKeyForAddrs);
   };
 
