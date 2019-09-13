@@ -90,6 +90,7 @@ export type SendAsAlias = {
   isPrimary: boolean;
   isDefault?: boolean;
   name?: string | null;
+  footer?: string;
 };
 
 export type AccountStore = {
