@@ -1163,19 +1163,25 @@ export class Composer {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
+    const { sendAs } = await Store.getAcct(this.urlParams.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(await emails.map(async email => {
-        const [contact] = await this.app.storageContactGet([email]);
-        return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
+        let name: string | undefined;
+        if (sendAs && sendAs[email] && sendAs[email].name) {
+          name = sendAs[email].name!;
+        } else {
+          const [contact] = await this.app.storageContactGet([email]);
+          if (contact && contact.name) {
+            name = contact.name;
+          }
+        }
+        return name ? `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
       }));
     };
     msg.recipients.to = await addNameToEmail(msg.recipients.to || []);
     msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
     msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
-    const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
-    if (name) {
-      msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;
-    }
+    msg.from = (await addNameToEmail([msg.from]))[0];
   }
 
   private hasValue(inputs: JQuery<HTMLElement>): boolean {
