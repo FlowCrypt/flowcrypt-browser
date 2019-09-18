@@ -324,7 +324,7 @@ export class BrowserMsg {
    */
   private static replaceBufWithObjUrlInplace = (requestOrResponse: unknown): Dict<string> => {
     const objUrls: Dict<string> = {};
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) {
+    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null) { // lgtm [js/comparison-between-incompatible-types]
       for (const possibleBufName of Object.keys(requestOrResponse)) {
         const possibleBufs = (requestOrResponse as any)[possibleBufName];
         if (possibleBufs instanceof Uint8Array) {
@@ -340,7 +340,7 @@ export class BrowserMsg {
    * Be careful when editting - the type system won't help you here and you'll likely make mistakes
    */
   private static replaceObjUrlWithBuf = async <T>(requestOrResponse: T, objUrls: Dict<string>): Promise<T> => {
-    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) {
+    if (requestOrResponse && typeof requestOrResponse === 'object' && requestOrResponse !== null && objUrls) { // lgtm [js/comparison-between-incompatible-types]
       for (const consumableObjUrlName of Object.keys(objUrls)) {
         (requestOrResponse as any)[consumableObjUrlName] = await Browser.objUrlConsume(objUrls[consumableObjUrlName]);
       }
