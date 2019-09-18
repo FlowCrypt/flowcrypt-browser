@@ -265,7 +265,7 @@ export class BrowserMsg {
           }
           e.stack = `${msg.stack}\n\n${e.stack}`;
           reject(e);
-        } else if (r && typeof r === 'object' && r.exception) {
+        } else if (typeof r === 'object' && r.exception) {
           reject(BrowserMsg.jsonToErr(r.exception, msg));
         } else if (!r.result || typeof r.result !== 'object') {
           resolve(r.result);
