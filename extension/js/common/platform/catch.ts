@@ -218,14 +218,12 @@ export class Catch {
       env = 'ex:fork';
     } else if (/moz-extension:\/\/.+/.test(url)) {
       env = 'ex';
-    } else if (url.indexOf('l.flowcrypt.com') !== -1 || url.indexOf('127.0.0.1') !== -1) {
+    } else if (url.startsWith('http://l.flowcrypt.com')) {
       env = 'web:local';
-    } else if (url.indexOf('flowcrypt.com') !== -1) {
+    } else if (url.startsWith('https://flowcrypt.com')) {
       env = 'web:prod';
-    } else if (url.indexOf('mail.google.com') !== -1) {
+    } else if (url.startsWith('https://mail.google.com')) {
       env = 'ex:script:gmail';
-    } else if (url.indexOf('inbox.google.com') !== -1) {
-      env = 'ex:script:inbox';
     }
     return browserName + ':' + env;
   }
