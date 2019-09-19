@@ -338,22 +338,11 @@ export class Composer {
     if (this.encryptionType === encryptionType) {
       return;
     }
+    const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
     this.encryptionType = encryptionType;
     this.addTickToPopover(elem);
-    let method: 'addClass' | 'removeClass' = 'addClass';
     this.S.cached('send_btn_span').text(elem.text());
-    switch (encryptionType) {
-      case 'signed':
-      case 'plain':
-        this.S.cached('title').text(Lang.compose.headerTitleComposeSign);
-        method = 'addClass';
-        break;
-      case 'encrypted':
-      case 'encryptedAndSigned':
-        this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
-        method = 'removeClass';
-        break;
-    }
+    this.S.cached('title').text(Lang.compose.headers[encryptionType]);
     this.S.cached('icon_sign')[method]('active');
     this.S.cached('compose_table')[method]('sign');
     this.S.now('attached_files')[method]('sign');
