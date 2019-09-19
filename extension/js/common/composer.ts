@@ -362,8 +362,20 @@ export class Composer {
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  private openOrClosePopover = () => {
-    $('.sending-container').toggleClass('popover-opened');
+  private openOrClosePopover = (event: JQuery.Event<HTMLElement, null>) => {
+    event.stopPropagation();
+    const sendingContainer = $('.sending-container');
+    sendingContainer.toggleClass('popover-opened');
+    if (sendingContainer.hasClass('popover-opened')) {
+      $('body').click((event) => {
+        if (!this.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
+          sendingContainer.removeClass('popover-opened');
+          $('body').off('click');
+        }
+      });
+    } else {
+      $('body').off('click');
+    }
   }
 
   private addTickToPopover = (elem: JQuery<HTMLElement>) => {
