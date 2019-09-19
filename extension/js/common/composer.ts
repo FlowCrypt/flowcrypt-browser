@@ -22,7 +22,7 @@ import { KeyImportUi } from './ui/key_import_ui.js';
 import { Xss } from './platform/xss.js';
 import { Rules } from './rules.js';
 import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams, RecipientElement, Recipients, RecipientStatuses, PubkeyResult } from './composer/interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients, RecipientStatuses, PubkeyResult, ComposerPopoverItem, EncryptionType } from './composer/interfaces/composer-types.js';
 import { ComposerDraft } from './composer/composer-draft.js';
 import { ComposerQuote } from './composer/composer-quote.js';
 import { ComposerContacts } from './composer/composer-contacts.js';
@@ -72,7 +72,8 @@ export class Composer {
     input_addresses_container_inner: '#input_addresses_container > div:first',
     recipients_inputs: '#input_addresses_container input',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
-    email_copy_actions: '#input_addresses_container .email_copy_actions'
+    email_copy_actions: '#input_addresses_container .email_copy_actions',
+    sending_options_container: 'div.sending-options-container'
   });
 
   private attach: AttUI;
@@ -96,6 +97,9 @@ export class Composer {
   private btnUpdateTimeout?: number;
   private refBodyHeight?: number;
   private urlParams: ComposerUrlParams;
+
+  private popoverItems?: ComposerPopoverItem[];
+  private encryptionType: EncryptionType = 'encrypted';
 
   private isSendMessageInProgress = false;
 
@@ -231,7 +235,6 @@ export class Composer {
     }, this.getErrHandlers(`change footer`)));
     this.composerDraft.initActions().catch(Catch.reportErr);
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
-    this.S.cached('icon_sign').click(Ui.event.handle(() => this.toggleSignIcon(), this.getErrHandlers(`enable/disable signing`)));
     $('body').click(event => {
       const target = $(event.target);
       if (this.composeWindowIsMaximized && target.is($('body'))) {
@@ -306,12 +309,82 @@ export class Composer {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
     }
+    this.initComposerPopover();
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
+  private initComposerPopover = () => {
+    this.popoverItems = [
+      { type: 'selectEncryptionType', HTMLContent: 'Encrypt and Send', data: 'encrypted' },
+      { type: 'selectEncryptionType', HTMLContent: 'Sign and Send', data: 'signed' },
+      { type: 'selectEncryptionType', HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned' },
+      { type: 'selectEncryptionType', HTMLContent: 'Send plain (not encrypted)', data: 'plain' }
+    ];
+    for (const item of this.popoverItems) {
+      const elem = $(`<div>${Xss.htmlSanitize(item.HTMLContent)}</div>`);
+      elem.on('click', () => this.handleEncryptionTypeSelected(elem, item.data));
+      this.S.cached('sending_options_container').append(elem);
+      if (item.data === this.encryptionType) {
+        this.addTickToPopover(elem);
+      }
+    }
+    this.S.cached('sending_options_container').css('top', - (this.S.cached('sending_options_container').outerHeight()! + 3) + 'px');
+  }
+
+  private handleEncryptionTypeSelected = (elem: JQuery<HTMLElement>, encryptionType: EncryptionType) => {
+    if (this.encryptionType === encryptionType) {
+      return;
+    }
+    this.encryptionType = encryptionType;
+    this.addTickToPopover(elem);
+    let method: 'addClass' | 'removeClass' = 'addClass';
+    this.S.cached('send_btn_span').text(elem.text());
+    switch (encryptionType) {
+      case 'signed':
+      case 'plain':
+        this.S.cached('title').text(Lang.compose.headerTitleComposeSign);
+        method = 'addClass';
+        break;
+      case 'encrypted':
+      case 'encryptedAndSigned':
+        this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
+        method = 'removeClass';
+        break;
+    }
+    this.S.cached('icon_sign')[method]('active');
+    this.S.cached('compose_table')[method]('sign');
+    this.S.now('attached_files')[method]('sign');
+    this.resetSendBtn();
+    $('.sending-container').removeClass('popover-opened');
+    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
+  }
+
+  private openOrClosePopover = () => {
+    $('.sending-container').toggleClass('popover-opened');
+  }
+
+  private addTickToPopover = (elem: JQuery<HTMLElement>) => {
+    elem.parent().find('img').remove();
+    elem.append('<img src="/img/svgs/tick.png" />'); // xss-direct
+  }
+
   public resetSendBtn = (delay?: number) => {
-    const btnText = this.S.cached('icon_sign').is('.active') ? this.BTN_SIGN_AND_SEND : this.BTN_ENCRYPT_AND_SEND;
-    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn'), `<i class=""></i><span>${btnText}</span>`);
+    let btnText: string = '';
+    switch (this.encryptionType) {
+      case "encrypted":
+        btnText = 'Encrypt and Send';
+        break;
+      case "encryptedAndSigned":
+        btnText = 'Encrypt, Sign and Send';
+        break;
+      case 'signed':
+        btnText = 'Sign and Send';
+        break;
+      case 'plain':
+        btnText = 'Send plain';
+        break;
+    }
+    const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn_span'), `<i></i>${btnText}`);
     if (typeof this.btnUpdateTimeout !== 'undefined') {
       clearTimeout(this.btnUpdateTimeout);
     }
@@ -838,25 +911,6 @@ export class Composer {
     }
   }
 
-  private toggleSignIcon = () => {
-    let method: 'addClass' | 'removeClass';
-    if (!this.S.cached('icon_sign').is('.active')) {
-      method = 'addClass';
-      this.S.cached('title').text(Lang.compose.headerTitleComposeSign);
-      this.S.cached('input_password').val('');
-    } else {
-      method = 'removeClass';
-      this.S.cached('title').text(Lang.compose.headerTitleComposeEncrypt);
-    }
-    this.S.cached('icon_sign')[method]('active');
-    this.S.cached('compose_table')[method]('sign');
-    this.S.now('attached_files')[method]('sign');
-    if ([this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_AND_SEND].includes(this.S.now('send_btn_span').text())) {
-      this.resetSendBtn();
-    }
-    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-  }
-
   public getSender = (): string => {
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
@@ -941,7 +995,7 @@ export class Composer {
       }
     }));
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
-    this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
+    this.S.cached('send_btn_span').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
     this.composerContacts.initActions();
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
@@ -979,6 +1033,7 @@ export class Composer {
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
+    $('.action-show-options-popover').on('click', this.openOrClosePopover);
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => {
       this.setInputTextHeightManuallyIfNeeded();

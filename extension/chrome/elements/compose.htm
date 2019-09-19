@@ -118,10 +118,16 @@
       </tr>
       <tr class="bottom">
         <td class="bottom">
-          <div id="send_btn" class="button green" data-test="action-send" tabindex="6"><i class=""></i><span>Encrypt and
-              Send</span></div>
-          <button class="icon action_sign" data-test="action-switch-to-sign" tabindex="7"
-            title="Sign this message instead of encrypting it"><i alt="sign"></i></button>
+          <div class="sending-container">
+            <div class="sending-options-container">
+            </div>
+            <div id="send_btn" class="button green" data-test="action-send" tabindex="6">
+              <span class="btn-text"><i></i>Encrypt and Send</span>
+              <div class="action-show-options-popover">
+                <img src="/img/svgs/chevron-left-white.svg" alt="Show Send Options" title="More Send Options" />
+              </div>
+            </div>
+          </div>
           <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
               alt="Attach File"></div>
           <div id="send_btn_note"></div>

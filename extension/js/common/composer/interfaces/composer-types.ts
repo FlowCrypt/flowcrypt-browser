@@ -61,3 +61,6 @@ export type ComposerUrlParams = {
 };
 
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
+
+export type ComposerPopoverItem = { type: 'selectEncryptionType', HTMLContent: string, data: EncryptionType };
+export type EncryptionType = 'encrypted' | 'signed' | 'encryptedAndSigned' | 'plain';
