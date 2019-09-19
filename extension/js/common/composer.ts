@@ -315,14 +315,17 @@ export class Composer {
 
   private initComposerPopover = () => {
     this.popoverItems = [
-      { type: 'selectEncryptionType', HTMLContent: 'Encrypt and Send', data: 'encrypted' },
-      { type: 'selectEncryptionType', HTMLContent: 'Sign and Send', data: 'signed' },
-      { type: 'selectEncryptionType', HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned' },
-      { type: 'selectEncryptionType', HTMLContent: 'Send plain (not encrypted)', data: 'plain' }
+      { type: 'selectEncryptionType', HTMLContent: 'Encrypt and Send', data: 'encrypted', iconPath: '/img/svgs/locked-icon-green.svg' },
+      { type: 'selectEncryptionType', HTMLContent: 'Sign and Send', data: 'signed', iconPath: '/img/svgs/signature.svg' },
+      { type: 'selectEncryptionType', HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned', iconPath: '/img/svgs/signature-green.svg' },
+      { type: 'selectEncryptionType', HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/caution.svg' }
     ];
     for (const item of this.popoverItems) {
-      const elem = $(`<div>${Xss.htmlSanitize(item.HTMLContent)}</div>`);
+      const elem = $(`<div><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
       elem.on('click', () => this.handleEncryptionTypeSelected(elem, item.data));
+      if (item.iconPath) {
+        elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`);
+      }
       this.S.cached('sending_options_container').append(elem);
       if (item.data === this.encryptionType) {
         this.addTickToPopover(elem);
@@ -364,8 +367,8 @@ export class Composer {
   }
 
   private addTickToPopover = (elem: JQuery<HTMLElement>) => {
-    elem.parent().find('img').remove();
-    elem.append('<img src="/img/svgs/tick.png" />'); // xss-direct
+    elem.parent().find('img.icon-tick').remove();
+    elem.append('<img class="icon-tick" src="/img/svgs/tick.png" />'); // xss-direct
   }
 
   public resetSendBtn = (delay?: number) => {
