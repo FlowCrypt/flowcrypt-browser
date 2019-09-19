@@ -14,19 +14,5 @@ path_classifiers:
 # Use the `queries` block to change the default display of query results.               #
 #########################################################################################
 
-# queries:
-#   # Start by hiding the results of all queries.
-#   - exclude: "*"
-#   # Then include all queries tagged 'security' and 'correctness', and with a severity of
-#   # 'error'.
-#   - include:           
-#       tags:
-#         - "security"
-#         - "correctness"           
-#       severity: "error"
-#   # Specifically hide the results of two queries.
-#   - exclude: cpp/use-of-goto
-#   - exclude: java/equals-on-unrelated-types
-#   # Refine by including the `java/command-line-injection` query.
-#   - include: java/command-line-injection
-
+queries:
+  - include: "*"
