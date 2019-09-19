@@ -1,0 +1,18 @@
+##########################################################################################
+# Customize file classifications.                                                        #
+# Results from files under any classifier will be excluded from LGTM                     #
+# statistics.                                                                            #
+##########################################################################################
+
+path_classifiers:
+  library:
+    - exclude: extension/lib/**/*.js
+  # some_custom_category:
+  #   - tools
+
+#########################################################################################
+# Use the `queries` block to change the default display of query results.               #
+#########################################################################################
+
+queries:
+  - include: "*"

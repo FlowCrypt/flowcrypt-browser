@@ -1108,7 +1108,7 @@ export class Composer {
     const html = [];
     if (intro) {
       text.push(intro + '\n');
-      html.push(intro.replace(/\n/, '<br>') + '<br><br>');
+      html.push(intro.replace(/\n/g, '<br>') + '<br><br>');
     }
     text.push(Lang.compose.msgEncryptedText[lang] + msgUrl + '\n');
     html.push('<div class="cryptup_encrypted_message_replaceable">');
