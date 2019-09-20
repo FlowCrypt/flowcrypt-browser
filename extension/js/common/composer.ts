@@ -84,7 +84,9 @@ export class Composer {
 
   private BTN_ENCRYPT_AND_SEND = 'Encrypt and Send';
   private BTN_SIGN_AND_SEND = 'Sign and Send';
-  private BTN_READY_TEXTS = [this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND];
+  private BTN_ENCRYPT_SIGN_AND_SEND = 'Encrypt, Sign and Send';
+  private BTN_PLAIN_SEND = 'Send plain';
+  private BTN_READY_TEXTS = [this.BTN_ENCRYPT_AND_SEND, this.BTN_SIGN_AND_SEND, this.BTN_ENCRYPT_SIGN_AND_SEND, this.BTN_PLAIN_SEND];
   private BTN_WRONG_ENTRY = 'Re-enter recipient..';
   private BTN_SENDING = 'Sending..';
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
@@ -376,16 +378,16 @@ export class Composer {
     let btnText: string = '';
     switch (this.encryptionType) {
       case "encrypted":
-        btnText = 'Encrypt and Send';
+        btnText = this.BTN_ENCRYPT_AND_SEND;
         break;
       case "encryptedAndSigned":
-        btnText = 'Encrypt, Sign and Send';
+        btnText = this.BTN_ENCRYPT_SIGN_AND_SEND;
         break;
       case 'signed':
-        btnText = 'Sign and Send';
+        btnText = this.BTN_SIGN_AND_SEND;
         break;
       case 'plain':
-        btnText = 'Send plain';
+        btnText = this.BTN_PLAIN_SEND;
         break;
     }
     const doReset = () => Xss.sanitizeRender(this.S.cached('send_btn_span'), `<i></i>${btnText}`);
@@ -490,17 +492,24 @@ export class Composer {
       const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipientElements.map(r => r.email));
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.S.cached('input_password').val()) } : undefined;
       await this.throwIfFormValsInvalid(recipientElements, emailsWithoutPubkeys, subject, plaintext, pwd);
-      if (this.S.cached('icon_sign').is('.active')) {
+      if (this.encryptionType === 'signed') {
         await this.signSend(recipients, subject, plaintext);
-      } else {
-        await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription);
+      } else if (['encrypted', 'encryptedAndSigned'].includes(this.encryptionType)) {
+        const prv = this.encryptionType === 'encryptedAndSigned' ? await this.getDecryptedPrimaryPrvOrShowError() : undefined;
+        if (this.encryptionType === 'encryptedAndSigned' && !prv) {
+          return;
+        }
+        await this.encryptSend(recipients, armoredPubkeys, subject, plaintext, pwd, subscription, prv);
+      } else { // Send Plain
+        await this.plainSend(recipients, subject, plaintext);
       }
     } catch (e) {
       await this.handleSendErr(e);
     }
   }
 
-  private encryptSend = async (recipients: Recipients, armoredPubkeys: PubkeyResult[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription) => {
+  private encryptSend = async (recipients: Recipients, armoredPubkeys: PubkeyResult[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription,
+    signingPrv?: OpenPGP.key.Key) => {
     this.S.now('send_btn_span').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys.map(p => p.pubkey), pwd);
@@ -508,14 +517,45 @@ export class Composer {
       this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
-      await this.doEncryptFmtSend(armoredPubkeys, pwd, plaintext, [], recipients, subject, subscription, attAdminCodes);
+      await this.doEncryptFmtSend(armoredPubkeys, pwd, plaintext, [], recipients, subject, subscription, attAdminCodes, signingPrv);
     } else {
-      await this.doEncryptFmtSend(armoredPubkeys, pwd, plaintext, atts, recipients, subject, subscription);
+      await this.doEncryptFmtSend(armoredPubkeys, pwd, plaintext, atts, recipients, subject, subscription, undefined, signingPrv);
     }
   }
 
   private signSend = async (recipients: Recipients, subject: string, plaintext: string) => {
     this.S.now('send_btn_span').text('Signing');
+    const prv = await this.getDecryptedPrimaryPrvOrShowError();
+    if (prv) {
+      // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
+      // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
+      // resulting in.. wait for it.. signatures that don't match
+      // if you are reading this and have ideas about better solutions which:
+      //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
+      //  - don't require text to be sent as an attachment
+      //  - don't require all other clients to support PGP/MIME
+      // then please const me know. Eagerly waiting! In the meanwhile..
+      plaintext = (window as unknown as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
+      // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
+      // Removing them here will prevent Gmail from screwing up the signature
+      plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
+      const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
+      const atts = await this.attach.collectAtts(); // todo - not signing attachments
+      this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() }).catch(Catch.reportErr);
+      this.S.now('send_btn_span').text(this.BTN_SENDING);
+      const body = { 'text/plain': signedData };
+      await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
+    }
+  }
+
+  private plainSend = async (recipients: Recipients, subject: string, plaintext: string) => {
+    this.S.now('send_btn_span').text(this.BTN_SENDING);
+    const atts = await this.attach.collectAtts();
+    const body = { 'text/plain': plaintext };
+    await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
+  }
+
+  private getDecryptedPrimaryPrvOrShowError = async (): Promise<OpenPGP.key.Key | undefined> => {
     const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
     if (primaryKi) {
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
@@ -523,38 +563,23 @@ export class Composer {
       if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
-          await this.signSend(recipients, subject, plaintext);
+          return await this.getDecryptedPrimaryPrvOrShowError();
         } else { // timeout - reset - no passphrase entered
           this.resetSendBtn();
         }
       } else {
-        // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
-        // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
-        // resulting in.. wait for it.. signatures that don't match
-        // if you are reading this and have ideas about better solutions which:
-        //  - don't involve text/html ( Enigmail refuses to fix: https://sourceforge.net/p/enigmail/bugs/218/ - Patrick Brunschwig - 2017-02-12 )
-        //  - don't require text to be sent as an attachment
-        //  - don't require all other clients to support PGP/MIME
-        // then please const me know. Eagerly waiting! In the meanwhile..
-        plaintext = (window as unknown as BrowserWidnow)['emailjs-mime-codec'].foldLines(plaintext, 76, true); // tslint:disable-line:no-unsafe-any
-        // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
-        // Removing them here will prevent Gmail from screwing up the signature
-        plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
         if (!prv.isFullyDecrypted()) {
           await Pgp.key.decrypt(prv, passphrase!); // checked !== undefined above
         }
-        const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
-        const atts = await this.attach.collectAtts(); // todo - not signing attachments
-        this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() }).catch(Catch.reportErr);
-        this.S.now('send_btn_span').text(this.BTN_SENDING);
-        const body = { 'text/plain': signedData };
-        await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
+        return prv;
       }
     } else {
       await Ui.modal.error('Cannot sign the message because your plugin is not correctly set up. Email human@flowcrypt.com if this persists.');
       this.resetSendBtn();
     }
+    return undefined;
   }
+
 
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
     const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
@@ -666,11 +691,12 @@ export class Composer {
   }
 
   private doEncryptFmtSend = async (
-    pubkeys: PubkeyResult[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = []
+    pubkeys: PubkeyResult[], pwd: Pwd | undefined, text: string, atts: Att[], recipients: Recipients, subj: string, subs: Subscription, attAdminCodes: string[] = [],
+    signingPrv?: OpenPGP.key.Key
   ) => {
     const pubkeysOnly = pubkeys.map(p => p.pubkey);
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(pubkeys);
-    const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
+    const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, signingPrv, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
     this.S.now('send_btn_span').text(this.BTN_SENDING);
