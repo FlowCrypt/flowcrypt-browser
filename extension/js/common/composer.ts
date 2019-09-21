@@ -326,9 +326,9 @@ export class Composer {
       const elem = $(`<div><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
       elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
       if (item.iconPath) {
-        elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`);
+        elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       }
-      this.S.cached('sending_options_container').append(elem);
+      this.S.cached('sending_options_container').append(elem); // xss-safe-factory
       if (item.data === this.encryptionType) {
         this.addTickToPopover(elem);
       }
