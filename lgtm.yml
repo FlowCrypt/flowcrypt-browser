@@ -6,7 +6,7 @@
 
 path_classifiers:
   library:
-    - exclude: extension/lib/**/*.js
+    - extension/lib
   # some_custom_category:
   #   - tools
 
