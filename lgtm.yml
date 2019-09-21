@@ -7,8 +7,7 @@
 path_classifiers:
   library:
     - extension/lib
-  # some_custom_category:
-  #   - tools
+    - extension/types
 
 #########################################################################################
 # Use the `queries` block to change the default display of query results.               #
@@ -16,3 +15,7 @@ path_classifiers:
 
 queries:
   - include: "*"
+  - exclude: js/jsdoc/malformed-param-tag
+  - exclude: js/jsdoc/missing-parameter
+  - exclude: js/jsdoc/unknown-parameter
+  - exclude: js/too-many-parameters
