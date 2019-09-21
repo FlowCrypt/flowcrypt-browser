@@ -205,6 +205,7 @@ export class Catch {
 
   public static environment = (url = window.location.href): string => {
     const browserName = Catch.browser().name;
+    const origin = new URL(window.location.href).origin;
     let env = 'unknown';
     if (url.indexOf('bnjglocicd') !== -1) {
       env = 'ex:prod';
@@ -218,11 +219,11 @@ export class Catch {
       env = 'ex:fork';
     } else if (/moz-extension:\/\/.+/.test(url)) {
       env = 'ex';
-    } else if (url.startsWith('http://l.flowcrypt.com')) {
+    } else if (origin === 'http://l.flowcrypt.com') {
       env = 'web:local';
-    } else if (url.startsWith('https://flowcrypt.com')) {
+    } else if (origin === 'https://flowcrypt.com/') {
       env = 'web:prod';
-    } else if (url.startsWith('https://mail.google.com')) {
+    } else if (origin === 'https://mail.google.com') {
       env = 'ex:script:gmail';
     }
     return browserName + ':' + env;

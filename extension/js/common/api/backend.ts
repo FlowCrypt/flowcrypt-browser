@@ -239,7 +239,7 @@ export class Backend extends Api {
     alias,
   })
 
-  public static retreiveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
+  public static retrieveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
     return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()); // tslint:disable-line:no-direct-ajax
   }
 
