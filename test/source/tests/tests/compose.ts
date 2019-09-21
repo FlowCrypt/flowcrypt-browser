@@ -43,8 +43,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
       const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase');
-      await composeFrame.waitAndClick('@action-switch-to-sign', { delay: 0.5 });
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', 'signed');
       await composeFrame.waitAndClick('@action-send');
       await settingsPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await settingsPage.getFrame(['passphrase.htm']);
@@ -53,8 +52,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await settingsPage.waitTillGone('@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
       // signed - done, now try to see if it remembered pp in session
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session');
-      await composePage.click('@action-switch-to-sign'); // should remember pass phrase in session from previous entry
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session', 'signed');
       await ComposePageRecipe.sendAndClose(composePage);
       await settingsPage.close();
     }));
@@ -290,7 +288,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default.only('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.default('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', 'signed');
       expect(await composePage.isElementPresent('@add-intro')).to.be.true;
