@@ -191,7 +191,7 @@ Catch.try(async () => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
     includedAtts = atts;
     for (const i of atts.keys()) {
-      const name = (atts[i].name ? Xss.escape(atts[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
+      const name = (atts[i].name ? Xss.escape(atts[i].name) : 'noname').replace(/\.(pgp|gpg)$/, '');
       const size = Str.numberFormat(Math.ceil(atts[i].length / 1024)) + 'KB';
       const htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
