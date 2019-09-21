@@ -167,7 +167,7 @@ Catch.try(async () => {
     const kisWithPp = await Store.keysGetAllWithPp(acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await getDecryptPwd() });
     if (decrypted.success) {
-      const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content });
+      const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
       Browser.saveToDownloads(att, renderIn);
       resizePgpBlockFrame();
     } else {
