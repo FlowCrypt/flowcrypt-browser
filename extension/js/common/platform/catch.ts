@@ -221,7 +221,7 @@ export class Catch {
       env = 'ex';
     } else if (origin === 'http://l.flowcrypt.com') {
       env = 'web:local';
-    } else if (origin === 'https://flowcrypt.com/') {
+    } else if (origin === 'https://flowcrypt.com') {
       env = 'web:prod';
     } else if (origin === 'https://mail.google.com') {
       env = 'ex:script:gmail';
