@@ -59,7 +59,6 @@ export class Composer {
     icon_pubkey: '.icon.action_include_pubkey',
     icon_footer: '.icon.action_include_footer',
     icon_help: '.action_feedback',
-    icon_sign: '.icon.action_sign',
     icon_popout: '.popout img',
     icon_show_prev_msg: '.action_show_prev_msg',
     prompt: 'div#initial_prompt',
@@ -323,7 +322,7 @@ export class Composer {
       { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/caution.svg' }
     ];
     for (const item of this.popoverItems) {
-      const elem = $(`<div><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
+      const elem = $(`<div data-test="action-choose-${item.data}"><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
       elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
@@ -345,7 +344,6 @@ export class Composer {
     this.addTickToPopover(elem);
     this.S.cached('send_btn_span').text(elem.text());
     this.S.cached('title').text(Lang.compose.headers[encryptionType]);
-    this.S.cached('icon_sign')[method]('active');
     this.S.cached('compose_table')[method]('sign');
     this.S.now('attached_files')[method]('sign');
     this.resetSendBtn();
@@ -421,7 +419,7 @@ export class Composer {
   }
 
   private throwIfFormValsInvalid = async (recipients: RecipientElement[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
-    const shouldEncrypt = !this.S.cached('icon_sign').is('.active');
+    const shouldEncrypt = ['encrypted', 'encryptedAndSigned'].includes(this.encryptionType);
     if (!recipients.length) {
       throw new ComposerUserError('Please add receiving email address.');
     }
@@ -738,7 +736,7 @@ export class Composer {
         throw e;
       }
     }
-    const isSigned = this.S.cached('icon_sign').is('.active');
+    const isSigned = this.encryptionType === 'signed';
     BrowserMsg.send.notificationShow(this.urlParams.parentTabId, {
       notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.`
     });
@@ -818,7 +816,7 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!this.getRecipients().length || this.S.cached('icon_sign').is('.active')) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
+    if (!this.getRecipients().length || ['signed', 'plain'].includes(this.encryptionType)) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
       this.hideMsgPwdUi();
       this.S.cached('send_btn').removeClass('gray').addClass('green');
     } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
@@ -885,7 +883,7 @@ export class Composer {
           (async () => { // not awaited because can take a long time & blocks rendering
             await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
             if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
-              this.S.cached('icon_sign').click();
+              this.encryptionType = 'signed';
             }
           })().catch(Catch.reportErr);
         }
@@ -951,7 +949,7 @@ export class Composer {
   }
 
   private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
-    const isSigned = this.S.cached('icon_sign').is('.active');
+    const isSigned = this.encryptionType === 'signed';
     this.app.renderReinsertReplyBox(msgId, msg.headers.To.split(',').map(a => Str.parseEmail(a).email).filter(e => !!e) as string[]);
     if (isSigned) {
       this.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');

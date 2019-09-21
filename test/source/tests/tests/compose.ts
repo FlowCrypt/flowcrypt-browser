@@ -127,8 +127,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('compose[global:compose] - signed message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message');
-      await composePage.click('@action-switch-to-sign');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message', 'signed');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -287,17 +286,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         '&threadMsgId=15f7f5face7101db&to=censored%40email.com&from=flowcrypt.compatibility%40gmail.com&subject=signed%20utf8%20(inline)';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await Util.sleep(3);
-      const iconSign = await composePage.waitAny('@action-switch-to-sign');
-      expect(await composePage.attr(iconSign!, 'className')).to.include('active');
+      await ComposePageRecipe.fillMsg(composePage, {}, undefined, 'signed');
+      await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+    ava.default.only('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', 'signed');
       expect(await composePage.isElementPresent('@add-intro')).to.be.true;
       expect(await composePage.isElementPresent('@password-or-pubkey-container')).to.be.true;
-      await composePage.waitAndClick('@action-switch-to-sign', { delay: 0.5 });
       await composePage.notPresent('@add-intro');
       await composePage.notPresent('@password-or-pubkey-container');
     }));
@@ -311,7 +308,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('compose[global:compatibility] - standalone - cc & bcc test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'isReplyBox=___cu_true___&threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
-      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 3 });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" });
       await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
       await Util.sleep(3);
