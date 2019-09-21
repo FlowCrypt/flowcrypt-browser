@@ -317,14 +317,14 @@ export class Composer {
 
   private initComposerPopover = () => {
     this.popoverItems = [
-      { type: 'selectEncryptionType', HTMLContent: 'Encrypt and Send', data: 'encrypted', iconPath: '/img/svgs/locked-icon-green.svg' },
-      { type: 'selectEncryptionType', HTMLContent: 'Sign and Send', data: 'signed', iconPath: '/img/svgs/signature.svg' },
-      { type: 'selectEncryptionType', HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned', iconPath: '/img/svgs/signature-green.svg' },
-      { type: 'selectEncryptionType', HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/caution.svg' }
+      { HTMLContent: 'Encrypt and Send', data: 'encrypted', iconPath: '/img/svgs/locked-icon-green.svg' },
+      { HTMLContent: 'Sign and Send', data: 'signed', iconPath: '/img/svgs/signature.svg' },
+      { HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned', iconPath: '/img/svgs/signature-green.svg' },
+      { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/caution.svg' }
     ];
     for (const item of this.popoverItems) {
       const elem = $(`<div><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
-      elem.on('click', () => this.handleEncryptionTypeSelected(elem, item.data));
+      elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`);
       }
@@ -358,12 +358,12 @@ export class Composer {
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
     if (sendingContainer.hasClass('popover-opened')) {
-      $('body').click((event) => {
+      $('body').click(Ui.event.handle((elem, event) => {
         if (!this.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
           sendingContainer.removeClass('popover-opened');
           $('body').off('click');
         }
-      });
+      }));
     } else {
       $('body').off('click');
     }
@@ -579,7 +579,6 @@ export class Composer {
     }
     return undefined;
   }
-
 
   private uploadAttsToFc = async (atts: Att[], subscription: Subscription): Promise<string[]> => {
     const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
