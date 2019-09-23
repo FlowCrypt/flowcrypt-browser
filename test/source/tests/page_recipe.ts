@@ -394,16 +394,6 @@ export class ComposePageRecipe extends PageRecipe {
     return composeFrame;
   }
 
-  public static changeDefSendingAddr = async (composePage: ControllablePage, newDef: string) => {
-    await composePage.waitAndClick('@action-open-sending-address-settings');
-    await composePage.waitAll('@dialog');
-    const sendingAddrFrame = await composePage.getFrame(['sending_address.htm']);
-    await sendingAddrFrame.waitAndClick(`@action-choose-address(${newDef})`);
-    await Util.sleep(0.5); // page reload
-    await sendingAddrFrame.waitAndClick('@action-close-sending-address-settings');
-    await composePage.waitTillGone('@dialog');
-  }
-
   public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined) => {
     await Util.sleep(0.5);
     await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);

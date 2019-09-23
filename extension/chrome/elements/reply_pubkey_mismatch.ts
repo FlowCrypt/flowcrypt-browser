@@ -60,7 +60,6 @@ Catch.try(async () => {
     renderFooterDialog: () => undefined,
     renderAddPubkeyDialog: () => undefined,
     renderHelpDialog: () => undefined,
-    renderSendingAddrDialog: () => undefined,
     closeMsg: () => undefined,
     factoryAtt: (att) => `<div>${Xss.escape(att.name)}</div>`,
     whenMasterPassphraseEntered: () => Promise.resolve(undefined),

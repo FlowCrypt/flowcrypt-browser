@@ -14,22 +14,19 @@ import { Pgp } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
+import { compareObjects } from './platform/util.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
-  static fetchAcctAliasesFromGmail = async (acctEmail: string, includeAcctAddress: boolean = false): Promise<Dict<SendAsAlias>> => {
+  static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await Google.gmail.fetchAcctAliases(acctEmail);
-    const validAliases = response.sendAs.filter(alias => (alias.isDefault as boolean) || alias.verificationStatus === 'accepted');
+    const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
     for (const alias of validAliases) {
-      result[alias.sendAsEmail] = { name: alias.displayName, isPrimary: false };
-    }
-    if (includeAcctAddress) {
-      const { full_name } = await Store.getAcct(acctEmail, ['full_name']);
-      result[acctEmail] = { isPrimary: true, name: full_name };
+      result[alias.sendAsEmail] = { name: alias.displayName, isPrimary: !!alias.isPrimary, isDefault: alias.isDefault };
     }
     return result;
   }
@@ -116,10 +113,14 @@ export class Settings {
     }
   }
 
-  static refreshAcctAliases = async (acctEmail: string) => {
-    const sendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail, true);
-    await Store.setAcct(acctEmail, { sendAs });
-    return sendAs;
+  static refreshAcctAliases = async (acctEmail: string): Promise<boolean> => {
+    const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+    const { sendAs: storedAliases } = (await Store.getAcct(acctEmail, ['sendAs']));
+    if (!storedAliases || !compareObjects(fetchedSendAs, storedAliases)) {
+      await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
+      return true;
+    }
+    return false;
   }
 
   static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {

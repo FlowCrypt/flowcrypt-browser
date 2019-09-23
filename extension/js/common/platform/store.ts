@@ -126,6 +126,12 @@ export type AccountStore = {
   tmp_submit_all?: boolean;
 };
 
+export class AccountStoreExtension {
+  static getEmailAliasesIncludingPrimary(acct: string, sendAs: Dict<SendAsAlias> | undefined) {
+    return sendAs ? Object.keys(sendAs) : [acct];
+  }
+}
+
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
   'google_token_refresh' | 'hide_message_password' | 'sendAs' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |

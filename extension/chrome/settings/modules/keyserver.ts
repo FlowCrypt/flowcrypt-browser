@@ -13,6 +13,7 @@ import { Attester } from '../../../js/common/api/attester.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Lang } from '../../../js/common/lang.js';
 
 type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boolean, results: Dict<{ pubkey?: string, match: boolean }> };
 
@@ -31,7 +32,7 @@ Catch.try(async () => {
     const { sendAs } = await Store.getAcct(acctEmail, ['sendAs']);
     const storedKeys = await Store.keysGet(acctEmail);
     const storedKeysLongids = storedKeys.map(ki => ki.longid);
-    const results = await Attester.lookupEmails(Object.keys(sendAs || {}));
+    const results = await Attester.lookupEmails(sendAs ? Object.keys(sendAs) : [acctEmail]);
     for (const email of Object.keys(results)) {
       const pubkeySearchResult = results[email];
       if (!pubkeySearchResult.pubkey) {
@@ -49,34 +50,32 @@ Catch.try(async () => {
     return diagnosis;
   };
 
+  (async () => {
+    const isRefreshed = await Settings.refreshAcctAliases(acctEmail);
+    if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
+      window.location.reload();
+    }
+  })().catch(Catch.reportErr);
+
   const renderDiagnosis = (diagnosis: AttKeyserverDiagnosis) => {
     for (const email of Object.keys(diagnosis.results)) {
       const result = diagnosis.results[email];
-      let note, action, remove, color;
+      let note, action, color;
       if (!result.pubkey) {
         note = 'Missing record. Your contacts will not know you have encryption set up.';
         action = `<div class="button gray2 small action_submit_key" email="${Xss.escape(email)}">Submit public key</div>`;
-        if (email === acctEmail) {
-          remove = '';
-        } else {
-          // todo - allow removing email even if pubkey submitted
-          // part of the process should be sending user to the takedown link
-          remove = ` &nbsp; <b class="bad action_remove_alias" email="${Xss.escape(email)}" title="Remove address from list of send-from addresses.">[x]</b> &nbsp; `;
-        }
         color = 'orange';
       } else if (result.match) {
         note = 'Submitted correctly, can receive encrypted email.';
         action = '';
-        remove = '';
         color = 'green';
       } else {
         note = 'Wrong public key recorded. Your incoming email may be unreadable when encrypted.';
         // todo - pass public key and email in
         action = `<div class="button gray2 small action_replace_pubkey" email="${Xss.escape(email)}">Correct public records</a>`;
-        remove = '';
         color = 'red';
       }
-      Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${remove} ${action}</div>`);
+      Xss.sanitizeAppend('#content', `<div class="line left">${Xss.escape(email)}: <span class="${color}">${note}</span> ${action}</div>`);
     }
 
     $('.action_submit_key').click(Ui.event.prevent('double', async self => {
@@ -110,35 +109,6 @@ Catch.try(async () => {
         await Ui.modal.error(Api.err.eli5(e));
         window.location.reload();
       }
-    }));
-
-    $('.action_remove_alias').click(Ui.event.prevent('double', async self => {
-      const { sendAs } = await Store.getAcct(acctEmail, ['sendAs']);
-      if (sendAs) {
-        delete sendAs[$(self).attr('email')!];
-        await Store.setAcct(acctEmail, { sendAs });
-      }
-      window.location.reload();
-    }));
-
-    const contentEl = Xss.sanitizeAppend('#content', '<div class="line"><a href="#" class="action_fetch_aliases">Missing email address? Refresh list</a></div>');
-    contentEl.find('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
-      Xss.sanitizeRender(self, Ui.spinner('green'));
-      try {
-        await Settings.refreshAcctAliases(acctEmail);
-      } catch (e) {
-        if (Api.err.isNetErr(e)) {
-          await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-        } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-          await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
-        } else {
-          Catch.reportErr(e);
-          await Ui.modal.error(`Error happened: ${String(e)}`);
-        }
-      }
-      window.location.reload();
-      done();
     }));
   };
 

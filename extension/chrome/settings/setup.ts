@@ -97,15 +97,10 @@ Catch.try(async () => {
       if (!GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
         $('.auth_denied_warning').css('display', 'block');
       }
-      if (typeof storage.sendAs === 'undefined') {
-        if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
-          Settings.fetchAcctAliasesFromGmail(acctEmail, true).then(saveAndFillSubmitOption).catch(Catch.reportErr);
-        } else { // cannot read emails, don't fetch alternative addresses
-          saveAndFillSubmitOption({}).catch(Catch.reportErr);
-        }
-      } else {
-        submitKeyForAddrs = filterAddressesForSubmittingKeys(Object.keys(storage.sendAs));
-        showSubmitAddrsOption(submitKeyForAddrs);
+      if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
+        Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.reportErr);
+      } else { // cannot read emails, don't fetch alternative addresses
+        saveAndFillSubmitOption({}).catch(Catch.reportErr);
       }
     }
     if (storage.setup_done) {

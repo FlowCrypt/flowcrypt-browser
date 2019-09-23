@@ -42,7 +42,6 @@ export interface ComposerAppFunctionsInterface {
   renderAddPubkeyDialog: (emails: string[]) => void;
   renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
   renderHelpDialog: () => void;
-  renderSendingAddrDialog: () => void;
   factoryAtt: (att: Att, isEncrypted: boolean) => string;
   closeMsg: () => void;
   whenMasterPassphraseEntered: (secondsTimeout?: number) => Promise<string | undefined>;

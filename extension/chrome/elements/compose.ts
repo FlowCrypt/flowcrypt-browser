@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store, ContactUpdate, DbContactFilter } from '../../js/common/platform/store.js';
+import { Store, ContactUpdate, DbContactFilter, AccountStoreExtension } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Ui, Env, JQS } from '../../js/common/browser.js';
@@ -89,7 +89,8 @@ Catch.try(async () => {
     if (gmailMsg.threadId) {
       threadId = gmailMsg.threadId;
     }
-    const reply = Google.determineReplyCorrespondents(acctEmail, Object.keys(storage.sendAs || {}), gmailMsg);
+    const reply = Google.determineReplyCorrespondents(acctEmail,
+      AccountStoreExtension.getEmailAliasesIncludingPrimary(acctEmail, storage.sendAs), gmailMsg);
     to = reply.to;
     from = reply.from;
     cc = reply.cc;
@@ -353,7 +354,6 @@ Catch.try(async () => {
       }
     },
     renderHelpDialog: () => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/help.htm' }),
-    renderSendingAddrDialog: () => ($ as JQS).featherlight({ iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500 }),
     closeMsg,
     factoryAtt: (att: Att, isEncrypted: boolean) => factory.embeddedAtta(att, isEncrypted),
     whenMasterPassphraseEntered: (secondsTimeout?: number): Promise<string | undefined> => {

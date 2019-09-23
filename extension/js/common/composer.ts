@@ -1067,12 +1067,7 @@ export class Composer {
     if (emailAliases.length > 1) {
       const inputAddrContainer = $('.recipients-inputs');
       inputAddrContainer.addClass('show_send_from');
-      let selectElHtml = '<select id="input_from" tabindex="1" data-test="input-from"></select>';
-      if (!this.urlParams.isReplyBox) {
-        selectElHtml += '<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">';
-      }
-      Xss.sanitizeAppend(inputAddrContainer, selectElHtml);
-      inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
+      Xss.sanitizeAppend(inputAddrContainer, '<select id="input_from" tabindex="1" data-test="input-from"></select>');
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
       emailAliases = emailAliases.sort((a, b) => {
         return (sendAs[a].isDefault === sendAs[b].isDefault) ? 0 : sendAs[a].isDefault ? -1 : 1;
@@ -1087,13 +1082,9 @@ export class Composer {
   private async checkEmailAliases() {
     if (!this.urlParams.isReplyBox) {
       try {
-        const sendAsAliases = await Settings.fetchAcctAliasesFromGmail(this.urlParams.acctEmail, true);
-        const storedAliases = (await Store.getAcct(this.urlParams.acctEmail, ['sendAs'])).sendAs || {};
-        if (Object.keys(sendAsAliases).sort().join() !== Object.keys(storedAliases).sort().join()) {
-          await Store.setAcct(this.urlParams.acctEmail, { sendAs: sendAsAliases });
-          if (await Ui.modal.confirm('Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?')) {
-            window.location.reload();
-          }
+        const isRefreshed = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
+        if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
+          window.location.reload();
         }
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {

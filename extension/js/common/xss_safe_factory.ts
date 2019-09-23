@@ -81,10 +81,6 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/shared/footer.htm'), { placement, grandparentTabId });
   }
 
-  srcSendingAddrDialog = (placement: Placement) => {
-    return this.frameSrc(this.extUrl('chrome/elements/sending_address.htm'), { placement });
-  }
-
   srcPgpAttIframe = (a: Att, isEncrypted: boolean) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
