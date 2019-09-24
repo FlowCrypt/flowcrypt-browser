@@ -388,7 +388,7 @@ export class Composer {
         btnText = this.BTN_PLAIN_SEND;
         break;
     }
-    const doReset = () => { 
+    const doReset = () => {
       Xss.sanitizeRender(this.S.cached('send_btn_span'), `<i></i>${btnText}`);
       this.S.cached('send_btn').removeClass('not-ready');
     };
