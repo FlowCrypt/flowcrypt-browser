@@ -478,6 +478,7 @@ export class Composer {
 
   private extractProcessSendMsg = async () => {
     try {
+      this.S.cached('send_btn').addClass('not-ready');
       const recipientElements = this.getRecipients();
       const recipients = this.mapRecipients(recipientElements);
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
@@ -503,6 +504,8 @@ export class Composer {
       }
     } catch (e) {
       await this.handleSendErr(e);
+    } finally {
+      this.S.cached('send_btn').removeClass('not-ready');
     }
   }
 
