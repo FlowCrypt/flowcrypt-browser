@@ -413,7 +413,8 @@ table#compose #send_btn i { font-size: 20px; }
 table#compose #send_btn span.btn-text { width: 100%; padding: 5px 15px 5px 15px; }
 table#compose #send_btn.button.green > span:hover, table#compose #send_btn > div:hover, table#compose td.bottom div.sending-container.popover-opened #send_btn > div { cursor: pointer; background-color: #5ab445; }
 table#compose #send_btn .action-show-options-popover { width: 15px; height: 35px; padding: 0 15px; border-left: 1px solid #fff; background-color: #31A217; }
-table#compose #send_btn .action-show-options-popover img { height: 15px; transform: rotate(-90deg); position: relative; top: 10px; }
+table#compose #send_btn .action-show-options-popover div.icon-chevron { background-image: url('/img/svgs/chevron-left-white.svg'); background-size: contain; background-repeat: no-repeat; height: 15px; transform: rotate(-90deg); position: relative; top: 10px; }
+table#compose td.bottom div.sending-container.popover-opened #send_btn .action-show-options-popover div.icon-chevron { transform: rotate(90deg); }
 table#compose td.bottom div#send_btn_note { display: inline-block; font-size: 12.8px; padding-left: 5px; opacity: 0.5; }
 table#compose td.bottom .delete-draft { width: 20px; height: 20px;}
 table#compose .bottom .icon { padding: 3px 4px; display: inline-block; border: 1px solid #f5f5f5; border-radius: 2px; opacity: 0.35; background: none; vertical-align: middle; -moz-user-focus: none; }
