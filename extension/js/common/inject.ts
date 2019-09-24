@@ -26,7 +26,7 @@ export class Injector {
       'settings': '#does_not_have',
     },
     finishSesionBtnSel: {
-      gmail: 'div.gb_Xd .gb_Me',
+      gmail: 'div.gb_ue',
       outlook: '#does_not_have',
       settings: '#settings > div.header'
     }
@@ -67,8 +67,7 @@ export class Injector {
   }
 
   insertEndSessionBtn = async (acctEmail: string) => {
-    $(this.factory.btnEndPPSession())
-      .attr(this.webmailName === 'gmail' ? 'data-tooltip' : 'title', 'End Current Session')
+    $(this.factory.btnEndPPSession(this.webmailName))
       .insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last())
       .click(Ui.event.prevent('double', async el => {
         const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);

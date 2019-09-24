@@ -201,12 +201,12 @@ export class XssSafeFactory {
     return `<div class="${this.destroyableCls} reply_message_button"><img title="Secure Reply" src="${this.srcImg('svgs/reply-icon.svg')}" /></div>`;
   }
 
-  btnEndPPSession = () => {
-    return `<div class="finish_session gb_te gb_re" data-test="finish-session">
-              <div class="zo">
-                <a class="gb_we gb_ue gb_tb t6"><img src="${this.srcImg('svgs/unlock.svg')}" /></a>
-              </div>
-            </div>`;
+  btnEndPPSession = (webmailName: string ) => {
+    return `<div class="finish_session zo" ${webmailName === 'gmail' ? 'data-tooltip' : 'title'}="End Current Session">
+                <a class="gb_xe gb_ve gb_pb t6" ${webmailName === 'gmail' ? 'style="text-align: center;"':''}>
+                  <img src="${this.srcImg('svgs/unlock.svg')}"  ${webmailName === 'gmail' ? 'style="width: 18px;"':''} />
+                </a>
+              </div>`;
   }
 
   btnWithoutFc = () => {
