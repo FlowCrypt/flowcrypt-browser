@@ -14,7 +14,6 @@ import { Pgp } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
-import { compareObjects } from './platform/util.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -116,11 +115,17 @@ export class Settings {
   static refreshAcctAliases = async (acctEmail: string): Promise<boolean> => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const { sendAs: storedAliases } = (await Store.getAcct(acctEmail, ['sendAs']));
-    if (!storedAliases || !compareObjects(fetchedSendAs, storedAliases)) {
-      await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
+    await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
+    if (!storedAliases) { // Aliases changed (it was previously undefined)
       return true;
     }
-    return false;
+    if(Settings.getDefaultEmailAlias(fetchedSendAs) !== Settings.getDefaultEmailAlias(storedAliases)) { // Changed (default email alias was changed)
+      return true;
+    }
+    if (Object.keys(fetchedSendAs).sort().join(',') !== Object.keys(storedAliases).sort().join(',')) { // Changed (added/removed email alias)
+      return true;
+    }
+    return false; // Nothing changed
   }
 
   static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {
@@ -372,6 +377,15 @@ export class Settings {
         ? Env.urlCreate(page, { acctEmail })
         : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
+  }
+
+  private static getDefaultEmailAlias(sendAs: Dict<SendAsAlias>) {
+    for (const key of Object.keys(sendAs)) {
+      if (sendAs[key] && sendAs[key].isDefault) {
+        return key;
+      }
+    }
+    return undefined;
   }
 
 }
