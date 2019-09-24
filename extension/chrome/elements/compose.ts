@@ -60,23 +60,15 @@ Catch.try(async () => {
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
-  let from: string = '';
-  let subject: string = '';
-  let to: string[] = [];
-  let cc: string[] = [];
-  let bcc: string[] = [];
+  const replyParams: { from: string, subject: string, to: string[], cc: string[], bcc: string[] } = { from: '', subject: '', to: [], cc: [], bcc: [] };
   if (threadId) {
     const fetchSuccess = await (async () => {
       Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
       try {
         const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
         const gmailMsg = await Google.gmail.msgGet(acctEmail, thread.messages[thread.messages.length - 1].id, 'metadata');
-        const reply = Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], gmailMsg);
-        from = reply.from;
-        to = reply.to;
-        cc = reply.cc;
-        bcc = reply.bcc;
-        subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
+        Object.assign(replyParams, Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], gmailMsg));
+        replyParams.subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
         threadId = gmailMsg.threadId ? gmailMsg.threadId : threadId;
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
@@ -98,7 +90,7 @@ Catch.try(async () => {
       return;
     }
   }
-  const processedUrlParams = { acctEmail, draftId, threadId, subject, from, to, cc, bcc, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
+  const processedUrlParams = { acctEmail, draftId, threadId, ...replyParams, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
   const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -329,7 +321,10 @@ Catch.try(async () => {
     // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),
     // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
     renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => {
-      BrowserMsg.send.reinsertReplyBox(parentTabId, { acctEmail, myEmail: from || acctEmail, subject, theirEmail: recipients, threadId, threadMsgId: lastMsgId });
+      BrowserMsg.send.reinsertReplyBox(parentTabId, {
+        acctEmail, myEmail: replyParams.from || acctEmail, subject: replyParams.subject,
+        theirEmail: recipients, threadId, threadMsgId: lastMsgId
+      });
     },
     renderFooterDialog: () => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
       iframe: factory.srcAddFooterDialog('compose', parentTabId),
