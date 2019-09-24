@@ -404,7 +404,8 @@ export class ComposePageRecipe extends PageRecipe {
     await composePage.waitTillGone('@dialog');
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined) => {
+  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined,
+    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted') => {
     await Util.sleep(0.5);
     await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
     if (subject) {
@@ -415,6 +416,10 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
+    if (sendingType !== 'encrypted') { // Encrypted is by default
+      await composePageOrFrame.waitAndClick('@action-show-options-popover');
+      await composePageOrFrame.waitAndClick(`@action-choose-${sendingType}`);
+    }
     return { subject, body };
   }
 
@@ -438,7 +443,6 @@ export class ComposePageRecipe extends PageRecipe {
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
     if (password) {
       await composePage.waitAndType('@input-password', 'test-pass');
-      await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
     await Promise.race([
