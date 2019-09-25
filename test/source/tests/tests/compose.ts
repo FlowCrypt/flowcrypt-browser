@@ -403,6 +403,24 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('compose[global:compose] - standalone - testing sending options popover', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.waitAndClick('@action-show-options-popover');
+      for (const element of await composePage.target.$$('.sending-options-container')) {
+        if (!element) {
+          throw new Error('Error: option cannot be empty');
+        }
+        const optionName = (await element.$('.option-name'))!;
+        const elementText = await PageRecipe.getElementPropertyJson(optionName, 'textContent');
+        expect(elementText).not.to.be.empty;
+        expect(await element!.$('.option-name img')!).not.to.be.empty;
+        await optionName.click();
+        expect(elementText).to.include(await PageRecipe.getElementPropertyJson(await composePage.waitAny('@action-send'), 'textContent'));
+        await composePage.click('@action-show-options-popover');
+        expect(await element.$('img.icon-tick')).to.not.be.empty;
+      }
+    }));
+
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.todo('compose[global:compose] - reply - skip click prompt');
