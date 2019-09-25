@@ -564,6 +564,7 @@ export class ComposerContacts extends ComposerComponent {
 
   public evaluateRecipients = async (recipients: RecipientElement[]) => {
     this.composer.debug(`evaluateRecipients`);
+    $('body').attr('data-test-state', 'working');
     for (const recipient of recipients) {
       this.composer.debug(`evaluateRecipients.email(${String(recipient.email)})`);
       this.composer.S.now('send_btn_span').text(this.BTN_LOADING);
@@ -583,6 +584,7 @@ export class ComposerContacts extends ComposerComponent {
     for (const callback of this.onRecipientAddedCallbacks) {
       callback(recipients);
     }
+    $('body').attr('data-test-state', 'ready');
     this.composer.setInputTextHeightManuallyIfNeeded();
   }
 
