@@ -57,7 +57,7 @@ export class XssSafeFactory {
   }
 
   srcComposeMsg = (draftId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), isReplyBox: false, draftId, placement: 'gmail' });
+    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), draftId, placement: 'gmail' });
   }
 
   srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType) => {

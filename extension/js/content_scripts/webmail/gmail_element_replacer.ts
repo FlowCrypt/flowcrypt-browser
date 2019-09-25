@@ -424,13 +424,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  private domGetMsgSubject = (convoRootEl: JQueryEl) => {
-    return $(convoRootEl).find(this.sel.subject).text();
-  }
-
   private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
     return {
-      subject: this.domGetMsgSubject(convoRootEl),
       addresses: this.addresses,
       threadId: this.determineThreadId(convoRootEl),
       threadMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),

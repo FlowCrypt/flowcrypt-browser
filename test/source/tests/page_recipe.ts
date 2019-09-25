@@ -352,7 +352,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (
     t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
-      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, initialScript?: EvaluateFn } = {}
+      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
   ): Promise<ControllablePage> => {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
@@ -363,16 +363,18 @@ export class ComposePageRecipe extends PageRecipe {
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
       options.initialScript);
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
-    if (!options.hasReplyPrompt) {
-      await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
-    } else {
-      if (options.skipClickPropt) {
-        await Util.sleep(2);
+    if (!options.skipValidation) {
+      if (!options.hasReplyPrompt) {
+        await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
       } else {
-        await composePage.waitAll(['@action-accept-reply-prompt']);
+        if (options.skipClickPropt) {
+          await Util.sleep(2);
+        } else {
+          await composePage.waitAll(['@action-accept-reply-prompt']);
+        }
       }
+      await composePage.waitForSelTestState('ready');
     }
-    await composePage.waitForSelTestState('ready');
     return composePage;
   }
 
