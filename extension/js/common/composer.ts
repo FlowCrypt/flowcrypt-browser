@@ -332,6 +332,12 @@ export class Composer {
         this.addTickToPopover(elem);
       }
     }
+    if (!this.urlParams.isReplyBox) {
+      this.setPopoverTopPosition();
+    }
+  }
+
+  private setPopoverTopPosition() {
     this.S.cached('sending_options_container').css('top', - (this.S.cached('sending_options_container').outerHeight()! + 3) + 'px');
   }
 
@@ -906,6 +912,7 @@ export class Composer {
       $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
     }
+    this.setPopoverTopPosition();
     this.resizeComposeBox();
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
