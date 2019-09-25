@@ -317,9 +317,9 @@ export class Composer {
   private initComposerPopover = () => {
     this.popoverItems = [
       { HTMLContent: 'Encrypt and Send', data: 'encrypted', iconPath: '/img/svgs/locked-icon-green.svg' },
-      { HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned', iconPath: '/img/svgs/signature-green.svg' },
+      { HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned', iconPath: '/img/svgs/locked-icon-green.svg' },
       { HTMLContent: 'Sign and Send', data: 'signed', iconPath: '/img/svgs/signature-gray.svg' },
-      { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/gmail.svg' }
+      { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/gmail.svg' },
     ];
     for (const item of this.popoverItems) {
       const elem = $(`<div data-test="action-choose-${item.data}"><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
