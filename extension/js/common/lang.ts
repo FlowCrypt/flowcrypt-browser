@@ -71,8 +71,12 @@ export const Lang = { // tslint:disable-line:variable-name
     openMsg: { EN: 'Open Message', DE: 'Nachricht öffnen' },
     includePubkeyIconTitle: 'Include your Public Key with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
     includePubkeyIconTitleActive: 'Your Public Key will be included with this message.\n\nThis allows people using non-FlowCrypt encryption to reply to you.',
-    headerTitleComposeEncrypt: 'New Secure Message',
-    headerTitleComposeSign: 'New Signed Message (not encrypted)',
+    headers: {
+      encrypted: 'New Secure Message',
+      encryptedAndSigned: 'New Signed Secure Message',
+      signed: 'New Signed Message (not encrypted)',
+      plain: 'New Plain Message (not encrypted)'
+    },
     pubkeyExpiredConfirmCompose: 'The public key of one of your recipients is expired.\n\nThe right thing to do is to ask the recipient to send you an updated Public Key.\n\nAre you sure you want to encrypt this message for an expired public key? (NOT RECOMMENDED)',
     needReadAccessToReply: 'FlowCrypt has limited functionality. Your browser needs to access this conversation to reply.',
     addMissingPermission: 'Add missing permission',
