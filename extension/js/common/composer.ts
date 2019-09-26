@@ -72,7 +72,7 @@ export class Composer {
     input_addresses_container_inner: '#input_addresses_container > div:first',
     recipients_inputs: '#input_addresses_container input',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
-    email_copy_actions: '#input_addresses_container .email_copy_actions'
+    email_copy_actions: '#input_addresses_container .email-copy-actions'
   });
 
   private attach: AttUI;
@@ -1038,7 +1038,7 @@ export class Composer {
     const addresses = this.app.storageGetAddresses();
     if (addresses.length > 1) {
       const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-      const inputAddrContainer = this.S.cached('email_copy_actions');
+      const inputAddrContainer = this.S.cached('email-copy-actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
         this.renderSenderAliasesOptions();
