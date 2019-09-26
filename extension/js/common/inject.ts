@@ -67,8 +67,7 @@ export class Injector {
   }
 
   insertEndSessionBtn = async (acctEmail: string) => {
-    $(this.factory.btnEndPPSession(this.webmailName))
-      .insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last())
+    $(this.factory.btnEndPPSession(this.webmailName)).insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last()) // xss-safe-factory
       .click(Ui.event.prevent('double', async el => {
         const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
         if (keysInSession.length) {
