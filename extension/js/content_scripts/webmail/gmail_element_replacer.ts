@@ -17,13 +17,13 @@ import { Google, GmailRes } from '../../common/api/google.js';
 import { Xss } from '../../common/platform/xss.js';
 import { Keyserver } from '../../common/api/keyserver.js';
 import { WebmailCommon } from "../../common/webmail.js";
-import { Store } from '../../common/platform/store.js';
+import { Store, SendAsAlias } from '../../common/platform/store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
 export class GmailElementReplacer implements WebmailElementReplacer {
   private recipientHasPgpCache: Dict<boolean> = {};
-  private addresses: string[];
+  private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
   private acctEmail: string;
   private canReadEmails: boolean;
@@ -50,10 +50,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
   };
 
-  constructor(factory: XssSafeFactory, acctEmail: string, addresses: string[], canReadEmails: boolean, injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
+  constructor(factory: XssSafeFactory, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
+    injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
     this.factory = factory;
     this.acctEmail = acctEmail;
-    this.addresses = addresses;
+    this.sendAs = sendAs;
     this.canReadEmails = canReadEmails;
     this.injector = injector;
     this.gmailVariant = gmailVariant;
@@ -89,7 +90,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    const params: FactoryReplyParams = { subject, addresses: this.addresses, threadId, threadMsgId: threadId };
+    const params: FactoryReplyParams = { subject, sendAs: this.sendAs, threadId, threadMsgId: threadId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
@@ -107,7 +108,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const emailContainer of emailsEontainingPgpBlock) {
       $(emailContainer).addClass('evaluated');
       const senderEmail = this.getSenderEmail(emailContainer);
-      const isOutgoing = this.addresses.includes(senderEmail);
+      const isOutgoing = !!this.sendAs[senderEmail];
       const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
@@ -231,7 +232,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
     let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
-    const isOutgoing = this.addresses.includes(senderEmail);
+    const isOutgoing = !!this.sendAs[senderEmail];
     attsContainerInner = $(attsContainerInner);
     attsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let nRenderedAtts = attMetas.length;
@@ -426,7 +427,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
     return {
-      addresses: this.addresses,
+      sendAs: this.sendAs,
       threadId: this.determineThreadId(convoRootEl),
       threadMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),
     };

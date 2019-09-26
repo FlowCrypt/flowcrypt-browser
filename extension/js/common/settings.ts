@@ -3,8 +3,8 @@
 'use strict';
 
 import { Catch } from './platform/catch.js';
-import { Store } from './platform/store.js';
-import { Value, Str, Dict } from './core/common.js';
+import { Store, SendAsAlias } from './platform/store.js';
+import { Str, Dict } from './core/common.js';
 import { Ui, Env, UrlParams, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
@@ -20,11 +20,14 @@ declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
-  static fetchAcctAliasesFromGmail = async (acctEmail: string) => {
+  static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await Google.gmail.fetchAcctAliases(acctEmail);
-    return response.sendAs
-      .filter(alias => alias.isDefault || alias.verificationStatus === 'accepted')
-      .map(alias => alias.sendAsEmail);
+    const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
+    const result: Dict<SendAsAlias> = {};
+    for (const alias of validAliases) {
+      result[alias.sendAsEmail] = { name: alias.displayName, isPrimary: !!alias.isPrimary, isDefault: alias.isDefault };
+    }
+    return result;
   }
 
   static evalPasswordStrength = (passphrase: string) => {
@@ -109,11 +112,23 @@ export class Settings {
     }
   }
 
-  static refreshAcctAliases = async (acctEmail: string) => {
-    const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-    const all = Value.arr.unique(addresses.concat(acctEmail));
-    await Store.setAcct(acctEmail, { addresses: all });
-    return all;
+  static refreshAcctAliases = async (acctEmail: string): Promise<boolean> => {
+    const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+    const { sendAs: storedAliases, addresses: oldStoredAddresses } = (await Store.getAcct(acctEmail, ['sendAs', 'addresses']));
+    await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
+    if (!storedAliases) { // Aliases changed (it was previously undefined)
+      if (oldStoredAddresses) { // Temporary solution
+        return Object.keys(fetchedSendAs).sort().join(',') !== oldStoredAddresses.sort().join(',');
+      }
+      return true;
+    }
+    if (Settings.getDefaultEmailAlias(fetchedSendAs) !== Settings.getDefaultEmailAlias(storedAliases)) { // Changed (default email alias was changed)
+      return true;
+    }
+    if (Object.keys(fetchedSendAs).sort().join(',') !== Object.keys(storedAliases).sort().join(',')) { // Changed (added/removed email alias)
+      return true;
+    }
+    return false; // Nothing changed
   }
 
   static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {
@@ -365,6 +380,15 @@ export class Settings {
         ? Env.urlCreate(page, { acctEmail })
         : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
+  }
+
+  private static getDefaultEmailAlias(sendAs: Dict<SendAsAlias>) {
+    for (const key of Object.keys(sendAs)) {
+      if (sendAs[key] && sendAs[key].isDefault) {
+        return key;
+      }
+    }
+    return undefined;
   }
 
 }

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Subscription, ContactUpdate, DbContactObjArg } from '../../platform/store.js';
+import { Subscription, ContactUpdate, DbContactObjArg, SendAsAlias } from '../../platform/store.js';
 import { KeyInfo, Contact } from '../../core/pgp.js';
 import { ProviderContactsQuery, SendableMsg } from '../../api/email_provider_api.js';
 import { GmailRes } from '../../api/google.js';
@@ -10,11 +10,12 @@ import { ProgressCb, ChunkedCb } from '../../api/api.js';
 import { DeterminedMsgHeaders } from '../../../../chrome/elements/compose.js';
 import { Att } from '../../core/att.js';
 import { PubkeyResult } from './composer-types.js';
+import { Dict } from '../../core/common.js';
 
 export interface ComposerAppFunctionsInterface {
   canReadEmails: () => boolean;
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
-  storageGetAddresses: () => string[];
+  storageGetAddresses: () => Dict<SendAsAlias> | undefined;
   storageGetAddressesKeyserver: () => string[];
   storageEmailFooterGet: () => string | undefined;
   storageEmailFooterSet: (footer?: string) => Promise<void>;
@@ -41,7 +42,6 @@ export interface ComposerAppFunctionsInterface {
   renderAddPubkeyDialog: (emails: string[]) => void;
   renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
   renderHelpDialog: () => void;
-  renderSendingAddrDialog: () => void;
   factoryAtt: (att: Att, isEncrypted: boolean) => string;
   closeMsg: () => void;
   whenMasterPassphraseEntered: (secondsTimeout?: number) => Promise<string | undefined>;

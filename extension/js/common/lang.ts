@@ -85,5 +85,6 @@ export const Lang = { // tslint:disable-line:variable-name
     somethingWentWrongTryAgain: 'Something went wrong, please try again. If this happens again, please write us at human@flowcrypt.com to fix it. ',
     writeMeToFixIt: 'Email human@flowcrypt.com to get this resolved if it happens repeatedly. ',
     restartBrowserAndTryAgain: 'Unexpected error occured. Please restart your browser and try again. If this persists after a restart, please write us at human@flowcrypt.com.',
+    emailAliasChangedAskForReload: 'Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?'
   },
 };

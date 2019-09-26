@@ -98,7 +98,6 @@ body#settings a.action_remove:before { background-size: 100%; content:""; height
 body#settings .action_show:before { background-image: url("/img/svgs/contact__show-icon.svg"); left: 5px;}
 body#settings .action_change:before { background-image: url("/img/svgs/contact__edit-icon.svg"); }
 body#settings .action_remove:before { background-image: url("/img/svgs/contact__remove-icon.svg"); }
-body#settings > div#content.pubkeys .action_remove_alias { cursor: pointer; }
 body#settings > div#content.contacts #emails td:nth-child(2),
 body#settings > div#content.contacts #emails td:nth-child(3),
 body#settings > div#content.contacts #emails td:nth-child(4) { display: inline-block; height: 25px; width: 25px; }
@@ -118,7 +117,6 @@ body#settings #emails td { display: block; width: 100%; height: 100%; margin: 0 
 body#settings > div#content.contacts div.fix_container { display: none; }
 body#settings > div#content.contacts textarea.input_pubkey { width: 600px; height: 420px; font-size: 12px; padding: 8px; }
 body#settings > div#content.contacts iframe.pgp_block { width: 500px; height: 61px; margin-bottom: 0; border: none; }
-body#settings > div#content.contacts table#emails td .action_remove_alias { cursor: pointer; }
 
 
 body#settings > div#content.setup [id^="step_"] { animation: fadeIn .7s;}
@@ -387,7 +385,7 @@ table#compose th div.header > div.actions_container span:hover { opacity: 1 }
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 8px; background: none; outline: none; color: inherit;}
 table#compose td.input.show_send_from select#input_from { border: none; background: none; margin: -3px 4px 9px 4px; cursor: pointer;
-  margin-right: 36px; width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; outline: none; }
+  width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; outline: none; }
 .reply_box table#compose td.input.show_send_from select#input_from { margin-right: 4px; }
 table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; opacity: 0.4; margin-top: -5px;  cursor: pointer; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; }

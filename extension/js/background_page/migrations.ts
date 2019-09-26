@@ -4,7 +4,7 @@
 
 import { Catch } from '../common/platform/catch.js';
 import { Store } from '../common/platform/store.js';
-import { Value, Str } from '../common/core/common.js';
+import { Value } from '../common/core/common.js';
 import { Api } from '../common/api/api.js';
 import { Pgp } from '../common/core/pgp.js';
 import { Attester } from '../common/api/attester.js';
@@ -36,25 +36,23 @@ const updateAcctInfo = async (acctEmails: string[]) => {
 const accountUpdateStatusKeyserver = async (acctEmail: string) => { // checks which emails were registered on Attester
   const keyinfos = await Store.keysGet(acctEmail);
   const myLongids = keyinfos.map(ki => ki.longid);
-  const storage = await Store.getAcct(acctEmail, ['addresses', 'addresses_keyserver']);
-  if (storage.addresses && storage.addresses.length) {
-    const unique = Value.arr.unique(storage.addresses.map(a => a.toLowerCase().trim())).filter(a => a && Str.isEmailValid(a));
-    if (unique.length < storage.addresses.length) {
-      storage.addresses = unique;
-      await Store.setAcct(acctEmail, storage); // fix duplicate email addresses
-    }
-    try {
-      const lookupEmailsRes = await Attester.lookupEmails(storage.addresses);
-      const addressesKeyserver = [];
-      for (const email of Object.keys(lookupEmailsRes)) {
-        const result = lookupEmailsRes[email];
-        if (result && result.pubkey && myLongids.includes(String(await Pgp.key.longid(result.pubkey)))) {
-          addressesKeyserver.push(email);
+  const storage = await Store.getAcct(acctEmail, ['sendAs', 'addresses_keyserver']);
+  if (storage.sendAs) {
+    const addresses = Object.keys(storage.sendAs);
+    if (addresses.length) {
+      try {
+        const lookupEmailsRes = await Attester.lookupEmails(addresses);
+        const addressesKeyserver = [];
+        for (const email of Object.keys(lookupEmailsRes)) {
+          const result = lookupEmailsRes[email];
+          if (result && result.pubkey && myLongids.includes(String(await Pgp.key.longid(result.pubkey)))) {
+            addressesKeyserver.push(email);
+          }
         }
+        await Store.setAcct(acctEmail, { addresses_keyserver: addressesKeyserver });
+      } catch (e) {
+        reportSignificantErrs(e);
       }
-      await Store.setAcct(acctEmail, { addresses_keyserver: addressesKeyserver });
-    } catch (e) {
-      reportSignificantErrs(e);
     }
   }
 };

@@ -3,9 +3,9 @@
 'use strict';
 
 import { Catch, UnreportableError } from './platform/catch.js';
-import { Store, Subscription } from './platform/store.js';
+import { Store, Subscription, SendAsAlias } from './platform/store.js';
 import { Lang } from './lang.js';
-import { Value, Str } from './core/common.js';
+import { Value, Str, Dict } from './core/common.js';
 import { Att } from './core/att.js';
 import { BrowserMsg, Extension, BrowserWidnow } from './extension.js';
 import { Pgp, Pwd, PgpMsg } from './core/pgp.js';
@@ -1109,7 +1109,9 @@ export class Composer {
         await this.toggleFullScreen();
         this.S.cached('body').show();
       }));
-      this.renderSenderAliasesOptions();
+      if (this.app.storageGetAddresses()) {
+        this.renderSenderAliasesOptions(this.app.storageGetAddresses()!);
+      }
       this.setInputTextHeightManuallyIfNeeded();
     }
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
@@ -1129,13 +1131,13 @@ export class Composer {
   }
 
   private renderSenderAliasesOptionsToggle() {
-    const addresses = this.app.storageGetAddresses();
-    if (addresses.length > 1) {
+    const sendAs = this.app.storageGetAddresses();
+    if (sendAs && Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.S.cached('email-copy-actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
-        this.renderSenderAliasesOptions();
+        this.renderSenderAliasesOptions(sendAs);
         el.remove();
       }, this.getErrHandlers(`show sending address options`)));
     }
@@ -1152,19 +1154,17 @@ export class Composer {
     this.composeWindowIsMinimized = !this.composeWindowIsMinimized;
   }
 
-  private renderSenderAliasesOptions() {
-    const addresses = this.app.storageGetAddresses();
-    if (addresses.length > 1) {
+  private renderSenderAliasesOptions(sendAs: Dict<SendAsAlias>) {
+    let emailAliases = Object.keys(sendAs);
+    if (emailAliases.length > 1) {
       const inputAddrContainer = $('.recipients-inputs');
       inputAddrContainer.addClass('show_send_from');
-      let selectElHtml = '<select id="input_from" tabindex="1" data-test="input-from"></select>';
-      if (!this.urlParams.isReplyBox) {
-        selectElHtml += '<img id="input_from_settings" src="/img/svgs/settings-icon.svg" data-test="action-open-sending-address-settings" title="Settings">';
-      }
-      Xss.sanitizeAppend(inputAddrContainer, selectElHtml);
-      inputAddrContainer.find('#input_from_settings').click(Ui.event.handle(() => this.app.renderSendingAddrDialog(), this.getErrHandlers(`open sending address dialog`)));
+      Xss.sanitizeAppend(inputAddrContainer, '<select id="input_from" tabindex="1" data-test="input-from"></select>');
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
-      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), addresses.map(fmtOpt).join('')).change(() => this.composerContacts.updatePubkeyIcon());
+      emailAliases = emailAliases.sort((a, b) => {
+        return (sendAs[a].isDefault === sendAs[b].isDefault) ? 0 : sendAs[a].isDefault ? -1 : 1;
+      });
+      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.composerContacts.updatePubkeyIcon());
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
       }
@@ -1174,13 +1174,9 @@ export class Composer {
   private async checkEmailAliases() {
     if (!this.urlParams.isReplyBox) {
       try {
-        const addresses = Value.arr.unique((await Settings.fetchAcctAliasesFromGmail(this.urlParams.acctEmail)).concat(this.urlParams.acctEmail));
-        const storedAdresses = (await Store.getAcct(this.urlParams.acctEmail, ['addresses'])).addresses || [];
-        if (addresses.sort().join() !== storedAdresses.sort().join()) { // This way of comparation two arrays works only for not object arrays
-          await Store.setAcct(this.urlParams.acctEmail, { addresses });
-          if (await Ui.modal.confirm('Your email aliases on Gmail have refreshed since the last time you used FlowCrypt.\nReload the compose window now?')) {
-            window.location.reload();
-          }
+        const isRefreshed = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
+        if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
+          window.location.reload();
         }
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
@@ -1250,19 +1246,25 @@ export class Composer {
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
+    const { sendAs } = await Store.getAcct(this.urlParams.acctEmail, ['sendAs']);
     const addNameToEmail = async (emails: string[]): Promise<string[]> => {
       return await Promise.all(await emails.map(async email => {
-        const [contact] = await this.app.storageContactGet([email]);
-        return contact && contact.name ? `${contact.name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
+        let name: string | undefined;
+        if (sendAs && sendAs[email] && sendAs[email].name) {
+          name = sendAs[email].name!;
+        } else {
+          const [contact] = await this.app.storageContactGet([email]);
+          if (contact && contact.name) {
+            name = contact.name;
+          }
+        }
+        return name ? `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
       }));
     };
     msg.recipients.to = await addNameToEmail(msg.recipients.to || []);
     msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
     msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
-    const { full_name: name } = await Store.getAcct(this.urlParams.acctEmail, ['full_name']);
-    if (name) {
-      msg.from = `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${msg.from}>`;
-    }
+    msg.from = (await addNameToEmail([msg.from]))[0];
   }
 
   private hasValue(inputs: JQuery<HTMLElement>): boolean {

@@ -86,6 +86,13 @@ export type GlobalIndex = 'version' | 'account_emails' | 'errors' | 'settings_se
   'cryptup_account_email' | 'cryptup_account_uuid' | 'cryptup_account_subscription' | 'dev_outlook_allow' |
   'cryptup_subscription_attempt' | 'admin_codes';
 
+export type SendAsAlias = {
+  isPrimary: boolean;
+  isDefault?: boolean;
+  name?: string | null;
+  footer?: string;
+};
+
 export type AccountStore = {
   keys?: KeyInfo[];
   notification_setup_needed_dismissed?: boolean;
@@ -95,7 +102,8 @@ export type AccountStore = {
   google_token_scopes?: string[]; // these are actuall scope urls the way the provider expects them
   google_token_refresh?: string;
   hide_message_password?: boolean; // is global?
-  addresses?: string[];
+  sendAs?: Dict<SendAsAlias>;
+  addresses?: string[],
   addresses_keyserver?: string[];
   email_footer?: string | null;
   drafts_reply?: Dict<StoredReplyDraftMeta>;
@@ -119,8 +127,14 @@ export type AccountStore = {
   tmp_submit_all?: boolean;
 };
 
+export class AccountStoreExtension {
+  static getEmailAliasesIncludingPrimary(acct: string, sendAs: Dict<SendAsAlias> | undefined) {
+    return sendAs ? Object.keys(sendAs) : [acct];
+  }
+}
+
 export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'email_provider' | 'google_token_access' | 'google_token_expires' | 'google_token_scopes' |
-  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
+  'google_token_refresh' | 'hide_message_password' | 'addresses' | 'sendAs' | 'addresses_keyserver' | 'email_footer' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
   'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
   'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all';

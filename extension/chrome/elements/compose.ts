@@ -3,8 +3,8 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store, ContactUpdate, DbContactFilter } from '../../js/common/platform/store.js';
-import { Str } from '../../js/common/core/common.js';
+import { Store, ContactUpdate, DbContactFilter, AccountStoreExtension, SendAsAlias } from '../../js/common/platform/store.js';
+import { Str, Dict } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Ui, Env, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer.js';
@@ -45,7 +45,7 @@ Catch.try(async () => {
   const isReplyBox = !!threadId;
   let passphraseInterval: number;
 
-  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'addresses_keyserver', 'email_footer', 'email_provider',
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_footer', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const canReadEmail = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
   const tabId = await BrowserMsg.requiredTabId();
@@ -67,7 +67,8 @@ Catch.try(async () => {
       try {
         const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
         const gmailMsg = await Google.gmail.msgGet(acctEmail, thread.messages[thread.messages.length - 1].id, 'metadata');
-        Object.assign(replyParams, Google.determineReplyCorrespondents(acctEmail, storage.addresses || [], gmailMsg));
+        const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(acctEmail, storage.sendAs);
+        Object.assign(replyParams, Google.determineReplyCorrespondents(acctEmail, aliases, gmailMsg));
         replyParams.subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
         threadId = gmailMsg.threadId ? gmailMsg.threadId : threadId;
       } catch (e) {
@@ -231,7 +232,17 @@ Catch.try(async () => {
         return undefined;
       }
     },
-    storageGetAddresses: () => storage.addresses || [acctEmail],
+    storageGetAddresses: () => {
+      const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
+        const result: Dict<SendAsAlias> = {}; // Temporary Solution
+        for (let i = 0; i < arr.length; i++) {
+          const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === acctEmail }; // before first element was default
+          result[arr[i]] = alias;
+        }
+        return result;
+      };
+      return storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
+    },
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageEmailFooterGet: () => storage.email_footer || undefined,
     storageEmailFooterSet: async (footer: string | undefined) => {
@@ -345,7 +356,6 @@ Catch.try(async () => {
       }
     },
     renderHelpDialog: () => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/help.htm' }),
-    renderSendingAddrDialog: () => ($ as JQS).featherlight({ iframe: factory.srcSendingAddrDialog('compose'), iframeWidth: 490, iframeHeight: 500 }),
     closeMsg,
     factoryAtt: (att: Att, isEncrypted: boolean) => factory.embeddedAtta(att, isEncrypted),
     whenMasterPassphraseEntered: (secondsTimeout?: number): Promise<string | undefined> => {

@@ -16,27 +16,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
-    ava.default('compose - standalone - can set and remember default send address', testWithNewBrowser(async (t, browser) => {
-      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-      let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.changeDefSendingAddr(composePage, 'flowcrypt.compatibility@gmail.com');
-      await composePage.close();
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      let currentlySelectedFrom = await composePage.value('@input-from');
-      if (currentlySelectedFrom !== 'flowcrypt.compatibility@gmail.com') {
-        throw new Error('did not remember selected from addr: flowcrypt.compatibility@gmail.com');
-      }
-      await ComposePageRecipe.changeDefSendingAddr(composePage, 'flowcryptcompatibility@gmail.com');
-      await composePage.close();
-      composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      currentlySelectedFrom = await composePage.value('@input-from');
-      if (currentlySelectedFrom !== 'flowcryptcompatibility@gmail.com') {
-        throw new Error('did not remember selected from addr: flowcryptcompatibility@gmail.com');
-      }
-      await ComposePageRecipe.changeDefSendingAddr(composePage, 'flowcrypt.compatibility@gmail.com');
-      await composePage.close();
-    }));
-
     ava.default('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (t, browser) => {
       const k = Config.key('test.ci.compose');
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
