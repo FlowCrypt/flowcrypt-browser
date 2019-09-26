@@ -293,15 +293,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.close();
     }));
 
-    ava.default('compose[global:comaptibility] - loading drafts - new message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const appendUrl = 'draftId=r300954446589633295';
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
-      await composePage.click('@action-expand-cc-bcc-fields');
-      await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
-      const subjectElem = await composePage.waitAny('@input-subject');
-      expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
-      expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
-    }));
+    ava.default('compose[global:comaptibility] - loading drafts - new message, rendering cc/bcc and check if cc/bcc btns are hidden',
+      testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+        const appendUrl = 'draftId=r-8909860425873898730';
+        const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
+        await composePage.click('@action-expand-cc-bcc-fields');
+        await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
+        const subjectElem = await composePage.waitAny('@input-subject');
+        expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
+        expect(await composePage.read('@input-body')).to.equal('Testing Drafts (Do not delete)');
+        for (const elem of await composePage.target.$$('.email-copy-actions > span')) {
+          expect(await PageRecipe.getElementPropertyJson(elem, 'offsetHeight')).to.equal(0); // CC/BCC btn isn't visible
+        }
+      }));
 
     ava.default('compose[global:compatibility] - loading drafts - reply', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');

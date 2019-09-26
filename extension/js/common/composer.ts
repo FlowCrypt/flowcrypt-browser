@@ -71,7 +71,7 @@ export class Composer {
     input_addresses_container_inner: '#input_addresses_container > div:first',
     recipients_inputs: '#input_addresses_container input',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
-    email_copy_actions: '#input_addresses_container .email_copy_actions',
+    email_copy_actions: '#input_addresses_container .email-copy-actions',
     sending_options_container: 'div.sending-options-container'
   });
 
@@ -278,10 +278,7 @@ export class Composer {
       this.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
-      const msgMimeContent = await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
-      if (msgMimeContent) {
-        this.composerContacts.evaluateRecipients(this.getRecipients()).catch(Catch.reportErr);
-      }
+      await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
     } else {
       if (this.urlParams.isReplyBox) {
         const toAddress = this.urlParams.to && this.urlParams.to[0] && Str.parseEmail(this.urlParams.to[0]).email;
@@ -309,6 +306,7 @@ export class Composer {
     } else {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
+      await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
     this.initComposerPopover();
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
@@ -1137,7 +1135,7 @@ export class Composer {
     const sendAs = this.app.storageGetAddresses();
     if (sendAs && Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-      const inputAddrContainer = this.S.cached('email_copy_actions');
+      const inputAddrContainer = this.S.cached('email-copy-actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
         this.renderSenderAliasesOptions(sendAs);
