@@ -352,7 +352,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (
     t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
-      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, initialScript?: EvaluateFn } = {}
+      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
   ): Promise<ControllablePage> => {
     if (group === 'compatibility') { // More common accounts
       group = 'flowcrypt.compatibility@gmail.com';
@@ -363,16 +363,18 @@ export class ComposePageRecipe extends PageRecipe {
     const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
       options.initialScript);
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
-    if (!options.hasReplyPrompt) {
-      await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
-    } else {
-      if (options.skipClickPropt) {
-        await Util.sleep(2);
+    if (!options.skipValidation) {
+      if (!options.hasReplyPrompt) {
+        await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
       } else {
-        await composePage.waitAll(['@action-accept-reply-prompt']);
+        if (options.skipClickPropt) {
+          await Util.sleep(2);
+        } else {
+          await composePage.waitAll(['@action-accept-reply-prompt']);
+        }
       }
+      await composePage.waitForSelTestState('ready');
     }
-    await composePage.waitForSelTestState('ready');
     return composePage;
   }
 
@@ -394,7 +396,8 @@ export class ComposePageRecipe extends PageRecipe {
     return composeFrame;
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined) => {
+  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined,
+    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted') => {
     await Util.sleep(0.5);
     await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
     if (subject) {
@@ -405,6 +408,10 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
+    if (sendingType !== 'encrypted') { // Encrypted is by default
+      await composePageOrFrame.waitAndClick('@action-show-options-popover');
+      await composePageOrFrame.waitAndClick(`@action-choose-${sendingType}`);
+    }
     return { subject, body };
   }
 
@@ -428,7 +435,6 @@ export class ComposePageRecipe extends PageRecipe {
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
     if (password) {
       await composePage.waitAndType('@input-password', 'test-pass');
-      await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
     await composePage.waitAndClick('@action-send', { delay: 0.5 });
     await Promise.race([

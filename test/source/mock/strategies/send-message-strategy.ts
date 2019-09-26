@@ -5,6 +5,16 @@ import { PgpMsg } from "../../core/pgp.js";
 import { Buf } from '../../core/buf.js';
 import { Config } from '../../util/index.js';
 
+class PlainTextMessageTestStrategy implements ITestMsgStrategy {
+  private readonly expectedText = 'New Plain Message';
+
+  async test(mimeMsg: ParsedMail) {
+    if (!mimeMsg.text.includes(this.expectedText)) {
+      throw new HttpClientErr(`Error: Msg Text is not matching expected. Current: '${mimeMsg.text}', expected: '${this.expectedText}'`);
+    }
+  }
+}
+
 class IncludeQuotedPartTestStrategy implements ITestMsgStrategy {
   private readonly quotedContent: string = [
     'On 2019-06-14 at 23:24, flowcrypt.compatibility@gmail.com wrote:',
@@ -55,6 +65,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new IncludeQuotedPartTestStrategy();
     } else if (subject.includes('Testing CC And BCC')) {
       this.strategy = new NewMessageCCAndBCCTestStrategy();
+    } else if (subject.includes('New Plain Message')) {
+      this.strategy = new PlainTextMessageTestStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }

@@ -421,13 +421,13 @@ body#settings .settings-border .key_list {
 #settings.client > #banner > img { height: 32px; width: 32px; float: right; border-radius: 32px; margin-top: -6px; margin-left: 20px; }
 #settings.client > #banner > img.action_open_settings { cursor: pointer; }
 #settings.client > #banner > div.finish_session {
-  width: 32px;
   height: 32px;
   margin-top: -6px;
   float: right;
   margin-left: 20px;
   cursor: pointer;
 }
+#settings.client > #banner > div.finish_session img { height: 32px;}
 #settings.client .attachments { margin-top: 12px; }
 #settings.client .attachments span.pgp_attachment { float: none; margin: 0 16px 16px 0; display: inline-block; }
 #settings.client .action_see_original_message { display:none; text-transform: uppercase; font-size: 9.5px; color: white; background: #31A217; padding: 2px 3px 2px 3px; 

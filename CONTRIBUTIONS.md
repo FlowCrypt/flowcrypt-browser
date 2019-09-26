@@ -23,7 +23,7 @@ Font Awesome by Dave Gandy (http://fontawesome.io/icons/)
  - licencing as per their website
 
 flaticon.com
- - /img/svgs/signature.svg from http://www.freepik.com licensed CC 3.0 BY
+ - /img/svgs/signature-*.svg from http://www.freepik.com licensed CC 3.0 BY
 
 Anthony Maki (https://github.com/4cm4k1)
  - removing address aliases

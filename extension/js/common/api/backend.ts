@@ -45,7 +45,7 @@ export namespace BackendRes {
 
 export class Backend extends Api {
 
-  private static call = (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> => {
+  private static request = (path: string, vals: Dict<any>, fmt: ReqFmt = 'JSON', addHeaders: Dict<string> = {}): Promise<any> => {
     return Backend.apiCall(Backend.url('api'), path, vals, fmt, undefined, { 'api-version': '3', ...addHeaders });
   }
 
@@ -59,12 +59,12 @@ export class Backend extends Api {
     } as Dict<string>)[type];
   }
 
-  public static helpFeedback = (acctEmail: string, message: string): Promise<BackendRes.FcHelpFeedback> => Backend.call('help/feedback', {
+  public static helpFeedback = (acctEmail: string, message: string): Promise<BackendRes.FcHelpFeedback> => Backend.request('help/feedback', {
     email: acctEmail,
     message,
   })
 
-  public static helpUninstall = (email: string, client: string): Promise<unknown> => Backend.call('help/uninstall', {
+  public static helpUninstall = (email: string, client: string): Promise<unknown> => Backend.request('help/uninstall', {
     email,
     client,
     metrics: null, // tslint:disable-line:no-null-keyword
@@ -74,7 +74,7 @@ export class Backend extends Api {
     const authInfo = await Store.authInfo();
     const uuid = authInfo.uuid || await Pgp.hash.sha1UtfStr(Pgp.password.random());
     const account = authInfo.acctEmail || acctEmail;
-    const response = await Backend.call('account/login', {
+    const response = await Backend.request('account/login', {
       account,
       uuid,
       token: token || null, // tslint:disable-line:no-null-keyword
@@ -88,7 +88,7 @@ export class Backend extends Api {
 
   public static accountLoginWithOpenid = async (acctEmail: string, idToken: string): Promise<{ verified: boolean, subscription: SubscriptionInfo }> => {
     const uuid = await Pgp.hash.sha1UtfStr(Pgp.password.random());
-    const response = await Backend.call('account/login', {
+    const response = await Backend.request('account/login', {
       account: acctEmail,
       uuid,
       token: null, // tslint:disable-line:no-null-keyword
@@ -103,7 +103,7 @@ export class Backend extends Api {
     return { verified: true, subscription: response.subscription };
   }
 
-  public static accountCheck = (emails: string[]) => Backend.call('account/check', {
+  public static accountCheck = (emails: string[]) => Backend.request('account/check', {
     emails,
   }) as Promise<BackendRes.FcAccountCheck>
 
@@ -140,12 +140,12 @@ export class Backend extends Api {
 
   public static accountUpdate = async (profileUpdate: ProfileUpdate = {}): Promise<BackendRes.FcAccountUpdate> => {
     const { acctEmail: account, uuid } = await Store.authInfo();
-    return await Backend.call('account/update', { account, uuid, ...profileUpdate }) as BackendRes.FcAccountUpdate;
+    return await Backend.request('account/update', { account, uuid, ...profileUpdate }) as BackendRes.FcAccountUpdate;
   }
 
   public static accountSubscribe = async (product: string, method: string, paymentSourceToken?: string): Promise<BackendRes.FcAccountSubscribe> => {
     const authInfo = await Store.authInfo();
-    const response = await Backend.call('account/subscribe', {
+    const response = await Backend.request('account/subscribe', {
       account: authInfo.acctEmail,
       uuid: authInfo.uuid,
       method,
@@ -160,18 +160,18 @@ export class Backend extends Api {
     let response: BackendRes.FcMsgPresignFiles;
     const lengths = atts.map(a => a.length);
     if (!authMethod) {
-      response = await Backend.call('message/presign_files', {
+      response = await Backend.request('message/presign_files', {
         lengths,
       }) as BackendRes.FcMsgPresignFiles;
     } else if (authMethod === 'uuid') {
       const authInfo = await Store.authInfo();
-      response = await Backend.call('message/presign_files', {
+      response = await Backend.request('message/presign_files', {
         account: authInfo.acctEmail,
         uuid: authInfo.uuid,
         lengths,
       }) as BackendRes.FcMsgPresignFiles;
     } else {
-      response = await Backend.call('message/presign_files', {
+      response = await Backend.request('message/presign_files', {
         message_token_account: authMethod.account,
         message_token: authMethod.token,
         lengths,
@@ -183,7 +183,7 @@ export class Backend extends Api {
     throw new Error('Could not verify that all files were uploaded properly, please try again.');
   }
 
-  public static messageConfirmFiles = (identifiers: string[]): Promise<BackendRes.FcMsgConfirmFiles> => Backend.call('message/confirm_files', {
+  public static messageConfirmFiles = (identifiers: string[]): Promise<BackendRes.FcMsgConfirmFiles> => Backend.request('message/confirm_files', {
     identifiers,
   })
 
@@ -193,21 +193,21 @@ export class Backend extends Api {
     }
     const content = new Att({ name: 'cryptup_encrypted_message.asc', type: 'text/plain', data: Buf.fromUtfStr(encryptedDataArmored) });
     if (!authMethod) {
-      return await Backend.call('message/upload', { content }, 'FORM') as BackendRes.FcMsgUpload;
+      return await Backend.request('message/upload', { content }, 'FORM') as BackendRes.FcMsgUpload;
     } else {
       const authInfo = await Store.authInfo();
-      return await Backend.call('message/upload', { account: authInfo.acctEmail, uuid: authInfo.uuid, content }, 'FORM') as BackendRes.FcMsgUpload;
+      return await Backend.request('message/upload', { account: authInfo.acctEmail, uuid: authInfo.uuid, content }, 'FORM') as BackendRes.FcMsgUpload;
     }
   }
 
   public static messageToken = async (): Promise<BackendRes.FcMsgToken> => {
     const authInfo = await Store.authInfo();
-    return await Backend.call('message/token', { account: authInfo.acctEmail, uuid: authInfo.uuid }) as BackendRes.FcMsgToken;
+    return await Backend.request('message/token', { account: authInfo.acctEmail, uuid: authInfo.uuid }) as BackendRes.FcMsgToken;
   }
 
   public static messageExpiration = async (adminCodes: string[], addDays?: number): Promise<BackendRes.ApirFcMsgExpiration> => {
     const authInfo = await Store.authInfo();
-    return await Backend.call('message/expiration', {
+    return await Backend.request('message/expiration', {
       account: authInfo.acctEmail,
       uuid: authInfo.uuid,
       admin_codes: adminCodes,
@@ -215,7 +215,7 @@ export class Backend extends Api {
     }) as BackendRes.ApirFcMsgExpiration;
   }
 
-  public static messageReply = (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => Backend.call('message/reply', {
+  public static messageReply = (short: string, token: string, from: string, to: string, subject: string, message: string): Promise<unknown> => Backend.request('message/reply', {
     short,
     token,
     from,
@@ -224,22 +224,22 @@ export class Backend extends Api {
     message,
   })
 
-  public static messageContact = (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => Backend.call('message/contact', {
+  public static messageContact = (sender: string, message: string, messageToken: FcAuthToken): Promise<unknown> => Backend.request('message/contact', {
     message_token_account: messageToken.account,
     message_token: messageToken.token,
     sender,
     message,
   })
 
-  public static linkMessage = (short: string): Promise<BackendRes.FcLinkMsg> => Backend.call('link/message', {
+  public static linkMessage = (short: string): Promise<BackendRes.FcLinkMsg> => Backend.request('link/message', {
     short,
   })
 
-  public static linkMe = (alias: string): Promise<BackendRes.FcLinkMe> => Backend.call('link/me', {
+  public static linkMe = (alias: string): Promise<BackendRes.FcLinkMe> => Backend.request('link/me', {
     alias,
   })
 
-  public static retreiveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
+  public static retrieveBlogPosts = async (): Promise<BackendRes.FcBlogPost[]> => {
     return Api.ajax({ url: 'https://flowcrypt.com/feed', dataType: 'json' }, Catch.stackTrace()); // tslint:disable-line:no-direct-ajax
   }
 
