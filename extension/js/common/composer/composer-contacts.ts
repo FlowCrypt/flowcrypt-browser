@@ -546,11 +546,10 @@ export class ComposerContacts extends ComposerComponent {
     const container = element.parentElement!.parentElement!; // Get Container, e.g. '.input-container-cc'
     this.addedRecipients[index].element.remove();
     this.composer.resizeInput($(container).find('input'));
-    this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
-    this.updatePubkeyIcon();
-    console.log(this.composer.S.cached('input_addresses_container_outer').find(`.input-container-${this.addedRecipients[index].sendingType} input`));
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
+    this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
+    this.updatePubkeyIcon();
   }
 
   private refreshRecipients = async () => {

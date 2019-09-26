@@ -54,7 +54,7 @@
               <span class="recipients recipients-to"></span>
               <input id="input_to" spellcheck="false" tabindex="1" placeholder="Add Recipient" data-test="input-to"
                 data-sending-type="to" autocomplete="false" />
-              <span class="email_copy_actions" data-test="action_open_input">
+              <span class="email-copy-actions" data-test="action_open_input">
                 <span class="cc">cc</span>
                 <span class="bcc">bcc</span>
               </span>
@@ -118,10 +118,16 @@
       </tr>
       <tr class="bottom">
         <td class="bottom">
-          <div id="send_btn" class="button green" data-test="action-send" tabindex="6"><i class=""></i><span>Encrypt and
-              Send</span></div>
-          <button class="icon action_sign" data-test="action-switch-to-sign" tabindex="7"
-            title="Sign this message instead of encrypting it"><i alt="sign"></i></button>
+          <div class="sending-container">
+            <div class="sending-options-container">
+            </div>
+            <div id="send_btn" class="button green" tabindex="6">
+              <span class="btn-text" data-test="action-send"><i></i>Encrypt and Send</span>
+              <div class="action-show-options-popover" data-test="action-show-options-popover">
+                <div class="icon-chevron"></div>
+              </div>
+            </div>
+          </div>
           <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
               alt="Attach File"></div>
           <div id="send_btn_note"></div>

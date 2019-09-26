@@ -188,7 +188,7 @@ export class ComposerDraft extends ComposerComponent {
           await this.composer.renderReplyMsgComposeTable({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         } else {
           this.composer.composerContacts.addRecipients({ to: headers.to, cc: headers.cc, bcc: headers.bcc }).catch(Catch.reportErr);
-          await this.composer.composerContacts.setEmailsPreview(this.composer.getRecipients());
+          this.composer.composerContacts.showHideCcAndBccInputsIfNeeded();
         }
         if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
