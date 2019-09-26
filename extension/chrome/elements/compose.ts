@@ -3,8 +3,8 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
-import { Store, ContactUpdate, DbContactFilter, AccountStoreExtension } from '../../js/common/platform/store.js';
-import { Str } from '../../js/common/core/common.js';
+import { Store, ContactUpdate, DbContactFilter, AccountStoreExtension, SendAsAlias } from '../../js/common/platform/store.js';
+import { Str, Dict } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Ui, Env, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer.js';
@@ -232,7 +232,17 @@ Catch.try(async () => {
         return undefined;
       }
     },
-    storageGetAddresses: () => storage.sendAs,
+    storageGetAddresses: () => {
+      const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
+        const result: Dict<SendAsAlias> = {}; // Temporary Solution
+        for (let i = 0; i < arr.length; i++) {
+          const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === acctEmail }; // before first element was default
+          result[arr[i]] = alias;
+        }
+        return result;
+      };
+      return storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
+    },
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageEmailFooterGet: () => storage.email_footer || undefined,
     storageEmailFooterSet: async (footer: string | undefined) => {

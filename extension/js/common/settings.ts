@@ -4,7 +4,7 @@
 
 import { Catch } from './platform/catch.js';
 import { Store, SendAsAlias } from './platform/store.js';
-import { Str, Dict, Value } from './core/common.js';
+import { Str, Dict } from './core/common.js';
 import { Ui, Env, UrlParams, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
@@ -117,7 +117,7 @@ export class Settings {
     const { sendAs: storedAliases, addresses: oldStoredAddresses } = (await Store.getAcct(acctEmail, ['sendAs', 'addresses']));
     await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
     if (!storedAliases) { // Aliases changed (it was previously undefined)
-      if (oldStoredAddresses) {
+      if (oldStoredAddresses) { // Temporary solution
         return Object.keys(fetchedSendAs).sort().join(',') !== oldStoredAddresses.sort().join(',');
       }
       return true;
