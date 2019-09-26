@@ -274,10 +274,7 @@ export class Composer {
       this.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
-      const msgMimeContent = await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
-      if (msgMimeContent) {
-        this.composerContacts.evaluateRecipients(this.getRecipients()).catch(Catch.reportErr);
-      }
+      await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
     } else {
       if (this.urlParams.isReplyBox) {
         const toAddress = this.urlParams.to && this.urlParams.to[0] && Str.parseEmail(this.urlParams.to[0]).email;
@@ -305,6 +302,7 @@ export class Composer {
     } else {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
+      await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
