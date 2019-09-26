@@ -389,6 +389,23 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('compose[global:compatibility] - reply all - TO/CC/BCC when replying all', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = `threadId=16d6a6c2d6ae618f&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16d6a6c2d6ae618f`;
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-accept-reply-all-prompt');
+      await composePage.waitForSelTestState('ready'); // continue when all recipients get evaluated
+      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
+      for (const type of ['to', 'cc', 'bcc']) {
+        const container = (await composePage.waitAny(`@container-${type}`))!;
+        const recipients = await container.$$('.recipients > span');
+        expect(recipients.length).to.equal(2);
+        for (const recipient of recipients) {
+          const textContent = await PageRecipe.getElementPropertyJson(recipient, 'textContent');
+          expect(textContent.trim()).to.include('@flowcrypt.com');
+        }
+      }
+    }));
+
     ava.default('compose[global:compose] - standalone - send new plain message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', 'plain');

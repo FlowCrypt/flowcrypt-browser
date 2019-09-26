@@ -281,8 +281,7 @@ export class Composer {
       await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
     } else {
       if (this.urlParams.isReplyBox) {
-        const toAddress = this.urlParams.to && this.urlParams.to[0] && Str.parseEmail(this.urlParams.to[0]).email;
-        const recipients: Recipients = { to: toAddress ? [toAddress] : [], cc: this.urlParams.cc, bcc: this.urlParams.bcc };
+        const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable(recipients);
         } else {
