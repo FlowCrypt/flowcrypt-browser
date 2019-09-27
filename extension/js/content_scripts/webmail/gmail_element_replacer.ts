@@ -136,7 +136,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
         const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
         $(lastReplyBtn).addClass('inserted');
-        const element = $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last());
+        const element = $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last());  // xss-safe-factory
         if (isEncrypted) {
           element.click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
         } else {

@@ -629,8 +629,9 @@ export class ComposerContacts extends ComposerComponent {
     let processed = 0;
     while (container.width()! <= maxWidth && recipients.length >= processed + 1) {
       const recipient = recipients[processed];
-      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${recipient.element.getAttribute('title')}">${recipient.email}</span>`;
-      $(emailHtml).insertBefore(rest); // xss-direct
+      const escapedTitle = Xss.escape(recipient.element.getAttribute('title') || '');
+      const emailHtml = `<span class="email_address ${recipient.element.className}" title="${escapedTitle}">${Xss.escape(recipient.email)}</span>`;
+      $(emailHtml).insertBefore(rest); // xss-escaped
       processed++;
     }
     if (container.width()! > maxWidth) {
@@ -673,7 +674,7 @@ export class ComposerContacts extends ComposerComponent {
         return;
       }
       this.dragged.parentElement!.removeChild(this.dragged);
-      element.parentElement!.insertBefore(this.dragged, element);
+      element.parentElement!.insertBefore(this.dragged, element);  // xss-reinsert
       const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
       const sendingType = this.addedRecipients.find(r => r.element === element)!.sendingType;
       this.addedRecipients[draggableElementIndex].sendingType = sendingType;
@@ -692,7 +693,7 @@ export class ComposerContacts extends ComposerComponent {
       if (!element.parentElement) {
         return false;
       }
-      element.parentElement!.insertBefore(cursor, element);
+      element.parentElement!.insertBefore(cursor, element); // xss-reinsert
     } else {
       element.appendChild(cursor);
     }
