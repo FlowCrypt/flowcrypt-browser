@@ -251,7 +251,7 @@ export class Backend extends Api {
     }
     for (const i of items.keys()) {
       const fields = items[i].fields;
-      fields.file = new Att({ name: 'encrpted_attachment', type: 'application/octet-stream', data: items[i].att.getData() });
+      fields.file = new Att({ name: 'encrypted_attachment', type: 'application/octet-stream', data: items[i].att.getData() });
       promises.push(Api.apiCall(items[i].baseUrl, '', fields, 'FORM', {
         upload: (singleFileProgress: number) => {
           progress[i] = singleFileProgress;
