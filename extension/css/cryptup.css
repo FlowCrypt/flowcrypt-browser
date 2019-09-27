@@ -282,7 +282,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 #pgp_block input#answer { padding: 8px 8px; width: 232px; }
 #pgp_block #attachments { margin-top: 8px; }
 #pgp_block #attachments .attachment { background: #f8f8f8; border: 1px solid #ccc; margin-bottom: 8px; cursor: pointer; padding: 8px 8px; border-left: 4px solid #31A217;
-  margin-right: 12px; width: fit-content; height: 15px; }
+  margin-right: 12px; display: inline-block; height: 15px; }
 #pgp_block #attachments .attachment .file-download-right-click-link { font-weight: bold; display: flex; text-decoration: none; color: #31A217; }
 #pgp_block > .block_pubkey_full { display: none; }
 #pgp_block > .block_pubkey_outgoing { display: none; opacity: 0.5; }
