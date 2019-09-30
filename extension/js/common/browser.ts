@@ -503,6 +503,6 @@ export class Ui {
         popup: 'ui-toast',
         title: 'ui-toast-title'
       }
-    })
-  };
+    });
+  }
 }
