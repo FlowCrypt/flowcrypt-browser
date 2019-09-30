@@ -13,7 +13,7 @@ import { PubkeyResult } from './composer-types.js';
 import { Dict } from '../../core/common.js';
 
 export interface ComposerAppFunctionsInterface {
-  canReadEmails: () => boolean;
+  getScopes: () => { canReadEmails: boolean, canSearchContacts: boolean };
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => Dict<SendAsAlias> | undefined;
   storageGetAddressesKeyserver: () => string[];

@@ -47,7 +47,10 @@ Catch.try(async () => {
 
   const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_footer', 'email_provider',
     'hide_message_password', 'drafts_reply']);
-  const canReadEmail = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
+  const scopes = {
+    canReadEmails: GoogleAuth.hasReadScope(storage.google_token_scopes || []),
+    canSearchContacts: (storage.google_token_scopes || []).includes(GoogleAuth.OAUTH.scopes.contactsReadOnly)
+  };
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
   const storagePassphraseGet = async () => {
@@ -200,7 +203,7 @@ Catch.try(async () => {
     return { armoredPubkeys, emailsWithoutPubkeys };
   };
   const composer = new Composer({
-    canReadEmails: () => canReadEmail,
+    getScopes: () => scopes,
     doesRecipientHaveMyPubkey: async (theirEmailUnchecked: string): Promise<boolean | undefined> => {
       const theirEmail = Str.parseEmail(theirEmailUnchecked).email;
       if (!theirEmail) {
@@ -210,7 +213,7 @@ Catch.try(async () => {
       if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
         return true;
       }
-      if (!canReadEmail) {
+      if (!scopes.canReadEmails) {
         return undefined;
       }
       const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;

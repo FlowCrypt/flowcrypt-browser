@@ -31,7 +31,7 @@ Catch.try(async () => {
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   const appFunctions: ComposerAppFunctionsInterface = {
-    canReadEmails: () => false,
+    getScopes: () => ({ canReadEmails: false, canSearchContacts: false }),
     doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
     storageGetAddresses: () => undefined,
     storageGetAddressesKeyserver: () => [],
