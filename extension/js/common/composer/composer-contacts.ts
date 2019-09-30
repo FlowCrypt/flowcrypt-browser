@@ -200,7 +200,7 @@ export class ComposerContacts extends ComposerComponent {
       return true;
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      let prev = currentActive.prev();
+      let prev = currentActive.prev('.select_contact');
       if (!prev.length) {
         prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
       }
@@ -209,7 +209,7 @@ export class ComposerContacts extends ComposerComponent {
       return true;
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      let next = currentActive.next();
+      let next = currentActive.next('.select_contact');
       if (!next.length) {
         next = this.composer.S.cached('contacts').find('ul li.select_contact').first();
       }
@@ -300,6 +300,10 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
+      if (true) { // TODO: check if user added permision for fetching contacts from Gmail API
+        this.composer.S.cached('contacts')
+          .append('<div class="allow-google-contact-search"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>'); // xss-direct
+      }
       const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact');
       contactItems.first().addClass('active');
       contactItems.click(Ui.event.prevent('double', async (target: HTMLElement) => {
@@ -436,6 +440,7 @@ export class ComposerContacts extends ComposerComponent {
 
   public hideContacts = () => {
     this.composer.S.cached('contacts').css('display', 'none');
+    this.composer.S.cached('contacts').children().not('ul').remove();
   }
 
   public updatePubkeyIcon = (include?: boolean) => {
