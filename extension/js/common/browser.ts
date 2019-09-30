@@ -491,4 +491,18 @@ export class Ui {
     },
   };
 
+  public static toast = async (msg: string): Promise<void> => {
+    await Swal.fire({
+      toast: true,
+      title: msg,
+      showConfirmButton: false,
+      animation: false,
+      position: 'bottom',
+      timer: 2000,
+      customClass: {
+        popup: 'ui-toast',
+        title: 'ui-toast-title'
+      }
+    })
+  };
 }
