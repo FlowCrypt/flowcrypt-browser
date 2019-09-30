@@ -265,10 +265,10 @@ body#settings > div#content.account .level, body#settings > div#content.account 
   text-transform: capitalize; }
 
 
-body { font-family: arial,sans-serif; font-size: 12.8px; padding:0; margin: 0; word-wrap: break-word; }
+body { font-family: arial,sans-serif; font-size: 0.9rem; padding:0; margin: 0; word-wrap: break-word; }
 body#reply_message { overflow: hidden; }
 html {  padding:0; margin: 0; }
-table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: none; border-image-width: 0;
+table, tbody, tr, td { border-collapse: collapse; font-size: 1em; border: none; border-image-width: 0;
   -webkit-border-horizontal-spacing: 0; -webkit-border-vertical-spacing: 0; vertical-align: top; }
 
 .pgp_secure { background: white; border: 1px solid #f0f0f0; border-left: 4px solid #31A217;
@@ -313,11 +313,11 @@ table, tbody, tr, td { border-collapse: collapse; font-size: inherit; border: no
 
 table#compose { min-height: 260px; border-spacing: 0; border-collapse: collapse; width: 100%; background-color: white; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0; border: 1px solid #31A217; background-color: #31A217; }
-table#compose th div.header h1 { display: flex; align-items: center; margin: 0; font-size: 15px; font-weight: normal; color: #FFF; text-align: left; cursor: pointer; padding: 0 10px; flex-grow: 1; }
+table#compose th div.header h1 { display: flex; align-items: center; margin: 0; font-size: 1em; font-weight: normal; color: #FFF; text-align: left; cursor: pointer; padding: 0 10px; flex-grow: 1; }
 table#compose.sign th { background-color: #808080; border-color: #808080; }
 table#compose td.input { height: 36px; vertical-align: middle; }
 table#compose td.input .collapsed { padding: 8px; cursor: text; height: 18px; align-items: center; }
-table#compose td.input .collapsed .placeholder { color: #636c72; font-family: Arial, sans-serif; font-size: 13.333px; }
+table#compose td.input .collapsed .placeholder { color: #636c72; font-family: Arial, sans-serif; font-size: 1em; }
 table#compose td.input .collapsed .email_preview { display: inline-block; white-space: nowrap; }
 table#compose td.input .collapsed .email_preview .email_address { margin-right: 5px; padding: 2px 4px; color: #fff; border-radius: 4px; }
 table#compose td.input .collapsed .email_preview .rest { background-color: #f5f5f5; border: 1px solid; padding: 2px; border-radius: 4px; cursor: pointer; }
@@ -336,7 +336,7 @@ table#compose td.recipients-inputs { vertical-align: middle; }
 table#compose td.recipients-inputs > div#input_addresses_container { outline: none; }
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
 table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
-table#compose td.recipients-inputs > div#input_addresses_container div input { vertical-align: middle; height: 34px; }
+table#compose td.recipients-inputs > div#input_addresses_container div input { vertical-align: middle; height: 34px; font-size: 1em; font-family: Arial, sans-serif; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients > span { margin: 2px -4px 0 8px; display: inline-block; border-radius: 4px; position: relative;
   -webkit-transition: .25s; transition: .25s; padding: 2px 6px; top: 2px; }
 table#compose td.recipients-inputs > div#input_addresses_container div .recipients { height: auto; position: relative; cursor: move; }
@@ -383,8 +383,8 @@ table#compose th div.header > div.actions_container span.minimize_new_message{ w
 table#compose th div.header > div.actions_container span:hover { opacity: 1 }
 
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
-table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 8px; background: none; outline: none; color: inherit;}
-table#compose td.input.show_send_from select#input_from { border: none; background: none; margin: -3px 4px 9px 4px; cursor: pointer;
+table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 8px; font-size: 1em; background: none; outline: none; color: inherit; }
+table#compose td.input.show_send_from select#input_from { border: none; background: none; margin: -3px 4px 9px 4px; font-size: 1em; cursor: pointer;
   width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; outline: none; }
 .reply_box table#compose td.input.show_send_from select#input_from { margin-right: 4px; }
 table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; opacity: 0.4; margin-top: -5px;  cursor: pointer; }
@@ -393,16 +393,16 @@ table#compose tr.bottom { background-color: #f5f5f5; }
 table#compose td.bottom { padding: 7px 12px 1px 12px; height: 47px; border-top: 1px solid #cfcfcf;}
 table#compose td.bottom div.sending-container { position: relative; display: inline-block; }
 table#compose td.bottom div.sending-container div.sending-options-container { display: none; position: absolute; background-color: #fff; 
-  border: 1px solid #dadada; border-bottom: 0px; white-space: nowrap; width: 232px; box-sizing: border-box; z-index: 1; 
+  border: 1px solid #dadada; border-bottom: 0px; white-space: nowrap; box-sizing: border-box; z-index: 1; 
   box-shadow: 0px 0px 4px 0px rgba(0,0,0,0.20) }
 table#compose td.bottom div.sending-container.popover-opened div.sending-options-container { display: block;  }
 table#compose td.bottom div.sending-container div.sending-options-container div { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; cursor: pointer; }
 table#compose td.bottom div.sending-container div.sending-options-container div:hover { background-color: #eee; }
 table#compose td.bottom div.sending-container div.sending-options-container div:not(:last-child) { border-bottom: 1px solid #cfcfcf; }
-table#compose td.bottom div.sending-container div.sending-options-container div span.option-name img { height: 12px; margin-right: 12px; position: relative; top: 1px; }
-table#compose td.bottom div.sending-container div.sending-options-container div img.icon-tick { height: 10px; margin-left: 12px; }
+table#compose td.bottom div.sending-container div.sending-options-container div span.option-name img { height: 0.8em; margin-right: 12px; position: relative; top: 1px; }
+table#compose td.bottom div.sending-container div.sending-options-container div img.icon-tick { height: 0.8em; margin-left: 12px; }
 table#compose td.bottom div#send_btn { text-transform: initial; white-space: nowrap; width: 100%; box-sizing: border-box;
-  position: relative; top: -2px; font-weight: 600; font-size: 13px; border: unset; border-radius: 2px;
+  position: relative; top: -2px; font-weight: 600; font-size: 0.9em; border: unset; border-radius: 2px;
   -webkit-transition: .4s !important; transition: .4s !important; margin: 0; margin-right: 10px; padding: 0; display: flex; }
 table#compose td.bottom div#send_btn.gray span { cursor: default; }
 table#compose #send_btn:focus { border: unset !important; outline: none !important; box-shadow: unset !important; }
@@ -416,7 +416,7 @@ table#compose #send_btn.not-ready .action-show-options-popover { display: none; 
 table#compose #send_btn .action-show-options-popover div.icon-chevron { background-image: url('/img/svgs/chevron-left-white.svg'); background-size: contain; 
   background-repeat: no-repeat; height: 10px; transform: rotate(90deg); position: relative; top: 15px; opacity: 0.7 }
 table#compose td.bottom div.sending-container.popover-opened #send_btn .action-show-options-popover div.icon-chevron { transform: rotate(-90deg); top: 10px }
-table#compose td.bottom div#send_btn_note { display: inline-block; font-size: 12.8px; padding-left: 5px; opacity: 0.5; }
+table#compose td.bottom div#send_btn_note { display: inline-block; font-size: 0.8em; padding-left: 5px; opacity: 0.5; }
 table#compose td.bottom .delete-draft { width: 20px; height: 20px;}
 table#compose .bottom .icon { padding: 3px 4px; display: inline-block; border: 1px solid #f5f5f5; border-radius: 2px; opacity: 0.35; background: none; vertical-align: middle; -moz-user-focus: none; }
 table#compose .bottom .icon::-moz-focus-inner { border: 0; } /* remove dotted outline in Firefox */
