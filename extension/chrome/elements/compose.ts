@@ -49,7 +49,7 @@ Catch.try(async () => {
     'hide_message_password', 'drafts_reply']);
   const scopes = {
     canReadEmails: GoogleAuth.hasReadScope(storage.google_token_scopes || []),
-    canSearchContacts: (storage.google_token_scopes || []).includes(GoogleAuth.OAUTH.scopes.contactsReadOnly)
+    canSearchContacts: GoogleAuth.hasReadContactsScope(storage.google_token_scopes || [])
   };
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);

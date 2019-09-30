@@ -554,8 +554,7 @@ export class GoogleAuth {
       profile: 'https://www.googleapis.com/auth/userinfo.profile', // needed so that `name` is present in `id_token`, which is required for key-server auth when in use
       compose: 'https://www.googleapis.com/auth/gmail.compose',
       modify: 'https://www.googleapis.com/auth/gmail.modify',
-      contactsReadOnly: 'https://www.googleapis.com/auth/contacts.readonly',
-      contacts: 'https://www.google.com/m8/feeds/',
+      readContacts: 'https://www.googleapis.com/auth/contacts.readonly',
     },
     legacy_scopes: {
       read: 'https://www.googleapis.com/auth/gmail.readonly', // deprecated in favor of modify, which also includes read
@@ -564,9 +563,10 @@ export class GoogleAuth {
   };
 
   public static hasReadScope = (scopes: string[]) => scopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1 || scopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1;
+  public static hasReadContactsScope = (scopes: string[]) => scopes.includes(GoogleAuth.OAUTH.scopes.readContacts);
 
   public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
-    const { contacts, contactsReadOnly, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
+    const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
     if (group === 'openid') {
@@ -577,20 +577,13 @@ export class GoogleAuth {
         return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
       } else if (BUILD === 'enterprise') {
         // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read, contacts]; // enterprise expects their contact search to work properly
+        return [openid, email, profile, compose, read, readContacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${BUILD}`);
       }
     } else if (group === 'contacts') {
-      if (BUILD === 'consumer') {
-        // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read, contactsReadOnly]; // consumer may freak out that extension asks for their contacts early on
-      } else if (BUILD === 'enterprise') {
-        // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read, contacts, contactsReadOnly]; // enterprise expects their contact search to work properly
-      } else {
-        throw new Error(`Unknown build ${BUILD}`);
-      }
+      // todo - replace "read" with "modify" when approved by google
+      return [openid, email, profile, compose, read, readContacts];
     } else if (group === 'compose_only') {
       return [openid, email, profile, compose]; // consumer may freak out that the extension asks for read email permission
     } else {

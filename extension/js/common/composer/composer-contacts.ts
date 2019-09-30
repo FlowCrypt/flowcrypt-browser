@@ -234,11 +234,11 @@ export class ComposerContacts extends ComposerComponent {
       const contacts = await this.app.storageContactSearch(query);
       if (dbOnly || !this.composer.canReadEmails) {
         this.composer.debug(`searchContacts 1`);
-        this.renderSearchRes(input, contacts, query, () => this.searchContacts(input, dbOnly));
+        this.renderSearchRes(input, contacts, query);
       } else {
         this.composer.debug(`searchContacts 2`);
         this.contactSearchInProgress = true;
-        this.renderSearchRes(input, contacts, query, () => this.searchContacts(input, dbOnly));
+        this.renderSearchRes(input, contacts, query);
         this.composer.debug(`searchContacts 3`);
         this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
           this.composer.debug(`searchContacts 4`);
@@ -272,7 +272,7 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery, research: () => Promise<void>) => {
+  private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
     const renderableContacts = contacts.slice(0, 10);
     renderableContacts.sort((a, b) =>
       (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(8); // have pgp on top, no pgp bottom. Sort each groups by last used
@@ -304,19 +304,7 @@ export class ComposerContacts extends ComposerComponent {
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
       if (!this.canSearchContacts) { // TODO: check if user added permision for fetching contacts from Gmail API
-        this.composer.S.cached('contacts')
-          .append('<div class="allow-google-contact-search"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>'); // xss-direct
-        this.composer.S.cached('contacts').find('.allow-google-contact-search').on('click', Ui.event.handle(async () => {
-          const authResult = await GoogleAuth.newAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
-          if (authResult.result === 'Success') {
-            this.canSearchContacts = true;
-            this.hideContacts();
-            await research();
-          } else if (authResult.result !== 'Closed') {
-            // tslint:disable-next-line: max-line-length
-            await Ui.modal.error(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${authResult.result}] ${authResult.error}`);
-          }
-        }));
+        this.addBtnToAllowSearchContactsFromGmail(input);
       }
       const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact');
       contactItems.first().addClass('active');
@@ -349,6 +337,23 @@ export class ComposerContacts extends ComposerComponent {
     } else {
       this.hideContacts();
     }
+  }
+
+  private addBtnToAllowSearchContactsFromGmail = (input: JQuery<HTMLElement>) => {
+    this.composer.S.cached('contacts')
+      .append('<div class="allow-google-contact-search"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
+      .find('.allow-google-contact-search')
+      .on('click', Ui.event.handle(async () => {
+        const authResult = await GoogleAuth.newAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
+        if (authResult.result === 'Success') {
+          this.canSearchContacts = true;
+          this.hideContacts();
+          await this.searchContacts(input);
+        } else if (authResult.result !== 'Closed') {
+          // tslint:disable-next-line: max-line-length
+          await Ui.modal.error(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${authResult.result}] ${authResult.error}`);
+        }
+      }));
   }
 
   private selectContact = async (input: JQuery<HTMLElement>, email: string, fromQuery: ProviderContactsQuery) => {
