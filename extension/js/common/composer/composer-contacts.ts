@@ -125,9 +125,9 @@ export class ComposerContacts extends ComposerComponent {
       }
       this.composer.setInputTextHeightManuallyIfNeeded();
     });
-    this.composer.S.cached('input_to').on('focus', focusRecipients)
-    this.composer.S.cached('cc').on('focus', focusRecipients)
-    this.composer.S.cached('bcc').on('focus', focusRecipients)
+    this.composer.S.cached('input_to').on('focus', focusRecipients);
+    this.composer.S.cached('cc').on('focus', focusRecipients);
+    this.composer.S.cached('bcc').on('focus', focusRecipients);
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
