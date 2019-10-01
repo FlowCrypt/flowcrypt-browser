@@ -53,9 +53,10 @@ export class Composer {
     password_or_pubkey: '#password_or_pubkey_container',
     password_label: '.label_password',
     send_btn_note: '#send_btn_note',
-    send_btn_span: '#send_btn span',
     send_btn_i: '#send_btn i',
     send_btn: '#send_btn',
+    send_btn_text: '#send_btn_text',
+    toggle_send_options: '#toggle_send_options',
     icon_pubkey: '.icon.action_include_pubkey',
     icon_footer: '.icon.action_include_footer',
     icon_help: '.action_feedback',
@@ -345,7 +346,7 @@ export class Composer {
     const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
     this.encryptionType = encryptionType;
     this.addTickToPopover(elem);
-    this.S.cached('send_btn_span').text(elem.text());
+    this.S.cached('send_btn_text').text(elem.text());
     this.S.cached('title').text(Lang.compose.headers[encryptionType]);
     this.S.cached('compose_table')[method]('sign');
     this.S.now('attached_files')[method]('sign');
@@ -354,7 +355,7 @@ export class Composer {
     this.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  private openOrClosePopover = (event: JQuery.Event<HTMLElement, null>) => {
+  private toggleSendOptions = (event: JQuery.Event<HTMLElement, null>) => {
     event.stopPropagation();
     const sendingContainer = $('.sending-container');
     sendingContainer.toggleClass('popover-opened');
@@ -392,8 +393,8 @@ export class Composer {
         break;
     }
     const doReset = () => {
-      Xss.sanitizeRender(this.S.cached('send_btn_span'), `<i></i>${btnText}`);
-      this.S.cached('send_btn').removeClass('not-ready');
+      Xss.sanitizeRender(this.S.cached('send_btn_text'), `<i></i>${btnText}`);
+      this.S.cached('toggle_send_options').show();
     };
     if (typeof this.btnUpdateTimeout !== 'undefined') {
       clearTimeout(this.btnUpdateTimeout);
@@ -412,10 +413,10 @@ export class Composer {
     if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
-    if (this.BTN_READY_TEXTS.includes(this.S.now('send_btn_span').text().trim()) && recipients.length) {
+    if (this.BTN_READY_TEXTS.includes(this.S.now('send_btn_text').text().trim()) && recipients.length) {
       return; // all good
     }
-    if (this.S.now('send_btn_span').text().trim() === this.BTN_WRONG_ENTRY) {
+    if (this.S.now('send_btn_text').text().trim() === this.BTN_WRONG_ENTRY) {
       throw new ComposerUserError('Please re-enter recipients marked in red color.');
     }
     if (!recipients || !recipients.length) {
@@ -484,13 +485,13 @@ export class Composer {
 
   private extractProcessSendMsg = async () => {
     try {
-      this.S.cached('send_btn').addClass('not-ready');
+      this.S.cached('toggle_send_options').hide();
       const recipientElements = this.getRecipients();
       const recipients = this.mapRecipients(recipientElements);
       const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
       const plaintext = this.extractAsText('input_text');
       await this.throwIfFormNotReady(recipientElements);
-      this.S.now('send_btn_span').text('Loading');
+      this.S.now('send_btn_text').text('Loading');
       Xss.sanitizeRender(this.S.now('send_btn_i'), Ui.spinner('white'));
       this.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
@@ -511,17 +512,17 @@ export class Composer {
     } catch (e) {
       await this.handleSendErr(e);
     } finally {
-      this.S.cached('send_btn').removeClass('not-ready');
+      this.S.cached('toggle_send_options').show();
     }
   }
 
   private encryptSend = async (recipients: Recipients, armoredPubkeys: PubkeyResult[], subject: string, plaintext: string, pwd: Pwd | undefined, subscription: Subscription,
     signingPrv?: OpenPGP.key.Key) => {
-    this.S.now('send_btn_span').text('Encrypting');
+    this.S.now('send_btn_text').text('Encrypting');
     plaintext = await this.addReplyTokenToMsgBodyIfNeeded([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], subject, plaintext, pwd, subscription);
     const atts = await this.attach.collectEncryptAtts(armoredPubkeys.map(p => p.pubkey), pwd);
     if (atts.length && pwd) { // these will be password encrypted attachments
-      this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_span').text(this.BTN_SENDING), 500);
+      this.btnUpdateTimeout = Catch.setHandledTimeout(() => this.S.now('send_btn_text').text(this.BTN_SENDING), 500);
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       plaintext = this.addUploadedFileLinksToMsgBody(plaintext, atts);
       await this.doEncryptFmtSend(armoredPubkeys, pwd, plaintext, [], recipients, subject, subscription, attAdminCodes, signingPrv);
@@ -531,7 +532,7 @@ export class Composer {
   }
 
   private signSend = async (recipients: Recipients, subject: string, plaintext: string) => {
-    this.S.now('send_btn_span').text('Signing');
+    this.S.now('send_btn_text').text('Signing');
     const prv = await this.getDecryptedPrimaryPrvOrShowError();
     if (prv) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
@@ -549,14 +550,14 @@ export class Composer {
       const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
       const atts = await this.attach.collectAtts(); // todo - not signing attachments
       this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() }).catch(Catch.reportErr);
-      this.S.now('send_btn_span').text(this.BTN_SENDING);
+      this.S.now('send_btn_text').text(this.BTN_SENDING);
       const body = { 'text/plain': signedData };
       await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
     }
   }
 
   private plainSend = async (recipients: Recipients, subject: string, plaintext: string) => {
-    this.S.now('send_btn_span').text(this.BTN_SENDING);
+    this.S.now('send_btn_text').text(this.BTN_SENDING);
     const atts = await this.attach.collectAtts();
     const body = { 'text/plain': plaintext };
     await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.getSender(), recipients, subject, body, atts, this.urlParams.threadId));
@@ -607,7 +608,7 @@ export class Composer {
   private renderUploadProgress = (progress: number) => {
     if (this.attach.hasAtt()) {
       progress = Math.floor(progress);
-      this.S.now('send_btn_span').text(`${this.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
+      this.S.now('send_btn_text').text(`${this.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 
@@ -705,7 +706,7 @@ export class Composer {
     const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, signingPrv, pwd, data: Buf.fromUtfStr(text), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
     await this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() });
-    this.S.now('send_btn_span').text(this.BTN_SENDING);
+    this.S.now('send_btn_text').text(this.BTN_SENDING);
     if (pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
@@ -831,7 +832,7 @@ export class Composer {
     } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
       this.showMsgPwdUiAndColorBtn();
     } else if (this.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
-      this.S.now('send_btn_span').text(this.BTN_WRONG_ENTRY);
+      this.S.now('send_btn_text').text(this.BTN_WRONG_ENTRY);
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.S.cached('send_btn').removeClass('green').addClass('gray');
     } else {
@@ -1032,8 +1033,7 @@ export class Composer {
       }
     }));
     this.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composeWindowIsMinimized && this.extractProcessSendMsg()));
-    this.S.cached('send_btn_span').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
-    this.S.cached('send_btn').keypress(Ui.enter(() => this.extractProcessSendMsg()));
+    this.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.composerContacts.initActions();
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
@@ -1070,7 +1070,7 @@ export class Composer {
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
-    $('.action-show-options-popover').on('click', this.openOrClosePopover);
+    this.S.cached('toggle_send_options').on('click', this.toggleSendOptions);
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => {
       this.setInputTextHeightManuallyIfNeeded();
