@@ -14,6 +14,7 @@ const replaceables: { needle: RegExp, val: string }[] = [
   { needle: /\[BUILD_REPLACEABLE_VERSION\]/g, val: version },
   { needle: /\[BUILD_REPLACEABLE_GOOGLE_API_HOST\]/g, val: 'https://www.googleapis.com' },
   { needle: /\[BUILD_REPLACEABLE_GOOGLE_OAUTH_SCREEN_HOST\]/g, val: 'https://accounts.google.com' },
+  { needle: /\[BUILD_REPLACEABLE_GOOGLE_CONTACTS_API_HOST\]/g, val: 'https://www.google.com/m8/feeds/contacts' },
 ];
 
 const paths = [

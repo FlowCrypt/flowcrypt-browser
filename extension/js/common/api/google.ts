@@ -17,7 +17,7 @@ import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
-import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
+import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, GOOGLE_CONTACTS_API_HOST } from '../core/const.js';
 import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
 import { Xss } from '../platform/xss.js';
 
@@ -72,6 +72,22 @@ export namespace GmailRes { // responses
     email?: string, email_verified?: boolean;
   };
 
+  export type GoogleContacts = {
+    feed: {
+      entry?: {
+        gd$email: {
+          address: string,
+          primary: string
+        }[],
+        gd$name?: {
+          gd$fullName?: {
+            $t: string
+          }
+        }
+      }[]
+    }
+  };
+
 }
 
 export class Google extends EmailProviderApi {
@@ -100,6 +116,24 @@ export class Google extends EmailProviderApi {
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
+  }
+
+  public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) => {
+    progress = progress || {};
+    const method = 'GET';
+    const contentType = 'application/json; charset=UTF-8';
+    const url = `${GOOGLE_CONTACTS_API_HOST}/default/thin`;
+    const data = { 'alt': "json", 'q': query, 'v': '3.0', 'max-results': max, 'start-index': start };
+    const xhr = Api.getAjaxProgressXhrFactory(progress);
+    const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const contacts = await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
+      { xhr, url, method, data, headers, contentType, crossDomain: true, async: true }) as GmailRes.GoogleContacts;
+    return contacts.feed.entry && contacts.feed.entry
+      .filter(entry => !!entry.gd$email.find(email => email.primary === "true")) // find all entries that have primary email
+      .map(e => ({
+        email: e.gd$email.find(e => e.primary === "true")!.address,
+        name: e.gd$name && e.gd$name.gd$fullName && e.gd$name.gd$fullName.$t
+      }));
   }
 
   private static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
