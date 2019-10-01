@@ -47,7 +47,7 @@
       </tr>
       <tr>
         <td class="input recipients-inputs">
-          <div id="input_addresses_container" tabindex="0" style="display: none;">
+          <div id="input_addresses_container" class="invisible">
             <!-- to -->
             <div id="input-container-to" data-sending-type="to" data-test="container-to">
               <span class="recipients recipients-to"></span>
@@ -71,7 +71,7 @@
                 autocomplete="false" />
             </div>
           </div>
-          <div class="collapsed" data-test="action-expand-cc-bcc-fields" style="display: flex;">
+          <div id="recipients_placeholder" class="collapsed" data-test="action-expand-cc-bcc-fields" style="display: flex;">
             <span class="placeholder">Recipients</span>
             <div class="email_preview"></div>
           </div>

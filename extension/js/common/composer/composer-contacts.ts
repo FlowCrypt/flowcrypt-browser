@@ -107,14 +107,16 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.resizeComposeBox();
         this.composer.setInputTextHeightManuallyIfNeeded();
       }));
-    this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
-      target.style.display = 'none';
-      this.composer.S.cached('input_addresses_container_outer').css('display', 'block');
+    this.composer.S.cached('recipients_placeholder').on('click', Ui.event.handle((target) => {
+      this.composer.S.cached('input_to').focus();
+    }));
+    this.composer.S.cached('input_to').on('focus', Ui.event.handle(() => {
+      this.composer.S.cached('recipients_placeholder').hide();
+      this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
       this.composer.resizeComposeBox();
       if (this.urlParams.isReplyBox) {
         this.composer.resizeInput();
       }
-      this.composer.S.cached('input_to').focus();
       this.composer.setInputTextHeightManuallyIfNeeded();
     }));
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
@@ -611,13 +613,13 @@ export class ComposerContacts extends ComposerComponent {
   */
   public setEmailsPreview = async (recipients: RecipientElement[]): Promise<void> => {
     if (recipients.length) {
-      this.composer.S.cached('collapsed').find('.placeholder').css('display', 'none');
+      this.composer.S.cached('recipients_placeholder').find('.placeholder').css('display', 'none');
     } else {
-      this.composer.S.cached('collapsed').find('.placeholder').css('display', 'block');
-      this.composer.S.cached('collapsed').find('.email_preview').empty();
+      this.composer.S.cached('recipients_placeholder').find('.placeholder').css('display', 'block');
+      this.composer.S.cached('recipients_placeholder').find('.email_preview').empty();
       return;
     }
-    const container = this.composer.S.cached('collapsed').find('.email_preview');
+    const container = this.composer.S.cached('recipients_placeholder').find('.email_preview');
     if (recipients.find(r => r.status === RecipientStatuses.EVALUATING)) {
       container.append(`<span id="r_loader">Loading Reciepients ${Ui.spinner('green')}</span>`); // xss-direct
       await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
@@ -738,8 +740,8 @@ export class ComposerContacts extends ComposerComponent {
         return;
       }
       this.showHideCcAndBccInputsIfNeeded();
-      this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
-      this.composer.S.cached('collapsed').css('display', 'flex');
+      this.composer.S.cached('input_addresses_container_outer').addClass('invisible');
+      this.composer.S.cached('recipients_placeholder').css('display', 'flex');
       await this.setEmailsPreview(this.addedRecipients);
       this.hideContacts();
       this.composer.setInputTextHeightManuallyIfNeeded();

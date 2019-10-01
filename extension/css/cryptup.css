@@ -335,7 +335,7 @@ table#compose td.input .collapsed .email_preview .rest.no_pgp { border-color: #9
 table#compose td.input .collapsed .email_preview .email_address.no_pgp { background-color: #989898; }
 table#compose.sign td.input .collapsed .email_preview .email_address { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
 table#compose td.recipients-inputs { vertical-align: middle; }
-table#compose td.recipients-inputs > div#input_addresses_container { outline: none; }
+table#compose td.recipients-inputs > div#input_addresses_container.invisible { height: 0; overflow: hidden; }
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
 table#compose td.recipients-inputs > div#input_addresses_container div { width: 100%; overflow: hidden; cursor: text; }
 table#compose td.recipients-inputs > div#input_addresses_container div input { vertical-align: middle; height: 34px; font-size: 1em; font-family: Arial, sans-serif; }
