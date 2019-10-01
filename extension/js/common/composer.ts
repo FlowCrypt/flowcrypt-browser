@@ -968,7 +968,7 @@ export class Composer {
     this.S.cached('compose_table').css('display', 'none');
     this.S.cached('reply_msg_successful').find('div.replied_from').text(this.getSender());
     this.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
-    Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escape(this.extractAsText('input_text', 'SKIP-ADDONS')).replace(/\n/g, '<br>'));
+    Xss.sanitizeRender(this.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escapeTextAsRenderableHtml(this.extractAsText('input_text', 'SKIP-ADDONS')));
     const emailFooter = this.app.storageEmailFooterGet();
     if (emailFooter) {
       const renderableEscapedEmailFooter = Xss.escape(emailFooter).replace(/\n/g, '<br>');
