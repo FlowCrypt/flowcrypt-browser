@@ -387,7 +387,7 @@ table#compose th div.header > div.actions_container span:hover { opacity: 1 }
 table#compose td { border: 1px solid #cfcfcf; border-top: none;  margin: 0; }
 table#compose td input { border: none;  height: 100%; width:100%; margin: 0; padding: 8px; font-size: 1em; background: none; outline: none; color: inherit; }
 table#compose td.input.show_send_from select#input_from { border: none; background: none; margin: -3px 4px 9px 4px; font-size: 1em; cursor: pointer;
-  width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; outline: none; }
+  width: -moz-available; width: -webkit-fill-available; -moz-appearance:none; }
 .reply_box table#compose td.input.show_send_from select#input_from { margin-right: 4px; }
 table#compose td.input.show_send_from #input_from_settings { position: absolute; right: 10px; width: 20px; opacity: 0.4; margin-top: -5px;  cursor: pointer; }
 table#compose td.input.show_send_from #input_from_settings:hover { opacity: 1; }
