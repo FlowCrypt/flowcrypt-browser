@@ -8,7 +8,7 @@ import { Str, Dict } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Ui, Env, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer.js';
-import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
+import { Api, ProgressCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { KeyInfo, Contact, Pgp, openpgp } from '../../js/common/core/pgp.js';
@@ -295,18 +295,6 @@ Catch.try(async () => {
     emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(acctEmail, draftId, mimeMsg),
     emailProviderDraftDelete: (draftId: string) => Google.gmail.draftDelete(acctEmail, draftId),
     emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Google.gmail.msgSend(acctEmail, message, renderUploadProgress),
-    emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
-      Google.gmail.searchContacts(acctEmail, query, knownContacts, multiCb).catch(e => {
-        if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-        } else if (Api.err.isNetErr(e)) {
-          // todo: render network error
-        } else {
-          Catch.reportErr(e);
-          // todo: render error
-        }
-      });
-    },
     emailProviderDetermineReplyMsgHeaderVariables: async (progressCb?: ProgressCb): Promise<DeterminedMsgHeaders | undefined> => {
       try {
         const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full', progressCb);

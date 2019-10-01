@@ -354,7 +354,7 @@ export class ComposerContacts extends ComposerComponent {
       .append('<div class="allow-google-contact-search"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
       .on('click', Ui.event.handle(async () => {
-        const authResult = await GoogleAuth.newAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
+        const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
         if (authResult.result === 'Success') {
           this.canSearchContacts = true;
           this.hideContacts();

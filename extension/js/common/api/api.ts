@@ -5,7 +5,6 @@
 // tslint:disable:no-direct-ajax
 
 import { Dict } from '../core/common.js';
-import { Contact } from '../core/pgp.js';
 import { Env } from '../browser.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
@@ -19,7 +18,6 @@ export type ReqFmt = 'JSON' | 'FORM' | 'TEXT';
 export type RecipientType = 'to' | 'cc' | 'bcc';
 type ResFmt = 'json' | 'xhr';
 export type ReqMethod = 'POST' | 'GET' | 'DELETE' | 'PUT';
-export type ProviderContactsResults = { new: Contact[], all: Contact[] };
 type RawAjaxError = {
   // getAllResponseHeaders?: () => any,
   // getResponseHeader?: (e: string) => any,
@@ -29,7 +27,6 @@ type RawAjaxError = {
   statusText?: string,
 };
 
-export type ChunkedCb = (r: ProviderContactsResults) => void;
 export type ProgressCb = (percent?: number, loaded?: number, total?: number) => void;
 export type ProgressCbs = { upload?: ProgressCb | null, download?: ProgressCb | null };
 

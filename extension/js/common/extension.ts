@@ -50,7 +50,7 @@ export namespace Bm {
   export type StoreAcctGet = { acctEmail: string, keys: AccountIndex[]; };
   export type StoreAcctSet = { acctEmail: string, values: AccountStore; };
   export type Inbox = { acctEmail?: string };
-  export type ReconnectAcctAuthPopup = { acctEmail: string };
+  export type ReconnectAcctAuthPopup = { acctEmail: string, scopes?: string[] };
   export type PgpKeyDetails = { pubkey: string };
   export type PgpMsgType = { rawBytesStr: string };
   export type PgpMsgDecrypt = PgpMsgMethod.Arg.Decrypt;
