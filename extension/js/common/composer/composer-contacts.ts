@@ -93,24 +93,30 @@ export class ComposerContacts extends ComposerComponent {
         target.focus();
       }
     }));
-    this.composer.S.cached('email_copy_actions').find('span')
-      .on('click', Ui.event.handle((target, event) => {
-        const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`div#input-container-${target.className}`);
-        const buttonsContainer = target.parentElement!;
-        const curentContainer = buttonsContainer.parentElement!;
-        const input = newContainer.find('input');
-        curentContainer.removeChild(buttonsContainer);
-        newContainer.append(buttonsContainer); // xss-safe-value
-        newContainer.css('display', 'block');
-        target.style.display = 'none';
-        input.focus();
-        this.composer.resizeComposeBox();
-        this.composer.setInputTextHeightManuallyIfNeeded();
-      }));
+    const handleCopyActionsClick = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
+      const buttonsContainer = target.parentElement!;
+      const curentContainer = buttonsContainer.parentElement!;
+      const input = newContainer.find('input');
+      curentContainer.removeChild(buttonsContainer);
+      newContainer.append(buttonsContainer); // xss-safe-value
+      newContainer.css('display', 'block');
+      target.style.display = 'none';
+      input.focus();
+      this.composer.resizeComposeBox();
+      this.composer.setInputTextHeightManuallyIfNeeded();
+    };
+    this.composer.S.cached('cc').on('click', Ui.event.handle((target) => {
+      const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
+      handleCopyActionsClick(target, newContainer);
+    }));
+    this.composer.S.cached('bcc').on('click', Ui.event.handle((target) => {
+      const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
+      handleCopyActionsClick(target, newContainer);
+    }));
     this.composer.S.cached('recipients_placeholder').on('click', Ui.event.handle((target) => {
       this.composer.S.cached('input_to').focus();
     }));
-    this.composer.S.cached('input_to').on('focus', Ui.event.handle(() => {
+    const focusRecipients = Ui.event.handle(() => {
       this.composer.S.cached('recipients_placeholder').hide();
       this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
       this.composer.resizeComposeBox();
@@ -118,7 +124,10 @@ export class ComposerContacts extends ComposerComponent {
         this.composer.resizeInput();
       }
       this.composer.setInputTextHeightManuallyIfNeeded();
-    }));
+    });
+    this.composer.S.cached('input_to').on('focus', focusRecipients)
+    this.composer.S.cached('cc').on('focus', focusRecipients)
+    this.composer.S.cached('bcc').on('focus', focusRecipients)
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -726,9 +735,9 @@ export class ComposerContacts extends ComposerComponent {
     const copyActionsContainer = this.composer.S.cached('email_copy_actions');
     copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
-    copyActionsContainer.find(`span.cc`).css('display', isThere.cc ? 'none' : '');
+    this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
-    copyActionsContainer.find(`span.bcc`).css('display', isThere.bcc ? 'none' : '');
+    this.composer.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(copyActionsContainer); // xss-safe-value
   }
 

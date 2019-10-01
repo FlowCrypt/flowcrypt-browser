@@ -72,6 +72,8 @@ export class Composer {
     recipients_inputs: '#input_addresses_container input',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
     email_copy_actions: '#input_addresses_container .email-copy-actions',
+    cc: '#cc',
+    bcc: '#bcc',
     sending_options_container: 'div.sending-options-container'
   });
 
