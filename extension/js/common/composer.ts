@@ -1097,10 +1097,6 @@ export class Composer {
     }
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
-        Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
-          this.S.cached('input_text').focus();
-          document.getElementById('input_text')!.focus(); // #input_text is in the template
-        }, 100);
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composerContacts.parseRenderRecipients(this.S.cached('input_to')); // this will force firefox to render them on load
@@ -1123,6 +1119,10 @@ export class Composer {
       }
       this.setInputTextHeightManuallyIfNeeded();
     }
+    Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
+      this.S.cached(this.urlParams.isReplyBox && this.urlParams.to.length ? 'input_text' : 'input_to').focus();
+      // document.getElementById('input_text')!.focus(); // #input_text is in the template
+    }, 100);
     Catch.setHandledTimeout(() => { // delay automatic resizing until a second later
       // we use veryslowspree for reply box because hand-resizing the main window will cause too many events
       // we use spree (faster) for new messages because rendering of window buttons on top right depend on it, else visible lag shows

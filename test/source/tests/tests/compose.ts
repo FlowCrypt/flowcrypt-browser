@@ -39,7 +39,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('[standalone] compose - can load contact based on name', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     }));
@@ -48,7 +47,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // composePage.enable_debugging('choose-contact');
-      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)'], { timeout: 30 });
       await composePage.waitAndClick('@action-select-contact(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });
@@ -134,7 +132,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await Util.sleep(1);
       // tslint:disable-next-line: no-unused-expression
       expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get a reply data for the message you are replying to.');
+      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
     }));
 
     ava.default('compose[global:compatibility] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
@@ -143,7 +141,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await Util.sleep(1);
       // tslint:disable-next-line: no-unused-expression
       expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get a reply data for the message you are replying to.');
+      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
     }));
 
     ava.default('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
@@ -248,11 +246,11 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default.only('compose[global:compatibility] - reply - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
-      await ComposePageRecipe.fillMsg(composePage, {}, undefined, 'signed');
+      await ComposePageRecipe.fillMsg(composePage, {}, undefined, 'signed', 'reply');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -275,7 +273,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
-      await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" });
+      await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" }, undefined, undefined, 'reply');
       await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
@@ -284,7 +282,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('compose[global:compose] - standalone - expired can still send', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'expired.on.attester@domain.com' }, 'Test Expired Email');
-      const expandContainer = await composePage.waitAny('@action-expand-cc-bcc-fields');
+      const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
       const recipient = await expandContainer.$('.email_preview span');
       expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('expired');
       await composePage.click('@action-send');
@@ -297,7 +295,6 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'draftId=r-8909860425873898730';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
-        await composePage.waitAndClick('@action-expand-cc-bcc-fields');
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
@@ -314,7 +311,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'r-1543309186581841785' } });
       };
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
-      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
       expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
@@ -373,7 +370,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt');
       await composePage.waitForSelTestState('ready'); // continue when all recipients get evaluated
-      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       for (const type of ['to', 'cc', 'bcc']) {
         const container = (await composePage.waitAny(`@container-${type}`))!;
         const recipients = await container.$$('.recipients > span');

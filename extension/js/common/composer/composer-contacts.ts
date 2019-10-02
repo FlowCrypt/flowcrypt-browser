@@ -105,11 +105,11 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.resizeComposeBox();
       this.composer.setInputTextHeightManuallyIfNeeded();
     };
-    this.composer.S.cached('cc').on('click', Ui.event.handle((target) => {
+    this.composer.S.now('cc').on('click', Ui.event.handle((target) => {
       const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
       handleCopyActionsClick(target, newContainer);
     }));
-    this.composer.S.cached('bcc').on('click', Ui.event.handle((target) => {
+    this.composer.S.now('bcc').on('click', Ui.event.handle((target) => {
       const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
       handleCopyActionsClick(target, newContainer);
     }));

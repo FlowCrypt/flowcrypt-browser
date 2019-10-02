@@ -365,7 +365,8 @@ export class ComposePageRecipe extends PageRecipe {
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!options.skipValidation) {
       if (!options.hasReplyPrompt) {
-        await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
+        await composePage.waitAll(['@input-body', '@input-subject', '@action-send']);
+        await composePage.waitAny(['@action-show-container-cc-bcc-buttons', '@container-cc-bcc-buttons']);
       } else {
         if (options.skipClickPropt) {
           await Util.sleep(2);
@@ -391,15 +392,20 @@ export class ComposePageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
-    await composeFrame.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
+    await composeFrame.waitAll(['@input-body', '@input-subject', '@action-send', '@container-cc-bcc-buttons']);
     await composeFrame.waitForSelTestState('ready');
     return composeFrame;
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined,
-    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted') => {
+  public static fillMsg = async (
+    composePageOrFrame: Controllable,
+    recipients: Recipients,
+    subject?: string | undefined,
+    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted',
+    windowType: 'new' | 'reply' = 'new'
+  ) => {
     await Util.sleep(0.5);
-    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients, windowType);
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
@@ -415,19 +421,20 @@ export class ComposePageRecipe extends PageRecipe {
     return { subject, body };
   }
 
-  private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients) => {
-    await composePageOrFrame.waitAndClick('@action-expand-cc-bcc-fields');
-    for (const key in recipients) {
-      if (recipients.hasOwnProperty(key)) {
-        const sendingType = key as RecipientType;
-        const email = recipients[sendingType] as string | undefined;
-        if (email) {
-          if (sendingType !== 'to') { // input-to is always visible
-            const elem = await composePageOrFrame.target.$('.email-copy-actions .' + sendingType);
-            await elem!.click();
-          }
-          await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+  private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
+    if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
+      await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
+    }
+    await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
+    for (const key of Object.keys(recipients)) {
+      const sendingType = key as RecipientType;
+      const email = recipients[sendingType] as string | undefined;
+      if (email) {
+        if (sendingType !== 'to') { // input-to is always visible
+          await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
         }
+        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+        await Util.sleep(1);
       }
     }
   }

@@ -174,7 +174,7 @@ export class BrowserPool {
     t.totalAttempts = consts.ATTEMPTS;
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
       t.attemptNumber = attemptNumber;
-      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts - 1})`;
+      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
       try {
         await browser.closeAllPages();
         try {
