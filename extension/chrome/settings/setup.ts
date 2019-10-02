@@ -323,6 +323,8 @@ Catch.try(async () => {
     }
   };
 
+  $('.action_send a').attr('href', Google.webmailUrl(acctEmail));
+
   $('.action_show_help').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail, tabId, '/chrome/settings/modules/help.htm')));
 
   $('.back').off().click(Ui.event.handle(() => {
@@ -429,10 +431,6 @@ Catch.try(async () => {
       importedKeysUniqueLongids = [];
       displayBlock('step_1_easy_or_manual');
     }
-  }));
-
-  $('.action_send').click(Ui.event.handle(() => {
-    window.location.href = Google.webmailUrl(acctEmail);
   }));
 
   $('.action_account_settings').click(Ui.event.handle(() => {
