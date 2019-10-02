@@ -132,7 +132,15 @@ abstract class ControllableBase {
       throw Error(`Element not found: ${selector}`);
     }
     this.log(`click:4:${selector}`);
-    await e.click();
+    try {
+      await e.click();
+    } catch (e) {
+      if (e instanceof Error) {
+        e.stack += ` SELECTOR: ${selector}`;
+        await Util.sleep(60);
+      }
+      throw e;
+    }
     this.log(`click:5:${selector}`);
   }
 

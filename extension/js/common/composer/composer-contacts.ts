@@ -93,30 +93,41 @@ export class ComposerContacts extends ComposerComponent {
         target.focus();
       }
     }));
-    this.composer.S.cached('email_copy_actions').find('span')
-      .on('click', Ui.event.handle((target, event) => {
-        const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`div#input-container-${target.className}`);
-        const buttonsContainer = target.parentElement!;
-        const curentContainer = buttonsContainer.parentElement!;
-        const input = newContainer.find('input');
-        curentContainer.removeChild(buttonsContainer);
-        newContainer.append(buttonsContainer); // xss-safe-value
-        newContainer.css('display', 'block');
-        target.style.display = 'none';
-        input.focus();
-        this.composer.resizeComposeBox();
-        this.composer.setInputTextHeightManuallyIfNeeded();
-      }));
-    this.composer.S.cached('collapsed').on('click', Ui.event.handle((target) => {
+    const handleCopyActionsClick = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
+      const buttonsContainer = target.parentElement!;
+      const curentContainer = buttonsContainer.parentElement!;
+      const input = newContainer.find('input');
+      curentContainer.removeChild(buttonsContainer);
+      newContainer.append(buttonsContainer); // xss-safe-value
+      newContainer.css('display', 'block');
       target.style.display = 'none';
-      this.composer.S.cached('input_addresses_container_outer').css('display', 'block');
+      input.focus();
+      this.composer.resizeComposeBox();
+      this.composer.setInputTextHeightManuallyIfNeeded();
+    };
+    this.composer.S.cached('cc').on('click', Ui.event.handle((target) => {
+      const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
+      handleCopyActionsClick(target, newContainer);
+    }));
+    this.composer.S.cached('bcc').on('click', Ui.event.handle((target) => {
+      const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`);
+      handleCopyActionsClick(target, newContainer);
+    }));
+    this.composer.S.cached('recipients_placeholder').on('click', Ui.event.handle((target) => {
+      this.composer.S.cached('input_to').focus();
+    }));
+    const focusRecipients = Ui.event.handle(() => {
+      this.composer.S.cached('recipients_placeholder').hide();
+      this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
       this.composer.resizeComposeBox();
       if (this.urlParams.isReplyBox) {
         this.composer.resizeInput();
       }
-      this.composer.S.cached('input_to').focus();
       this.composer.setInputTextHeightManuallyIfNeeded();
-    }));
+    });
+    this.composer.S.cached('input_to').on('focus', focusRecipients);
+    this.composer.S.cached('cc').on('focus', focusRecipients);
+    this.composer.S.cached('bcc').on('focus', focusRecipients);
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
@@ -611,13 +622,13 @@ export class ComposerContacts extends ComposerComponent {
   */
   public setEmailsPreview = async (recipients: RecipientElement[]): Promise<void> => {
     if (recipients.length) {
-      this.composer.S.cached('collapsed').find('.placeholder').css('display', 'none');
+      this.composer.S.cached('recipients_placeholder').find('.placeholder').css('display', 'none');
     } else {
-      this.composer.S.cached('collapsed').find('.placeholder').css('display', 'block');
-      this.composer.S.cached('collapsed').find('.email_preview').empty();
+      this.composer.S.cached('recipients_placeholder').find('.placeholder').css('display', 'block');
+      this.composer.S.cached('recipients_placeholder').find('.email_preview').empty();
       return;
     }
-    const container = this.composer.S.cached('collapsed').find('.email_preview');
+    const container = this.composer.S.cached('recipients_placeholder').find('.email_preview');
     if (recipients.find(r => r.status === RecipientStatuses.EVALUATING)) {
       container.append(`<span id="r_loader">Loading Reciepients ${Ui.spinner('green')}</span>`); // xss-direct
       await Promise.all(recipients.filter(r => r.evaluating).map(r => r.evaluating!));
@@ -724,9 +735,9 @@ export class ComposerContacts extends ComposerComponent {
     const copyActionsContainer = this.composer.S.cached('email_copy_actions');
     copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
-    copyActionsContainer.find(`span.cc`).css('display', isThere.cc ? 'none' : '');
+    this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
-    copyActionsContainer.find(`span.bcc`).css('display', isThere.bcc ? 'none' : '');
+    this.composer.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(copyActionsContainer); // xss-safe-value
   }
 
@@ -738,8 +749,8 @@ export class ComposerContacts extends ComposerComponent {
         return;
       }
       this.showHideCcAndBccInputsIfNeeded();
-      this.composer.S.cached('input_addresses_container_outer').css('display', 'none');
-      this.composer.S.cached('collapsed').css('display', 'flex');
+      this.composer.S.cached('input_addresses_container_outer').addClass('invisible');
+      this.composer.S.cached('recipients_placeholder').css('display', 'flex');
       await this.setEmailsPreview(this.addedRecipients);
       this.hideContacts();
       this.composer.setInputTextHeightManuallyIfNeeded();

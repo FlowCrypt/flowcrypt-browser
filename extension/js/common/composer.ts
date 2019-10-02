@@ -45,7 +45,7 @@ export class Composer {
     input_subject: '#input_subject',
     input_password: '#input_password',
     input_intro: '.input_intro',
-    collapsed: '.collapsed',
+    recipients_placeholder: '#recipients_placeholder',
     all_cells_except_text: 'table#compose > tbody > tr > :not(.text)',
     add_intro: '.action_add_intro',
     add_their_pubkey: '.add_pubkey',
@@ -73,6 +73,8 @@ export class Composer {
     recipients_inputs: '#input_addresses_container input',
     attached_files: 'table#compose #fineuploader .qq-upload-list li',
     email_copy_actions: '#input_addresses_container .email-copy-actions',
+    cc: '#cc',
+    bcc: '#bcc',
     sending_options_container: 'div.sending-options-container'
   });
 
@@ -1132,7 +1134,7 @@ export class Composer {
   private windowResized = async () => {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
-    if (this.S.cached('collapsed').is(':visible')) {
+    if (this.S.cached('recipients_placeholder').is(':visible')) {
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
   }
@@ -1236,7 +1238,7 @@ export class Composer {
     } else {
       this.S.cached('icon_popout').attr('src', '/img/svgs/maximize.svg');
     }
-    if (this.S.cached('collapsed').is(':visible')) {
+    if (this.S.cached('recipients_placeholder').is(':visible')) {
       await this.composerContacts.setEmailsPreview(this.composerContacts.getRecipients());
     }
     this.composeWindowIsMaximized = !this.composeWindowIsMaximized;
