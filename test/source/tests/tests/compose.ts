@@ -1,5 +1,5 @@
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe, PageRecipe } from '../page_recipe';
+import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe, PageRecipe, OauthPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import { Url, Controllable, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
@@ -407,6 +407,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         await composePage.click('@action-show-options-popover');
         expect(await element.$('img.icon-tick')).to.not.be.empty;
       }
+    }));
+
+    ava.default('compose[global:compose] - standalone - load contacts through API', testWithNewBrowser(async (t, browser) => {
+      await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await composePage.click('@action-expand-cc-bcc-fields');
+      await composePage.type('@input-to', 'contact');
+      let contacts = await composePage.waitAny('@container-contacts');
+      expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('No Contacts Found');
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.click('@action-auth-with-contacts-scope'), 'test.ci.compose@org.flowcrypt.com');
+      await OauthPageRecipe.google(t, oauthPopup, 'test.ci.compose@org.flowcrypt.com', 'approve');
+      contacts = await composePage.waitAny('@container-contacts');
+      expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('contact.test@flowcrypt.com');
     }));
 
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');

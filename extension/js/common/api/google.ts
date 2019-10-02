@@ -17,7 +17,7 @@ import { Att } from '../core/att.js';
 import { FormatError, Pgp } from '../core/pgp.js';
 import { tabsQuery, windowsCreate } from './chrome.js';
 import { Buf } from '../core/buf.js';
-import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST, GOOGLE_CONTACTS_API_HOST } from '../core/const.js';
+import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
 import { Xss } from '../platform/xss.js';
 
@@ -119,7 +119,7 @@ export class Google extends EmailProviderApi {
     progress = progress || {};
     const method = 'GET';
     const contentType = 'application/json; charset=UTF-8';
-    const url = `${GOOGLE_CONTACTS_API_HOST}/default/thin`;
+    const url = `${GOOGLE_API_HOST}/m8/feeds/contacts/default/thin`;
     const data = { 'alt': "json", 'q': query, 'v': '3.0', 'max-results': max, 'start-index': start };
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };

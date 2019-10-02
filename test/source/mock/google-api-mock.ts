@@ -59,6 +59,19 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },
+    '/m8/feeds/contacts/default/thin': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isGet(req) && acct === 'test.ci.compose@org.flowcrypt.com') {
+        return {
+          feed: {
+            entry: [
+              { gd$email: [{ address: 'contact.test@flowcrypt.com', primary: "true" }] }
+            ]
+          }
+        }
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
     '/gmail/v1/users/me/settings/sendAs': async (parsedReq, req) => {
       const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
       if (isGet(req)) {

@@ -351,7 +351,7 @@ export class ComposerContacts extends ComposerComponent {
       return;
     }
     this.composer.S.cached('contacts')
-      .append('<div class="allow-google-contact-search"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
+      .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
       .find('.allow-google-contact-search')
       .on('click', Ui.event.handle(async () => {
         const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
