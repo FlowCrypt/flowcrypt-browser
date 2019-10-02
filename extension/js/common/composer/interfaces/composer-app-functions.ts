@@ -6,7 +6,7 @@ import { Subscription, ContactUpdate, DbContactObjArg, SendAsAlias } from '../..
 import { KeyInfo, Contact } from '../../core/pgp.js';
 import { ProviderContactsQuery, SendableMsg } from '../../api/email_provider_api.js';
 import { GmailRes } from '../../api/google.js';
-import { ProgressCb } from '../../api/api.js';
+import { ProgressCb, ChunkedCb } from '../../api/api.js';
 import { DeterminedMsgHeaders } from '../../../../chrome/elements/compose.js';
 import { Att } from '../../core/att.js';
 import { PubkeyResult } from './composer-types.js';
@@ -35,6 +35,7 @@ export interface ComposerAppFunctionsInterface {
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<GmailRes.GmailDraftUpdate>;
   emailProviderDraftDelete: (draftId: string) => Promise<GmailRes.GmailDraftDelete>;
   emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<GmailRes.GmailMsgSend>;
+  emailProviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | DeterminedMsgHeaders>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
   renderFooterDialog: () => void;

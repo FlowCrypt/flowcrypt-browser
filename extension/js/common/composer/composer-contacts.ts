@@ -235,7 +235,8 @@ export class ComposerContacts extends ComposerComponent {
     if (substring) {
       const query = { substring };
       const contacts = await this.app.storageContactSearch(query);
-      if (!this.canSearchContacts || dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH) {
+      const canLoadContactsFromAPI = this.composer.canReadEmails || this.canSearchContacts;
+      if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
         this.composer.debug(`searchContacts 1`);
         this.renderSearchRes(input, contacts, query);
       } else {
@@ -243,36 +244,26 @@ export class ComposerContacts extends ComposerComponent {
         this.contactSearchInProgress = true;
         this.renderSearchRes(input, contacts, query);
         this.composer.debug(`searchContacts 3`);
-        const contactsGmail = await Google.contactsGet(this.urlParams.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
-        if (contactsGmail) {
-          const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
-          const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
-          if (mappedContactsFromGmail.length) {
-            for (const contact of mappedContactsFromGmail) {
-              const [inDb] = await this.app.storageContactGet([contact.email]);
-              this.composer.debug(`searchContacts 5`);
-              if (!inDb) {
-                await this.app.storageContactSave(await this.app.storageContactObj({
-                  email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
-                }));
-              } else if (!inDb.name && contact.name) {
-                const toUpdate = { name: contact.name };
-                await this.app.storageContactUpdate(contact.email, toUpdate);
-                this.composer.debug(`searchContacts 6`);
-              }
-            }
-            this.composer.debug(`searchContacts 7`);
-            await this.searchContacts(input, true);
-            this.composer.debug(`searchContacts 8`);
+        if (this.canSearchContacts) {
+          this.composer.debug(`searchContacts (Gmail API) 3`);
+          const contactsGmail = await Google.contactsGet(this.urlParams.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
+          if (contactsGmail) {
+            const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
+            const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
+            await this.renderAndAddToDBAPILoadedContacts(input, mappedContactsFromGmail);
           }
+        } else if (this.composer.canReadEmails) {
+          this.composer.debug(`searchContacts (Gmail Sent Messages) 3`);
+          this.app.emailProviderSearchContacts(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
         }
-        this.composer.debug(`searchContacts 9`);
+        this.composer.debug(`searchContacts 4`);
         this.renderSearchResultsLoadingDone();
         this.contactSearchInProgress = false;
+        this.composer.debug(`searchContacts 5`);
       }
     } else {
       this.hideContacts(); // todo - show suggestions of most contacted ppl etc
-      this.composer.debug(`searchContacts 10`);
+      this.composer.debug(`searchContacts 6`);
     }
   }
 
@@ -307,7 +298,7 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
-      if (!this.canSearchContacts && contacts.length < this.MAX_CONTACTS_LENGTH) {
+      if (!this.canSearchContacts) {
         if (!contacts.length) {
           this.composer.S.cached('contacts').find('ul').append('<li>No Contacts Found</li>'); // xss-direct
         }
@@ -483,6 +474,23 @@ export class ComposerContacts extends ComposerComponent {
       } else {
         this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
       }
+    }
+  }
+
+  private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
+    if (contacts.length) {
+      for (const contact of contacts) {
+        const [inDb] = await this.app.storageContactGet([contact.email]);
+        if (!inDb) {
+          await this.app.storageContactSave(await this.app.storageContactObj({
+            email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
+          }));
+        } else if (!inDb.name && contact.name) {
+          const toUpdate = { name: contact.name };
+          await this.app.storageContactUpdate(contact.email, toUpdate);
+        }
+      }
+      await this.searchContacts(input, true);
     }
   }
 
