@@ -432,7 +432,7 @@ Catch.try(async () => {
   }));
 
   $('.action_send').click(Ui.event.handle(() => {
-    window.location.href = Google.webmailUrl(acctEmail);
+    window.open(Google.webmailUrl(acctEmail), '_blank');
   }));
 
   $('.action_account_settings').click(Ui.event.handle(() => {
