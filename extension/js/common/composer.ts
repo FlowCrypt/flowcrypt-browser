@@ -1090,8 +1090,11 @@ export class Composer {
     }
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
-        this.S.cached('input_text').focus();
-        document.getElementById('input_text')!.focus(); // #input_text is in the template
+        // Chrome needs async focus (#2056)
+        setTimeout(() => {
+          this.S.cached('input_text').focus();
+          document.getElementById('input_text')!.focus(); // #input_text is in the template
+        }, 100)
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composerContacts.parseRenderRecipients(this.S.cached('input_to')); // this will force firefox to render them on load
@@ -1134,7 +1137,7 @@ export class Composer {
     const sendAs = this.app.storageGetAddresses();
     if (sendAs && Object.keys(sendAs).length > 1) {
       const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-      const inputAddrContainer = this.S.cached('email-copy-actions');
+      const inputAddrContainer = this.S.cached('email_copy_actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
         this.renderSenderAliasesOptions(sendAs);
