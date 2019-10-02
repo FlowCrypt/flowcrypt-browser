@@ -566,7 +566,7 @@ export class ComposerContacts extends ComposerComponent {
     $('body').attr('data-test-state', 'working');
     for (const recipient of recipients) {
       this.composer.debug(`evaluateRecipients.email(${String(recipient.email)})`);
-      this.composer.S.now('send_btn_span').text(this.BTN_LOADING);
+      this.composer.S.now('send_btn_text').text(this.BTN_LOADING);
       this.composer.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';

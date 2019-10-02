@@ -120,11 +120,12 @@
           <div class="sending-container">
             <div class="sending-options-container">
             </div>
-            <div id="send_btn" class="button green" tabindex="6">
-              <span class="btn-text" data-test="action-send"><i></i>Encrypt and Send</span>
-              <div class="action-show-options-popover" data-test="action-show-options-popover">
-                <div class="icon-chevron"></div>
-              </div>
+            <button id="send_btn" class="button green" tabindex="6">
+              <span id="send_btn_text" class="btn-text" data-test="action-send"><i></i>Encrypt and Send</span>
+            </button>
+            <button id="toggle_send_options" class="action-show-options-popover button green" title="More send options" tabindex="7" data-test="action-show-options-popover">
+              <div class="icon-chevron"></div>
+            </button>
             </div>
           </div>
           <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
