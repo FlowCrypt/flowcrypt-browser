@@ -1094,7 +1094,7 @@ export class Composer {
         setTimeout(() => {
           this.S.cached('input_text').focus();
           document.getElementById('input_text')!.focus(); // #input_text is in the template
-        }, 100)
+        }, 100);
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composerContacts.parseRenderRecipients(this.S.cached('input_to')); // this will force firefox to render them on load
