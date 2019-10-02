@@ -403,7 +403,7 @@ table#compose td.bottom div.sending-container div.sending-options-container div:
 table#compose td.bottom div.sending-container div.sending-options-container div:not(:last-child) { border-bottom: 1px solid #cfcfcf; }
 table#compose td.bottom div.sending-container div.sending-options-container div span.option-name img { height: 0.8em; margin-right: 12px; position: relative; top: 1px; }
 table#compose td.bottom div.sending-container div.sending-options-container div img.icon-tick { height: 0.8em; margin-left: 12px; }
-table#compose td.bottom div.sending-container .button.green { border-radius: 0; }
+table#compose td.bottom div.sending-container .button.green { padding: 3px 10px; border-radius: 0; }
 table#compose td.bottom div.sending-container .button.green::-moz-focus-inner { border: 0; }
 table#compose td.bottom #send_btn { text-transform: initial; white-space: nowrap; width: 100%; box-sizing: border-box;
   position: relative; font-weight: 600; font-size: 0.9em; transition: .4s !important; display: flex; }
