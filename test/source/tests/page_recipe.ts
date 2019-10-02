@@ -365,7 +365,8 @@ export class ComposePageRecipe extends PageRecipe {
     // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
     if (!options.skipValidation) {
       if (!options.hasReplyPrompt) {
-        await composePage.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
+        await composePage.waitAll(['@input-body', '@input-subject', '@action-send']);
+        await composePage.waitAny(['@action-show-container-cc-bcc-buttons', '@container-cc-bcc-buttons']);
       } else {
         if (options.skipClickPropt) {
           await Util.sleep(2);
@@ -391,7 +392,7 @@ export class ComposePageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
-    await composeFrame.waitAll(['@input-body', '@action-expand-cc-bcc-fields', '@input-subject', '@action-send']);
+    await composeFrame.waitAll(['@input-body', '@action-show-container-cc-bcc-buttons', '@input-subject', '@action-send']);
     await composeFrame.waitForSelTestState('ready');
     return composeFrame;
   }
@@ -422,7 +423,7 @@ export class ComposePageRecipe extends PageRecipe {
 
   private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
     if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
-      await composePageOrFrame.waitAndClick('@action-expand-cc-bcc-fields');
+      await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
     }
     await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
     for (const key of Object.keys(recipients)) {
