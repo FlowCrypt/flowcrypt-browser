@@ -403,10 +403,10 @@ table#compose td.bottom div.sending-container div.sending-options-container div:
 table#compose td.bottom div.sending-container div.sending-options-container div:not(:last-child) { border-bottom: 1px solid #cfcfcf; }
 table#compose td.bottom div.sending-container div.sending-options-container div span.option-name img { height: 0.8em; margin-right: 12px; position: relative; top: 1px; }
 table#compose td.bottom div.sending-container div.sending-options-container div img.icon-tick { height: 0.8em; margin-left: 12px; }
-table#compose td.bottom div.sending-container .button { padding: 3px 10px; border-radius: 0; }
+table#compose td.bottom div.sending-container .button { padding: 3px 10px; border-radius: 0; transition: background-color .4s; }
 table#compose td.bottom div.sending-container .button::-moz-focus-inner { border: 0; }
 table#compose td.bottom #send_btn { text-transform: initial; white-space: nowrap; width: 100%; box-sizing: border-box;
-  position: relative; font-weight: 600; font-size: 0.9em; transition: .4s !important; display: flex; }
+  position: relative; font-weight: 600; font-size: 0.9em; display: flex; }
 table#compose #send_btn i { font-size: 20px; }
 table#compose .button.green:hover, table#compose td.bottom div.sending-container.popover-opened > .action-show-options-popover { cursor: pointer; background-color: #5ab445; }
 table#compose .action-show-options-popover { min-width: auto; padding: 0 10px; }
