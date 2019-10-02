@@ -1090,8 +1090,7 @@ export class Composer {
     }
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
-        // Chrome needs async focus (#2056)
-        setTimeout(() => {
+        Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
           this.S.cached('input_text').focus();
           document.getElementById('input_text')!.focus(); // #input_text is in the template
         }, 100);
