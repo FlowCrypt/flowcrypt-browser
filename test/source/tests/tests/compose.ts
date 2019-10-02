@@ -40,8 +40,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await composePage.click('@action-expand-cc-bcc-fields');
-      await composePage.type('@input-to', 'human'); // test loading of contacts
-      await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
+      await composePage.type('@input-to', 'test'); // test loading of contacts
+      await composePage.waitAll(['@container-contacts', '@action-select-contact']);
     }));
 
     ava.default(`[standalone] compose - can choose found contact`, testWithNewBrowser(async (t, browser) => {
@@ -49,9 +49,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // composePage.enable_debugging('choose-contact');
       await composePage.click('@action-expand-cc-bcc-fields');
-      await composePage.type('@input-to', 'human'); // test loading of contacts
-      await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)'], { timeout: 30 });
-      await composePage.waitAndClick('@action-select-contact(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });
+      await composePage.type('@input-to', 'test'); // test loading of contacts
+      await composePage.waitAll(['@container-contacts', '@action-select-contact'], { timeout: 30 });
+      await composePage.waitAndClick('@action-select-contact', { retryErrs: true, confirmGone: true, delay: 0 });
       // todo - verify that the contact/pubkey is showing in green once clicked
       await composePage.click('@input-subject');
       await composePage.type('@input-subject', `Automated puppeteer test: pubkey chosen by clicking found contact`);
