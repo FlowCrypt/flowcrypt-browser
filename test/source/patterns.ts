@@ -41,7 +41,7 @@ const validateLine = (line: string, location: string) => {
     errsFound++;
   }
   if (line.match(/setInterval|setTimeout/) && !hasErrHandledComment(line)) {
-    console.error(`errors not handled in ${location}:\n${line}\n`);
+    console.error(`errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`);
     errsFound++;
   }
 };
