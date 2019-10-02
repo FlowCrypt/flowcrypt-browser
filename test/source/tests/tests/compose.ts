@@ -39,7 +39,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('[standalone] compose - can load contact based on name', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.click('@action-expand-cc-bcc-fields');
+      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)']);
     }));
@@ -48,7 +48,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       // composePage.enable_debugging('choose-contact');
-      await composePage.click('@action-expand-cc-bcc-fields');
+      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
       await composePage.type('@input-to', 'human'); // test loading of contacts
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)'], { timeout: 30 });
       await composePage.waitAndClick('@action-select-contact(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });
@@ -248,7 +248,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default('compose[global:compatibility] - reply - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose[global:compatibility] - reply - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
@@ -297,7 +297,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
         const appendUrl = 'draftId=r-8909860425873898730';
         const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl });
-        await composePage.click('@action-expand-cc-bcc-fields');
+        await composePage.waitAndClick('@action-expand-cc-bcc-fields');
         await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'], cc: ['flowcrypt.compatibility@gmail.com'], bcc: ['human@flowcrypt.com'] });
         const subjectElem = await composePage.waitAny('@input-subject');
         expect(await (await subjectElem.getProperty('value')).jsonValue()).to.equal('Test Draft - New Message');
@@ -314,7 +314,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         chrome.storage.local.set({ 'cryptup_flowcryptcompatibilitygmailcom_drafts_reply': { '16cfa9001baaac0a': 'r-1543309186581841785' } });
       };
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true, skipClickPropt: true, initialScript });
-      await composePage.click('@action-expand-cc-bcc-fields');
+      await composePage.waitAndClick('@action-expand-cc-bcc-fields');
       await expectRecipientElements(composePage, { to: ['flowcryptcompatibility@gmail.com'] });
       expect(await composePage.read('@input-body')).to.include('Test Draft Reply (Do not delete, tests is using this draft)');
     }));
