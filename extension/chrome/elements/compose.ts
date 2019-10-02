@@ -77,7 +77,7 @@ Catch.try(async () => {
         } else if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
         }
-        Xss.sanitizePrepend('#new_message', `<div>Cannot get a reply data for the message you are replying to. <a class="action_retry" href="#">Retry</a></div>`);
+        Xss.sanitizePrepend('#new_message', `<div>Cannot get reply data for the message you are replying to. <a class="action_retry" href="#">Retry</a></div>`);
         $('.action_retry').on('click', Ui.event.handle(async (elem) => {
           location.reload();
         }));

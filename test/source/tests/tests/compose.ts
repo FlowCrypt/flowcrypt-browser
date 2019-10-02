@@ -132,7 +132,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await Util.sleep(1);
       // tslint:disable-next-line: no-unused-expression
       expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get a reply data for the message you are replying to.');
+      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
     }));
 
     ava.default('compose[global:compatibility] - reply - thread id does not exist', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
@@ -141,7 +141,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await Util.sleep(1);
       // tslint:disable-next-line: no-unused-expression
       expect(await replyFrame.isElementPresent('.action_retry')).to.be.true;
-      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get a reply data for the message you are replying to.');
+      expect(await PageRecipe.getElementPropertyJson(await replyFrame.waitAny('#new_message'), 'textContent')).to.include('Cannot get reply data for the message you are replying to.');
     }));
 
     ava.default('compose[global:compose] - standalone - quote - can load quote from encrypted/text email', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {

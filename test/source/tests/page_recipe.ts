@@ -431,10 +431,10 @@ export class ComposePageRecipe extends PageRecipe {
       const email = recipients[sendingType] as string | undefined;
       if (email) {
         if (sendingType !== 'to') { // input-to is always visible
-          const elem = await composePageOrFrame.target.$('.email-copy-actions .' + sendingType);
-          await elem!.click();
+          await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
         }
         await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+        await Util.sleep(1);
       }
     }
   }
