@@ -396,10 +396,15 @@ export class ComposePageRecipe extends PageRecipe {
     return composeFrame;
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, recipients: Recipients, subject?: string | undefined,
-    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted') => {
+  public static fillMsg = async (
+    composePageOrFrame: Controllable,
+    recipients: Recipients,
+    subject?: string | undefined,
+    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted',
+    windowType: 'new' | 'reply' = 'new'
+  ) => {
     await Util.sleep(0.5);
-    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients);
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients, windowType);
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
@@ -415,19 +420,20 @@ export class ComposePageRecipe extends PageRecipe {
     return { subject, body };
   }
 
-  private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients) => {
-    await composePageOrFrame.waitAndClick('@action-expand-cc-bcc-fields');
-    for (const key in recipients) {
-      if (recipients.hasOwnProperty(key)) {
-        const sendingType = key as RecipientType;
-        const email = recipients[sendingType] as string | undefined;
-        if (email) {
-          if (sendingType !== 'to') { // input-to is always visible
-            const elem = await composePageOrFrame.target.$('.email-copy-actions .' + sendingType);
-            await elem!.click();
-          }
-          await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+  private static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
+    if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
+      await composePageOrFrame.waitAndClick('@action-expand-cc-bcc-fields');
+    }
+    await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
+    for (const key of Object.keys(recipients)) {
+      const sendingType = key as RecipientType;
+      const email = recipients[sendingType] as string | undefined;
+      if (email) {
+        if (sendingType !== 'to') { // input-to is always visible
+          const elem = await composePageOrFrame.target.$('.email-copy-actions .' + sendingType);
+          await elem!.click();
         }
+        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
       }
     }
   }
