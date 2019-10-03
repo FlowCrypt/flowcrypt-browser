@@ -146,10 +146,10 @@ Catch.try(async () => {
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await Store.keysGet(acctEmail), message });
     if (msgDiagnosis.found_match) {
       await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
-    } else if (msgDiagnosis.receivers === 1) {
-      await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend + btnHtml('account settings', 'gray2 settings_keyserver'), undefined);
     } else {
-      await renderErr(Lang.pgpBlock.yourKeyCantOpenImportIfHave + btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
+      const startText = msgDiagnosis.receivers === 1 ?
+        Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
+      await renderErr(startText + btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
         + btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + btnHtml('settings', 'gray2 settings_keyserver'), undefined);
     }
   };

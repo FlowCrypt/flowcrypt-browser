@@ -38,7 +38,7 @@ export const Lang = { // tslint:disable-line:variable-name
     cantOpen: 'Could not open this message with FlowCrypt.\n\n',
     yourKeyCantOpenImportIfHave: 'Your current key cannot open this message. If you have any other keys available, you should import them now.\n',
     encryptedCorrectlyFileBug: 'It\'s correctly encrypted for you. Please file a bug report if you see this on multiple messages. ',
-    singleSender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. ',
+    singleSender: 'Normally, messages are encrypted for at least two people (sender and the receiver). It seems the sender encrypted this message manually for themselves, and forgot to add you as a receiver. This sometimes happens when the sender is using OpenPGP software other than FlowCrypt, because they have to configure encryption manually, and mistakes can happen.',
     accountInfoOutdated: 'Some of your account information is incorrect. Update it to prevent future errors. ',
     wrongPubkeyUsed: 'It looks like it was encrypted for someone else. If you have more keys that may help decrypt this message, you can add them in the settings. ',
     askResend: 'Please ask them to send a new message.\n',
