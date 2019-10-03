@@ -51,10 +51,16 @@ Catch.try(async () => {
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');
 
-  $('.action_download_pubkey, .action_download_prv').click(Ui.event.prevent('double', (e) => {
-    const keyStr = e.className.includes('pubkey') ? primaryKi.public : primaryKi.private;
-    const keyAtt = new Att({ data: Buf.fromUtfStr(keyStr), type: 'application/pgp-keys', name: `0x${primaryKi.longid}.private.asc` });
-    Browser.saveToDownloads(keyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
+  $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
+    const name = `0x${primaryKi.longid}.asc`;
+    const pubKeyAtt = new Att({ data: Buf.fromUtfStr(primaryKi.public), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(pubKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
+  }));
+
+  $('.action_download_prv').click(Ui.event.prevent('double', () => {
+    const name = `flowcrypt-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}-0x${primaryKi.longid}.asc`;
+    const prvKeyAtt = new Att({ data: Buf.fromUtfStr(primaryKi.private), type: 'application/pgp-keys', name });
+    Browser.saveToDownloads(prvKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_show_other_type').click(Ui.event.handle(() => {
