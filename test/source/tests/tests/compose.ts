@@ -51,7 +51,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.waitAll(['@container-contacts', '@action-select-contact(human@flowcrypt.com)'], { timeout: 30 });
       await composePage.waitAndClick('@action-select-contact(human@flowcrypt.com)', { retryErrs: true, confirmGone: true, delay: 0 });
       // todo - verify that the contact/pubkey is showing in green once clicked
-      await composePage.click('@input-subject');
+      await composePage.waitAndClick('@input-subject');
       await composePage.type('@input-subject', `Automated puppeteer test: pubkey chosen by clicking found contact`);
       await composePage.type('@input-body', `This is an automated puppeteer test: pubkey chosen by clicking found contact`);
       await ComposePageRecipe.sendAndClose(composePage);
@@ -285,7 +285,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const expandContainer = await composePage.waitAny('@action-show-container-cc-bcc-buttons');
       const recipient = await expandContainer.$('.email_preview span');
       expect(await PageRecipe.getElementPropertyJson(recipient!, 'className')).to.include('expired');
-      await composePage.click('@action-send');
+      await composePage.waitAndClick('@action-send');
       await PageRecipe.waitForModalAndRespond(composePage, 'confirm', { contentToCheck: 'The public key of one of your recipients is expired.', clickOn: 'confirm' });
       await composePage.waitForSelTestState('closed', 20); // succesfully sent
       await composePage.close();
@@ -340,7 +340,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await settingsPage.waitAndClick('@input-step2bmanualenter-source-paste');
       await settingsPage.type('@input-step2bmanualenter-ascii-key', expiredKey);
       await settingsPage.type('@input-step2bmanualenter-passphrase', "qweasd");
-      await settingsPage.click('@input-step2bmanualenter-save');
+      await settingsPage.waitAndClick('@input-step2bmanualenter-save');
       await SettingsPageRecipe.waitForModalAndRespond(settingsPage, 'confirm', { contentToCheck: 'You are importing a key that is expired.', clickOn: 'confirm' });
       await settingsPage.close();
       // Try To send message with expired key
@@ -356,7 +356,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const updatePrvPage = await browser.newPage(t, urls[0]);
       await updatePrvPage.waitAndType('@input-prv-key', validKey);
       await updatePrvPage.type('@input-passphrase', 'qweasd');
-      await updatePrvPage.click('@action-update-key');
+      await updatePrvPage.waitAndClick('@action-update-key');
       await PageRecipe.waitForModalAndRespond(updatePrvPage, 'confirm', { clickOn: 'confirm' });
       await updatePrvPage.close();
       // Try send message again
@@ -401,7 +401,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
         expect(await element!.$('.option-name img')!).not.to.be.empty;
         await optionName.click();
         expect(elementText).to.include(await PageRecipe.getElementPropertyJson(await composePage.waitAny('@action-send'), 'textContent'));
-        await composePage.click('@action-show-options-popover');
+        await composePage.waitAndClick('@action-show-options-popover');
         expect(await element.$('img.icon-tick')).to.not.be.empty;
       }
     }));
@@ -409,19 +409,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('compose[global:compose] - standalone - load contacts through API', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       let composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.click('@action-expand-cc-bcc-fields');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       // first search, did not yet receive contacts scope
       await composePage.type('@input-to', 'contact');
       let contacts = await composePage.waitAny('@container-contacts');
       expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('No Contacts Found');
       // allow contacts scope, and expect that it will find a contact
-      const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.click('@action-auth-with-contacts-scope'), 'test.ci.compose@org.flowcrypt.com');
+      const oauthPopup = await browser.newPageTriggeredBy(t, () => composePage.waitAndClick('@action-auth-with-contacts-scope'), 'test.ci.compose@org.flowcrypt.com');
       await OauthPageRecipe.google(t, oauthPopup, 'test.ci.compose@org.flowcrypt.com', 'approve');
       contacts = await composePage.waitAny('@container-contacts');
       expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('contact.test@flowcrypt.com');
       // re-load the compose window, expect that it remembers scope was connected, and remembers the contact
       composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.click('@action-expand-cc-bcc-fields');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
       await composePage.type('@input-to', 'contact');
       contacts = await composePage.waitAny('@container-contacts');
       await composePage.notPresent('@action-auth-with-contacts-scope');
@@ -453,7 +453,7 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
   await composePage.waitAll(['@action-expand-quoted-text']);
   await Util.sleep(2); // wait for quote to be loaded and button activated
   expect(await composePage.read('@input-body')).to.not.include(textToInclude);
-  await composePage.click('@action-expand-quoted-text');
+  await composePage.waitAndClick('@action-expand-quoted-text');
   await composePage.waitTillGone(['@action-expand-quoted-text']);
   expect(await composePage.read('@input-body')).to.include(textToInclude);
 };

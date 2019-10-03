@@ -401,10 +401,10 @@ table#compose td.bottom div.sending-container div.sending-options-container { di
   box-shadow: 0px 0px 4px 0px rgba(0,0,0,0.20) }
 table#compose td.bottom div.sending-container.popover-opened div.sending-options-container { display: block;  }
 table#compose td.bottom div.sending-container div.sending-options-container div { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; cursor: pointer; }
-table#compose td.bottom div.sending-container div.sending-options-container div:hover { background-color: #eee; }
-table#compose td.bottom div.sending-container div.sending-options-container div:not(:last-child) { border-bottom: 1px solid #cfcfcf; }
-table#compose td.bottom div.sending-container div.sending-options-container div span.option-name img { height: 0.8em; margin-right: 12px; position: relative; top: 1px; }
-table#compose td.bottom div.sending-container div.sending-options-container div img.icon-tick { height: 0.8em; margin-left: 12px; }
+table#compose td.bottom div.sending-container div.sending-options-container .sending-option.active { background-color: #eee; }
+table#compose td.bottom div.sending-container div.sending-options-container .sending-option:not(:last-child) { border-bottom: 1px solid #cfcfcf; }
+table#compose td.bottom div.sending-container div.sending-options-container .sending-option span.option-name img { height: 0.8em; margin-right: 12px; position: relative; top: 1px; }
+table#compose td.bottom div.sending-container div.sending-options-container .sending-option img.icon-tick { height: 0.8em; margin-left: 12px; }
 table#compose td.bottom div.sending-container .button { padding: 3px 10px; border-radius: 0; transition: background-color .4s; }
 table#compose td.bottom div.sending-container .button::-moz-focus-inner { border: 0; }
 table#compose td.bottom #send_btn { text-transform: initial; white-space: nowrap; width: 100%; box-sizing: border-box;
