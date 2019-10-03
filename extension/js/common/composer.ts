@@ -1112,6 +1112,8 @@ export class Composer {
       }
       this.setInputTextHeightManuallyIfNeeded();
     }
+    // Firefox needs an iframe to be focused before focusing its content
+    BrowserMsg.send.focusFrame(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
       this.S.cached(this.urlParams.isReplyBox && this.urlParams.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
