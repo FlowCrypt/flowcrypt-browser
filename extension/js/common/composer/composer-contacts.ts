@@ -83,11 +83,13 @@ export class ComposerContacts extends ComposerComponent {
         target.blur();
       }
     }));
+    inputs.on('dragover', (e) => e.preventDefault());
     inputs.on('drop', Ui.event.handle((target) => {
       if (Catch.browser().name === 'firefox') {
         this.removeCursor(target.previousElementSibling as HTMLElement);
       }
       if (this.dragged) {
+        const previousInput = this.dragged.parentElement!.nextElementSibling!;
         this.dragged.parentElement!.removeChild(this.dragged);
         const sendingType = target.getAttribute('data-sending-type') as RecipientType;
         const jqueryTarget = $(target);
@@ -95,7 +97,7 @@ export class ComposerContacts extends ComposerComponent {
         const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
         this.addedRecipients[draggableElementIndex].sendingType = sendingType;
         this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.length - 1);
-        this.composer.resizeInput(jqueryTarget);
+        this.composer.resizeInput(jqueryTarget.add(previousInput));
         target.focus();
       }
     }));
@@ -708,9 +710,6 @@ export class ComposerContacts extends ComposerComponent {
       event.dataTransfer!.setData('text/plain', 'FlowCrypt Drag&Drop'); // Firefox requires to run the dataTransfer.setData function in the event.
       this.dragged = element;
     };
-    element.ondragend = () => {
-      this.dragged = undefined;
-    };
     element.ondragenter = () => {
       if (this.dragged !== element) {
         this.insertCursorBefore(element);
@@ -721,12 +720,17 @@ export class ComposerContacts extends ComposerComponent {
         this.removeCursor(element.parentElement!);
       }
     };
-    element.ondrop = (event) => {
+    element.ondragover = (ev) => {
+      ev.preventDefault();
+    }
+    element.ondrop = () => {
       this.removeCursor(element.parentElement!);
       // The position won't be changed so we don't need to do any manipulations
       if (!this.dragged || this.dragged === element || this.dragged.nextElementSibling === element) {
+        this.dragged = undefined;
         return;
       }
+      const previousInput = this.dragged.parentElement!.nextElementSibling!;
       this.dragged.parentElement!.removeChild(this.dragged);
       element.parentElement!.insertBefore(this.dragged, element);  // xss-reinsert
       const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
@@ -734,9 +738,10 @@ export class ComposerContacts extends ComposerComponent {
       this.addedRecipients[draggableElementIndex].sendingType = sendingType;
       // Sync the Recipients array with HTML
       this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.findIndex(r => r.element === element));
-      console.log(this.addedRecipients);
-      this.composer.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
+      const newInput = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`);
+      this.composer.resizeInput(newInput.add(previousInput));
       this.dragged = undefined;
+      newInput.focus();
     };
   }
 
