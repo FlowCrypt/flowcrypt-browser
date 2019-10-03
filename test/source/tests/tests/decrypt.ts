@@ -183,8 +183,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       await pubFrame.close();
     }));
 
-    ava.default('[standalone] - wrong message - checksum throws error', testWithNewBrowser(async (t, browser) => {
-      await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
+    ava.default('[standalone] - wrong message - checksum throws error', testWithSemaphoredBrowser('compatibility', async (t, browser) => {
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       const threadId = '15f7ffb9320bd79e';
       const expectedContent = 'Ascii armor integrity check on message failed';
