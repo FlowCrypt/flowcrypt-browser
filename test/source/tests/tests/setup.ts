@@ -60,9 +60,9 @@ export const defineSetupTests = (testVariant: TestVariant, testWithNewBrowser: T
 
     ava.todo('[standalone] setup - create key simple');
 
-    ava.skip('[standalone] setup - create key advanced - no backup', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] setup - create key advanced - no backup', testWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
-      await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: false });
+      await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: true });
     }));
 
     ava.default('[standalone] setup - recover with a pass phrase - skip remaining', testWithNewBrowser(async (t, browser) => {
