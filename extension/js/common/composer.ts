@@ -75,7 +75,7 @@ export class Composer {
     email_copy_actions: '#input_addresses_container .email-copy-actions',
     cc: '#cc',
     bcc: '#bcc',
-    sending_options_container: 'div.sending-options-container'
+    sending_options_container: '#sending-options-container'
   });
 
   private attach: AttUI;
@@ -322,7 +322,7 @@ export class Composer {
       { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/gmail.svg' },
     ];
     for (const item of this.popoverItems) {
-      const elem = $(`<div data-test="action-choose-${item.data}"><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
+      const elem = $(`<div class="sending-option" data-test="action-choose-${item.data}"><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
       elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
@@ -366,16 +366,54 @@ export class Composer {
         if (!this.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
           sendingContainer.removeClass('popover-opened');
           $('body').off('click');
+          this.S.cached('toggle_send_options').off('keydown');
         }
       }));
+      this.S.cached('toggle_send_options').on('keydown', Ui.event.handle(async (target, e) => this.sendingOptionsKeydownHandler(e)));
+      const sendingOptions = this.S.cached('sending_options_container').find('.sending-option');
+      sendingOptions.hover(function () {
+        sendingOptions.removeClass('active');
+        $(this).addClass('active');
+      });
     } else {
       $('body').off('click');
+      this.S.cached('toggle_send_options').off('keydown');
+    }
+  }
+
+  private sendingOptionsKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+    console.log('sendingOptionsKeydownHandler')
+    const sendingOptions = this.S.cached('sending_options_container').find('.sending-option');
+    const currentActive = sendingOptions.filter('.active');
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      this.toggleSendOptions(e);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      let prev = currentActive.prev();
+      if (!prev.length) {
+        prev = sendingOptions.last();
+      }
+      currentActive.removeClass('active');
+      prev.addClass('active');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      let next = currentActive.next();
+      if (!next.length) {
+        next = sendingOptions.first();
+      }
+      currentActive.removeClass('active');
+      next.addClass('active');
+    } else if (e.key === 'Enter') {
+      e.stopPropagation();
+      e.preventDefault();
+      currentActive.click();
     }
   }
 
   private addTickToPopover = (elem: JQuery<HTMLElement>) => {
     elem.parent().find('img.icon-tick').remove();
-    elem.append('<img class="icon-tick" src="/img/svgs/tick.svg" />'); // xss-direct
+    elem.append('<img class="icon-tick" src="/img/svgs/tick.svg" />').addClass('active'); // xss-direct
   }
 
   public resetSendBtn = (delay?: number) => {
