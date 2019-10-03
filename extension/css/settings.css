@@ -123,11 +123,11 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   height: 1px;
 }
 #settings-row .my-keys-row {
+  display: flex;
+  justify-content: center;
   margin-top: 60px;
-  padding-top: 30px;
-  margin-left: 0!important;
+  margin-left: 0 !important;
   text-indent: 0;
-  padding-left: 0!important;
 }
 
 #settings-row .my-keys-row .key_words, #settings-row .my-keys-row .key_id {
@@ -312,12 +312,13 @@ body#settings .basic {
   animation-fill-mode:forwards;
 }
 body#settings .settings-border {
+  position: relative;
   border: 1px solid rgba(0, 0, 0, .2);
   width: 47%;
   margin: 10px;
   height: 220px;
   text-align: left;
-  padding-right: 0;
+  padding: 0 15px;
 }
 body#settings .settings-border .row {
   padding: 10px 0;

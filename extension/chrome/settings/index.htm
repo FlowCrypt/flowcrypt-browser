@@ -150,7 +150,7 @@
       </div>
 
       <div class="row settings-icons-rows">
-        <div class="col-sm-offset-1 col-sm-2 col-xs-6">
+        <div class="col-sm-2 col-xs-6">
           <a href="#" class="show_settings_page" page="modules/my_key.htm" data-test="action-open-pubkey-page">
             <span class="box">
               <img src="/img/svgs/pub-key-icon.svg" class="pub-key-icon" alt="Your Public Keys">
@@ -182,6 +182,17 @@
         </div>
 
         <div class="col-sm-2 col-xs-6">
+          <a href="#" class="show_settings_page" page="modules/security.htm" data-test="action-open-security-page">
+            <span class="box">
+              <img src="/img/svgs/security-icon.svg" class="security-icon" alt="FlowCrypt Security and Settings">
+            </span>
+            <p class="text-center">
+              Security
+            </p>
+          </a>
+        </div>
+
+        <div class="col-sm-2 col-xs-6">
           <a href="#" class="show_settings_page" page="modules/backup.htm">
             <span class="box">
               <img src="/img/svgs/keys-icon.svg" class="keys-icon" alt="FlowCrypt, set up and backup your Keys">
@@ -207,7 +218,7 @@
       <!--<br/><b>Coming soon:</b> ..-->
       <!--</div>-->
       <div class="row my-keys-row">
-        <div class="col-xs-6 settings-border">
+        <div class="settings-border">
           <div class="row abs-row">
             <div class="col-sm-12" style="padding-left:0;">
               <img src="/img/svgs/key-icon.svg" class="key-icon" alt="key icon">
@@ -218,20 +229,6 @@
             </div>
           </div>
           <div class="key_list"></div>
-        </div>
-
-        <div class="col-xs-6 settings-border">
-          <div class="row abs-row">
-            <div class="col-sm-12" style="padding-left:0;">
-              <img src="/img/svgs/shield-icon.svg" class="shield-icon" alt="shield icon">
-              <span class="security-copy">Security</span>
-              <span class="text-right change-passphrase">
-                <a href="#" class="show_settings_page" page="/chrome/settings/modules/change_passphrase.htm">Change
-                  pass phrase</a>
-              </span>
-            </div>
-          </div>
-          <iframe id="security_module" style="border: none; width: 100%;"></iframe>
         </div>
       </div>
     </div>
