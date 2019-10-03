@@ -19,47 +19,59 @@
     <div class="line title_container">
       <h1>Security</h1>
     </div>
-    <div class="line change_passhrase_container">
-      <a href="#" class="action_change_passphrase" data-test="action-change-passphrase-begin">Change pass phrase</a>
+    <div class="line title_container">
+      <h3>Private key pass phrase</h3>
     </div>
-    <div class="line">
-      <a href="#" class="action_test_passphrase" data-test="action-test-passphrase-begin">Test my pass phrase</a>
+    <div class="settings-form-group">
+      <div class="line change_passhrase_container">
+        <a href="#" class="action_change_passphrase" data-test="action-change-passphrase-begin">Change pass phrase</a>
+      </div>
+      <div class="line">
+        <a href="#" class="action_test_passphrase" data-test="action-test-passphrase-begin">Test my pass phrase</a>
+      </div>
+      <div class="line passhprase_checkbox_container">
+        <label for="passphrase_to_open_email"><input type="checkbox" id="passphrase_to_open_email" data-test="input-toggle-require-pass-phrase">
+          Require pass phrase to open encrypted email</label>
+      </div>
+      <div class="line passphrase_entry_container" style="display: none;">
+        <input type="text" id="passphrase_entry" placeholder="Enter pass phrase to confirm" data-test="input-confirm-pass-phrase" />
+      </div>
+      <div class="line passphrase_entry_container" style="display: none;">
+        <div class="button green confirm_passphrase_requirement_change" data-test="action-confirm-pass-phrase-requirement-change">continue</div>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <div class="button gray cancel_passphrase_requirement_change">cancel</div>
+      </div>
     </div>
-    <div class="line">
-      Password encrypted messages expire in
-      <span class="expiration_container">
-        <span class="select_loader_container"></span>
-        <select class="default_message_expire" style="display: none" , disabled="disabled">
-          <option value="1">1</option>
-          <option value="3">3</option>
-          <option value="7">7</option>
-          <option value="30">30</option>
-          <option value="90">90</option>
-          <option value="365">365</option>
+    <div class="line title_container">
+      <h3>Password protected messages</h3>
+    </div>
+    <div class="settings-form-group">
+      <div class="line">
+        Password encrypted messages expire in
+        <span class="expiration_container">
+          <span class="select_loader_container"></span>
+          <select class="default_message_expire" style="display: none" , disabled="disabled">
+            <option value="1">1</option>
+            <option value="3">3</option>
+            <option value="7">7</option>
+            <option value="30">30</option>
+            <option value="90">90</option>
+            <option value="365">365</option>
+          </select>
+          days,
+        </span>
+      </div>
+      <div class="line">
+        Titled in
+        <select class="password_message_language">
+          <option value="EN">English</option>
+          <option value="DE">Deutsch</option>
         </select>
-        days,
-      </span>
-      titled in
-      <select class="password_message_language">
-        <option value="EN">English</option>
-        <option value="DE">Deutsch</option>
-      </select>
-    </div>
-    <div class="line">
-      <label for="hide_message_password"><input type="checkbox" id="hide_message_password"> Hide one-time message
-        passwords when composing</label>
-    </div>
-    <div class="line passhprase_checkbox_container">
-      <label for="passphrase_to_open_email"><input type="checkbox" id="passphrase_to_open_email" data-test="input-toggle-require-pass-phrase">
-        Require pass phrase to open encrypted email</label>
-    </div>
-    <div class="line passphrase_entry_container" style="display: none;">
-      <input type="text" id="passphrase_entry" placeholder="Enter pass phrase to confirm" data-test="input-confirm-pass-phrase" />
-    </div>
-    <div class="line passphrase_entry_container" style="display: none;">
-      <div class="button green confirm_passphrase_requirement_change" data-test="action-confirm-pass-phrase-requirement-change">continue</div>
-      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      <div class="button gray cancel_passphrase_requirement_change">cancel</div>
+      </div>
+      <div class="line">
+        <label for="hide_message_password"><input type="checkbox" id="hide_message_password"> Hide one-time message
+          passwords when composing</label>
+      </div>
     </div>
 
     <!-- <p>Passphrase strength: [**********]</p>
