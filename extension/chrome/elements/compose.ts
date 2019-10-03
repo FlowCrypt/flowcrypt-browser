@@ -300,10 +300,10 @@ Catch.try(async () => {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         } else if (Api.err.isNetErr(e)) {
-          // todo: render network error
+          Ui.toast(`Network erroc - cannot search contacts`).catch(Catch.reportErr);
         } else {
           Catch.reportErr(e);
-          // todo: render error
+          Ui.toast(`Error searching contacts: ${Api.err.eli5(e)}`).catch(Catch.reportErr);
         }
       });
     },
