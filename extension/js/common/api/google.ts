@@ -8,10 +8,10 @@ const BUILD = 'consumer'; // todo
 
 import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
-import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, ChunkedCb, ProviderContactsResults, AjaxError, RecipientType } from './api.js';
+import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, AjaxError, RecipientType, ChunkedCb, ProviderContactsResults } from './api.js';
 import { Env, Ui } from '../browser.js';
 import { Dict, Value, Str } from '../core/common.js';
-import { GoogleAuthWindowResult$result, BrowserWidnow, AddrParserResult, BrowserMsg } from '../extension.js';
+import { GoogleAuthWindowResult$result, BrowserMsg, AddrParserResult, BrowserWidnow } from '../extension.js';
 import { Mime, SendableMsgBody } from '../core/mime.js';
 import { Att } from '../core/att.js';
 import { FormatError, Pgp, Contact } from '../core/pgp.js';
@@ -72,6 +72,22 @@ export namespace GmailRes { // responses
     email?: string, email_verified?: boolean;
   };
 
+  export type GoogleContacts = {
+    feed: {
+      entry?: {
+        gd$email: {
+          address: string,
+          primary: string
+        }[],
+        gd$name?: {
+          gd$fullName?: {
+            $t: string
+          }
+        }
+      }[]
+    }
+  };
+
 }
 
 export class Google extends EmailProviderApi {
@@ -100,6 +116,24 @@ export class Google extends EmailProviderApi {
     const xhr = Api.getAjaxProgressXhrFactory(progress);
     const request = { xhr, url, method, data, headers, crossDomain: true, contentType, async: true };
     return await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail, request);
+  }
+
+  public static contactsGet = async (acctEmail: string, query?: string, progress?: ProgressCbs, max: number = 10, start: number = 0) => {
+    progress = progress || {};
+    const method = 'GET';
+    const contentType = 'application/json; charset=UTF-8';
+    const url = `${GOOGLE_API_HOST}/m8/feeds/contacts/default/thin`;
+    const data = { 'alt': "json", 'q': query, 'v': '3.0', 'max-results': max, 'start-index': start };
+    const xhr = Api.getAjaxProgressXhrFactory(progress);
+    const headers = { 'Authorization': await GoogleAuth.googleApiAuthHeader(acctEmail) };
+    const contacts = await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
+      { xhr, url, method, data, headers, contentType, crossDomain: true, async: true }) as GmailRes.GoogleContacts;
+    return contacts.feed.entry && contacts.feed.entry
+      .filter(entry => !!entry.gd$email.find(email => email.primary === "true")) // find all entries that have primary email
+      .map(e => ({
+        email: e.gd$email.find(e => e.primary === "true")!.address,
+        name: e.gd$name && e.gd$name.gd$fullName && e.gd$name.gd$fullName.$t
+      }));
   }
 
   private static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
@@ -359,8 +393,8 @@ export class Google extends EmailProviderApi {
       }
     },
     /**
-     * This will keep triggering callback with new emails as they are being discovered
-     */
+    * This will keep triggering callback with new emails as they are being discovered
+    */
     searchContacts: async (acctEmail: string, userQuery: string, knownContacts: Contact[], chunkedCb: ChunkedCb) => {
       let gmailQuery = `is:sent ${Google.GMAIL_USELESS_CONTACTS_FILTER} `;
       if (userQuery) {
@@ -554,7 +588,7 @@ export class GoogleAuth {
       profile: 'https://www.googleapis.com/auth/userinfo.profile', // needed so that `name` is present in `id_token`, which is required for key-server auth when in use
       compose: 'https://www.googleapis.com/auth/gmail.compose',
       modify: 'https://www.googleapis.com/auth/gmail.modify',
-      contacts: 'https://www.google.com/m8/feeds/',
+      readContacts: 'https://www.googleapis.com/auth/contacts.readonly',
     },
     legacy_scopes: {
       read: 'https://www.googleapis.com/auth/gmail.readonly', // deprecated in favor of modify, which also includes read
@@ -563,9 +597,10 @@ export class GoogleAuth {
   };
 
   public static hasReadScope = (scopes: string[]) => scopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1 || scopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1;
+  public static hasReadContactsScope = (scopes: string[]) => scopes.includes(GoogleAuth.OAUTH.scopes.readContacts);
 
   public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
-    const { contacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
+    const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);
     const read = GoogleAuth.OAUTH.legacy_scopes.read; // todo - remove as soon as "modify" is approved by google
     if (group === 'openid') {
@@ -576,13 +611,13 @@ export class GoogleAuth {
         return [openid, email, profile, compose, read]; // consumer may freak out that extension asks for their contacts early on
       } else if (BUILD === 'enterprise') {
         // todo - replace "read" with "modify" when approved by google
-        return [openid, email, profile, compose, read, contacts]; // enterprise expects their contact search to work properly
+        return [openid, email, profile, compose, read, readContacts]; // enterprise expects their contact search to work properly
       } else {
         throw new Error(`Unknown build ${BUILD}`);
       }
     } else if (group === 'contacts') {
       // todo - replace "read" with "modify" when approved by google
-      return [openid, email, profile, compose, read, contacts];
+      return [openid, email, profile, compose, read, readContacts];
     } else if (group === 'compose_only') {
       return [openid, email, profile, compose]; // consumer may freak out that the extension asks for read email permission
     } else {

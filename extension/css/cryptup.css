@@ -464,15 +464,18 @@ table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:
 body.full_window table#compose { position: relative;}
 
 div#contacts { display: none; position: absolute; background: white; top: 74px; border: 1px solid rgba(0,0,0,.2); left: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  padding: 6px 0; z-index: 1; }
+  z-index: 1; }
 body#reply_message div#contacts { top: 39px; }
-div#contacts ul { padding: 0; margin: 0; width: 320px; }
+div#contacts ul { padding: 0; margin: 0; width: 320px; padding: 6px 0; }
 div#contacts ul li { padding: 13px; height: 16px; list-style: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-div#contacts ul li img { padding-left: 6px; padding-right: 12px; height: 13px; position: relative; top: 1px; }
+div#contacts ul li img, div#contacts div.allow-google-contact-search img { padding-left: 6px; padding-right: 12px; height: 13px; position: relative; top: 1px; }
 div#contacts ul li:not(.loading) { cursor: pointer; }
-div#contacts ul li.active:not(.loading) { background: #eee; }
+div#contacts ul li.active:not(.loading) { background: #d6d6d6; }
 div#contacts ul li.auth_contacts { background: #fff !important; height: 24px; }
 div#contacts .button { padding: 4px 20px; }
+div#contacts div.allow-google-contact-search { background-color: #eee; border-top: 1px solid #cfcfcf; padding: 10px 13px; cursor: pointer; }
+div#contacts div.allow-google-contact-search:hover { background-color: #cfcfcf; }
+div#contacts div.allow-google-contact-search img { padding-right: 9px; }
 
 table#compose tr#password_or_pubkey_container { display: none; }
 table#compose tr#password_or_pubkey_container td { height: 66px; padding: 5px 14px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s; }

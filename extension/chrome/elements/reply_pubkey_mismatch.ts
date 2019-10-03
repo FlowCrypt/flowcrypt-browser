@@ -31,7 +31,7 @@ Catch.try(async () => {
 
   const att = Att.keyinfoAsPubkeyAtt(primaryKi);
   const appFunctions: ComposerAppFunctionsInterface = {
-    canReadEmails: () => false,
+    getScopes: () => ({ canReadEmails: false, canSearchContacts: false }),
     doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
     storageGetAddresses: () => undefined,
     storageGetAddressesKeyserver: () => [],
@@ -53,7 +53,7 @@ Catch.try(async () => {
     emailProviderDraftUpdate: () => Promise.resolve({}),
     emailProviderDraftDelete: () => Promise.resolve({}),
     emailProviderMsgSend: () => Promise.reject({ message: 'not implemented' }),
-    emailEroviderSearchContacts: (query, knownContacts, multiCb) => multiCb({ new: [], all: [] }),
+    emailProviderGuessContactsFromSentEmails: (query, knownContacts, multiCb) => multiCb({ new: [], all: [] }),
     emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
     emailProviderExtractArmoredBlock: () => Promise.resolve(''),
     renderReinsertReplyBox: () => Promise.resolve(),

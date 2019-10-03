@@ -21,7 +21,8 @@ const isPut = (r: IncomingMessage) => r.method === 'PUT';
 const isDelete = (r: IncomingMessage) => r.method === 'DELETE';
 const parseResourceId = (url: string) => url.match(/\/([a-zA-Z0-9\-_]+)(\?|$)/)![1];
 const allowedRecipients: Array<string> = ['flowcrypt.compatibility@gmail.com', 'human+manualcopypgp@flowcrypt.com',
-  'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com'];
+  'censored@email.com', 'test@email.com', 'human@flowcrypt.com', 'human+nopgp@flowcrypt.com', 'expired.on.attester@domain.com',
+  'test.ci.compose@org.flowcrypt.com'];
 
 export const startGoogleApiMock = async (logger: (line: string) => void) => {
   class LoggedApi<REQ, RES> extends Api<REQ, RES> {
@@ -56,6 +57,19 @@ export const startGoogleApiMock = async (logger: (line: string) => void) => {
       oauth.checkAuthorizationHeader(`Bearer ${access_token}`);
       if (isGet(req)) {
         return { issued_to: 'issued_to', audience: 'audience', scope: 'scope', expires_in: oauth.expiresIn, access_type: 'offline' };
+      }
+      throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
+    },
+    '/m8/feeds/contacts/default/thin': async (parsedReq, req) => {
+      const acct = oauth.checkAuthorizationHeader(req.headers.authorization);
+      if (isGet(req) && acct === 'test.ci.compose@org.flowcrypt.com') {
+        return {
+          feed: {
+            entry: [
+              { gd$email: [{ address: 'contact.test@flowcrypt.com', primary: "true" }] }
+            ]
+          }
+        }
       }
       throw new HttpClientErr(`Method not implemented for ${req.url}: ${req.method}`);
     },

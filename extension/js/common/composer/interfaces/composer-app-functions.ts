@@ -13,7 +13,7 @@ import { PubkeyResult } from './composer-types.js';
 import { Dict } from '../../core/common.js';
 
 export interface ComposerAppFunctionsInterface {
-  canReadEmails: () => boolean;
+  getScopes: () => { canReadEmails: boolean, canSearchContacts: boolean };
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => Dict<SendAsAlias> | undefined;
   storageGetAddressesKeyserver: () => string[];
@@ -35,7 +35,7 @@ export interface ComposerAppFunctionsInterface {
   emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Promise<GmailRes.GmailDraftUpdate>;
   emailProviderDraftDelete: (draftId: string) => Promise<GmailRes.GmailDraftDelete>;
   emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<GmailRes.GmailMsgSend>;
-  emailEroviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
+  emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | DeterminedMsgHeaders>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
   renderFooterDialog: () => void;

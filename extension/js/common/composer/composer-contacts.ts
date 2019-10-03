@@ -9,7 +9,7 @@ import { ProviderContactsQuery } from '../api/email_provider_api.js';
 import { Contact, Pgp } from '../core/pgp.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
-import { GoogleAuth } from '../api/google.js';
+import { GoogleAuth, Google } from '../api/google.js';
 import { Lang } from '../lang.js';
 import { ComposerUrlParams, RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
@@ -18,11 +18,14 @@ import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfa
 import { Catch } from '../platform/catch.js';
 import { moveElementInArray } from '../platform/util.js';
 import { RecipientType } from '../api/api.js';
+import { Store } from '../platform/store.js';
 
 export class ComposerContacts extends ComposerComponent {
   private app: ComposerAppFunctionsInterface;
   private addedRecipients: RecipientElement[] = [];
   private BTN_LOADING = 'Loading..';
+
+  private readonly MAX_CONTACTS_LENGTH = 8;
 
   private contactSearchInProgress = false;
   private includePubkeyToggledManually = false;
@@ -35,10 +38,13 @@ export class ComposerContacts extends ComposerComponent {
 
   private dragged: Element | undefined = undefined;
 
+  private canSearchContacts: boolean;
+
   constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
     super(composer, urlParams);
     this.app = app;
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
+    this.canSearchContacts = app.getScopes().canSearchContacts;
   }
 
   initActions(): void {
@@ -213,7 +219,7 @@ export class ComposerContacts extends ComposerComponent {
       return true;
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      let prev = currentActive.prev();
+      let prev = currentActive.prev('.select_contact');
       if (!prev.length) {
         prev = this.composer.S.cached('contacts').find('ul li.select_contact').last();
       }
@@ -222,7 +228,7 @@ export class ComposerContacts extends ComposerComponent {
       return true;
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      let next = currentActive.next();
+      let next = currentActive.next('.select_contact');
       if (!next.length) {
         next = this.composer.S.cached('contacts').find('ul li.select_contact').first();
       }
@@ -242,7 +248,8 @@ export class ComposerContacts extends ComposerComponent {
     if (substring) {
       const query = { substring };
       const contacts = await this.app.storageContactSearch(query);
-      if (dbOnly || !this.composer.canReadEmails) {
+      const canLoadContactsFromAPI = this.composer.canReadEmails || this.canSearchContacts;
+      if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
         this.composer.debug(`searchContacts 1`);
         this.renderSearchRes(input, contacts, query);
       } else {
@@ -250,43 +257,34 @@ export class ComposerContacts extends ComposerComponent {
         this.contactSearchInProgress = true;
         this.renderSearchRes(input, contacts, query);
         this.composer.debug(`searchContacts 3`);
-        this.app.emailEroviderSearchContacts(query.substring, contacts, async searchContactsRes => {
-          this.composer.debug(`searchContacts 4`);
-          if (searchContactsRes.new.length) {
-            for (const contact of searchContactsRes.new) {
-              const [inDb] = await this.app.storageContactGet([contact.email]);
-              this.composer.debug(`searchContacts 5`);
-              if (!inDb) {
-                await this.app.storageContactSave(await this.app.storageContactObj({
-                  email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
-                }));
-              } else if (!inDb.name && contact.name) {
-                const toUpdate = { name: contact.name };
-                await this.app.storageContactUpdate(contact.email, toUpdate);
-                this.composer.debug(`searchContacts 6`);
-              }
-            }
-            this.composer.debug(`searchContacts 7`);
-            await this.searchContacts(input, true);
-            this.composer.debug(`searchContacts 8`);
-          } else {
-            this.composer.debug(`searchContacts 9`);
-            this.renderSearchResultsLoadingDone();
-            this.contactSearchInProgress = false;
+        if (this.canSearchContacts) {
+          this.composer.debug(`searchContacts (Gmail API) 3`);
+          const contactsGmail = await Google.contactsGet(this.urlParams.acctEmail, substring, undefined, this.MAX_CONTACTS_LENGTH);
+          if (contactsGmail) {
+            const newContacts = contactsGmail.filter(cGmail => !contacts.find(c => c.email === cGmail.email));
+            const mappedContactsFromGmail = await Promise.all(newContacts.map(({ email, name }) => Store.dbContactObj({ email, name })));
+            await this.renderAndAddToDBAPILoadedContacts(input, mappedContactsFromGmail);
           }
-        });
+        } else if (this.composer.canReadEmails) {
+          this.composer.debug(`searchContacts (Gmail Sent Messages) 3`);
+          this.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
+        }
+        this.composer.debug(`searchContacts 4`);
+        this.renderSearchResultsLoadingDone();
+        this.contactSearchInProgress = false;
+        this.composer.debug(`searchContacts 5`);
       }
     } else {
       this.hideContacts(); // todo - show suggestions of most contacted ppl etc
-      this.composer.debug(`searchContacts 10`);
+      this.composer.debug(`searchContacts 6`);
     }
   }
 
   private renderSearchRes = (input: JQuery<HTMLElement>, contacts: Contact[], query: ProviderContactsQuery) => {
-    const renderableContacts = contacts.slice(0, 10);
+    const renderableContacts = contacts.slice(0, this.MAX_CONTACTS_LENGTH);
     renderableContacts.sort((a, b) =>
       (10 * (b.has_pgp - a.has_pgp)) + ((b.last_use || 0) - (a.last_use || 0) > 0 ? 1 : -1)).slice(8); // have pgp on top, no pgp bottom. Sort each groups by last used
-    if (renderableContacts.length > 0 || this.contactSearchInProgress) {
+    if ((renderableContacts.length > 0 || this.contactSearchInProgress) || !this.canSearchContacts) {
       let ulHtml = '';
       for (const contact of renderableContacts) {
         ulHtml += `<li class="select_contact" data-test="action-select-contact" email="${Xss.escape(contact.email.replace(/<\/?b>/g, ''))}">`;
@@ -313,6 +311,12 @@ export class ComposerContacts extends ComposerComponent {
         ulHtml += '<li class="loading">loading...</li>';
       }
       Xss.sanitizeRender(this.composer.S.cached('contacts').find('ul'), ulHtml);
+      if (!this.canSearchContacts) {
+        if (!contacts.length) {
+          this.composer.S.cached('contacts').find('ul').append('<li>No Contacts Found</li>'); // xss-direct
+        }
+        this.addBtnToAllowSearchContactsFromGoogle(input);
+      }
       const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact');
       contactItems.first().addClass('active');
       contactItems.click(Ui.event.prevent('double', async (target: HTMLElement) => {
@@ -344,6 +348,25 @@ export class ComposerContacts extends ComposerComponent {
     } else {
       this.hideContacts();
     }
+  }
+
+  private addBtnToAllowSearchContactsFromGoogle = (input: JQuery<HTMLElement>) => {
+    if (this.composer.S.cached('contacts').find('.allow-google-contact-search').length) {
+      return;
+    }
+    this.composer.S.cached('contacts')
+      .append('<div class="allow-google-contact-search" data-test="action-auth-with-contacts-scope"><img src="/img/svgs/gmail.svg" />Enable Google Contact Search</div>') // xss-direct
+      .find('.allow-google-contact-search')
+      .on('click', Ui.event.handle(async () => {
+        const authResult = await BrowserMsg.send.bg.await.reconnectAcctAuthPopup({ acctEmail: this.urlParams.acctEmail, scopes: GoogleAuth.defaultScopes('contacts') });
+        if (authResult.result === 'Success') {
+          this.canSearchContacts = true;
+          this.hideContacts();
+          await this.searchContacts(input);
+        } else if (authResult.result !== 'Closed') {
+          await Ui.modal.error(`Could not enable Google Contact search. Please write us at human@flowcrypt.com\n\n[${authResult.result}] ${authResult.error}`);
+        }
+      }));
   }
 
   private selectContact = async (input: JQuery<HTMLElement>, email: string, fromQuery: ProviderContactsQuery) => {
@@ -449,6 +472,7 @@ export class ComposerContacts extends ComposerComponent {
 
   public hideContacts = () => {
     this.composer.S.cached('contacts').css('display', 'none');
+    this.composer.S.cached('contacts').children().not('ul').remove();
   }
 
   public updatePubkeyIcon = (include?: boolean) => {
@@ -462,6 +486,23 @@ export class ComposerContacts extends ComposerComponent {
       } else {
         this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
       }
+    }
+  }
+
+  private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
+    if (contacts.length) {
+      for (const contact of contacts) {
+        const [inDb] = await this.app.storageContactGet([contact.email]);
+        if (!inDb) {
+          await this.app.storageContactSave(await this.app.storageContactObj({
+            email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
+          }));
+        } else if (!inDb.name && contact.name) {
+          const toUpdate = { name: contact.name };
+          await this.app.storageContactUpdate(contact.email, toUpdate);
+        }
+      }
+      await this.searchContacts(input, true);
     }
   }
 
