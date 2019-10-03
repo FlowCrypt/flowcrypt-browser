@@ -724,7 +724,7 @@ export class ComposerContacts extends ComposerComponent {
     };
     element.ondragover = (ev) => {
       ev.preventDefault();
-    }
+    };
     element.ondrop = () => {
       this.removeCursor(element.parentElement!);
       // The position won't be changed so we don't need to do any manipulations
