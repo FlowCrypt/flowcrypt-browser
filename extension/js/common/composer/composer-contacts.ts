@@ -446,7 +446,9 @@ export class ComposerContacts extends ComposerComponent {
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
       const element = document.getElementById(recipientId)!;
       $(element).on('blur', Ui.event.handle(async (elem, event) => {
-        await this.collapseIpnutsIfNeeded(event.relatedTarget);
+        if (!this.dragged) {
+          await this.collapseIpnutsIfNeeded(event.relatedTarget);
+        }
       }));
       this.addDraggableEvents(element);
       const recipient = { email, element, id: recipientId, sendingType, status };
@@ -743,6 +745,7 @@ export class ComposerContacts extends ComposerComponent {
       this.dragged = undefined;
       newInput.focus();
     };
+    element.ondragend = () => Catch.setHandledTimeout(() => this.dragged = undefined, 0);
   }
 
   private insertCursorBefore = (element: HTMLElement | Element, append?: boolean) => {
