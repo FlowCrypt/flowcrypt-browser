@@ -52,9 +52,7 @@ Catch.try(async () => {
   $('.show_when_showing_private').css('display', 'none');
 
   $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    const name = `0x${primaryKi.longid}.asc`;
-    const pubKeyAtt = new Att({ data: Buf.fromUtfStr(primaryKi.public), type: 'application/pgp-keys', name });
-    Browser.saveToDownloads(pubKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
+    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(primaryKi), Catch.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_download_prv').click(Ui.event.prevent('double', () => {
