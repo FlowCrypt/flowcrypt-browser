@@ -456,10 +456,10 @@ export class ComposerContacts extends ComposerComponent {
       }
     } else { // set icon to specific state
       if (include) {
-        Ui.toast('Attaching your Public Key to the message');
+        await Ui.toast('Attaching your Public Key to the message');
         this.composer.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
       } else {
-        Ui.toast('Removing your Public Key from the message');
+        await Ui.toast('Removing your Public Key from the message');
         this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
       }
     }
