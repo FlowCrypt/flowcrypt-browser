@@ -149,7 +149,9 @@ export class ComposerContacts extends ComposerComponent {
     }, this.composer.getErrHandlers('add recipient public key')));
     this.composer.S.cached('icon_pubkey').click(Ui.event.handle(target => {
       this.includePubkeyToggledManually = true;
-      this.updatePubkeyIcon(!$(target).is('.active'));
+      const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
+      Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
+      this.updatePubkeyIcon(includePub);
     }, this.composer.getErrHandlers(`set/unset pubkey attachment`)));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.listen(this.urlParams.parentTabId);
@@ -456,10 +458,8 @@ export class ComposerContacts extends ComposerComponent {
       }
     } else { // set icon to specific state
       if (include) {
-        Ui.toast('Attaching your Public Key to the message').catch(Catch.reportErr);
         this.composer.S.cached('icon_pubkey').addClass('active').attr('title', Lang.compose.includePubkeyIconTitleActive);
       } else {
-        Ui.toast('Removing your Public Key from the message').catch(Catch.reportErr);
         this.composer.S.cached('icon_pubkey').removeClass('active').attr('title', Lang.compose.includePubkeyIconTitle);
       }
     }
