@@ -254,7 +254,7 @@ export class ComposerContacts extends ComposerComponent {
           }
         } else if (this.composer.canReadEmails) {
           this.composer.debug(`searchContacts (Gmail Sent Messages) 3`);
-          this.app.emailProviderSearchContacts(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
+          this.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
         }
         this.composer.debug(`searchContacts 4`);
         this.renderSearchResultsLoadingDone();
@@ -302,7 +302,7 @@ export class ComposerContacts extends ComposerComponent {
         if (!contacts.length) {
           this.composer.S.cached('contacts').find('ul').append('<li>No Contacts Found</li>'); // xss-direct
         }
-        this.addBtnToAllowSearchContactsFromGmail(input);
+        this.addBtnToAllowSearchContactsFromGoogle(input);
       }
       const contactItems = this.composer.S.cached('contacts').find('ul li.select_contact');
       contactItems.first().addClass('active');
@@ -337,7 +337,7 @@ export class ComposerContacts extends ComposerComponent {
     }
   }
 
-  private addBtnToAllowSearchContactsFromGmail = (input: JQuery<HTMLElement>) => {
+  private addBtnToAllowSearchContactsFromGoogle = (input: JQuery<HTMLElement>) => {
     if (this.composer.S.cached('contacts').find('.allow-google-contact-search').length) {
       return;
     }
@@ -351,8 +351,7 @@ export class ComposerContacts extends ComposerComponent {
           this.hideContacts();
           await this.searchContacts(input);
         } else if (authResult.result !== 'Closed') {
-          // tslint:disable-next-line: max-line-length
-          await Ui.modal.error(`Failed to connect to Gmail(new). If this happens repeatedly, please write us at human@flowcrypt.com to fix it.\n\n[${authResult.result}] ${authResult.error}`);
+          await Ui.modal.error(`Could not enable Google Contact search. Please write us at human@flowcrypt.com\n\n[${authResult.result}] ${authResult.error}`);
         }
       }));
   }

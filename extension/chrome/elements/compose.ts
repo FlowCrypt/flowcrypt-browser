@@ -295,7 +295,7 @@ Catch.try(async () => {
     emailProviderDraftUpdate: (draftId: string, mimeMsg: string) => Google.gmail.draftUpdate(acctEmail, draftId, mimeMsg),
     emailProviderDraftDelete: (draftId: string) => Google.gmail.draftDelete(acctEmail, draftId),
     emailProviderMsgSend: (message: SendableMsg, renderUploadProgress: ProgressCb) => Google.gmail.msgSend(acctEmail, message, renderUploadProgress),
-    emailProviderSearchContacts: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
+    emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => {
       Google.gmail.searchContacts(acctEmail, query, knownContacts, multiCb).catch(e => {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
