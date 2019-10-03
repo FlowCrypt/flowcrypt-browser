@@ -1064,7 +1064,8 @@ export class Composer {
               pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(normalizedPub)
             }));
           }
-          this.S.cached('input_to').val(keyUser.email).blur().focus(); // Need (blur + focus) to run parseRender function
+          this.S.cached('input_to').val(keyUser.email);
+          this.composerContacts.parseRenderRecipients(this.S.cached('input_to'));
         } else {
           await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
         }
