@@ -11,6 +11,7 @@ import { Api } from '../../../js/common/api/api.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Buf } from '../../../js/common/core/buf.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
@@ -50,19 +51,19 @@ Catch.try(async () => {
   $('.show_when_showing_public').css('display', '');
   $('.show_when_showing_private').css('display', 'none');
 
-  $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
-    Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(primaryKi), Catch.browser().name === 'firefox' ? $('body') : undefined);
+  $('.action_download_pubkey, .action_download_prv').click(Ui.event.prevent('double', (e) => {
+    const keyStr = e.className.includes('pubkey') ? primaryKi.public : primaryKi.private;
+    const keyAtt = new Att({ data: Buf.fromUtfStr(keyStr), type: 'application/pgp-keys', name: `0x${primaryKi.longid}.private.asc` });
+    Browser.saveToDownloads(keyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
   $('.action_show_other_type').click(Ui.event.handle(() => {
     if ($('.action_show_other_type').text().toLowerCase() === 'show private key') {
-      $('.key_dump').text(prv.armor()).removeClass('good').addClass('bad');
       $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
       $('.key_type').text('Private Key');
       $('.show_when_showing_public').css('display', 'none');
       $('.show_when_showing_private').css('display', '');
     } else {
-      $('.key_dump').text('').removeClass('bad').addClass('good');
       $('.action_show_other_type').text('show private key').removeClass('good').addClass('bad');
       $('.key_type').text('Public Key Info');
       $('.show_when_showing_public').css('display', '');
@@ -70,7 +71,7 @@ Catch.try(async () => {
     }
   }));
 
-  const clipboardOpts = { text: () => prv.toPublic().armor() };
-  new ClipboardJS('.action_copy_pubkey', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
+  const clipboardOpts = { text: () => $('.action_show_other_type').text().toLowerCase() === 'show private key' ? primaryKi.public : primaryKi.private };
+  new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
 
 })();
