@@ -428,6 +428,17 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('contact.test@flowcrypt.com');
     }));
 
+    ava.default.only('compose[global:compose] - standalone - test drag and drop', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Testing Drag And Drop');
+      await composePage.waitAndClick('@action-show-container-cc-bcc-buttons');
+      await composePage.waitAndClick('@action-show-cc');
+      await composePage.waitAndClick('@action-show-bcc');
+      const recipient = await composePage.waitAny('.recipients-to span:first-child');
+      const inputCC = await composePage.waitAny('@input-cc');
+      await ComposePageRecipe.dragAndDropRecipient(composePage, recipient, inputCC);
+    }));
+
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.todo('compose[global:compose] - reply - skip click prompt');

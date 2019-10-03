@@ -438,6 +438,16 @@ export class ComposePageRecipe extends PageRecipe {
     }
   }
 
+  public static dragAndDropRecipient = async (composePage: ControllablePage, recipient: ElementHandle<Element>, moveTo: ElementHandle<Element>) => {
+    const recipientBoundingBox = (await recipient.boundingBox())!;
+    const moveToBoundingBox = (await moveTo.boundingBox())!;
+    console.log(moveToBoundingBox);
+    await composePage.page.mouse.move(recipientBoundingBox.x + recipientBoundingBox.width / 2, recipientBoundingBox.y + recipientBoundingBox.height / 2);
+    await composePage.page.mouse.down();
+    await composePage.page.mouse.move(moveToBoundingBox.x + moveToBoundingBox.width / 2, moveToBoundingBox.y + moveToBoundingBox.height / 2);
+    await composePage.page.mouse.up();
+  };
+
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
     if (password) {
       await composePage.waitAndType('@input-password', 'test-pass');
