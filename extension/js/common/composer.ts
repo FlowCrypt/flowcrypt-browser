@@ -382,7 +382,6 @@ export class Composer {
   }
 
   private sendingOptionsKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
-    console.log('sendingOptionsKeydownHandler')
     const sendingOptions = this.S.cached('sending_options_container').find('.sending-option');
     const currentActive = sendingOptions.filter('.active');
     if (e.key === 'Escape') {
