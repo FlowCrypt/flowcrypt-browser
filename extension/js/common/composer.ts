@@ -1065,7 +1065,7 @@ export class Composer {
             }));
           }
           this.S.cached('input_to').val(keyUser.email);
-          this.composerContacts.parseRenderRecipients(this.S.cached('input_to'));
+          await this.composerContacts.parseRenderRecipients(this.S.cached('input_to'));
         } else {
           await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
         }
