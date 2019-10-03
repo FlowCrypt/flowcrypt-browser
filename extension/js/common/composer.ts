@@ -1064,7 +1064,8 @@ export class Composer {
               pubkey: normalizedPub, lastCheck: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(normalizedPub)
             }));
           }
-          this.S.cached('input_to').val(keyUser.email).blur().focus(); // Need (blur + focus) to run parseRender function
+          this.S.cached('input_to').val(keyUser.email);
+          await this.composerContacts.parseRenderRecipients(this.S.cached('input_to'));
         } else {
           await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
         }
@@ -1087,14 +1088,6 @@ export class Composer {
       this.setInputTextHeightManuallyIfNeeded();
       this.resizeComposeBox();
     });
-    if (!String(this.S.cached('input_to').val()).length) {
-      // focus on recipients, but only if empty (user has not started typing yet)
-      // this is particularly important to skip if CI tests are already typing the recipient in
-      this.debug(`renderComposeTable -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
-      // Firefox needs an iframe to be focused before focusing its content
-      BrowserMsg.send.focusFrame(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
-      this.S.cached('input_to').focus();
-    }
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur()
@@ -1119,6 +1112,8 @@ export class Composer {
       }
       this.setInputTextHeightManuallyIfNeeded();
     }
+    // Firefox needs an iframe to be focused before focusing its content
+    BrowserMsg.send.focusFrame(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
     Catch.setHandledTimeout(() => { // Chrome needs async focus: https://github.com/FlowCrypt/flowcrypt-browser/issues/2056
       this.S.cached(this.urlParams.isReplyBox && this.urlParams.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
