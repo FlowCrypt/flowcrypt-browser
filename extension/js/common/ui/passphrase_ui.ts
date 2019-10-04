@@ -30,7 +30,10 @@ export const initPassphraseToggle = async (passphraseInputIds: string[], forceIn
       passphraseInput.after(`<label href="#" id="toggle_${id}" class="toggle_show_hide_pass_phrase" for="${id}">${buttonShow}</label>`);
       passphraseInput.attr('type', 'password');
     }
-    $(`#toggle_${id}`).click(Ui.event.handle(target => {
+    $(`#toggle_${id}`).click(Ui.event.handle((target, event) => {
+      if (event.originalEvent) {
+        $('.toggle_show_hide_pass_phrase:visible').not(target).click(); // toggle the visibility of all other visible password fields on the page
+      }
       if (passphraseInput.attr('type') === 'password') {
         $(`#${id}`).attr('type', 'text');
         Xss.sanitizeRender(target, buttonHide);
