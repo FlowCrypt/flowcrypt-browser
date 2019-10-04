@@ -1138,6 +1138,7 @@ export class Composer {
           this.app.closeMsg();
         }
       }, this.getErrHandlers(`close message`)));
+      this.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
       $('.minimize_new_message').click(Ui.event.handle(this.minimizeComposerWindow));
       $('.popout').click(Ui.event.handle(async () => {
         this.S.cached('body').hide(); // Need to hide because it seems laggy on some devices
