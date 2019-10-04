@@ -24,7 +24,7 @@
     "sweetalert2": "8.15.3",
     "tslint": "5.11.0",
     "typescript": "3.6.2",
-    "web-ext": "3.1.1"
+    "web-ext": "3.2.0"
   },
   "scripts": {
     "build": "./build.sh",
