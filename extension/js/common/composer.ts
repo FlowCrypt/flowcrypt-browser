@@ -263,7 +263,7 @@ export class Composer {
     if (selection) {
       const r = selection.getRangeAt(0);
       r.insertNode(r.createContextualFragment(sanitized));
-    }
+  }
   }
 
   private initComposeBox = async () => {
@@ -285,8 +285,9 @@ export class Composer {
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
+        await this.composerContacts.addRecipientsAndShowPreview(recipients).catch(Catch.reportErr);
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
-          await this.renderReplyMsgComposeTable(recipients);
+          await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             switch ($(target).attr('id')) {
@@ -298,7 +299,7 @@ export class Composer {
                 recipients.bcc = [];
                 break;
             }
-            await this.renderReplyMsgComposeTable(recipients, (($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
+            await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.getErrHandlers(`activate repply box`)));
         }
       }
@@ -311,7 +312,7 @@ export class Composer {
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
     this.initComposerPopover();
-    $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
+    this.waitUntilRecipientsLoadedAndSetTestStateReady().catch(Catch.reportErr);
   }
 
   private initComposerPopover = () => {
@@ -917,15 +918,8 @@ export class Composer {
     }
   }
 
-  public renderReplyMsgComposeTable = async (recipients?: Recipients, method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
-    if (recipients) {
-      (async () => {
-        this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
-        this.composerContacts.showHideCcAndBccInputsIfNeeded();
-        await this.composerContacts.setEmailsPreview(this.getRecipients());
-      })().catch(Catch.reportErr);
-    }
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
@@ -1284,6 +1278,11 @@ export class Composer {
       this.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
+  }
+
+  private waitUntilRecipientsLoadedAndSetTestStateReady = async () => {
+    await Promise.all(this.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
+    $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
