@@ -143,9 +143,6 @@ html, body {
   left: 49px;
   color: #337ab7;
 }
-a:focus {
-  outline: none;
-}
 ul {
   padding-left: 0px;
 }
