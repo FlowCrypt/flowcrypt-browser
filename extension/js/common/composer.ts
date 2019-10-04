@@ -789,7 +789,7 @@ export class Composer {
     BrowserMsg.send.notificationShow(this.urlParams.parentTabId, {
       notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.`
     });
-    BrowserMsg.send.focusBody(this.urlParams.parentTabId) // Bring focus back to body so Gmails shortcuts will work
+    BrowserMsg.send.focusBody(this.urlParams.parentTabId); // Bring focus back to body so Gmails shortcuts will work
     await this.composerDraft.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.urlParams.isReplyBox) {
