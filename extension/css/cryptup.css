@@ -14,7 +14,6 @@
 }
 
 a { color: #337AB7; }
-a:focus { outline: none !important; }
 .line.red, td.red, b.red, span.red { color: #d14836; }
 .line.prange, td.orange, b.orange, span.orange { color: #c27e23; }
 .line.green, td.green, b.green, span.green { color: #31A217; }
