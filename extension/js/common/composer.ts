@@ -263,7 +263,7 @@ export class Composer {
     if (selection) {
       const r = selection.getRangeAt(0);
       r.insertNode(r.createContextualFragment(sanitized));
-  }
+    }
   }
 
   private initComposeBox = async () => {
@@ -323,7 +323,10 @@ export class Composer {
       { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/gmail.svg' },
     ];
     for (const item of this.popoverItems) {
-      const elem = $(`<div class="sending-option" data-test="action-choose-${item.data}"><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
+      const elem = $(`
+      <div class="action-choose-${item.data}-sending-option sending-option" data-test="action-choose-${item.data}">
+        <span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span>
+      </div>`);
       elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
@@ -346,10 +349,10 @@ export class Composer {
     if (this.encryptionType === encryptionType) {
       return;
     }
+    elem.parent().children().removeClass('active');
     const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
     this.encryptionType = encryptionType;
     this.addTickToPopover(elem);
-    this.S.cached('send_btn_text').text(elem.text());
     this.S.cached('title').text(Lang.compose.headers[encryptionType]);
     this.S.cached('compose_table')[method]('sign');
     this.S.now('attached_files')[method]('sign');
@@ -931,7 +934,7 @@ export class Composer {
           (async () => { // not awaited because can take a long time & blocks rendering
             await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
             if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
-              this.encryptionType = 'signed';
+              this.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
             }
           })().catch(Catch.reportErr);
         }
