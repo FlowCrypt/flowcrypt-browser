@@ -312,7 +312,7 @@ export class Composer {
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
     this.initComposerPopover();
-    this.waitUntilRecipientsLoadedAndSetTestStateReady().catch(Catch.reportErr);
+    this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 
   private initComposerPopover = () => {
@@ -1283,7 +1283,7 @@ export class Composer {
     }
   }
 
-  private waitUntilRecipientsLoadedAndSetTestStateReady = async () => {
+  private loadRecipientsThenSetTestStateReady = async () => {
     await Promise.all(this.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
