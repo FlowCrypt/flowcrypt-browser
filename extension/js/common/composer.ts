@@ -285,8 +285,9 @@ export class Composer {
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
+        await this.composerContacts.addRecipientsAndShowPreview(recipients).catch(Catch.reportErr);
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
-          await this.renderReplyMsgComposeTable(recipients);
+          await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             switch ($(target).attr('id')) {
@@ -298,7 +299,7 @@ export class Composer {
                 recipients.bcc = [];
                 break;
             }
-            await this.renderReplyMsgComposeTable(recipients, (($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
+            await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
           }, this.getErrHandlers(`activate repply box`)));
         }
       }
@@ -311,7 +312,7 @@ export class Composer {
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
     this.initComposerPopover();
-    $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
+    this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 
   private initComposerPopover = () => {
@@ -322,7 +323,10 @@ export class Composer {
       { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/gmail.svg' },
     ];
     for (const item of this.popoverItems) {
-      const elem = $(`<div class="sending-option" data-test="action-choose-${item.data}"><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
+      const elem = $(`
+      <div class="action-choose-${item.data}-sending-option sending-option" data-test="action-choose-${item.data}">
+        <span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span>
+      </div>`);
       elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
@@ -345,10 +349,10 @@ export class Composer {
     if (this.encryptionType === encryptionType) {
       return;
     }
+    elem.parent().children().removeClass('active');
     const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
     this.encryptionType = encryptionType;
     this.addTickToPopover(elem);
-    this.S.cached('send_btn_text').text(elem.text());
     this.S.cached('title').text(Lang.compose.headers[encryptionType]);
     this.S.cached('compose_table')[method]('sign');
     this.S.now('attached_files')[method]('sign');
@@ -918,15 +922,8 @@ export class Composer {
     }
   }
 
-  public renderReplyMsgComposeTable = async (recipients?: Recipients, method: 'forward' | 'reply' = 'reply'): Promise<void> => {
+  public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
-    if (recipients) {
-      (async () => {
-        this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
-        this.composerContacts.showHideCcAndBccInputsIfNeeded();
-        await this.composerContacts.setEmailsPreview(this.getRecipients());
-      })().catch(Catch.reportErr);
-    }
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
@@ -938,7 +935,7 @@ export class Composer {
           (async () => { // not awaited because can take a long time & blocks rendering
             await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
             if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
-              this.encryptionType = 'signed';
+              this.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
             }
           })().catch(Catch.reportErr);
         }
@@ -1286,6 +1283,11 @@ export class Composer {
       this.S.cached('body').removeClass(this.FULL_WINDOW_CLASS);
       BrowserMsg.send.removeClass(this.urlParams.parentTabId, { class: this.FULL_WINDOW_CLASS, selector: 'div#new_message' });
     }
+  }
+
+  private loadRecipientsThenSetTestStateReady = async () => {
+    await Promise.all(this.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
+    $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
   private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
