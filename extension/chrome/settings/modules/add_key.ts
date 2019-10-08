@@ -60,8 +60,10 @@ Catch.try(async () => {
 
   $('.source_selector').css('display', 'block');
   $('#spinner_container').text('');
-
-  $('.action_add_private_key').click(Ui.event.prevent('double', async () => {
+  $('.action_add_private_key').click(Ui.event.prevent('double', async (e) => {
+    if (e.className.includes('gray')) {
+      return;
+    }
     try {
       const checked = await keyImportUi.checkPrv(acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {

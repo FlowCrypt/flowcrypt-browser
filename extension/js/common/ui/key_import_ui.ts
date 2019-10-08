@@ -9,6 +9,8 @@ import { KeyBlockType } from '../core/mime.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { AttUI } from './att_ui.js';
 import { Lang } from '../lang.js';
+import { Catch } from '../platform/catch.js';
+import { Settings } from '../settings.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -71,6 +73,12 @@ export class KeyImportUi {
       }
       if (prv.isFullyDecrypted()) {
         $('.line.unprotected_key_create_pass_phrase').show();
+        const { destroy } = this.validateInputPP($('.input_passphrase'), $('.action_add_private_key'));
+        const destroyWhenKeyChanged = Ui.event.handle(() => {
+          destroy();
+          $('.input_private_key').off('change', destroyWhenKeyChanged);
+        });
+        $('.input_private_key').change(destroyWhenKeyChanged);
       } else if (prv.isFullyEncrypted()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
       } else {
@@ -122,6 +130,43 @@ export class KeyImportUi {
     await this.longid(parsed);
     await this.checkEncryptionPubIfSelected(normalized);
     return normalized;
+  }
+
+  validateInputPP = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>) => {
+    const validationElements = this.getPPValidationElements();
+    const setBtnColor = (type: 'gray' | 'green') => {
+      submitButton.addClass(type === 'gray' ? 'gray' : 'green');
+      submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
+    };
+    const validate = () => {
+      const password = input.val();
+      if (typeof password !== 'string') {
+        Catch.report('render_password_strength: Selected password is not a string', typeof password);
+        return;
+      }
+      const result = Settings.evalPasswordStrength(password);
+      validationElements.passwordResult.css('display', 'block');
+      validationElements.passwordResult.css('color', result.word.color);
+      validationElements.passwordResult.find('.password_result').text(result.word.word);
+      validationElements.passwordResult.find('.password_time').text(result.time);
+      validationElements.progressBar.find('div').css('width', result.word.bar + '%');
+      validationElements.progressBar.find('div').css('background-color', result.word.color);
+      setBtnColor(result.word.pass ? 'green' : 'gray');
+    };
+    input.parent().append(validationElements.progressBar);
+    validationElements.passwordResult.insertBefore(input.parent());
+    input.on('keyup', Ui.event.prevent('spree', validate));
+    const destroy = () => {
+      validationElements.passwordResult.remove();
+      validationElements.progressBar.remove();
+      setBtnColor('green');
+    };
+    if (!input.val()) {
+      setBtnColor('gray');
+    } else {
+      validate();
+    }
+    return { destroy };
   }
 
   private normalize = async (type: KeyBlockType, armored: string) => {
@@ -248,6 +293,16 @@ export class KeyImportUi {
       }
     }
     return;
+  }
+
+  private getPPValidationElements = () => {
+    const passwordResultHTML = `<div class="line left password_feedback">
+                                  <span class="password_result"></span> (time to crack: <span class="password_time"></span>)<ul></ul>
+                                </div>`;
+    const progressBarHTML = `<br/><div class="password_bar">
+                <div></div>
+              </div>`;
+    return { passwordResult: $(passwordResultHTML), progressBar: $(progressBarHTML) };
   }
 
 }
