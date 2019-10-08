@@ -162,7 +162,6 @@ Catch.try(async () => {
     $('#password').val('').keyup();
     $('#password2').val('');
     displayBlock('step_1_password');
-    Settings.renderPwdStrength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   }));
   $("#password2").keydown(event => {
