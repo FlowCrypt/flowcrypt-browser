@@ -87,16 +87,9 @@
       <div class="line left">Choose pass phrase to protect your encrypted emails. <a href="#"
           data-featherlight="/chrome/texts/passphrase_help.htm">choosing
           secure pass phrases</a></div>
-      <div class="line left password_feedback"><span class="password_result"></span> (time to crack: <span
-          class="password_time"></span>)<ul></ul>
-      </div>
       <div class="line left">
         <input class="input_password" type="text" placeholder="Pass phrase" style="margin-bottom: 0px;"
           id="step_2a_manual_create_input_password" data-test="input-step2bmanualcreate-passphrase-1" />
-        <br />
-        <div class="password_bar">
-          <div></div>
-        </div>
       </div>
       <div class="line left">
         <input class="input_password2" type="text" placeholder="Repeat pass phrase"
@@ -177,7 +170,7 @@
           <a href="#" id="fineuploader_button" class="display_none">file</a>
           <div class="line display_none" id="fineuploader"></div>
         </div>
-        <div class="source_paste_container display_none">
+        <div class="source_paste_container setup_page display_none">
           <div class="wide line">
             <textarea class="input_private_key" placeholder="ASCII Armored Private Key"
               data-test="input-step2bmanualenter-ascii-key"></textarea>
@@ -187,7 +180,7 @@
               data-test="action-step2bmanualenter-new-random-passphrase">use
               a random one</a>.
           </div>
-          <div class="line" style="text-align: left; padding-left: 40px;">
+          <div class="line pp_container">
             <input class="input_passphrase" type="text" placeholder="Private Key Passphrase"
               id="step_2b_manual_enter_passphrase" data-test="input-step2bmanualenter-passphrase" />
           </div>

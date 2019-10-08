@@ -73,7 +73,8 @@ export class KeyImportUi {
       }
       if (prv.isFullyDecrypted()) {
         $('.line.unprotected_key_create_pass_phrase').show();
-        const { destroy } = this.validateInputPP($('.input_passphrase'), $('.action_add_private_key'));
+        const { passwordResultElement, destroy } = this.validateInputPP($('.input_passphrase'), $('.action_add_private_key'));
+        passwordResultElement.addClass('left');
         const destroyWhenKeyChanged = Ui.event.handle(() => {
           destroy();
           $('.input_private_key').off('change', destroyWhenKeyChanged);
@@ -83,7 +84,7 @@ export class KeyImportUi {
         $('.line.unprotected_key_create_pass_phrase').hide();
       } else {
         await Ui.modal.error(Lang.setup.partiallyEncryptedKeyUnsupported);
-        $('.line.unprotected_key_create_pass_phrase').hide();
+        $('.line.unprotected_key_crprogressBareate_pass_phrase').hide();
       }
     }));
     const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
@@ -132,7 +133,7 @@ export class KeyImportUi {
     return normalized;
   }
 
-  validateInputPP = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>) => {
+  validateInputPP = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>, validationResultInsertAfter: boolean = false) => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
@@ -145,20 +146,24 @@ export class KeyImportUi {
         return;
       }
       const result = Settings.evalPasswordStrength(password);
-      validationElements.passwordResult.css('display', 'block');
-      validationElements.passwordResult.css('color', result.word.color);
-      validationElements.passwordResult.find('.password_result').text(result.word.word);
-      validationElements.passwordResult.find('.password_time').text(result.time);
-      validationElements.progressBar.find('div').css('width', result.word.bar + '%');
-      validationElements.progressBar.find('div').css('background-color', result.word.color);
+      validationElements.passwordResultElement.css('display', 'block');
+      validationElements.passwordResultElement.css('color', result.word.color);
+      validationElements.passwordResultElement.find('.password_result').text(result.word.word);
+      validationElements.passwordResultElement.find('.password_time').text(result.time);
+      validationElements.progressBarElement.find('div').css('width', result.word.bar + '%');
+      validationElements.progressBarElement.find('div').css('background-color', result.word.color);
       setBtnColor(result.word.pass ? 'green' : 'gray');
     };
-    input.parent().append(validationElements.progressBar);
-    validationElements.passwordResult.insertBefore(input.parent());
+    input.parent().append(validationElements.progressBarElement);
+    if (validationResultInsertAfter) {
+      validationElements.passwordResultElement.insertAfter(input.parent());
+    } else {
+      validationElements.passwordResultElement.insertBefore(input.parent());
+    }
     input.on('keyup', Ui.event.prevent('spree', validate));
     const destroy = () => {
-      validationElements.passwordResult.remove();
-      validationElements.progressBar.remove();
+      validationElements.passwordResultElement.remove();
+      validationElements.progressBarElement.remove();
       setBtnColor('green');
     };
     if (!input.val()) {
@@ -166,7 +171,7 @@ export class KeyImportUi {
     } else {
       validate();
     }
-    return { destroy };
+    return { ...validationElements, destroy };
   }
 
   private normalize = async (type: KeyBlockType, armored: string) => {
@@ -296,13 +301,13 @@ export class KeyImportUi {
   }
 
   private getPPValidationElements = () => {
-    const passwordResultHTML = `<div class="line left password_feedback">
+    const passwordResultHTML = `<div class="line password_feedback">
                                   <span class="password_result"></span> (time to crack: <span class="password_time"></span>)<ul></ul>
                                 </div>`;
     const progressBarHTML = `<br/><div class="password_bar">
                 <div></div>
               </div>`;
-    return { passwordResult: $(passwordResultHTML), progressBar: $(progressBarHTML) };
+    return { passwordResultElement: $(passwordResultHTML), progressBarElement: $(progressBarHTML) };
   }
 
 }
