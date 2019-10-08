@@ -60,7 +60,7 @@ export class KeyImportUi {
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(target => {
-      $('.source_paste_container .input_passphrase').val(Pgp.password.random());
+      $('.source_paste_container .input_passphrase').val(Pgp.password.random()).keyup();
       $('.input_passphrase').attr('type', 'text');
       $('#e_rememberPassphrase').prop('checked', true);
     }));
@@ -154,16 +154,18 @@ export class KeyImportUi {
       validationElements.progressBarElement.find('div').css('background-color', result.word.color);
       setBtnColor(result.word.pass ? 'green' : 'gray');
     };
-    input.parent().append(validationElements.progressBarElement);
+    input.parent().append(validationElements.progressBarElement); // xss-direct
     if (validationResultInsertAfter) {
-      validationElements.passwordResultElement.insertAfter(input.parent());
+      validationElements.passwordResultElement.insertAfter(input.parent()); // xss-direct
     } else {
-      validationElements.passwordResultElement.insertBefore(input.parent());
+      validationElements.passwordResultElement.insertBefore(input.parent()); // xss-direct
     }
-    input.on('keyup', Ui.event.prevent('spree', validate));
+    const validation = Ui.event.prevent('spree', validate);
+    input.on('keyup', validation);
     const destroy = () => {
       validationElements.passwordResultElement.remove();
       validationElements.progressBarElement.remove();
+      input.off('keydown', validation);
       setBtnColor('green');
     };
     if (!input.val()) {
