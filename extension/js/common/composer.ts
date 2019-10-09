@@ -291,220 +291,10 @@ export class Composer {
       await this.renderComposeTable();
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
-<<<<<<< HEAD
     this.composerSendBtn.initComposerPopover();
-    $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
-  }
-
-=======
-    this.initComposerPopover();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 
-  private initComposerPopover = () => {
-    this.popoverItems = [
-      { HTMLContent: 'Encrypt and Send', data: 'encrypted', iconPath: '/img/svgs/locked-icon-green.svg' },
-      { HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned', iconPath: '/img/svgs/locked-icon-green.svg' },
-      { HTMLContent: 'Sign and Send', data: 'signed', iconPath: '/img/svgs/signature-gray.svg' },
-      { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/gmail.svg' },
-    ];
-    for (const item of this.popoverItems) {
-      const elem = $(`
-      <div class="action-choose-${item.data}-sending-option sending-option" data-test="action-choose-${item.data}">
-        <span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span>
-      </div>`);
-      elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
-      if (item.iconPath) {
-        elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
-      }
-      this.S.cached('sending_options_container').append(elem); // xss-safe-factory
-      if (item.data === this.encryptionType) {
-        this.addTickToPopover(elem);
-      }
-    }
-    if (!this.urlParams.isReplyBox) {
-      this.setPopoverTopPosition();
-    }
-  }
-
-  private setPopoverTopPosition() {
-    this.S.cached('sending_options_container').css('top', - (this.S.cached('sending_options_container').outerHeight()! + 3) + 'px');
-  }
-
-  private handleEncryptionTypeSelected = (elem: JQuery<HTMLElement>, encryptionType: EncryptionType) => {
-    if (this.encryptionType === encryptionType) {
-      return;
-    }
-    elem.parent().children().removeClass('active');
-    const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
-    this.encryptionType = encryptionType;
-    this.addTickToPopover(elem);
-    this.S.cached('title').text(Lang.compose.headers[encryptionType]);
-    this.S.cached('compose_table')[method]('sign');
-    this.S.now('attached_files')[method]('sign');
-    this.resetSendBtn();
-    $('.sending-container').removeClass('popover-opened');
-    this.showHidePwdOrPubkeyContainerAndColorSendBtn();
-  }
-
-  private toggleSendOptions = (event: JQuery.Event<HTMLElement, null>) => {
-    event.stopPropagation();
-    const sendingContainer = $('.sending-container');
-    sendingContainer.toggleClass('popover-opened');
-    if (sendingContainer.hasClass('popover-opened')) {
-      $('body').click(Ui.event.handle((elem, event) => {
-        if (!this.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
-          sendingContainer.removeClass('popover-opened');
-          $('body').off('click');
-          this.S.cached('toggle_send_options').off('keydown');
-        }
-      }));
-      this.S.cached('toggle_send_options').on('keydown', Ui.event.handle(async (target, e) => this.sendingOptionsKeydownHandler(e)));
-      const sendingOptions = this.S.cached('sending_options_container').find('.sending-option');
-      sendingOptions.hover(function () {
-        sendingOptions.removeClass('active');
-        $(this).addClass('active');
-      });
-    } else {
-      $('body').off('click');
-      this.S.cached('toggle_send_options').off('keydown');
-    }
-  }
-
-  private sendingOptionsKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
-    const sendingOptions = this.S.cached('sending_options_container').find('.sending-option');
-    const currentActive = sendingOptions.filter('.active');
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      this.toggleSendOptions(e);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      let prev = currentActive.prev();
-      if (!prev.length) {
-        prev = sendingOptions.last();
-      }
-      currentActive.removeClass('active');
-      prev.addClass('active');
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      let next = currentActive.next();
-      if (!next.length) {
-        next = sendingOptions.first();
-      }
-      currentActive.removeClass('active');
-      next.addClass('active');
-    } else if (e.key === 'Enter') {
-      e.stopPropagation();
-      e.preventDefault();
-      currentActive.click();
-    }
-  }
-
-  private addTickToPopover = (elem: JQuery<HTMLElement>) => {
-    elem.parent().find('img.icon-tick').remove();
-    elem.append('<img class="icon-tick" src="/img/svgs/tick.svg" />').addClass('active'); // xss-direct
-  }
-
-  public resetSendBtn = (delay?: number) => {
-    let btnText: string = '';
-    switch (this.encryptionType) {
-      case "encrypted":
-        btnText = this.BTN_ENCRYPT_AND_SEND;
-        break;
-      case "encryptedAndSigned":
-        btnText = this.BTN_ENCRYPT_SIGN_AND_SEND;
-        break;
-      case 'signed':
-        btnText = this.BTN_SIGN_AND_SEND;
-        break;
-      case 'plain':
-        btnText = this.BTN_PLAIN_SEND;
-        break;
-    }
-    const doReset = () => {
-      Xss.sanitizeRender(this.S.cached('send_btn_text'), `<i></i>${btnText}`);
-      this.S.cached('toggle_send_options').show();
-    };
-    if (typeof this.btnUpdateTimeout !== 'undefined') {
-      clearTimeout(this.btnUpdateTimeout);
-    }
-    if (!delay) {
-      doReset();
-    } else {
-      Catch.setHandledTimeout(doReset, delay);
-    }
-  }
-
-  private throwIfFormNotReady = async (recipients: RecipientElement[]): Promise<void> => {
-    if (this.hasValue(this.S.cached('recipients_inputs'))) {
-      this.composerContacts.parseRenderRecipients(this.S.cached('recipients_inputs')).catch(Catch.reportErr);
-    }
-    if (this.S.cached('icon_show_prev_msg').hasClass('progress')) {
-      throw new ComposerNotReadyError('Retrieving previous message, please wait.');
-    }
-    if (this.BTN_READY_TEXTS.includes(this.S.now('send_btn_text').text().trim()) && recipients.length) {
-      return; // all good
-    }
-    if (this.S.now('send_btn_text').text().trim() === this.BTN_WRONG_ENTRY) {
-      throw new ComposerUserError('Please re-enter recipients marked in red color.');
-    }
-    if (!recipients || !recipients.length) {
-      throw new ComposerUserError('Please add a recipient first');
-    }
-    throw new ComposerNotReadyError('Still working, please wait.');
-  }
-
-  private throwIfFormValsInvalid = async (recipients: RecipientElement[], emailsWithoutPubkeys: string[], subject: string, plaintext: string, challenge?: Pwd) => {
-    const shouldEncrypt = ['encrypted', 'encryptedAndSigned'].includes(this.encryptionType);
-    if (!recipients.length) {
-      throw new ComposerUserError('Please add receiving email address.');
-    }
-    if (shouldEncrypt && emailsWithoutPubkeys.length && (!challenge || !challenge.answer)) {
-      this.S.cached('input_password').focus();
-      throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
-    }
-    if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
-      throw new ComposerResetBtnTrigger();
-    }
-  }
-
-  private handleSendErr = async (e: any) => {
-    if (Api.err.isNetErr(e)) {
-      await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
-    } else if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-      await Ui.modal.error('Could not send message because FlowCrypt needs to be re-connected to google account.');
-    } else if (Api.err.isAuthErr(e)) {
-      if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
-      }
-    } else if (Api.err.isReqTooLarge(e)) {
-      await Ui.modal.error(`Could not send: message or attachments too large.`);
-    } else if (Api.err.isBadReq(e)) {
-      const errMsg = e.parseErrResMsg('google');
-      if (errMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || errMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
-        await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
-      } else {
-        if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
-          const page = '/chrome/settings/modules/help.htm';
-          const pageUrlParams = { bugReport: Extension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
-          BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page, pageUrlParams });
-        }
-      }
-    } else if (e instanceof ComposerUserError) {
-      await Ui.modal.error(`Could not send message: ${String(e)}`);
-    } else {
-      if (!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
-        Catch.reportErr(e);
-        await Ui.modal.error(`Failed to send message due to: ${String(e)}`);
-      }
-    }
-    if (!(e instanceof ComposerNotReadyError)) {
-      this.resetSendBtn(100);
-    }
-  }
-
->>>>>>> d31024702c3ac2c1c533c4632b39752883a2c587
   public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
     let html = this.S.cached(elSel)[0].innerHTML;
     if (elSel === 'input_text' && this.composerQuote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
@@ -636,11 +426,7 @@ export class Composer {
           (async () => { // not awaited because can take a long time & blocks rendering
             await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
             if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
-<<<<<<< HEAD
-              this.composerSendBtn.encryptionType = 'signed';
-=======
-              this.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
->>>>>>> d31024702c3ac2c1c533c4632b39752883a2c587
+              this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
             }
           })().catch(Catch.reportErr);
         }
@@ -925,56 +711,10 @@ export class Composer {
     }
   }
 
-<<<<<<< HEAD
   public isMinimized = () => this.composeWindowIsMinimized;
-=======
+
   private loadRecipientsThenSetTestStateReady = async () => {
     await Promise.all(this.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
-
-  private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
-    const { sendAs } = await Store.getAcct(this.urlParams.acctEmail, ['sendAs']);
-    const addNameToEmail = async (emails: string[]): Promise<string[]> => {
-      return await Promise.all(await emails.map(async email => {
-        let name: string | undefined;
-        if (sendAs && sendAs[email] && sendAs[email].name) {
-          name = sendAs[email].name!;
-        } else {
-          const [contact] = await this.app.storageContactGet([email]);
-          if (contact && contact.name) {
-            name = contact.name;
-          }
-        }
-        return name ? `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
-      }));
-    };
-    msg.recipients.to = await addNameToEmail(msg.recipients.to || []);
-    msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
-    msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
-    msg.from = (await addNameToEmail([msg.from]))[0];
-  }
-
-  private hasValue(inputs: JQuery<HTMLElement>): boolean {
-    return !!inputs.filter((index, elem) => !!$(elem).val()).length;
-  }
-
-  private mapRecipients = (recipients: RecipientElement[]) => {
-    const result: Recipients = { to: [], cc: [], bcc: [] };
-    for (const recipient of recipients) {
-      switch (recipient.sendingType) {
-        case "to":
-          result.to!.push(recipient.email);
-          break;
-        case "cc":
-          result.cc!.push(recipient.email);
-          break;
-        case "bcc":
-          result.bcc!.push(recipient.email);
-          break;
-      }
-    }
-    return result;
-  }
->>>>>>> d31024702c3ac2c1c533c4632b39752883a2c587
 }
