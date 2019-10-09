@@ -1,5 +1,5 @@
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { ComposerPopoverItem, EncryptionType, ComposerUrlParams, RecipientElement, Recipients, PubkeyResult, SendBtnButtonTexts } from './interfaces/composer-types.js';
+import { EncryptionType, ComposerUrlParams, RecipientElement, Recipients, PubkeyResult, SendBtnButtonTexts, ComposerPopoverItems } from './interfaces/composer-types.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { Composer } from '../composer.js';
 import { Xss } from '../platform/xss.js';
@@ -25,7 +25,12 @@ export class ComposerSendBtn extends ComposerComponent {
 
     private app: ComposerAppFunctionsInterface;
 
-    private popoverItems?: ComposerPopoverItem[];
+    private popoverItems: ComposerPopoverItems = {
+        encrypted: { text: 'Encrypt and Send', iconPath: '/img/svgs/locked-icon-green.svg' },
+        encryptedAndSigned: { text: 'Encrypt, Sign and Send', iconPath: '/img/svgs/locked-icon-green.svg' },
+        signed: { text: 'Sign and Send', iconPath: '/img/svgs/signature-gray.svg' },
+        plain: { text: 'Send plain (not encrypted)', iconPath: '/img/svgs/gmail.svg' }
+    };
 
     public encryptionType: EncryptionType = 'encrypted';
     public additionalMsgHeaders: { [key: string]: string } = {};
@@ -44,7 +49,7 @@ export class ComposerSendBtn extends ComposerComponent {
         SendBtnButtonTexts.BTN_PLAIN_SEND
     ];
 
-    private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
+    private FC_WEB_URL = 'https://flowcrypt.com'; // todo Send plain (not encrypted)uld use Api.url()
 
     private btnUpdateTimeout?: number;
 
@@ -58,6 +63,7 @@ export class ComposerSendBtn extends ComposerComponent {
     initActions(): void {
         this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.isMinimized() && this.extractProcessSendMsg()));
         this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
+        this.composer.S.cached('toggle_send_options').on('click', this.toggleSendOptions);
     }
 
     isSendMessageInProgres(): boolean {
@@ -65,20 +71,16 @@ export class ComposerSendBtn extends ComposerComponent {
     }
 
     initComposerPopover() {
-        this.popoverItems = [
-            { HTMLContent: 'Encrypt and Send', data: 'encrypted', iconPath: '/img/svgs/locked-icon-green.svg' },
-            { HTMLContent: 'Encrypt, Sign and Send', data: 'encryptedAndSigned', iconPath: '/img/svgs/locked-icon-green.svg' },
-            { HTMLContent: 'Sign and Send', data: 'signed', iconPath: '/img/svgs/signature-gray.svg' },
-            { HTMLContent: 'Send plain (not encrypted)', data: 'plain', iconPath: '/img/svgs/gmail.svg' },
-        ];
-        for (const item of this.popoverItems) {
-            const elem = $(`<div class="sending-option" data-test="action-choose-${item.data}"><span class="option-name">${Xss.htmlSanitize(item.HTMLContent)}</span></div>`);
-            elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, item.data)));
+        for (const key of Object.keys(this.popoverItems)) {
+            const encryptionType = key as EncryptionType;
+            const item = this.popoverItems[encryptionType];
+            const elem = $(`<div class="sending-option" data-test="action-choose-${encryptionType}"><span class="option-name">${Xss.htmlSanitize(item.text)}</span></div>`);
+            elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, encryptionType)));
             if (item.iconPath) {
                 elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
             }
             this.composer.S.cached('sending_options_container').append(elem); // xss-safe-factory
-            if (item.data === this.encryptionType) {
+            if (encryptionType === this.encryptionType) {
                 this.addTickToPopover(elem);
             }
         }
@@ -104,9 +106,8 @@ export class ComposerSendBtn extends ComposerComponent {
     }
 
     setBtnColor(color: 'green' | 'gray') {
-        const possibleColors = ['green', 'gray'];
         const classToAdd = color;
-        const classToRemove = possibleColors.find(c => c !== color);
+        const classToRemove = ['green', 'gray'].find(c => c !== color);
         this.composer.S.cached('send_btn').removeClass(classToRemove).addClass(classToAdd);
         this.composer.S.cached('toggle_send_options').removeClass(classToRemove).addClass(classToAdd);
     }
@@ -133,6 +134,59 @@ export class ComposerSendBtn extends ComposerComponent {
     private addTickToPopover = (elem: JQuery<HTMLElement>) => {
         elem.parent().find('img.icon-tick').remove();
         elem.append('<img class="icon-tick" src="/img/svgs/tick.svg" />').addClass('active'); // xss-direct
+    }
+
+    private toggleSendOptions = (event: JQuery.Event<HTMLElement, null>) => {
+        event.stopPropagation();
+        const sendingContainer = $('.sending-container');
+        sendingContainer.toggleClass('popover-opened');
+        if (sendingContainer.hasClass('popover-opened')) {
+            $('body').click(Ui.event.handle((elem, event) => {
+                if (!this.composer.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
+                    sendingContainer.removeClass('popover-opened');
+                    $('body').off('click');
+                    this.composer.S.cached('toggle_send_options').off('keydown');
+                }
+            }));
+            this.composer.S.cached('toggle_send_options').on('keydown', Ui.event.handle(async (target, e) => this.sendingOptionsKeydownHandler(e)));
+            const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
+            sendingOptions.hover(function () {
+                sendingOptions.removeClass('active');
+                $(this).addClass('active');
+            });
+        } else {
+            $('body').off('click');
+            this.composer.S.cached('toggle_send_options').off('keydown');
+        }
+    }
+
+    private sendingOptionsKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
+        const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
+        const currentActive = sendingOptions.filter('.active');
+        if (e.key === 'Escape') {
+            e.stopPropagation();
+            this.toggleSendOptions(e);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            let prev = currentActive.prev();
+            if (!prev.length) {
+                prev = sendingOptions.last();
+            }
+            currentActive.removeClass('active');
+            prev.addClass('active');
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            let next = currentActive.next();
+            if (!next.length) {
+                next = sendingOptions.first();
+            }
+            currentActive.removeClass('active');
+            next.addClass('active');
+        } else if (e.key === 'Enter') {
+            e.stopPropagation();
+            e.preventDefault();
+            currentActive.click();
+        }
     }
 
     private extractProcessSendMsg = async () => {

@@ -294,59 +294,6 @@ export class Composer {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  private toggleSendOptions = (event: JQuery.Event<HTMLElement, null>) => {
-    event.stopPropagation();
-    const sendingContainer = $('.sending-container');
-    sendingContainer.toggleClass('popover-opened');
-    if (sendingContainer.hasClass('popover-opened')) {
-      $('body').click(Ui.event.handle((elem, event) => {
-        if (!this.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
-          sendingContainer.removeClass('popover-opened');
-          $('body').off('click');
-          this.S.cached('toggle_send_options').off('keydown');
-        }
-      }));
-      this.S.cached('toggle_send_options').on('keydown', Ui.event.handle(async (target, e) => this.sendingOptionsKeydownHandler(e)));
-      const sendingOptions = this.S.cached('sending_options_container').find('.sending-option');
-      sendingOptions.hover(function () {
-        sendingOptions.removeClass('active');
-        $(this).addClass('active');
-      });
-    } else {
-      $('body').off('click');
-      this.S.cached('toggle_send_options').off('keydown');
-    }
-  }
-
-  private sendingOptionsKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
-    const sendingOptions = this.S.cached('sending_options_container').find('.sending-option');
-    const currentActive = sendingOptions.filter('.active');
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      this.toggleSendOptions(e);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      let prev = currentActive.prev();
-      if (!prev.length) {
-        prev = sendingOptions.last();
-      }
-      currentActive.removeClass('active');
-      prev.addClass('active');
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      let next = currentActive.next();
-      if (!next.length) {
-        next = sendingOptions.first();
-      }
-      currentActive.removeClass('active');
-      next.addClass('active');
-    } else if (e.key === 'Enter') {
-      e.stopPropagation();
-      e.preventDefault();
-      currentActive.click();
-    }
-  }
-
   public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
     let html = this.S.cached(elSel)[0].innerHTML;
     if (elSel === 'input_text' && this.composerQuote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
@@ -551,7 +498,6 @@ export class Composer {
     return this.urlParams.acctEmail;
   }
 
-
   private debugFocusEvents = (...selNames: string[]) => {
     for (const selName of selNames) {
       this.S.cached(selName)
@@ -593,6 +539,7 @@ export class Composer {
       }
     }));
     this.composerContacts.initActions();
+    this.composerSendBtn.initActions();
     this.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
         const textData = event.originalEvent.clipboardData.getData('text/plain');
@@ -629,7 +576,6 @@ export class Composer {
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
-    this.S.cached('toggle_send_options').on('click', this.toggleSendOptions);
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => {
       this.setInputTextHeightManuallyIfNeeded();

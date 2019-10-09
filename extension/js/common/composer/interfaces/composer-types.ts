@@ -62,7 +62,7 @@ export type ComposerUrlParams = {
 
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 
-export type ComposerPopoverItem = { HTMLContent: string, data: EncryptionType, iconPath?: string };
+export type ComposerPopoverItems = { [key in EncryptionType]: { text: string, iconPath?: string } };
 export type EncryptionType = 'encrypted' | 'signed' | 'encryptedAndSigned' | 'plain';
 
 export class SendBtnButtonTexts {
