@@ -521,23 +521,31 @@ Catch.try(async () => {
   });
 
   const isCreatePrivateFormInputCorrect = async () => {
-    if (!$('#step_2a_manual_create .input_password').val()) {
+    const password1 = $('#step_2a_manual_create .input_password')
+    const password2 = $('#step_2a_manual_create .input_password2')
+    if (!password1.val()) {
       await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
-      $('#step_2a_manual_create .input_password').focus();
+      password1.focus();
       return false;
     }
     if ($('#step_2a_manual_create .action_create_private').hasClass('gray')) {
       await Ui.modal.warning('Pass phrase is not strong enough. Please make it stronger, by adding a few words.');
-      $('#step_2a_manual_create .input_password').focus();
+      password1.focus();
       return false;
     }
-    if ($('#step_2a_manual_create .input_password').val() !== $('#step_2a_manual_create .input_password2').val()) {
+    if (password1.val() !== password2.val()) {
       await Ui.modal.warning('The pass phrases do not match. Please try again.');
-      $('#step_2a_manual_create .input_password2').val('');
-      $('#step_2a_manual_create .input_password2').focus();
+      password2.val('').focus();
       return false;
     }
-    return true;
+    const paperPassword = `
+      <div style="font-size: 1.2em">
+        Please write down your pass phrase and store it in safe place or even two.
+        It is needed in order to access your FlowCrypt account.
+      </div>
+      <div class="passphrase-sticky-note">${password1.val()}</div>
+    `
+    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassword);
   };
 
   $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent('double', async () => {
