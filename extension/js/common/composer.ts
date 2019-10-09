@@ -372,13 +372,7 @@ export class Composer {
       this.S.cached('password_label').css('display', 'none');
       this.S.cached('input_password').attr('placeholder', 'one time password');
     }
-    if (this.getPwdValidationWarning()) {
-      this.S.cached('send_btn').removeClass('green').addClass('gray');
-      this.S.cached('toggle_send_options').removeClass('green').addClass('gray');
-    } else {
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-      this.S.cached('toggle_send_options').removeClass('gray').addClass('green');
-    }
+    this.composerSendBtn.setBtnColor(this.getPwdValidationWarning() ? 'gray' : 'green');
     if (this.S.cached('input_intro').is(':visible')) {
       this.S.cached('add_intro').css('display', 'none');
     } else {
@@ -426,19 +420,16 @@ export class Composer {
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
     if (!this.getRecipients().length || ['signed', 'plain'].includes(this.composerSendBtn.encryptionType)) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
       this.hideMsgPwdUi();
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-      this.S.cached('toggle_send_options').removeClass('gray').addClass('green');
+      this.composerSendBtn.setBtnColor('green');
     } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
       this.showMsgPwdUiAndColorBtn();
     } else if (this.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
       this.S.now('send_btn_text').text(SendBtnButtonTexts.BTN_WRONG_ENTRY);
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
-      this.S.cached('send_btn').removeClass('green').addClass('gray');
-      this.S.cached('toggle_send_options').removeClass('green').addClass('gray');
+      this.composerSendBtn.setBtnColor('gray');
     } else {
       this.hideMsgPwdUi();
-      this.S.cached('send_btn').removeClass('gray').addClass('green');
-      this.S.cached('toggle_send_options').removeClass('gray').addClass('green');
+      this.composerSendBtn.setBtnColor('green');
     }
     if (this.urlParams.isReplyBox) {
       if (!wasPreviouslyVisible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {

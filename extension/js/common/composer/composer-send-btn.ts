@@ -103,6 +103,14 @@ export class ComposerSendBtn extends ComposerComponent {
         }
     }
 
+    setBtnColor(color: 'green' | 'gray') {
+        const possibleColors = ['green', 'gray'];
+        const classToAdd = color;
+        const classToRemove = possibleColors.find(c => c !== color);
+        this.composer.S.cached('send_btn').removeClass(classToRemove).addClass(classToAdd);
+        this.composer.S.cached('toggle_send_options').removeClass(classToRemove).addClass(classToAdd);
+    }
+
     setPopoverTopPosition() {
         this.composer.S.cached('sending_options_container').css('top', - (this.composer.S.cached('sending_options_container').outerHeight()! + 3) + 'px');
     }
