@@ -116,7 +116,7 @@ export class ComposerSendBtn extends ComposerComponent {
         this.composer.S.cached('sending_options_container').css('top', - (this.composer.S.cached('sending_options_container').outerHeight()! + 3) + 'px');
     }
 
-    private handleEncryptionTypeSelected = (elem: JQuery<HTMLElement>, encryptionType: EncryptionType) => {
+    handleEncryptionTypeSelected(elem: JQuery<HTMLElement>, encryptionType: EncryptionType) {
         if (this.encryptionType === encryptionType) {
             return;
         }

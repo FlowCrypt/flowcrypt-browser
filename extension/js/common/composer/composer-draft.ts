@@ -184,11 +184,9 @@ export class ComposerDraft extends ComposerComponent {
         }
         this.composer.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
+        await this.composer.composerContacts.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         if (this.urlParams.isReplyBox) {
-          await this.composer.renderReplyMsgComposeTable({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
-        } else {
-          this.composer.composerContacts.addRecipients({ to: headers.to, cc: headers.cc, bcc: headers.bcc }).catch(Catch.reportErr);
-          this.composer.composerContacts.showHideCcAndBccInputsIfNeeded();
+          await this.composer.renderReplyMsgComposeTable();
         }
         if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
