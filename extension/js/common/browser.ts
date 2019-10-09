@@ -491,7 +491,7 @@ export class Ui {
     },
     confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
       const { dismiss } = await Swal.fire({
-        html: html,
+        html,
         input: 'checkbox',
         inputPlaceholder: label,
         animation: false,
@@ -502,12 +502,12 @@ export class Ui {
           cancelButton: 'ui-modal-confirm-cancel',
         },
         onOpen: () => {
-          const input = Swal.getInput()
-          const confirmButton = Swal.getConfirmButton()
-          $(confirmButton).prop('disabled', true)
+          const input = Swal.getInput();
+          const confirmButton = Swal.getConfirmButton();
+          $(confirmButton).prop('disabled', true);
           $(input).on('change', () => {
-            $(confirmButton).prop('disabled', !input.checked)
-          })
+            $(confirmButton).prop('disabled', !input.checked);
+          });
         }
       });
       return typeof dismiss === 'undefined';

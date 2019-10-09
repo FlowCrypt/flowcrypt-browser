@@ -521,8 +521,8 @@ Catch.try(async () => {
   });
 
   const isCreatePrivateFormInputCorrect = async () => {
-    const password1 = $('#step_2a_manual_create .input_password')
-    const password2 = $('#step_2a_manual_create .input_password2')
+    const password1 = $('#step_2a_manual_create .input_password');
+    const password2 = $('#step_2a_manual_create .input_password2');
     if (!password1.val()) {
       await Ui.modal.warning('Pass phrase is needed to protect your private email. Please enter a pass phrase.');
       password1.focus();
@@ -544,7 +544,7 @@ Catch.try(async () => {
         It is needed in order to access your FlowCrypt account.
       </div>
       <div class="passphrase-sticky-note">${password1.val()}</div>
-    `
+    `;
     return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassword);
   };
 
