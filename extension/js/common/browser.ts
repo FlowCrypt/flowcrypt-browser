@@ -497,9 +497,10 @@ export class Ui {
         animation: false,
         allowOutsideClick: false,
         customClass: {
-          popup: 'ui-modal-confirm',
-          confirmButton: 'ui-modal-confirm-confirm',
-          cancelButton: 'ui-modal-confirm-cancel',
+          popup: 'ui-modal-confirm-checkbox',
+          confirmButton: 'ui-modal-confirm-checkbox-confirm',
+          cancelButton: 'ui-modal-confirm-checkbox-cancel',
+          input: 'ui-modal-confirm-checkbox-input',
         },
         onOpen: () => {
           const input = Swal.getInput();

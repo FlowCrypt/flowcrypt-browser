@@ -30,10 +30,10 @@ a { color: #337AB7; }
 .gray_label { color: white; background-color: #B7B7B7; }
 .swal2-popup .swal2-styled.swal2-confirm.ui-modal-error-confirm, .button.red {
   background: initial; background-color: #d14836; color: white; }
-.swal2-popup .swal2-styled.swal2-confirm.ui-modal-info-confirm, .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-confirm, .button.green {
-  background-color: #31A217; color: white; }
-.swal2-popup .swal2-styled.swal2-confirm.ui-modal-warning-confirm, .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-cancel, .button.gray {
-  background-color: #B7B7B7; background-image: -webkit-linear-gradient(top, #C5C5C5, #B7B7B7); color: white; }
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-info-confirm, .swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-confirm,
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-confirm-checkbox-confirm, .button.green { background-color: #31A217; color: white; }
+.swal2-popup .swal2-styled.swal2-confirm.ui-modal-warning-confirm, .swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-cancel,
+.swal2-popup .swal2-styled.swal2-cancel.ui-modal-confirm-checkbox-cancel, .button.gray { background-color: #B7B7B7; background-image: -webkit-linear-gradient(top, #C5C5C5, #B7B7B7); color: white; }
 .swal2-popup.ui-toast { margin-bottom: 50px; background-color: #000; opacity: 0.8; }
 .swal2-title.ui-toast-title  { color: #fff; }
 .button.gray2 { background-color: #D9D9D9; background-image: -webkit-linear-gradient(top, #E9E9E9, #DFDFDF); color: #444;}
