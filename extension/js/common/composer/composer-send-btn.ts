@@ -30,12 +30,20 @@ export class ComposerSendBtn extends ComposerComponent {
     public encryptionType: EncryptionType = 'encrypted';
     public additionalMsgHeaders: { [key: string]: string } = {};
 
+    private DEFAULT_BTN_TEXTS: { [key in EncryptionType]: string } = {
+        "encrypted": SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND,
+        "encryptedAndSigned": SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND,
+        "signed": SendBtnButtonTexts.BTN_SIGN_AND_SEND,
+        "plain": SendBtnButtonTexts.BTN_PLAIN_SEND
+    };
+
     private BTN_READY_TEXTS = [
         SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND,
         SendBtnButtonTexts.BTN_SIGN_AND_SEND,
         SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND,
         SendBtnButtonTexts.BTN_PLAIN_SEND
     ];
+
     private FC_WEB_URL = 'https://flowcrypt.com'; // todo - should use Api.url()
 
     private btnUpdateTimeout?: number;
@@ -80,12 +88,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
 
     resetSendBtn(delay?: number) {
-        const btnText: string = {
-            "encrypted": SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND,
-            "encryptedAndSigned": SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND,
-            "signed": SendBtnButtonTexts.BTN_SIGN_AND_SEND,
-            "plain": SendBtnButtonTexts.BTN_PLAIN_SEND
-        }[this.encryptionType];
+        const btnText: string = this.DEFAULT_BTN_TEXTS[this.encryptionType];
         const doReset = () => {
             Xss.sanitizeRender(this.composer.S.cached('send_btn_text'), `<i></i>${btnText}`);
             this.composer.S.cached('toggle_send_options').show();
@@ -111,10 +114,9 @@ export class ComposerSendBtn extends ComposerComponent {
         const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
         this.encryptionType = encryptionType;
         this.addTickToPopover(elem);
-        this.composer.S.cached('send_btn_text').text(elem.text());
         this.composer.S.cached('title').text(Lang.compose.headers[encryptionType]);
-        this.composer.S.cached('compose_table')[method]('sign');
-        this.composer.S.now('attached_files')[method]('sign');
+        this.composer.S.cached('compose_table')[method]('not-encrypted');
+        this.composer.S.now('attached_files')[method]('not-encrypted');
         this.resetSendBtn();
         $('.sending-container').removeClass('popover-opened');
         this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
