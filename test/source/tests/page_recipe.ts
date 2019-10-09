@@ -61,6 +61,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
+    await settingsPage.waitAndRespondToModal('confirm', 'confirm', 'Please write down your pass phrase');
     if (backup === 'none') {
       await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 60 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
