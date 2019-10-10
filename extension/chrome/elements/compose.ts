@@ -60,6 +60,20 @@ Catch.try(async () => {
     }
     return await Store.passphraseGet(acctEmail, primaryKi.longid);
   };
+  const storageGetAddresses = () => {
+    const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
+      const result: Dict<SendAsAlias> = {}; // Temporary Solution
+      for (let i = 0; i < arr.length; i++) {
+        const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === acctEmail }; // before first element was default
+        result[arr[i]] = alias;
+      }
+      if (arr.length) {
+        Store.setAcct(acctEmail, { sendAs: result }).catch(Catch.reportErr);
+      }
+      return result;
+    };
+    return storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
+  };
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
@@ -70,7 +84,7 @@ Catch.try(async () => {
       try {
         const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
         const gmailMsg = await Google.gmail.msgGet(acctEmail, thread.messages[thread.messages.length - 1].id, 'metadata');
-        const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(acctEmail, storage.sendAs);
+        const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(acctEmail, storageGetAddresses());
         Object.assign(replyParams, Google.determineReplyCorrespondents(acctEmail, aliases, gmailMsg));
         replyParams.subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
         threadId = gmailMsg.threadId ? gmailMsg.threadId : threadId;
@@ -235,18 +249,8 @@ Catch.try(async () => {
         return undefined;
       }
     },
-    storageGetAddresses: () => {
-      const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
-        const result: Dict<SendAsAlias> = {}; // Temporary Solution
-        for (let i = 0; i < arr.length; i++) {
-          const alias: SendAsAlias = { isDefault: i === 0, isPrimary: arr[i] === acctEmail }; // before first element was default
-          result[arr[i]] = alias;
-        }
-        return result;
-      };
-      return storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
-    },
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
+    storageGetAddresses,
     storageEmailFooterGet: () => storage.email_footer || undefined,
     storageEmailFooterSet: async (footer: string | undefined) => {
       storage.email_footer = footer;

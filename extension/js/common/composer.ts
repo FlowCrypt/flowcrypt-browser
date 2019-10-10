@@ -290,8 +290,10 @@ export class Composer {
           await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
+            let method: 'reply' | 'forward' = 'reply';
             switch ($(target).attr('id')) {
               case 'a_forward':
+                method = 'forward';
                 recipients.to = [];
               case 'reply_click_area':
               case 'a_reply':
@@ -299,7 +301,7 @@ export class Composer {
                 recipients.bcc = [];
                 break;
             }
-            await this.renderReplyMsgComposeTable((($(target).attr('id') || '').replace('a_', '') || 'reply') as 'reply' | 'forward');
+            await this.renderReplyMsgComposeTable(method);
           }, this.getErrHandlers(`activate repply box`)));
         }
       }
