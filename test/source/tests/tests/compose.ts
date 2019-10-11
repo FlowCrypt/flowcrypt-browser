@@ -246,13 +246,14 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       ].join('\n'));
     }));
 
-    ava.default('compose[global:compatibility] - reply - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default.only('compose[global:compatibility] - reply - signed message', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
       expect(await PageRecipe.getElementPropertyJson((await composePage.waitAny('@action-send'))!, 'textContent')).to.eq('Sign and Send');
       await composePage.waitAndClick('@action-show-options-popover');
       const sendingOptionSigned = (await composePage.waitAny('@action-choose-signed'))!;
+      await Util.sleep(30);
       expect(await PageRecipe.getElementPropertyJson(sendingOptionSigned, 'className')).to.include('active');
       await ComposePageRecipe.fillMsg(composePage, {}, undefined, 'signed', 'reply');
       await ComposePageRecipe.sendAndClose(composePage);

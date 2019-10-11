@@ -74,7 +74,10 @@ export class ComposerSendBtn extends ComposerComponent {
         for (const key of Object.keys(this.popoverItems)) {
             const encryptionType = key as EncryptionType;
             const item = this.popoverItems[encryptionType];
-            const elem = $(`<div class="sending-option" data-test="action-choose-${encryptionType}"><span class="option-name">${Xss.htmlSanitize(item.text)}</span></div>`);
+            const elem = $(`
+            <div class="action-choose-${encryptionType}-sending-option sending-option" data-test="action-choose-${encryptionType}">
+                <span class="option-name">${Xss.htmlSanitize(item.text)}</span>
+            </div>`);
             elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, encryptionType)));
             if (item.iconPath) {
                 elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
@@ -120,6 +123,7 @@ export class ComposerSendBtn extends ComposerComponent {
         if (this.encryptionType === encryptionType) {
             return;
         }
+        elem.parent().children().removeClass('active');
         const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
         this.encryptionType = encryptionType;
         this.addTickToPopover(elem);
