@@ -116,7 +116,7 @@ Catch.try(async () => {
           const causesUnsecureReply = unsecureReplyKeyShortcuts.includes(e.which);
           if (causesUnsecureReply && !$(document.activeElement!).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
             e.stopImmediatePropagation();
-            replacer.setReplyBoxEditable();
+            replacer.setReplyBoxEditable().catch(Catch.reportErr);
           }
         })();
       });

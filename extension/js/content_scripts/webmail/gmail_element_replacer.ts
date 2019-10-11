@@ -74,17 +74,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
     this.replaceConvoBtns();
-    this.replaceStandardReplyBox();
+    this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
   }
 
-  setReplyBoxEditable = () => {
+  setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
       $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
-      this.replaceStandardReplyBox(true);
+      await this.replaceStandardReplyBox(true);
     }
     this.scrollToBottomOfConvo();
   }
@@ -138,7 +138,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         $(lastReplyBtn).addClass('inserted');
         const element = $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last());  // xss-safe-factory
         if (isEncrypted) {
-          element.click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
+          element.click(Ui.event.prevent('double', () => this.setReplyBoxEditable().catch(Catch.reportErr)));
         } else {
           element.click(Ui.event.prevent('double', Catch.try(() => this.replaceStandardReplyBox(true, true)))); // xss-safe-factory
         }
