@@ -62,6 +62,7 @@ Catch.try(async () => {
   $('#spinner_container').text('');
   $('.action_add_private_key').click(Ui.event.prevent('double', async (e) => {
     if (e.className.includes('gray')) {
+      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
       return;
     }
     try {

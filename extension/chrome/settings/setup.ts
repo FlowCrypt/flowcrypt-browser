@@ -459,6 +459,7 @@ Catch.try(async () => {
 
   $('#step_2b_manual_enter .action_add_private_key').click(Ui.event.handle(async (e) => {
     if (e.className.includes('gray')) {
+      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
       return;
     }
     const options: SetupOptions = {
