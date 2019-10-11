@@ -506,7 +506,7 @@ Catch.try(async () => {
     await finalizeSetup(options);
     await renderSetupDone();
   };
-  keyImportUi.validateInputPP($('.input_password'), $('.action_create_private'));
+  keyImportUi.renderPassPhraseStrengthValidationInput($('.input_password'), $('.action_create_private'));
   $('.input_password').on('keydown', event => {
     if (event.which === 13) {
       $('#step_2a_manual_create .action_create_private').click();

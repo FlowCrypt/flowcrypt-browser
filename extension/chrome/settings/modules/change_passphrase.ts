@@ -60,7 +60,7 @@ Catch.try(async () => {
     }
   }));
 
-  keyImportUi.validateInputPP($('#password'), $('.action_set_pass_phrase'), true);
+  keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_set_pass_phrase'), true);
   $('#password').on('keydown', event => {
     if (event.which === 13) {
       $('#step_1_enter_new .action_set_pass_phrase').click();

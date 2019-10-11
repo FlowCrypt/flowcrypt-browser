@@ -73,7 +73,7 @@ export class KeyImportUi {
       }
       if (prv.isFullyDecrypted()) {
         $('.line.unprotected_key_create_pass_phrase').show();
-        const { passwordResultElement, destroy } = this.validateInputPP($('.input_passphrase'), $('.action_add_private_key'));
+        const { passwordResultElement, destroy } = this.renderPassPhraseStrengthValidationInput($('.input_passphrase'), $('.action_add_private_key'));
         passwordResultElement.addClass('left');
         const destroyWhenKeyChanged = Ui.event.handle(() => {
           destroy();
@@ -133,7 +133,7 @@ export class KeyImportUi {
     return normalized;
   }
 
-  validateInputPP = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>, validationResultInsertAfter: boolean = false) => {
+  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>, validationResultInsertAfter: boolean = false) => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
