@@ -73,13 +73,13 @@ export class KeyImportUi {
       }
       if (prv.isFullyDecrypted()) {
         $('.line.unprotected_key_create_pass_phrase').show();
-        const { passwordResultElement, destroy } = this.renderPassPhraseStrengthValidationInput($('.input_passphrase'), $('.action_add_private_key'));
+        const { passwordResultElement, removeValidationElements } = this.renderPassPhraseStrengthValidationInput($('.input_passphrase'), $('.action_add_private_key'));
         passwordResultElement.addClass('left');
-        const destroyWhenKeyChanged = Ui.event.handle(() => {
-          destroy();
-          $('.input_private_key').off('change', destroyWhenKeyChanged);
+        const removeValidationElementsWhenKeyChanged = Ui.event.handle(() => {
+          removeValidationElements();
+          $('.input_private_key').off('change', removeValidationElementsWhenKeyChanged);
         });
-        $('.input_private_key').change(destroyWhenKeyChanged);
+        $('.input_private_key').change(removeValidationElementsWhenKeyChanged);
       } else if (prv.isFullyEncrypted()) {
         $('.line.unprotected_key_create_pass_phrase').hide();
       } else {
@@ -158,7 +158,7 @@ export class KeyImportUi {
     input.parent().append(validationElements.passwordResultElement); // xss-direct
     const validation = Ui.event.prevent('spree', validate);
     input.on('keyup', validation);
-    const destroy = () => {
+    const removeValidationElements = () => {
       validationElements.passwordResultElement.remove();
       validationElements.progressBarElement.remove();
       input.off('keydown', validation);
@@ -169,7 +169,7 @@ export class KeyImportUi {
     } else {
       validate();
     }
-    return { ...validationElements, destroy };
+    return { ...validationElements, removeValidationElements };
   }
 
   private normalize = async (type: KeyBlockType, armored: string) => {
