@@ -19,6 +19,7 @@ import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js'
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -27,6 +28,7 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
+  const keyImportUi = new KeyImportUi({});
   let parentTabId: string | undefined;
   if (action !== 'setup') {
     parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
@@ -53,7 +55,7 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPwdStrength('#step_1_password', '#password', '.action_password')));
+  keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_password'));
 
   const showStatus = async () => {
     $('.hide_if_backup_done').css('display', 'none');
@@ -157,10 +159,9 @@ Catch.try(async () => {
   }));
 
   $('.action_reset_password').click(Ui.event.handle(() => {
-    $('#password').val('');
+    $('#password').val('').keyup();
     $('#password2').val('');
     displayBlock('step_1_password');
-    Settings.renderPwdStrength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   }));
   $("#password2").keydown(event => {

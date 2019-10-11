@@ -9,6 +9,7 @@ import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -17,6 +18,7 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const keyImportUi = new KeyImportUi({});
 
   await initPassphraseToggle(['original_password', 'password', 'password2']);
 
@@ -58,7 +60,7 @@ Catch.try(async () => {
     }
   }));
 
-  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPwdStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase')));
+  keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_set_pass_phrase'));
   $('#password').on('keydown', event => {
     if (event.which === 13) {
       $('#step_1_enter_new .action_set_pass_phrase').click();
@@ -74,10 +76,9 @@ Catch.try(async () => {
   }));
 
   $('#step_2_confirm_new .action_use_another').click(Ui.event.handle(() => {
-    $('#password').val('');
+    $('#password').val('').keyup();
     $('#password2').val('');
     displayBlock('step_1_enter_new');
-    Settings.renderPwdStrength('#step_1_enter_new', '#password', '.action_set_pass_phrase');
     $('#password').focus();
   }));
 

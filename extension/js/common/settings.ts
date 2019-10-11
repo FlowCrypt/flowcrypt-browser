@@ -34,29 +34,6 @@ export class Settings {
     return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses); // tslint:disable-line:no-unsafe-any
   }
 
-  static renderPwdStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
-    parentSel += ' ';
-    const password = $(parentSel + inputSel).val();
-    if (typeof password !== 'string') {
-      Catch.report('render_password_strength: Selected password is not a string', typeof password);
-      return;
-    }
-    const result = Settings.evalPasswordStrength(password);
-    $(parentSel + '.password_feedback').css('display', 'block');
-    $(parentSel + '.password_bar > div').css('width', result.word.bar + '%');
-    $(parentSel + '.password_bar > div').css('background-color', result.word.color);
-    $(parentSel + '.password_result, .password_time').css('color', result.word.color);
-    $(parentSel + '.password_result').text(result.word.word);
-    $(parentSel + '.password_time').text(result.time);
-    if (result.word.pass) {
-      $(parentSel + buttonSel).removeClass('gray');
-      $(parentSel + buttonSel).addClass('green');
-    } else {
-      $(parentSel + buttonSel).removeClass('green');
-      $(parentSel + buttonSel).addClass('gray');
-    }
-  }
-
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
     await Attester.initialLegacySubmit(acctEmail, pubkey);
     const aliases = addresses.filter(a => a !== acctEmail);

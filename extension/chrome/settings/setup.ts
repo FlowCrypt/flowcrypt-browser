@@ -457,7 +457,11 @@ Catch.try(async () => {
 
   $('#step_0_found_key .action_manual_enter_key, #step_1_easy_or_manual .action_manual_enter_key').click(Ui.event.handle(() => displayBlock('step_2b_manual_enter')));
 
-  $('#step_2b_manual_enter .action_save_private').click(Ui.event.handle(async () => {
+  $('#step_2b_manual_enter .action_add_private_key').click(Ui.event.handle(async (e) => {
+    if (e.className.includes('gray')) {
+      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
+      return;
+    }
     const options: SetupOptions = {
       passphrase: String($('#step_2b_manual_enter .input_passphrase').val()),
       key_backup_prompt: false,
@@ -470,7 +474,7 @@ Catch.try(async () => {
     };
     try {
       const checked = await keyImportUi.checkPrv(acctEmail, String($('#step_2b_manual_enter .input_private_key').val()), options.passphrase);
-      Xss.sanitizeRender('#step_2b_manual_enter .action_save_private', Ui.spinner('white'));
+      Xss.sanitizeRender('#step_2b_manual_enter .action_add_private_key', Ui.spinner('white'));
       await saveKeys([checked.encrypted], options);
       await preFinalizeSetup(options);
       await finalizeSetup(options);
@@ -503,11 +507,7 @@ Catch.try(async () => {
     await finalizeSetup(options);
     await renderSetupDone();
   };
-
-  $('#step_2a_manual_create .input_password').on('keyup', Ui.event.prevent('spree', () => {
-    Settings.renderPwdStrength('#step_2a_manual_create', '.input_password', '.action_create_private');
-  }));
-
+  keyImportUi.renderPassPhraseStrengthValidationInput($('.input_password'), $('.action_create_private'));
   $('.input_password').on('keydown', event => {
     if (event.which === 13) {
       $('#step_2a_manual_create .action_create_private').click();

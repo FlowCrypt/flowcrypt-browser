@@ -81,7 +81,7 @@ body#settings > div#content p { margin: 21px 0; }
 body#settings > div#content .copy--light {margin: 0; font-weight: 400; font-size: 13px; line-height: 1.75;}
 body#settings > div#content hr { height: 1px; border: none; border-bottom: 1px solid #CACACA; }
 body#settings > div#content input[type=password], body#settings > div#content input[type=text] { padding: 0; box-sizing: border-box;
-  width: 360px!important; height:45px !important; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; margin-bottom: 5px; }
+  width: 360px!important; height:45px !important; border: 1px solid rgba(0,0,0,0.25); padding-left:8px; text-indent: 5px; }
 .toggled_passphrase  { padding-right: 62px !important; }
 body#settings > div#content .separator {max-width: 550px; margin:10px auto; margin-bottom: 20px; background: rgba(0,0,0,.125); height: 1px; }
 body#settings > div#content .start-arrow { position: absolute; width: 160px; right: 53px; animation: fadeInUp 1s;}
@@ -147,7 +147,7 @@ body#settings > div#content.setup div.manual textarea, textarea.armored { width:
 body#settings > div#content.setup div.manual div.line_container { width: 534px; display: block; position: relative; text-align: left; margin: 0 auto;}
 body#settings > div#content.setup div.manual a.back i { color:  rgba(0, 0, 0, 0.5); font-size: 30px; position: absolute; top:5px; left:10px;}
 body#settings > div#content.setup div.manual input[type=checkbox] { margin: 0 6px; margin-right: 0; -webkit-transform: scale(1.6); transform: scale(1.6); position: relative; top: 2px; }
-body#settings > div#content.setup div.action_save_private { margin-top: 20px; font-size: 15px;}
+body#settings > div#content.setup div.action_add_private_key { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.action_create_private { margin-top: 20px; font-size: 15px;}
 body#settings > div#content.setup div.manual div#btn_save_private { text-transform: uppercase; display: inline-block; -webkit-box-shadow: none; box-shadow: none;
   border: 1px solid transparent; color: #fff; border-radius: 2px; cursor: default; font-size: 11px; font-weight: bold; text-align: center; white-space: nowrap; min-width: 56px;
@@ -192,8 +192,9 @@ body#settings > div#content.backup div#step_3_manual .d-inline-block { display: 
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options label { text-transform: uppercase; font-weight: bold; position: relative; bottom: 2px; }
 body#settings .password_feedback { display: none; }
-body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left:0; right:0; margin-top: 57px;
- -webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
+body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left: 0; right: 0; margin-top: -8px;
+    -webkit-animation: fadeIn .7s; animation: fadeIn .7s; height: 20px; padding: 0; }
+body#settings > div#content.setup div.manual .setup_page .password_feedback, body#settings > div#content.setup div.manual .setup_page .pp_container  { text-align: left; padding-left: 40px; }
 body#settings > div#content.backup .password_result, body#settings > div#content.setup div.manual .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
 body#settings div.password_bar { width: 360px; border: none; display: inline-block; margin-bottom: 14px; position: relative; }
 body#settings div.password_bar > div { width: 0; height: 3px; }
