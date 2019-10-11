@@ -84,7 +84,7 @@ export class KeyImportUi {
         $('.line.unprotected_key_create_pass_phrase').hide();
       } else {
         await Ui.modal.error(Lang.setup.partiallyEncryptedKeyUnsupported);
-        $('.line.unprotected_key_crprogressBareate_pass_phrase').hide();
+        $('.line.unprotected_key_create_pass_phrase').hide();
       }
     }));
     const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
