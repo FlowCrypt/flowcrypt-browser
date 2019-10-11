@@ -28,7 +28,7 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
-  const keyImportUi = new KeyImportUi({ checkEncryption: true });
+  const keyImportUi = new KeyImportUi({});
   let parentTabId: string | undefined;
   if (action !== 'setup') {
     parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');

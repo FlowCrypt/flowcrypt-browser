@@ -18,7 +18,7 @@ Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const keyImportUi = new KeyImportUi({ checkEncryption: true });
+  const keyImportUi = new KeyImportUi({});
 
   await initPassphraseToggle(['original_password', 'password', 'password2']);
 
