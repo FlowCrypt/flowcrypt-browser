@@ -323,7 +323,7 @@ Catch.try(async () => {
     }
   };
 
-  $('.action_send a').attr('href', Google.webmailUrl(acctEmail));
+  $('.action_send').attr('href', Google.webmailUrl(acctEmail));
 
   $('.action_show_help').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail, tabId, '/chrome/settings/modules/help.htm')));
 
