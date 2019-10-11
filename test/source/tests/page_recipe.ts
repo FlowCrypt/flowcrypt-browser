@@ -103,7 +103,7 @@ export class SetupPageRecipe extends PageRecipe {
         if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedPp)) {
           throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generatedPp}`);
         }
-        const ppValidationResult = await PageRecipe.getElementPropertyJson((await settingsPage.waitAny('.password_feedback')), 'textContent');
+        const ppValidationResult = await settingsPage.read('@container-password-feedback');
         if (!ppValidationResult.includes('great (time to crack: centuries)')) {
           throw new Error(`Incorrect Passphrase validation result, expected 'great (time to crack: centuries)' but got ${ppValidationResult}`);
         }

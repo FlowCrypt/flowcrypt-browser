@@ -299,7 +299,7 @@ export class KeyImportUi {
   }
 
   private getPPValidationElements = () => {
-    const passwordResultHTML = `<div class="line password_feedback">
+    const passwordResultHTML = `<div class="line password_feedback" data-test="container-password-feedback">
                                   <span class="password_result"></span> (time to crack: <span class="password_time"></span>)<ul></ul>
                                 </div>`;
     const progressBarHTML = `<br/><div class="password_bar">
