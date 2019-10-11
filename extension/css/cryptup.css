@@ -317,7 +317,7 @@ table, tbody, tr, td { border-collapse: collapse; font-size: 1em; border: none; 
 table#compose { min-height: 260px; border-spacing: 0; border-collapse: collapse; width: 100%; background-color: white; }
 table#compose th { width: 538px; height: 36px; text-align: left; margin: 0; border: 1px solid #31A217; background-color: #31A217; }
 table#compose th div.header h1 { display: flex; align-items: center; margin: 0; font-size: 1em; font-weight: normal; color: #FFF; text-align: left; cursor: pointer; padding: 0 10px; flex-grow: 1; }
-table#compose.sign th { background-color: #808080; border-color: #808080; }
+table#compose.not-encrypted th { background-color: #808080; border-color: #808080; }
 table#compose td.input { height: 36px; vertical-align: middle; }
 table#compose td.input .collapsed { padding: 8px; cursor: text; height: 18px; align-items: center; }
 table#compose td.input .collapsed .placeholder { color: #636c72; font-family: Arial, sans-serif; font-size: 1em; }
@@ -334,7 +334,7 @@ table#compose td.input .collapsed .email_preview .rest.expired { border-color: #
 table#compose td.input .collapsed .email_preview .email_address.expired { background-color: #d18826; }
 table#compose td.input .collapsed .email_preview .rest.no_pgp { border-color: #989898; }
 table#compose td.input .collapsed .email_preview .email_address.no_pgp { background-color: #989898; }
-table#compose.sign td.input .collapsed .email_preview .email_address { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
+table#compose.not-encrypted td.input .collapsed .email_preview .email_address { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
 table#compose td.recipients-inputs { vertical-align: middle; }
 table#compose td.recipients-inputs > div#input_addresses_container.invisible { height: 0; overflow: hidden; }
 table#compose td.recipients-inputs > div#input_addresses_container > div { position: relative; }
@@ -369,13 +369,13 @@ table#compose td.recipients-inputs > div#input_addresses_container div span.emai
 table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions img#show_sender_aliases_options { transform: rotate(270deg) }
 table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions button:hover { text-decoration: underline; }
 table#compose td.recipients-inputs > div#input_addresses_container div span.email-copy-actions img:hover { opacity: 0.8; }
-table#compose.sign .recipients span { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
-table#compose.sign .recipients span.wrong { background: #A44 !important; color: white !important; }
-table#compose.sign .recipients span.wrong .close-icon { display: inline-block !important; }
-table#compose.sign .recipients span.wrong .close-icon.display_when_sign { display: none !important; }
-table#compose.sign .recipients img, table#compose.sign .recipients i { display: none !important; }
-table#compose.sign .recipients img.display_when_sign { display: inline-block !important; }
-table#compose.sign #password_or_pubkey_container { display: none !important; }
+table#compose.not-encrypted .recipients span { border: none !important; background-color: #f0f0f0 !important; color: black !important; }
+table#compose.not-encrypted .recipients span.wrong { background: #A44 !important; color: white !important; }
+table#compose.not-encrypted .recipients span.wrong .close-icon { display: inline-block !important; }
+table#compose.not-encrypted .recipients span.wrong .close-icon.display_when_sign { display: none !important; }
+table#compose.not-encrypted .recipients img, table#compose.not-encrypted .recipients i { display: none !important; }
+table#compose.not-encrypted .recipients img.display_when_sign { display: inline-block !important; }
+table#compose.not-encrypted #password_or_pubkey_container { display: none !important; }
 
 table#compose th div.header { display: flex; height: 36px; }
 table#compose th div.header > div.actions_container { display: flex; align-items: center; }
@@ -456,7 +456,7 @@ table#compose #fineuploader .qq-upload-list li .qq-upload-file { line-height: 18
 table#compose #fineuploader .qq-upload-list [class^="qq-file-id"] { background: #f3f3f3; border: 1px solid #ccc; margin: 3px 0px 3px 10px ; position: relative;
   border-left: 4px solid #31A217; background-image: url("/img/svgs/locked-icon-green.svg"); background-repeat: no-repeat; background-size: 9px;
   background-position-x: 8px; background-position-y: 8px; }
-table#compose #fineuploader .qq-upload-list .sign { border-left: 1px solid #ccc !important; background-image: none !important; padding-left: 8px; }
+table#compose #fineuploader .qq-upload-list .not-encrypted { border-left: 1px solid #ccc !important; background-image: none !important; padding-left: 8px; }
 table#compose #fineuploader .qq-upload-cancel  {background: transparent; border:0; box-shadow: none; }
 
 body.full_window table#compose { position: relative;}

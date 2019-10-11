@@ -62,5 +62,14 @@ export type ComposerUrlParams = {
 
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 
-export type ComposerPopoverItem = { HTMLContent: string, data: EncryptionType, iconPath?: string };
+export type ComposerPopoverItems = { [key in EncryptionType]: { text: string, iconPath?: string } };
 export type EncryptionType = 'encrypted' | 'signed' | 'encryptedAndSigned' | 'plain';
+
+export class SendBtnButtonTexts {
+  public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";
+  public static readonly BTN_SIGN_AND_SEND: string = "Sign and Send";
+  public static readonly BTN_ENCRYPT_SIGN_AND_SEND: string = "Encrypt, Sign and Send";
+  public static readonly BTN_PLAIN_SEND: string = "Send plain";
+  public static readonly BTN_WRONG_ENTRY: string = "Re-enter recipient..";
+  public static readonly BTN_SENDING: string = "Sending..";
+}
