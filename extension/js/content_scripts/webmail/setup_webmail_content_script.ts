@@ -23,7 +23,7 @@ type WebmailSpecificInfo = {
 };
 export interface WebmailElementReplacer {
   getIntervalFunctions: () => Array<IntervalFunction>;
-  setReplyBoxEditable: () => void;
+  setReplyBoxEditable: () => Promise<void>;
   reinsertReplyBox: (subject: string, myEmail: string, replyTo: string[], threadId: string) => void;
   scrollToBottomOfConvo: () => void;
 }
