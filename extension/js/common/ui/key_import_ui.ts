@@ -133,7 +133,7 @@ export class KeyImportUi {
     return normalized;
   }
 
-  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>, validationResultInsertAfter: boolean = false) => {
+  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>) => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
@@ -155,11 +155,7 @@ export class KeyImportUi {
       setBtnColor(result.word.pass ? 'green' : 'gray');
     };
     input.parent().append(validationElements.progressBarElement); // xss-direct
-    if (validationResultInsertAfter) {
-      validationElements.passwordResultElement.insertAfter(input.parent()); // xss-direct
-    } else {
-      validationElements.passwordResultElement.insertBefore(input.parent()); // xss-direct
-    }
+    input.parent().append(validationElements.passwordResultElement); // xss-direct
     const validation = Ui.event.prevent('spree', validate);
     input.on('keyup', validation);
     const destroy = () => {

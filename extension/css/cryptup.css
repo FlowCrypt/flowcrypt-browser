@@ -193,8 +193,8 @@ body#settings > div#content.backup div#step_3_manual .d-inline-block { display: 
 body#settings > div#content.backup div#step_3_manual table.backup_options tr.text td { padding-bottom: 20px; }
 body#settings > div#content.backup div#step_3_manual table.backup_options label { text-transform: uppercase; font-weight: bold; position: relative; bottom: 2px; }
 body#settings .password_feedback { display: none; }
-body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left:0; right:0; margin-top: 57px;
- -webkit-animation: fadeIn .7s; animation: fadeIn .7s; }
+body#settings > div#content.setup div.manual .password_feedback { display: none; position: absolute; left: 0; right: 0; margin-top: -8px;
+    -webkit-animation: fadeIn .7s; animation: fadeIn .7s; height: 20px; padding: 0; }
 body#settings > div#content.setup div.manual .setup_page .password_feedback, body#settings > div#content.setup div.manual .setup_page .pp_container  { text-align: left; padding-left: 40px; }
 body#settings > div#content.backup .password_result, body#settings > div#content.setup div.manual .password_result { margin-top: 7px; text-transform: uppercase; font-weight: bold; }
 body#settings div.password_bar { width: 360px; border: none; display: inline-block; margin-bottom: 14px; position: relative; }

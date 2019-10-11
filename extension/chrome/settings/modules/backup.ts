@@ -55,7 +55,7 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_password'), true);
+  keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_password'));
 
   const showStatus = async () => {
     $('.hide_if_backup_done').css('display', 'none');
