@@ -538,14 +538,14 @@ Catch.try(async () => {
       password2.val('').focus();
       return false;
     }
-    const paperPassword = `
+    const paperPassPhraseStickyNote = `
       <div style="font-size: 1.2em">
         Please write down your pass phrase and store it in safe place or even two.
         It is needed in order to access your FlowCrypt account.
       </div>
       <div class="passphrase-sticky-note">${password1.val()}</div>
     `;
-    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassword);
+    return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
   };
 
   $('#step_2a_manual_create .action_create_private').click(Ui.event.prevent('double', async () => {
