@@ -610,6 +610,12 @@ export class ComposerContacts extends ComposerComponent {
     this.updatePubkeyIcon();
   }
 
+  public addRecipientsAndShowPreview = async (recipients: Recipients) => {
+    this.composer.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
+    this.composer.composerContacts.showHideCcAndBccInputsIfNeeded();
+    await this.composer.composerContacts.setEmailsPreview(this.getRecipients());
+  }
+
   private refreshRecipients = async () => {
     const failedRecipients = this.addedRecipients.filter(r => r.element.className.includes('failed'));
     for (const recipient of failedRecipients) {

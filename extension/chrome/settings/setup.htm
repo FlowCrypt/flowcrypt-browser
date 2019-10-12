@@ -8,21 +8,52 @@
 
   <title>FlowCrypt</title>
   <link rel="stylesheet" href="/css/cryptup.css" />
+  <link rel="stylesheet" href="/css/settings.css" />
   <link rel="stylesheet" href="/css/open-sans.css" />
   <link rel="stylesheet" href="/css/animate.css" />
   <link rel="stylesheet" href="/lib/featherlight/featherlight.css" />
+  <link rel="stylesheet" href="/lib/bootstrap/bootstrap.min.css" />
   <link rel="stylesheet" href="/css/mobile-menu-styling.css" />
   <link rel="icon" href="/img/logo/flowcrypt-logo-19-19.png" />
   <script type="text/template" src="/chrome/elements/hared/attach.template.htm" id="qq-template"></script>
 </head>
 
 <body id="settings">
-  <div class="profile-row ">
-    <span class="email-address"></span>
-    <span>
-      <img src="/img/svgs/profile-icon.svg" class="profile-img" alt="Profile Image">
-    </span>
-  </div>
+  <section id="header-row">
+    <div class="container">
+      <div class="row ">
+        <div class="col-sm-6 text-left logo-row">
+          <img class="cryptup-logo" src="/img/logo/full-logo.svg" alt="FlowCrypt Logo">
+        </div>
+
+        <div class="col-sm-6 text-right">
+          <div class="profile-row ">
+            <div class="public-profile-container hide_if_setup_not_done public_profile_indicator_container" style="visibility: hidden;">
+              <div id="public-profile-indicator">
+                <a href="#" class="show_settings_page" page="modules/contact_page.htm">
+                  <i class="status-indicator">
+                    <div class="status-indicator-text">Complete setup of your Encrypted Contact Page to receive
+                      encrypted emails from the web.</div>
+                  </i>
+                </a>
+              </div>
+            </div>
+            <span class="email-address action-toggle-accounts-menu" data-test="action-toggle-accounts-menu"></span>
+            <span id="toggle-accounts-profile-img" class="action-toggle-accounts-menu">
+              <img src="/img/svgs/profile-icon.svg" class="profile-img main-profile-img" alt="Profile Image">
+            </span>
+            <a href="#" class="add-account action_add_account hide_if_setup_not_done" data-test="action-add-account">+
+              Add account</a>
+          </div>
+          <div id="alt-accounts" class="accounts-row">
+            <div class="row alt-accounts accounts-options-row text-center">
+              <a href="#" class="action_add_account action_add_account--settings">Add Account</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div id="content" class="setup">
     <div class="wide line">
@@ -258,7 +289,7 @@
 
     <div id="step_4_done">
       <div class="wide line">
-        <div class="button long green action_send"><a target="_blank">COMPOSE ENCRYPTED EMAIL</a></div>
+        <a class="button long green action_send" target="_blank">COMPOSE ENCRYPTED EMAIL</a>
       </div>
       <div class="wide line">
         <div class="button long gray action_account_settings" data-test="action-step4done-account-settings">MORE
@@ -320,6 +351,7 @@
   <script src="/lib/zxcvbn.js"></script>
   <script src="/lib/openpgp.js"></script>
   <script src="setup.js" type="module"></script>
+  <script src="../settings/index.js" type="module"></script>
 
 </body>
 

@@ -74,17 +74,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
     this.replaceConvoBtns();
-    this.replaceStandardReplyBox();
+    this.replaceStandardReplyBox().catch(Catch.reportErr);
     this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
     this.addSettingsBtn();
   }
 
-  setReplyBoxEditable = () => {
+  setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
       $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
-      this.replaceStandardReplyBox(true);
+      await this.replaceStandardReplyBox(true);
     }
     this.scrollToBottomOfConvo();
   }
@@ -138,7 +138,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         $(lastReplyBtn).addClass('inserted');
         const element = $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last());  // xss-safe-factory
         if (isEncrypted) {
-          element.click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
+          element.click(Ui.event.prevent('double', () => this.setReplyBoxEditable().catch(Catch.reportErr)));
         } else {
           element.click(Ui.event.prevent('double', Catch.try(() => this.replaceStandardReplyBox(true, true)))); // xss-safe-factory
         }
@@ -437,12 +437,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   }
 
-  private replaceStandardReplyBox = (editable: boolean = false, force: boolean = false) => {
+  private replaceStandardReplyBox = async (editable: boolean = false, force: boolean = false) => {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
+      const { drafts_reply } = await Store.getAcct(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
-      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length || (convoRootEl.is(':visible') && force));
+      const replyParams = this.getReplyParams(convoRootEl!);
+      const hasDraft = drafts_reply && replyParams.threadId && !!drafts_reply[replyParams.threadId];
+      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length
+        || (convoRootEl.is(':visible') && force)
+        || hasDraft);
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
@@ -453,7 +458,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             Xss.sanitizeAppend(replyBox, '<font>&nbsp;&nbsp;Draft skipped</font>');
             replyBox.children(':not(font)').hide();
           } else {
-            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(this.getReplyParams(convoRootEl!), editable)}</div>`;
+            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
               const origChildren = replyBox.children();
               replyBox.addClass('reply_message_evaluated').append(secureReplyBoxXssSafe); // xss-safe-factory

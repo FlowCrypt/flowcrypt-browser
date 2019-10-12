@@ -4,6 +4,7 @@ body, html { font-family: 'Open Sans', sans-serif, Arial!important; position: re
 .new_message_featherlight .featherlight-content, .new_message_featherlight .featherlight-content iframe { overflow: hidden !important;}
 .new_message_featherlight .featherlight-content .featherlight-close-icon { display: none; }
 
+#header-row { margin-top: 20px; }
 #header-row .logo-row img.cryptup-logo { height: auto; width: 170px; margin-right: 5px; text-align: left; margin-top: -2px; }
 #header-row .logo-row { margin-top: 10px; }
 #header-row .logo-row .subscription { font-size: 14px; }
@@ -134,7 +135,7 @@ a.gray_link { color: #aaa; font-weight: normal; padding-right: 20px; padding-lef
   text-align: left;
 }
 
-#settings-row .blog_post_list .line { 
+#settings-row .blog_post_list .line {
   padding: 6px 0;
   color: #646464;
   opacity: 0.9;
@@ -414,7 +415,7 @@ body#settings .settings-border .key_list {
 #settings.client div.new_message { position: fixed; }
 #settings.client span.label { font-weight: normal; text-transform: lowercase; font-size: 10px; padding: 2px 4px; margin-left: 8px; position: relative;
   top: -1px; display: inline-block; border-radius: 2px; margin-top: 2px; margin-bottom: 0px; cursor: pointer; }
-#settings.client > table { width: 100%; min-height: 90%; } 
+#settings.client > table { width: 100%; min-height: 90%; }
 #settings.client > table td.menu { width: 200px; min-width: 200px; max-width: 200px; padding: 20px; padding-top: 0px; background: white; }
 #settings.client > table td.menu .button { width: 160px !important; margin-bottom: 8px !important; text-align: left !important; }
 #settings.client > table td.menu span.label { margin-left: 0; margin-bottom: 2px; font-size: 12px; white-space: nowrap; overflow: hidden;
@@ -431,5 +432,5 @@ body#settings .settings-border .key_list {
 #settings.client > #banner > div.finish_session img { height: 32px;}
 #settings.client .attachments { margin-top: 12px; }
 #settings.client .attachments span.pgp_attachment { float: none; margin: 0 16px 16px 0; display: inline-block; }
-#settings.client .action_see_original_message { display:none; text-transform: uppercase; font-size: 9.5px; color: white; background: #31A217; padding: 2px 3px 2px 3px; 
+#settings.client .action_see_original_message { display:none; text-transform: uppercase; font-size: 9.5px; color: white; background: #31A217; padding: 2px 3px 2px 3px;
   border-radius: 2px; cursor: pointer; float:right; margin-top: 20px; }

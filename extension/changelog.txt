@@ -1,5 +1,9 @@
 <div>
 
+version 7.0.4 on Oct 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/357?closed=1" target="_blank">Fix sendAs migration</a>
+
+version 7.0.3 on Oct 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/356?closed=1" target="_blank">Google Contacts</a>
+
 version 7.0.2 on Sep 12, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/355?closed=1" target="_blank">Expired Public Keys</a>
 
 version 7.0.1 on Sep 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/354?closed=1" target="_blank">Firefox Content Script fix</a>

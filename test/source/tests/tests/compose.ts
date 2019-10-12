@@ -250,6 +250,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'threadId=15f7f5face7101db&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=15f7f5face7101db';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
+      expect(await PageRecipe.getElementPropertyJson((await composePage.waitAny('@action-send'))!, 'textContent')).to.eq('Sign and Send');
+      await composePage.waitAndClick('@action-show-options-popover');
+      const sendingOptionSigned = (await composePage.waitAny('@action-choose-signed'))!;
+      expect(await PageRecipe.getElementPropertyJson(sendingOptionSigned, 'className')).to.include('active');
       await ComposePageRecipe.fillMsg(composePage, {}, undefined, 'signed', 'reply');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
