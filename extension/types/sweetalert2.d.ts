@@ -1,5 +1,3 @@
-// tslint:disable
-
 declare module 'sweetalert2' {
   /**
    * A namespace inside the default function, containing utility function for controlling the currently-displayed
@@ -22,7 +20,7 @@ declare module 'sweetalert2' {
      *   import Swal from 'sweetalert2';
      *   Swal.fire('The Internet?', 'That thing is still around?', 'question');
      */
-    function fire(title?: string, message?: string, type?: SweetAlertType): Promise<SweetAlertResult>;
+    function fire(...options: SweetAlertArrayOptions): Promise<SweetAlertResult>;
 
     /**
      * Function to display a SweetAlert2 modal, with an object of options, all being optional.
@@ -36,7 +34,7 @@ declare module 'sweetalert2' {
      *     timer: 2000
      *   })
      */
-    function fire(settings: SweetAlertOptions): Promise<SweetAlertResult>;
+    function fire(options: SweetAlertOptions): Promise<SweetAlertResult>;
 
     /**
      * Reuse configuration by creating a Swal instance.
@@ -60,14 +58,15 @@ declare module 'sweetalert2' {
      *     type: 'error'
      *   })
      */
-    function update(newSettings: SweetAlertOptions): void;
+    function update(options: SweetAlertOptions): void;
 
     /**
      * Closes the currently open SweetAlert2 modal programmatically.
      *
-     * @param onComplete An optional callback to be called when the alert has finished closing.
+     * @param result The promise originally returned by {@link Swal.fire} will be resolved with this value.
+     *               If no object is given, the promise is resolved with an empty ({}) {@link SweetAlertResult} object.
      */
-    function close(onComplete?: (modalElement: HTMLElement) => void): void;
+    function close(result?: SweetAlertResult): void;
 
     /**
      * Gets the popup.
@@ -192,7 +191,7 @@ declare module 'sweetalert2' {
     /**
      * Gets the input DOM node, this method works with input parameter.
      */
-    function getInput(): HTMLElement;
+    function getInput(): HTMLInputElement;
 
     /**
      * Disables the modal input. A disabled input element is unusable and un-clickable.
@@ -253,7 +252,7 @@ declare module 'sweetalert2' {
      *
      * @param steps The steps' configuration.
      */
-    function queue(steps: (SweetAlertOptions | string)[]): Promise<any>;
+    function queue(steps: Array<SweetAlertOptions | string>): Promise<any>;
 
     /**
      * Gets the index of current modal in queue. When there's no active queue, null will be returned.
@@ -359,7 +358,7 @@ declare module 'sweetalert2' {
 
   type ValueOrThunk<T> = T | (() => T);
 
-  export type SweetAlertArrayOptions = [string] | [string, string] | [string, string, string];
+  export type SweetAlertArrayOptions = [string?, string?, SweetAlertType?];
 
   export interface SweetAlertOptions {
     /**
@@ -368,7 +367,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    title?: string;
+    title?: string | HTMLElement | JQuery;
 
     /**
      * The title of the modal, as text. Useful to avoid HTML injection.
@@ -398,7 +397,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    footer?: string | JQuery;
+    footer?: string | HTMLElement | JQuery;
 
     /**
      * The type of the modal.
@@ -732,7 +731,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    preConfirm?: (inputValue: any) => SyncOrAsync<any | void>;
+    preConfirm?(inputValue: any): SyncOrAsync<any | void>;
 
     /**
      * Add a customized icon for the modal. Should contain a string with the path or URL to the image.
@@ -826,7 +825,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    inputValidator?: (inputValue: string) => SyncOrAsync<string | null>;
+    inputValidator?(inputValue: string): SyncOrAsync<string | null>;
 
     /**
      * A custom validation message for default validators (email, url).
@@ -875,28 +874,37 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    onBeforeOpen?: (modalElement: HTMLElement) => void;
-
-    /**
-     * Function to run after modal has been disposed.
-     *
-     * @default null
-     */
-    onAfterClose?: () => void;
+    onBeforeOpen?(modalElement: HTMLElement): void;
 
     /**
      * Function to run when modal opens, provides modal DOM element as the first argument.
      *
      * @default null
      */
-    onOpen?: (modalElement: HTMLElement) => void;
+    onOpen?(modalElement: HTMLElement): void;
+
+    /**
+     * Function to run after modal DOM has been updated.
+     * Typically, this will happen after Swal.fire() or Swal.update().
+     * If you want to perform changes in the modal's DOM, that survive Swal.update(), onRender is a good place for that.
+     *
+     * @default null
+     */
+    onRender?(modalElement: HTMLElement): void;
 
     /**
      * Function to run when modal closes, provides modal DOM element as the first argument.
      *
      * @default null
      */
-    onClose?: (modalElement: HTMLElement) => void;
+    onClose?(modalElement: HTMLElement): void;
+
+    /**
+     * Function to run after modal has been disposed.
+     *
+     * @default null
+     */
+    onAfterClose?(): void;
 
     /**
      * Set to false to disable body padding adjustment when scrollbar is present.

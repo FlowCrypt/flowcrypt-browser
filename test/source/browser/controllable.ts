@@ -202,10 +202,13 @@ abstract class ControllableBase {
     await this.type(selector, text);
   }
 
-  public waitAndRespondToModal = async (type: 'info' | 'warning' | 'error' | 'confirm', clickBtn: 'confirm' | 'cancel', message: string) => {
+  public waitAndRespondToModal = async (type: 'info' | 'warning' | 'error' | 'confirm' | 'confirm-checkbox', clickBtn: 'confirm' | 'cancel', message: string) => {
     await this.waitAll([`@ui-modal-${type}`, `@ui-modal-${type}:message`]);
     await Util.sleep(0.5);
     expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
+    if (type === 'confirm-checkbox') {
+      await this.waitAndClick(`@ui-modal-${type}-input`)
+    }
     await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
 

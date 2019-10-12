@@ -489,6 +489,30 @@ export class Ui {
       });
       return typeof dismiss === 'undefined';
     },
+    confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
+      const { dismiss } = await Swal.fire({
+        html,
+        input: 'checkbox',
+        inputPlaceholder: label,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'ui-modal-confirm-checkbox',
+          confirmButton: 'ui-modal-confirm-checkbox-confirm',
+          cancelButton: 'ui-modal-confirm-checkbox-cancel',
+          input: 'ui-modal-confirm-checkbox-input',
+        },
+        onOpen: () => {
+          const input = Swal.getInput();
+          const confirmButton = Swal.getConfirmButton();
+          $(confirmButton).prop('disabled', true);
+          $(input).on('change', () => {
+            $(confirmButton).prop('disabled', !input.checked);
+          });
+        }
+      });
+      return typeof dismiss === 'undefined';
+    },
   };
 
   public static toast = async (msg: string): Promise<void> => {
