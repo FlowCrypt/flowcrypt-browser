@@ -16,7 +16,7 @@ import { Google, GoogleAuth } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
-import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
+import { initPassphraseToggle, shouldPassPhraseBeHidden } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
 
@@ -538,12 +538,16 @@ Catch.try(async () => {
       password2.val('').focus();
       return false;
     }
+    let notePp = String(password1.val());
+    if (await shouldPassPhraseBeHidden()) {
+      notePp = notePp.substring(0, 2) + notePp.substring(2, notePp.length - 2).replace(/[^ ]/g, '*') + notePp.substring(notePp.length - 2, notePp.length);
+    }
     const paperPassPhraseStickyNote = `
       <div style="font-size: 1.2em">
         Please write down your pass phrase and store it in safe place or even two.
         It is needed in order to access your FlowCrypt account.
       </div>
-      <div class="passphrase-sticky-note">${password1.val()}</div>
+      <div class="passphrase-sticky-note">${notePp}</div>
     `;
     return await Ui.modal.confirmWithCheckbox('Yes, I wrote it down', paperPassPhraseStickyNote);
   };
