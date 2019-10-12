@@ -188,8 +188,14 @@ abstract class ControllableBase {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
-  public read = async (selector: string): Promise<string> => { // read text of first visible element
-    return await this.target.evaluate((s) => [].slice.call(document.querySelectorAll(s)).find((el: HTMLElement) => el.offsetParent !== null).innerText, this.selector(selector));
+  public read = async (selector: string, onlyVisible = false): Promise<string> => {
+    return await this.target.evaluate((s) => {
+      if (onlyVisible) {
+        return [].slice.call(document.querySelectorAll(s)).find((el: HTMLElement) => el.offsetParent !== null).innerText;
+      } else {
+        return document.querySelector(s).innerText;
+      }
+    }, this.selector(selector));
   }
 
   public selectOption = async (selector: string, choice: string) => {

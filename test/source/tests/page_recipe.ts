@@ -104,7 +104,7 @@ export class SetupPageRecipe extends PageRecipe {
           throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generatedPp}`);
         }
         const ppValidationExpect = 'GREAT (time to crack: centuries)';
-        const ppValidationResult = await settingsPage.read('@container-password-feedback');
+        const ppValidationResult = await settingsPage.read('@container-password-feedback', true);
         if (!ppValidationResult.includes(ppValidationExpect)) {
           throw new Error(`Incorrect Passphrase validation result, expected '${ppValidationExpect}' but got ${ppValidationResult}`);
         }
