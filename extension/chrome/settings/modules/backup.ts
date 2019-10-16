@@ -240,7 +240,7 @@ Catch.try(async () => {
       return;
     }
     if (!isPassPhraseStrongEnough(primaryKi, pp) && await Ui.modal.confirm('Your key is not protected with strong pass phrase, would you like to change pass phrase now?')) {
-      window.location.href = Env.urlCreate('/chrome/settings/modules/change_passphrase.htm', { acctEmail, parentTabId, redirectTo: 'backup' });
+      window.location.href = Env.urlCreate('/chrome/settings/modules/change_passphrase.htm', { acctEmail, parentTabId });
       return;
     }
     const btn = $('.action_manual_backup');
