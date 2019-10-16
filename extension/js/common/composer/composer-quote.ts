@@ -34,7 +34,7 @@ export class ComposerQuote extends ComposerComponent {
       Xss.sanitizeAppend(this.composer.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
       this.composer.resizeComposeBox();
       try {
-        this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, (progress) => this.setQuoteLoaderProgress(progress + '%'));
+        this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method, (progress) => this.setQuoteLoaderProgress(progress + '%'));
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
@@ -79,12 +79,16 @@ export class ComposerQuote extends ComposerComponent {
     }
   }
 
-  public getAndDecryptMessage = async (msgId: string, progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+  public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     try {
       const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
-      const readableBlocks = message.blocks.filter(b => ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg', 'encryptedAtt'].includes(b.type));
-      const pgpBlockCount = readableBlocks.filter(b => ['encryptedMsg', 'signedMsg', 'encryptedAtt'].includes(b.type)).length;
+      const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
+      if (method === 'forward') {
+        readableBlockTypes.push('encryptedAtt');
+      }
+      const readableBlocks = message.blocks.filter(b => readableBlockTypes.includes(b.type));
+      const pgpBlockCount = readableBlocks.filter(b => readableBlockTypes.includes(b.type)).length;
       const decryptedAndFormatedContent: string[] = [];
       const decryptedFiles: File[] = [];
       for (const [index, block] of readableBlocks.entries()) {
