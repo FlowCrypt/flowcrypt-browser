@@ -638,8 +638,7 @@ Catch.try(async () => {
       } else if (e instanceof FormatError) {
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
       } else if (Api.err.isInPrivateMode(e)) {
-        await renderErr(`Error: FlowCrypt extension cannot communicate with its background script to decrypt this message.
-  On Firefox, this is commonly caused by the Private Browsing Mode or the use of Firefox Containers.`, undefined);
+        await renderErr(`FlowCrypt does not currently work in a Firefox Private Window (or when Firefox Containers are used) due to app limitations. Please try in a standard window.`, undefined);
       } else {
         Catch.reportErr(e);
         await renderErr(String(e), encryptedMsgUrlParam ? encryptedMsgUrlParam.toUtfStr() : undefined);
