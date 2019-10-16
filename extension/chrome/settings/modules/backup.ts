@@ -230,7 +230,7 @@ Catch.try(async () => {
   const backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
     const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
     if (!parentTabId) {
-      await Ui.modal.error(`Error: There isn't 'parentTabId' property. Please contact human@flowcrypt.com`);
+      await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
       return;
     }
     if (!pp) {
@@ -251,7 +251,7 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-      } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
+      } else if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
