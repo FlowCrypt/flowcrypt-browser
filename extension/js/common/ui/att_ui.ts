@@ -131,6 +131,10 @@ export class AttUI {
     }
   }
 
+  public addFile = async (file: File) => {
+    this.uploader.addFiles([file]); // tslint:disable-line: no-unsafe-any
+  }
+
   private getFileSizeSum = () => {
     let sum = 0;
     for (const file of Object.values(this.attachedFiles)) {
