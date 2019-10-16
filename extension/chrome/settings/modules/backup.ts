@@ -229,29 +229,39 @@ Catch.try(async () => {
 
   const backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
     const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
-    if (!pp || !await isPassPhraseStrongEnough(primaryKi, pp)) {
-      await Ui.modal.warning('Your key is not protected with a strong pass phrase, skipping');
+    if (!parentTabId) {
       return;
     }
-    const btn = $('.action_manual_backup');
-    const origBtnText = btn.text();
-    Xss.sanitizeRender(btn, Ui.spinner('white'));
-    try {
-      await doBackupOnEmailProvider(acctEmail, primaryKi.private);
-    } catch (e) {
-      if (Api.err.isNetErr(e)) {
-        return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-      } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-        return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
-      } else {
-        Catch.reportErr(e);
-        return await Ui.modal.error(`Error happened: ${String(e)}`);
-      }
-    } finally {
-      btn.text(origBtnText);
+    if (!pp) {
+      BrowserMsg.send.passphraseDialog(parentTabId, { type: 'backup', longids: [primaryKi.longid] });
+      await Store.waitUntilPassphraseChanged(acctEmail, [primaryKi.longid]);
+      await backupOnEmailProviderAndUpdateUi(primaryKi);
+      return;
     }
-    await writeBackupDoneAndRender(false, 'inbox');
+    // test when pp isn't strong
+    if (await Ui.modal.confirm('Your key is not protected with strong pass phrase, would you like to change pass phrase now?')) {
+      window.location.href = Env.urlCreate('/chrome/settings/modules/change_passphrase.htm', { acctEmail, parentTabId });
+      return;
+    }
+    // const btn = $('.action_manual_backup');
+    // const origBtnText = btn.text();
+    // Xss.sanitizeRender(btn, Ui.spinner('white'));
+    // try {
+    //   await doBackupOnEmailProvider(acctEmail, primaryKi.private);
+    // } catch (e) {
+    //   if (Api.err.isNetErr(e)) {
+    //     return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
+    //   } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
+    //     BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
+    //     return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
+    //   } else {
+    //     Catch.reportErr(e);
+    //     return await Ui.modal.error(`Error happened: ${String(e)}`);
+    //   }
+    // } finally {
+    //   btn.text(origBtnText);
+    // }
+    // await writeBackupDoneAndRender(false, 'inbox');
   };
 
   const backupAsFile = async (primaryKi: KeyInfo) => { // todo - add a non-encrypted download option
@@ -300,28 +310,28 @@ Catch.try(async () => {
     }
   }));
 
-  const isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
-    const prv = await Pgp.key.read(ki.private);
-    if (!prv.isFullyEncrypted()) {
-      return false;
-    }
-    if (!passphrase) {
-      const pp = prompt('Please enter your pass phrase:');
-      if (!pp) {
-        return false;
-      }
-      if (await Pgp.key.decrypt(prv, pp) !== true) {
-        await Ui.modal.warning('Pass phrase did not match, please try again.');
-        return false;
-      }
-      passphrase = pp;
-    }
-    if (Settings.evalPasswordStrength(passphrase).word.pass === true) {
-      return true;
-    }
-    await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
-    return false;
-  };
+  // const isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
+  //   const prv = await Pgp.key.read(ki.private);
+  //   if (!prv.isFullyEncrypted()) {
+  //     return false;
+  //   }
+  //   if (!passphrase) {
+  //     const pp = prompt('Please enter your pass phrase:');
+  //     if (!pp) {
+  //       return false;
+  //     }
+  //     if (await Pgp.key.decrypt(prv, pp) !== true) {
+  //       await Ui.modal.warning('Pass phrase did not match, please try again.');
+  //       return false;
+  //     }
+  //     passphrase = pp;
+  //   }
+  //   if (Settings.evalPasswordStrength(passphrase).word.pass === true) {
+  //     return true;
+  //   }
+  //   await Ui.modal.warning('Please change your pass phrase first.\n\nIt\'s too weak for this backup method.');
+  //   return false;
+  // };
 
   const setupCreateSimpleAutomaticInboxBackup = async () => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);

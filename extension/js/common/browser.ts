@@ -452,9 +452,10 @@ export class Ui {
         },
       });
     },
-    warning: async (text: string): Promise<void> => {
+    warning: async (text: string, isHTML: boolean = false): Promise<void> => {
+      text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       await Swal.fire({
-        html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        html: `<span class="orange">${text}</span>`,
         animation: false,
         allowOutsideClick: false,
         customClass: {
