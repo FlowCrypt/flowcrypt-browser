@@ -15,7 +15,7 @@ import { SendAsAlias } from './platform/store.js';
 
 type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
-export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote`;
+export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote` | `backup`;
 export type FactoryReplyParams = {
   threadId?: string,
   threadMsgId?: string,
