@@ -10,7 +10,7 @@ import { Api, ProgressCb } from '../api/api.js';
 import { Catch } from '../platform/catch.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { Google } from '../api/google.js';
-import { Mime } from '../core/mime.js';
+import { Mime, MsgBlock } from '../core/mime.js';
 import { Buf } from '../core/buf.js';
 import { FormatError, PgpMsg } from '../core/pgp.js';
 import { BrowserMsg, Bm } from '../extension.js';
@@ -84,35 +84,51 @@ export class ComposerQuote extends ComposerComponent {
       const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
+      const decryptedBlockTypes = ['decryptedHtml'];
       if (method === 'forward') {
         readableBlockTypes.push('encryptedAtt');
+        decryptedBlockTypes.push('decryptedAtt');
       }
-      const readableBlocks = message.blocks.filter(b => readableBlockTypes.includes(b.type));
-      const pgpBlockCount = readableBlocks.filter(b => readableBlockTypes.includes(b.type)).length;
+      const readableBlocks: MsgBlock[] = [];
+      for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
+        if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
+          const stringContent = String(block.content);
+          const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
+          const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
+          readableBlocks.push(...msgBlocks.filter(b => decryptedBlockTypes.includes(b.type)));
+        } else {
+          readableBlocks.push(block);
+        }
+      }
       const decryptedAndFormatedContent: string[] = [];
       const decryptedFiles: File[] = [];
       for (const [index, block] of readableBlocks.entries()) {
         const stringContent = String(block.content);
-        if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
-          const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
-          const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
-          const htmlBlock = msgBlocks.find(b => b.type === 'decryptedHtml');
-          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(htmlBlock ? htmlBlock.content.toString() : 'No Content', '\n');
+        if (block.type === 'decryptedHtml') {
+          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n');
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
           if (progressCb) {
-            progressCb(60 + (Math.round((40 / pgpBlockCount) * (index + 1))));
+            progressCb(60 + (Math.round((40 / readableBlocks.length) * (index + 1))));
           }
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
-        } else if (block.type === 'encryptedAtt') {
+        } else if (['encryptedAtt', 'decryptedAtt'].includes(block.type)) {
           if (block.attMeta && block.attMeta.data) {
-            const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: block.attMeta.data });
-            if (result.success) {
-              const file = new File([result.content], result.filename || '');
+            let attMeta: { content: Buf, filename?: string } | undefined;
+            if (block.type === 'encryptedAtt') {
+              const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: block.attMeta.data });
+              if (result.success) {
+                attMeta = { content: result.content, filename: result.filename };
+              }
+            } else {
+              attMeta = { content: Buf.fromUint8(block.attMeta.data), filename: block.attMeta.name };
+            }
+            if (attMeta) {
+              const file = new File([attMeta.content], attMeta.filename || '');
               decryptedFiles.push(file);
             }
             if (progressCb) {
-              progressCb(60 + (Math.round((40 / pgpBlockCount) * (index + 1))));
+              progressCb(60 + (Math.round((40 / readableBlocks.length) * (index + 1))));
             }
           }
         } else {
