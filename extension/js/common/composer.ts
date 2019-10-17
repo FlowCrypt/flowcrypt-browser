@@ -205,10 +205,6 @@ export class Composer {
       this.setInputTextHeightManuallyIfNeeded();
     }, this.getErrHandlers(`add intro`)));
     this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.getErrHandlers(`render help dialog`)));
-    this.S.now('input_from').change(() => {
-      // when I change input_from, I should completely re-evaluate: update_pubkey_icon() and render_pubkey_result()
-      // because they might not have a pubkey for the alternative address, and might get confused
-    });
     this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
     this.S.cached('icon_footer').click(Ui.event.handle(target => {
       if (!$(target).is('.active')) {
