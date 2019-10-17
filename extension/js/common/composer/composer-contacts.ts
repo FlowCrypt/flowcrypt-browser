@@ -101,6 +101,11 @@ export class ComposerContacts extends ComposerComponent {
         target.focus();
       }
     }));
+    this.composer.S.now('input_from').change(async () => {
+      await this.reEvaluateRecipients(this.addedRecipients);
+      await this.setEmailsPreview(this.addedRecipients);
+      await this.updatePubkeyIcon();
+    });
     const handleCopyActionsClick = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
       const buttonsContainer = target.parentElement!;
       const curentContainer = buttonsContainer.parentElement!;
@@ -618,11 +623,15 @@ export class ComposerContacts extends ComposerComponent {
 
   private refreshRecipients = async () => {
     const failedRecipients = this.addedRecipients.filter(r => r.element.className.includes('failed'));
-    for (const recipient of failedRecipients) {
-      Xss.sanitizeReplace(recipient.element, `<span id="${recipient.id}">${Xss.escape(recipient.email)} ${Ui.spinner('green')}</span>`);
-      recipient.element = document.getElementById(recipient.id)!;
+    await this.reEvaluateRecipients(failedRecipients);
+  }
+
+  public reEvaluateRecipients = async (recipients: RecipientElement[]) => {
+    for (const recipient of recipients) {
+      $(recipient.element).empty().removeClass();
+      Xss.sanitizeAppend(recipient.element, `${Xss.escape(recipient.email)} ${Ui.spinner('green')}`);
     }
-    await this.evaluateRecipients(failedRecipients);
+    await this.evaluateRecipients(recipients);
   }
 
   public evaluateRecipients = async (recipients: RecipientElement[]) => {
