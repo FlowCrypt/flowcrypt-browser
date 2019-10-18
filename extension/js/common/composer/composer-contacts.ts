@@ -449,16 +449,18 @@ export class ComposerContacts extends ComposerComponent {
       const recipientId = this.generateRecipientId();
       const recipientsHtml = `<span tabindex="0" id="${recipientId}"><span>${Xss.escape(email)}</span> ${Ui.spinner('green')}</span>`;
       Xss.sanitizeAppend(container.find('.recipients'), recipientsHtml);
-      const element = document.getElementById(recipientId)!;
-      $(element).on('blur', Ui.event.handle(async (elem, event) => {
-        if (!this.dragged) {
-          await this.collapseIpnutsIfNeeded(event.relatedTarget);
-        }
-      }));
-      this.addDraggableEvents(element);
-      const recipient = { email, element, id: recipientId, sendingType, status };
-      this.addedRecipients.push(recipient);
-      result.push(recipient);
+      const element = document.getElementById(recipientId);
+      if (element) { // todo - may need a better fix: "Cannot set property 'draggable' of null" https://github.com/FlowCrypt/flowcrypt-browser/issues/2119
+        $(element).on('blur', Ui.event.handle(async (elem, event) => {
+          if (!this.dragged) {
+            await this.collapseIpnutsIfNeeded(event.relatedTarget);
+          }
+        }));
+        this.addDraggableEvents(element);
+        const recipient = { email, element, id: recipientId, sendingType, status };
+        this.addedRecipients.push(recipient);
+        result.push(recipient);
+      }
     }
     return result;
   }
@@ -799,7 +801,10 @@ export class ComposerContacts extends ComposerComponent {
       }
     }
     const copyActionsContainer = this.composer.S.cached('email_copy_actions');
-    copyActionsContainer.parent()[0].removeChild(copyActionsContainer[0]);
+    const parent = copyActionsContainer.parent()[0];
+    if (parent) { // todo - may need a better fix? "Cannot read property 'removeChild' of undefined" https://github.com/FlowCrypt/flowcrypt-browser/issues/2119
+      parent.removeChild(copyActionsContainer[0]);
+    }
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
     this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
