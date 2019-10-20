@@ -75,7 +75,7 @@ export namespace GmailRes { // responses
   export type GoogleContacts = {
     feed: {
       entry?: {
-        gd$email: {
+        gd$email?: {
           address: string,
           primary: string
         }[],
@@ -129,9 +129,9 @@ export class Google extends EmailProviderApi {
     const contacts = await GoogleAuth.apiGoogleCallRetryAuthErrorOneTime(acctEmail,
       { xhr, url, method, data, headers, contentType, crossDomain: true, async: true }) as GmailRes.GoogleContacts;
     return contacts.feed.entry && contacts.feed.entry
-      .filter(entry => !!entry.gd$email.find(email => email.primary === "true")) // find all entries that have primary email
+      .filter(entry => !!(entry.gd$email || []).find(email => email.primary === "true")) // find all entries that have primary email
       .map(e => ({
-        email: e.gd$email.find(e => e.primary === "true")!.address,
+        email: (e.gd$email || []).find(e => e.primary === "true")!.address,
         name: e.gd$name && e.gd$name.gd$fullName && e.gd$name.gd$fullName.$t
       }));
   }
