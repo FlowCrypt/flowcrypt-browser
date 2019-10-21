@@ -287,8 +287,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-forward', { delay: 2 });
-      const isInputToFocused = await composePage.page.evaluate(() => document.activeElement === document.getElementById('input_to'));
-      expect(isInputToFocused).to.be.true;
+      await composePage.waitAny('@input-to'); // if this element is present then the elemenent should be focused
       await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 

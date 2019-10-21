@@ -261,7 +261,7 @@ export class Composer {
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
-        this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
+        this.composerContacts.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
