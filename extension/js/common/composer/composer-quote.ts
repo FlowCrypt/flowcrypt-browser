@@ -92,7 +92,7 @@ export class ComposerQuote extends ComposerComponent {
       const readableBlocks: MsgBlock[] = [];
       for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
         if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
-          const stringContent = String(block.content);
+          const stringContent = block.content.toString();
           const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
           const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
           readableBlocks.push(...msgBlocks.filter(b => decryptedBlockTypes.includes(b.type)));
@@ -103,7 +103,7 @@ export class ComposerQuote extends ComposerComponent {
       const decryptedAndFormatedContent: string[] = [];
       const decryptedFiles: File[] = [];
       for (const [index, block] of readableBlocks.entries()) {
-        const stringContent = String(block.content);
+        const stringContent = block.content.toString();
         if (block.type === 'decryptedHtml') {
           const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n');
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
