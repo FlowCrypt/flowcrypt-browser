@@ -273,7 +273,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default('compose[global:compatibility] - standalone - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
@@ -281,6 +281,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
+    }));
+
+    ava.default('compose[global:compatibility] - reply - CC&BCC test forward', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-forward', { delay: 2 });
+      const isInputToFocused = await composePage.page.evaluate(() => document.activeElement === document.getElementById('input_to'));
+      expect(isInputToFocused).to.be.true;
+      await expectRecipientElements(composePage, { to: [], cc: [], bcc: [] });
     }));
 
     ava.default('compose[global:compose] - standalone - expired can still send', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {

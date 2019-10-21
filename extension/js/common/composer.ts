@@ -8,7 +8,7 @@ import { Lang } from './lang.js';
 import { Str, Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
 import { Pgp, } from './core/pgp.js';
-import { Api } from './api/api.js';
+import { Api, RecipientType } from './api/api.js';
 import { Ui, BrowserEventErrHandler } from './browser.js';
 import { AttUI, AttLimits } from './ui/att_ui.js';
 import { Settings } from './settings.js';
@@ -261,22 +261,25 @@ export class Composer {
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
-        await this.composerContacts.addRecipientsAndShowPreview(recipients).catch(Catch.reportErr);
+        this.composerContacts.addRecipients(recipients).catch(Catch.reportErr);
+        // await this.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
         } else {
           $('#reply_click_area,#a_reply,#a_reply_all,#a_forward').click(Ui.event.handle(async target => {
             let method: 'reply' | 'forward' = 'reply';
+            const typesToDelete: RecipientType[] = [];
             switch ($(target).attr('id')) {
               case 'a_forward':
                 method = 'forward';
-                recipients.to = [];
+                typesToDelete.push('to');
               case 'reply_click_area':
               case 'a_reply':
-                recipients.cc = [];
-                recipients.bcc = [];
+                typesToDelete.push('cc');
+                typesToDelete.push('bcc');
                 break;
             }
+            this.composerContacts.deleteRecipientsBySendingType(typesToDelete);
             await this.renderReplyMsgComposeTable(method);
           }, this.getErrHandlers(`activate repply box`)));
         }
@@ -413,6 +416,8 @@ export class Composer {
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
+    this.composerContacts.showHideCcAndBccInputsIfNeeded();
+    await this.composerContacts.setEmailsPreview(this.getRecipients());
     await this.renderComposeTable();
     if (this.canReadEmails) {
       const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
@@ -443,6 +448,9 @@ export class Composer {
     }
     this.composerSendBtn.setPopoverTopPosition();
     this.resizeComposeBox();
+    if (method === 'forward') {
+      this.S.cached('recipients_placeholder').click();
+    }
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
   }
 

@@ -481,6 +481,12 @@ export class ComposerContacts extends ComposerComponent {
     await this.evaluateRecipients(newRecipients);
   }
 
+  public deleteRecipientsBySendingType = (types: ('to' | 'cc' | 'bcc')[]) => {
+    for (const recipient of this.addedRecipients.filter(r => types.includes(r.sendingType))) {
+      this.removeRecipient(recipient.element);
+    }
+  }
+
   public hideContacts = () => {
     this.composer.S.cached('contacts').css('display', 'none');
     this.composer.S.cached('contacts').children().not('ul').remove();
@@ -801,14 +807,14 @@ export class ComposerContacts extends ComposerComponent {
       }
     }
     const copyActionsContainer = this.composer.S.cached('email_copy_actions');
+    this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
+    this.composer.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
+    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
+    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
     const parent = copyActionsContainer.parent()[0];
     if (parent) { // todo - may need a better fix? "Cannot read property 'removeChild' of undefined" https://github.com/FlowCrypt/flowcrypt-browser/issues/2119
       parent.removeChild(copyActionsContainer[0]);
     }
-    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
-    this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
-    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
-    this.composer.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(copyActionsContainer); // xss-safe-value
   }
 
