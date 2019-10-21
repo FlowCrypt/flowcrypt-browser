@@ -138,7 +138,7 @@ export class ComposerQuote extends ComposerComponent {
       return {
         headers: { date: String(message.headers.date), from: message.from },
         text: decryptedAndFormatedContent.join('\n').trim(),
-        isSigned: readableBlocks.length === 1 && readableBlocks[0].type === 'signedMsg',
+        isSigned: message.blocks.length > 0 && message.blocks[0].type === 'signedMsg',
         decryptedFiles
       };
     } catch (e) {
