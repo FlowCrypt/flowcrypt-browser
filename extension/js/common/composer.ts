@@ -98,7 +98,9 @@ export class Composer {
     this.composerContacts = new ComposerContacts(appFunctions, urlParams, this);
     this.composerSendBtn = new ComposerSendBtn(appFunctions, urlParams, this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
-    this.canReadEmails = this.app.getScopes().canReadEmails;
+
+    const scopes = this.app.getScopes();
+    this.canReadEmails = scopes.read || scopes.modify;
     if (initSubs.active) {
       this.updateFooterIcon();
     } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired

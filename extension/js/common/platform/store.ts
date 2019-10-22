@@ -11,7 +11,7 @@ import { Product, PaymentMethod, ProductLevel } from '../account.js';
 import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
-import { GmailRes } from '../api/google.js';
+import { GmailRes, GoogleAuth } from '../api/google.js';
 import { PgpClient } from '../api/keyserver.js';
 
 // tslint:disable:no-null-keyword
@@ -36,6 +36,7 @@ export type DbContactObjArg = {
   expiresOn?: Date | null;
 };
 export type EmailProvider = 'gmail';
+export type GoogleAuthScopesNames = [keyof typeof GoogleAuth.OAUTH.scopes, keyof typeof GoogleAuth.OAUTH.legacy_scopes][number];
 
 export type KeyBackupMethod = 'file' | 'inbox' | 'none' | 'print';
 export type DbContactFilter = { has_pgp?: boolean, substring?: string, limit?: number };
@@ -204,6 +205,25 @@ export class Store {
       }
     }
     return accountStore;
+  }
+
+  static getScopes = async (acctEmail: string) => {
+    const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
+    const result: { [key in GoogleAuthScopesNames]: boolean } = {
+      email: false, openid: false, profile: false, compose: false,
+      modify: false, readContacts: false, gmail: false, read: false
+    };
+    if (google_token_scopes) {
+      for (const key of Object.keys({ ...GoogleAuth.OAUTH.scopes, ...GoogleAuth.OAUTH.legacy_scopes })) {
+        const scopeName = key as GoogleAuthScopesNames;
+        if (scopeName in GoogleAuth.OAUTH.scopes) {
+          result[scopeName] = google_token_scopes.includes(GoogleAuth.OAUTH.scopes[scopeName as keyof typeof GoogleAuth.OAUTH.scopes]);
+        } else if (scopeName in GoogleAuth.OAUTH.legacy_scopes) {
+          result[scopeName] = google_token_scopes.includes(GoogleAuth.OAUTH.legacy_scopes[scopeName as keyof typeof GoogleAuth.OAUTH.legacy_scopes]);
+        }
+      }
+    }
+    return result;
   }
 
   static sessionGet = async (acctEmail: string, key: string): Promise<string | null> => {

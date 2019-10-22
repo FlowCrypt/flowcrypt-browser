@@ -44,7 +44,7 @@ export class ComposerContacts extends ComposerComponent {
     super(composer, urlParams);
     this.app = app;
     this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
-    this.canSearchContacts = app.getScopes().canSearchContacts;
+    this.canSearchContacts = app.getScopes().readContacts;
   }
 
   initActions(): void {

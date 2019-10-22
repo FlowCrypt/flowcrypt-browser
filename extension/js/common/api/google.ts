@@ -596,9 +596,6 @@ export class GoogleAuth {
     }
   };
 
-  public static hasReadScope = (scopes: string[]) => scopes.indexOf(GoogleAuth.OAUTH.scopes.modify) !== -1 || scopes.indexOf(GoogleAuth.OAUTH.legacy_scopes.read) !== -1;
-  public static hasReadContactsScope = (scopes: string[]) => scopes.includes(GoogleAuth.OAUTH.scopes.readContacts);
-
   public static defaultScopes = (group: 'default' | 'contacts' | 'compose_only' | 'openid' = 'default') => {
     const { readContacts, compose, modify, openid, email, profile } = GoogleAuth.OAUTH.scopes;
     console.info(`Not using scope ${modify} because not approved on oauth screen yet`);

@@ -13,7 +13,7 @@ import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Google, GoogleAuth } from '../../js/common/api/google.js';
+import { Google } from '../../js/common/api/google.js';
 import { KeyInfo } from '../../js/common/core/pgp.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
@@ -118,7 +118,8 @@ Catch.try(async () => {
     } else if (acctEmail) {
       $('.email-address').text(acctEmail);
       $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
-      const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
+      const storage = await Store.getAcct(acctEmail, ['setup_done', 'email_provider', 'picture']);
+      const scopes = await Store.getScopes(acctEmail);
       if (storage.setup_done) {
         checkGoogleAcct().catch(Catch.reportErr);
         checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
@@ -127,7 +128,7 @@ Catch.try(async () => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!GoogleAuth.hasReadScope(storage.google_token_scopes || []) && (storage.email_provider || 'gmail') === 'gmail') {
+        if (!(scopes.read || scopes.modify) && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         displayOrig('.hide_if_setup_not_done');

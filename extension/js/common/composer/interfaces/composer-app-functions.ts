@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Subscription, ContactUpdate, DbContactObjArg, SendAsAlias } from '../../platform/store.js';
+import { Subscription, ContactUpdate, DbContactObjArg, SendAsAlias, GoogleAuthScopesNames } from '../../platform/store.js';
 import { KeyInfo, Contact } from '../../core/pgp.js';
 import { ProviderContactsQuery, SendableMsg } from '../../api/email_provider_api.js';
 import { GmailRes } from '../../api/google.js';
@@ -13,7 +13,7 @@ import { PubkeyResult } from './composer-types.js';
 import { Dict } from '../../core/common.js';
 
 export interface ComposerAppFunctionsInterface {
-  getScopes: () => { canReadEmails: boolean, canSearchContacts: boolean };
+  getScopes: () => { [key in GoogleAuthScopesNames]: boolean };
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => Dict<SendAsAlias> | undefined;
   storageGetAddressesKeyserver: () => string[];
