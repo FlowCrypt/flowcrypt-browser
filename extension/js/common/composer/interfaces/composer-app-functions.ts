@@ -17,8 +17,6 @@ export interface ComposerAppFunctionsInterface {
   doesRecipientHaveMyPubkey: (email: string) => Promise<boolean | undefined>;
   storageGetAddresses: () => Dict<SendAsAlias> | undefined;
   storageGetAddressesKeyserver: () => string[];
-  storageEmailFooterGet: () => string | undefined;
-  storageEmailFooterSet: (footer?: string) => Promise<void>;
   storageGetHideMsgPassword: () => boolean;
   storageGetSubscription: () => Promise<Subscription>;
   storageGetKey: (senderEmail: string) => Promise<KeyInfo>;
@@ -38,7 +36,7 @@ export interface ComposerAppFunctionsInterface {
   emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | DeterminedMsgHeaders>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
-  renderFooterDialog: () => void;
+  renderFooterDialog: (emailAlias?: string) => void;
   renderAddPubkeyDialog: (emails: string[]) => void;
   renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
   renderHelpDialog: () => void;

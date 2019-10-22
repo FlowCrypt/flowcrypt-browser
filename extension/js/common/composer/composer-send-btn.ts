@@ -536,7 +536,9 @@ export class ComposerSendBtn extends ComposerComponent {
     }
 
     private formatEmailTextFooter = (origBody: SendableMsgBody): SendableMsgBody => {
-        const emailFooter = this.app.storageEmailFooterGet();
+        const addresses = this.app.storageGetAddresses();
+        const sender = this.composer.getSender();
+        const emailFooter = addresses && addresses[sender] && addresses[sender].footer;
         const body: SendableMsgBody = { 'text/plain': origBody['text/plain'] + (emailFooter ? '\n' + emailFooter : '') };
         if (typeof origBody['text/html'] !== 'undefined') {
             body['text/html'] = origBody['text/html'] + (emailFooter ? '<br>\n' + emailFooter.replace(/\n/g, '<br>\n') : '');
@@ -590,7 +592,9 @@ export class ComposerSendBtn extends ComposerComponent {
         this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.getSender());
         this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
         Xss.sanitizeRender(this.composer.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escapeTextAsRenderableHtml(this.composer.extractAsText('input_text', 'SKIP-ADDONS')));
-        const emailFooter = this.app.storageEmailFooterGet();
+        const sendAs = this.app.storageGetAddresses();
+        const sender = this.composer.getSender();
+        const emailFooter = sendAs && sendAs[sender] && sendAs[sender].footer;
         if (emailFooter) {
             const renderableEscapedEmailFooter = Xss.escape(emailFooter).replace(/\n/g, '<br>');
             if (isSigned) {

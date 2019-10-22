@@ -92,6 +92,13 @@ export class Settings {
   static refreshAcctAliases = async (acctEmail: string): Promise<boolean> => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const { sendAs: storedAliases, addresses: oldStoredAddresses } = (await Store.getAcct(acctEmail, ['sendAs', 'addresses']));
+    if (storedAliases) {
+      for (const email of Object.keys(fetchedSendAs)) {
+        if (fetchedSendAs[email] && (storedAliases[email] && storedAliases[email].footer)) {
+          fetchedSendAs[email].footer = storedAliases[email].footer;
+        }
+      }
+    }
     await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
     if (!storedAliases) { // Aliases changed (it was previously undefined)
       if (oldStoredAddresses) { // Temporary solution

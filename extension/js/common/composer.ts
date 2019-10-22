@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from './platform/catch.js';
-import { Store, Subscription, SendAsAlias } from './platform/store.js';
+import { Store, SendAsAlias } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Str, Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
@@ -89,7 +89,7 @@ export class Composer {
   public canReadEmails: boolean;
   public initialized: Promise<void>;
 
-  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
+  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
     this.urlParams = urlParams;
@@ -101,13 +101,8 @@ export class Composer {
 
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
-    if (initSubs.active) {
-      this.updateFooterIcon();
-    } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
-      this.app.storageEmailFooterSet(undefined).catch(Catch.reportErr);
-      const notification = `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`;
-      BrowserMsg.send.notificationShow(this.urlParams.parentTabId, { notification });
-    }
+    this.updateFooterIcon();
+
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
@@ -210,7 +205,7 @@ export class Composer {
     this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
     this.S.cached('icon_footer').click(Ui.event.handle(target => {
       if (!$(target).is('.active')) {
-        this.app.renderFooterDialog();
+        this.app.renderFooterDialog(this.getSender());
       } else {
         this.updateFooterIcon(!$(target).is('.active'));
       }
@@ -480,7 +475,9 @@ export class Composer {
 
   updateFooterIcon = (include?: boolean) => {
     if (typeof include === 'undefined') { // decide if pubkey should be included
-      this.updateFooterIcon(!!this.app.storageEmailFooterGet());
+      const addresses = this.app.storageGetAddresses();
+      const sender = this.getSender();
+      this.updateFooterIcon(!!(addresses && addresses[sender] && addresses[sender].footer));
     } else { // set icon to specific state
       if (include) {
         this.S.cached('icon_footer').addClass('active');
@@ -670,6 +667,12 @@ export class Composer {
         return (sendAs[a].isDefault === sendAs[b].isDefault) ? 0 : sendAs[a].isDefault ? -1 : 1;
       });
       Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.composerContacts.updatePubkeyIcon());
+      this.S.now('input_from').change(async () => {
+        await this.composerContacts.reEvaluateRecipients(this.getRecipients());
+        await this.composerContacts.setEmailsPreview(this.getRecipients());
+        this.composerContacts.updatePubkeyIcon();
+        this.updateFooterIcon();
+      });
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
       }

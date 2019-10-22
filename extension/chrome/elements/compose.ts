@@ -68,7 +68,19 @@ Catch.try(async () => {
       }
       return result;
     };
-    return storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
+    const result = storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
+    if (result && storage.email_footer) {
+      for (const email of Object.keys(result)) {
+        if (result[email] && result[email].isPrimary) {
+          if (!result[email].footer) {
+            result[email].footer = storage.email_footer;
+          }
+          Store.setAcct(acctEmail, { sendAs: result, email_footer: null }).catch(Catch.reportErr); // tslint:disable-line: no-null-keyword
+          break;
+        }
+      }
+    }
+    return result;
   };
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
@@ -248,11 +260,6 @@ Catch.try(async () => {
     },
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageGetAddresses,
-    storageEmailFooterGet: () => storage.email_footer || undefined,
-    storageEmailFooterSet: async (footer: string | undefined) => {
-      storage.email_footer = footer;
-      await Store.setAcct(acctEmail, { email_footer: footer });
-    },
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
     storageGetKey,
@@ -341,8 +348,8 @@ Catch.try(async () => {
         theirEmail: recipients, threadId, threadMsgId: lastMsgId
       });
     },
-    renderFooterDialog: () => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
-      iframe: factory.srcAddFooterDialog('compose', parentTabId),
+    renderFooterDialog: (emailAlias?: string) => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
+      iframe: factory.srcAddFooterDialog('compose', parentTabId, emailAlias),
       iframeWidth: 490,
       iframeHeight: 230,
       variant: 'noscroll',
@@ -380,13 +387,18 @@ Catch.try(async () => {
     },
     lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded,
     collectAllAvailablePublicKeys
-  }, processedUrlParams, await Store.subscription());
+  }, processedUrlParams);
 
   BrowserMsg.addListener('close_dialog', async () => {
     $('.featherlight.featherlight-iframe').remove();
   });
-  BrowserMsg.addListener('set_footer', async ({ footer }: Bm.SetFooter) => {
-    storage.email_footer = footer;
+  BrowserMsg.addListener('set_footer', async ({ email, footer }: Bm.SetFooter) => {
+    if (storage.sendAs && storage.sendAs[email]) {
+      storage.sendAs[email].footer = footer;
+      if (storage.sendAs[email].isPrimary) {
+        storage.email_footer = null; // tslint:disable-line: no-null-keyword
+      }
+    }
     composer.updateFooterIcon();
     $('.featherlight.featherlight-iframe').remove();
   });

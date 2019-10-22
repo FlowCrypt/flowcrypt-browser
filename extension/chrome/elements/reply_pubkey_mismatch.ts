@@ -38,8 +38,6 @@ Catch.try(async () => {
     doesRecipientHaveMyPubkey: (): Promise<boolean | undefined> => Promise.resolve(false),
     storageGetAddresses: () => undefined,
     storageGetAddressesKeyserver: () => [],
-    storageEmailFooterGet: () => undefined,
-    storageEmailFooterSet: () => Promise.resolve(),
     storageGetHideMsgPassword: () => false,
     storageGetSubscription: () => Promise.resolve(new Subscription(undefined)),
     storageSetDraftMeta: () => Promise.resolve(),
@@ -101,7 +99,7 @@ Catch.try(async () => {
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true
   };
-  const composer = new Composer(appFunctions, processedUrlParams, new Subscription(undefined));
+  const composer = new Composer(appFunctions, processedUrlParams);
 
   const sendBtnText = 'Send Response';
 

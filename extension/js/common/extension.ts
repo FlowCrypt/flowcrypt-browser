@@ -35,7 +35,7 @@ export namespace Bm {
   export type CloseReplyMessage = { frameId: string, threadId: string };
   export type ReinsertReplyBox = { acctEmail: string, myEmail: string, subject: string, theirEmail: string[], threadId: string, threadMsgId: string };
   export type AddPubkeyDialog = { emails: string[] };
-  export type SetFooter = { footer: string | null };
+  export type SetFooter = { email: string, footer: string | undefined };
   export type Reload = { advanced?: boolean };
   export type Redirect = { location: string };
   export type OpenGoogleAuthDialog = { acctEmail?: string, scopes?: string[] };

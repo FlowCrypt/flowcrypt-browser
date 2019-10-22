@@ -4,7 +4,7 @@
 'use strict';
 
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store, AccountStore } from '../../../js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg, BrowserWidnow } from '../../../js/common/extension.js';
 import { Assert } from '../../../js/common/assert.js';
@@ -13,48 +13,42 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'grandparentTabId']); // placement: compose||settings
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailAlias', 'grandparentTabId']); // placement: compose||settings
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const emailAlias = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'emailAlias');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const grandparentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'grandparentTabId');  // grandparent is the email provider tab
+
+  const email = emailAlias || acctEmail;
 
   const renderInitial = async () => {
-    const subscription = await Store.subscription();
-    const storage = await Store.getAcct(acctEmail, ['email_footer']);
-    if (!subscription.active && storage.email_footer) {
-      storage.email_footer = undefined;
-      await Store.setAcct(acctEmail, storage);
+    const { sendAs, email_footer } = await Store.getAcct(acctEmail, ['sendAs', 'email_footer']);
+    let footer = sendAs && sendAs[email] && sendAs[email].footer;
+    if (email_footer && sendAs && sendAs[email] && sendAs[email].isPrimary) {
+      footer = email_footer;
     }
-    if (subscription.active) {
-      $('.input_email_footer').val(storage.email_footer || '');
-      $('.input_remember').prop('checked', 'checked');
-    }
+    $('.input_email_footer').val(footer || '');
+    $('.input_remember').prop('checked', 'checked');
   };
 
   const saveFooterIfAppropriate = async (requested: boolean, emailFooter: string) => {
-    const subscription = await Store.subscription();
-    if (requested && subscription.active) {
-      await Store.setAcct(acctEmail, { email_footer: emailFooter });
+    const { sendAs } = await Store.getAcct(acctEmail, ['sendAs']);
+    if (requested && sendAs && sendAs[email]) {
+      const update: AccountStore = {};
+      sendAs[email].footer = emailFooter;
+      update.sendAs = sendAs;
+      if (sendAs[email].isPrimary) {
+        update.email_footer = null; // tslint:disable-line: no-null-keyword
+      }
+      await Store.setAcct(acctEmail, update);
     }
   };
-
-  $('.input_remember').change(Ui.event.handle(async target => {
-    const doRemember = $(target).is(':checked');
-    const subscription = await Store.subscription();
-    if (doRemember && !subscription.active) {
-      $('.input_remember').prop('checked', false);
-      if (await Ui.modal.confirm(`FlowCrypt Advanced is needed to save custom footers. Show more info?`)) {
-        BrowserMsg.send.subscribeDialog(grandparentTabId, {}); // grandparent is the email provider tab
-      }
-    }
-  }));
 
   $('.action_add_footer').click(Ui.event.prevent('double', async self => {
     let footer = `${String($('.input_email_footer').val())}`;
     footer = (window as unknown as BrowserWidnow)['emailjs-mime-codec'].foldLines(footer, 72, true); // tslint:disable-line:no-unsafe-any
     footer = footer.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
     await saveFooterIfAppropriate(Boolean($('.input_remember').prop('checked')), footer);
-    BrowserMsg.send.setFooter(parentTabId, { footer });
+    BrowserMsg.send.setFooter(parentTabId, { email, footer });
   }));
 
   $('.action_cancel').click(Ui.event.handle(() => BrowserMsg.send.closeDialog(parentTabId)));
