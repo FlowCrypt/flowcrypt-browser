@@ -10,7 +10,7 @@ import { Api, ProgressCb } from '../api/api.js';
 import { Catch } from '../platform/catch.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { Google } from '../api/google.js';
-import { Mime } from '../core/mime.js';
+import { Mime, MsgBlock } from '../core/mime.js';
 import { Buf } from '../core/buf.js';
 import { FormatError, PgpMsg } from '../core/pgp.js';
 import { BrowserMsg, Bm } from '../extension.js';
@@ -34,7 +34,7 @@ export class ComposerQuote extends ComposerComponent {
       Xss.sanitizeAppend(this.composer.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
       this.composer.resizeComposeBox();
       try {
-        this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, (progress) => this.setQuoteLoaderProgress(progress + '%'));
+        this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method, (progress) => this.setQuoteLoaderProgress(progress + '%'));
       } catch (e) {
         if (Api.err.isSignificant(e)) {
           Catch.reportErr(e);
@@ -72,28 +72,65 @@ export class ComposerQuote extends ComposerComponent {
     } else {
       this.composer.S.cached('icon_show_prev_msg').hide();
     }
+    if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
+      for (const file of this.messageToReplyOrForward.decryptedFiles) {
+        await this.composer.attach.addFile(file);
+      }
+    }
   }
 
-  public getAndDecryptMessage = async (msgId: string, progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
+  public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     try {
       const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
-      const readableBlocks = message.blocks.filter(b => ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'].includes(b.type));
-      const pgpBlockCount = readableBlocks.filter(b => ['encryptedMsg', 'signedMsg'].includes(b.type)).length;
-      const decryptedAndFormatedContent: string[] = [];
-      for (const [index, block] of readableBlocks.entries()) {
-        const stringContent = String(block.content);
+      const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
+      const decryptedBlockTypes = ['decryptedHtml'];
+      if (method === 'forward') {
+        readableBlockTypes.push('encryptedAtt');
+        decryptedBlockTypes.push('decryptedAtt');
+      }
+      const readableBlocks: MsgBlock[] = [];
+      for (const block of message.blocks.filter(b => readableBlockTypes.includes(b.type))) {
         if (['encryptedMsg', 'signedMsg'].includes(block.type)) {
+          const stringContent = block.content.toString();
           const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
           const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
-          const htmlBlock = msgBlocks.find(b => b.type === 'decryptedHtml');
-          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(htmlBlock ? htmlBlock.content.toString() : 'No Content', '\n');
+          readableBlocks.push(...msgBlocks.filter(b => decryptedBlockTypes.includes(b.type)));
+        } else {
+          readableBlocks.push(block);
+        }
+      }
+      const decryptedAndFormatedContent: string[] = [];
+      const decryptedFiles: File[] = [];
+      for (const [index, block] of readableBlocks.entries()) {
+        const stringContent = block.content.toString();
+        if (block.type === 'decryptedHtml') {
+          const htmlParsed = Xss.htmlSanitizeAndStripAllTags(block ? block.content.toString() : 'No Content', '\n');
           decryptedAndFormatedContent.push(Xss.htmlUnescape(htmlParsed));
           if (progressCb) {
-            progressCb(60 + (40 / pgpBlockCount) * (index + 1));
+            progressCb(60 + (Math.round((40 / readableBlocks.length) * (index + 1))));
           }
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
+        } else if (['encryptedAtt', 'decryptedAtt'].includes(block.type)) {
+          if (block.attMeta && block.attMeta.data) {
+            let attMeta: { content: Buf, filename?: string } | undefined;
+            if (block.type === 'encryptedAtt') {
+              const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: block.attMeta.data });
+              if (result.success) {
+                attMeta = { content: result.content, filename: result.filename };
+              }
+            } else {
+              attMeta = { content: Buf.fromUint8(block.attMeta.data), filename: block.attMeta.name };
+            }
+            if (attMeta) {
+              const file = new File([attMeta.content], attMeta.filename || '');
+              decryptedFiles.push(file);
+            }
+            if (progressCb) {
+              progressCb(60 + (Math.round((40 / readableBlocks.length) * (index + 1))));
+            }
+          }
         } else {
           decryptedAndFormatedContent.push(stringContent);
         }
@@ -101,7 +138,8 @@ export class ComposerQuote extends ComposerComponent {
       return {
         headers: { date: String(message.headers.date), from: message.from },
         text: decryptedAndFormatedContent.join('\n').trim(),
-        isSigned: readableBlocks.length === 1 && readableBlocks[0].type === 'signedMsg'
+        isSigned: message.blocks.length > 0 && message.blocks[0].type === 'signedMsg',
+        decryptedFiles
       };
     } catch (e) {
       if (e instanceof FormatError) {

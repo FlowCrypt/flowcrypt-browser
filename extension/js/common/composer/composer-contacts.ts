@@ -465,7 +465,7 @@ export class ComposerContacts extends ComposerComponent {
     return result;
   }
 
-  public addRecipients = async (recipients: Recipients) => {
+  public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     let newRecipients: RecipientElement[] = [];
     for (const key in recipients) {
       if (recipients.hasOwnProperty(key)) {
@@ -478,7 +478,13 @@ export class ComposerContacts extends ComposerComponent {
         }
       }
     }
-    await this.evaluateRecipients(newRecipients);
+    await this.evaluateRecipients(newRecipients, triggerCallback);
+  }
+
+  public deleteRecipientsBySendingType = (types: ('to' | 'cc' | 'bcc')[]) => {
+    for (const recipient of this.addedRecipients.filter(r => types.includes(r.sendingType))) {
+      this.removeRecipient(recipient.element);
+    }
   }
 
   public hideContacts = () => {
@@ -636,7 +642,7 @@ export class ComposerContacts extends ComposerComponent {
     await this.evaluateRecipients(recipients);
   }
 
-  public evaluateRecipients = async (recipients: RecipientElement[]) => {
+  public evaluateRecipients = async (recipients: RecipientElement[], triggerCallback: boolean = true) => {
     this.composer.debug(`evaluateRecipients`);
     $('body').attr('data-test-state', 'working');
     for (const recipient of recipients) {
@@ -655,8 +661,10 @@ export class ComposerContacts extends ComposerComponent {
       })();
     }
     await Promise.all(recipients.map(r => r.evaluating));
-    for (const callback of this.onRecipientAddedCallbacks) {
-      callback(recipients);
+    if (triggerCallback) {
+      for (const callback of this.onRecipientAddedCallbacks) {
+        callback(recipients);
+      }
     }
     $('body').attr('data-test-state', 'ready');
     this.composer.setInputTextHeightManuallyIfNeeded();

@@ -138,7 +138,7 @@ Catch.try(async () => {
         const container = $('#bulk_import #processed');
         for (const block of blocks) {
           if (block.type === 'publicKey') {
-            const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, String(block.content));
+            const replacedHtmlSafe = XssSafeFactory.replaceRenderableMsgBlocks(factory, block.content.toString());
             if (replacedHtmlSafe && replacedHtmlSafe !== value) {
               container.append(replacedHtmlSafe); // xss-safe-factory
             }
