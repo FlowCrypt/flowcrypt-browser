@@ -39,7 +39,8 @@ export type MessageToReplyOrForward = {
     from?: string
   },
   isSigned?: boolean,
-  text?: string
+  text?: string,
+  decryptedFiles: File[]
 };
 
 export type ComposerUrlParams = {
