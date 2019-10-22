@@ -8,7 +8,7 @@ export type Dict<T> = { [key: string]: T; };
 
 export class Str {
 
-  public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
+  public static parseEmail(full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') {
     let email: string | undefined;
     let name: string | undefined;
     if (full.includes('<') && full.includes('>')) {
@@ -23,15 +23,23 @@ export class Str {
     return { email, name, full };
   }
 
-  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+  public static prettyPrint(obj: any) {
+    return (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
+  }
 
-  public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
+  public static normalizeSpaces(str: string) {
+    return str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
+  }
 
-  public static normalizeDashes = (str: string) => str.replace(/^—–|—–$/gm, '-----');
+  public static normalizeDashes(str: string) {
+    return str.replace(/^—–|—–$/gm, '-----');
+  }
 
-  public static normalize = (str: string) => Str.normalizeSpaces(Str.normalizeDashes(str));
+  public static normalize(str: string) {
+    return Str.normalizeSpaces(Str.normalizeDashes(str));
+  }
 
-  public static numberFormat = (number: number) => {
+  public static numberFormat(number: number) {
     const nStr: string = number + '';
     const x = nStr.split('.');
     let x1 = x[0];
@@ -43,16 +51,18 @@ export class Str {
     return x1 + x2;
   }
 
-  public static isEmailValid = (email: string) => {
+  public static isEmailValid(email: string) {
     if (email.indexOf(' ') !== -1) {
       return false;
     }
     return /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(email);
   }
 
-  public static monthName = (monthIndex: number) => ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
+  public static monthName(monthIndex: number) {
+    return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][monthIndex];
+  }
 
-  public static sloppyRandom = (length: number = 5) => {
+  public static sloppyRandom(length: number = 5) {
     let id = '';
     const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     for (let i = 0; i < length; i++) {
@@ -61,15 +71,18 @@ export class Str {
     return id;
   }
 
-  public static regexEscape = (toBeUsedInRegex: string) => toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-  public static asEscapedHtml = (text: string) => {
+  public static regexEscape(toBeUsedInRegex: string) {
+    return toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  public static asEscapedHtml(text: string) {
     return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br />');
   }
 
-  public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
+  public static htmlAttrEncode(values: Dict<any>): string {
+    return Str.base64urlUtfEncode(JSON.stringify(values));
+  }
 
-  public static htmlAttrDecode = (encoded: string): any => {
+  public static htmlAttrDecode(encoded: string): any {
     try {
       return JSON.parse(Str.base64urlUtfDecode(encoded)); // tslint:disable-line:no-unsafe-any
     } catch (e) {
@@ -77,15 +90,20 @@ export class Str {
     }
   }
 
-  public static capitalize = (string: string): string => string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  public static capitalize(string: string): string {
+    return string.trim().split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+  }
 
-  public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
-
-  public static datetimeToDate = (date: string) => date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
-
-  public static fromDate = (date: Date) => date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
-
-  private static base64urlUtfEncode = (str: string) => {
+  public static toUtcTimestamp(datetimeStr: string, asStr: boolean = false) {
+    return asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
+  }
+  public static datetimeToDate(date: string) {
+    return date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+  }
+  public static fromDate(date: Date) {
+    return date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
+  }
+  private static base64urlUtfEncode(str: string) {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {
       return str;
@@ -94,7 +112,7 @@ export class Str {
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  private static base64urlUtfDecode = (str: string) => {
+  private static base64urlUtfDecode(str: string) {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
     if (typeof str === 'undefined') {
       return str;
@@ -110,7 +128,7 @@ export class Str {
 export class Value {
 
   public static arr = {
-    unique: <T>(array: T[]): T[] => {
+    unique<T>(array: T[]): T[] {
       const unique: T[] = [];
       for (const v of array) {
         if (!unique.includes(v)) {
@@ -119,8 +137,10 @@ export class Value {
       }
       return unique;
     },
-    withoutKey: <T>(array: T[], i: number) => array.splice(0, i).concat(array.splice(i + 1, array.length)),
-    withoutVal: <T>(array: T[], withoutVal: T) => {
+    withoutKey<T>(array: T[], i: number) {
+      return array.splice(0, i).concat(array.splice(i + 1, array.length));
+    },
+    withoutVal<T>(array: T[], withoutVal: T) {
       const result: T[] = [];
       for (const value of array) {
         if (value !== withoutVal) {
@@ -129,29 +149,46 @@ export class Value {
       }
       return result;
     },
-    contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
-    sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
-    average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
-    zeroes: (length: number): number[] => new Array(length).map(() => 0)
+    contains<T>(arr: T[] | string, value: T): boolean {
+      return Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1);
+    },
+    sum(arr: number[]) {
+      return arr.reduce((a, b) => a + b, 0);
+    },
+    average(arr: number[]) {
+      return Value.arr.sum(arr) / arr.length;
+    },
+    zeroes(length: number): number[] {
+      return new Array(length).map(() => 0);
+    }
   };
 
+  // tslint:disable-next-line: oneliner-object-literal
   public static obj = {
-    keyByValue: <T>(obj: Dict<T>, v: T) => {
+    keyByValue<T>(obj: Dict<T>, v: T) {
       for (const k of Object.keys(obj)) {
         if (obj[k] === v) {
           return k;
         }
       }
       return undefined;
-    },
+    }
   };
 
   public static int = {
-    lousyRandom: (minVal: number, maxVal: number) => minVal + Math.round(Math.random() * (maxVal - minVal)),
-    getFutureTimestampInMonths: (monthsToAdd: number) => new Date().getTime() + 1000 * 3600 * 24 * 30 * monthsToAdd,
-    hoursAsMiliseconds: (h: number) => h * 1000 * 60 * 60,
+    lousyRandom(minVal: number, maxVal: number) {
+      return minVal + Math.round(Math.random() * (maxVal - minVal));
+    },
+    getFutureTimestampInMonths(monthsToAdd: number) {
+      return new Date().getTime() + 1000 * 3600 * 24 * 30 * monthsToAdd;
+    },
+    hoursAsMiliseconds(h: number) {
+      return h * 1000 * 60 * 60;
+    },
   };
 
-  public static noop = (): void => undefined;
+  public static noop(): void {
+    return undefined;
+  }
 
 }
