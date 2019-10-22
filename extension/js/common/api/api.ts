@@ -130,7 +130,7 @@ export class AuthError extends Error { }
 export class Api {
 
   public static err = {
-    eli5: (e: any) => {
+    eli5(e: any): string {
       if (Api.err.isMailOrAcctDisabled(e)) {
         return 'Email account is disabled';
       } else if (Api.err.isAuthPopupNeeded(e)) {
@@ -157,7 +157,7 @@ export class Api {
         return 'FlowCrypt encountered an error with unknown cause.';
       }
     },
-    detailsAsHtmlWithNewlines: (e: any) => {
+    detailsAsHtmlWithNewlines(e: any): string {
       let details = 'Below are technical details about the error. This may be useful for debugging.\n\n';
       details += `<b>Error string</b>: ${Xss.escape(String(e))}\n\n`;
       details += `<b>Error stack</b>: ${e instanceof Error ? Xss.escape((e.stack || '(empty)')) : '(no error stack)'}\n\n`;
@@ -166,7 +166,7 @@ export class Api {
       }
       return details;
     },
-    isNetErr: (e: any) => {
+    isNetErr(e: any): boolean {
       if (e instanceof TypeError && (e.message === 'Failed to fetch' || e.message === 'NetworkError when attempting to fetch resource.')) {
         return true; // openpgp.js uses fetch()... which produces these errors
       }
@@ -178,7 +178,7 @@ export class Api {
       }
       return false;
     },
-    isAuthErr: (e: any) => {
+    isAuthErr(e: any): boolean {
       if (e instanceof AuthError) {
         return true;
       }
@@ -192,7 +192,7 @@ export class Api {
       }
       return false;
     },
-    isStandardErr: (e: any, internalType: string) => {
+    isStandardErr(e: any, internalType: string): boolean {
       if (e instanceof ApiErrorResponse && typeof e.res === 'object' && typeof e.res.error === 'object' && e.res.error.internal === 'auth') {
         return true;
       }
@@ -204,7 +204,7 @@ export class Api {
       }
       return false;
     },
-    isAuthPopupNeeded: (e: any) => {
+    isAuthPopupNeeded(e: any): boolean {
       if (e instanceof AjaxError && e.status === 400 && typeof e.responseText === 'string') {
         try {
           const json = JSON.parse(e.responseText);
@@ -218,18 +218,28 @@ export class Api {
       }
       return false;
     },
-    isMailOrAcctDisabled: (e: any): boolean => {
+    isMailOrAcctDisabled(e: any): boolean {
       if (Api.err.isBadReq(e) && typeof e.responseText === 'string') {
         return e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1;
       }
       return false;
     },
-    isInsufficientPermission: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1,
-    isNotFound: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 404,
-    isBadReq: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 400,
-    isReqTooLarge: (e: any): e is AjaxError => e instanceof AjaxError && e.status === 413,
-    isServerErr: (e: any): e is AjaxError => e instanceof AjaxError && e.status >= 500,
-    isBlockedByProxy: (e: any): e is AjaxError => {
+    isInsufficientPermission(e: any): e is AjaxError {
+      return e instanceof AjaxError && e.status === 403 && e.responseText.indexOf('insufficientPermissions') !== -1;
+    },
+    isNotFound(e: any): e is AjaxError {
+      return e instanceof AjaxError && e.status === 404;
+    },
+    isBadReq(e: any): e is AjaxError {
+      return e instanceof AjaxError && e.status === 400;
+    },
+    isReqTooLarge(e: any): e is AjaxError {
+      return e instanceof AjaxError && e.status === 413;
+    },
+    isServerErr(e: any): e is AjaxError {
+      return e instanceof AjaxError && e.status >= 500;
+    },
+    isBlockedByProxy(e: any): e is AjaxError {
       if (!(e instanceof AjaxError)) {
         return false;
       }
@@ -243,35 +253,37 @@ export class Api {
       }
       return false;
     },
-    isSignificant: (e: any) => {
+    isSignificant(e: any) {
       return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isAuthErr(e)
         && !Api.err.isBlockedByProxy(e);
     },
-    isInPrivateMode: (e: any) => {
+    isInPrivateMode(e: any) {
       return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
     }
   };
 
-  public static download = (url: string, progress?: ProgressCb): Promise<Buf> => new Promise((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open('GET', url, true);
-    request.responseType = 'arraybuffer';
-    if (typeof progress === 'function') {
-      request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
-    }
-    request.onerror = progressEvent => {
-      if (!progressEvent.target) {
-        reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
-      } else {
-        const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
-        reject(AjaxError.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+  public static download(url: string, progress?: ProgressCb): Promise<Buf> {
+    return new Promise((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.open('GET', url, true);
+      request.responseType = 'arraybuffer';
+      if (typeof progress === 'function') {
+        request.onprogress = (evt) => progress(evt.lengthComputable ? Math.floor((evt.loaded / evt.total) * 100) : undefined, evt.loaded, evt.total);
       }
-    };
-    request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
-    request.send();
-  })
+      request.onerror = progressEvent => {
+        if (!progressEvent.target) {
+          reject(new Error(`Api.download(${url}) failed with a null progressEvent.target`));
+        } else {
+          const { readyState, status, statusText } = progressEvent.target as XMLHttpRequest;
+          reject(AjaxError.fromXhr({ readyState, status, statusText }, { url, method: 'GET' }, Catch.stackTrace()));
+        }
+      };
+      request.onload = e => resolve(new Buf(request.response as ArrayBuffer));
+      request.send();
+    });
+  }
 
-  public static ajax = async (req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> => {
+  public static async ajax(req: JQueryAjaxSettings, stack: string): Promise<any | JQuery.jqXHR<any>> {
     if (Env.isContentScript()) {
       // content script CORS not allowed anymore, have to drag it through background page
       // https://www.chromestatus.com/feature/5629709824032768
@@ -300,7 +312,7 @@ export class Api {
     }
   }
 
-  public static getAjaxProgressXhrFactory = (progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined => {
+  public static getAjaxProgressXhrFactory(progressCbs?: ProgressCbs): (() => XMLHttpRequest) | undefined {
     if (Env.isContentScript() || Env.isBackgroundPage() || !progressCbs || !Object.keys(progressCbs).length) {
       // xhr object would cause 'The object could not be cloned.' lastError during BrowserMsg passing
       // thus no progress callbacks in bg or content scripts
@@ -335,17 +347,18 @@ export class Api {
     };
   }
 
-  private static isRawAjaxError = (e: any): e is RawAjaxError => {
+  private static isRawAjaxError(e: any): e is RawAjaxError {
     return e && typeof e === 'object' && typeof (e as RawAjaxError).readyState === 'number';
   }
 
-  private static isStandardError = (e: any): e is StandardError => {
+  private static isStandardError(e: any): e is StandardError {
     return e && typeof e === 'object' && (e as StandardError).hasOwnProperty('internal') && Boolean((e as StandardError).message);
   }
 
-  protected static apiCall = async (
-    url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>, resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
-  ) => {
+  protected static async apiCall(
+    url: string, path: string, fields?: Dict<any> | string, fmt?: ReqFmt, progress?: ProgressCbs, headers?: Dict<string>,
+    resFmt: ResFmt = 'json', method: ReqMethod = 'POST'
+  ) {
     progress = progress || {} as ProgressCbs;
     let formattedData: FormData | string | undefined;
     let contentType: string | false;
