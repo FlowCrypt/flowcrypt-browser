@@ -32,11 +32,17 @@ Catch.try(async () => {
 
   const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
 
+  $('.email').text(acctEmail);
+  $('.key_fingerprint').text(await Pgp.key.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
+  $('.key_words').text(primaryKi.keywords);
+
   try {
     const result = await Attester.lookupEmail(acctEmail);
     const url = Backend.url('pubkey', acctEmail);
     if (result.pubkey && await Pgp.key.longid(result.pubkey) === primaryKi.longid) {
-      $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('visibility', 'visible');
+      $('.pubkey_link_container a').text(url.replace('https://', '')).attr('href', url).parent().css('display', '');
+    } else {
+      $('.pubkey_link_container').remove();
     }
   } catch (e) {
     if (Api.err.isSignificant(e)) {
@@ -44,12 +50,6 @@ Catch.try(async () => {
     }
     $('.pubkey_link_container').remove();
   }
-
-  $('.email').text(acctEmail);
-  $('.key_fingerprint').text(await Pgp.key.fingerprint(prv, 'spaced') || '(unknown fingerprint)');
-  $('.key_words').text(primaryKi.keywords);
-  $('.show_when_showing_public').css('display', '');
-  $('.show_when_showing_private').css('display', 'none');
 
   $('.action_download_pubkey').click(Ui.event.prevent('double', () => {
     Browser.saveToDownloads(Att.keyinfoAsPubkeyAtt(primaryKi), Catch.browser().name === 'firefox' ? $('body') : undefined);
@@ -61,21 +61,6 @@ Catch.try(async () => {
     Browser.saveToDownloads(prvKeyAtt, Catch.browser().name === 'firefox' ? $('body') : undefined);
   }));
 
-  $('.action_show_other_type').click(Ui.event.handle(() => {
-    if ($('.action_show_other_type').text().toLowerCase() === 'show private key') {
-      $('.action_show_other_type').text('show public key').removeClass('bad').addClass('good');
-      $('.key_type').text('Private Key');
-      $('.show_when_showing_public').css('display', 'none');
-      $('.show_when_showing_private').css('display', '');
-    } else {
-      $('.action_show_other_type').text('show private key').removeClass('good').addClass('bad');
-      $('.key_type').text('Public Key Info');
-      $('.show_when_showing_public').css('display', '');
-      $('.show_when_showing_private').css('display', 'none');
-    }
-  }));
-
-  const clipboardOpts = { text: () => $('.action_show_other_type').text().toLowerCase() === 'show private key' ? primaryKi.public : primaryKi.private };
+  const clipboardOpts = { text: (trigger: HTMLElement) => trigger.className.includes('action_copy_pubkey') ? primaryKi.public : primaryKi.private };
   new ClipboardJS('.action_copy_pubkey, .action_copy_prv', clipboardOpts); // tslint:disable-line:no-unused-expression no-unsafe-any
-
 })();
