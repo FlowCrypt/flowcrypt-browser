@@ -395,6 +395,9 @@ Catch.try(async () => {
   BrowserMsg.addListener('set_footer', async ({ email, footer }: Bm.SetFooter) => {
     if (storage.sendAs && storage.sendAs[email]) {
       storage.sendAs[email].footer = footer;
+      if (footer) {
+        composer.addFooter(footer);
+      }
       if (storage.sendAs[email].isPrimary) {
         storage.email_footer = null; // tslint:disable-line: no-null-keyword
       }

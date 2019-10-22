@@ -108,7 +108,7 @@ export class Composer {
     }
     this.initialized = (async () => {
       await this.initComposeBox();
-      await this.initActions();
+      this.initActions();
       await this.checkEmailAliases();
     })().catch(Catch.reportErr);
   }
@@ -207,6 +207,7 @@ export class Composer {
       if (!$(target).is('.active')) {
         this.app.renderFooterDialog(this.getSender());
       } else {
+        this.composerQuote.removeFooter();
         this.updateFooterIcon(!$(target).is('.active'));
       }
     }, this.getErrHandlers(`change footer`)));
@@ -255,6 +256,11 @@ export class Composer {
     }
     if (this.urlParams.draftId) {
       await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
+      const addresses = this.app.storageGetAddresses();
+      const sender = this.getSender();
+      if (addresses && addresses[sender] && addresses[sender].footer) {
+        this.composerQuote.setFooter(addresses[sender].footer!);
+      }
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
@@ -424,7 +430,10 @@ export class Composer {
         this.composerSendBtn.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
           (async () => { // not awaited because can take a long time & blocks rendering
-            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
+            const addresses = this.app.storageGetAddresses();
+            const sender = this.getSender();
+            const footer = addresses && addresses[sender] && addresses[sender].footer || undefined;
+            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method, footer);
             if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
               this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
             }
@@ -477,7 +486,8 @@ export class Composer {
     if (typeof include === 'undefined') { // decide if pubkey should be included
       const addresses = this.app.storageGetAddresses();
       const sender = this.getSender();
-      this.updateFooterIcon(!!(addresses && addresses[sender] && addresses[sender].footer));
+      const footer = addresses && addresses[sender] && addresses[sender].footer;
+      this.updateFooterIcon(!!footer);
     } else { // set icon to specific state
       if (include) {
         this.S.cached('icon_footer').addClass('active');
@@ -485,6 +495,10 @@ export class Composer {
         this.S.cached('icon_footer').removeClass('active');
       }
     }
+  }
+
+  public addFooter = (footer: string) => {
+    this.composerQuote.addFooter(footer);
   }
 
   public getSender = (): string => {
@@ -608,6 +622,10 @@ export class Composer {
       if (this.app.storageGetAddresses()) {
         this.renderSenderAliasesOptions(this.app.storageGetAddresses()!);
       }
+      const addresses = await this.app.storageGetAddresses();
+      const sender = this.getSender();
+      const footer = addresses && addresses[sender] && addresses[sender].footer || undefined;
+      await this.composerQuote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
       this.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
@@ -672,6 +690,9 @@ export class Composer {
         await this.composerContacts.setEmailsPreview(this.getRecipients());
         this.composerContacts.updatePubkeyIcon();
         this.updateFooterIcon();
+        const addresses = this.app.storageGetAddresses();
+        const sender = this.getSender();
+        this.composerQuote.replaceFooter(addresses && addresses[sender] && addresses[sender].footer || undefined);
       });
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
