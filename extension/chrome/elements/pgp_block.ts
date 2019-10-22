@@ -12,7 +12,7 @@ import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
 import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg, Pgp } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
-import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
+import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { BackendRes, Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
@@ -647,7 +647,8 @@ Catch.try(async () => {
   };
 
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes']);
-  canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
+  const scopes = await Store.getScopes(acctEmail);
+  canReadEmails = scopes.read || scopes.modify;
   if (storage.setup_done) {
     await initialize();
   } else {

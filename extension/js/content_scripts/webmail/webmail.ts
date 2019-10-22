@@ -15,7 +15,6 @@ import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { ContentScriptWindow } from '../../common/extension.js';
 import { Env } from '../../common/browser.js';
-import { GoogleAuth } from '../../common/api/google.js';
 import { XssSafeFactory } from '../../common/xss_safe_factory.js';
 
 Catch.try(async () => {
@@ -85,11 +84,12 @@ Catch.try(async () => {
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
       const storage = await Store.getAcct(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
+      const scopes = await Store.getScopes(acctEmail);
       if (!storage.sendAs) {
         storage.sendAs = {};
         storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
       }
-      const canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
+      const canReadEmails = scopes.read || scopes.modify;
       injector.btns();
       replacer = new GmailElementReplacer(factory, acctEmail, storage.sendAs, canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);

@@ -10,7 +10,7 @@ import { Ui, Env, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer.js';
 import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
-import { Google, GoogleAuth } from '../../js/common/api/google.js';
+import { Google } from '../../js/common/api/google.js';
 import { KeyInfo, Contact, Pgp, openpgp } from '../../js/common/core/pgp.js';
 import { SendableMsg } from '../../js/common/api/email_provider_api.js';
 import { Assert } from '../../js/common/assert.js';
@@ -47,10 +47,6 @@ Catch.try(async () => {
 
   const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_footer', 'email_provider',
     'hide_message_password', 'drafts_reply']);
-  const scopes = {
-    canReadEmails: GoogleAuth.hasReadScope(storage.google_token_scopes || []),
-    canSearchContacts: GoogleAuth.hasReadContactsScope(storage.google_token_scopes || [])
-  };
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
   const storagePassphraseGet = async () => {
@@ -216,6 +212,7 @@ Catch.try(async () => {
     }
     return { armoredPubkeys, emailsWithoutPubkeys };
   };
+  const scopes = await Store.getScopes(acctEmail);
   const composer = new Composer({
     getScopes: () => scopes,
     doesRecipientHaveMyPubkey: async (theirEmailUnchecked: string): Promise<boolean | undefined> => {
@@ -227,7 +224,7 @@ Catch.try(async () => {
       if (storage.pubkey_sent_to && storage.pubkey_sent_to.includes(theirEmail)) {
         return true;
       }
-      if (!scopes.canReadEmails) {
+      if (scopes.read || scopes.modify) {
         return undefined;
       }
       const qSentPubkey = `is:sent to:${theirEmail} "BEGIN PGP PUBLIC KEY" "END PGP PUBLIC KEY"`;

@@ -10,7 +10,6 @@ import { FcAcct, CheckVerificationEmail } from '../../js/common/account.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
-import { GoogleAuth } from '../../js/common/api/google.js';
 import { Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
@@ -109,8 +108,8 @@ Catch.try(async () => {
   }
 
   const subscription = await Store.subscription();
-  const { google_token_scopes } = await Store.getAcct(acctEmail, ['google_token_scopes']);
-  const canReadEmail = GoogleAuth.hasReadScope(google_token_scopes || []);
+  const scopes = await Store.getScopes(acctEmail);
+  const canReadEmail = scopes.read || scopes.modify;
   const fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
 
   if (placement === 'settings') {

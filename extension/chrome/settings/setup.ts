@@ -12,7 +12,7 @@ import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api/api.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
 import { Catch } from '../../js/common/platform/catch.js';
-import { Google, GoogleAuth } from '../../js/common/api/google.js';
+import { Google } from '../../js/common/api/google.js';
 import { Attester } from '../../js/common/api/attester.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../js/common/ui/key_import_ui.js';
@@ -54,7 +54,8 @@ Catch.try(async () => {
   await initPassphraseToggle(['step_2b_manual_enter_passphrase'], 'hide');
   await initPassphraseToggle(['step_2a_manual_create_input_password', 'step_2a_manual_create_input_password2', 'recovery_pasword']);
 
-  const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'google_token_scopes', 'sendAs']);
+  const storage = await Store.getAcct(acctEmail, ['setup_done', 'key_backup_prompt', 'email_provider', 'sendAs']);
+  const scopes = await Store.getScopes(acctEmail);
 
   storage.email_provider = storage.email_provider || 'gmail';
   let acctEmailAttesterFingerprint: string | undefined;
@@ -94,10 +95,10 @@ Catch.try(async () => {
     $('.email-address').text(acctEmail);
     $('.back').css('visibility', 'hidden');
     if (storage.email_provider === 'gmail') { // show alternative account addresses in setup form + save them for later
-      if (!GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
+      if (!(scopes.read || scopes.modify)) {
         $('.auth_denied_warning').css('display', 'block');
       }
-      if (GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
+      if (scopes.read || scopes.modify) {
         Settings.fetchAcctAliasesFromGmail(acctEmail).then(saveAndFillSubmitOption).catch(Catch.reportErr);
       } else { // cannot read emails, don't fetch alternative addresses
         saveAndFillSubmitOption({}).catch(Catch.reportErr);
@@ -173,7 +174,7 @@ Catch.try(async () => {
       if (!rules.canBackupKeys()) {
         // they already have a key recorded on attester, but no backups allowed on the domain. They should enter their prv manually
         displayBlock('step_2b_manual_enter');
-      } else if (storage.email_provider === 'gmail' && GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
+      } else if (storage.email_provider === 'gmail' && (scopes.read || scopes.modify)) {
         try {
           fetchedKeyBackups = await Google.gmail.fetchKeyBackups(acctEmail);
           fetchedKeyBackupsUniqueLongids = await getUniqueLongids(fetchedKeyBackups);
