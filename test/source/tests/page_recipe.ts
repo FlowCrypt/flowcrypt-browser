@@ -270,8 +270,6 @@ export class SettingsPageRecipe extends PageRecipe {
     const k = Config.key(expectedKeyName);
     await myKeyFrame.waitAll('@content-key-words');
     expect(await myKeyFrame.read('@content-key-words')).to.equal(k.keywords);
-    await myKeyFrame.waitAndClick('@action-toggle-key-type(show private key)');
-    await myKeyFrame.waitAndClick('@action-toggle-key-type(show public key)');
     await SettingsPageRecipe.closeDialog(settingsPage);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
   }

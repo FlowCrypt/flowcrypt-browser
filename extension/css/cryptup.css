@@ -56,6 +56,8 @@ i.large_spinner img { position: relative; width: 75px; height: 75px; }
 .bad { color: #A44; }
 .neutral { color: #B7B7B7; }
 
+.line-separator { height: 1px; width: 100%; background-color: #cfcfcf; margin: 50px 0; }
+
 div.line { min-height: 18px; padding: 12px 0; max-width: 650px; margin:0 auto; position: relative; }
 div.wide.line { max-width: 850px; }
 div.line.left { text-align: left; }
