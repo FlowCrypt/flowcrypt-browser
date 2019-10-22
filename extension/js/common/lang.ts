@@ -10,16 +10,24 @@ export const Lang = { // tslint:disable-line:variable-name
   },
   setup: {
     partiallyEncryptedKeyUnsupported: 'This Private Key seems to be only partially encrypted (some secret packets are encrypted, some not).\n\nSuch keys are not supported - please either fully encrypt or fully decrypt the key before importing it.',
-    confirmResetAcct: (acctEmail: string) => `This will remove all your FlowCrypt settings for ${acctEmail} including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY AND PASS PHRASE IN A SAFE PLACE FIRST OR YOU MAY LOSE IT`,
-    confirmManualAcctEmailChange: (currentAcctEmail: string) => `Your current account email is ${currentAcctEmail}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`,
-    keyFormattedWell: (begin: string, end: string) => `Private key is not correctly formated. Please insert complete key, including "${begin}" and "${end}"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.`,
+    confirmResetAcct(acctEmail: string) {
+      return `This will remove all your FlowCrypt settings for ${acctEmail} including your keys. It is not a recommended thing to do.\n\nMAKE SURE TO BACK UP YOUR PRIVATE KEY AND PASS PHRASE IN A SAFE PLACE FIRST OR YOU MAY LOSE IT`;
+    },
+    confirmManualAcctEmailChange(currentAcctEmail: string) {
+      return `Your current account email is ${currentAcctEmail}.\n\nUse this when your Google Account email address has changed and the account above is outdated.\n\nIn the following step, please sign in with your updated Google Account.\n\nContinue?`;
+    },
+    keyFormattedWell(begin: string, end: string) {
+      return `Private key is not correctly formated. Please insert complete key, including "${begin}" and "${end}"\n\nEnter the private key you previously used. The corresponding public key is registered with your email, and the private key is needed to confirm this change.\n\nIf you chose to download your backup as a file, you should find it inside that file. If you backed up your key on Gmail, you will find there it by searching your inbox.`;
+    },
     failedToCheckIfAcctUsesEncryption: 'Failed to check if encryption is already set up on your account. ',
     failedToCheckAccountBackups: 'Failed to check for account backups. ',
     failedToSubmitToAttester: 'Failed to submit to Attester. ',
     failedToBackUpKey: 'Failed to back up your key. ',
     cannotLocateBackupPasteManually: 'FlowCrypt can\'t locate your backup automatically.</div><div class="line">Find "Your FlowCrypt Backup" email, open the attachment, copy all text and paste it below.',
     confirmSkipRecovery: 'Your account will be set up for encryption again, but your previous encrypted emails will be unreadable. You will need to inform your encrypted contacts that you have a new key. Regular email will not be affected. Are you sure?',
-    nBackupsAlreadyRecoveredOrLeft: (nGot: number, nBups: number, txtTeft: string) => `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`,
+    nBackupsAlreadyRecoveredOrLeft(nGot: number, nBups: number, txtTeft: string) {
+      return `You successfully recovered ${nGot} of ${nBups} backups. There ${txtTeft} left.<br><br>Try a different pass phrase to unlock all backups.`;
+    },
     tryDifferentPassPhraseForRemainingBackups: 'This pass phrase was already used to recover some of your backups.\n\nThe remaining backups use a different pass phrase.\n\nPlease try another one.\n\nYou can skip this step, but some of your encrypted email may not be readable.',
     fcDidntSetUpProperly: 'FlowCrypt didn\'t set up properly due to en error.<br/><br/>Email human@flowcrypt.com so that we can fix it ASAP.',
     creatingKeysNotAllowedPleaseImport: 'Creating keys is not allowed on your domain. Please import your keys.',
