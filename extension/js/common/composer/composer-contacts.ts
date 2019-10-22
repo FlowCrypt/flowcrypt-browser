@@ -465,7 +465,7 @@ export class ComposerContacts extends ComposerComponent {
     return result;
   }
 
-  public addRecipients = async (recipients: Recipients) => {
+  public addRecipients = async (recipients: Recipients, triggerCallback: boolean = true) => {
     let newRecipients: RecipientElement[] = [];
     for (const key in recipients) {
       if (recipients.hasOwnProperty(key)) {
@@ -478,7 +478,13 @@ export class ComposerContacts extends ComposerComponent {
         }
       }
     }
-    await this.evaluateRecipients(newRecipients);
+    await this.evaluateRecipients(newRecipients, triggerCallback);
+  }
+
+  public deleteRecipientsBySendingType = (types: ('to' | 'cc' | 'bcc')[]) => {
+    for (const recipient of this.addedRecipients.filter(r => types.includes(r.sendingType))) {
+      this.removeRecipient(recipient.element);
+    }
   }
 
   public hideContacts = () => {
@@ -636,7 +642,7 @@ export class ComposerContacts extends ComposerComponent {
     await this.evaluateRecipients(recipients);
   }
 
-  public evaluateRecipients = async (recipients: RecipientElement[]) => {
+  public evaluateRecipients = async (recipients: RecipientElement[], triggerCallback: boolean = true) => {
     this.composer.debug(`evaluateRecipients`);
     $('body').attr('data-test-state', 'working');
     for (const recipient of recipients) {
@@ -655,8 +661,10 @@ export class ComposerContacts extends ComposerComponent {
       })();
     }
     await Promise.all(recipients.map(r => r.evaluating));
-    for (const callback of this.onRecipientAddedCallbacks) {
-      callback(recipients);
+    if (triggerCallback) {
+      for (const callback of this.onRecipientAddedCallbacks) {
+        callback(recipients);
+      }
     }
     $('body').attr('data-test-state', 'ready');
     this.composer.setInputTextHeightManuallyIfNeeded();
@@ -801,14 +809,14 @@ export class ComposerContacts extends ComposerComponent {
       }
     }
     const copyActionsContainer = this.composer.S.cached('email_copy_actions');
+    this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
+    this.composer.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
+    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
+    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
     const parent = copyActionsContainer.parent()[0];
     if (parent) { // todo - may need a better fix? "Cannot read property 'removeChild' of undefined" https://github.com/FlowCrypt/flowcrypt-browser/issues/2119
       parent.removeChild(copyActionsContainer[0]);
     }
-    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`).css('display', isThere.cc ? '' : 'none');
-    this.composer.S.cached('cc').css('display', isThere.cc ? 'none' : '');
-    this.composer.S.cached('input_addresses_container_outer').find(`#input-container-bcc`).css('display', isThere.bcc ? '' : 'none');
-    this.composer.S.cached('bcc').css('display', isThere.bcc ? 'none' : '');
     this.composer.S.cached('input_addresses_container_outer').children(`:not([style="display: none;"])`).last().append(copyActionsContainer); // xss-safe-value
   }
 

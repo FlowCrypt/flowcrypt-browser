@@ -19,7 +19,8 @@
     <div id="initial_prompt" class="display_none" data-test="action-accept-reply-prompt">
       <p id="reply_links">
         Encrypted <a href="#" id="a_reply">Reply</a>, <a href="#" id="a_reply_all"
-          data-test="action-accept-reply-all-prompt">Reply to All</a>, or <a href="#" id="a_forward">Forward</a>
+          data-test="action-accept-reply-all-prompt">Reply to All</a>, or <a href="#" id="a_forward"
+          data-test="action-forward">Forward</a>
         <div id="reply_click_area"></div>
       </p>
     </div>
@@ -71,7 +72,8 @@
                 autocomplete="false" />
             </div>
           </div>
-          <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons" style="display: flex;">
+          <div id="recipients_placeholder" class="collapsed" data-test="action-show-container-cc-bcc-buttons"
+            style="display: flex;">
             <span class="placeholder">Recipients</span>
             <div class="email_preview"></div>
           </div>
@@ -123,48 +125,49 @@
             <button id="send_btn" class="button green" tabindex="6">
               <span id="send_btn_text" class="btn-text" data-test="action-send"><i></i>Encrypt and Send</span>
             </button>
-            <button id="toggle_send_options" class="action-show-options-popover button green" title="More send options" tabindex="7" data-test="action-show-options-popover">
+            <button id="toggle_send_options" class="action-show-options-popover button green" title="More send options"
+              tabindex="7" data-test="action-show-options-popover">
               <div class="icon-chevron"></div>
             </button>
-            </div>
           </div>
-          <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
-              alt="Attach File"></div>
-          <div id="send_btn_note"></div>
-          <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img
-              src="/img/svgs/trash-can-icon.svg" class="delete-draft" alt="Delete Email"></button>
-          <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i
-              alt="pubkey"></i></button>
-          <button class="icon right action_include_footer" tabindex="9" title="Include email footer (not encrypted)"><i
-              alt="footer"></i></button>
+  </div>
+  <div class="icon attach" id="fineuploader_button"><img src="/img/svgs/paperclip-icon.svg" class="attach-file"
+      alt="Attach File"></div>
+  <div id="send_btn_note"></div>
+  <button class="icon right delete_draft" tabindex="11" title="Delete draft"><img src="/img/svgs/trash-can-icon.svg"
+      class="delete-draft" alt="Delete Email"></button>
+  <button class="icon right action_include_pubkey" tabindex="10" title="Include your Public Key"><i
+      alt="pubkey"></i></button>
+  <button class="icon right action_include_footer" tabindex="9" title="Include email footer (not encrypted)"><i
+      alt="footer"></i></button>
+  </td>
+  </tr>
+  </table>
+
+  <div id="reply_message_successful_container" data-test="container-reply-msg-successful">
+    <table>
+      <tr class="first">
+        <td>
+          <!-- to -->
+          <div class="replied_from"></div>
+          <div class="replied_to">to <span></span></div>
+        </td>
+        <td class="right">
+          <div class="replied_time"></div>
         </td>
       </tr>
+      <tr>
+        <td colspan="2">
+          <!-- body -->
+          <div class="replied_body pgp_secure"></div>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2" class="email_footer"></td>
+      </tr>
     </table>
-
-    <div id="reply_message_successful_container" data-test="container-reply-msg-successful">
-      <table>
-        <tr class="first">
-          <td>
-            <!-- to -->
-            <div class="replied_from"></div>
-            <div class="replied_to">to <span></span></div>
-          </td>
-          <td class="right">
-            <div class="replied_time"></div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <!-- body -->
-            <div class="replied_body pgp_secure"></div>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2" class="email_footer"></td>
-        </tr>
-      </table>
-      <div id="attachments"></div>
-    </div>
+    <div id="attachments"></div>
+  </div>
   </div>
   <script src="/lib/purify.min.js"></script>
   <script src="/lib/openpgp.js"></script>
