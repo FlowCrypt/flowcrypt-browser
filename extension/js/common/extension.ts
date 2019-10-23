@@ -217,7 +217,6 @@ export class BrowserMsg {
     focusBody: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'focus_body', {}),
     focusFrame: (dest: Bm.Dest, bm: Bm.FocusFrame) => BrowserMsg.sendCatch(dest, 'focus_frame', bm),
     closeReplyMessage: (dest: Bm.Dest, bm: Bm.CloseReplyMessage) => BrowserMsg.sendCatch(dest, 'close_reply_message', bm),
-    setFooter: (dest: Bm.Dest, bm: Bm.SetFooter) => BrowserMsg.sendCatch(dest, 'set_footer', bm),
     openNewMessage: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'open_new_message', {}),
     scrollToBottomOfConversation: (dest: Bm.Dest) => BrowserMsg.sendCatch(dest, 'scroll_to_bottom_of_conversation', {}),
     reinsertReplyBox: (dest: Bm.Dest, bm: Bm.ReinsertReplyBox) => BrowserMsg.sendCatch(dest, 'reinsert_reply_box', bm),

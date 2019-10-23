@@ -31,24 +31,28 @@ export class Xss {
     });
   }
 
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string): string => {
+  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string, removeImgs: boolean = false): string => {
     // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
     DOMPurify.removeAllHooks();
     DOMPurify.addHook('afterSanitizeAttributes', node => {
       if ('src' in node) {
         // replace images with a link that points to that image
         const img: Element = node;
-        const src = img.getAttribute('src')!;
-        const title = img.getAttribute('title');
-        img.removeAttribute('src');
-        const a = document.createElement('a');
-        a.href = src;
-        a.className = 'image_src_link';
-        a.target = '_blank';
-        a.innerText = title || 'show image';
-        const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
-        a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
-        img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
+        if (removeImgs) {
+          img.remove();
+        } else {
+          const src = img.getAttribute('src')!;
+          const title = img.getAttribute('title');
+          img.removeAttribute('src');
+          const a = document.createElement('a');
+          a.href = src;
+          a.className = 'image_src_link';
+          a.target = '_blank';
+          a.innerText = title || 'show image';
+          const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};max-width:98%;`;
+          a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
+          img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
+        }
       }
       if ('target' in node) { // open links in new window
         (node as Element).setAttribute('target', '_blank');
@@ -64,8 +68,8 @@ export class Xss {
     return cleanHtml;
   }
 
-  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml);
+  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string, removeImgs: boolean = false): string => {
+    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml, removeImgs);
     const random = Str.sloppyRandom(5);
     const br = `CU_BR_${random}`;
     const blockStart = `CU_BS_${random}`;

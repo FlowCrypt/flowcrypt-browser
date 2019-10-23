@@ -50,7 +50,6 @@ export class Composer {
     send_btn_text: '#send_btn_text',
     toggle_send_options: '#toggle_send_options',
     icon_pubkey: '.icon.action_include_pubkey',
-    icon_footer: '.icon.action_include_footer',
     icon_help: '.action_feedback',
     icon_popout: '.popout img',
     icon_show_prev_msg: '.action_show_prev_msg',
@@ -101,7 +100,6 @@ export class Composer {
 
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
-    this.updateFooterIcon();
 
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
@@ -203,14 +201,6 @@ export class Composer {
     }, this.getErrHandlers(`add intro`)));
     this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.getErrHandlers(`render help dialog`)));
     this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
-    this.S.cached('icon_footer').click(Ui.event.handle(target => {
-      if (!$(target).is('.active')) {
-        this.app.renderFooterDialog(this.getSender());
-      } else {
-        this.composerQuote.removeFooter();
-        this.updateFooterIcon(!$(target).is('.active'));
-      }
-    }, this.getErrHandlers(`change footer`)));
     this.composerDraft.initActions().catch(Catch.reportErr);
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     $('body').click(event => {
@@ -479,23 +469,6 @@ export class Composer {
     }
   }
 
-  updateFooterIcon = (include?: boolean) => {
-    if (typeof include === 'undefined') { // decide if pubkey should be included
-      const footer = this.getFooter();
-      this.updateFooterIcon(!!footer);
-    } else { // set icon to specific state
-      if (include) {
-        this.S.cached('icon_footer').addClass('active');
-      } else {
-        this.S.cached('icon_footer').removeClass('active');
-      }
-    }
-  }
-
-  public addFooter = (footer: string) => {
-    this.composerQuote.addFooter(footer);
-  }
-
   public getSender = (): string => {
     if (this.S.now('input_from').length) {
       return String(this.S.now('input_from').val());
@@ -682,7 +655,6 @@ export class Composer {
         await this.composerContacts.reEvaluateRecipients(this.getRecipients());
         await this.composerContacts.setEmailsPreview(this.getRecipients());
         this.composerContacts.updatePubkeyIcon();
-        this.updateFooterIcon();
         this.composerQuote.replaceFooter(this.getFooter());
       });
       if (this.urlParams.isReplyBox) {

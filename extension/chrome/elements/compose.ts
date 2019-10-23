@@ -45,7 +45,7 @@ Catch.try(async () => {
   const isReplyBox = !!threadId;
   let passphraseInterval: number;
 
-  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_footer', 'email_provider',
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
@@ -68,19 +68,7 @@ Catch.try(async () => {
       }
       return result;
     };
-    const result = storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
-    if (result && storage.email_footer) {
-      for (const email of Object.keys(result)) {
-        if (result[email] && result[email].isPrimary) {
-          if (!result[email].footer) {
-            result[email].footer = storage.email_footer;
-          }
-          Store.setAcct(acctEmail, { sendAs: result, email_footer: null }).catch(Catch.reportErr); // tslint:disable-line: no-null-keyword
-          break;
-        }
-      }
-    }
-    return result;
+    return storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
   };
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
@@ -348,17 +336,6 @@ Catch.try(async () => {
         theirEmail: recipients, threadId, threadMsgId: lastMsgId
       });
     },
-    renderFooterDialog: (emailAlias?: string) => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
-      iframe: factory.srcAddFooterDialog('compose', parentTabId, emailAlias),
-      iframeWidth: 490,
-      iframeHeight: 230,
-      variant: 'noscroll',
-      afterContent: () => {
-        const iframe = $('.featherlight.noscroll > .featherlight-content > iframe');
-        iframe.attr('scrolling', 'no').focus();
-        iframe.contents().find('textarea').focus();
-      },
-    }),
     renderAddPubkeyDialog: (emails: string[]) => {
       if (placement !== 'settings') {
         BrowserMsg.send.addPubkeyDialog(parentTabId, { emails });
@@ -390,19 +367,6 @@ Catch.try(async () => {
   }, processedUrlParams);
 
   BrowserMsg.addListener('close_dialog', async () => {
-    $('.featherlight.featherlight-iframe').remove();
-  });
-  BrowserMsg.addListener('set_footer', async ({ email, footer }: Bm.SetFooter) => {
-    if (storage.sendAs && storage.sendAs[email]) {
-      storage.sendAs[email].footer = footer;
-      if (footer) {
-        composer.addFooter(footer);
-      }
-      if (storage.sendAs[email].isPrimary) {
-        storage.email_footer = null; // tslint:disable-line: no-null-keyword
-      }
-    }
-    composer.updateFooterIcon();
     $('.featherlight.featherlight-iframe').remove();
   });
   BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {

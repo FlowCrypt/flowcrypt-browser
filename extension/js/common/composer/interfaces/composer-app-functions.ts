@@ -36,7 +36,6 @@ export interface ComposerAppFunctionsInterface {
   emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderDetermineReplyMsgHeaderVariables: (progressCb?: ProgressCb) => Promise<undefined | DeterminedMsgHeaders>;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
-  renderFooterDialog: (emailAlias?: string) => void;
   renderAddPubkeyDialog: (emails: string[]) => void;
   renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => void;
   renderHelpDialog: () => void;

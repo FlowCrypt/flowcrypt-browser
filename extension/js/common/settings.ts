@@ -25,7 +25,7 @@ export class Settings {
     const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
     const result: Dict<SendAsAlias> = {};
     for (const alias of validAliases) {
-      result[alias.sendAsEmail] = { name: alias.displayName, isPrimary: !!alias.isPrimary, isDefault: alias.isDefault };
+      result[alias.sendAsEmail] = { name: alias.displayName, isPrimary: !!alias.isPrimary, isDefault: alias.isDefault, footer: alias.signature };
     }
     return result;
   }
@@ -92,13 +92,6 @@ export class Settings {
   static refreshAcctAliases = async (acctEmail: string): Promise<boolean> => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
     const { sendAs: storedAliases, addresses: oldStoredAddresses } = (await Store.getAcct(acctEmail, ['sendAs', 'addresses']));
-    if (storedAliases) {
-      for (const email of Object.keys(fetchedSendAs)) {
-        if (fetchedSendAs[email] && (storedAliases[email] && storedAliases[email].footer)) {
-          fetchedSendAs[email].footer = storedAliases[email].footer;
-        }
-      }
-    }
     await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
     if (!storedAliases) { // Aliases changed (it was previously undefined)
       if (oldStoredAddresses) { // Temporary solution
@@ -110,6 +103,10 @@ export class Settings {
       return true;
     }
     if (Object.keys(fetchedSendAs).sort().join(',') !== Object.keys(storedAliases).sort().join(',')) { // Changed (added/removed email alias)
+      return true;
+    }
+    if (Object.keys(fetchedSendAs).filter(email => fetchedSendAs[email].footer).map(email => fetchedSendAs[email].footer).sort().join(',') !==
+      Object.keys(storedAliases).filter(email => storedAliases[email].footer).map(email => storedAliases[email].footer).sort().join(',')) {
       return true;
     }
     return false; // Nothing changed

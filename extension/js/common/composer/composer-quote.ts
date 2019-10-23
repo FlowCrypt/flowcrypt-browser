@@ -94,23 +94,8 @@ export class ComposerQuote extends ComposerComponent {
     }
   }
 
-  public addFooter = (newFooter: string) => {
-    newFooter = this.createFooterHTML(newFooter);
-    if (this.msgExpandingHTMLPart) {
-      this.msgExpandingHTMLPart = newFooter + this.msgExpandingHTMLPart;
-      this.composer.S.cached('icon_show_prev_msg').show();
-    } else {
-      this.composer.S.cached('input_text').append(newFooter); // xss-sanitized;
-    }
-    this.footerHTML = newFooter;
-  }
-
-  public removeFooter = () => {
-    this.replaceFooter(undefined);
-  }
-
   private createFooterHTML = (footer: string) => {
-    return `<br>-<br><br>${Xss.htmlSanitizeAndStripAllTags(footer, '<br>')}`;
+    return `<br>-<br><br>${Xss.htmlSanitizeAndStripAllTags(footer, '<br>', true)}`;
   }
 
   public replaceFooter = (newFooter: string | undefined) => {

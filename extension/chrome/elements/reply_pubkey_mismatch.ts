@@ -58,7 +58,6 @@ Catch.try(async () => {
     emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
     emailProviderExtractArmoredBlock: () => Promise.resolve(''),
     renderReinsertReplyBox: () => Promise.resolve(),
-    renderFooterDialog: () => undefined,
     renderAddPubkeyDialog: () => undefined,
     renderHelpDialog: () => undefined,
     closeMsg: () => undefined,

@@ -77,10 +77,6 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
 
-  srcAddFooterDialog = (placement: Placement, grandparentTabId: string, emailAlias?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/shared/footer.htm'), { placement, grandparentTabId, emailAlias });
-  }
-
   srcPgpAttIframe = (a: Att, isEncrypted: boolean) => {
     if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
       a.url = Browser.objUrlCreate(a.getData());
