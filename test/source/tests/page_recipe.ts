@@ -412,8 +412,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
-      subject = `Automated puppeteer test: ${subject}`;
-      await composePageOrFrame.type('@input-subject', subject);
+      await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
