@@ -646,7 +646,7 @@ export class Composer {
   private renderSenderAliasesOptionsToggle() {
     const sendAs = this.app.storageGetAddresses();
     if (sendAs && Object.keys(sendAs).length > 1) {
-      const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
+      const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.S.cached('email_copy_actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {

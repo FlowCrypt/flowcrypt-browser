@@ -100,7 +100,7 @@ export class ComposerQuote extends ComposerComponent {
       this.msgExpandingHTMLPart = newFooter + this.msgExpandingHTMLPart;
       this.composer.S.cached('icon_show_prev_msg').show();
     } else {
-      this.composer.S.cached('input_text').append(newFooter);
+      this.composer.S.cached('input_text').append(newFooter); // xss-sanitized;
     }
     this.footerHTML = newFooter;
   }
@@ -126,14 +126,14 @@ export class ComposerQuote extends ComposerComponent {
             this.composer.S.cached('icon_show_prev_msg').hide();
           }
         } else {
-          this.composer.S.cached('input_text').html(textHTML);
+          this.composer.S.cached('input_text').html(textHTML); // xss-sanitized
         }
       }
     } else {
       if (this.msgExpandingHTMLPart) {
         this.msgExpandingHTMLPart = newFooter + this.msgExpandingHTMLPart;
       } else {
-        this.composer.S.cached('input_text').append(newFooter);
+        this.composer.S.cached('input_text').append(newFooter); // xss-sanitized
       }
     }
     this.footerHTML = newFooter || undefined;
