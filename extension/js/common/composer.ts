@@ -256,10 +256,9 @@ export class Composer {
     }
     if (this.urlParams.draftId) {
       await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
-      const addresses = this.app.storageGetAddresses();
-      const sender = this.getSender();
-      if (addresses && addresses[sender] && addresses[sender].footer) {
-        this.composerQuote.setFooter(addresses[sender].footer!);
+      const footer = this.getFooter();
+      if (footer) {
+        this.composerQuote.setFooter(footer);
       }
     } else {
       if (this.urlParams.isReplyBox) {
@@ -430,9 +429,7 @@ export class Composer {
         this.composerSendBtn.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
           (async () => { // not awaited because can take a long time & blocks rendering
-            const addresses = this.app.storageGetAddresses();
-            const sender = this.getSender();
-            const footer = addresses && addresses[sender] && addresses[sender].footer || undefined;
+            const footer = this.getFooter();
             await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method, footer);
             if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
               this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
@@ -484,9 +481,7 @@ export class Composer {
 
   updateFooterIcon = (include?: boolean) => {
     if (typeof include === 'undefined') { // decide if pubkey should be included
-      const addresses = this.app.storageGetAddresses();
-      const sender = this.getSender();
-      const footer = addresses && addresses[sender] && addresses[sender].footer;
+      const footer = this.getFooter();
       this.updateFooterIcon(!!footer);
     } else { // set icon to specific state
       if (include) {
@@ -622,9 +617,7 @@ export class Composer {
       if (this.app.storageGetAddresses()) {
         this.renderSenderAliasesOptions(this.app.storageGetAddresses()!);
       }
-      const addresses = await this.app.storageGetAddresses();
-      const sender = this.getSender();
-      const footer = addresses && addresses[sender] && addresses[sender].footer || undefined;
+      const footer = this.getFooter();
       await this.composerQuote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
       this.setInputTextHeightManuallyIfNeeded();
     }
@@ -690,9 +683,7 @@ export class Composer {
         await this.composerContacts.setEmailsPreview(this.getRecipients());
         this.composerContacts.updatePubkeyIcon();
         this.updateFooterIcon();
-        const addresses = this.app.storageGetAddresses();
-        const sender = this.getSender();
-        this.composerQuote.replaceFooter(addresses && addresses[sender] && addresses[sender].footer || undefined);
+        this.composerQuote.replaceFooter(this.getFooter());
       });
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
@@ -744,6 +735,12 @@ export class Composer {
   }
 
   public isMinimized = () => this.composeWindowIsMinimized;
+
+  public getFooter = () => {
+    const addresses = this.app.storageGetAddresses();
+    const sender = this.getSender();
+    return addresses && addresses[sender] && addresses[sender].footer || undefined;
+  }
 
   private loadRecipientsThenSetTestStateReady = async () => {
     await Promise.all(this.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
