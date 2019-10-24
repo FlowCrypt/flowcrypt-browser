@@ -258,6 +258,15 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default.only('compose[global:compatibility] - forward - pgp/mime signed-only', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const appendUrl = 'threadId=15f7fc2919788f03&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=15f7fc2919788f03';
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
+      await composePage.waitAndClick('@action-forward');
+      await ComposePageRecipe.fillRecipients(composePage, { to: 'human@flowcrypt.com' }, 'reply');
+      expect(await composePage.read('@input-body')).to.include('> This message will contain a separately attached file + signature.');
+      await composePage.waitAny('.qq-file-id-0');
+    }));
+
     ava.default('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
       await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', 'signed');
