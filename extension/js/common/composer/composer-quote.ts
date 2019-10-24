@@ -95,7 +95,16 @@ export class ComposerQuote extends ComposerComponent {
   }
 
   private createFooterHTML = (footer: string) => {
-    return `<br>-<br><br>${Xss.htmlSanitizeAndStripAllTags(footer, '<br>', true)}`;
+    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n', true); // true: strip away images because not supported yet
+    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
+    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
+    if (!footerFirstLine) {
+      return '';
+    }
+    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
+      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
+    }
+    return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
   }
 
   public replaceFooter = (newFooter: string | undefined) => {
