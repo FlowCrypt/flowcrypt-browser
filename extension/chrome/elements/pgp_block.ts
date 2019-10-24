@@ -378,8 +378,10 @@ Catch.try(async () => {
         isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
         decryptedContent = decoded.text;
+      } else {
+        decryptedContent = '';
       }
-      if (decoded.subject) {
+      if (decoded.subject && isEncrypted) {
         decryptedContent = getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent;
       }
       for (const att of decoded.atts) {
