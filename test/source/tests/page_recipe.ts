@@ -412,8 +412,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (subject) {
       await composePageOrFrame.click('@input-subject');
       await Util.sleep(1);
-      subject = `Automated puppeteer test: ${subject}`;
-      await composePageOrFrame.type('@input-subject', subject);
+      await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
@@ -446,7 +445,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (password) {
       await composePage.waitAndType('@input-password', 'test-pass');
     }
-    await composePage.waitAndClick('@action-send', { delay: 0.5 });
+    await composePage.waitAndClick('@action-send', { delay: 1 });
     await Promise.race([
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply

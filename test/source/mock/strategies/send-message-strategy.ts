@@ -1,9 +1,26 @@
 import { UnsuportableStrategyError, ITestMsgStrategy } from './strategy-base.js';
 import { ParsedMail, AddressObject } from 'mailparser';
 import { HttpClientErr } from '../api.js';
-import { PgpMsg } from "../../core/pgp.js";
+import { PgpMsg, Pgp } from "../../core/pgp.js";
 import { Buf } from '../../core/buf.js';
 import { Config } from '../../util/index.js';
+
+class SignedMessageTestStrategy implements ITestMsgStrategy {
+  private readonly expectedText = 'New Signed Message (Mock Test)';
+
+  async test(mimeMsg: ParsedMail) {
+    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    if (decrypted.success && decrypted.signature) {
+      const content = decrypted.content.toUtfStr();
+      if (!content.includes(this.expectedText)) {
+        throw new HttpClientErr(`Error: Contents don't match. Expected: '${this.expectedText}' but got: '${content}'.`);
+      }
+    } else {
+      throw new HttpClientErr(`Error: The message isn't signed.`);
+    }
+  }
+}
 
 class PlainTextMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Plain Message';
@@ -67,6 +84,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new NewMessageCCAndBCCTestStrategy();
     } else if (subject.includes('New Plain Message')) {
       this.strategy = new PlainTextMessageTestStrategy();
+    } else if (subject.includes('New Signed Message (Mock Test)')) {
+      this.strategy = new SignedMessageTestStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }
