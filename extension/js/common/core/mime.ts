@@ -192,11 +192,11 @@ export class Mime {
           for (const node of Object.values(leafNodes)) {
             if (Mime.getNodeType(node) === 'application/pgp-signature') {
               mimeContent.signature = node.rawContent;
-            } else if (Mime.getNodeType(node) === 'text/html') {
+            } else if (Mime.getNodeType(node) === 'text/html' && !Mime.getNodeFilename(node)) {
               // html content may be broken up into smaller pieces by attachments in between
               // AppleMail does this with inline attachments
               mimeContent.html = (mimeContent.html || '') + Mime.getNodeContentAsUtfStr(node);
-            } else if (Mime.getNodeType(node) === 'text/plain') {
+            } else if (Mime.getNodeType(node) === 'text/plain' && !Mime.getNodeFilename(node)) {
               mimeContent.text = Mime.getNodeContentAsUtfStr(node);
             } else if (Mime.getNodeType(node) === 'text/rfc822-headers') {
               if (node._parentNode && node._parentNode.headers.subject) {
