@@ -136,11 +136,12 @@ export class ComposerQuote extends ComposerComponent {
   public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
     try {
       const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
-      const message = await Mime.process(Buf.fromBase64UrlStr(raw!));
+      const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
+      const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : await Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
       const decryptedBlockTypes = ['decryptedHtml'];
       if (method === 'forward') {
-        readableBlockTypes.push('encryptedAtt');
+        readableBlockTypes.push(...['encryptedAtt', 'plainAtt']);
         decryptedBlockTypes.push('decryptedAtt');
       }
       const readableBlocks: MsgBlock[] = [];
@@ -166,7 +167,7 @@ export class ComposerQuote extends ComposerComponent {
           }
         } else if (block.type === 'plainHtml') {
           decryptedAndFormatedContent.push(Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(stringContent, '\n')));
-        } else if (['encryptedAtt', 'decryptedAtt'].includes(block.type)) {
+        } else if (['encryptedAtt', 'decryptedAtt', 'plainAtt'].includes(block.type)) {
           if (block.attMeta && block.attMeta.data) {
             let attMeta: { content: Buf, filename?: string } | undefined;
             if (block.type === 'encryptedAtt') {
@@ -190,9 +191,9 @@ export class ComposerQuote extends ComposerComponent {
         }
       }
       return {
-        headers: { date: String(message.headers.date), from: message.from },
+        headers: { date: String(decoded.headers.date), from: decoded.from },
         text: decryptedAndFormatedContent.join('\n').trim(),
-        isSigned: message.blocks.length > 0 && message.blocks[0].type === 'signedMsg',
+        isSigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles
       };
     } catch (e) {
