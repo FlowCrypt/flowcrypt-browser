@@ -202,8 +202,7 @@ export class Mime {
               if (node._parentNode && node._parentNode.headers.subject) {
                 mimeContent.subject = node._parentNode.headers.subject[0].value;
               }
-            }
-            if (Mime.getNodeFilename(node)) {
+            } else {
               mimeContent.atts.push(Mime.getNodeAsAtt(node));
             }
           }
