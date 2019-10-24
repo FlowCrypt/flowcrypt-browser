@@ -13,7 +13,6 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
     const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
     if (decrypted.success && decrypted.signature) {
       const content = decrypted.content.toUtfStr();
-      console.log(content);
       if (!content.includes(this.expectedText)) {
         throw new HttpClientErr(`Error: Contents don't match. Expected: '${this.expectedText}' but got: '${content}'.`);
       }
