@@ -445,7 +445,7 @@ export class ComposePageRecipe extends PageRecipe {
     if (password) {
       await composePage.waitAndType('@input-password', 'test-pass');
     }
-    await composePage.waitAndClick('@action-send', { delay: 0.5 });
+    await composePage.waitAndClick('@action-send', { delay: 1 });
     await Promise.race([
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
