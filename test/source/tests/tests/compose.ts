@@ -440,7 +440,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('contact.test@flowcrypt.com');
     }));
 
-    ava.default.only('[compose[global:compatibility] - standalone - new signed message, verification in mock', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('[compose[global:compatibility] - standalone - new signed message, verification in mock', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', 'signed');
       await ComposePageRecipe.sendAndClose(composePage);
