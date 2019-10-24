@@ -101,11 +101,6 @@ export class ComposerContacts extends ComposerComponent {
         target.focus();
       }
     }));
-    this.composer.S.now('input_from').change(async () => {
-      await this.reEvaluateRecipients(this.addedRecipients);
-      await this.setEmailsPreview(this.addedRecipients);
-      await this.updatePubkeyIcon();
-    });
     const handleCopyActionsClick = (target: HTMLElement, newContainer: JQuery<HTMLElement>) => {
       const buttonsContainer = target.parentElement!;
       const curentContainer = buttonsContainer.parentElement!;

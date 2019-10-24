@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch } from './platform/catch.js';
-import { Store, Subscription, SendAsAlias } from './platform/store.js';
+import { Store, SendAsAlias } from './platform/store.js';
 import { Lang } from './lang.js';
 import { Str, Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
@@ -50,7 +50,6 @@ export class Composer {
     send_btn_text: '#send_btn_text',
     toggle_send_options: '#toggle_send_options',
     icon_pubkey: '.icon.action_include_pubkey',
-    icon_footer: '.icon.action_include_footer',
     icon_help: '.action_feedback',
     icon_popout: '.popout img',
     icon_show_prev_msg: '.action_show_prev_msg',
@@ -89,7 +88,7 @@ export class Composer {
   public canReadEmails: boolean;
   public initialized: Promise<void>;
 
-  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, initSubs: Subscription) {
+  constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams) {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
     this.urlParams = urlParams;
@@ -101,19 +100,13 @@ export class Composer {
 
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
-    if (initSubs.active) {
-      this.updateFooterIcon();
-    } else if (this.app.storageEmailFooterGet()) { // footer set but subscription not active - subscription expired
-      this.app.storageEmailFooterSet(undefined).catch(Catch.reportErr);
-      const notification = `${Lang.account.fcSubscriptionEndedNoFooter} <a href="#" class="subscribe">renew</a> <a href="#" class="close">close</a>`;
-      BrowserMsg.send.notificationShow(this.urlParams.parentTabId, { notification });
-    }
+
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
     this.initialized = (async () => {
       await this.initComposeBox();
-      await this.initActions();
+      this.initActions();
       await this.checkEmailAliases();
     })().catch(Catch.reportErr);
   }
@@ -208,13 +201,6 @@ export class Composer {
     }, this.getErrHandlers(`add intro`)));
     this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.getErrHandlers(`render help dialog`)));
     this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
-    this.S.cached('icon_footer').click(Ui.event.handle(target => {
-      if (!$(target).is('.active')) {
-        this.app.renderFooterDialog();
-      } else {
-        this.updateFooterIcon(!$(target).is('.active'));
-      }
-    }, this.getErrHandlers(`change footer`)));
     this.composerDraft.initActions().catch(Catch.reportErr);
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     $('body').click(event => {
@@ -260,6 +246,10 @@ export class Composer {
     }
     if (this.urlParams.draftId) {
       await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
+      const footer = this.getFooter();
+      if (footer) {
+        this.composerQuote.setFooter(footer);
+      }
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
@@ -429,7 +419,8 @@ export class Composer {
         this.composerSendBtn.additionalMsgHeaders.References = determined.headers.References;
         if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
           (async () => { // not awaited because can take a long time & blocks rendering
-            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method);
+            const footer = this.getFooter();
+            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method, footer);
             if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
               this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
             }
@@ -475,18 +466,6 @@ export class Composer {
         offset = Math.ceil(lastRecipient.position().left + lastRecipient.outerWidth()!);
       }
       jqueryElem.css('width', (containerWidth - offset - additionalWidth - 11) + 'px');
-    }
-  }
-
-  updateFooterIcon = (include?: boolean) => {
-    if (typeof include === 'undefined') { // decide if pubkey should be included
-      this.updateFooterIcon(!!this.app.storageEmailFooterGet());
-    } else { // set icon to specific state
-      if (include) {
-        this.S.cached('icon_footer').addClass('active');
-      } else {
-        this.S.cached('icon_footer').removeClass('active');
-      }
     }
   }
 
@@ -611,6 +590,8 @@ export class Composer {
       if (this.app.storageGetAddresses()) {
         this.renderSenderAliasesOptions(this.app.storageGetAddresses()!);
       }
+      const footer = this.getFooter();
+      await this.composerQuote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
       this.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
@@ -638,7 +619,7 @@ export class Composer {
   private renderSenderAliasesOptionsToggle() {
     const sendAs = this.app.storageGetAddresses();
     if (sendAs && Object.keys(sendAs).length > 1) {
-      const showAliasChevronHtml = '<img id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
+      const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
       const inputAddrContainer = this.S.cached('email_copy_actions');
       Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
@@ -670,6 +651,12 @@ export class Composer {
         return (sendAs[a].isDefault === sendAs[b].isDefault) ? 0 : sendAs[a].isDefault ? -1 : 1;
       });
       Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.composerContacts.updatePubkeyIcon());
+      this.S.now('input_from').change(async () => {
+        await this.composerContacts.reEvaluateRecipients(this.getRecipients());
+        await this.composerContacts.setEmailsPreview(this.getRecipients());
+        this.composerContacts.updatePubkeyIcon();
+        this.composerQuote.replaceFooter(this.getFooter());
+      });
       if (this.urlParams.isReplyBox) {
         this.resizeComposeBox();
       }
@@ -720,6 +707,12 @@ export class Composer {
   }
 
   public isMinimized = () => this.composeWindowIsMinimized;
+
+  public getFooter = () => {
+    const addresses = this.app.storageGetAddresses();
+    const sender = this.getSender();
+    return addresses && addresses[sender] && addresses[sender].footer || undefined;
+  }
 
   private loadRecipientsThenSetTestStateReady = async () => {
     await Promise.all(this.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));

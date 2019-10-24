@@ -257,11 +257,9 @@ export class ComposerSendBtn extends ComposerComponent {
             const { short, admin_code } = await Backend.messageUpload(encryptedBody['text/plain']!, subs.active ? 'uuid' : undefined);
             const storage = await Store.getAcct(this.urlParams.acctEmail, ['outgoing_language']);
             encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeysOnly, atts, storage.outgoing_language || 'EN');
-            encryptedBody = this.formatEmailTextFooter(encryptedBody);
             await this.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
             await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.composer.getSender(), recipients, subj, encryptedBody, atts, this.urlParams.threadId));
         } else {
-            encryptedBody = this.formatEmailTextFooter(encryptedBody);
             await this.doSendMsg(await Google.createMsgObj(this.urlParams.acctEmail, this.composer.getSender(), recipients, subj, encryptedBody, atts, this.urlParams.threadId));
         }
     }
@@ -282,7 +280,7 @@ export class ComposerSendBtn extends ComposerComponent {
             // Gmail will also remove trailing spaces on the end of each line in transit, causing signatures that don't match
             // Removing them here will prevent Gmail from screwing up the signature
             plaintext = plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
-            const signedData = await PgpMsg.sign(prv, this.formatEmailTextFooter({ 'text/plain': plaintext })['text/plain'] || '');
+            const signedData = await PgpMsg.sign(prv, plaintext);
             const atts = await this.composer.attach.collectAtts(); // todo - not signing attachments
             this.app.storageContactUpdate([...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []], { last_use: Date.now() }).catch(Catch.reportErr);
             this.composer.S.now('send_btn_text').text(SendBtnButtonTexts.BTN_SENDING);
@@ -535,15 +533,6 @@ export class ComposerSendBtn extends ComposerComponent {
         return { 'text/plain': text.join('\n'), 'text/html': html.join('\n') };
     }
 
-    private formatEmailTextFooter = (origBody: SendableMsgBody): SendableMsgBody => {
-        const emailFooter = this.app.storageEmailFooterGet();
-        const body: SendableMsgBody = { 'text/plain': origBody['text/plain'] + (emailFooter ? '\n' + emailFooter : '') };
-        if (typeof origBody['text/html'] !== 'undefined') {
-            body['text/html'] = origBody['text/html'] + (emailFooter ? '<br>\n' + emailFooter.replace(/\n/g, '<br>\n') : '');
-        }
-        return body;
-    }
-
     private addNamesToMsg = async (msg: SendableMsg): Promise<void> => {
         const { sendAs } = await Store.getAcct(this.urlParams.acctEmail, ['sendAs']);
         const addNameToEmail = async (emails: string[]): Promise<string[]> => {
@@ -590,15 +579,6 @@ export class ComposerSendBtn extends ComposerComponent {
         this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.getSender());
         this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
         Xss.sanitizeRender(this.composer.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escapeTextAsRenderableHtml(this.composer.extractAsText('input_text', 'SKIP-ADDONS')));
-        const emailFooter = this.app.storageEmailFooterGet();
-        if (emailFooter) {
-            const renderableEscapedEmailFooter = Xss.escape(emailFooter).replace(/\n/g, '<br>');
-            if (isSigned) {
-                Xss.sanitizeAppend(this.composer.S.cached('replied_body'), `<br><br>${renderableEscapedEmailFooter}`);
-            } else {
-                Xss.sanitizeRender(this.composer.S.cached('reply_msg_successful').find('.email_footer'), `<br> ${renderableEscapedEmailFooter}`);
-            }
-        }
         const t = new Date();
         const time = ((t.getHours() !== 12) ?
             (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';

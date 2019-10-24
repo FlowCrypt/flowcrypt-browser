@@ -20,6 +20,8 @@ export class ComposerQuote extends ComposerComponent {
   public messageToReplyOrForward: MessageToReplyOrForward | undefined;
   private msgExpandingHTMLPart: string | undefined;
 
+  private footerHTML: string | undefined;
+
   get expandingHTMLPart(): string | undefined {
     return this.msgExpandingHTMLPart;
   }
@@ -28,9 +30,9 @@ export class ComposerQuote extends ComposerComponent {
     // No need
   }
 
-  public addTripleDotQuoteExpandBtn = async (msgId: string, method: ('reply' | 'forward')) => {
-    if (!this.messageToReplyOrForward) {
-      this.composer.S.cached('icon_show_prev_msg').show().addClass('progress');
+  public addTripleDotQuoteExpandBtn = async (msgId: string | undefined, method?: ('reply' | 'forward'), footer?: string) => {
+    if (!this.messageToReplyOrForward && msgId && method) {
+      this.composer.S.cached('icon_show_prev_msg').addClass('progress');
       Xss.sanitizeAppend(this.composer.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
       this.composer.resizeComposeBox();
       try {
@@ -44,7 +46,7 @@ export class ComposerQuote extends ComposerComponent {
       this.composer.S.cached('icon_show_prev_msg').find('#loader').remove();
       this.composer.S.cached('icon_show_prev_msg').removeClass('progress');
     }
-    if (!this.messageToReplyOrForward) {
+    if (!this.messageToReplyOrForward && msgId) {
       this.composer.S.cached('icon_show_prev_msg').click(Ui.event.handle(async el => {
         this.composer.S.cached('icon_show_prev_msg').unbind('click');
         await this.addTripleDotQuoteExpandBtn(msgId, method);
@@ -54,29 +56,81 @@ export class ComposerQuote extends ComposerComponent {
       }));
       return;
     }
-    if (this.messageToReplyOrForward.text) {
+    let safePreviousMsg = '';
+    if (footer) {
+      this.footerHTML = this.createFooterHTML(footer);
+      safePreviousMsg += this.footerHTML;
+    }
+    if (this.messageToReplyOrForward && this.messageToReplyOrForward.text) {
       const sentDate = new Date(String(this.messageToReplyOrForward.headers.date));
-      if (!this.messageToReplyOrForward.headers.from || !this.messageToReplyOrForward.headers.date) {
-        this.composer.S.cached('icon_show_prev_msg').hide();
-        return;
+      if (this.messageToReplyOrForward.headers.from && this.messageToReplyOrForward.headers.date) {
+        safePreviousMsg += `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
       }
-      const safePreviousMsg = `<br><br>${this.generateHtmlPreviousMsgQuote(this.messageToReplyOrForward.text, sentDate, this.messageToReplyOrForward.headers.from)}`;
-      if (method === 'forward') {
-        this.composer.S.cached('icon_show_prev_msg').remove();
-        Xss.sanitizeAppend(this.composer.S.cached('input_text'), safePreviousMsg);
-        this.composer.resizeComposeBox();
-      } else {
-        this.msgExpandingHTMLPart = safePreviousMsg;
-        this.setExpandingTextAfterClick(this.msgExpandingHTMLPart);
+      if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
+        for (const file of this.messageToReplyOrForward.decryptedFiles) {
+          await this.composer.attach.addFile(file);
+        }
+      }
+    }
+    if (!safePreviousMsg) {
+      this.composer.S.cached('icon_show_prev_msg').remove();
+      return;
+    }
+    if (method === 'forward') {
+      this.composer.S.cached('icon_show_prev_msg').remove();
+      Xss.sanitizeAppend(this.composer.S.cached('input_text'), safePreviousMsg);
+      this.composer.resizeComposeBox();
+    } else {
+      this.msgExpandingHTMLPart = safePreviousMsg;
+      this.setExpandingTextAfterClick();
+    }
+  }
+
+  public setFooter = (footer: string) => {
+    const footerHTML = this.createFooterHTML(footer);
+    if ((this.msgExpandingHTMLPart && this.msgExpandingHTMLPart.includes(footerHTML)) ||
+      this.composer.S.cached('input_text').html().includes(footerHTML)) {
+      this.footerHTML = footerHTML;
+    }
+  }
+
+  private createFooterHTML = (footer: string) => {
+    const sanitizedPlainFooter = Xss.htmlSanitizeAndStripAllTags(footer, '\n', true); // true: strip away images because not supported yet
+    const sanitizedHtmlFooter = sanitizedPlainFooter.replace(/\n/g, '<br>');
+    const footerFirstLine = sanitizedPlainFooter.split('\n')[0];
+    if (!footerFirstLine) {
+      return '';
+    }
+    if (/^[*-_=+#~ ]+$/.test(footerFirstLine)) {
+      return `<br>${sanitizedHtmlFooter}`;  // first line of footer is already a footer separator, made of special characters
+    }
+    return `<br><br>--<br>${sanitizedHtmlFooter}`; // create a custom footer separator
+  }
+
+  public replaceFooter = (newFooter: string | undefined) => {
+    newFooter = newFooter ? this.createFooterHTML(newFooter) : '';
+    if (this.footerHTML) {
+      let textHTML = this.msgExpandingHTMLPart || this.composer.S.cached('input_text').html();
+      const lastOccurrenceIndex = textHTML.lastIndexOf(this.footerHTML);
+      if (lastOccurrenceIndex !== -1) {
+        textHTML = textHTML.substr(0, lastOccurrenceIndex) + newFooter + textHTML.substr(lastOccurrenceIndex + this.footerHTML.length);
+        if (this.msgExpandingHTMLPart) {
+          this.msgExpandingHTMLPart = textHTML;
+          if (!textHTML) {
+            this.composer.S.cached('icon_show_prev_msg').hide();
+          }
+        } else {
+          this.composer.S.cached('input_text').html(textHTML); // xss-sanitized
+        }
       }
     } else {
-      this.composer.S.cached('icon_show_prev_msg').hide();
-    }
-    if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
-      for (const file of this.messageToReplyOrForward.decryptedFiles) {
-        await this.composer.attach.addFile(file);
+      if (this.msgExpandingHTMLPart) {
+        this.msgExpandingHTMLPart = newFooter + this.msgExpandingHTMLPart;
+      } else {
+        this.composer.S.cached('input_text').append(newFooter); // xss-sanitized
       }
     }
+    this.footerHTML = newFooter || undefined;
   }
 
   public getAndDecryptMessage = async (msgId: string, method: 'reply' | 'forward', progressCb?: ProgressCb): Promise<MessageToReplyOrForward | undefined> => {
@@ -182,11 +236,11 @@ export class ComposerQuote extends ComposerComponent {
     return Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
   }
 
-  private setExpandingTextAfterClick = (expandedHTMLText: string) => {
+  private setExpandingTextAfterClick = () => {
     this.composer.S.cached('icon_show_prev_msg')
       .click(Ui.event.handle(el => {
         el.style.display = 'none';
-        Xss.sanitizeAppend(this.composer.S.cached('input_text'), expandedHTMLText);
+        Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.msgExpandingHTMLPart || '');
         this.msgExpandingHTMLPart = undefined;
         this.composer.S.cached('input_text').focus();
         this.composer.resizeComposeBox();

@@ -45,7 +45,7 @@ Catch.try(async () => {
   const isReplyBox = !!threadId;
   let passphraseInterval: number;
 
-  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_footer', 'email_provider',
+  const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_provider',
     'hide_message_password', 'drafts_reply']);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
@@ -248,11 +248,6 @@ Catch.try(async () => {
     },
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageGetAddresses,
-    storageEmailFooterGet: () => storage.email_footer || undefined,
-    storageEmailFooterSet: async (footer: string | undefined) => {
-      storage.email_footer = footer;
-      await Store.setAcct(acctEmail, { email_footer: footer });
-    },
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
     storageGetKey,
@@ -341,17 +336,6 @@ Catch.try(async () => {
         theirEmail: recipients, threadId, threadMsgId: lastMsgId
       });
     },
-    renderFooterDialog: () => ($ as JQS).featherlight({ // tslint:disable:no-unsafe-any
-      iframe: factory.srcAddFooterDialog('compose', parentTabId),
-      iframeWidth: 490,
-      iframeHeight: 230,
-      variant: 'noscroll',
-      afterContent: () => {
-        const iframe = $('.featherlight.noscroll > .featherlight-content > iframe');
-        iframe.attr('scrolling', 'no').focus();
-        iframe.contents().find('textarea').focus();
-      },
-    }),
     renderAddPubkeyDialog: (emails: string[]) => {
       if (placement !== 'settings') {
         BrowserMsg.send.addPubkeyDialog(parentTabId, { emails });
@@ -380,14 +364,9 @@ Catch.try(async () => {
     },
     lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded,
     collectAllAvailablePublicKeys
-  }, processedUrlParams, await Store.subscription());
+  }, processedUrlParams);
 
   BrowserMsg.addListener('close_dialog', async () => {
-    $('.featherlight.featherlight-iframe').remove();
-  });
-  BrowserMsg.addListener('set_footer', async ({ footer }: Bm.SetFooter) => {
-    storage.email_footer = footer;
-    composer.updateFooterIcon();
     $('.featherlight.featherlight-iframe').remove();
   });
   BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
