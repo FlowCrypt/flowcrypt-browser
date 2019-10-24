@@ -2,11 +2,11 @@
 
 'use strict';
 
-import { Ui } from '../browser.js';
 import { PgpMsg, Pwd } from '../core/pgp.js';
 import { Dict } from '../core/common.js';
 import { Att } from '../core/att.js';
 import { Catch } from '../platform/catch.js';
+import { Ui } from '../browser.js';
 
 declare const qq: any;
 
@@ -36,7 +36,7 @@ export class AttUI {
           extraDropzones: $('#input_text'),
         },
         callbacks: {
-          onSubmitted: (uploadFileId: string, name: string) => this.processNewAtt(uploadFileId, name).catch(Catch.reportErr),
+          onSubmit: this.processNewAtt,
           onCancel: (uploadFileId: string) => Catch.try(() => this.cancelAtt(uploadFileId))(),
         },
       };
@@ -109,17 +109,16 @@ export class AttUI {
     const limits = await this.getLimits();
     if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
       await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
-      this.uploader.cancel(uploadFileId); // tslint:disable-line:no-unsafe-any
+      throw new Error(`Error: Number of files is more than ${limits.count}`);
     } else {
       const newFile: File = this.uploader.getFile(uploadFileId); // tslint:disable-line:no-unsafe-any
       if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
-        this.uploader.cancel(uploadFileId); // tslint:disable-line:no-unsafe-any
         if (typeof limits.oversize === 'function') {
           await limits.oversize(this.getFileSizeSum() + newFile.size);
         } else {
           await Ui.modal.warning('Combined file size is limited to ' + limits.sizeMb + 'MB');
         }
-        return;
+        throw new Error(`Error: Combined file size is more than maximum.`);
       }
       this.attachedFiles[uploadFileId] = newFile;
       if (typeof this.attAddedCb === 'function') {
@@ -128,6 +127,7 @@ export class AttUI {
         const input = this.setInputAttributes();
         input.focus();
       }
+      return true;
     }
   }
 
