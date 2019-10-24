@@ -56,9 +56,7 @@ export type MimeProccesedMsg = {
 type SendingType = 'to' | 'cc' | 'bcc';
 
 export class Mime {
-
-  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
-    const decoded = await Mime.decode(mimeMsg);
+  public static processDecoded = async (decoded: MimeContent): Promise<MimeProccesedMsg> => {
     const blocks: MsgBlock[] = [];
     if (decoded.text) {
       const blocksFromTextPart = Pgp.armor.detectBlocks(Str.normalize(decoded.text)).blocks;
@@ -109,6 +107,11 @@ export class Mime {
       }
     }
     return { headers: decoded.headers, blocks, from: decoded.from, to: decoded.to, rawSignedContent: decoded.rawSignedContent };
+  }
+
+  public static process = async (mimeMsg: Uint8Array): Promise<MimeProccesedMsg> => {
+    const decoded = await Mime.decode(mimeMsg);
+    return await Mime.processDecoded(decoded);
   }
 
   public static isPlainInlineImg = (b: MsgBlock) => {
