@@ -87,9 +87,7 @@ export class ComposerSendBtn extends ComposerComponent {
                 this.addTickToPopover(elem);
             }
         }
-        if (!this.urlParams.isReplyBox) {
-            this.setPopoverTopPosition();
-        }
+        this.setPopoverTopPosition();
     }
 
     resetSendBtn(delay?: number) {
