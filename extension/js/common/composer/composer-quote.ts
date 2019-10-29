@@ -191,7 +191,10 @@ export class ComposerQuote extends ComposerComponent {
         }
       }
       return {
-        headers: { date: String(decoded.headers.date), from: decoded.from },
+        headers: {
+          date: String(decoded.headers.date), from: decoded.from,
+          'in-reply-to': decoded.headers['in-reply-to'] as string, references: decoded.headers.references as string
+        },
         text: decryptedAndFormatedContent.join('\n').trim(),
         isSigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles

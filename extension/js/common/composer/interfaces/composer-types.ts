@@ -35,6 +35,8 @@ export interface RecipientElement extends BaseRecipient {
 
 export type MessageToReplyOrForward = {
   headers: {
+    'in-reply-to': string,
+    references: string,
     date?: string,
     from?: string
   },
@@ -49,6 +51,7 @@ export type ComposerUrlParams = {
   tabId: string;
   acctEmail: string;
   threadId: string;
+  threadMsgId: string;
   draftId: string;
   subject: string;
   from: string | undefined;

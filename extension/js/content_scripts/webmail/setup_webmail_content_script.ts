@@ -25,7 +25,7 @@ export interface WebmailElementReplacer {
   getIntervalFunctions: () => Array<IntervalFunction>;
   setReplyBoxEditable: () => Promise<void>;
   reinsertReplyBox: (subject: string, myEmail: string, replyTo: string[], threadId: string) => void;
-  scrollToBottomOfConvo: () => void;
+  scrollToElement: (selector: string) => void;
 }
 
 const win = window as unknown as ContentScriptWindow;
@@ -134,8 +134,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('close_dialog', async () => {
       $('#cryptup_dialog').remove();
     });
-    BrowserMsg.addListener('scroll_to_bottom_of_conversation', async () => {
-      webmailSpecific.getReplacer().scrollToBottomOfConvo();
+    BrowserMsg.addListener('scroll_to_element', async ({ selector }: Bm.ScrollToElement) => {
+      webmailSpecific.getReplacer().scrollToElement(selector);
     });
     BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
       if (!$('#cryptup_dialog').length) {

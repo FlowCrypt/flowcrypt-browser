@@ -24,6 +24,7 @@ Catch.try(async () => {
   const from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
+  const threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
   const debug = uncheckedUrlParams.debug === true;
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
   let to = uncheckedUrlParams.to ? String(uncheckedUrlParams.to).split(',') : [];
@@ -55,7 +56,6 @@ Catch.try(async () => {
     emailProviderDraftDelete: () => Promise.resolve({}),
     emailProviderMsgSend: () => Promise.reject({ message: 'not implemented' }),
     emailProviderGuessContactsFromSentEmails: (query, knownContacts, multiCb) => multiCb({ new: [], all: [] }),
-    emailProviderDetermineReplyMsgHeaderVariables: () => Promise.resolve(undefined),
     emailProviderExtractArmoredBlock: () => Promise.resolve(''),
     renderReinsertReplyBox: () => Promise.resolve(),
     renderAddPubkeyDialog: () => undefined,
@@ -94,7 +94,7 @@ Catch.try(async () => {
   })();
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
-    acctEmail, draftId: '', threadId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
+    acctEmail, draftId: '', threadId, threadMsgId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true
   };
@@ -108,7 +108,7 @@ Catch.try(async () => {
     }
     $('.pubkey_file_name').text(att.name);
     composer.resizeComposeBox();
-    BrowserMsg.send.scrollToBottomOfConversation(parentTabId);
+    BrowserMsg.send.scrollToElement(parentTabId, { selector: `#${frameId}` });
     $('#input_text').focus();
 
     Catch.setHandledTimeout(() => {
