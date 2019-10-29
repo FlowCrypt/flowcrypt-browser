@@ -96,7 +96,7 @@ Catch.try(async () => {
   const processedUrlParams = {
     acctEmail, draftId: '', threadId, threadMsgId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
-    parentTabId, disableDraftSaving: true
+    parentTabId, disableDraftSaving: true, removeAfterClose: false
   };
   const composer = new Composer(appFunctions, processedUrlParams);
 

@@ -21,6 +21,7 @@ export type FactoryReplyParams = {
   threadMsgId?: string,
   sendAs?: Dict<SendAsAlias>,
   subject?: string,
+  removeAfterClose?: boolean,
 };
 
 export class XssSafeFactory {
@@ -107,6 +108,7 @@ export class XssSafeFactory {
       skipClickPrompt: Boolean(skipClickPrompt),
       ignoreDraft: Boolean(ignoreDraft),
       threadMsgId: convoParams.threadMsgId,
+      removeAfterClose: convoParams.removeAfterClose
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
   }

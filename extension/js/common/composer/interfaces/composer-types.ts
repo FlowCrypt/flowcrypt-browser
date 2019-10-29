@@ -62,6 +62,7 @@ export type ComposerUrlParams = {
   parentTabId: string;
   skipClickPrompt: boolean;
   debug: boolean;
+  removeAfterClose: boolean;
 };
 
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };

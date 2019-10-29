@@ -80,10 +80,15 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   setReplyBoxEditable = async () => {
-    await this.replaceStandardReplyBox(undefined, true);
+    const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
+    if (replyContainerIframe.length) {
+      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
+    } else {
+      await this.replaceStandardReplyBox(undefined, true);
+    }
   }
 
-  reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
+  reinsertReplyBox = (subject: string, threadId: string) => {
     const params: FactoryReplyParams = { subject, sendAs: this.sendAs, threadId, threadMsgId: threadId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
@@ -134,8 +139,16 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const element = $(this.factory.btnReply()).insertBefore($(elem).children().last());  // xss-safe-factory
         const messageContainer = $(elem.closest('.h7') as HTMLElement);
         element.click(Ui.event.prevent('double', Catch.try(async () => {
-          await this.insertEncryptedReplyBox(messageContainer);
-        }))); // xss-safe-factory
+          if (messageContainer.is(':last-child')) {
+            if (isEncrypted) {
+              await this.setReplyBoxEditable();
+            } else {
+              await this.replaceStandardReplyBox(undefined, true, true);
+            }
+          } else {
+            await this.insertEncryptedReplyBox(messageContainer);
+          }
+        })));
       }
     }
     // conversation top-right icon buttons
@@ -409,7 +422,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
+  private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
     return {
       sendAs: this.sendAs,
       threadId: this.determineThreadId(convoRootEl),
@@ -429,8 +442,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const threadId = convoRoot.find('[data-legacy-thread-id]').attr('data-legacy-thread-id');
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
-    const replyParams: FactoryReplyParams = { sendAs: this.sendAs, threadId, threadMsgId: msgId };
-    const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, true)}</div>`;
+    const replyParams: FactoryReplyParams = { sendAs: this.sendAs, threadId, threadMsgId: msgId, removeAfterClose: true };
+    const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(replyParams, true, true)}</div>`;
     messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
   }
 
@@ -440,7 +453,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       // cache for subseqent loop runs
       const { drafts_reply } = await Store.getAcct(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
-      const replyParams = this.getReplyParams(convoRootEl!);
+      const replyParams = this.getLastMsgReplyParams(convoRootEl!);
       if (msgId) {
         replyParams.threadMsgId = msgId;
       }

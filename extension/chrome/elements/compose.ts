@@ -31,12 +31,14 @@ Catch.try(async () => {
 
   const ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'threadId', 'threadMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'threadId',
+    'threadMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const skipClickPrompt = uncheckedUrlParams.skipClickPrompt === true;
   const ignoreDraft = uncheckedUrlParams.ignoreDraft === true;
+  const removeAfterClose = uncheckedUrlParams.removeAfterClose === true;
   const placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'gmail', undefined]);
   const disableDraftSaving = false;
   const debug = uncheckedUrlParams.debug === true;
@@ -104,7 +106,10 @@ Catch.try(async () => {
       return;
     }
   }
-  const processedUrlParams = { acctEmail, draftId, threadId, threadMsgId, ...replyParams, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
+  const processedUrlParams = {
+    acctEmail, draftId, threadId, threadMsgId, ...replyParams, frameId, tabId, isReplyBox,
+    skipClickPrompt, parentTabId, disableDraftSaving, debug, removeAfterClose
+  };
   const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
@@ -212,6 +217,7 @@ Catch.try(async () => {
     }
     return { armoredPubkeys, emailsWithoutPubkeys };
   };
+
   const scopes = await Store.getScopes(acctEmail);
   const composer = new Composer({
     getScopes: () => scopes,

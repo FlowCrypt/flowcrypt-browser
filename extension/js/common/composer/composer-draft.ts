@@ -38,7 +38,7 @@ export class ComposerDraft extends ComposerComponent {
   async initActions(): Promise<void> {
     $('.delete_draft').click(Ui.event.handle(async () => {
       await this.draftDelete();
-      if (this.urlParams.isReplyBox) { // reload iframe so we don't leave users without a reply UI
+      if (this.urlParams.isReplyBox && !this.urlParams.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
         this.urlParams.skipClickPrompt = false;
         window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
       } else { // close new msg
