@@ -309,29 +309,6 @@ Catch.try(async () => {
         }
       });
     },
-    // emailProviderDetermineReplyMsgHeaderVariables: async (msgId: string, progressCb?: ProgressCb): Promise<DeterminedMsgHeaders | undefined> => {
-    //   try {
-    //     const msg = await Google.gmail.msgGet(acctEmail, msgId, 'metadata', progressCb);
-    //     if (!msg) {
-    //       return;
-    //     }
-    //     const msgId = Google.gmail.findHeader(msg, 'Message-ID') || '';
-    //     const msgRefs = Google.gmail.findHeader(msg, 'In-Reply-To') || '';
-    //     return { lastMsgId: msgId.id, headers: { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast } };
-    //   } catch (e) {
-    //     if (Api.err.isAuthPopupNeeded(e)) {
-    //       BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-    //     } else if (Api.err.isNetErr(e)) {
-    //       // todo: render retry
-    //     } else if (Api.err.isNotFound(e)) {
-    //       // todo: render as new message compose?
-    //     } else {
-    //       Catch.reportErr(e);
-    //       // todo: render error
-    //     }
-    //   }
-    //   return;
-    // },
     emailProviderExtractArmoredBlock: (msgId: string) => Google.gmail.extractArmoredBlock(acctEmail, msgId, 'full'),
     // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),
     // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
