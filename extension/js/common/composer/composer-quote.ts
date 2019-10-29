@@ -137,6 +137,11 @@ export class ComposerQuote extends ComposerComponent {
     try {
       const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
+      const headers = {
+        date: String(decoded.headers.date), from: decoded.from,
+        'in-reply-to': decoded.headers['message-id'] as string,
+        references: decoded.headers['message-id'] as string,
+      };
       const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : await Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
       const decryptedBlockTypes = ['decryptedHtml'];
@@ -191,10 +196,7 @@ export class ComposerQuote extends ComposerComponent {
         }
       }
       return {
-        headers: {
-          date: String(decoded.headers.date), from: decoded.from,
-          'in-reply-to': decoded.headers['in-reply-to'] as string, references: decoded.headers.references as string
-        },
+        headers,
         text: decryptedAndFormatedContent.join('\n').trim(),
         isSigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles

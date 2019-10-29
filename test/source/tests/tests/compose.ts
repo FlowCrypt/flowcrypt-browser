@@ -287,7 +287,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
       await ComposePageRecipe.fillMsg(composePage, { bcc: "test@email.com" }, undefined, undefined, 'reply');
-      await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'] });
+      await expectRecipientElements(composePage, { to: ['censored@email.com'], cc: ['censored@email.com'], bcc: ['test@email.com'] });
       await Util.sleep(3);
       await ComposePageRecipe.sendAndClose(composePage, 'test-pass');
     }));
