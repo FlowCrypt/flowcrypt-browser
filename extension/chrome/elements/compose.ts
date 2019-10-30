@@ -19,7 +19,6 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/composer-errors.js';
 import { PubkeyResult } from '../../js/common/composer/interfaces/composer-types.js';
-import { Settings } from '../../js/common/settings.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,

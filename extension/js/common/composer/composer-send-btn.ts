@@ -621,6 +621,21 @@ export class ComposerSendBtn extends ComposerComponent {
             this.composer.S.cached('input_password').focus();
             throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
         }
+        if (challenge) {
+            const pp = await this.app.storagePassphraseGet();
+            if (pp) {
+                if (pp.toLowerCase().includes(challenge.answer.toLowerCase())) {
+                    throw new ComposerUserError('Please do not use your private key passphrase as a password for this message.');
+                }
+                if (subject.toLowerCase().includes(challenge.answer.toLowerCase())) {
+                    throw new ComposerUserError('Please do not include the password in the subject line.');
+                }
+                const intro = this.composer.S.cached('input_intro').length ? this.composer.extractAsText('input_intro') : '';
+                if (intro.toLowerCase().includes(challenge.answer.toLowerCase())) {
+                    throw new ComposerUserError('Please do not include the password in the intro.');
+                }
+            }
+        }
         if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
             throw new ComposerResetBtnTrigger();
         }
