@@ -148,7 +148,7 @@
   }
   #section_subject,
   #new_message table#compose td.text div#input_text,
-  table#compose td#input_addresses_container > div .recipients span {
+  table#compose td.recipients-inputs > div#input_addresses_container > div .recipients span {
     word-break: break-all;
   }
   #settings #content {

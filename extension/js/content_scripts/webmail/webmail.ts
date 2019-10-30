@@ -8,20 +8,18 @@
 
 import { Catch } from '../../common/platform/catch.js';
 import { Store } from '../../common/platform/store.js';
-import { Str, Value } from '../../common/core/common.js';
+import { Str } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { InboxElementReplacer } from './inbox_element_replacer.js';
 import { GmailElementReplacer } from './gmail_element_replacer.js';
 import { contentScriptSetupIfVacant, WebmailVariantObject } from './setup_webmail_content_script.js';
 import { ContentScriptWindow } from '../../common/extension.js';
-import { XssSafeFactory, Env } from '../../common/browser.js';
-import { GoogleAuth } from '../../common/api/google.js';
+import { Env } from '../../common/browser.js';
+import { XssSafeFactory } from '../../common/xss_safe_factory.js';
 
 Catch.try(async () => {
 
   const gmailWebmailStartup = async () => {
-    const replacePgElsIntervalMs = 1000;
     let replacePgpElsInterval: number;
     let replacer: GmailElementReplacer;
     let hostPageInfo: WebmailVariantObject;
@@ -85,20 +83,29 @@ Catch.try(async () => {
 
     const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
       hijackGmailHotkeys();
-      const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      const canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
+      const storage = await Store.getAcct(acctEmail, ['sendAs', 'google_token_scopes', 'full_name']);
+      const scopes = await Store.getScopes(acctEmail);
+      if (!storage.sendAs) {
+        storage.sendAs = {};
+        storage.sendAs[acctEmail] = { name: storage.full_name, isPrimary: true };
+      }
+      const canReadEmails = scopes.read || scopes.modify;
       injector.btns();
-      replacer = new GmailElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
+      replacer = new GmailElementReplacer(factory, acctEmail, storage.sendAs, canReadEmails, injector, notifications, hostPageInfo.gmailVariant);
       await notifications.showInitial(acctEmail);
-      replacer.everything();
-      replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as any).$ === 'function') {
-          replacer.everything();
-        } else { // firefox will unload jquery when extension is restarted or updated
-          clearInterval(replacePgpElsInterval);
-          notifyMurdered();
-        }
-      }, replacePgElsIntervalMs);
+      const intervaliFunctions = replacer.getIntervalFunctions();
+      for (const intervalFunction of intervaliFunctions) {
+        intervalFunction.handler();
+        replacePgpElsInterval = (window as unknown as ContentScriptWindow).TrySetDestroyableInterval(() => {
+          if (typeof (window as any).$ === 'function') {
+            intervalFunction.handler();
+          } else { // firefox will unload jquery when extension is restarted or updated
+            clearInterval(replacePgpElsInterval);
+            notifyMurdered();
+          }
+        }, intervalFunction.interval);
+      }
+
     };
 
     const hijackGmailHotkeys = () => {
@@ -106,10 +113,10 @@ Catch.try(async () => {
       const unsecureReplyKeyShortcuts = [keys.a, keys.r, keys.A, keys.R, keys.f, keys.F];
       $(document).keypress(e => {
         Catch.try(() => {
-          const causesUnsecureReply = Value.is(e.which).in(unsecureReplyKeyShortcuts);
+          const causesUnsecureReply = unsecureReplyKeyShortcuts.includes(e.which);
           if (causesUnsecureReply && !$(document.activeElement!).is('input, select, textarea, div[contenteditable="true"]') && $('iframe.reply_message').length) {
             e.stopImmediatePropagation();
-            replacer.setReplyBoxEditable();
+            replacer.setReplyBoxEditable().catch(Catch.reportErr);
           }
         })();
       });
@@ -126,52 +133,8 @@ Catch.try(async () => {
     });
   };
 
-  const inboxWebmailStartup = async () => {
-    const replacePgpElementsIntervalMs = 1000;
-    let replacePgpElsInterval: number;
-    let replacer: InboxElementReplacer;
-    let fullName = '';
-
-    const start = async (acctEmail: string, injector: Injector, notifications: Notifications, factory: XssSafeFactory, notifyMurdered: () => void) => {
-      const storage = await Store.getAcct(acctEmail, ['addresses', 'google_token_scopes']);
-      const canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
-      injector.btns();
-      replacer = new InboxElementReplacer(factory, acctEmail, storage.addresses || [acctEmail], canReadEmails, injector, undefined);
-      await notifications.showInitial(acctEmail);
-      replacer.everything();
-      replacePgpElsInterval = (window as ContentScriptWindow).TrySetDestroyableInterval(() => {
-        if (typeof (window as any).$ === 'function') {
-          replacer.everything();
-        } else { // firefox will unload jquery when extension is restarted or updated
-          clearInterval(replacePgpElsInterval);
-          notifyMurdered();
-        }
-      }, replacePgpElementsIntervalMs);
-    };
-
-    await contentScriptSetupIfVacant({
-      name: 'inbox',
-      variant: 'standard',
-      getUserAccountEmail: () => {
-        const creds = $('div > div > a[href="https://myaccount.google.com/privacypolicy"]').parent().siblings('div');
-        if (creds.length === 2 && creds[0].innerText && creds[1].innerText && Str.isEmailValid(creds[1].innerText)) {
-          const acctEmail = creds[1].innerText.toLowerCase();
-          fullName = creds[0].innerText;
-          console.info(`Loading for ${acctEmail} (${fullName})`);
-          return acctEmail;
-        }
-        return undefined;
-      },
-      getUserFullName: () => fullName,
-      getReplacer: () => replacer,
-      start,
-    });
-  };
-
-  if (window.location.host !== 'inbox.google.com') {
-    await gmailWebmailStartup();
-  } else {
-    await inboxWebmailStartup(); // to be deprecated by Google in 2019
-  }
+  // when we support more webmails, there will be if/else here to figure out which one to run
+  // in which case each *WebmailStartup function should go into its own file
+  await gmailWebmailStartup();
 
 })();

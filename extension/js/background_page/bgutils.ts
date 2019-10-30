@@ -3,7 +3,7 @@
 'use strict';
 
 import { Catch, UnreportableError } from '../common/platform/catch.js';
-import { Value, Dict } from '../common/core/common.js';
+import { Dict } from '../common/core/common.js';
 import { Env, UrlParam } from '../common/browser.js';
 import { Store, StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../common/platform/store.js';
 
@@ -33,9 +33,9 @@ export class BgUtils {
 
   public static getFcSettingsTabIdIfOpen = (): Promise<number | undefined> => new Promise(resolve => {
     chrome.tabs.query({ currentWindow: true }, tabs => {
-      const extension = chrome.runtime.getURL('/');
+      const extensionUrl = chrome.runtime.getURL('/');
       for (const tab of tabs) {
-        if (Value.is(extension).in(tab.url || '')) {
+        if (tab.url && tab.url.includes(extensionUrl)) {
           resolve(tab.id);
           return;
         }
@@ -53,7 +53,7 @@ export class BgUtils {
       } else if (e instanceof StoreFailedError) {
         reason = 'db_failed';
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         reason = 'db_failed';
       }
     }

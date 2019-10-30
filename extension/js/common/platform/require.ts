@@ -1,5 +1,7 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
+/// <reference path="../core/types/openpgp.d.ts" />
+
 'use strict';
 
 /**
@@ -21,7 +23,7 @@
  *  - add < script > tags to appropriate .htm files pointing to the js using ABSOLUTE path, unless this dep can be imported as es6 module tag, in which case use RELATIVE path
  */
 
-/// <reference path="../../../types/openpgp.d.ts" />
+import { MimeParser } from '../core/types/emailjs.js';
 
 const loadedTags: string[] = [];
 
@@ -31,15 +33,18 @@ type Codec = { encode: (text: string, mode: 'fatal' | 'html') => string, decode:
 
 export const requireOpenpgp = (): typeof OpenPGP => {
   try {
+    openpgp.config.versionstring = `FlowCrypt Gmail Encryption`;
+    openpgp.config.commentstring = 'Seamlessly send and receive encrypted email';
+    // openpgp.config.require_uid_self_cert = false;
     return openpgp;
   } catch (e) {
-    // a hack for content scripts, which do not currently need openpgp, until I come up with something better
+    // a hack for content scripts, which do not currently need openpgp, until we come up with something better
     return undefined as any as typeof OpenPGP;
   }
 };
 
-export const requireMimeParser = (): any => {
-  return (window as any)['emailjs-mime-parser'];
+export const requireMimeParser = (): typeof MimeParser => {
+  return (window as any)['emailjs-mime-parser']; // tslint:disable-line:no-unsafe-any
 };
 
 export const requireMimeBuilder = (): any => {

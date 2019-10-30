@@ -5,10 +5,29 @@ import { expect } from 'chai';
 import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
 import { FlowCryptApi } from './api';
+import { EvaluateFn, ElementHandle } from 'puppeteer';
 
 export class PageRecipe {
+  public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
 
+  public static waitForModalAndRespond = async (controllable: Controllable, name: 'confirm' | 'error', { contentToCheck, clickOn }:
+    { contentToCheck?: string, clickOn?: 'confirm' | 'cancel' }) => {
+    const modalContainer = await controllable.waitAny(`.ui-modal-${name}`);
+    if (typeof contentToCheck !== 'undefined') {
+      const contentElement = await modalContainer.$('#swal2-content');
+      expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);
+    }
+    if (clickOn) {
+      const button = await modalContainer.$(`button.ui-modal-${name}-${clickOn}`);
+      await button!.click();
+    }
+  }
 }
+
+type RecipientType = "to" | "cc" | "bcc";
+type Recipients = {
+  [key in RecipientType]?: string;
+};
 
 type ManualEnterOpts = { usedPgpBefore?: boolean, submitPubkey?: boolean, fixKey?: boolean, naked?: boolean, genPp?: boolean, simulateRetryOffline?: boolean };
 
@@ -42,6 +61,7 @@ export class SetupPageRecipe extends PageRecipe {
       await settingsPage.waitAndClick('@input-step2bmanualcreate-submit-pubkey'); // uncheck
     }
     await settingsPage.waitAndClick('@input-step2bmanualcreate-create-and-save');
+    await settingsPage.waitAndRespondToModal('confirm-checkbox', 'confirm', 'Please write down your pass phrase');
     if (backup === 'none') {
       await settingsPage.waitAll('@input-backup-step3manual-no-backup', { timeout: 60 });
       await settingsPage.waitAndClick('@input-backup-step3manual-no-backup');
@@ -84,6 +104,11 @@ export class SetupPageRecipe extends PageRecipe {
         if (!/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(generatedPp)) {
           throw new Error(`Import naked key page did not generate proper pass phrase, instead got: ${generatedPp}`);
         }
+        const ppValidationExpect = 'GREAT (time to crack: centuries)';
+        const ppValidationResult = await settingsPage.read('@container-password-feedback', true);
+        if (!ppValidationResult.includes(ppValidationExpect)) {
+          throw new Error(`Incorrect Passphrase validation result, expected '${ppValidationExpect}' but got ${ppValidationResult}`);
+        }
       } else {
         await settingsPage.waitAndType('@input-step2bmanualenter-passphrase', k.passphrase);
       }
@@ -114,7 +139,7 @@ export class SetupPageRecipe extends PageRecipe {
         await settingsPage.click('@action-overlay-retry');
         // after retry, the rest should continue as usual below
       }
-      await settingsPage.waitAll('@action-step4done-account-settings', { timeout: fixKey ? 45 : 20 });
+      await settingsPage.waitAll('@action-step4done-account-settings', { timeout: fixKey ? 90 : 20 });
       await settingsPage.waitAndClick('@action-step4done-account-settings');
       await SettingsPageRecipe.ready(settingsPage);
     } finally {
@@ -243,11 +268,8 @@ export class SettingsPageRecipe extends PageRecipe {
       trigger === 'button' ? '@action-open-pubkey-page' : `@action-show-key-${linkIndex}`, ['my_key.htm', 'placement=settings']);
     await Util.sleep(1);
     const k = Config.key(expectedKeyName);
-    await myKeyFrame.waitAll(['@content-key-words', '@content-armored-key']);
+    await myKeyFrame.waitAll('@content-key-words');
     expect(await myKeyFrame.read('@content-key-words')).to.equal(k.keywords);
-    await myKeyFrame.waitAndClick('@action-toggle-key-type(show private key)');
-    expect(await myKeyFrame.read('@content-armored-key')).to.contain('-----BEGIN PGP PRIVATE KEY BLOCK-----');
-    await myKeyFrame.waitAndClick('@action-toggle-key-type(show public key)');
     await SettingsPageRecipe.closeDialog(settingsPage);
     await SettingsPageRecipe.toggleScreen(settingsPage, 'basic');
   }
@@ -281,12 +303,14 @@ export class InboxPageRecipe extends PageRecipe {
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');
     if (enterPp) {
+      await inboxPage.notPresent("@finish-session");
       await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
       await inboxPage.waitAll('@dialog-passphrase');
       const ppFrame = await inboxPage.getFrame(['passphrase.htm']);
       await ppFrame.waitAndType('@input-pass-phrase', enterPp);
       await ppFrame.waitAndClick('@action-confirm-pass-phrase-entry', { delay: 1 });
       await pgpBlockFrame.waitForSelTestState('ready');
+      await inboxPage.waitAll('@finish-session');
       await Util.sleep(1);
     }
     const content = await pgpBlockFrame.read('@pgp-block-content');
@@ -294,6 +318,17 @@ export class InboxPageRecipe extends PageRecipe {
       throw new Error(`message did not decrypt`);
     }
     await inboxPage.close();
+  }
+
+  public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
+    const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    await inboxPage.waitAll('iframe');
+    await inboxPage.waitAndClick('@finish-session');
+    const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
+    await pgpBlockFrame.waitAll('@pgp-block-content');
+    await pgpBlockFrame.waitForSelTestState('ready');
+    await pgpBlockFrame.waitAndClick('@action-show-passphrase-dialog', { delay: 1 });
+    await inboxPage.waitAll('@dialog-passphrase');
   }
 
   public static checkSentMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, subject, expectedContent, isEncrypted, isSigned, sender }: CheckSentMsg$opt) => {
@@ -319,16 +354,39 @@ export class InboxPageRecipe extends PageRecipe {
 export class ComposePageRecipe extends PageRecipe {
 
   public static openStandalone = async (
-    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, { appendUrl, hasReplyPrompt }: { appendUrl?: string, hasReplyPrompt?: boolean } = {}
+    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup | string, options:
+      { appendUrl?: string, hasReplyPrompt?: boolean, skipClickPropt?: boolean, skipValidation?: boolean, initialScript?: EvaluateFn } = {}
+  ): Promise<ControllablePage> => {
+    if (group === 'compatibility') { // More common accounts
+      group = 'flowcrypt.compatibility@gmail.com';
+    } else if (group === 'compose') {
+      group = 'test.ci.compose@org.flowcrypt.com';
+    }
+    const email = encodeURIComponent(group);
+    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${options.appendUrl || ''}`,
+      options.initialScript);
+    // await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
+    if (!options.skipValidation) {
+      if (!options.hasReplyPrompt) {
+        await composePage.waitAll(['@input-body', '@input-subject', '@action-send']);
+        await composePage.waitAny(['@action-show-container-cc-bcc-buttons', '@container-cc-bcc-buttons']);
+      } else {
+        if (options.skipClickPropt) {
+          await Util.sleep(2);
+        } else {
+          await composePage.waitAll(['@action-accept-reply-prompt']);
+        }
+      }
+      await composePage.waitForSelTestState('ready');
+    }
+    return composePage;
+  }
+
+  public static openReplyKeyMismatch = async (
+    t: AvaContext, browser: BrowserHandle, group: CommonBrowserGroup, appendUrl?: string
   ): Promise<ControllablePage> => {
     const email = (group === 'compose') ? 'test.ci.compose%40org.flowcrypt.com' : 'flowcrypt.compatibility%40gmail.com';
-    const composePage = await browser.newPage(t, `chrome/elements/compose.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
-    await composePage.page.on('console', msg => console.log(`compose-dbg:${msg.text()}`));
-    if (!hasReplyPrompt) {
-      await composePage.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
-    } else {
-      await composePage.waitAll(['@action-accept-reply-prompt']);
-    }
+    const composePage = await browser.newPage(t, `chrome/elements/reply_pubkey_mismatch.htm?account_email=${email}&parent_tab_id=0&debug=___cu_true___&frameId=none&${appendUrl || ''}`);
     await composePage.waitForSelTestState('ready');
     return composePage;
   }
@@ -337,44 +395,61 @@ export class ComposePageRecipe extends PageRecipe {
     await settingsPage.waitAndClick('@action-show-compose-page');
     await settingsPage.waitAll('@dialog');
     const composeFrame = await settingsPage.getFrame(['compose.htm']);
-    await composeFrame.waitAll(['@input-body', '@input-to', '@input-subject', '@action-send']);
+    await composeFrame.waitAll(['@input-body', '@input-subject', '@action-send', '@container-cc-bcc-buttons']);
     await composeFrame.waitForSelTestState('ready');
     return composeFrame;
   }
 
-  public static changeDefSendingAddr = async (composePage: ControllablePage, newDef: string) => {
-    await composePage.waitAndClick('@action-open-sending-address-settings');
-    await composePage.waitAll('@dialog');
-    const sendingAddrFrame = await composePage.getFrame(['sending_address.htm']);
-    await sendingAddrFrame.waitAndClick(`@action-choose-address(${newDef})`);
-    await Util.sleep(0.5); // page reload
-    await sendingAddrFrame.waitAndClick('@action-close-sending-address-settings');
-    await composePage.waitTillGone('@dialog');
+  public static fillMsg = async (
+    composePageOrFrame: Controllable,
+    recipients: Recipients,
+    subject?: string | undefined,
+    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted',
+    windowType: 'new' | 'reply' = 'new'
+  ) => {
+    await Util.sleep(0.5);
+    await ComposePageRecipe.fillRecipients(composePageOrFrame, recipients, windowType);
+    if (subject) {
+      await composePageOrFrame.click('@input-subject');
+      await Util.sleep(1);
+      await composePageOrFrame.type('@input-subject', `Automated puppeteer test: ${subject}`);
+    }
+    const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
+    await composePageOrFrame.type('@input-body', body);
+    if (sendingType !== 'encrypted') { // Encrypted is by default
+      await composePageOrFrame.waitAndClick('@action-show-options-popover');
+      await composePageOrFrame.waitAndClick(`@action-choose-${sendingType}`);
+    }
+    return { subject, body };
   }
 
-  public static fillMsg = async (composePageOrFrame: Controllable, to: string | undefined, subject: string) => {
-    await Util.sleep(0.5);
-    if (to) {
-      await composePageOrFrame.click('@input-to');
-      await Util.sleep(0.5);
-      await composePageOrFrame.type('@input-to', to);
-      await Util.sleep(0.5);
+  public static fillRecipients = async (composePageOrFrame: Controllable, recipients: Recipients, windowType: 'new' | 'reply') => {
+    if (windowType === 'reply') { // new messages should already have cc/bcc buttons visible, because they should have recipients in focus
+      await composePageOrFrame.waitAndClick('@action-show-container-cc-bcc-buttons');
     }
-    await composePageOrFrame.click('@input-subject');
-    await Util.sleep(1);
-    subject = `Automated puppeteer test: ${subject}`;
-    const body = `This is an automated puppeteer test: ${subject}`;
-    await composePageOrFrame.type('@input-subject', subject);
-    await composePageOrFrame.type('@input-body', body);
-    return { subject, body };
+    await composePageOrFrame.waitAll('@container-cc-bcc-buttons');
+    for (const key of Object.keys(recipients)) {
+      const sendingType = key as RecipientType;
+      const email = recipients[sendingType] as string | undefined;
+      if (email) {
+        if (sendingType !== 'to') { // input-to is always visible
+          await composePageOrFrame.waitAndClick(`@action-show-${sendingType}`);
+        }
+        await composePageOrFrame.waitAndType(`@input-${sendingType}`, email);
+        await Util.sleep(1);
+      }
+    }
+    if (composePageOrFrame instanceof ControllablePage) {
+      await composePageOrFrame.page.evaluate(() => { $('#input_text').focus(); });
+      await Util.sleep(1);
+    }
   }
 
   public static sendAndClose = async (composePage: ControllablePage, password?: string | undefined, timeout = 60) => {
     if (password) {
       await composePage.waitAndType('@input-password', 'test-pass');
-      await composePage.waitAndClick('@action-send', { delay: 0.5 }); // in real usage, also have to click two times when using password - why?
     }
-    await composePage.waitAndClick('@action-send', { delay: 0.5 });
+    await composePage.waitAndClick('@action-send', { delay: 1 });
     await Promise.race([
       composePage.waitForSelTestState('closed', timeout), // in case this was a new message compose
       composePage.waitAny('@container-reply-msg-successful', { timeout }) // in case of reply
@@ -390,12 +465,12 @@ export class OauthPageRecipe extends PageRecipe {
   private static longTimeout = 40;
 
   public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
-    const auth = Config.secrets.auth.google.filter(a => a.email === acctEmail)[0];
+    const isMock = oauthPage.target.url().includes('localhost');
+    const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
     const selectors = {
       backup_email_verification_choice: "//div[@class='vdE7Oc' and text() = 'Confirm your recovery email']",
       approve_button: '#submit_approve_access',
-      // pwd_input: '.zHQkBf',
-      pwd_input: 'input[type="password"]',
+      pwd_input: 'input[type="password"]', // pwd_input: '.zHQkBf',
       pwd_confirm_btn: '.CwaK9',
     };
     const enterPwdAndConfirm = async () => {
@@ -426,12 +501,12 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
         await oauthPage.waitAndClick('.bLzI3e', { delay: 1 }); // choose other account, also try .TnvOCe .k6Zj8d .XraQ3b
-        await Util.sleep(2);
+        await Util.sleep(isMock ? 0 : 2);
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       }
-      await Util.sleep(5);
+      await Util.sleep(isMock ? 0 : 5);
       const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice, selectors.pwd_input]);
-      await Util.sleep(1);
+      await Util.sleep(isMock ? 0 : 1);
       if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email
         await element.click();
         await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
@@ -456,7 +531,7 @@ export class OauthPageRecipe extends PageRecipe {
       if (eStr.indexOf('Execution context was destroyed') === -1 && eStr.indexOf('Cannot find context with specified id') === -1) {
         throw e; // not a known retriable error
       }
-      t.log(`Attempting to retry google auth:${action} on the same window for ${auth.email} because: ${eStr}`);
+      // t.log(`Attempting to retry google auth:${action} on the same window for ${email} because: ${eStr}`);
       return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // retry, it should pick up where it left off
     }
   }

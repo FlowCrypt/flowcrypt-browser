@@ -6,8 +6,7 @@ import { VERSION } from '../common/core/const.js';
 import { Catch } from '../common/platform/catch.js';
 import { Store, GlobalStore } from '../common/platform/store.js';
 import { BrowserMsg, Bm } from '../common/extension.js';
-import { BgAttests } from './attests.js';
-import { injectFcIntoWebmailIfNeeded } from './inject.js';
+import { injectFcIntoWebmail } from './inject.js';
 import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
 import { GoogleAuth } from '../common/api/google.js';
 import { BgUtils } from './bgutils.js';
@@ -67,11 +66,12 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgAddListener('pgpHashChallengeAnswer', async (r: Bm.PgpHashChallengeAnswer) => ({ hashed: await Pgp.hash.challengeAnswer(r.answer) }));
   BrowserMsg.bgAddListener('pgpMsgDecrypt', PgpMsg.decrypt);
   BrowserMsg.bgAddListener('pgpMsgVerifyDetached', PgpMsg.verifyDetached);
+  BrowserMsg.bgAddListener('pgpKeyDetails', BgHandlers.pgpKeyDetails);
 
+  BrowserMsg.bgAddListener('ajax', BgHandlers.ajaxHandler);
+  BrowserMsg.bgAddListener('ajaxGmailAttGetChunk', BgHandlers.ajaxGmailAttGetChunkHandler);
   BrowserMsg.bgAddListener('settings', BgHandlers.openSettingsPageHandler);
   BrowserMsg.bgAddListener('inbox', BgHandlers.openInboxPageHandler);
-  BrowserMsg.bgAddListener('attest_requested', BgAttests.attestRequestedHandler);
-  BrowserMsg.bgAddListener('attest_packet_received', BgAttests.attestPacketReceivedHandler);
   BrowserMsg.bgAddListener('update_uninstall_url', BgHandlers.updateUninstallUrl);
   BrowserMsg.bgAddListener('get_active_tab_info', BgHandlers.getActiveTabInfo);
   BrowserMsg.bgAddListener('reconnect_acct_auth_popup', (r: Bm.ReconnectAcctAuthPopup) => GoogleAuth.newAuthPopup(r));
@@ -79,12 +79,11 @@ chrome.runtime.onInstalled.addListener(event => {
   BrowserMsg.bgListen();
 
   await BgHandlers.updateUninstallUrl({}, {});
-  injectFcIntoWebmailIfNeeded();
+  injectFcIntoWebmail();
   scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
-  BgAttests.watchForAttestEmailIfAppropriate().catch(Catch.handleErr);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
     await Store.removeGlobal(['errors']);
   }
 
-})().catch(Catch.handleErr);
+})().catch(Catch.reportErr);

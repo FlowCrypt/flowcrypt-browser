@@ -132,7 +132,15 @@ abstract class ControllableBase {
       throw Error(`Element not found: ${selector}`);
     }
     this.log(`click:4:${selector}`);
-    await e.click();
+    try {
+      await e.click();
+    } catch (e) {
+      if (e instanceof Error) {
+        e.stack += ` SELECTOR: ${selector}`;
+        await Util.sleep(60);
+      }
+      throw e;
+    }
     this.log(`click:5:${selector}`);
   }
 
@@ -180,8 +188,13 @@ abstract class ControllableBase {
     return await this.target.evaluate((s) => document.querySelector(s).checked, this.selector(selector));
   }
 
-  public read = async (selector: string): Promise<string> => {
-    return await this.target.evaluate((s) => document.querySelector(s).innerText, this.selector(selector));
+  public read = async (selector: string, onlyVisible = false): Promise<string> => {
+    selector = this.selector(selector);
+    if (onlyVisible) {
+      return await this.target.evaluate((s) => [].slice.call(document.querySelectorAll(s)).find((el: HTMLElement) => el.offsetParent !== null).innerText, selector);
+    } else {
+      return await this.target.evaluate((s) => document.querySelector(s).innerText, selector);
+    }
   }
 
   public selectOption = async (selector: string, choice: string) => {
@@ -194,10 +207,13 @@ abstract class ControllableBase {
     await this.type(selector, text);
   }
 
-  public waitAndRespondToModal = async (type: 'info' | 'warning' | 'error' | 'confirm', clickBtn: 'confirm' | 'cancel', message: string) => {
+  public waitAndRespondToModal = async (type: 'info' | 'warning' | 'error' | 'confirm' | 'confirm-checkbox', clickBtn: 'confirm' | 'cancel', message: string) => {
     await this.waitAll([`@ui-modal-${type}`, `@ui-modal-${type}:message`]);
     await Util.sleep(0.5);
     expect(await this.read(`@ui-modal-${type}:message`)).to.contain(message, `ui-modal-${type}:message does not contain expected text`);
+    if (type === 'confirm-checkbox') {
+      await this.waitAndClick(`@ui-modal-${type}-input`)
+    }
     await this.waitAndClick(`@ui-modal-${type}-${clickBtn}`);
   }
 

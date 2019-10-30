@@ -6,7 +6,7 @@ import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Store, KeyBackupMethod, EmailProvider } from '../../../js/common/platform/store.js';
 import { Value } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -16,22 +16,27 @@ import { Pgp, KeyInfo } from '../../../js/common/core/pgp.js';
 import { Google, GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { GMAIL_RECOVERY_EMAIL_SUBJECTS } from '../../../js/common/core/const.js';
+import { Assert } from '../../../js/common/assert.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { KeyImportUi } from '../../../js/common/ui/key_import_ui.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const action = Env.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
+  const keyImportUi = new KeyImportUi({});
   let parentTabId: string | undefined;
   if (action !== 'setup') {
-    parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+    parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   }
 
   let emailProvider: EmailProvider;
 
-  await Ui.passphraseToggle(['password', 'password2']);
+  await initPassphraseToggle(['password', 'password2']);
 
   const storage = await Store.getAcct(acctEmail, ['setup_simple', 'email_provider']);
   emailProvider = storage.email_provider || 'gmail';
@@ -50,14 +55,15 @@ Catch.try(async () => {
     $('#' + name).css('display', 'block');
   };
 
-  $('#password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#step_1_password', '#password', '.action_password')));
+  keyImportUi.renderPassPhraseStrengthValidationInput($('#password'), $('.action_password'));
 
   const showStatus = async () => {
     $('.hide_if_backup_done').css('display', 'none');
     $('h1').text('Key Backups');
     displayBlock('loading');
-    const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'google_token_scopes', 'email_provider']);
-    if (emailProvider === 'gmail' && GoogleAuth.hasReadScope(storage.google_token_scopes || [])) {
+    const storage = await Store.getAcct(acctEmail, ['setup_simple', 'key_backup_method', 'email_provider']);
+    const scopes = await Store.getScopes(acctEmail);
+    if (emailProvider === 'gmail' && (scopes.read || scopes.modify)) {
       let keys;
       try {
         keys = await Google.gmail.fetchKeyBackups(acctEmail);
@@ -71,7 +77,7 @@ Catch.try(async () => {
           Xss.sanitizeRender('#content', `Could not check for backups: account needs to be re-connected. ${Ui.retryLink()}`);
         } else {
           if (Api.err.isSignificant(e)) {
-            Catch.handleErr(e);
+            Catch.reportErr(e);
           }
           Xss.sanitizeRender('#content', `Could not check for backups: unknown error (${String(e)}). ${Ui.retryLink()}`);
         }
@@ -154,14 +160,18 @@ Catch.try(async () => {
   }));
 
   $('.action_reset_password').click(Ui.event.handle(() => {
-    $('#password').val('');
+    $('#password').val('').keyup();
     $('#password2').val('');
     displayBlock('step_1_password');
-    Settings.renderPasswordStrength('#step_1_password', '#password', '.action_password');
     $('#password').focus();
   }));
+  $("#password2").keydown(event => {
+    if (event.which === 13) {
+      $('.action_backup').click();
+    }
+  });
 
-  $('.action_backup').click(Ui.event.prevent('double', async (target) => {
+  $('.action_backup').click(Ui.event.prevent('double', async (target: HTMLElement) => {
     const newPassphrase = String($('#password').val());
     if (newPassphrase !== $('#password2').val()) {
       await Ui.modal.warning('The two pass phrases do not match, please try again.');
@@ -171,9 +181,9 @@ Catch.try(async () => {
       const btnText = $(target).text();
       Xss.sanitizeRender(target, Ui.spinner('white'));
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-      await Settings.openpgpKeyEncrypt(prv, newPassphrase);
+      await Pgp.key.encrypt(prv, newPassphrase);
       await Store.passphraseSave('local', acctEmail, primaryKi.longid, newPassphrase);
       await Store.keysAdd(acctEmail, prv.armor());
       try {
@@ -185,7 +195,7 @@ Catch.try(async () => {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
           await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           await Ui.modal.error(`Error happened, please try again (${String(e)})`);
         }
         $(target).text(btnText);
@@ -197,28 +207,20 @@ Catch.try(async () => {
 
   const isMasterPrivateKeyEncrypted = async (ki: KeyInfo) => {
     const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
-    if (prv.primaryKey.isDecrypted()) {
+    if (await Pgp.key.decrypt(prv, '', undefined, 'OK-IF-ALREADY-DECRYPTED') === true) {
       return false;
     }
-    for (const packet of prv.getKeys()) {
-      if (packet.isDecrypted() === true) {
-        return false;
-      }
-    }
-    if (await Pgp.key.decrypt(prv, ['']) === true) {
-      return false;
-    }
-    return true;
+    return prv.isFullyEncrypted();
   };
 
   const asBackupFile = (acctEmail: string, armoredKey: string) => {
-    return new Att({ name: `cryptup-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
+    return new Att({ name: `flowcrypt-backup-${acctEmail.replace(/[^A-Za-z0-9]+/g, '')}.key`, type: 'text/plain', data: Buf.fromUtfStr(armoredKey) });
   };
 
   const doBackupOnEmailProvider = async (acctEmail: string, armoredKey: string) => {
     const emailMsg = String(await $.get({ url: '/chrome/emails/email_intro.template.htm', dataType: 'html' }));
     const emailAtts = [asBackupFile(acctEmail, armoredKey)];
-    const msg = await Api.common.msg(acctEmail, acctEmail, [acctEmail], GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
+    const msg = await Google.createMsgObj(acctEmail, acctEmail, { to: [acctEmail] }, GMAIL_RECOVERY_EMAIL_SUBJECTS[0], { 'text/html': emailMsg }, emailAtts);
     if (emailProvider === 'gmail') {
       return await Google.gmail.msgSend(acctEmail, msg);
     } else {
@@ -228,8 +230,18 @@ Catch.try(async () => {
 
   const backupOnEmailProviderAndUpdateUi = async (primaryKi: KeyInfo) => {
     const pp = await Store.passphraseGet(acctEmail, primaryKi.longid);
-    if (!pp || !await isPassPhraseStrongEnough(primaryKi, pp)) {
-      await Ui.modal.warning('Your key is not protected with a strong pass phrase, skipping');
+    if (!parentTabId) {
+      await Ui.modal.error(`Missing parentTabId. Please restart your browser and try again.`);
+      return;
+    }
+    if (!pp) {
+      BrowserMsg.send.passphraseDialog(parentTabId, { type: 'backup', longids: [primaryKi.longid] });
+      await Store.waitUntilPassphraseChanged(acctEmail, [primaryKi.longid]);
+      await backupOnEmailProviderAndUpdateUi(primaryKi);
+      return;
+    }
+    if (!isPassPhraseStrongEnough(primaryKi, pp) && await Ui.modal.confirm('Your key is not protected with strong pass phrase, would you like to change pass phrase now?')) {
+      window.location.href = Env.urlCreate('/chrome/settings/modules/change_passphrase.htm', { acctEmail, parentTabId });
       return;
     }
     const btn = $('.action_manual_backup');
@@ -240,11 +252,11 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         return await Ui.modal.warning('Need internet connection to finish. Please click the button again to retry.');
-      } else if (parentTabId && Api.err.isAuthPopupNeeded(e)) {
+      } else if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         return await Ui.modal.warning('Account needs to be re-connected first. Please try later.');
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         return await Ui.modal.error(`Error happened: ${String(e)}`);
       }
     } finally {
@@ -283,7 +295,7 @@ Catch.try(async () => {
   $('.action_manual_backup').click(Ui.event.prevent('double', async (target) => {
     const selected = $('input[type=radio][name=input_backup_choice]:checked').val();
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     if (!await isMasterPrivateKeyEncrypted(primaryKi)) {
       await Ui.modal.error('Sorry, cannot back up private key because it\'s not protected with a pass phrase.');
       return;
@@ -301,7 +313,7 @@ Catch.try(async () => {
 
   const isPassPhraseStrongEnough = async (ki: KeyInfo, passphrase: string) => {
     const prv = await Pgp.key.read(ki.private);
-    if (prv.isDecrypted()) {
+    if (!prv.isFullyEncrypted()) {
       return false;
     }
     if (!passphrase) {
@@ -309,7 +321,7 @@ Catch.try(async () => {
       if (!pp) {
         return false;
       }
-      if (await Pgp.key.decrypt(prv, [pp]) !== true) {
+      if (await Pgp.key.decrypt(prv, pp) !== true) {
         await Ui.modal.warning('Pass phrase did not match, please try again.');
         return false;
       }
@@ -324,13 +336,25 @@ Catch.try(async () => {
 
   const setupCreateSimpleAutomaticInboxBackup = async () => {
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if ((await Pgp.key.read(primaryKi.private)).isDecrypted()) {
+    if (!(await Pgp.key.read(primaryKi.private)).isFullyEncrypted()) {
       await Ui.modal.warning('Key not protected with a pass phrase, skipping');
       throw new UnreportableError('Key not protected with a pass phrase, skipping');
     }
-    Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    await doBackupOnEmailProvider(acctEmail, primaryKi.private);
-    await writeBackupDoneAndRender(false, 'inbox');
+    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+    try {
+      await doBackupOnEmailProvider(acctEmail, primaryKi.private);
+      await writeBackupDoneAndRender(false, 'inbox');
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        await Ui.modal.info("Authorization Error. FlowCrypt needs to reconnect your Gmail account");
+        const connectResult = await GoogleAuth.newAuthPopup({ acctEmail });
+        if (!connectResult.error) {
+          await setupCreateSimpleAutomaticInboxBackup();
+        } else {
+          throw e;
+        }
+      }
+    }
   };
 
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
@@ -379,7 +403,7 @@ Catch.try(async () => {
     if (storage.setup_simple) {
       displayBlock('loading');
       const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
       try {
         await doBackupOnEmailProvider(acctEmail, primaryKi.private);
         $('#content').text('Pass phrase changed. You will find a new backup in your inbox.');
@@ -393,7 +417,7 @@ Catch.try(async () => {
           });
         } else {
           Xss.sanitizeRender('#content', `Unknown error: ${String(e)}<br><a href="#" class="reload">try again</a>`).find('.reload').click(() => window.location.reload());
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
       }
     } else { // should never happen on this action. Just in case.

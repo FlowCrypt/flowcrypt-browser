@@ -5,7 +5,7 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Ui } from '../../js/common/browser.js';
-import { BrowserMsg } from '../../js/common/extension.js';
+import { BrowserMsg, BgNotReadyError } from '../../js/common/extension.js';
 
 Catch.try(async () => {
 
@@ -38,34 +38,43 @@ Catch.try(async () => {
   const setupAcctPromptPopup = (activeAcctEmail: string) => {
     $('#set_up_account').css('display', 'block');
     $('.email').text(activeAcctEmail);
-    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.handleErr)));
+    $('.action_set_up_account').click(Ui.event.prevent('double', () => redirectToInitSetup(activeAcctEmail).catch(Catch.reportErr)));
   };
 
-  const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
-  if (activeTab && activeTab.acctEmail) {
-    const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
-    if (setup_done) {
-      chooseEmailOrSettingsPopup(activeTab.acctEmail);
-    } else {
-      setupAcctPromptPopup(activeTab.acctEmail);
-    }
-  } else if (activeTab && activeTab.provider && activeTab.sameWorld === true && activeTab.acctEmail) {
-    setupAcctPromptPopup(activeTab.acctEmail);
-  } else {
-    const acctEmails = await Store.acctEmailsGet();
-    if (acctEmails && acctEmails.length) {
-      const acctStorages = await Store.getAccounts(acctEmails, ['setup_done']);
-      let functioningAccts = 0;
-      for (const email of Object.keys(acctStorages)) {
-        functioningAccts += Number(acctStorages[email].setup_done === true);
-      }
-      if (!functioningAccts) {
-        await redirectToInitSetup();
+  try {
+    const activeTab = await BrowserMsg.send.bg.await.getActiveTabInfo();
+    if (activeTab && activeTab.acctEmail) {
+      const { setup_done } = await Store.getAcct(activeTab.acctEmail, ['setup_done']);
+      if (setup_done) {
+        chooseEmailOrSettingsPopup(activeTab.acctEmail);
       } else {
-        chooseEmailOrSettingsPopup();
+        setupAcctPromptPopup(activeTab.acctEmail);
       }
+    } else if (activeTab && activeTab.provider && activeTab.sameWorld === true && activeTab.acctEmail) {
+      setupAcctPromptPopup(activeTab.acctEmail);
     } else {
-      await redirectToInitSetup();
+      const acctEmails = await Store.acctEmailsGet();
+      if (acctEmails && acctEmails.length) {
+        const acctStorages = await Store.getAccounts(acctEmails, ['setup_done']);
+        let functioningAccts = 0;
+        for (const email of Object.keys(acctStorages)) {
+          functioningAccts += Number(acctStorages[email].setup_done === true);
+        }
+        if (!functioningAccts) {
+          await redirectToInitSetup();
+        } else {
+          chooseEmailOrSettingsPopup();
+        }
+      } else {
+        await redirectToInitSetup();
+      }
+    }
+  } catch (e) {
+    if (e instanceof BgNotReadyError) {
+      $('body').text('Extension not ready.\nRestarting the browser should help.\nWrite human@flowcrypt.com if you need help.').css({ 'white-space': 'pre', size: 16, padding: 6 });
+      return;
+    } else {
+      throw e;
     }
   }
 

@@ -34,8 +34,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://mail.google.com/*",
-        "*://inbox.google.com/*"
+        "https://mail.google.com/*"
       ],
       "css": [
         "/css/webmail.css"
@@ -49,8 +48,7 @@
     },
     {
       "matches": [
-        "https://flowcrypt.com/stripe*",
-        "https://cryptup.org/stripe*"
+        "https://flowcrypt.com/stripe*"
       ],
       "js": [
         "/lib/purify.min.js",
@@ -70,6 +68,7 @@
     "/img/svgs/reply-icon.svg",
     "/img/svgs/spinner-white-small.svg",
     "/img/svgs/spinner-green-small.svg",
+    "/img/svgs/unlock.svg",
     "/img/logo/flowcrypt-logo-19-19.png",
     "/chrome/elements/compose.htm",
     "/chrome/elements/reply_pubkey_mismatch.htm",
@@ -79,10 +78,9 @@
     "/chrome/elements/passphrase.htm",
     "/chrome/elements/add_pubkey.htm",
     "/chrome/elements/pgp_pubkey.htm",
+    "/chrome/elements/backup.htm",
     "/chrome/elements/subscribe.htm",
     "/chrome/elements/verification.htm",
-    "/chrome/elements/attest.htm",
-    "/chrome/elements/sending_address.htm",
     "/chrome/elements/shared/footer.htm"
   ],
   "minimum_chrome_version": "61"

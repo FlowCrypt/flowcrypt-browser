@@ -2,30 +2,35 @@
 
 'use strict';
 
-import { Value, Str, Dict } from '../../common/core/common.js';
+import { Str, Dict } from '../../common/core/common.js';
 import { Injector } from '../../common/inject.js';
 import { Notifications } from '../../common/notifications.js';
-import { Api, R, AjaxError } from '../../common/api/api.js';
+import { Api, AjaxError } from '../../common/api/api.js';
 import { Pgp } from '../../common/core/pgp.js';
 import { BrowserMsg } from '../../common/extension.js';
-import { Xss, Ui, XssSafeFactory, WebmailVariantString, FactoryReplyParams, Browser } from '../../common/browser.js';
+import { Ui, Browser } from '../../common/browser.js';
+import { XssSafeFactory, WebmailVariantString, FactoryReplyParams } from '../../common/xss_safe_factory.js';
 import { Att } from '../../common/core/att.js';
-import { WebmailElementReplacer } from './setup_webmail_content_script.js';
+import { WebmailElementReplacer, IntervalFunction } from './setup_webmail_content_script.js';
 import { Catch } from '../../common/platform/catch.js';
-import { Google } from '../../common/api/google.js';
+import { Google, GmailRes } from '../../common/api/google.js';
+import { Xss } from '../../common/platform/xss.js';
+import { Keyserver } from '../../common/api/keyserver.js';
+import { WebmailCommon } from "../../common/webmail.js";
+import { Store, SendAsAlias } from '../../common/platform/store.js';
 
 type JQueryEl = JQuery<HTMLElement>;
 
 export class GmailElementReplacer implements WebmailElementReplacer {
-
   private recipientHasPgpCache: Dict<boolean> = {};
-  private addresses: string[];
+  private sendAs: Dict<SendAsAlias>;
   private factory: XssSafeFactory;
   private acctEmail: string;
   private canReadEmails: boolean;
   private injector: Injector;
   private notifications: Notifications;
   private gmailVariant: WebmailVariantString;
+  private webmailCommon: WebmailCommon;
   private cssHidden = `opacity: 0 !important; height: 1px !important; width: 1px !important; max-height: 1px !important;
   max-width: 1px !important; position: absolute !important; z-index: -1000 !important`;
   private currentlyEvaluatingStandardComposeBoxRecipients = false;
@@ -41,39 +46,51 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     attsContainerInner: 'div.aQH',
     translatePrompt: '.adI',
     standardComposeWin: '.aaZ:visible',
+    settingsBtnContainer: 'div.aeH > div > .fY',
+    standardComposeRecipient: 'div.az9 span[email][data-hovercard-id]',
   };
 
-  constructor(factory: XssSafeFactory, acctEmail: string, addresses: string[], canReadEmails: boolean, injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
+  constructor(factory: XssSafeFactory, acctEmail: string, sendAs: Dict<SendAsAlias>, canReadEmails: boolean,
+    injector: Injector, notifications: Notifications, gmailVariant: WebmailVariantString) {
     this.factory = factory;
     this.acctEmail = acctEmail;
-    this.addresses = addresses;
+    this.sendAs = sendAs;
     this.canReadEmails = canReadEmails;
     this.injector = injector;
     this.gmailVariant = gmailVariant;
     this.notifications = notifications;
+    this.webmailCommon = new WebmailCommon(acctEmail, injector);
   }
 
-  everything = () => {
+  getIntervalFunctions = (): Array<IntervalFunction> => {
+    return [
+      { interval: 1000, handler: this.everything },
+      { interval: 30000, handler: this.webmailCommon.addOrRemoveEndSessionBtnIfNeeded }
+    ];
+  }
+
+  private everything = () => {
     this.replaceArmoredBlocks();
-    this.replaceAtts().catch(Catch.handleErr);
+    this.replaceAtts().catch(Catch.reportErr);
     this.replaceFcTags();
     this.replaceConvoBtns();
-    this.replaceStandardReplyBox();
-    this.evaluateStandardComposeReceivers().catch(Catch.handleErr);
+    this.replaceStandardReplyBox().catch(Catch.reportErr);
+    this.evaluateStandardComposeRecipients().catch(Catch.reportErr);
+    this.addSettingsBtn();
   }
 
-  setReplyBoxEditable = () => {
-    const replyContainerIframe = $('.reply_message_iframe_container > iframe').first();
+  setReplyBoxEditable = async () => {
+    const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
       $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
-      this.replaceStandardReplyBox(true);
+      await this.replaceStandardReplyBox(true);
     }
     this.scrollToBottomOfConvo();
   }
 
   reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    const params: FactoryReplyParams = { subject, replyTo, addresses: this.addresses, myEmail, threadId, threadMsgId: threadId };
+    const params: FactoryReplyParams = { subject, sendAs: this.sendAs, threadId, threadMsgId: threadId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
@@ -91,8 +108,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     for (const emailContainer of emailsEontainingPgpBlock) {
       $(emailContainer).addClass('evaluated');
       const senderEmail = this.getSenderEmail(emailContainer);
-      const isOutgoing = Value.is(senderEmail).in(this.addresses);
-      const replacementXssSafe = Ui.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
+      const isOutgoing = !!this.sendAs[senderEmail];
+      const replacementXssSafe = XssSafeFactory.replaceRenderableMsgBlocks(this.factory, emailContainer.innerText, this.determineMsgId(emailContainer), senderEmail, isOutgoing);
       if (typeof replacementXssSafe !== 'undefined') {
         $(this.sel.translatePrompt).hide();
         this.updateMsgBodyEl_DANGEROUSLY(emailContainer, 'set', replacementXssSafe); // xss-safe-factory: replace_blocks is XSS safe
@@ -107,20 +124,31 @@ export class GmailElementReplacer implements WebmailElementReplacer {
 
   private replaceConvoBtns = (force: boolean = false) => {
     const convoUpperIcons = $('div.ade:visible');
-    const useEncryptionInThisConvo = $('iframe.pgp_block').filter(':visible').length || force;
+    const isEncrypted = $('iframe.pgp_block').filter(':visible').length;
+    const useEncryptionInThisConvo = isEncrypted || force;
     // reply buttons
-    if (useEncryptionInThisConvo) {
-      const visibleReplyBtns = $('td.acX:visible');
-      if (visibleReplyBtns.not('.replaced').length) { // last reply button in convo gets replaced
-        const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced');
-        const hasVisibleReplacements = visibleReplyBtns.filter('.replaced').length > 0;
-        const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
-        if (!hasVisibleReplacements && convoReplyBtnsToReplaceArr.length) {
-          // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
-          const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
-          $(lastReplyBtn).addClass('replaced').html(this.factory.btnReply()); // xss-safe-factory
-          $(lastReplyBtn).click(Ui.event.prevent('double', Catch.try(this.setReplyBoxEditable)));
+    const visibleReplyBtns = $('td.acX:visible');
+    if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
+      const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced, .inserted');
+      const hasVisibleReplacements = visibleReplyBtns.filter('.replaced, .inserted').length > 0;
+      const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
+      if (!hasVisibleReplacements && convoReplyBtnsToReplaceArr.length) {
+        // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
+        const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
+        $(lastReplyBtn).addClass('inserted');
+        const element = $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last());  // xss-safe-factory
+        if (isEncrypted) {
+          element.click(Ui.event.prevent('double', () => this.setReplyBoxEditable().catch(Catch.reportErr)));
+        } else {
+          element.click(Ui.event.prevent('double', Catch.try(() => this.replaceStandardReplyBox(true, true)))); // xss-safe-factory
         }
+      }
+      if (isEncrypted) {
+        // hide original gmail reply buttons, except for the last one, but ONLY IF this is an encrypted conversation
+        // the reason is that currently encrypted replies only support replying to last message. If some other reply button
+        // was clicked, and FlowCrypt replaced the reply box with an encrypted one mid-message, it would create a false imagination
+        // for the user that they are replying mid-convo, when in fact it would end up replying to the last message anyway
+        // todo - revisit this (and potentially remove) when we support encrypted replies mid-convo
         for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
           $(replyBtn).addClass('replaced').text(''); // hide all except last
         }
@@ -134,14 +162,6 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             convoUpperIcons.find('.gZ').click();
           });
         }
-      } else {
-        if (!convoUpperIcons.is('.appended')) {
-          this.addfcConvoIcon(convoUpperIcons, this.factory.btnWithFc(), '.use_secure_reply', () => {
-            this.replaceConvoBtns(true);
-            this.replaceStandardReplyBox(true, true);
-            this.scrollToBottomOfConvo();
-          });
-        }
       }
     }
   }
@@ -152,7 +172,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const contenteditable = $(contenteditableEl);
       const fcLinkMatch = contenteditable.html().substr(0, 1000).match(/\[cryptup:link:([a-z_]+):([0-9a-fr\-]+)]/);
       if (fcLinkMatch) {
-        let button;
+        let button: string | undefined;
         const [, name, buttonHrefId] = fcLinkMatch;
         if (name === 'draft_compose') {
           button = `<a href="#" class="open_draft_${Xss.escape(buttonHrefId)}">Open draft</a>`;
@@ -173,7 +193,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   private replaceAtts = async () => {
     for (const attsContainerEl of $(this.sel.attsContainerInner)) {
       const attsContainer = $(attsContainerEl);
-      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.pgpNamePatterns()).addClass('evaluated');
+      const newPgpAtts = this.filterAtts(attsContainer.children().not('.evaluated'), Att.attachmentsPattern).addClass('evaluated');
       const newPgpAttsNames = Browser.arrFromDomNodeList(newPgpAtts.find('.aV3')).map(x => $.trim($(x).text()));
       if (newPgpAtts.length) {
         const msgId = this.determineMsgId(attsContainer);
@@ -191,7 +211,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
                 $(newPgpAtts).find('.attachment_loader').text('Network error');
               } else {
                 if (!Api.err.isServerErr(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isNotFound(e)) {
-                  Catch.handleErr(e);
+                  Catch.reportErr(e);
                 }
                 $(newPgpAtts).find('.attachment_loader').text('Failed to load');
               }
@@ -210,32 +230,32 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private processAtts = async (msgId: string, attMetas: Att[], attsContainerInner: JQueryEl | HTMLElement, skipGoogleDrive: boolean, newPgpAttsNames: string[] = []) => {
-    let msgEl = this.getMsgBodyEl(msgId);
+    let msgEl = this.getMsgBodyEl(msgId); // not a constant because sometimes elements get replaced, then returned by the function that replaced them
     const senderEmail = this.getSenderEmail(msgEl);
-    const isOutgoing = Value.is(senderEmail).in(this.addresses);
+    const isOutgoing = !!this.sendAs[senderEmail];
     attsContainerInner = $(attsContainerInner);
     attsContainerInner.parent().find('span.aVW').hide(); // original gmail header showing amount of attachments
     let nRenderedAtts = attMetas.length;
     for (const a of attMetas) {
       const treatAs = a.treatAs();
       // todo - [same name + not processed].first() ... What if attachment metas are out of order compared to how gmail shows it? And have the same name?
-      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), [a.name]).first();
+      const attSel = this.filterAtts(attsContainerInner.children().not('.attachment_processed'), new RegExp(`^${Str.regexEscape(a.name || 'noname')}$`)).first();
       try {
-        if (treatAs !== 'standard') {
+        if (treatAs !== 'plainFile') {
           this.hideAtt(attSel, attsContainerInner);
           nRenderedAtts--;
-          if (treatAs === 'encrypted') { // actual encrypted attachment - show it
+          if (treatAs === 'encryptedFile') { // actual encrypted attachment - show it
             attsContainerInner.prepend(this.factory.embeddedAtta(a, true)); // xss-safe-factory
             nRenderedAtts++;
-          } else if (treatAs === 'message') {
-            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !Value.is(a.name).in(['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp']); // ambiguous .asc name
+          } else if (treatAs === 'encryptedMsg') {
+            const isAmbiguousAscFile = a.name.substr(-4) === '.asc' && !['msg.asc', 'message.asc', 'encrypted.asc', 'encrypted.eml.pgp'].includes(a.name); // ambiguous .asc name
             const isAmbiguousNonameFile = !a.name || a.name === 'noname'; // may not even be OpenPGP related
             if (isAmbiguousAscFile || isAmbiguousNonameFile) { // Inspect a chunk
               const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
               const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
               if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
                 nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
-              } else if (openpgpType && Value.is(openpgpType.type).in(['message', 'signedMsg'])) {
+              } else if (openpgpType && ['encryptedMsg', 'signedMsg'].includes(openpgpType.type)) {
                 msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedMsg('', msgId, false, senderEmail, false)); // xss-safe-factory
               } else {
                 attSel.show().children('.attachment_loader').text('Unknown OpenPGP format');
@@ -246,13 +266,14 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             }
           } else if (treatAs === 'publicKey') { // todo - pubkey should be fetched in pgp_pubkey.js
             nRenderedAtts = await this.renderPublicKeyFromFile(a, attsContainerInner, msgEl, isOutgoing, attSel, nRenderedAtts);
+          } else if (treatAs === 'privateKey') {
+            nRenderedAtts = await this.renderBackupFromFile(a, attsContainerInner, msgEl, attSel, nRenderedAtts);
           } else if (treatAs === 'signature') {
-            const signedContent = msgEl[0] ? Str.normalizeSpaces(msgEl[0].innerText).trim() : '';
-            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg(signedContent, msgId, false, senderEmail, false, true);
-            const replace = !msgEl.is('.evaluated') && !Value.is(Pgp.armor.headers('null').begin).in(msgEl.text());
+            const embeddedSignedMsgXssSafe = this.factory.embeddedMsg('', msgId, false, senderEmail, false, true);
+            const replace = !msgEl.is('.evaluated') && !msgEl.text().includes(Pgp.armor.headers('null').begin);
             msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, replace ? 'set' : 'append', embeddedSignedMsgXssSafe); // xss-safe-factory
           }
-        } else if (treatAs === 'standard' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
+        } else if (treatAs === 'plainFile' && a.name.substr(-4) === '.asc') { // normal looking attachment ending with .asc
           const data = await Google.gmail.attGetChunk(this.acctEmail, msgId, a.id!); // .id is present when fetched from api
           const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: data.toRawBytesStr() });
           if (openpgpType && openpgpType.type === 'publicKey' && openpgpType.armored) { // if it looks like OpenPGP public key
@@ -270,7 +291,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
           attSel.show().children('.attachment_loader').text('Categorize: net err');
           nRenderedAtts++;
         } else {
-          Catch.handleErr(e);
+          Catch.reportErr(e);
           attSel.show().children('.attachment_loader').text('Categorize: unknown err');
           nRenderedAtts++;
         }
@@ -293,7 +314,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         const downloadUrl = $(attLoaderEl).parent().attr('download_url');
         if (downloadUrl) {
           const meta = downloadUrl.split(':');
-          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encrypted' }));
+          googleDriveAtts.push(new Att({ msgId, name: meta[1], type: meta[0], url: `${meta[2]}:${meta[3]}`, treatAs: 'encryptedFile' }));
         } else {
           console.info('Missing Google Drive attachments download_url');
         }
@@ -303,9 +324,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private renderPublicKeyFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, isOutgoing: boolean, attSel: JQueryEl, nRenderedAtts: number) => {
-    let downloadedAtt: R.GmailAtt;
+    let downloadedAtt: GmailRes.GmailAtt;
     try {
-      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id is present when fetched from api
+      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
     } catch (e) {
       attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
       nRenderedAtts++;
@@ -313,7 +334,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
     const openpgpType = await BrowserMsg.send.bg.await.pgpMsgType({ rawBytesStr: downloadedAtt.data.toRawBytesStr() });
     if (openpgpType && openpgpType.type === 'publicKey') {
-      msgEl = this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
+      this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedPubkey(downloadedAtt.data.toUtfStr(), isOutgoing)); // xss-safe-factory
     } else {
       attSel.show().addClass('attachment_processed').children('.attachment_loader').text('Unknown Public Key Format');
       nRenderedAtts++;
@@ -321,21 +342,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return nRenderedAtts;
   }
 
-  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, patterns: string[]) => {
+  private renderBackupFromFile = async (attMeta: Att, attsContainerInner: JQueryEl, msgEl: JQueryEl, attSel: JQueryEl, nRenderedAtts: number) => {
+    let downloadedAtt: GmailRes.GmailAtt;
+    try {
+      downloadedAtt = await Google.gmail.attGet(this.acctEmail, attMeta.msgId!, attMeta.id!); // .id! is present when fetched from api
+    } catch (e) {
+      attsContainerInner.show().addClass('attachment_processed').find('.attachment_loader').text('Please reload page');
+      nRenderedAtts++;
+      return nRenderedAtts;
+    }
+    this.updateMsgBodyEl_DANGEROUSLY(msgEl, 'append', this.factory.embeddedBackup(downloadedAtt.data.toUtfStr())); // xss-safe-factory
+    return nRenderedAtts;
+  }
+
+  private filterAtts = (potentialMatches: JQueryEl | HTMLElement, regExp: RegExp) => {
     return $(potentialMatches).filter('span.aZo:visible, span.a5r:visible').find('span.aV3').filter(function () {
       const name = this.innerText.trim();
-      for (const pattern of patterns) {
-        if (pattern.indexOf('*.') === 0) { // wildcard
-          if (name.endsWith(pattern.substr(1))) {
-            return true;
-          }
-        } else if (name === pattern) { // exact match
-          return true;
-        } else if ((name === 'noname' && pattern === '') || (name === '' && pattern === 'noname')) { // empty filename (sometimes represented as "noname" in Gmail)
-          return true;
-        }
-      }
-      return false;
+      return regExp.test(name);
     }).closest('span.aZo, span.a5r');
   }
 
@@ -348,8 +371,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => { // todo - test and use data-message-id with Gmail API once available
-    return $(innerMsgEl).parents(this.sel.msgOuter).attr('data-legacy-message-id') || '';
+  private determineMsgId = (innerMsgEl: HTMLElement | JQueryEl) => {
+    const parents = $(innerMsgEl).parents(this.sel.msgOuter);
+    return parents.attr('data-legacy-message-id') || parents.attr('data-message-id') || '';
   }
 
   private determineThreadId = (convoRootEl: HTMLElement | JQueryEl) => { // todo - test and use data-thread-id with Gmail API once available
@@ -401,25 +425,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  private domGetMsgSender = (convoRootEl: JQueryEl) => {
-    return (convoRootEl.find('h3.iw span[email]').last().attr('email') || '').trim().toLowerCase();
-  }
-
-  private domGetMsgRecipients = (convoRootEl: JQueryEl) => {
-    return convoRootEl.find('span.hb').last().find('span.g2').toArray().map(el => ($(el).attr('email') || '').toLowerCase()); // add all recipients including me
-  }
-
-  private domGetMsgSubject = (convoRootEl: JQueryEl) => {
-    return $(convoRootEl).find(this.sel.subject).text();
-  }
-
   private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
-    const headers = Api.common.replyCorrespondents(this.acctEmail, this.addresses, this.domGetMsgSender(convoRootEl), this.domGetMsgRecipients(convoRootEl));
     return {
-      subject: this.domGetMsgSubject(convoRootEl),
-      replyTo: headers.to,
-      addresses: this.addresses,
-      myEmail: headers.from,
+      sendAs: this.sendAs,
       threadId: this.determineThreadId(convoRootEl),
       threadMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),
     };
@@ -429,12 +437,17 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   }
 
-  private replaceStandardReplyBox = (editable: boolean = false, force: boolean = false) => {
+  private replaceStandardReplyBox = async (editable: boolean = false, force: boolean = false) => {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
+      const { drafts_reply } = await Store.getAcct(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
-      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length || (convoRootEl.is(':visible') && force));
+      const replyParams = this.getReplyParams(convoRootEl!);
+      const hasDraft = drafts_reply && replyParams.threadId && !!drafts_reply[replyParams.threadId];
+      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length
+        || (convoRootEl.is(':visible') && force)
+        || hasDraft);
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
       let midConvoDraft = false;
       if (doReplace) {
@@ -445,7 +458,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             Xss.sanitizeAppend(replyBox, '<font>&nbsp;&nbsp;Draft skipped</font>');
             replyBox.children(':not(font)').hide();
           } else {
-            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(this.getReplyParams(convoRootEl!), editable)}</div>`;
+            const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
               const origChildren = replyBox.children();
               replyBox.addClass('reply_message_evaluated').append(secureReplyBoxXssSafe); // xss-safe-factory
@@ -464,12 +477,12 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  private evaluateStandardComposeReceivers = async () => {
+  private evaluateStandardComposeRecipients = async () => {
     if (!this.currentlyEvaluatingStandardComposeBoxRecipients) {
       this.currentlyEvaluatingStandardComposeBoxRecipients = true;
       for (const standardComposeWinEl of $(this.sel.standardComposeWin)) {
         const standardComposeWin = $(standardComposeWinEl);
-        const recipients = standardComposeWin.find('div.az9 span[email]').get().map(e => $(e).attr('email')!).filter(e => !!e);
+        const recipients = standardComposeWin.find(this.sel.standardComposeRecipient).get().map(e => $(e).attr('email')!).filter(e => !!e);
         if (!recipients.length) {
           standardComposeWin.find('.recipients_use_encryption').remove();
         } else {
@@ -483,13 +496,22 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               }
               if (typeof cache === 'undefined') {
                 try {
-                  const { results: [result] } = await Api.attester.lookupEmail([email]);
-                  this.recipientHasPgpCache[email] = Boolean(result.pubkey); // true or false
+                  const [contact] = await Store.dbContactGet(undefined, [email]);
+                  if (contact && contact.pubkey) {
+                    this.recipientHasPgpCache[email] = true;
+                  } else if ((await Keyserver.lookupEmail(this.acctEmail, email)).pubkey) {
+                    this.recipientHasPgpCache[email] = true;
+                  } else {
+                    this.recipientHasPgpCache[email] = false;
+                  }
                   if (!this.recipientHasPgpCache[email]) {
                     everyoneUsesEncryption = false;
                     break;
                   }
                 } catch (e) {
+                  if (Api.err.isSignificant(e)) {
+                    Catch.reportErr(e);
+                  }
                   // this is a low-importance request, so evaluate has_pgp as false on errors
                   // this way faulty requests wouldn't unnecessarily repeat and overwhelm Attester
                   this.recipientHasPgpCache[email] = false;
@@ -520,4 +542,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
+  private addSettingsBtn = () => {
+    if (window.location.hash.startsWith('#settings')) {
+      const settingsBtnContainer = $(this.sel.settingsBtnContainer);
+      if (settingsBtnContainer.length && !settingsBtnContainer.find('#fc_settings_btn').length) {
+        settingsBtnContainer.children().last().before(this.factory.btnSettings('gmail')); // xss-safe-factory
+        settingsBtnContainer.find('#fc_settings_btn').on('click', Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail: this.acctEmail })));
+      }
+    }
+  }
 }

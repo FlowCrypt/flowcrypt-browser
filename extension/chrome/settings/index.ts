@@ -6,23 +6,27 @@ import { VERSION } from '../../js/common/core/const.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Xss, Ui, XssSafeFactory, Env, JQS, UrlParams } from '../../js/common/browser.js';
+import { Ui, Env, JQS, UrlParams } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Google, GoogleAuth } from '../../js/common/api/google.js';
+import { Google } from '../../js/common/api/google.js';
 import { KeyInfo } from '../../js/common/core/pgp.js';
+import { Backend } from '../../js/common/api/backend.js';
+import { Assert } from '../../js/common/assert.js';
+import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
-  const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
-  let page = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
+  const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+  let page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
   page = (page === 'undefined') ? undefined : page; // in case an "undefined" strring slipped in
   const pageUrlParams: UrlParams | undefined = (typeof uncheckedUrlParams.pageUrlParams === 'string') ? JSON.parse(uncheckedUrlParams.pageUrlParams) as UrlParams : undefined;
   const addNewAcct = uncheckedUrlParams.addNewAcct === true;
@@ -114,16 +118,17 @@ Catch.try(async () => {
     } else if (acctEmail) {
       $('.email-address').text(acctEmail);
       $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
-      const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes', 'email_provider', 'picture']);
+      const storage = await Store.getAcct(acctEmail, ['setup_done', 'email_provider', 'picture']);
+      const scopes = await Store.getScopes(acctEmail);
       if (storage.setup_done) {
-        checkGoogleAcct().catch(Catch.handleErr);
-        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.handleErr);
+        checkGoogleAcct().catch(Catch.reportErr);
+        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
         if (storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
           }));
         }
-        if (!GoogleAuth.hasReadScope(storage.google_token_scopes || []) && (storage.email_provider || 'gmail') === 'gmail') {
+        if (!(scopes.read || scopes.modify) && (storage.email_provider || 'gmail') === 'gmail') {
           $('.auth_denied_warning').css('display', 'block');
         }
         displayOrig('.hide_if_setup_not_done');
@@ -150,12 +155,12 @@ Catch.try(async () => {
       }
     }
 
-    Api.retreiveBlogPosts().then(posts => {
+    Backend.retrieveBlogPosts().then(posts => { // do not await because may take a while
       for (const post of posts) {
         const html = `<div class="line"><a href="https://flowcrypt.com${Xss.escape(post.url)}" target="_blank">${Xss.escape(post.title.trim())}</a> ${Xss.escape(post.date.trim())}</div>`;
         Xss.sanitizeAppend('.blog_post_list', html);
       }
-    }).catch(e => Api.err.isSignificant(e) ? Catch.handleErr(e) : undefined);
+    }).catch(e => Api.err.isSignificant(e) ? Catch.reportErr(e) : undefined);
   };
 
   const checkFcAcctAndSubscriptionAndContactPage = async () => {
@@ -163,12 +168,12 @@ Catch.try(async () => {
     try {
       await renderSubscriptionStatusHeader();
     } catch (e) {
-      Catch.handleErr(e);
+      Catch.reportErr(e);
     }
     const authInfo = await Store.authInfo();
     if (authInfo.acctEmail) { // have auth email set
       try {
-        const response = await Api.fc.accountUpdate();
+        const response = await Backend.accountUpdate();
         $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:ok`);
         if (response && response.result && response.result.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
@@ -187,7 +192,7 @@ Catch.try(async () => {
         } else {
           statusContainer.text('ecp error');
           $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
-          Catch.handleErr(e);
+          Catch.reportErr(e);
         }
       }
     } else { // never set up
@@ -211,21 +216,27 @@ Catch.try(async () => {
       } else if (Api.err.isAuthPopupNeeded(e)) {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
-        Catch.handleErr(e);
-        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${String(e)}`);
+        Catch.reportErr(e);
+        await Ui.modal.error(`There was an error changing google account, please write human@flowcrypt.com\n\n${Api.err.eli5(e)}\n\n${String(e)}`);
       }
     }
   };
 
   const checkGoogleAcct = async () => {
     try {
-      const me = await Google.gmail.usersMeProfile(acctEmail!);
-      $('#status-row #status_google').text(`g:${me.emailAddress}:ok`);
-      if (me.emailAddress !== acctEmail) {
-        $('#status-row #status_google').text(`g:${me.emailAddress}:changed`).addClass('bad').attr('title', 'Account email address has changed');
-        if (me.emailAddress && acctEmail) {
-          if (await Ui.modal.confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${me.emailAddress}. FlowCrypt Settings need to be updated accordingly.`)) {
-            await resolveChangedGoogleAcct(me.emailAddress);
+      const { sendAs } = await Google.gmail.fetchAcctAliases(acctEmail!);
+      const primary = sendAs.find(addr => addr.isPrimary === true);
+      if (!primary) {
+        await Ui.modal.warning(`Your account sendAs does not have any primary sendAsEmail`);
+        return;
+      }
+      const googleAcctEmailAddr = primary.sendAsEmail;
+      $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:ok`);
+      if (googleAcctEmailAddr !== acctEmail) {
+        $('#status-row #status_google').text(`g:${googleAcctEmailAddr}:changed`).addClass('bad').attr('title', 'Account email address has changed');
+        if (googleAcctEmailAddr && acctEmail) {
+          if (await Ui.modal.confirm(`Your Google Account address seems to have changed from ${acctEmail} to ${googleAcctEmailAddr}. FlowCrypt Settings need to be updated accordingly.`)) {
+            await resolveChangedGoogleAcct(googleAcctEmailAddr);
           }
         }
       }
@@ -242,7 +253,7 @@ Catch.try(async () => {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
         $('#status-row #status_google').text(`g:?:err`).addClass('bad').attr('title', `Cannot determine Google account: ${Xss.escape(String(e))}`);
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
     }
   };
@@ -250,11 +261,11 @@ Catch.try(async () => {
   const renderSubscriptionStatusHeader = async () => {
     let liveness = '';
     try {
-      await Api.fc.accountCheckSync();
+      await Backend.accountCheckSync();
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         liveness = 'err';
       } else {
         liveness = 'offline';
@@ -293,7 +304,7 @@ Catch.try(async () => {
       const { keys: [prv] } = await openpgp.key.readArmored(ki.private);
       const date = Str.monthName(prv.primaryKey.created.getMonth()) + ' ' + prv.primaryKey.created.getDate() + ', ' + prv.primaryKey.created.getFullYear();
       const escapedPrimaryOrRemove = (ki.primary) ? '(primary)' : '(<a href="#" class="action_remove_key" longid="' + Xss.escape(ki.longid) + '">remove</a>)';
-      const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email);
+      const escapedEmail = Xss.escape(Str.parseEmail(prv.users[0].userId ? prv.users[0].userId!.userid : '').email || '');
       const escapedLongid = Xss.escape(ki.longid);
       const escapedLink = `<a href="#" data-test="action-show-key-${i}" class="action_show_key" page="modules/my_key.htm" addurltext="&longid=${escapedLongid}">${escapedEmail}</a>`;
       html += `<div class="row key-content-row key_${Xss.escape(ki.longid)}">`;
@@ -373,7 +384,7 @@ Catch.try(async () => {
   };
 
   await initialize();
-  await Ui.abortAndRenderErrOnUnprotectedKey(acctEmail, tabId);
+  await Assert.abortAndRenderErrOnUnprotectedKey(acctEmail, tabId);
   if (page) {
     if (page === '/chrome/settings/modules/auth_denied.htm') {
       Settings.renderSubPage(acctEmail, tabId, page);

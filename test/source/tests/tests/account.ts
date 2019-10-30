@@ -1,31 +1,31 @@
 
-import { TestWithBrowser, TestWithGlobalBrowser } from '..';
-import { ComposePageRecipe, SetupPageRecipe, GmailPageRecipe } from '../page_recipe';
+import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
+import { ComposePageRecipe, SetupPageRecipe, GmailPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
 import * as ava from 'ava';
 import { Config, Util } from '../../util';
 import { expect } from 'chai';
 import { FlowCryptApi } from '../api';
-import { TestVariant } from '../../test';
+import { TestVariant } from '../../util';
 
 // tslint:disable:no-blank-lines-func
 
-export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBrowser: TestWithBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
+export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBrowser: TestWithNewBrowser, testWithSemaphoredGlobalBrowser: TestWithGlobalBrowser) => {
 
-  if (testVariant === 'CONSUMER') {
+  if (testVariant === 'CONSUMER-LIVE-GMAIL') {
 
     // todo - make a helper method that forces account tests to run in sequence with Semaphore
-    ava.test('compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] compose > large file > subscribe > trial > attach again', testWithNewBrowser(async (t, browser) => {
       // delete account
-      await FlowCryptApi.hookCiAcctDelete(Config.secrets.ci_dev_account);
+      await FlowCryptApi.hookCiAcctDelete('test.ci.trial@org.flowcrypt.com');
       // set up acct and open compose page
-      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, Config.secrets.ci_dev_account);
-      await SetupPageRecipe.recover(settingsPage, 'flowcrypt.test.trial', { hasRecoverMore: false });
+      const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, "test.ci.trial@org.flowcrypt.com");
+      await SetupPageRecipe.recover(settingsPage, 'test.ci.trial', { hasRecoverMore: false });
       await browser.closeAllPages();
       const gmailPage = await BrowserRecipe.openGmailPageAndVerifyComposeBtnPresent(t, browser);
       await GmailPageRecipe.closeInitialSetupNotif(gmailPage);
       const composePage = await GmailPageRecipe.openSecureCompose(t, gmailPage, browser);
-      await ComposePageRecipe.fillMsg(composePage, 'human@flowcrypt.com', 'a large file to trigger trial');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file to trigger trial');
       // add a large file
       let fileInput = await composePage.target.$('input[type=file]');
       await fileInput!.uploadFile('test/samples/large.jpg');
@@ -47,18 +47,27 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       await gmailPage.waitTillGone('@container-new-message');
     }));
 
-    ava.test.todo('compose > footer > subscribe > trial');
+    ava.todo('compose > footer > subscribe > trial');
 
-    ava.test.todo('settings > subscribe > trial');
+    ava.todo('settings > subscribe > trial');
 
-    ava.test.todo('settings will recognize expired subscription');
+    ava.todo('settings will recognize expired subscription');
 
-    ava.test.todo('settings will recognize / sync subscription');
+    ava.todo('settings will recognize / sync subscription');
 
-    ava.test.todo('settings > subscribe > expire > compose > large file > subscribe');
+    ava.todo('settings > subscribe > expire > compose > large file > subscribe');
 
-    ava.test.todo('settings > subscribe > expire > compose > footer > subscribe');
+    ava.todo('settings > subscribe > expire > compose > footer > subscribe');
+
+  } else {
+    ava.default('compose > large file > public domain account (should not prompt to upgrade)', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'a large file test (gmail account)');
+      const fileInput = await composePage.target.$('input[type=file]');
+      await fileInput!.uploadFile('test/samples/large.jpg');
+      await Util.sleep(2);
+      await ComposePageRecipe.sendAndClose(composePage);
+    }));
 
   }
-
 };

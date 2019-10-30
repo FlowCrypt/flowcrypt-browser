@@ -14,24 +14,25 @@
 
 <body id="new_message">
 
-  <table id="compose" class="sign">
+  <table id="compose" class="not-encrypted">
     <tr>
-      <td class="input" id="input_addresses_container">
-        <div>
-          <span class="recipients"></span>
+      <td class="input recipients-inputs">
+        <div class="collapsed" style="display: flex;">
+          <div class="email_preview" data-test="email-preview"></div>
         </div>
       </td>
     </tr>
     <tr>
       <td class="text">
-        <div contenteditable id="input_text" tabindex="3" style="background: none;">Hello,<br><br>I was not able to
+        <div contenteditable id="input_text" data-test="input-body" tabindex="3" style="background: none;">
+          Hello,<br><br>I was not able to
           read your encrypted message because it was encrypted for a wrong key.<br><br>My current public key is
           attached below. Please update your records and send me a new encrypted message.<br><br>Thank you</div>
         <div id="fineuploader">
           <div class="qq-uploader-selector qq-uploader">
             <ul class="qq-upload-list-selector qq-upload-list">
-              <li class="qq-file-id-0" qq-file-id="0" title="This is your public key. The recipient will use it to send a new, correctly encrypted message.">
-                <img src="/img/svgs/paperclip-icon.svg" style="display: inline-block;padding-right:5px;position: relative; top: 3px;">
+              <li class="qq-file-id-0" qq-file-id="0" data-test="attachment"
+                title="This is your public key. The recipient will use it to send a new, correctly encrypted message.">
                 <span class="qq-upload-file-selector qq-upload-file pubkey_file_name" style="width: 215px;"></span>
               </li>
             </ul>
@@ -41,7 +42,11 @@
     </tr>
     <tr class="bottom">
       <td class="bottom">
-        <div id="send_btn" class="button green"><i class=""></i><span tabindex="4">Send Response</span></div>
+        <div class="sending-container">
+          <button id="send_btn" data-test="action-send" class="button green"><span id="send_btn_text" class="btn-text"
+              tabindex="4"><i class=""></i>Send
+              Response</span></button>
+        </div>
       </td>
     </tr>
   </table>

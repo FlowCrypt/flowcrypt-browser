@@ -4,42 +4,51 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Xss, Ui, Env } from '../../../js/common/browser.js';
+import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
+import { Assert } from '../../../js/common/assert.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  await Ui.passphraseToggle(['password']);
+  await initPassphraseToggle(['password']);
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
-  if (key.isDecrypted()) {
+  if (!key.isFullyEncrypted()) {
     const setUpPpUrl = Env.urlCreate('change_passphrase.htm', { acctEmail, parentTabId });
     Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
     return;
   }
 
+  $('#password').keydown(event => {
+    if (event.which === 13) {
+      $('.action_verify').click();
+    }
+  });
+
   $('.action_verify').click(Ui.event.handle(async () => {
 
-    if (await Pgp.key.decrypt(key, [String($('#password').val())]) === true) {
+    if (await Pgp.key.decrypt(key, String($('#password').val())) === true) {
       Xss.sanitizeRender('#content', `
         <div class="line">${Lang.setup.ppMatchAllSet}</div>
         <div class="line"><div class="button green close" data-test="action-test-passphrase-successful-close">close</div></div>
       `);
       $('.close').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
     } else {
-      await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that do don\'t get locked out of your encrypted messages.');
+      await Ui.modal.warning('Pass phrase did not match. Please try again. If you forgot your pass phrase, please change it, so that you don\'t get locked out of your encrypted messages.');
     }
   }));
 

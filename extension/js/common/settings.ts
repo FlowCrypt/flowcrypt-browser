@@ -3,103 +3,43 @@
 'use strict';
 
 import { Catch } from './platform/catch.js';
-import { Store } from './platform/store.js';
-import { Value, Str, Dict } from './core/common.js';
-import { Xss, Ui, Env, UrlParams, JQS } from './browser.js';
+import { Store, SendAsAlias } from './platform/store.js';
+import { Str, Dict } from './core/common.js';
+import { Ui, Env, UrlParams, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
 import { Api } from './api/api.js';
 import { Pgp } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
+import { Attester } from './api/attester.js';
+import { Xss } from './platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
 
 export class Settings {
 
-  static fetchAcctAliasesFromGmail = async (acctEmail: string) => {
+  static fetchAcctAliasesFromGmail = async (acctEmail: string): Promise<Dict<SendAsAlias>> => {
     const response = await Google.gmail.fetchAcctAliases(acctEmail);
-    return response.sendAs
-      .filter(alias => alias.isDefault || alias.verificationStatus === 'accepted')
-      .map(alias => alias.sendAsEmail);
+    const validAliases = response.sendAs.filter(alias => alias.isPrimary || alias.verificationStatus === 'accepted');
+    const result: Dict<SendAsAlias> = {};
+    for (const alias of validAliases) {
+      result[alias.sendAsEmail] = { name: alias.displayName, isPrimary: !!alias.isPrimary, isDefault: alias.isDefault, footer: alias.signature };
+    }
+    return result;
   }
 
   static evalPasswordStrength = (passphrase: string) => {
     return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses); // tslint:disable-line:no-unsafe-any
   }
 
-  static renderPasswordStrength = (parentSel: string, inputSel: string, buttonSel: string) => {
-    parentSel += ' ';
-    const password = $(parentSel + inputSel).val();
-    if (typeof password !== 'string') {
-      Catch.report('render_password_strength: Selected password is not a string', typeof password);
-      return;
-    }
-    const result = Settings.evalPasswordStrength(password);
-    $(parentSel + '.password_feedback').css('display', 'block');
-    $(parentSel + '.password_bar > div').css('width', result.word.bar + '%');
-    $(parentSel + '.password_bar > div').css('background-color', result.word.color);
-    $(parentSel + '.password_result, .password_time').css('color', result.word.color);
-    $(parentSel + '.password_result').text(result.word.word);
-    $(parentSel + '.password_time').text(result.time);
-    if (result.word.pass) {
-      $(parentSel + buttonSel).removeClass('gray');
-      $(parentSel + buttonSel).addClass('green');
-    } else {
-      $(parentSel + buttonSel).removeClass('green');
-      $(parentSel + buttonSel).addClass('gray');
-    }
-  }
-
-  static saveAttestReq = async (acctEmail: string, attester: string) => {
-    const storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
-    if (typeof storage.attests_requested === 'undefined') {
-      storage.attests_requested = [attester];
-    } else if (!Value.is(attester).in(storage.attests_requested)) {
-      storage.attests_requested.push(attester); // insert into requests if not already there
-    }
-    if (typeof storage.attests_processed === 'undefined') {
-      storage.attests_processed = [];
-    }
-    await Store.setAcct(acctEmail, storage);
-    BrowserMsg.send.bg.attestRequested({ acctEmail });
-  }
-
-  static markAsAttested = async (acctEmail: string, attester: string) => {
-    const storage = await Store.getAcct(acctEmail, ['attests_requested', 'attests_processed']);
-    if (typeof storage.attests_requested === 'undefined') {
-      storage.attests_requested = [];
-    } else if (Value.is(attester).in(storage.attests_requested)) {
-      storage.attests_requested.splice(storage.attests_requested.indexOf(attester), 1); // remove attester from requested
-    }
-    if (typeof storage.attests_processed === 'undefined') {
-      storage.attests_processed = [attester];
-    } else if (!Value.is(attester).in(storage.attests_processed)) {
-      storage.attests_processed.push(attester); // add attester as processed if not already there
-    }
-    await Store.setAcct(acctEmail, storage);
-  }
-
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
-    const attestResp = await Api.attester.initialLegacySubmit(acctEmail, pubkey, true);
-    if (!attestResp.attested) {
-      await Settings.saveAttestReq(acctEmail, 'CRYPTUP');
-    } else { // Attester claims it was previously successfully attested
-      await Settings.markAsAttested(acctEmail, 'CRYPTUP');
-    }
+    await Attester.initialLegacySubmit(acctEmail, pubkey);
     const aliases = addresses.filter(a => a !== acctEmail);
     if (aliases.length) {
-      await Promise.all(aliases.map(a => Api.attester.initialLegacySubmit(a, pubkey, false)));
+      await Promise.all(aliases.map(a => Attester.initialLegacySubmit(a, pubkey)));
     }
-  }
-
-  static openpgpKeyEncrypt = async (key: OpenPGP.key.Key, passphrase: string) => {
-    // todo: remove. new versions of OpenPGP.js check this, so this function is probably unnecessary
-    if (!passphrase) {
-      throw new Error("Encryption passphrase should not be empty");
-    }
-    await key.encrypt(passphrase);
   }
 
   private static prepareNewSettingsLocationUrl = (acctEmail: string | undefined, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams): string => {
@@ -119,6 +59,10 @@ export class Settings {
   static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
+    const beforeClose = () => {
+      const urlWithoutPageParam = Env.removeParamsFromUrl(window.location.href, ['page']);
+      window.history.pushState('', '', urlWithoutPageParam);
+    };
     if (page !== '/chrome/elements/compose.htm') {
       iframeWidth = Math.min(800, $('body').width()! - 200);
       iframeHeight = $('body').height()! - ($('body').height()! > 800 ? 150 : 75);
@@ -130,7 +74,7 @@ export class Settings {
       closeOnClick = false;
       newLocation += `&frameId=${Str.sloppyRandom(5)}`; // does not get added to <iframe>
     }
-    ($ as JQS).featherlight({ closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant });
+    ($ as JQS).featherlight({ beforeClose, closeOnClick, iframe: newLocation, iframeWidth, iframeHeight, variant });
     // todo - deprecate this - because we don't want to use this compose module this way, only on webmail or in settings/inbox
     // for now some tests rely on it, so cannot be removed yet
     Xss.sanitizePrepend('.new_message_featherlight .featherlight-content', '<div class="line">You can also send encrypted messages directly from Gmail.<br/><br/></div>');
@@ -145,11 +89,27 @@ export class Settings {
     }
   }
 
-  static refreshAcctAliases = async (acctEmail: string) => {
-    const addresses = await Settings.fetchAcctAliasesFromGmail(acctEmail);
-    const all = Value.arr.unique(addresses.concat(acctEmail));
-    await Store.setAcct(acctEmail, { addresses: all });
-    return all;
+  static refreshAcctAliases = async (acctEmail: string): Promise<boolean> => {
+    const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+    const { sendAs: storedAliases, addresses: oldStoredAddresses } = (await Store.getAcct(acctEmail, ['sendAs', 'addresses']));
+    await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
+    if (!storedAliases) { // Aliases changed (it was previously undefined)
+      if (oldStoredAddresses) { // Temporary solution
+        return Object.keys(fetchedSendAs).sort().join(',') !== oldStoredAddresses.sort().join(',');
+      }
+      return true;
+    }
+    if (Settings.getDefaultEmailAlias(fetchedSendAs) !== Settings.getDefaultEmailAlias(storedAliases)) { // Changed (default email alias was changed)
+      return true;
+    }
+    if (Object.keys(fetchedSendAs).sort().join(',') !== Object.keys(storedAliases).sort().join(',')) { // Changed (added/removed email alias)
+      return true;
+    }
+    if (Object.keys(fetchedSendAs).filter(email => fetchedSendAs[email].footer).map(email => fetchedSendAs[email].footer).sort().join(',') !==
+      Object.keys(storedAliases).filter(email => storedAliases[email].footer).map(email => storedAliases[email].footer).sort().join(',')) {
+      return true;
+    }
+    return false; // Nothing changed
   }
 
   static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {
@@ -157,7 +117,7 @@ export class Settings {
       throw new Error('Missing account_email to reset');
     }
     const acctEmails = await Store.acctEmailsGet();
-    if (!Value.is(acctEmail).in(acctEmails)) {
+    if (!acctEmails.includes(acctEmail)) {
       throw new Error(`"${acctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToRemove: string[] = [];
@@ -190,7 +150,7 @@ export class Settings {
       throw new Error('Missing or wrong account_email to reset');
     }
     const acctEmails = await Store.acctEmailsGet();
-    if (!Value.is(oldAcctEmail).in(acctEmails)) {
+    if (!acctEmails.includes(oldAcctEmail)) {
       throw new Error(`"${oldAcctEmail}" is not a known account_email in "${JSON.stringify(acctEmails)}"`);
     }
     const storageIndexesToChange: string[] = [];
@@ -244,7 +204,7 @@ export class Settings {
     acctEmail: string, container: string | JQuery<HTMLElement>, origPrv: OpenPGP.key.Key, passphrase: string, backUrl: string
   ): Promise<OpenPGP.key.Key> => {
     return new Promise((resolve, reject) => {
-      const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.isEmailValid(Str.parseEmail(u.userid).email)).map(u => u!.userid).filter(Boolean) as string[];
+      const uids = origPrv.users.map(u => u.userId).filter(u => !!u && u.userid && Str.parseEmail(u.userid).email).map(u => u!.userid).filter(Boolean) as string[];
       if (!uids.length) {
         uids.push(acctEmail);
       }
@@ -283,7 +243,7 @@ export class Settings {
           $(target).off();
           Xss.sanitizeRender(target, Ui.spinner('white'));
           const expireSeconds = (expireYears === 'never') ? 0 : Math.floor((Date.now() - origPrv.primaryKey.created.getTime()) / 1000) + (60 * 60 * 24 * 365 * Number(expireYears));
-          await Pgp.key.decrypt(origPrv, [passphrase]);
+          await Pgp.key.decrypt(origPrv, passphrase);
           let reformatted;
           const userIds = uids.map(uid => Str.parseEmail(uid)).map(u => ({ email: u.email, name: u.name || '' }));
           try {
@@ -292,8 +252,11 @@ export class Settings {
             reject(e);
             return;
           }
-          if (reformatted.key.isDecrypted()) {
-            await reformatted.key.encrypt(passphrase); // this is a security precaution, in case OpenPGP.js library changes in the future
+          if (!reformatted.key.isFullyEncrypted()) { // this is a security precaution, in case OpenPGP.js library changes in the future
+            Catch.report(`Key update: Key not fully encrypted after update`, { isFullyEncrypted: reformatted.key.isFullyEncrypted(), isFullyDecrypted: reformatted.key.isFullyDecrypted() });
+            await Ui.modal.error('Key update:Key not fully encrypted after update. Please contact human@flowcrypt.com');
+            Xss.sanitizeReplace(target, Ui.e('a', { href: backUrl, text: 'Go back and try something else' }));
+            return;
           }
           if (await reformatted.key.getEncryptionKey()) {
             resolve(reformatted.key);
@@ -313,7 +276,7 @@ export class Settings {
       } catch (e2) {
         lastErr = e2;
         if (Api.err.isSignificant(e2)) {
-          Catch.handleErr(e2);
+          Catch.reportErr(e2);
         }
       }
     }
@@ -364,7 +327,7 @@ export class Settings {
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await Ui.modal.error(`Unknown error happened when connecting to Google: ${String(e)}`);
       }
       await Ui.time.sleep(1000);
@@ -399,4 +362,14 @@ export class Settings {
         : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
   }
+
+  private static getDefaultEmailAlias(sendAs: Dict<SendAsAlias>) {
+    for (const key of Object.keys(sendAs)) {
+      if (sendAs[key] && sendAs[key].isDefault) {
+        return key;
+      }
+    }
+    return undefined;
+  }
+
 }

@@ -4,24 +4,24 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Xss, Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api } from '../../../js/common/api/api.js';
 import { Lang } from '../../../js/common/lang.js';
 import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { Assert } from '../../../js/common/assert.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { Backend } from '../../../js/common/api/backend.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  // this is for debugging
-  if ((Value.is('mjkiaimhi').in(window.location.href) || Value.is('filter').in(['info@nvimp.com', 'human@flowcrypt.com', 'flowcrypt.compatibility@gmail.com']))) {
+  if (Catch.environment() === 'ex:dev') {
     Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.escape(Env.urlCreate('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
   }
 
@@ -39,34 +39,21 @@ Catch.try(async () => {
       window.location.reload();
     }));
 
-    $('.action_open_compatability').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/compatability.htm')));
+    $('.action_open_compatibility').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/compatibility.htm')));
 
     $('.action_open_decrypt').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt.htm')));
 
-    $('.action_open_decrypt_ignore_mdc').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt_ignore_mdc.htm')));
-
-    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.handleErr)));
-
-    $('.action_fetch_aliases').click(Ui.event.prevent('parallel', async (self, done) => {
-      Xss.sanitizeRender(self, Ui.spinner('white'));
-      try {
-        const all = await Settings.refreshAcctAliases(acctEmail);
-        await Ui.modal.info('Updated to: ' + all.join(', '));
-      } catch (e) {
-        if (Api.err.isNetErr(e)) {
-          await Ui.modal.error('Network error, please try again');
-        } else if (Api.err.isAuthPopupNeeded(e)) {
-          await Ui.modal.warning('Error: account needs to be re-connected first.');
-          BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
-        } else {
-          Catch.handleErr(e);
-          await Ui.modal.error(`Error happened: ${String(e)}`);
-        }
+    $('.action_openid_login').click(Ui.event.handle(async () => {
+      const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+      if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
+        await Backend.accountLoginWithOpenid(authRes.acctEmail, authRes.id_token);
+        await Ui.modal.info(`Sucessfully logged in as ${authRes.acctEmail}`);
+      } else {
+        await Ui.modal.error(`Could not log in:\n\n${authRes.error}`);
       }
-      await Ui.time.sleep(100);
-      window.location.reload();
-      done();
     }));
+
+    $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.reportErr)));
 
     $('.action_throw_unchecked').click(() => Catch.test('error'));
 
@@ -86,19 +73,6 @@ Catch.try(async () => {
           window.parent.location.reload();
         }
       }
-    }));
-
-    $('.action_attest_log').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/dev/storage.htm', Env.urlCreate('', {
-      filter: acctEmail,
-      keys: 'attest_log',
-      title: `Attest Log - ${acctEmail}`,
-    }).replace('?', '&'))));
-
-    $('.action_flush_attest_info').click(Ui.event.handle(async () => {
-      await Store.remove(acctEmail, ['attests_requested', 'attests_processed', 'attest_log']);
-      await Ui.modal.info('Internal attest info flushed');
-      await Ui.time.sleep(100);
-      window.location.reload();
     }));
 
     $('.action_reset_managing_auth').click(Ui.event.handle(async () => {
@@ -129,7 +103,7 @@ Catch.try(async () => {
                 await Ui.modal.info(`Email address changed to ${response.acctEmail}. You should now check that your public key is properly submitted.`);
                 BrowserMsg.send.bg.settings({ path: 'index.htm', page: '/chrome/settings/modules/keyserver.htm', acctEmail: response.acctEmail });
               } catch (e) {
-                Catch.handleErr(e);
+                Catch.reportErr(e);
                 await Ui.modal.error('There was an error changing google account, please write human@flowcrypt.com');
               }
             }
@@ -147,7 +121,7 @@ Catch.try(async () => {
     }));
 
     const collectInfoAndDownloadBackupFile = async (acctEmail: string) => {
-      const name = 'FlowCrypt_BACKUP_FILE_' + acctEmail.replace('[^a-z0-9]+', '') + '.txt';
+      const name = `FlowCrypt_BACKUP_FILE_${acctEmail.replace(/[^a-z0-9]+/, '')}.txt`;
       const backupText = await collectInfoForAccountBackup(acctEmail);
       Browser.saveToDownloads(new Att({ name, type: 'text/plain', data: Buf.fromUtfStr(backupText) }));
       await Ui.delay(1000);

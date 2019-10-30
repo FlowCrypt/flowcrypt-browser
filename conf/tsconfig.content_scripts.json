@@ -21,7 +21,8 @@
       ]
     },
     "typeRoots": [
-      "../extension/types"
+      "../extension/types",
+      "../extension/js/common/core/types"
     ]
   },
   "include": [

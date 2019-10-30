@@ -4,37 +4,20 @@
 
 'use strict';
 
-import * as DOMPurify from 'dompurify';
-import { Catch, UnreportableError } from './platform/catch.js';
-import { Store } from './platform/store.js';
-import { Str, Value, Dict } from './core/common.js';
-import { BrowserMsg } from './extension.js';
+import { Catch } from './platform/catch.js';
+import { Value, Dict } from './core/common.js';
 import { Api } from './api/api.js';
-import { Pgp, Pwd, PgpMsg, KeyInfo } from './core/pgp.js';
-import { mnemonic } from './core/mnemonic.js';
 import { Att } from './core/att.js';
-import { MsgBlock, KeyBlockType } from './core/mime.js';
-import { Settings } from './settings.js';
 import Swal from 'sweetalert2';
 import { requireTag } from './platform/require.js';
+import { Xss } from './platform/xss.js';
 
 requireTag('sweetalert2.js', 'sweetalert2.css');
 
-declare const openpgp: typeof OpenPGP;
-declare const qq: any;
-
-type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail' | 'embedded' | 'compose';
 type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 type NamedSels = Dict<JQuery<HTMLElement>>;
-type KeyImportUiCheckResult = {
-  normalized: string; longid: string; passphrase: string; fingerprint: string; decrypted: OpenPGP.key.Key;
-  encrypted: OpenPGP.key.Key;
-};
 
-export type AttLimits = { count?: number, size?: number, sizeMb?: number, oversize?: (newFileSize: number) => Promise<void> };
-export type WebMailName = 'gmail' | 'outlook' | 'inbox' | 'settings';
-export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
-export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'attest' | 'draft' | 'sign';
+export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
 export type UrlParam = string | number | null | undefined | boolean | string[];
@@ -63,16 +46,12 @@ export class Browser {
       a.href = window.URL.createObjectURL(blob);
       a.download = Xss.escape(att.name);
       if (renderIn) {
-        a.textContent = 'DECRYPTED FILE';
-        a.style.cssText = 'font-size: 16px; font-weight: bold;';
-        Xss.sanitizeRender(
-          renderIn,
-          '<div style="font-size: 16px;padding: 17px 0;">File is ready.<br>Right-click the link and select <b>Save Link As</b></div>',
-        );
-        renderIn.append(a); // xss-escaped attachment name above
+        a.innerHTML = '<div>Right-click here and choose \'Save Link As\' to save encrypted file</div>'; // xss-direct
+        a.className = 'file-download-right-click-link';
+        renderIn.html(a.outerHTML); // xss-escaped attachment name above
         renderIn.css('height', 'auto');
         renderIn.find('a').click(e => {
-          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.handleErr);
+          Ui.modal.warning('Please use right-click and select Save Link As').catch(Catch.reportErr);
           e.preventDefault();
           e.stopPropagation();
           return false;
@@ -128,25 +107,9 @@ export class Env {
 
   public static isContentScript = () => Env.isExtension() && window.location.href.indexOf(chrome.runtime.getURL('')) === -1; // extension but not on its own url
 
-  public static isBackgroundPage = () => Boolean(window.location && Value.is('background_page.htm').in(window.location.href));
+  public static isBackgroundPage = () => Boolean(window.location && window.location.href.includes('background_page.htm'));
 
   public static isExtension = () => typeof Env.runtimeId() !== 'undefined';
-
-  public static urlParamRequire = {
-    string: (values: UrlParams, name: string): string => {
-      return String(Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string'));
-    },
-    optionalString: (values: UrlParams, name: string): string | undefined => {
-      const r = Ui.abortAndRenderErrOnUrlParamTypeMismatch(values, name, 'string?');
-      if (typeof r === 'string' || typeof r === 'undefined') {
-        return r;
-      }
-      throw new Error(`urlParamRequire.optionalString: type of ${name} unexpectedly ${typeof r}`);
-    },
-    oneof: <T>(values: UrlParams, name: string, allowed: T[]): T => {
-      return Ui.abortAndRenderErrOnUrlParamValMismatch(values, name, allowed as any as UrlParam[]) as any as T; // todo - there should be a better way
-    },
-  };
 
   private static snakeCaseToCamelCase = (s: string) => s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
 
@@ -181,16 +144,16 @@ export class Env {
   public static urlParams = (expectedKeys: string[], parseThisUrl?: string) => {
     const url = (parseThisUrl || window.location.search.replace('?', ''));
     const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    const rawParms: Dict<string> = {};
+    const rawParams: Dict<string> = {};
     const rawParamNameDict: Dict<string> = {};
     for (const valuePair of valuePairs) {
       const pair = valuePair.split('=');
-      rawParms[pair[0]] = pair[1];
+      rawParams[pair[0]] = pair[1];
       Env.fillPossibleUrlParamNameVariations(pair[0], rawParamNameDict);
     }
     const processedParams: UrlParams = {};
     for (const expectedKey of expectedKeys) {
-      processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParms);
+      processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParams);
     }
     return processedParams;
   }
@@ -200,18 +163,32 @@ export class Env {
       const value = params[key];
       if (typeof value !== 'undefined') {
         const transformed = Value.obj.keyByValue(Env.URL_PARAM_DICT, value);
-        link += (!Value.is('?').in(link) ? '?' : '&') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
+        link += (link.includes('?') ? '&' : '?') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
       }
     }
     return link;
   }
 
-  public static keyCodes = () => {
+  public static removeParamsFromUrl = (url: string, paramsToDelete: string[]) => {
+    const urlParts = url.split('?');
+    if (!urlParts[1]) { // Nothing to remove
+      return url;
+    }
+    let queryParams = urlParts[1];
+    queryParams = queryParams[queryParams.length - 1] === '#' ? queryParams.slice(0, -1) : queryParams;
+    const params = new URLSearchParams(queryParams);
+    for (const p of paramsToDelete) {
+      params.delete(p);
+    }
+    return `${urlParts[0]}?${params.toString()}`;
+  }
+
+  public static keyCodes = () => { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };
   }
 
   public static webmails = async (): Promise<WebMailName[]> => {
-    return ['gmail', 'inbox']; // async because storage may be involved in the future
+    return ['gmail']; // async because storage may be involved in the future
   }
 
   public static getBaseUrl = () => {
@@ -278,103 +255,32 @@ export class Ui {
     });
   }
 
-  static abortAndRenderErrorIfKeyinfoEmpty = (ki: KeyInfo | undefined, doThrow: boolean = true) => {
-    if (!ki) {
-      const msg = `Cannot find primary key. Is FlowCrypt not set up yet? ${Ui.retryLink()}`;
-      Xss.sanitizeRender($('#content').length ? '#content' : 'body', msg);
-      if (doThrow) {
-        throw new UnreportableError(msg);
-      }
+  public static escape = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    if (!e.metaKey && !e.ctrlKey && e.key === 'Escape') {
+      callback();
     }
   }
 
-  public static abortAndRenderErrOnUnprotectedKey = async (acctEmail?: string, tabId?: string) => {
-    if (acctEmail) {
-      const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-      const { setup_done, setup_simple } = await Store.getAcct(acctEmail, ['setup_simple', 'setup_done']);
-      if (setup_done && setup_simple && primaryKi && (await openpgp.key.readArmored(primaryKi.private)).keys[0].isDecrypted()) {
-        if (window.location.pathname === '/chrome/settings/index.htm') {
-          // @ts-ignore - this lets it compile in content script that is missing Settings
-          Settings.renderSubPage(acctEmail, tabId!, '/chrome/settings/modules/change_passphrase.htm');
-        } else {
-          const msg = `Protect your key with a pass phrase to finish setup.`;
-          const r = await Ui.renderOverlayPromptAwaitUserChoice({ finishSetup: {}, later: { color: 'gray' } }, msg);
-          if (r === 'finish_setup') {
-            BrowserMsg.send.bg.settings({ acctEmail });
-          }
-        }
-      }
+  public static tab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
+    if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.key === 'Tab') {
+      callback(e);
     }
   }
 
-  public static abortAndRenderErrOnUrlParamTypeMismatch = (values: UrlParams, name: string, expectedType: string): UrlParam => {
-    const actualType = values[name] === null ? 'null' : typeof values[name];
-    if (actualType === expectedType.replace(/\?$/, '')) { // eg expected string or optional string, and got string
-      return values[name];
-    }
-    if (actualType === 'undefined' && expectedType.match(/\?$/)) { // optional type, got undefined: ok
-      return values[name];
-    }
-    console.info(values[name]);  // for local debugging
-    // tslint:disable-next-line:max-line-length
-    const msg = `Cannot render page (expected ${Xss.escape(name)} to be of type ${Xss.escape(expectedType)} but got ${Xss.escape(actualType)})`;
-    const renderMsg = `${msg}<br><br><div class="button green long action_report_issue">report issue</div>`;
-    Xss.sanitizeRender('body', renderMsg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
-    $('.action_report_issue').click(Ui.event.handle(async target => {
-      Catch.report(msg, { currentUrl: window.location.href, params: values });
-      $('body').text('Thank you. Feel free to reach out to human@flowcrypt.com in you need assistance.');
-    }));
-    throw new UnreportableError(msg);
-  }
-
-  public static abortAndRenderErrOnUrlParamValMismatch = <T>(values: Dict<T>, name: string, expectedVals: T[]): T => {
-    if (expectedVals.indexOf(values[name]) === -1) {
-      // tslint:disable-next-line:max-line-length
-      const msg = `Cannot render page (expected ${Xss.escape(name)} to be one of ${Xss.escape(expectedVals.map(String).join(','))} but got ${Xss.escape(String(values[name]))}<br><br>Was the URL editted manually? Please write human@flowcrypt.com for help.`;
-      Xss.sanitizeRender('body', msg).addClass('bad').css({ padding: '20px', 'font-size': '16px' });
-      throw new UnreportableError(msg);
-    }
-    return values[name];
-  }
-
-  public static passphraseToggle = async (passphraseInputIds: string[], forceInitialShowOrHide?: "show" | "hide") => {
-    const buttonHide = '<img src="/img/svgs/eyeclosed-icon.svg" class="eye-closed"><br>hide';
-    const buttonShow = '<img src="/img/svgs/eyeopen-icon.svg" class="eye-open"><br>show';
-    const storage = await Store.getGlobal(['hide_pass_phrases']);
-    let show: boolean;
-    if (forceInitialShowOrHide === 'hide') {
-      show = false;
-    } else if (forceInitialShowOrHide === 'show') {
-      show = true;
-    } else {
-      show = !storage.hide_pass_phrases;
-    }
-    for (const id of passphraseInputIds) {
-      const passphraseInput = $(`#${id}`);
-      passphraseInput.addClass('toggled_passphrase');
-      if (show) {
-        passphraseInput.after(`<label href="#" id="toggle_${id}" class="toggle_show_hide_pass_phrase" for="${id}">${buttonHide}</label>`);
-        passphraseInput.attr('type', 'text');
-      } else {
-        passphraseInput.after(`<label href="#" id="toggle_${id}" class="toggle_show_hide_pass_phrase" for="${id}">${buttonShow}</label>`);
-        passphraseInput.attr('type', 'password');
-      }
-      $(`#toggle_${id}`).click(Ui.event.handle(target => {
-        if (passphraseInput.attr('type') === 'password') {
-          $(`#${id}`).attr('type', 'text');
-          Xss.sanitizeRender(target, buttonHide);
-          Store.setGlobal({ hide_pass_phrases: false }).catch(Catch.handleErr);
-        } else {
-          $(`#${id}`).attr('type', 'password');
-          Xss.sanitizeRender(target, buttonShow);
-          Store.setGlobal({ hide_pass_phrases: true }).catch(Catch.handleErr);
-        }
-      })).click().click(); // double-click the toggle to prevent browser from prefilling values
+  public static shiftTab = (callback: (e: JQuery.Event<HTMLElement>) => void) => (e: JQuery.Event<HTMLElement>) => { // returns a function
+    if (!e.metaKey && !e.ctrlKey && e.shiftKey && e.key === 'Tab') {
+      callback(e);
     }
   }
 
   public static enter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
-    if (e.which === Env.keyCodes().enter) {
+    if (!e.metaKey && !e.ctrlKey && e.key === 'Enter') {
+      callback();
+    }
+  }
+
+  public static ctrlEnter = (callback: () => void) => (e: JQuery.Event<HTMLElement, null>) => { // returns a function
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       callback();
     }
   }
@@ -421,7 +327,7 @@ export class Ui {
   }
 
   public static event = {
-    clicked: (selector: string): Promise<HTMLElement> => new Promise(resolve => $(selector).one('click', function () { resolve(this); })),
+    clicked: (selector: string | JQuery<HTMLElement>): Promise<HTMLElement> => new Promise(resolve => $(selector as string).one('click', function () { resolve(this); })),
     stop: () => (e: JQuery.Event) => { // returns a function
       e.preventDefault();
       e.stopPropagation();
@@ -435,7 +341,7 @@ export class Ui {
         // should be further combined with iframe type=content + sandboxing, but these could potentially be changed by the parent frame
         // so this indeed seems like the only defense
         // happened on only one machine, but could potentially happen to other users as well
-        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, const me know
+        // if you know more than I do about the hows and whys of events bubbling out of iframes on different domains, let me know
         e.stopPropagation();
       });
     },
@@ -454,15 +360,15 @@ export class Ui {
     },
     _dispatchErr: (e: any, errHandlers?: BrowserEventErrHandler) => {
       if (Api.err.isNetErr(e) && errHandlers && errHandlers.network) {
-        errHandlers.network().catch(Catch.handleErr);
+        errHandlers.network().catch(Catch.reportErr);
       } else if (Api.err.isAuthErr(e) && errHandlers && errHandlers.auth) {
-        errHandlers.auth().catch(Catch.handleErr);
+        errHandlers.auth().catch(Catch.reportErr);
       } else if (Api.err.isAuthPopupNeeded(e) && errHandlers && errHandlers.authPopup) {
-        errHandlers.authPopup().catch(Catch.handleErr);
+        errHandlers.authPopup().catch(Catch.reportErr);
       } else if (errHandlers && errHandlers.other) {
-        errHandlers.other(e).catch(Catch.handleErr);
+        errHandlers.other(e).catch(Catch.reportErr);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
       }
     },
     prevent: <THIS extends HTMLElement | void>(evName: PreventableEventName, cb: (el: HTMLElement, resetTimer: () => void) => void | Promise<void>, errHandler?: BrowserEventErrHandler) => {
@@ -512,53 +418,6 @@ export class Ui {
     }
   };
 
-  /**
-   * XSS WARNING
-   *
-   * Return values are inserted directly into DOM. Results must be html escaped.
-   *
-   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
-   */
-  public static renderableMsgBlock = (factory: XssSafeFactory, block: MsgBlock, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    if (block.type === 'text' || block.type === 'privateKey') {
-      return Xss.escape(block.content).replace(/\n/g, '<br>') + '<br><br>';
-    } else if (block.type === 'message') {
-      return factory.embeddedMsg(block.complete ? Pgp.armor.normalize(block.content, 'message') : '', msgId, isOutgoing, senderEmail, false);
-    } else if (block.type === 'signedMsg') {
-      return factory.embeddedMsg(block.content, msgId, isOutgoing, senderEmail, false);
-    } else if (block.type === 'publicKey') {
-      return factory.embeddedPubkey(Pgp.armor.normalize(block.content, 'publicKey'), isOutgoing);
-    } else if (block.type === 'passwordMsg') {
-      return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content); // here block.content is message short id
-    } else if (block.type === 'attestPacket') {
-      return factory.embeddedAttest(block.content);
-    } else if (block.type === 'cryptupVerification') {
-      return factory.embeddedVerification(block.content);
-    } else {
-      Catch.report('dunno how to process block type: ' + block.type);
-      return '';
-    }
-  }
-
-  /**
-   * XSS WARNING
-   *
-   * Return values are inserted directly into DOM. Results must be html escaped.
-   *
-   * When edited, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
-   */
-  public static replaceRenderableMsgBlocks = (factory: XssSafeFactory, origText: string, msgId?: string, senderEmail?: string, isOutgoing?: boolean) => {
-    const { blocks } = Pgp.armor.detectBlocks(origText);
-    if (blocks.length === 1 && blocks[0].type === 'text') {
-      return;
-    }
-    let r = '';
-    for (const block of blocks) {
-      r += (r ? '\n\n' : '') + Ui.renderableMsgBlock(factory, block, msgId, senderEmail, isOutgoing);
-    }
-    return r;
-  }
-
   public static time = {
     wait: (untilThisFunctionEvalsTrue: () => boolean | undefined) => new Promise((success, error) => {
       const interval = Catch.setHandledInterval(() => {
@@ -587,8 +446,10 @@ export class Ui {
         html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-info',
-        confirmButtonClass: 'ui-modal-info-confirm',
+        customClass: {
+          popup: 'ui-modal-info',
+          confirmButton: 'ui-modal-info-confirm',
+        },
       });
     },
     warning: async (text: string): Promise<void> => {
@@ -596,17 +457,22 @@ export class Ui {
         html: `<span class="orange">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-warning',
-        confirmButtonClass: 'ui-modal-warning-confirm',
+        customClass: {
+          popup: 'ui-modal-warning',
+          confirmButton: 'ui-modal-warning-confirm',
+        },
       });
     },
-    error: async (text: string): Promise<void> => {
+    error: async (text: string, isHTML: boolean = false): Promise<void> => {
+      text = isHTML ? Xss.htmlSanitize(text) : Xss.escape(text).replace(/\n/g, '<br>');
       await Swal.fire({
-        html: `<span class="red">${Xss.escape(text).replace(/\n/g, '<br>')}</span>`,
+        html: `<span class="red">${text}</span>`,
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-error',
-        confirmButtonClass: 'ui-modal-error-confirm',
+        customClass: {
+          popup: 'ui-modal-error',
+          confirmButton: 'ui-modal-error-confirm',
+        },
       });
     },
     confirm: async (text: string): Promise<boolean> => {
@@ -614,675 +480,53 @@ export class Ui {
         html: Xss.escape(text).replace(/\n/g, '<br>'),
         animation: false,
         allowOutsideClick: false,
-        customClass: 'ui-modal-confirm',
-        confirmButtonClass: 'ui-modal-confirm-confirm',
         showCancelButton: true,
-        cancelButtonClass: 'ui-modal-confirm-cancel',
+        customClass: {
+          popup: 'ui-modal-confirm',
+          confirmButton: 'ui-modal-confirm-confirm',
+          cancelButton: 'ui-modal-confirm-cancel',
+        },
+      });
+      return typeof dismiss === 'undefined';
+    },
+    confirmWithCheckbox: async (label: string, html: string = ''): Promise<boolean> => {
+      const { dismiss } = await Swal.fire({
+        html,
+        input: 'checkbox',
+        inputPlaceholder: label,
+        animation: false,
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'ui-modal-confirm-checkbox',
+          confirmButton: 'ui-modal-confirm-checkbox-confirm',
+          cancelButton: 'ui-modal-confirm-checkbox-cancel',
+          input: 'ui-modal-confirm-checkbox-input',
+        },
+        onOpen: () => {
+          const input = Swal.getInput();
+          const confirmButton = Swal.getConfirmButton();
+          $(confirmButton).prop('disabled', true);
+          $(input).on('change', () => {
+            $(confirmButton).prop('disabled', !input.checked);
+          });
+        }
       });
       return typeof dismiss === 'undefined';
     },
   };
 
-}
-
-export class Xss {
-
-  private static ALLOWED_HTML_TAGS = ['p', 'div', 'br', 'u', 'i', 'em', 'b', 'ol', 'ul', 'pre', 'li', 'table', 'tr', 'td', 'th', 'img', 'h1', 'h2', 'h3', 'h4', 'h5',
-    'h6', 'hr', 'address', 'blockquote', 'dl', 'fieldset', 'a', 'font'];
-  private static ADD_ATTR = ['email', 'page', 'addurltext', 'longid', 'index'];
-  private static HREF_REGEX_CACHE: RegExp | undefined;
-
-  public static sanitizeRender = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).html(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-
-  public static sanitizeAppend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).append(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-
-  public static sanitizePrepend = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).prepend(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-
-  public static sanitizeReplace = (selector: string | HTMLElement | JQuery<HTMLElement>, dirtyHtml: string) => $(selector as any).replaceWith(Xss.htmlSanitize(dirtyHtml)); // xss-sanitized
-
-  public static htmlSanitize = (dirtyHtml: string): string => {
-    return DOMPurify.sanitize(dirtyHtml, { // tslint:disable-line:oneliner-object-literal
-      SAFE_FOR_JQUERY: true,
-      ADD_ATTR: Xss.ADD_ATTR,
-      ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
-    });
-  }
-
-  public static htmlSanitizeKeepBasicTags = (dirtyHtml: string): string => {
-    // used whenever untrusted remote content (eg html email) is rendered, but we still want to preserve html
-    DOMPurify.removeAllHooks();
-    DOMPurify.addHook('afterSanitizeAttributes', node => {
-      if ('src' in node) {
-        // replace images with a link that points to that image
-        const img: Element = node;
-        const src = img.getAttribute('src')!;
-        const title = img.getAttribute('title');
-        img.removeAttribute('src');
-        const a = document.createElement('a');
-        a.href = src;
-        a.className = 'image_src_link';
-        a.target = '_blank';
-        a.innerText = title || 'show image';
-        const heightWidth = `height: ${img.clientHeight ? `${Number(img.clientHeight)}px` : 'auto'}; width: ${img.clientWidth ? `${Number(img.clientWidth)}px` : 'auto'};`;
-        a.setAttribute('style', `text-decoration: none; background: #FAFAFA; padding: 4px; border: 1px dotted #CACACA; display: inline-block; ${heightWidth}`);
-        img.outerHTML = a.outerHTML; // xss-safe-value - "a" was build using dom node api
-      }
-      if ('target' in node) { // open links in new window
-        (node as Element).setAttribute('target', '_blank');
-      }
-    });
-    const cleanHtml = DOMPurify.sanitize(dirtyHtml, {
-      SAFE_FOR_JQUERY: true,
-      ADD_ATTR: Xss.ADD_ATTR,
-      ALLOWED_TAGS: Xss.ALLOWED_HTML_TAGS,
-      ALLOWED_URI_REGEXP: Xss.sanitizeHrefRegexp(),
-    });
-    DOMPurify.removeAllHooks();
-    return cleanHtml;
-  }
-
-  public static htmlSanitizeAndStripAllTags = (dirtyHtml: string, outputNl: string): string => {
-    let html = Xss.htmlSanitizeKeepBasicTags(dirtyHtml);
-    const random = Str.sloppyRandom(5);
-    const br = `CU_BR_${random}`;
-    const blockStart = `CU_BS_${random}`;
-    const blockEnd = `CU_BE_${random}`;
-    html = html.replace(/<br[^>]*>/gi, br);
-    html = html.replace(/\n/g, '');
-    html = html.replace(/<\/(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockEnd);
-    html = html.replace(/<(p|h1|h2|h3|h4|h5|h6|ol|ul|pre|address|blockquote|dl|div|fieldset|form|hr|table)[^>]*>/gi, blockStart);
-    html = html.replace(RegExp(`(${blockStart})+`, 'g'), blockStart).replace(RegExp(`(${blockEnd})+`, 'g'), blockEnd);
-    html = html.split(blockEnd + blockStart).join(br).split(br + blockEnd).join(br);
-    let text = html.split(br).join('\n').split(blockStart).filter(v => !!v).join('\n').split(blockEnd).filter(v => !!v).join('\n');
-    text = text.replace(/\n{2,}/g, '\n\n');
-    // not all tags were removed above. Remove all remaining tags
-    text = DOMPurify.sanitize(text, { SAFE_FOR_JQUERY: true, ALLOWED_TAGS: [] });
-    text = text.trim();
-    if (outputNl !== '\n') {
-      text = text.replace(/\n/g, outputNl);
-    }
-    return text;
-  }
-
-  public static escape = (str: string) => str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;');
-
-  public static htmlUnescape = (str: string) => {
-    // the &nbsp; at the end is replaced with an actual NBSP character, not a space character. IDE won't show you the difference. Do not change.
-    return str.replace(/&#x2F;/g, '/').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ');
-  }
-
-  private static sanitizeHrefRegexp = () => { // allow href links that have same origin as our extension + cid
-    if (typeof Xss.HREF_REGEX_CACHE === 'undefined') {
-      if (window && window.location && window.location.origin && window.location.origin.match(/^(?:chrome-extension|moz-extension):\/\/[a-z0-9\-]+$/g)) {
-        Xss.HREF_REGEX_CACHE = new RegExp(`^(?:(http|https|cid):|${Str.regexEscape(window.location.origin)}|[^a-z]|[a-z+.\\-]+(?:[^a-z+.\\-:]|$))`, 'i');
-      } else {
-        Xss.HREF_REGEX_CACHE = /^(?:(http|https):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i;
-      }
-    }
-    return Xss.HREF_REGEX_CACHE;
-  }
-
-}
-
-export type FactoryReplyParams = {
-  threadId?: string,
-  threadMsgId?: string,
-  addresses?: string[],
-  replyTo?: string[],
-  myEmail?: string,
-  subject?: string,
-};
-
-export class XssSafeFactory {
-
-  /**
-   * XSS WARNING
-   *
-   * Method return values are inserted directly into DOM.
-   *
-   * All public methods are expected to escape unknown content to prevent XSS.
-   *
-   * If you add or edit a method, REQUEST A SECOND SET OF EYES TO REVIEW CHANGES
-   */
-
-  private setParams: UrlParams;
-  private reloadableCls: string;
-  private destroyableCls: string;
-  private acctEmail: string;
-  private hideGmailNewMsgInThreadNotification = '<style>.ata-asE { display: none !important; visibility: hidden !important; }</style>';
-
-  constructor(acctEmail: string, parentTabId: string, reloadableCls: string = '', destroyableCls: string = '', setParams: UrlParams = {}) {
-    this.reloadableCls = Xss.escape(reloadableCls);
-    this.destroyableCls = Xss.escape(destroyableCls);
-    this.setParams = setParams;
-    this.setParams.acctEmail = acctEmail;
-    this.setParams.parentTabId = parentTabId;
-    this.acctEmail = acctEmail;
-  }
-
-  srcImg = (relPath: string) => this.extUrl(`img/${relPath}`);
-
-  private frameSrc = (path: string, params: UrlParams = {}) => {
-    for (const k of Object.keys(this.setParams)) {
-      params[k] = this.setParams[k];
-    }
-    return Env.urlCreate(path, params);
-  }
-
-  srcComposeMsg = (draftId?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), { frameId: this.newId(), isReplyBox: false, draftId, placement: 'gmail' });
-  }
-
-  srcPassphraseDialog = (longids: string[] = [], type: PassphraseDialogType) => {
-    return this.frameSrc(this.extUrl('chrome/elements/passphrase.htm'), { type, longids });
-  }
-
-  srcSubscribeDialog = (verificationEmailText?: string, placement?: Placement, isAuthErr?: boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, isAuthErr });
-  }
-
-  srcVerificationDialog = (verificationEmailText: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/verification.htm'), { verificationEmailText });
-  }
-
-  srcAttest = (attestPacket: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/attest.htm'), { attestPacket, });
-  }
-
-  srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
-    return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
-  }
-
-  srcAddFooterDialog = (placement: Placement, grandparentTabId: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/shared/footer.htm'), { placement, grandparentTabId });
-  }
-
-  srcSendingAddrDialog = (placement: Placement) => {
-    return this.frameSrc(this.extUrl('chrome/elements/sending_address.htm'), { placement });
-  }
-
-  srcPgpAttIframe = (a: Att, isEncrypted: boolean) => {
-    if (!a.id && !a.url && a.hasData()) { // data provided directly, pass as object url
-      a.url = Browser.objUrlCreate(a.getData());
-    }
-    return this.frameSrc(this.extUrl('chrome/elements/attachment.htm'), {
-      frameId: this.newId(), msgId: a.msgId, name: a.name, type: a.type, size: a.length, attId: a.id, url: a.url, isEncrypted
-    });
-  }
-
-  srcPgpBlockIframe = (message: string, msgId?: string, isOutgoing?: boolean, senderEmail?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/pgp_block.htm'), { frameId: this.newId(), message, hasPassword, msgId, senderEmail, isOutgoing, signature, short });
-  }
-
-  srcPgpPubkeyIframe = (armoredPubkey: string, isOutgoind?: boolean) => {
-    return this.frameSrc(this.extUrl('chrome/elements/pgp_pubkey.htm'), { frameId: this.newId(), armoredPubkey, minimized: Boolean(isOutgoind), });
-  }
-
-  srcReplyMsgIframe = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean) => {
-    const params: UrlParams = {
-      isReplyBox: true,
-      frameId: `frame_${Str.sloppyRandom(10)}`,
-      placement: 'gmail',
-      threadId: convoParams.threadId,
-      skipClickPrompt: Boolean(skipClickPrompt),
-      ignoreDraft: Boolean(ignoreDraft),
-      threadMsgId: convoParams.threadMsgId,
-    };
-    if (convoParams.replyTo) { // for gmail and inbox. Outlook gets this from API
-      const headers = this.resolveFromTo(convoParams.addresses || [], convoParams.myEmail || this.acctEmail, convoParams.replyTo);
-      params.to = headers.to;
-      params.from = headers.from;
-      params.subject = 'Re: ' + convoParams.subject;
-    }
-    return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);
-  }
-
-  srcStripeCheckout = () => {
-    return this.frameSrc('https://flowcrypt.com/stripe.htm', {});
-  }
-
-  metaNotificationContainer = () => {
-    return `<div class="${this.destroyableCls} webmail_notifications" style="text-align: center;"></div>`;
-  }
-
-  metaStylesheet = (file: string) => {
-    return `<link class="${this.destroyableCls}" rel="stylesheet" href="${this.extUrl(`css/${file}.css`)}" />`;
-  }
-
-  dialogPassphrase = (longids: string[], type: PassphraseDialogType) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, type), ['medium'], { scrolling: 'no' }), 'dialog-passphrase'); // xss-safe-factory
-  }
-
-  dialogSubscribe = (verifEmailText?: string, isAuthErr?: boolean) => {
-    const src = this.srcSubscribeDialog(verifEmailText, 'dialog', isAuthErr);
-    return this.divDialog_DANGEROUS(this.iframe(src, ['mediumtall'], { scrolling: 'no' }), 'dialog-subscribe'); // xss-safe-factory
-  }
-
-  dialogAddPubkey = (emails: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcAddPubkeyDialog(emails, 'gmail'), ['tall'], { scrolling: 'no' }), 'dialog-add-pubkey'); // xss-safe-factory
-  }
-
-  embeddedCompose = (draftId?: string) => {
-    return Ui.e('div', { id: 'new_message', class: 'new_message', 'data-test': 'container-new-message', html: this.iframe(this.srcComposeMsg(draftId), [], { scrolling: 'no' }) });
-  }
-
-  embeddedSubscribe = (verifEmailText: string, isAuthErr: boolean) => {
-    return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
-  }
-
-  embeddedVerification = (verifEmailText: string) => {
-    return this.iframe(this.srcVerificationDialog(verifEmailText), ['short', 'embedded'], { scrolling: 'no' });
-  }
-
-  embeddedAtta = (meta: Att, isEncrypted: boolean) => {
-    return Ui.e('span', { class: 'pgp_attachment', html: this.iframe(this.srcPgpAttIframe(meta, isEncrypted)) });
-  }
-
-  embeddedMsg = (armored: string, msgId?: string, isOutgoing?: boolean, sender?: string, hasPassword?: boolean, signature?: string | boolean, short?: string) => {
-    return this.iframe(this.srcPgpBlockIframe(armored, msgId, isOutgoing, sender, hasPassword, signature, short), ['pgp_block']) + this.hideGmailNewMsgInThreadNotification;
-  }
-
-  embeddedPubkey = (armoredPubkey: string, isOutgoing?: boolean) => {
-    return this.iframe(this.srcPgpPubkeyIframe(armoredPubkey, isOutgoing), ['pgp_block']);
-  }
-
-  embeddedReply = (convoParams: FactoryReplyParams, skipClickPrompt: boolean, ignoreDraft: boolean = false) => {
-    return this.iframe(this.srcReplyMsgIframe(convoParams, skipClickPrompt, ignoreDraft), ['reply_message']);
-  }
-
-  embeddedPassphrase = (longids: string[]) => {
-    return this.divDialog_DANGEROUS(this.iframe(this.srcPassphraseDialog(longids, 'embedded'), ['medium'], { scrolling: 'no' }), 'embedded-passphrase'); // xss-safe-factory
-  }
-
-  embeddedAttaStatus = (content: string) => {
-    return Ui.e('div', { class: 'attachment_loader', html: Xss.htmlSanitize(content) });
-  }
-
-  embeddedAttest = (attestPacket: string) => {
-    return this.iframe(this.srcAttest(attestPacket), ['short', 'embedded'], { scrolling: 'no' });
-  }
-
-  embeddedStripeCheckout = () => {
-    return this.iframe(this.srcStripeCheckout(), [], { sandbox: 'allow-forms allow-scripts allow-same-origin' });
-  }
-
-  btnCompose = (webmailName: WebMailName) => {
-    if (webmailName === 'inbox') {
-      const logo = `<div class="new_message_button y pN oX" tabindex="0" data-test="action-secure-compose"><img src="${this.srcImg('logo/logo.svg')}"/></div>`;
-      return `<div class="S ${this.destroyableCls}">${logo}<label class="bT qV" id="cryptup_compose_button_label"><div class="tv">Secure Compose</div></label></div>`;
-    } else if (webmailName === 'outlook') {
-      const btn = `<div class="new_message_button" title="New Secure Email"><img src="${this.srcImg('logo-19-19.png')}"></div>`;
-      return `<div class="_fce_c ${this.destroyableCls} cryptup_compose_button_container" role="presentation">${btn}</div>`;
-    } else {
-      const btn = `<div class="new_message_button T-I J-J5-Ji T-I-KE L3" id="flowcrypt_new_message_button" role="button" tabindex="0" data-test="action-secure-compose">Secure Compose</div>`;
-      return `<div class="${this.destroyableCls} z0">${btn}</div>`;
-    }
-  }
-
-  btnReply = () => {
-    return `<div class="${this.destroyableCls} reply_message_button"><img src="${this.srcImg('svgs/reply-icon.svg')}" /></div>`;
-  }
-
-  btnWithoutFc = () => {
-    const span = `<span>see original</span>`;
-    return `<span class="hk J-J5-Ji cryptup_convo_button show_original_conversation ${this.destroyableCls}" data-tooltip="Show conversation without FlowCrypt">${span}</span>`;
-  }
-
-  btnWithFc = () => {
-    return `<span class="hk J-J5-Ji cryptup_convo_button use_secure_reply ${this.destroyableCls}" data-tooltip="Use Secure Reply"><span>secure reply</span></span>`;
-  }
-
-  btnRecipientsUseEncryption = (webmailName: WebMailName) => {
-    if (webmailName !== 'gmail') {
-      Catch.report('switch_to_secure not implemented for ' + webmailName);
-      return '';
-    } else {
-      return '<div class="aoD az6 recipients_use_encryption">Your recipients seem to have encryption set up! <a href="#">Secure Compose</a></div>';
-    }
-  }
-
-  private extUrl = (s: string) => chrome.runtime.getURL(s);
-
-  private newId = () => `frame_${Str.sloppyRandom(10)}`;
-
-  private resolveFromTo = (secondaryEmails: string[], myEmail: string, theirEmails: string[]) => {
-    // when replaying to email I've sent myself, make sure to send it to the other person, and not myself
-    if (theirEmails.length === 1 && Value.is(theirEmails[0]).in(secondaryEmails)) {
-      return { from: theirEmails[0], to: myEmail }; // replying to myself, reverse the values to actually write to them
-    }
-    return { to: theirEmails, from: myEmail };
-  }
-
-  private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
-    const id = String(Env.urlParams(['frameId'], src).frameId);
-    const classAttribute = (classes || []).concat(this.reloadableCls).join(' ');
-    const attrs: Dict<string> = { id, class: classAttribute, src };
-    for (const name of Object.keys(elAttributes)) {
-      attrs[name] = String(elAttributes[name]);
-    }
-    return Ui.e('iframe', attrs);
-  }
-
-  // tslint:disable-next-line:variable-name
-  private divDialog_DANGEROUS = (content_MUST_BE_XSS_SAFE: string, dataTest: string) => { // xss-dangerous-function
-    return Ui.e('div', { id: 'cryptup_dialog', html: content_MUST_BE_XSS_SAFE, 'data-test': dataTest });
-  }
-
-}
-
-export class KeyCanBeFixed extends Error {
-  encrypted: OpenPGP.key.Key;
-  constructor(encrypted: OpenPGP.key.Key) {
-    super();
-    this.encrypted = encrypted;
-  }
-}
-
-export class UserAlert extends Error { }
-
-export class KeyImportUi {
-
-  private expectedLongid?: string;
-  private rejectKnown: boolean;
-  private checkEncryption: boolean;
-  private checkSigning: boolean;
-  public onBadPassphrase: VoidCallback = () => undefined;
-
-  constructor(o: { expectLongid?: string, rejectKnown?: boolean, checkEncryption?: boolean, checkSigning?: boolean }) {
-    this.expectedLongid = o.expectLongid;
-    this.rejectKnown = o.rejectKnown === true;
-    this.checkEncryption = o.checkEncryption === true;
-    this.checkSigning = o.checkSigning === true;
-  }
-
-  public initPrvImportSrcForm = (acctEmail: string, parentTabId: string | undefined) => {
-    $('input[type=radio][name=source]').off().change(function () {
-      if ((this as HTMLInputElement).value === 'file') {
-        $('.input_private_key').val('').change().prop('disabled', true);
-        $('.source_paste_container').css('display', 'none');
-        $('.source_paste_container .pass_phrase_needed').hide();
-        $('#fineuploader_button > input').click();
-      } else if ((this as HTMLInputElement).value === 'paste') {
-        $('.input_private_key').val('').change().prop('disabled', false);
-        $('.source_paste_container').css('display', 'block');
-        $('.source_paste_container .pass_phrase_needed').hide();
-      } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
-      }
-    });
-    $('.line.pass_phrase_needed .action_use_random_pass_phrase').click(Ui.event.handle(target => {
-      $('.source_paste_container .input_passphrase').val(Pgp.password.random());
-      $('.input_passphrase').attr('type', 'text');
-      $('#e_rememberPassphrase').prop('checked', true);
-    }));
-    $('.input_private_key').change(Ui.event.handle(async target => {
-      const { keys: [prv] } = await openpgp.key.readArmored(String($(target).val()));
-      $('.input_passphrase').val('');
-      if (prv && prv.isPrivate() && prv.isDecrypted()) {
-        $('.line.pass_phrase_needed').show();
-      } else {
-        $('.line.pass_phrase_needed').hide();
-      }
-    }));
-    const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attach.initAttDialog('fineuploader', 'fineuploader_button');
-    attach.setAttAddedCb(async file => {
-      let prv: OpenPGP.key.Key | undefined;
-      const utf = file.getData().toUtfStr();
-      if (Value.is(Pgp.armor.headers('privateKey').begin).in(utf)) {
-        const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
-        if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-          prv = (await openpgp.key.readArmored(firstPrv.content)).keys[0];
-        }
-      } else {
-        prv = (await openpgp.key.read(file.getData())).keys[0];
-      }
-      if (typeof prv !== 'undefined') {
-        $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
-        $('.source_paste_container').css('display', 'block');
-      } else {
-        $('.input_private_key').val('').change().prop('disabled', false);
-        await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
-        $('input[type=radio][name=source]').removeAttr('checked');
+  public static toast = async (msg: string): Promise<void> => {
+    await Swal.fire({
+      toast: true,
+      title: msg,
+      showConfirmButton: false,
+      animation: false,
+      position: 'bottom',
+      timer: 2000,
+      customClass: {
+        popup: 'ui-toast',
+        title: 'ui-toast-title'
       }
     });
   }
-
-  checkPrv = async (acctEmail: string, armored: string, passphrase: string): Promise<KeyImportUiCheckResult> => {
-    const { normalized } = await this.normalize('privateKey', armored);
-    const decrypted = await this.read('privateKey', normalized);
-    const encrypted = await this.read('privateKey', normalized);
-    const longid = await this.longid(decrypted);
-    this.rejectIfNot('privateKey', decrypted);
-    await this.rejectKnownIfSelected(acctEmail, decrypted);
-    this.rejectIfDifferentFromSelectedLongid(longid);
-    await this.decryptAndEncryptAsNeeded(decrypted, encrypted, passphrase);
-    await this.checkEncryptionPrvIfSelected(decrypted, encrypted);
-    await this.checkSigningIfSelected(decrypted);
-    return { normalized, longid, passphrase, fingerprint: (await Pgp.key.fingerprint(decrypted))!, decrypted, encrypted }; // will have fp if had longid
-  }
-
-  checkPub = async (armored: string): Promise<string> => {
-    const { normalized } = await this.normalize('publicKey', armored);
-    const parsed = await this.read('publicKey', normalized);
-    await this.longid(parsed);
-    await this.checkEncryptionPubIfSelected(normalized);
-    return normalized;
-  }
-
-  private normalize = async (type: KeyBlockType, armored: string) => {
-    const headers = Pgp.armor.headers(type);
-    const normalized = await Pgp.key.normalize(armored);
-    if (!normalized) {
-      throw new UserAlert('There was an error processing this key, possibly due to bad formatting.\nPlease insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
-    }
-    return normalized;
-  }
-
-  private read = async (type: KeyBlockType, normalized: string) => {
-    const headers = Pgp.armor.headers(type);
-    const { keys: [k] } = await openpgp.key.readArmored(normalized);
-    if (typeof k === 'undefined') {
-      throw new UserAlert('Private key is not correctly formated. Please insert complete key, including "' + headers.begin + '" and "' + headers.end + '"');
-    }
-    return k;
-  }
-
-  private longid = async (k: OpenPGP.key.Key) => {
-    const longid = await Pgp.key.longid(k);
-    if (!longid) {
-      throw new UserAlert('This key may not be compatible. Email human@flowcrypt.com and const us know which software created this key.\n\n(error: cannot get long_id)');
-    }
-    return longid;
-  }
-
-  private rejectIfNot = (type: KeyBlockType, k: OpenPGP.key.Key) => {
-    const headers = Pgp.armor.headers(type);
-    if (type === 'privateKey' && k.isPublic()) {
-      throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
-    }
-    if (type === 'publicKey' && !k.isPublic()) {
-      throw new UserAlert('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + headers.begin + '"');
-    }
-  }
-
-  private rejectKnownIfSelected = async (acctEmail: string, k: OpenPGP.key.Key) => {
-    if (this.rejectKnown) {
-      const keyinfos = await Store.keysGet(acctEmail);
-      const privateKeysLongids = keyinfos.map(ki => ki.longid);
-      if (Value.is(await Pgp.key.longid(k)).in(privateKeysLongids)) {
-        throw new UserAlert('This is one of your current keys, try another one.');
-      }
-    }
-  }
-
-  private rejectIfDifferentFromSelectedLongid = (longid: string) => {
-    if (this.expectedLongid && longid !== this.expectedLongid) {
-      throw new UserAlert(`Key does not match. Looking for key with KeyWords ${mnemonic(this.expectedLongid)} (${this.expectedLongid})`);
-    }
-  }
-
-  private decryptAndEncryptAsNeeded = async (toDecrypt: OpenPGP.key.Key, toEncrypt: OpenPGP.key.Key, passphrase: string): Promise<void> => {
-    if (!passphrase) {
-      throw new UserAlert('Please enter a pass phrase to use with this key');
-    }
-    let decryptResult;
-    try {
-      if (toEncrypt.isDecrypted()) {
-        await toEncrypt.encrypt(passphrase);
-      }
-      if (toDecrypt.isDecrypted()) {
-        return;
-      }
-      decryptResult = await Pgp.key.decrypt(toDecrypt, [passphrase]);
-    } catch (e) {
-      throw new UserAlert(`This key is not supported by FlowCrypt yet. Please write at human@flowcrypt.com to add support soon. (decrypt error: ${String(e)})`);
-    }
-    if (!decryptResult) {
-      this.onBadPassphrase();
-      if (this.expectedLongid) {
-        // tslint:disable-next-line:max-line-length
-        throw new UserAlert('This is the right key! However, the pass phrase does not match. Please try a different pass phrase. Your original pass phrase might have been different then what you use now.');
-      } else {
-        throw new UserAlert('The pass phrase does not match. Please try a different pass phrase.');
-      }
-    }
-  }
-
-  private checkEncryptionPrvIfSelected = async (k: OpenPGP.key.Key, encrypted: OpenPGP.key.Key) => {
-    if (this.checkEncryption && ! await k.getEncryptionKey()) {
-      if (await k.verifyPrimaryKey() === openpgp.enums.keyStatus.no_self_cert || await Pgp.key.usableButExpired(k)) { // known issues - key can be fixed
-        throw new KeyCanBeFixed(encrypted);
-      } else {
-        throw new UserAlert('This looks like a valid key but it cannot be used for encryption. Please write at human@flowcrypt.com to see why is that.');
-      }
-    }
-  }
-
-  private checkEncryptionPubIfSelected = async (normalized: string) => {
-    if (this.checkEncryption && !await Pgp.key.usable(normalized)) {
-      throw new UserAlert('This public key looks correctly formatted, but cannot be used for encryption. Please write at human@flowcrypt.com. We\'ll see if there is a way to fix it.');
-    }
-  }
-
-  private checkSigningIfSelected = async (k: OpenPGP.key.Key) => {
-    if (this.checkSigning && ! await k.getSigningKey()) {
-      throw new UserAlert('This looks like a valid key but it cannot be used for signing. Please write at human@flowcrypt.com to see why is that.');
-    }
-  }
-}
-
-export class AttUI {
-
-  private templatePath = '/chrome/elements/shared/attach.template.htm';
-  private getLimits: () => Promise<AttLimits>;
-  private attachedFiles: Dict<File> = {};
-  private uploader: any = undefined;
-  private attAddedCb?: (r: Att) => Promise<void>;
-
-  constructor(getLimits: () => Promise<AttLimits>) {
-    this.getLimits = getLimits;
-  }
-
-  initAttDialog = (elId: string, btnId: string) => {
-    $('#qq-template').load(this.templatePath, () => {
-      const config = {
-        autoUpload: false,
-        // debug: true,
-        element: $('#' + elId).get(0),
-        button: $('#' + btnId).get(0),
-        dragAndDrop: {
-          extraDropzones: $('#input_text'),
-        },
-        callbacks: {
-          onSubmitted: (id: string, name: string) => this.processNewAtt(id, name).catch(Catch.handleErr),
-          onCancel: (id: string) => Catch.try(() => this.cancelAtt(id))(),
-        },
-      };
-      this.uploader = new qq.FineUploader(config); // tslint:disable-line:no-unsafe-any
-    });
-  }
-
-  setAttAddedCb = (cb: (r: Att) => Promise<void>) => {
-    this.attAddedCb = cb;
-  }
-
-  hasAtt = () => {
-    return Object.keys(this.attachedFiles).length > 0;
-  }
-
-  getAttIds = () => {
-    return Object.keys(this.attachedFiles);
-  }
-
-  collectAtt = async (id: string) => {
-    const fileData = await this.readAttDataAsUint8(id);
-    return new Att({ name: this.attachedFiles[id].name, type: this.attachedFiles[id].type, data: fileData });
-  }
-
-  collectAtts = async () => {
-    const atts: Att[] = [];
-    for (const id of Object.keys(this.attachedFiles)) {
-      atts.push(await this.collectAtt(id));
-    }
-    return atts;
-  }
-
-  collectEncryptAtts = async (pubkeys: string[], pwd?: Pwd): Promise<Att[]> => {
-    const atts: Att[] = [];
-    for (const id of Object.keys(this.attachedFiles)) {
-      const file = this.attachedFiles[id];
-      const data = await this.readAttDataAsUint8(id);
-      const encrypted = await PgpMsg.encrypt({ pubkeys, data, pwd, filename: file.name, armor: false }) as OpenPGP.EncryptBinaryResult;
-      atts.push(new Att({ name: file.name.replace(/[^a-zA-Z\-_.0-9]/g, '_').replace(/__+/g, '_') + '.pgp', type: file.type, data: encrypted.message.packets.write() }));
-    }
-    return atts;
-  }
-
-  private cancelAtt = (id: string) => {
-    delete this.attachedFiles[id];
-  }
-
-  private processNewAtt = async (id: string, name: string) => {
-    const limits = await this.getLimits();
-    if (limits.count && Object.keys(this.attachedFiles).length >= limits.count) {
-      await Ui.modal.warning('Amount of attached files is limited to ' + limits.count);
-      this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
-    } else {
-      const newFile: File = this.uploader.getFile(id); // tslint:disable-line:no-unsafe-any
-      if (limits.size && this.getFileSizeSum() + newFile.size > limits.size) {
-        this.uploader.cancel(id); // tslint:disable-line:no-unsafe-any
-        if (typeof limits.oversize === 'function') {
-          await limits.oversize(this.getFileSizeSum() + newFile.size);
-        } else {
-          await Ui.modal.warning('Combined file size is limited to ' + limits.sizeMb + 'MB');
-        }
-        return;
-      }
-      this.attachedFiles[id] = newFile;
-      if (typeof this.attAddedCb === 'function') {
-        const a = await this.collectAtt(id);
-        await this.attAddedCb(a);
-      }
-    }
-  }
-
-  private getFileSizeSum = () => {
-    let sum = 0;
-    for (const file of Object.values(this.attachedFiles)) {
-      sum += file.size;
-    }
-    return sum;
-  }
-
-  private readAttDataAsUint8 = (id: string): Promise<Uint8Array> => {
-    return new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        resolve(new Uint8Array(reader.result as ArrayBuffer)); // that's what we're getting
-      };
-      reader.readAsArrayBuffer(this.attachedFiles[id]);
-    });
-  }
-
 }

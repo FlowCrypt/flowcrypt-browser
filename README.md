@@ -1,11 +1,8 @@
 # FlowCrypt: Encrypt Gmail with PGP
 
-
 ## Users
 
 Get [FlowCrypt](https://flowcrypt.com/) browser extension at: https://flowcrypt.com/download
-
-
 
 ## Developers
 
@@ -26,7 +23,7 @@ $ cd some/folder/flowcrypt-browser
 $ npm install
 ```
 
-To build the project:
+To build the project (for now Linux and Mac only)
 ```
 $ npm run-script build
 
@@ -52,4 +49,8 @@ $ npm run-script build
 [02:42:12] Finished 'default' after 7.97 s
 ```
 
-Now you can find your built project in `build/chrome` and `build/firefox`
+Now you can find your built project in `build/chrome-consumer` and `build/firefox-consumer`
+
+[FlowCrypt Project Structure and Overview](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-Project-Structure-and-Overview)
+
+[FlowCrypt TypeScript Style Guide](https://github.com/FlowCrypt/flowcrypt-browser/wiki/FlowCrypt-TypeScript-Style-Guide)

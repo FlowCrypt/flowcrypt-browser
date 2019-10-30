@@ -1,0 +1,21 @@
+##########################################################################################
+# Customize file classifications.                                                        #
+# Results from files under any classifier will be excluded from LGTM                     #
+# statistics.                                                                            #
+##########################################################################################
+
+path_classifiers:
+  library:
+    - extension/lib
+    - extension/types
+
+#########################################################################################
+# Use the `queries` block to change the default display of query results.               #
+#########################################################################################
+
+queries:
+  - include: "*"
+  - exclude: js/jsdoc/malformed-param-tag
+  - exclude: js/jsdoc/missing-parameter
+  - exclude: js/jsdoc/unknown-parameter
+  - exclude: js/too-many-parameters

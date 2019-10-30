@@ -2,8 +2,9 @@
 
 'use strict';
 
-import { Xss, Env } from '../../js/common/browser.js';
+import { Env } from '../../js/common/browser.js';
 import { Lang } from '../../js/common/lang.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 const uncheckedUrlParams = Env.urlParams(['reason', 'stack']);
 const reason = String(uncheckedUrlParams.reason);
@@ -23,7 +24,8 @@ const dbCorruptedHtml = `
   <p>Email human@flowcrypt.com if you need any help.</p>
 `;
 
-const checkFfSettings = `If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser about:config.`;
+const checkFfSettings = `If you are on Firefox, check that <b>indexedDB.enabled</b> is set to <b>true</b> in browser about:config
+                        or check if Firefox remembers history in <b>Options/Preferences</b> -> <b>Privacy & Security</b> -> <b>History</b>.`;
 
 if (reason === 'db_corrupted') {
   title.text('FlowCrypt cannot function because your Browser Profile is corrupted.');

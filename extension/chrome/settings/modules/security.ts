@@ -4,25 +4,28 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Xss, Ui, Env } from '../../../js/common/browser.js';
+import { Ui, Env } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Value } from '../../../js/common/core/common.js';
+import { Backend } from '../../../js/common/api/backend.js';
+import { Assert } from '../../../js/common/assert.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'embedded', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const embedded = uncheckedUrlParams.embedded === true;
 
-  await Ui.passphraseToggle(['passphrase_entry']);
+  await initPassphraseToggle(['passphrase_entry']);
 
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi, false);
   if (!primaryKi) {
     return; // added do_throw=false above + manually exiting here because security.htm can indeed be commonly rendered on setup page before setting acct up
   }
@@ -37,13 +40,13 @@ Catch.try(async () => {
   const onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Api.fc.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
+    await Backend.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 
   const onMsgLanguageUserChange = async () => {
     const outgoingLanguage = String($('.password_message_language').val());
-    if (Value.is(outgoingLanguage).in(['EN', 'DE'])) {
+    if (['EN', 'DE'].includes(outgoingLanguage)) {
       await Store.setAcct(acctEmail, { outgoing_language: outgoingLanguage as 'DE' | 'EN' });
       window.location.reload();
     }
@@ -57,6 +60,11 @@ Catch.try(async () => {
     $('.passhprase_checkbox_container').css('display', 'none');
     $('.passphrase_entry_container').css('display', 'block');
   }));
+  $('#passphrase_entry').keydown(event => {
+    if (event.which === 13) {
+      $('.confirm_passphrase_requirement_change').click();
+    }
+  });
 
   $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
 
@@ -75,7 +83,7 @@ Catch.try(async () => {
       }
     } else { // save pass phrase
       const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-      if (await Pgp.key.decrypt(prv, [String($('input#passphrase_entry').val())]) === true) {
+      if (await Pgp.key.decrypt(prv, String($('input#passphrase_entry').val())) === true) {
         await Store.passphraseSave('local', acctEmail, primaryKi.longid, String($('input#passphrase_entry').val()));
         window.location.reload();
       } else {
@@ -100,7 +108,7 @@ Catch.try(async () => {
   if (subscription.active) {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await Api.fc.accountUpdate();
+      const response = await Backend.accountUpdate();
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));
@@ -111,7 +119,7 @@ Catch.try(async () => {
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         Xss.sanitizeRender('.expiration_container', '(unknown error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       }
     }

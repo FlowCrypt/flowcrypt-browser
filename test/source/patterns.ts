@@ -28,27 +28,22 @@ const hasErrHandledComment = (line: string) => {
 };
 
 const validateLine = (line: string, location: string) => {
-
   if (line.match(/\.(innerHTML|outerHTML) ?= ?/) && !hasXssComment(line)) {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
-
-  if (line.match(/\.(html|append|prepend|replaceWith)\([^)]/) && !hasXssComment(line)) {
+  if (line.match(/\.(html|append|prepend|replaceWith|insertBefore|insertAfter)\([^)]/) && !hasXssComment(line)) {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
-
-  if (line.match(/DANGEROUS/i) && !hasXssComment(line)) {
+  if (line.match(/DANGEROUS/i) && !hasXssComment(line) && !line.includes(' is dangerous ')) {
     console.error(`unchecked xss in ${location}:\n${line}\n`);
     errsFound++;
   }
-
   if (line.match(/setInterval|setTimeout/) && !hasErrHandledComment(line)) {
-    console.error(`errors not handled in ${location}:\n${line}\n`);
+    console.error(`errors not handled in ${location} (make sure to use Catch.setHandledTimeout or Catch.setHandledInterval):\n${line}\n`);
     errsFound++;
   }
-
 };
 
 const srcFilePaths = getAllFilesInDir('./extension', /\.ts$/);

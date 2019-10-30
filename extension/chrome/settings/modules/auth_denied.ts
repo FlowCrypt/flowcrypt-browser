@@ -7,13 +7,14 @@ import { Store } from '../../../js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { GoogleAuth } from '../../../js/common/api/google.js';
+import { Assert } from '../../../js/common/assert.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
-  const acctEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const emailProvider = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';
+  const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const emailProvider = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';
 
   const renderSetupDone = (setupDone: boolean) => {
     if (setupDone) {

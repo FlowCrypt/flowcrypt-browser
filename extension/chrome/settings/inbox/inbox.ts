@@ -4,24 +4,28 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value, Str, Dict } from '../../../js/common/core/common.js';
-import { Xss, Ui, XssSafeFactory, Env, UrlParams, FactoryReplyParams } from '../../../js/common/browser.js';
+import { Str, Dict } from '../../../js/common/core/common.js';
+import { Ui, Env, UrlParams } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
-import { Api, R } from '../../../js/common/api/api.js';
+import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../../js/common/extension.js';
 import { Mime } from '../../../js/common/core/mime.js';
 import { Lang } from '../../../js/common/lang.js';
-import { Google, GoogleAuth } from '../../../js/common/api/google.js';
+import { Google, GoogleAuth, GoogleAcctNotConnected, GmailRes } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { Assert } from '../../../js/common/assert.js';
+import { XssSafeFactory, FactoryReplyParams } from '../../../js/common/xss_safe_factory.js';
+import { Xss } from '../../../js/common/platform/xss.js';
+import { WebmailCommon } from "../../../js/common/webmail.js";
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
-  const threadId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
+  const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
   const showOriginal = uncheckedUrlParams.showOriginal === true;
 
   let threadHasPgpBlock = false;
@@ -29,7 +33,8 @@ Catch.try(async () => {
   let factory: XssSafeFactory;
   let injector: Injector;
   let notifications: Notifications;
-  let allLabels: R.GmailLabels$label[];
+  let allLabels: GmailRes.GmailLabels$label[];
+  let webmailCommon: WebmailCommon;
 
   const S = Ui.buildJquerySels({ // tslint:disable-line:oneliner-object-literal
     threads: '.threads',
@@ -37,14 +42,17 @@ Catch.try(async () => {
     body: 'body',
   });
 
-  const LABEL = { INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES' };
+  const LABEL: Dict<GmailRes.GmailMsg$labelId> = {
+    INBOX: 'INBOX', UNREAD: 'UNREAD', CATEGORY_PERSONAL: 'CATEGORY_PERSONAL', IMPORTANT: 'IMPORTANT', SENT: 'SENT', CATEGORY_UPDATES: 'CATEGORY_UPDATES'
+  };
   const FOLDERS = ['INBOX', 'STARRED', 'SENT', 'DRAFT', 'TRASH']; // 'UNREAD', 'SPAM'
 
   const tabId = await BrowserMsg.requiredTabId();
   notifications = new Notifications(tabId);
   factory = new XssSafeFactory(acctEmail, tabId);
   injector = new Injector('settings', undefined, factory);
-  const storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'addresses']);
+  webmailCommon = new WebmailCommon(acctEmail, injector);
+  const storage = await Store.getAcct(acctEmail, ['email_provider', 'picture', 'sendAs']);
   emailProvider = storage.email_provider || 'gmail';
   S.cached('body').prepend(factory.metaNotificationContainer()); // xss-safe-factory
   if (storage.picture) {
@@ -53,6 +61,7 @@ Catch.try(async () => {
     }));
   }
 
+  $('.action_open_webmail').attr('href', Google.webmailUrl(acctEmail));
   $('.action_open_settings').click(Ui.event.handle(self => BrowserMsg.send.bg.settings({ acctEmail })));
   $('.action_choose_account').get(0).title = acctEmail;
   $(".action-toggle-accounts-menu").click(Ui.event.handle((target, event) => {
@@ -70,11 +79,14 @@ Catch.try(async () => {
     $('body').one('click', Ui.event.handle(notifications.clear));
   };
 
+  const every30Sec = async () => {
+    await webmailCommon.addOrRemoveEndSessionBtnIfNeeded();
+  };
+
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 500);
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 1000);
   Catch.setHandledTimeout(() => $('#banner a').css('color', 'red'), 1500);
   Catch.setHandledTimeout(() => $('#banner a').css('color', ''), 2000);
-
   BrowserMsg.addListener('notification_show', notificationShowHandler);
   BrowserMsg.addListener('close_new_message', async () => {
     $('div.new_message').remove();
@@ -87,7 +99,10 @@ Catch.try(async () => {
   });
   BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
-      $('body').append(factory.dialogPassphrase(longids, type)); // xss-safe-factory
+      $('body').append(factory.dialogPassphrase(longids, type))  // xss-safe-factory;
+        .click(Ui.event.handle(e => { // click on the area outside the iframe
+          $('#cryptup_dialog').remove();
+        }));
     }
   });
   BrowserMsg.addListener('subscribe_dialog', async ({ isAuthErr }: Bm.SubscribeDialog) => {
@@ -126,16 +141,17 @@ Catch.try(async () => {
   BrowserMsg.addListener('notification_show_auth_popup_needed', async ({ acctEmail }: Bm.NotificationShowAuthPopupNeeded) => {
     notifications.showAuthPopupNeeded(acctEmail);
   });
+  BrowserMsg.addListener('add_end_session_btn', () => injector.insertEndSessionBtn(acctEmail));
   BrowserMsg.listen(tabId);
 
-  const updateUrl = (title: string, params: UrlParams) => {
+  const updateUrlWithoutRedirecting = (title: string, params: UrlParams) => {
     const newUrlSearch = Env.urlCreate('', params);
     if (newUrlSearch !== window.location.search) {
       window.history.pushState({}, title, newUrlSearch);
     }
   };
 
-  const loadUrl = (params: UrlParams) => {
+  const redirectToUrl = (params: UrlParams) => {
     const newUrlSearch = Env.urlCreate('', params);
     if (newUrlSearch !== window.location.search) {
       window.location.search = newUrlSearch;
@@ -204,7 +220,7 @@ Catch.try(async () => {
     }
   };
 
-  const renderableLabels = (labelIds: (R.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
+  const renderableLabels = (labelIds: (GmailRes.GmailMsg$labelId | string)[], placement: 'messages' | 'menu' | 'labels') => {
     return labelIds.map(id => renderableLabel(id, placement)).join('');
   };
 
@@ -215,18 +231,17 @@ Catch.try(async () => {
       const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
       const firstMsg = thread.messages[0];
       const lastMsg = thread.messages[thread.messages.length - 1];
-
       threadItem.find('.subject').text(Google.gmail.findHeader(firstMsg, 'subject') || '(no subject)');
       Xss.sanitizeAppend(threadItem.find('.subject'), renderableLabels(firstMsg.labelIds || [], 'messages'));
       const fromHeaderVal = Google.gmail.findHeader(firstMsg, 'from');
       if (fromHeaderVal) {
         const from = Str.parseEmail(fromHeaderVal);
-        threadItem.find('.from').text(from.name || from.email);
+        threadItem.find('.from').text(from.name || from.email || from.full);
       }
       threadItem.find('.loading').text('');
       threadItem.find('.date').text(formatDate(lastMsg.internalDate));
       threadItem.addClass('loaded').click(Ui.event.handle(() => renderThread(thread.id, thread)));
-      if (Value.is(LABEL.UNREAD).in(lastMsg.labelIds || [])) {
+      if (lastMsg.labelIds && lastMsg.labelIds.includes(LABEL.UNREAD)) {
         threadItem.css({ 'font-weight': 'bold', 'background': 'white' });
       }
       if (thread.messages.length > 1) {
@@ -240,13 +255,13 @@ Catch.try(async () => {
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         showNotification(Lang.account.googleAcctDisabled);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         threadItem.find('.loading').text('Failed to load');
       }
     }
   };
 
-  const addLabelStyles = (labels: R.GmailLabels$label[]) => {
+  const addLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     let style = '';
     for (const label of labels) {
       if (label.color) {
@@ -263,11 +278,11 @@ Catch.try(async () => {
     for (const cls of labelEl.classList) {
       const labelId = (cls.match(/^label_([a-zA-Z0-9_]+)$/) || [])[1];
       if (labelId) {
-        loadUrl({ acctEmail, labelId });
+        redirectToUrl({ acctEmail, labelId });
         return;
       }
     }
-    loadUrl({ acctEmail });
+    redirectToUrl({ acctEmail });
   };
 
   const getLabelName = (labelId: string) => {
@@ -281,7 +296,7 @@ Catch.try(async () => {
     return `UNKNOWN LABEL: ${labelId}`;
   };
 
-  const renderMenuAndLabelStyles = (labels: R.GmailLabels$label[]) => {
+  const renderMenuAndLabelStyles = (labels: GmailRes.GmailLabels$label[]) => {
     allLabels = labels;
     addLabelStyles(labels);
     Xss.sanitizeAppend('.menu', `<br>${renderableLabels(FOLDERS, 'menu')}<div class="button gray2 label label_ALL">ALL MAIL</div><br>`);
@@ -310,8 +325,11 @@ Catch.try(async () => {
         showNotification(Lang.account.googleAcctDisabled);
       } else if (Api.err.isInsufficientPermission(e)) {
         renderAndHandleAuthPopupNotification(true);
+      } else if (e instanceof GoogleAcctNotConnected) {
+        await Ui.modal.error('Error: Google account not connected to Browser Extension');
+        BrowserMsg.send.bg.settings({ acctEmail });
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         showNotification(`Error trying to get list of folders ${Ui.retryLink()}`);
       }
     }
@@ -337,25 +355,25 @@ Catch.try(async () => {
       } else if (Api.err.isInsufficientPermission(e)) {
         renderAndHandleAuthPopupNotification(true);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         showNotification(`Error trying to get list of messages ${Ui.retryLink()}`);
       }
     }
   };
 
-  const renderThread = async (threadId: string, thread?: R.GmailThread) => {
+  const renderThread = async (threadId: string, thread?: GmailRes.GmailThread) => {
     displayBlock('thread', 'Loading..');
     try {
       thread = thread || await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
       const subject = Google.gmail.findHeader(thread.messages[0], 'subject') || '(no subject)';
-      updateUrl(`${subject} - FlowCrypt Inbox`, { acctEmail, threadId });
+      updateUrlWithoutRedirecting(`${subject} - FlowCrypt Inbox`, { acctEmail, threadId });
       displayBlock('thread', subject);
       for (const m of thread.messages) {
         await renderMsg(m);
       }
       if (threadHasPgpBlock) {
         $(".action_see_original_message").css('display', 'inline-block');
-        $(".action_see_original_message").click(Ui.event.handle(() => loadUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
+        $(".action_see_original_message").click(Ui.event.handle(() => redirectToUrl({ acctEmail, threadId, showOriginal: !showOriginal })));
         if (showOriginal) {
           $(".action_see_original_message").text('See Decrypted');
         }
@@ -370,7 +388,7 @@ Catch.try(async () => {
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         showNotification(Lang.account.googleAcctDisabled);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeRender('.thread', `<br>Failed to load thread due to the following error: <pre>${printable}</pre>`);
       }
@@ -381,7 +399,7 @@ Catch.try(async () => {
     return Ui.e('div', { id, class: 'message line', html });
   };
 
-  const renderMsg = async (message: R.GmailMsg) => {
+  const renderMsg = async (message: GmailRes.GmailMsg) => {
     const htmlId = threadMsgId(message.id);
     const from = Google.gmail.findHeader(message, 'from') || 'unknown';
     try {
@@ -389,22 +407,24 @@ Catch.try(async () => {
       const mimeMsg = Buf.fromBase64UrlStr(raw!);
       const { blocks, headers } = await Mime.process(mimeMsg);
       let r = '';
+      let renderedAtts = '';
       for (const block of blocks) {
-        if (block.type === 'message' || block.type === 'publicKey' || block.type === 'signedMsg' || block.type === 'passwordMsg') {
+        if (block.type === 'encryptedMsg' || block.type === 'publicKey' || block.type === 'privateKey' || block.type === 'signedMsg' || block.type === 'encryptedMsgLink') {
           threadHasPgpBlock = true;
         }
         if (r) {
           r += '<br><br>';
         }
-        if (showOriginal) {
-          r += Xss.escape(block.content).replace(/\n/g, '<br>');
+        if (block.type === 'encryptedAtt') {
+          renderedAtts += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.sendAs && !!storage.sendAs[from]);
+        } else if (showOriginal) {
+          r += Xss.escape(block.content.toString()).replace(/\n/g, '<br>');
         } else {
-          r += Ui.renderableMsgBlock(factory, block, message.id, from, Value.is(from).in(storage.addresses || []));
+          r += XssSafeFactory.renderableMsgBlock(factory, block, message.id, from, storage.sendAs && !!storage.sendAs[from]);
         }
       }
-      const { atts } = await Mime.decode(mimeMsg);
-      if (atts.length) {
-        r += `<div class="attachments">${atts.filter(a => a.treatAs() === 'encrypted').map(a => factory.embeddedAtta(a, true)).join('')}</div>`;
+      if (renderedAtts) {
+        r += `<div class="attachments">${renderedAtts}</div>`;
       }
       r = `<p class="message_header" data-test="container-msg-header">From: ${Xss.escape(from)} <span style="float:right;">${headers.date}</p>` + r;
       $('.thread').append(wrapMsg(htmlId, r)); // xss-safe-factory
@@ -416,21 +436,18 @@ Catch.try(async () => {
       } else if (Api.err.isMailOrAcctDisabled(e)) {
         showNotification(Lang.account.googleAcctDisabled);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         const printable = Xss.escape(e instanceof Error ? e.stack || e.message : JSON.stringify(e, undefined, 2));
         Xss.sanitizeAppend('.thread', wrapMsg(htmlId, `Failed to load a message due to the following error: <pre>${printable}</pre>`));
       }
     }
   };
 
-  const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: R.GmailMsg) => {
+  const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: GmailRes.GmailMsg) => {
     let params: FactoryReplyParams;
     if (lastMsg) {
-      const to = Google.gmail.findHeader(lastMsg, 'to');
-      const toArr = to ? to.split(',').map(Str.parseEmail).map(e => e.email).filter(e => e) : [];
-      const headers = Api.common.replyCorrespondents(acctEmail, storage.addresses || [], Google.gmail.findHeader(lastMsg, 'from'), toArr);
       const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
-      params = { subject, replyTo: headers.to, addresses: storage.addresses || [], myEmail: headers.from, threadId, threadMsgId };
+      params = { subject, sendAs: storage.sendAs, threadId, threadMsgId };
     } else {
       params = { threadId, threadMsgId };
     }
@@ -472,4 +489,7 @@ Catch.try(async () => {
   }
 
   await Settings.populateAccountsMenu('inbox.htm');
+
+  await every30Sec();
+  Catch.setHandledInterval(every30Sec, 30000);
 })();

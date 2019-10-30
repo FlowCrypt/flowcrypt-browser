@@ -8,14 +8,17 @@ import { Ui, Env } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
+import { Assert } from '../../../js/common/assert.js';
+import { Attester } from '../../../js/common/api/attester.js';
+import { Api } from '../../../js/common/api/api.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const longid = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
   const showKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
 
   $('.action_show_public_key').attr('href', showKeyUrl);
@@ -24,7 +27,7 @@ Catch.try(async () => {
 
   const [primaryKi] = await Store.keysGet(acctEmail, [longid]);
 
-  Ui.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
+  Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
 
   $('.email').text(acctEmail);
   $('.key_words').text(primaryKi.keywords).attr('title', primaryKi.longid);
@@ -40,7 +43,7 @@ Catch.try(async () => {
       await Ui.modal.warning('This was a public key. Please insert a private key instead. It\'s a block of text starting with "' + prvHeaders.begin + '"');
     } else if (await Pgp.key.fingerprint(uddatedKey) !== await Pgp.key.fingerprint(primaryKi.public)) {
       await Ui.modal.warning(`This key ${await Pgp.key.longid(uddatedKey)} does not match your current key ${primaryKi.longid}`);
-    } else if (await Pgp.key.decrypt(uddatedKey, [uddatedKeyPassphrase]) !== true) {
+    } else if (await Pgp.key.decrypt(uddatedKey, uddatedKeyPassphrase) !== true) {
       await Ui.modal.error('The pass phrase does not match.\n\nPlease enter pass phrase of the newly updated key.');
     } else {
       if (await uddatedKey.getEncryptionKey()) {
@@ -64,7 +67,16 @@ Catch.try(async () => {
     await Store.keysAdd(acctEmail, updatedPrv.armor());
     await Store.passphraseSave('local', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? updatedPrvPassphrase : undefined);
     await Store.passphraseSave('session', acctEmail, primaryKi.longid, typeof storedPassphrase !== 'undefined' ? undefined : updatedPrvPassphrase);
-    await Ui.modal.info('Public and private key updated.\n\nPlease send updated PUBLIC key to human@flowcrypt.com to update Attester records.');
+    if (await Ui.modal.confirm('Public and private key updated locally.\n\nUpdate public records with new Public Key?')) {
+      try {
+        await Ui.modal.info(await Attester.updatePubkey(primaryKi.longid, updatedPrv.toPublic().armor()));
+      } catch (e) {
+        if (Api.err.isSignificant(e)) {
+          Catch.reportErr(e);
+        }
+        await Ui.modal.error(`Error updating public records:\n\n${Api.err.eli5(e)}\n\n(but local update was successful)`);
+      }
+    }
     window.location.href = showKeyUrl;
   };
 

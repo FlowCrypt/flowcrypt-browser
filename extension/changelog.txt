@@ -1,5 +1,83 @@
 <div>
 
+version 7.0.6 on Oct 20, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/359?closed=1" target="_blank">Contact search bugfix</a>
+
+version 7.0.5 on Oct 18, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/358?closed=1" target="_blank">Write pass phrase down</a>
+
+version 7.0.4 on Oct 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/357?closed=1" target="_blank">Fix sendAs migration</a>
+
+version 7.0.3 on Oct 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/356?closed=1" target="_blank">Google Contacts</a>
+
+version 7.0.2 on Sep 12, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/355?closed=1" target="_blank">Expired Public Keys</a>
+
+version 7.0.1 on Sep 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/354?closed=1" target="_blank">Firefox Content Script fix</a>
+
+version 7.0.0 on Sep 4, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/353?closed=1" target="_blank">Cc, bcc</a>
+
+version 6.9.9 on Aug 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/352?closed=1" target="_blank">Safer key checks</a>
+
+version 6.9.8 on Aug 17, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/351?closed=1" target="_blank">UX Improvements II</a>
+
+version 6.9.7 on Aug 14, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/350?closed=1" target="_blank">Defensive key encrypt/decrypt</a>
+
+version 6.9.6 on Aug 14, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/349?closed=1" target="_blank">Fix ESC close window bug</a>
+
+version 6.9.5 on Aug 14, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/348?closed=1" target="_blank">UX Fixes</a>
+
+version 6.9.4 on Aug 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/347?closed=1" target="_blank">Import contact button bugfix</a>
+
+version 6.9.3 on Aug 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/346?closed=1" target="_blank">Security fix</a>
+
+version 6.9.2 on Jul 18, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/345?closed=1" target="_blank">Send-from alias fix</a>
+
+version 6.9.1 on Jul 13, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/344?closed=1" target="_blank">Enterprise improvements</a>
+
+version 6.9.0 on Jul 10, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/343?closed=1" target="_blank">Fix reply threading</a>
+
+version 6.8.9 on Jul 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/342?closed=1" target="_blank">Fix quoting html</a>
+
+version 6.8.8 on Jul 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/341?closed=1" target="_blank">Quote previous reply</a>
+
+version 6.8.7 on Jul 4, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/340?closed=1" target="_blank">Signature verification bugfixes</a>
+
+version 6.8.6 on Jun 22, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/339?closed=1" target="_blank">Fix Gmail Scopes</a>
+
+version 6.8.5 on Jun 18, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/337?closed=1" target="_blank">Hide quoted part</a>
+
+version 6.8.4 on Jun 16, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/336?closed=1" target="_blank">Fix Detached Signatures</a>
+
+version 6.8.3 on Jun 8, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/335?closed=1" target="_blank">Keyboard Actions</a>
+
+version 6.8.2 on May 27, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/334?closed=1" target="_blank">Checkout Fix</a>
+
+version 6.8.1 on May 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/333?closed=1" target="_blank">Reply Button Bugfix</a>
+
+version 6.8.0 on May 23, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/332?closed=1" target="_blank">Bugfixes</a>
+
+version 6.7.9 on May 15, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/331?closed=1" target="_blank">Keep pubkeys up to date</a>
+
+version 6.7.8 on May 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/330?closed=1" target="_blank">Firefox re-relase</a>
+
+version 6.7.7 on May 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/329?closed=1" target="_blank">Fix inner attachment styling</a>
+
+version 6.7.6 on April 26, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/328?closed=1" target="_blank">Compose bugfixes</a>
+
+version 6.7.5 on April 20, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/327?closed=1" target="_blank">Deprecating attests</a>
+
+version 6.7.4 on April 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/326?closed=1" target="_blank">Decrypt performance</a>
+
+version 6.7.3 on April 9, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/325?closed=1" target="_blank">UX Fixes</a>
+
+version 6.7.2 on April 4, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/324?closed=1" target="_blank">Simpler MDC handling</a>
+
+version 6.7.1 on April 1, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/323?closed=1" target="_blank">Import Pubkey from file</a>
+
+version 6.7.0 on March 23, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/322?closed=1" target="_blank">Chrome 73 compatibility fixes</a>
+
+version 6.6.9 on March 11, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/321?closed=1" target="_blank">Minimize compose window</a>
+
+version 6.6.8 on March 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/320?closed=1" target="_blank">Fix decrypt files with session pass phrase</a>
+
 version 6.6.7 on March 2, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/319?closed=1" target="_blank">Bugfixes</a>
 
 version 6.6.6 on February 24, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/318?closed=1" target="_blank">Bugfixes</a>

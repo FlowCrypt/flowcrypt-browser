@@ -39,8 +39,9 @@
         <div class="line">
           <textarea class="input_private_key" placeholder="ASCII Armored Private Key"></textarea>
         </div>
-        <div class="line display_none pass_phrase_needed" style="text-align: left; padding-left: 40px;">
-          This key is unprotected. Choose a pass phrase or <a href="#" class="action_use_random_pass_phrase" data-test="action-step2bmanualenter-new-random-passphrase">use
+        <div class="line display_none unprotected_key_create_pass_phrase" style="text-align: left; padding-left: 40px;">
+          This key is unprotected. Create a pass phrase or <a href="#" class="action_use_random_pass_phrase"
+            data-test="action-step2bmanualenter-new-random-passphrase">use
             a random one</a>.
         </div>
         <div class="line">
@@ -48,8 +49,8 @@
         </div>
         <div class="line">
           <div class="squaredFour">
-            <input type="checkbox" value="" id="e_rememberPassphrase" name="check" class="input_passphrase_save squaredFour"
-              checked="">
+            <input type="checkbox" value="" id="e_rememberPassphrase" name="check"
+              class="input_passphrase_save squaredFour" checked="">
             <label class="checkboxSquaredOne" for="e_rememberPassphrase"></label>
           </div>
           <span class="labelCopy">Remember Pass Phrase after closing browser.</span>
@@ -65,6 +66,7 @@
     <script src="/lib/fine-uploader.js"></script>
     <script src="/lib/jquery.min.js"></script>
     <script src="/lib/openpgp.js"></script>
+    <script src="/lib/zxcvbn.js"></script>
     <script src="add_key.js" type="module"></script>
 </body>
 

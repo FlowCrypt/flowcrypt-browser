@@ -8,6 +8,15 @@
     "tslint.configFile": "conf/tslint.yaml",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
+    "editor.fontFamily": "'Hack', 'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback'",
+    "files.exclude": {
+      "**/node_modules/**": true
+    },
+    "errorLens.enabledDiagnosticLevels": [
+      "error"
+    ],
+    "errorLens.errorColor": "#FF00000A",
+    "errorLens.errorTextColor": "#FF000066"
   },
   "folders": [
     {

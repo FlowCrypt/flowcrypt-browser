@@ -6,8 +6,9 @@ import { Catch } from './platform/catch.js';
 import { Store } from './platform/store.js';
 import { Dict } from './core/common.js';
 import { BrowserMsg } from './extension.js';
-import { Xss, Ui } from './browser.js';
+import { Ui } from './browser.js';
 import { Lang } from './lang.js';
+import { Xss } from './platform/xss.js';
 
 export type NotificationWithHandlers = { notification: string, callbacks: Dict<() => void> };
 
@@ -38,7 +39,7 @@ export class Notifications {
         if (authRes.result === 'Success') {
           this.show(`Connected successfully. You may need to reload the tab. <a href="#" class="close">Close</a>`);
         } else {
-          this.show(`Failed to connect (${authRes.result}) ${authRes.error}. <a href="#" class="close">Close</a>`);
+          this.show(`Failed to connect (${authRes.result}) ${authRes.error || ''}. <a href="#" class="close">Close</a>`);
         }
       },
     });

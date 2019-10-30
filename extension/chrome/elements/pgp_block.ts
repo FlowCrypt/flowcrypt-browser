@@ -4,48 +4,52 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Str, Dict } from '../../js/common/core/common.js';
+import { Str } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
-import { Xss, Ui, Env, Browser } from '../../js/common/browser.js';
+import { Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Api, R } from '../../js/common/api/api.js';
-import { MsgVerifyResult, DecryptErrTypes, FormatError, PgpMsg } from '../../js/common/core/pgp.js';
+import { Api } from '../../js/common/api/api.js';
+import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg, Pgp } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
-import { Google, GmailResponseFormat, GoogleAuth } from '../../js/common/api/google.js';
+import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
 import { Buf } from '../../js/common/core/buf.js';
+import { BackendRes, Backend } from '../../js/common/api/backend.js';
+import { Assert } from '../../js/common/assert.js';
+import { Xss } from '../../js/common/platform/xss.js';
+import { Keyserver } from '../../js/common/api/keyserver.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'frameId', 'message', 'parentTabId', 'msgId', 'isOutgoing', 'senderEmail', 'hasPassword', 'signature', 'short']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const frameId = Env.urlParamRequire.string(uncheckedUrlParams, 'frameId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
   const hasChallengePassword = uncheckedUrlParams.hasPassword === true;
   const isOutgoing = uncheckedUrlParams.isOutgoing === true;
-  const short = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
-  const senderEmail = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
-  const msgId = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
+  const short = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'short');
+  let senderEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'senderEmail');
+  senderEmail = senderEmail ? Str.parseEmail(senderEmail).email : undefined;
+  const msgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'msgId');
   const heightHistory: number[] = [];
+  const encryptedMsgUrlParam = uncheckedUrlParams.message ? Buf.fromUtfStr(Assert.urlParamRequire.string(uncheckedUrlParams, 'message')) : undefined;
   let signature = uncheckedUrlParams.signature === true ? true : (uncheckedUrlParams.signature ? String(uncheckedUrlParams.signature) : undefined);
-  let encStr = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'message');
-  const encryptedMsgUrlParam: Buf | undefined = encStr ? Buf.fromUtfStr(encStr) : undefined; // todo - could be changed to msg
-  encStr = undefined;
   let msgFetchedFromApi: false | GmailResponseFormat = false;
   let includedAtts: Att[] = [];
   let canReadEmails: undefined | boolean;
-  let passwordMsgLinkRes: R.FcLinkMsg;
+  let passwordMsgLinkRes: BackendRes.FcLinkMsg;
   let adminCodes: string[];
   let userEnteredMsgPassword: string | undefined;
+  let doNotSetStateAsReadyYet = false;
 
   const renderText = (text: string) => {
-    document.getElementById('pgp_block')!.innerText = text; // pgp_block.htm
+    document.getElementById('pgp_block')!.innerText = text;
   };
 
-  const sendResizeMsg = () => {
-    let height = Math.max($('#pgp_block').height()!, 20) + 40; // pgp_block.htm
+  const resizePgpBlockFrame = () => {
+    let height = Math.max($('#pgp_block').height()!, 20) + 40;
     const isInfiniteResizeLoop = () => {
       heightHistory.push(height);
       const len = heightHistory.length;
@@ -68,7 +72,7 @@ Catch.try(async () => {
     img.setAttribute('style', a.getAttribute('style') || '');
     img.style.background = 'none';
     img.style.border = 'none';
-    img.addEventListener('load', () => sendResizeMsg());
+    img.addEventListener('load', () => resizePgpBlockFrame());
     if (a.href.indexOf('cid:') === 0) { // image included in the email
       const contentId = a.href.replace(/^cid:/g, '');
       const content = includedAtts.filter(a => a.type.indexOf('image/') === 0 && a.cid === `<${contentId}>`)[0];
@@ -78,7 +82,7 @@ Catch.try(async () => {
       } else {
         a.outerHTML = Xss.escape(`[broken link: ${a.href}]`); // xss-escaped
       }
-    } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) {
+    } else if (a.href.indexOf('https://') === 0 || a.href.indexOf('http://') === 0) { // image referenced as url
       img.src = a.href;
       a.outerHTML = img.outerHTML; // xss-safe-value - img.outerHTML was built using dom node api
     } else {
@@ -99,32 +103,19 @@ Catch.try(async () => {
     } else { // rendering our own ui
       Xss.sanitizeRender('#pgp_block', htmlContent);
     }
-    // if (unsecure_mdc_ignored && !is_error) {
-    //   set_frame_color('red');
-    //   Xss.sanitize_prepend('#pgp_block', '<div style="border: 4px solid #d14836;color:#d14836;padding: 5px;">' + Lang.pgp_block.mdc_warning.replace(/\n/g, '<br>') + '</div><br>');
-    // }
     if (isErr) {
       $('.action_show_raw_pgp_block').click(Ui.event.handle(target => {
         $('.raw_pgp_block').css('display', 'block');
         $(target).css('display', 'none');
-        sendResizeMsg();
+        resizePgpBlockFrame();
       }));
     }
-    // resize window now
-    sendResizeMsg();
-    // start auto-resizing the window after 1s
-    Catch.setHandledTimeout(() => $(window).resize(Ui.event.prevent('spree', sendResizeMsg)), 1000);
+    resizePgpBlockFrame(); // resize window now
+    Catch.setHandledTimeout(() => $(window).resize(Ui.event.prevent('spree', resizePgpBlockFrame)), 1000); // start auto-resizing the window after 1s
   };
 
   const btnHtml = (text: string, addClasses: string) => {
     return `<div class="button long ${addClasses}" style="margin:30px 0;" target="cryptup">${text}</div>`;
-  };
-
-  const armoredMsgAsHtml = (encrypted?: string) => {
-    if (encrypted && encrypted.length) {
-      return `<div class="raw_pgp_block" style="display: none;">${Xss.escape(encrypted).replace(/\n/g, '<br>')}</div><a href="#" class="action_show_raw_pgp_block">show original message</a>`;
-    }
-    return '';
   };
 
   const setFrameColor = (color: 'red' | 'green' | 'gray') => {
@@ -137,15 +128,17 @@ Catch.try(async () => {
     }
   };
 
-  const renderErr = async (errBoxContent: string, renderRawEncrypted: string | undefined) => {
+  const renderErr = async (errBoxContent: string, renderRawMsg: string | undefined) => {
     setFrameColor('red');
-    await renderContent('<div class="error">' + errBoxContent.replace(/\n/g, '<br>') + '</div>' + armoredMsgAsHtml(renderRawEncrypted), true);
+    const showRawMsgPrompt = renderRawMsg ? '<a href="#" class="action_show_raw_pgp_block">show original message</a>' : '';
+    await renderContent(`<div class="error">${errBoxContent.replace(/\n/g, '<br>')}</div>${showRawMsgPrompt}`, true);
+    $('.action_show_raw_pgp_block').click(Ui.event.handle(async () => { // this may contain content missing MDC
+      Xss.sanitizeAppend('#pgp_block', `<div class="raw_pgp_block">${Xss.escape(renderRawMsg!)}</div>`); // therefore the .escape is crucial
+    }));
     $('.button.settings_keyserver').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/keyserver.htm' })));
     $('.button.settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail })));
     $('.button.settings_add_key').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/add_key.htm' })));
-    $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => {
-      BrowserMsg.send.replyPubkeyMismatch(parentTabId);
-    }));
+    $('.button.reply_pubkey_mismatch').click(Ui.event.handle(() => BrowserMsg.send.replyPubkeyMismatch(parentTabId)));
     Ui.setTestState('ready');
   };
 
@@ -153,16 +146,16 @@ Catch.try(async () => {
     const msgDiagnosis = await BrowserMsg.send.bg.await.pgpMsgDiagnosePubkeys({ privateKis: await Store.keysGet(acctEmail), message });
     if (msgDiagnosis.found_match) {
       await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.encryptedCorrectlyFileBug, undefined);
-    } else if (msgDiagnosis.receivers === 1) {
-      await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend + btnHtml('account settings', 'gray2 settings_keyserver'), undefined);
     } else {
-      await renderErr(Lang.pgpBlock.yourKeyCantOpenImportIfHave + btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
+      const startText = msgDiagnosis.receivers === 1 ?
+        Lang.pgpBlock.cantOpen + Lang.pgpBlock.singleSender + Lang.pgpBlock.askResend : Lang.pgpBlock.yourKeyCantOpenImportIfHave;
+      await renderErr(startText + btnHtml('import missing key', 'gray2 settings_add_key') + '&nbsp; &nbsp;'
         + btnHtml('ask sender to update', 'gray2 short reply_pubkey_mismatch') + '&nbsp; &nbsp;' + btnHtml('settings', 'gray2 settings_keyserver'), undefined);
     }
   };
 
   const getDecryptPwd = async (suppliedPwd?: string | undefined): Promise<string | undefined> => {
-    const pwd = suppliedPwd || userEnteredMsgPassword || undefined;
+    const pwd = suppliedPwd || userEnteredMsgPassword;
     if (pwd && hasChallengePassword) {
       const { hashed } = await BrowserMsg.send.bg.await.pgpHashChallengeAnswer({ answer: pwd });
       return hashed;
@@ -171,18 +164,18 @@ Catch.try(async () => {
   };
 
   const decryptAndSaveAttToDownloads = async (encrypted: Att, renderIn: JQuery<HTMLElement>) => {
-    const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
+    const kisWithPp = await Store.keysGetAllWithPp(acctEmail);
     const decrypted = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData: encrypted.getData(), msgPwd: await getDecryptPwd() });
     if (decrypted.success) {
-      const att = new Att({ name: encrypted.name.replace(/(\.pgp)|(\.gpg)$/, ''), type: encrypted.type, data: decrypted.content });
+      const att = new Att({ name: encrypted.name.replace(/\.(pgp|gpg)$/, ''), type: encrypted.type, data: decrypted.content });
       Browser.saveToDownloads(att, renderIn);
-      sendResizeMsg();
+      resizePgpBlockFrame();
     } else {
       delete decrypted.message;
       console.info(decrypted);
-      await Ui.modal.error('There was a problem decrypting this file. Downloading encrypted original. Email human@flowcrypt.com if this happens repeatedly.');
+      await Ui.modal.error(`There was a problem decrypting this file (${decrypted.error.type}: ${decrypted.error.message}). Downloading encrypted original.`);
       Browser.saveToDownloads(encrypted, renderIn);
-      sendResizeMsg();
+      resizePgpBlockFrame();
     }
   };
 
@@ -198,17 +191,17 @@ Catch.try(async () => {
     Xss.sanitizeAppend('#pgp_block', '<div id="attachments"></div>');
     includedAtts = atts;
     for (const i of atts.keys()) {
-      const name = (atts[i].name ? Xss.escape(atts[i].name) : 'noname').replace(/(\.pgp)|(\.gpg)$/, '');
+      const name = (atts[i].name ? Xss.escape(atts[i].name) : 'noname').replace(/\.(pgp|gpg)$/, '');
       const size = Str.numberFormat(Math.ceil(atts[i].length / 1024)) + 'KB';
       const htmlContent = `<b>${Xss.escape(name)}</b>&nbsp;&nbsp;&nbsp;${size}<span class="progress"><span class="percent"></span></span>`;
       Xss.sanitizeAppend('#attachments', `<div class="attachment" index="${Number(i)}">${htmlContent}</div>`);
     }
-    sendResizeMsg();
+    resizePgpBlockFrame();
     $('div.attachment').click(Ui.event.prevent('double', async target => {
       const att = includedAtts[Number($(target).attr('index'))];
       if (att.hasData()) {
         Browser.saveToDownloads(att, $(target));
-        sendResizeMsg();
+        resizePgpBlockFrame();
       } else {
         Xss.sanitizePrepend($(target).find('.progress'), Ui.spinner('green'));
         att.setData(await Api.download(att.url!, (perc, load, total) => renderProgress($(target).find('.progress .percent'), perc, load, total || att.length)));
@@ -219,13 +212,75 @@ Catch.try(async () => {
     }));
   };
 
-  const renderPgpSignatureCheckResult = (signature: MsgVerifyResult | undefined) => {
+  const renderPgpSignatureCheckMissingPubkeyOptions = async (signerLongid: string, senderEmail: string | undefined): Promise<void> => { // don't have appropriate pubkey by longid in contacts
+    const render = (note: string, action: () => void) => $('#pgp_signature').addClass('neutral').find('.result').text(note).click(Ui.event.handle(action));
+    try {
+      if (senderEmail) { // we know who sent it
+        const [senderContactByEmail] = await Store.dbContactGet(undefined, [senderEmail]);
+        if (senderContactByEmail && senderContactByEmail.pubkey) {
+          render(`Fetched the right pubkey ${signerLongid} from keyserver, but will not use it because you have conflicting pubkey ${senderContactByEmail.longid} loaded.`, () => undefined);
+          return;
+        } // ---> and user doesn't have pubkey for that email addr
+        const { pubkey, pgpClient } = await Keyserver.lookupEmail(acctEmail, senderEmail);
+        if (!pubkey) {
+          render(`Missing pubkey ${signerLongid}`, () => undefined);
+          return;
+        } // ---> and pubkey found on keyserver by sender email
+        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        if (!keyDetails || !keyDetails.ids.map(ids => ids.longid).includes(signerLongid)) {
+          render(`Fetched sender's pubkey ${keyDetails.ids[0].longid} but message was signed with a different key: ${signerLongid}, will not verify.`, () => undefined);
+          return;
+        } // ---> and longid it matches signature
+        await Store.dbContactSave(undefined, await Store.dbContactObj({
+          email: senderEmail, pubkey, client: pgpClient, expiresOn: await Pgp.key.dateBeforeExpiration(pubkey)
+        })); // <= TOFU auto-import
+        render('Fetched pubkey, click to verify', () => window.location.reload());
+      } else { // don't know who sent it
+        const { pubkey, pgpClient } = await Keyserver.lookupLongid(acctEmail, signerLongid);
+        if (!pubkey) { // but can find matching pubkey by longid on keyserver
+          render(`Could not find sender's pubkey anywhere: ${signerLongid}`, () => undefined);
+          return;
+        }
+        const { keys: [keyDetails] } = await BrowserMsg.send.bg.await.pgpKeyDetails({ pubkey });
+        const pubkeyEmail = Str.parseEmail(keyDetails.users[0] || '').email!;
+        if (!pubkeyEmail) {
+          render(`Fetched matching pubkey ${signerLongid} but no valid email address is listed in it.`, () => undefined);
+          return;
+        }
+        const [conflictingContact] = await Store.dbContactGet(undefined, [pubkeyEmail]);
+        if (conflictingContact && conflictingContact.pubkey) {
+          render(`Fetched matching pubkey ${signerLongid} but conflicting key is in local contacts ${conflictingContact.longid} for email ${pubkeyEmail}, cannot verify.`, () => undefined);
+          return;
+        }
+        render(`Fetched matching pubkey ${signerLongid}. Click to load and use it.`, async () => {
+          await Store.dbContactSave(undefined, await Store.dbContactObj({
+            email: pubkeyEmail, pubkey, client: pgpClient, expiresOn: await Pgp.key.dateBeforeExpiration(pubkey)
+          })); // TOFU manual import
+          window.location.reload();
+        });
+      }
+    } catch (e) {
+      if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
+        render(`Could not load sender pubkey ${signerLongid} due to an error.`, () => undefined);
+      } else {
+        render(`Could not look up sender's pubkey due to network error, click to retry.`, () => window.location.reload());
+      }
+    }
+  };
+
+  const renderPgpSignatureCheckResult = (signature: VerifyRes | undefined) => {
     if (signature) {
       const signerEmail = signature.contact ? signature.contact.name || senderEmail : senderEmail;
       $('#pgp_signature > .cursive > span').text(String(signerEmail) || 'Unknown Signer');
       if (signature.signer && !signature.contact) {
-        $('#pgp_signature').addClass('neutral');
-        $('#pgp_signature > .result').text(`missing pubkey ${signature.signer}`);
+        doNotSetStateAsReadyYet = true; // so that body state is not marked as ready too soon - automated tests need to know when to check results
+        renderPgpSignatureCheckMissingPubkeyOptions(signature.signer, senderEmail).then(() => { // async so that it doesn't block rendering
+          doNotSetStateAsReadyYet = false;
+          Ui.setTestState('ready');
+          $('#pgp_block').css('min-height', '100px'); // signature fail can have a lot of text in it to render
+          resizePgpBlockFrame();
+        }).catch(Catch.reportErr);
       } else if (signature.match && signature.signer && signature.contact) {
         $('#pgp_signature').addClass('good');
         $('#pgp_signature > .result').text('matching signature');
@@ -278,10 +333,10 @@ Catch.try(async () => {
 
   const handleExtendMsgExpirationClicked = async (self: HTMLElement) => {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
-    Xss.sanitizeRender($(self).parent(), 'Updating..' + Ui.spinner('green'));
+    Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
-      const r = await Api.fc.messageExpiration(adminCodes, nDays);
-      if (r.updated) {
+      const r = await Backend.messageExpiration(adminCodes, nDays);
+      if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
         window.location.reload();
       } else {
         throw r;
@@ -299,38 +354,36 @@ Catch.try(async () => {
     }
   };
 
-  const decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: MsgVerifyResult | undefined) => {
+  const decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined) => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
+    let renderableAtts: Att[] = [];
     let decryptedContent = decryptedBytes.toUtfStr();
+    let isHtml: boolean = false;
     // todo - replace with PgpMsg.fmtDecrypted
     if (!Mime.resemblesMsg(decryptedBytes)) {
       const fcAttBlocks: MsgBlock[] = [];
       decryptedContent = PgpMsg.extractFcAtts(decryptedContent, fcAttBlocks);
       decryptedContent = PgpMsg.stripFcTeplyToken(decryptedContent);
       decryptedContent = PgpMsg.stripPublicKeys(decryptedContent, publicKeys);
-      if (publicKeys.length) {
-        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
-      }
-      await renderContent(Xss.escape(decryptedContent).replace(/\n/g, '<br>'), false);
       if (fcAttBlocks.length) {
-        renderInnerAtts(fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!)));
-      }
-      if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
-        renderFutureExpiration(passwordMsgLinkRes.expire);
+        renderableAtts = fcAttBlocks.map(attBlock => new Att(attBlock.attMeta!));
       }
     } else {
       renderText('Formatting...');
       const decoded = await Mime.decode(decryptedBytes);
       if (typeof decoded.html !== 'undefined') {
-        await renderContent(decoded.html, false);
+        decryptedContent = decoded.html;
+        isHtml = true;
       } else if (typeof decoded.text !== 'undefined') {
-        await renderContent(Xss.escape(decoded.text).replace(/\n/g, '<br>'), false);
+        decryptedContent = decoded.text;
       } else {
-        await renderContent((decryptedContent || '').replace(/\n/g, '<br>'), false); // not sure about the replace, time will tell
+        decryptedContent = '';
       }
-      const renderableAtts: Att[] = [];
+      if (decoded.subject && isEncrypted) {
+        decryptedContent = getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent;
+      }
       for (const att of decoded.atts) {
         if (att.treatAs() !== 'publicKey') {
           renderableAtts.push(att);
@@ -338,19 +391,26 @@ Catch.try(async () => {
           publicKeys.push(att.getData().toUtfStr());
         }
       }
-      if (renderableAtts.length) {
-        renderInnerAtts(decoded.atts);
-      }
-      if (publicKeys.length) {
-        BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
-      }
     }
-    Ui.setTestState('ready');
+    await separateQuotedContentAndRenderText(decryptedContent, isHtml);
+    if (publicKeys.length) {
+      BrowserMsg.send.renderPublicKeys(parentTabId, { afterFrameId: frameId, publicKeys });
+    }
+    if (renderableAtts.length) {
+      renderInnerAtts(renderableAtts);
+    }
+    if (passwordMsgLinkRes && passwordMsgLinkRes.expire) {
+      renderFutureExpiration(passwordMsgLinkRes.expire);
+    }
+    resizePgpBlockFrame();
+    if (!doNotSetStateAsReadyYet) { // in case async tasks are still being worked at
+      Ui.setTestState('ready');
+    }
   };
 
   const decryptAndRender = async (encryptedData: Buf, optionalPwd?: string) => {
     if (typeof signature !== 'string') {
-      const kisWithPp = await Store.keysGetAllWithPassphrases(acctEmail);
+      const kisWithPp = await Store.keysGetAllWithPp(acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await getDecryptPwd(optionalPwd) });
       if (typeof result === 'undefined') {
         await renderErr(Lang.general.restartBrowserAndTryAgain, undefined);
@@ -372,7 +432,13 @@ Catch.try(async () => {
           await renderErr(Lang.pgpBlock.badFormat + '\n\n' + result.error.message, encryptedData.toUtfStr());
         }
       } else if (result.longids.needPassphrase.length) {
-        await renderPassphrasePromptAndAwaitChange(result.longids.needPassphrase);
+        await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
+        $('.enter_passphrase').click(Ui.event.handle(() => {
+          Ui.setTestState('waiting');
+          BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: result.longids.needPassphrase });
+        }));
+        await Store.waitUntilPassphraseChanged(acctEmail, result.longids.needPassphrase);
+        renderText('Decrypting...');
         await decryptAndRender(encryptedData, optionalPwd);
       } else {
         const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
@@ -380,20 +446,19 @@ Catch.try(async () => {
           await renderErr(Lang.pgpBlock.notProperlySetUp + btnHtml('FlowCrypt settings', 'green settings'), undefined);
         } else if (result.error.type === DecryptErrTypes.keyMismatch) {
           if (hasChallengePassword && !optionalPwd) {
-            const pwd = await renderPasswordPromptAndWaitForEntry('first');
+            const pwd = await renderPasswordPromptAndAwaitEntry('first');
             await decryptAndRender(encryptedData, pwd);
           } else {
             await handlePrivateKeyMismatch(acctEmail, encryptedData);
           }
         } else if (result.error.type === DecryptErrTypes.wrongPwd) {
-          const pwd = await renderPasswordPromptAndWaitForEntry('retry');
+          const pwd = await renderPasswordPromptAndAwaitEntry('retry');
           await decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.usePassword) {
-          const pwd = await renderPasswordPromptAndWaitForEntry('first');
+          const pwd = await renderPasswordPromptAndAwaitEntry('first');
           await decryptAndRender(encryptedData, pwd);
         } else if (result.error.type === DecryptErrTypes.noMdc) {
-          const errMsg = `This message may not be safe to open: missing MDC. Please go to FlowCrypt Settings -> Additional Settings -> Exprimental -> Decrypt message without MDC`;
-          await renderErr(errMsg, encryptedData.toUtfStr());
+          await renderErr(result.error.message, result.content!.toUtfStr()); // missing mdc - only render the result after user confirmation
         } else if (result.error) {
           await renderErr(`${Lang.pgpBlock.cantOpen}\n\n<em>${result.error.type}: ${result.error.message}</em>`, encryptedData.toUtfStr());
         } else { // should generally not happen
@@ -407,32 +472,10 @@ Catch.try(async () => {
     }
   };
 
-  const renderPassphrasePromptAndAwaitChange = async (missingOrWrongPpKeyLongids: string[]) => {
-    const missingOrWrongPassprases: Dict<string | undefined> = {};
-    const passphrases = await Promise.all(missingOrWrongPpKeyLongids.map(longid => Store.passphraseGet(acctEmail, longid)));
-    for (const i of missingOrWrongPpKeyLongids.keys()) {
-      missingOrWrongPassprases[missingOrWrongPpKeyLongids[i]] = passphrases[i];
-    }
-    await renderErr(`<a href="#" class="enter_passphrase" data-test="action-show-passphrase-dialog">${Lang.pgpBlock.enterPassphrase}</a> ${Lang.pgpBlock.toOpenMsg}`, undefined);
-    let wasClicked = false;
-    $('.enter_passphrase').click(Ui.event.handle(() => {
-      Ui.setTestState('waiting');
-      BrowserMsg.send.passphraseDialog(parentTabId, { type: 'message', longids: missingOrWrongPpKeyLongids });
-      wasClicked = true;
-    }));
-    while (true) {
-      await Ui.time.sleep(wasClicked ? 400 : 2000);
-      if (await werePassphrasesUpdated(missingOrWrongPassprases)) {
-        return;
-      }
-    }
-  };
-
-  const renderPasswordPromptAndWaitForEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
+  const renderPasswordPromptAndAwaitEntry = async (attempt: 'first' | 'retry'): Promise<string> => {
     let prompt = `<p>${attempt === 'first' ? '' : `<span style="color: red; font-weight: bold;">${Lang.pgpBlock.wrongPassword}</span>`}${Lang.pgpBlock.decryptPasswordPrompt}</p>`;
     const btn = `<div class="button green long decrypt" data-test="action-decrypt-with-password">decrypt message</div>`;
     prompt += `<p><input id="answer" placeholder="Password" data-test="input-message-password"></p><p>${btn}</p>`;
-    prompt += armoredMsgAsHtml();
     await renderContent(prompt, true);
     Ui.setTestState('ready');
     await Ui.event.clicked('.button.decrypt');
@@ -442,20 +485,7 @@ Catch.try(async () => {
     return String($('#answer').val());
   };
 
-  const werePassphrasesUpdated = async (missingOrWrongPassprases: Dict<string | undefined>): Promise<boolean> => {
-    const longidsMissingPp = Object.keys(missingOrWrongPassprases);
-    const updatedPpArr = await Promise.all(longidsMissingPp.map(longid => Store.passphraseGet(acctEmail, longid)));
-    for (let i = 0; i < longidsMissingPp.length; i++) {
-      const missingOrWrongPp = missingOrWrongPassprases[longidsMissingPp[i]];
-      const updatedPp = updatedPpArr[i];
-      if (updatedPp !== missingOrWrongPp) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const renderPasswordEncryptedMsgLoadFail = async (linkRes: R.FcLinkMsg) => {
+  const renderPasswordEncryptedMsgLoadFail = async (linkRes: BackendRes.FcLinkMsg) => {
     if (linkRes.expired) {
       let expirationMsg = Lang.pgpBlock.msgExpiredOn + Str.datetimeToDate(linkRes.expire) + '. ' + Lang.pgpBlock.msgsDontExpire + '\n\n';
       if (linkRes.deleted) {
@@ -477,28 +507,94 @@ Catch.try(async () => {
     }
   };
 
+  const separateQuotedContentAndRenderText = async (decryptedContent: string, isHtml: boolean) => {
+    if (isHtml) {
+      const message = $('<div>').html(Xss.htmlSanitize(decryptedContent)); // xss-sanitized
+      let htmlBlockQuoteExists: boolean = false;
+      const shouldBeQuoted: Array<Element> = [];
+      for (let i = message[0].children.length - 1; i >= 0; i--) {
+        if (['BLOCKQUOTE', 'BR', 'PRE'].includes(message[0].children[i].nodeName)) {
+          shouldBeQuoted.push(message[0].children[i]);
+          if (message[0].children[i].nodeName === 'BLOCKQUOTE') {
+            htmlBlockQuoteExists = true;
+            break;
+          }
+          continue;
+        } else {
+          break;
+        }
+      }
+      if (htmlBlockQuoteExists) {
+        let quotedHtml = '';
+        for (let i = shouldBeQuoted.length - 1; i >= 0; i--) {
+          message[0].removeChild(shouldBeQuoted[i]);
+          quotedHtml += shouldBeQuoted[i].outerHTML;
+        }
+        await renderContent(message.html(), false);
+        appendCollapsedQuotedContentButton(quotedHtml, true);
+      } else {
+        await renderContent(decryptedContent, false);
+      }
+    } else {
+      const lines = decryptedContent.trim().split(/\r?\n/);
+      const linesQuotedPart: string[] = [];
+      while (lines.length) {
+        const lastLine = lines.pop()!; // lines.length above ensures there is a line
+        if (lastLine[0] === '>' || !lastLine.length) { // look for lines starting with '>' or empty lines, from last line up (sometimes quoted content may have empty lines in it)
+          linesQuotedPart.unshift(lastLine);
+        } else { // found first non-quoted part from the bottom
+          if (lastLine.startsWith('On ') && lastLine.endsWith(' wrote:')) { // on the very top of quoted content, looks like qote header
+            linesQuotedPart.unshift(lastLine);
+          } else { // no quote header, just regular content from here onwards
+            lines.push(lastLine);
+          }
+          break;
+        }
+      }
+      if (linesQuotedPart.length && !lines.length) { // only got quoted part, no real text -> show everything as real text, without quoting
+        lines.push(...linesQuotedPart.splice(0, linesQuotedPart.length));
+      }
+      await renderContent(Xss.escapeTextAsRenderableHtml(lines.join('\n')), false);
+      if (linesQuotedPart.length) {
+        appendCollapsedQuotedContentButton(linesQuotedPart.join('\n'));
+      }
+    }
+  };
+
+  const getEncryptedSubjectText = (subject: string, isHtml: boolean) => {
+    if (isHtml) {
+      return `<div style="font-size: 14px; border-bottom: 1px #cacaca"> Encrypted Subject:
+                <b> ${subject}</b>
+              </div>
+              <hr/>`;
+    } else {
+      return `Encrypted Subject: ${subject}\n----------------------------------------------------------------------------------------------------\n`;
+    }
+  };
+
+  const appendCollapsedQuotedContentButton = (message: string, isHtml: boolean = false) => {
+    const pgpBlk = $("#pgp_block");
+    pgpBlk.append('<div id="action_show_quoted_content" data-test="action-show-quoted-content" class="three_dots"><img src="/img/svgs/three-dots.svg" /></div>'); // xss-direct
+    pgpBlk.append(`<div class="quoted_content">${Xss.htmlSanitizeKeepBasicTags(isHtml ? message : Xss.escapeTextAsRenderableHtml(message))}</div>`); // xss-sanitized
+    pgpBlk.find('#action_show_quoted_content').click(Ui.event.handle(async target => {
+      $(".quoted_content").css('display', $(".quoted_content").css('display') === 'none' ? 'block' : 'none');
+      resizePgpBlockFrame();
+    }));
+  };
+
   const initialize = async (forcePullMsgFromApi = false) => {
     try {
-      if (canReadEmails && encryptedMsgUrlParam && signature === true && msgId) {
-        renderText('Loading signature...');
+      if (canReadEmails && signature === true && msgId) {
+        renderText('Loading signed message...');
         const { raw } = await Google.gmail.msgGet(acctEmail, msgId, 'raw');
-        if (!raw) {
-          await decryptAndRender(encryptedMsgUrlParam);
+        msgFetchedFromApi = 'raw';
+        const mimeMsg = Buf.fromBase64UrlStr(raw!); // used 'raw' above
+        const parsed = await Mime.decode(mimeMsg);
+        if (parsed && typeof parsed.rawSignedContent === 'string' && parsed.signature) {
+          signature = parsed.signature;
+          await decryptAndRender(Buf.fromUtfStr(parsed.rawSignedContent));
         } else {
-          msgFetchedFromApi = 'raw';
-          const mimeMsg = Buf.fromBase64UrlStr(raw);
-          const parsed = Mime.signed(mimeMsg);
-          if (parsed && typeof parsed.signed === 'string') {
-            signature = parsed.signature || undefined;
-            await decryptAndRender(encryptedMsgUrlParam);
-          } else {
-            const decoded = await Mime.decode(mimeMsg);
-            signature = decoded.signature || undefined;
-            console.info('%c[___START___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-            console.info(mimeMsg.toUtfStr());
-            console.info('%c[___END___ PROBLEM PARSING THIS MESSSAGE WITH DETACHED SIGNATURE]', 'color: red; font-weight: bold;');
-            await decryptAndRender(encryptedMsgUrlParam);
-          }
+          await renderErr('Error: could not properly parse signed message', parsed.rawSignedContent || parsed.text || parsed.html || mimeMsg.toUtfStr());
         }
       } else if (encryptedMsgUrlParam && !forcePullMsgFromApi) { // ascii armored message supplied
         renderText(signature ? 'Verifying..' : 'Decrypting...');
@@ -506,7 +602,7 @@ Catch.try(async () => {
       } else if (!encryptedMsgUrlParam && hasChallengePassword && short) { // need to fetch the message from FlowCrypt API
         renderText('Loading message...');
         await recoverStoredAdminCodes();
-        const msgLinkRes = await Api.fc.linkMessage(short);
+        const msgLinkRes = await Backend.linkMessage(short);
         passwordMsgLinkRes = msgLinkRes;
         if (msgLinkRes.url) {
           const downloaded = await Api.download(msgLinkRes.url);
@@ -517,11 +613,13 @@ Catch.try(async () => {
       } else {  // need to fetch the inline signed + armored or encrypted +armored message block from gmail api
         if (!msgId) {
           Xss.sanitizeRender('#pgp_block', `Missing msgId to fetch message in pgp_block. If this happens repeatedly, please report the issue to human@flowcrypt.com`);
-          sendResizeMsg();
+          resizePgpBlockFrame();
         } else if (canReadEmails) {
           renderText('Retrieving message...');
           const format: GmailResponseFormat = (!msgFetchedFromApi) ? 'full' : 'raw';
-          const extracted = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format);
+          const extracted = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format, (progress) => {
+            renderText(`Retrieving message... ${progress}%`);
+          });
           renderText('Decrypting...');
           msgFetchedFromApi = format;
           await decryptAndRender(Buf.fromUtfStr(extracted));
@@ -529,7 +627,7 @@ Catch.try(async () => {
           // tslint:disable-next-line:max-line-length
           const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;
           Xss.sanitizeRender('#pgp_block', `This encrypted message is very large (possibly containing an attachment). ${readAccess}`);
-          sendResizeMsg();
+          resizePgpBlockFrame();
           $('.auth_settings').click(Ui.event.handle(() => BrowserMsg.send.bg.settings({ acctEmail, page: '/chrome/settings/modules/auth_denied.htm' })));
         }
       }
@@ -540,17 +638,19 @@ Catch.try(async () => {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
         await renderErr(`Could not load message due to missing auth. ${Ui.retryLink()}`, undefined);
       } else if (e instanceof FormatError) {
-        console.info(e.data);
         await renderErr(Lang.pgpBlock.cantOpen + Lang.pgpBlock.badFormat + Lang.pgpBlock.dontKnowHowOpen, e.data);
+      } else if (Api.err.isInPrivateMode(e)) {
+        await renderErr(`FlowCrypt does not work in a Firefox Private Window (or when Firefox Containers are used). Please try in a standard window.`, undefined);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await renderErr(String(e), encryptedMsgUrlParam ? encryptedMsgUrlParam.toUtfStr() : undefined);
       }
     }
   };
 
   const storage = await Store.getAcct(acctEmail, ['setup_done', 'google_token_scopes']);
-  canReadEmails = GoogleAuth.hasReadScope(storage.google_token_scopes || []);
+  const scopes = await Store.getScopes(acctEmail);
+  canReadEmails = scopes.read || scopes.modify;
   if (storage.setup_done) {
     await initialize();
   } else {

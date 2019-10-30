@@ -5,19 +5,23 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Value } from '../../../js/common/core/common.js';
-import { Xss, Ui, KeyImportUi, UserAlert, KeyCanBeFixed, Env } from '../../../js/common/browser.js';
+import { Ui, Env } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Google } from '../../../js/common/api/google.js';
+import { Assert } from '../../../js/common/assert.js';
+import { KeyImportUi, UserAlert, KeyCanBeFixed } from '../../../js/common/ui/key_import_ui.js';
+import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
+import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
-  await Ui.passphraseToggle(['input_passphrase']);
+  await initPassphraseToggle(['input_passphrase']);
   const keyImportUi = new KeyImportUi({ rejectKnown: true });
   keyImportUi.initPrvImportSrcForm(acctEmail, parentTabId);
 
@@ -32,7 +36,7 @@ Catch.try(async () => {
     if (keyBackups.length) {
       const notImportedBackupLongids: string[] = [];
       for (const longid of Value.arr.unique(await Promise.all(keyBackups.map(Pgp.key.longid)))) {
-        if (longid && !Value.is(longid).in(privateKeysLongIds)) {
+        if (longid && !privateKeysLongIds.includes(longid)) {
           notImportedBackupLongids.push(longid);
         }
       }
@@ -56,8 +60,11 @@ Catch.try(async () => {
 
   $('.source_selector').css('display', 'block');
   $('#spinner_container').text('');
-
-  $('.action_add_private_key').click(Ui.event.prevent('double', async () => {
+  $('.action_add_private_key').click(Ui.event.prevent('double', async (e) => {
+    if (e.className.includes('gray')) {
+      await Ui.modal.warning('Please double check the pass phrase input field for any issues.');
+      return;
+    }
     try {
       const checked = await keyImportUi.checkPrv(acctEmail, String($('.input_private_key').val()), String($('.input_passphrase').val()));
       if (checked) {
@@ -71,7 +78,7 @@ Catch.try(async () => {
       } else if (e instanceof KeyCanBeFixed) {
         return await Ui.modal.error(`This type of key cannot be set as non-primary yet. Please write human@flowcrypt.com`);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         return await Ui.modal.error(`An error happened when processing the key: ${String(e)}\nPlease write at human@flowcrypt.com`);
       }
     }

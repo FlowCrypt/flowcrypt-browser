@@ -4,31 +4,32 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Xss, Ui, KeyImportUi, UserAlert, Env } from '../../js/common/browser.js';
+import { Ui, Env } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
+import { Assert } from '../../js/common/assert.js';
+import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
+import { AttUI } from '../../js/common/ui/att_ui.js';
+import { Pgp } from '../../js/common/core/pgp.js';
+import { Xss } from '../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
-  const acctEmail = Env.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
-  const parentTabId = Env.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
-  const emails = Env.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
-  const placement = Env.urlParamRequire.optionalString(uncheckedUrlParams, 'placement');
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
+  const missingPubkeyEmails = Assert.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
+  const placement = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'placement');
 
-  const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
-
-  for (const email of emails) {
-    Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(email)}">${Xss.escape(email)}</option>`);
+  for (const missingPubkeyEmail of missingPubkeyEmails) {
+    Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
   }
-
-  const contacts = await Store.dbContactSearch(undefined, { has_pgp: true });
-
-  Xss.sanitizeAppend('select.copy_from_email', '<option value=""></option>');
-  for (const contact of contacts) {
+  for (const contact of await Store.dbContactSearch(undefined, { has_pgp: true })) {
     Xss.sanitizeAppend('select.copy_from_email', `<option value="${Xss.escape(contact.email)}">${Xss.escape(contact.email)}</option>`);
   }
+
+  const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {
@@ -36,6 +37,7 @@ Catch.try(async () => {
       if (contact && contact.pubkey) {
         $('.pubkey').val(contact.pubkey).prop('disabled', true);
       } else {
+        Catch.report('Contact unexpectedly not found when copying pubkey by email in add_pubkey.htm');
         await Ui.modal.error('Contact not found.');
       }
     } else {
@@ -47,13 +49,16 @@ Catch.try(async () => {
     try {
       const keyImportUi = new KeyImportUi({ checkEncryption: true });
       const normalized = await keyImportUi.checkPub(String($('.pubkey').val()));
-      await Store.dbContactSave(undefined, await Store.dbContactObj(String($('select.email').val()), undefined, 'pgp', normalized, undefined, false, Date.now()));
+      await Store.dbContactSave(undefined, await Store.dbContactObj({
+        email: String($('select.email').val()), client: 'pgp', pubkey: normalized,
+        lastUse: Date.now(), expiresOn: await Pgp.key.dateBeforeExpiration(normalized)
+      }));
       closeDialog();
     } catch (e) {
       if (e instanceof UserAlert) {
         await Ui.modal.warning(e.message);
       } else {
-        Catch.handleErr(e);
+        Catch.reportErr(e);
         await Ui.modal.error(`Error happened when processing the public key: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
@@ -66,5 +71,21 @@ Catch.try(async () => {
   }
 
   $('.action_close').click(Ui.event.handle(closeDialog));
+
+  const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
+  attUI.initAttDialog('fineuploader', 'fineuploader_button');
+  attUI.setAttAddedCb(async (file) => {
+    attUI.clearAllAtts();
+    const { keys, errs } = await Pgp.key.readMany(file.getData());
+    if (keys.length) {
+      if (errs.length) {
+        await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
+      }
+      $('.pubkey').val(String(keys[0].armor()));
+      $('.action_ok').trigger('click');
+    } else if (errs.length) {
+      await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
+    }
+  });
 
 })();

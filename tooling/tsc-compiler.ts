@@ -2,6 +2,8 @@
 
 'use strict';
 
+// tslint:disable:no-unsafe-any
+
 import * as ts from 'typescript';
 import * as path from 'path';
 import { readFileSync } from 'fs';
@@ -14,7 +16,7 @@ for (let i = 0; i < process.argv.length; i++) {
   }
 }
 tsconfigAbsPath = path.resolve(tsconfigAbsPath || './tsconfig.json');
-const tsconfigAbsDir = tsconfigAbsPath.replace(/\/[^/]+$/g, '');
+const tsconfigAbsDir = path.dirname(tsconfigAbsPath);
 
 const getNameAndPos = (f: ts.FunctionLike) => {
   const sf = f.getSourceFile();
@@ -40,7 +42,6 @@ const getNameAndPos = (f: ts.FunctionLike) => {
  * This transformer will wrap content of all async functions with a try/catch that helps preserve proper async stack traces
  */
 const preserveAsyncStackTracesTransformerFactory = () => {
-
   const createStackTracePreservingCatchBlockStatements = (f: ts.FunctionLike): ts.Statement[] => {
     const statements: ts.Statement[] = [];
     const addStackLine = `\\n    at <async> ${getNameAndPos(f)}`;
@@ -48,7 +49,6 @@ const preserveAsyncStackTracesTransformerFactory = () => {
     statements.push(ts.createStatement(ts.createIdentifier(code)));
     return statements;
   };
-
   const visitor = (ctx: ts.TransformationContext) => {
     const recursiveVisitor: ts.Visitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
       if (ts.isFunctionDeclaration(node) || ts.isArrowFunction(node) || ts.isMethodDeclaration(node) || ts.isFunctionExpression(node)) {
@@ -69,11 +69,9 @@ const preserveAsyncStackTracesTransformerFactory = () => {
     };
     return recursiveVisitor;
   };
-
   return (ctx: ts.TransformationContext): ts.Transformer<ts.SourceFile> => {
     return (sf: ts.SourceFile) => ts.visitNode(sf, visitor(ctx));
   };
-
 };
 
 const printErrsAndExitIfPresent = (allDiagnostics: ts.Diagnostic[]) => {

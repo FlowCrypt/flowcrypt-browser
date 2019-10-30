@@ -5,16 +5,26 @@
 import { Store } from '../platform/store.js';
 import { Env, Ui } from '../browser.js';
 import { Catch } from '../platform/catch.js';
+import { ContentScriptWindow } from '../extension.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
-  if (Env.isBackgroundPage()) {
-    throw error;
-  } else if (Env.isContentScript()) {
-    console.error('Incomplete extension environment in content script', error);
-  } else if (!chrome.runtime) {
-    console.error('Chrome.runtime missing, cannot continue', error);
-  } else { // extension pages
-    window.location.href = chrome.runtime.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
+  try {
+    if (Env.isBackgroundPage()) {
+      throw error;
+    } else if (Env.isContentScript()) {
+      console.error('Incomplete extension environment in content script', error);
+    } else if (!chrome.runtime) {
+      console.error('Chrome.runtime missing, cannot continue', error);
+    } else { // extension pages
+      window.location.href = chrome.runtime.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
+    }
+  } catch (e) {
+    if (e && e instanceof Error && e.message === 'Extension context invalidated.') {
+      console.info(`FlowCrypt cannot handle fatal error because: Extension context invalidated. Destroying.`, error);
+      (window as any as ContentScriptWindow).destroy();
+    } else {
+      throw e;
+    }
   }
 };
 
@@ -24,7 +34,7 @@ export const windowsCreate = (q: chrome.windows.CreateData): Promise<chrome.wind
   if (typeof chrome.windows !== 'undefined') {
     chrome.windows.create(q, resolve);
   } else {
-    Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.handleErr);
+    Ui.modal.error('Your platform is not supported: browser does not support extension windows').catch(Catch.reportErr);
   }
 });
 

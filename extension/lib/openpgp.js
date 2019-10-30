@@ -1,246 +1,856 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.openpgp = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 (function (global){
-!function(e,r){"object"==typeof exports&&"undefined"!=typeof module?r(exports):"function"==typeof define&&define.amd?define(["exports"],r):r(e.WebStreamsPolyfill={})}(this,function(e){"use strict";function r(e,r){for(var t=0;t<r.length;t++){var o=r[t];o.enumerable=o.enumerable||!1,o.configurable=!0,"value"in o&&(o.writable=!0),Object.defineProperty(e,o.key,o)}}function t(e,t,o){return t&&r(e.prototype,t),o&&r(e,o),e}function o(){return(o=Object.assign||function(e){for(var r=1;r<arguments.length;r++){var t=arguments[r];for(var o in t)Object.prototype.hasOwnProperty.call(t,o)&&(e[o]=t[o])}return e}).apply(this,arguments)}var n=Number.isInteger||function(e){return"number"==typeof e&&isFinite(e)&&Math.floor(e)===e},i="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?Symbol:function(e){return"Symbol("+e+")"};function a(){}var s="undefined"!=typeof self?self:"undefined"!=typeof window?window:"undefined"!=typeof global?global:void 0,l=Number.isNaN||function(e){return e!=e};var u=function(e,r){return e(r={exports:{}},r.exports),r.exports}(function(e,r){var t=i('is "detached" for our purposes');function o(e,r,t){if("function"!=typeof e)throw new TypeError("Argument is not a function");return Function.prototype.apply.call(e,r,t)}function n(e,r,t){try{return Promise.resolve(o(e,r,t))}catch(e){return Promise.reject(e)}}r.typeIsObject=function(e){return"object"==typeof e&&null!==e||"function"==typeof e},r.createDataProperty=function(e,r,t){Object.defineProperty(e,r,{value:t,writable:!0,enumerable:!0,configurable:!0})},r.createArrayFromList=function(e){return e.slice()},r.ArrayBufferCopy=function(e,r,t,o,n){new Uint8Array(e).set(new Uint8Array(t,o,n),r)},r.CreateIterResultObject=function(e,r){var t={};return Object.defineProperty(t,"value",{value:e,enumerable:!0,writable:!0,configurable:!0}),Object.defineProperty(t,"done",{value:r,enumerable:!0,writable:!0,configurable:!0}),t},r.IsFiniteNonNegativeNumber=function(e){return!1!==r.IsNonNegativeNumber(e)&&e!==1/0},r.IsNonNegativeNumber=function(e){return"number"==typeof e&&(!l(e)&&!(e<0))},r.Call=o,r.CreateAlgorithmFromUnderlyingMethod=function(e,r,t,o){var i=e[r];if(void 0!==i){if("function"!=typeof i)throw new TypeError(i+" is not a method");switch(t){case 0:return function(){return n(i,e,o)};case 1:return function(r){var t=[r].concat(o);return n(i,e,t)}}}return function(){return Promise.resolve()}},r.InvokeOrNoop=function(e,r,t){var n=e[r];if(void 0!==n)return o(n,e,t)},r.PromiseCall=n,r.TransferArrayBuffer=function(e){var r=e.slice();return Object.defineProperty(e,"byteLength",{get:function(){return 0}}),e[t]=!0,r},r.IsDetachedBuffer=function(e){return t in e},r.ValidateAndNormalizeHighWaterMark=function(e){if(e=Number(e),l(e)||e<0)throw new RangeError("highWaterMark property of a queuing strategy must be non-negative and non-NaN");return e},r.MakeSizeAlgorithmFromSizeFunction=function(e){if(void 0===e)return function(){return 1};if("function"!=typeof e)throw new TypeError("size property of a queuing strategy must be a function");return function(r){return e(r)}}}),c={default:u,__moduleExports:u,typeIsObject:u.typeIsObject,createDataProperty:u.createDataProperty,createArrayFromList:u.createArrayFromList,ArrayBufferCopy:u.ArrayBufferCopy,CreateIterResultObject:u.CreateIterResultObject,IsFiniteNonNegativeNumber:u.IsFiniteNonNegativeNumber,IsNonNegativeNumber:u.IsNonNegativeNumber,Call:u.Call,CreateAlgorithmFromUnderlyingMethod:u.CreateAlgorithmFromUnderlyingMethod,InvokeOrNoop:u.InvokeOrNoop,PromiseCall:u.PromiseCall,TransferArrayBuffer:u.TransferArrayBuffer,IsDetachedBuffer:u.IsDetachedBuffer,ValidateAndNormalizeHighWaterMark:u.ValidateAndNormalizeHighWaterMark,MakeSizeAlgorithmFromSizeFunction:u.MakeSizeAlgorithmFromSizeFunction};function d(){}d.AssertionError=a;var f={default:d},_=f&&d||f,m=function(e){e&&e instanceof _.AssertionError&&setTimeout(function(){throw e},0)},h={rethrowAssertionErrorRejection:m},b={default:h,__moduleExports:h,rethrowAssertionErrorRejection:m},v=c&&u||c,y=v.IsFiniteNonNegativeNumber,p=function(e){var r=e._queue.shift();return e._queueTotalSize-=r.size,e._queueTotalSize<0&&(e._queueTotalSize=0),r.value},w=function(e,r,t){if(t=Number(t),!y(t))throw new RangeError("Size must be a finite, non-NaN, non-negative number.");e._queue.push({value:r,size:t}),e._queueTotalSize+=t},g=function(e){return e._queue[0].value},S=function(e){e._queue=[],e._queueTotalSize=0},P={DequeueValue:p,EnqueueValueWithSize:w,PeekQueueValue:g,ResetQueue:S},R={default:P,__moduleExports:P,DequeueValue:p,EnqueueValueWithSize:w,PeekQueueValue:g,ResetQueue:S},q={default:a},T=q&&a||q,j=b&&h||b,C=R&&P||R,E=(T("streams:writable-stream:verbose"),v.CreateAlgorithmFromUnderlyingMethod),W=v.InvokeOrNoop,A=v.ValidateAndNormalizeHighWaterMark,k=(v.IsNonNegativeNumber,v.MakeSizeAlgorithmFromSizeFunction),O=v.typeIsObject,z=j.rethrowAssertionErrorRejection,B=C.DequeueValue,I=C.EnqueueValueWithSize,F=C.PeekQueueValue,N=C.ResetQueue,D=i("[[AbortSteps]]"),M=i("[[ErrorSteps]]"),L=function(){function e(e,r){void 0===e&&(e={});var t=void 0===r?{}:r,o=t.size,n=t.highWaterMark,i=void 0===n?1:n;if(x(this),void 0!==e.type)throw new RangeError("Invalid type is specified");var a=k(o);!function(e,r,t,o){var n=Object.create(le.prototype);var i=E(r,"write",1,[n]),a=E(r,"close",0,[]),s=E(r,"abort",1,[]);ue(e,n,function(){return W(r,"start",[n])},i,a,s,t,o)}(this,e,i=A(i),a)}var r=e.prototype;return r.abort=function(e){return!1===Q(this)?Promise.reject(he("abort")):!0===Y(this)?Promise.reject(new TypeError("Cannot abort a stream that already has a writer")):U(this,e)},r.getWriter=function(){if(!1===Q(this))throw he("getWriter");return H(this)},t(e,[{key:"locked",get:function(){if(!1===Q(this))throw he("locked");return Y(this)}}]),e}(),V={AcquireWritableStreamDefaultWriter:H,CreateWritableStream:function(e,r,t,o,n,i){void 0===n&&(n=1);void 0===i&&(i=function(){return 1});var a=Object.create(L.prototype);x(a);var s=Object.create(le.prototype);return ue(a,s,e,r,t,o,n,i),a},IsWritableStream:Q,IsWritableStreamLocked:Y,WritableStream:L,WritableStreamAbort:U,WritableStreamDefaultControllerErrorIfNeeded:fe,WritableStreamDefaultWriterCloseWithErrorPropagation:function(e){var r=e._ownerWritableStream,t=r._state;if(!0===Z(r)||"closed"===t)return Promise.resolve();if("errored"===t)return Promise.reject(r._storedError);return oe(e)},WritableStreamDefaultWriterRelease:ae,WritableStreamDefaultWriterWrite:se,WritableStreamCloseQueuedOrInFlight:Z};function H(e){return new re(e)}function x(e){e._state="writable",e._storedError=void 0,e._writer=void 0,e._writableStreamController=void 0,e._writeRequests=[],e._inFlightWriteRequest=void 0,e._closeRequest=void 0,e._inFlightCloseRequest=void 0,e._pendingAbortRequest=void 0,e._backpressure=!1}function Q(e){return!!O(e)&&!!Object.prototype.hasOwnProperty.call(e,"_writableStreamController")}function Y(e){return void 0!==e._writer}function U(e,r){var t=e._state;if("closed"===t||"errored"===t)return Promise.resolve(void 0);if(void 0!==e._pendingAbortRequest)return e._pendingAbortRequest._promise;var o=!1;"erroring"===t&&(o=!0,r=void 0);var n=new Promise(function(t,n){e._pendingAbortRequest={_resolve:t,_reject:n,_reason:r,_wasAlreadyErroring:o}});return e._pendingAbortRequest._promise=n,!1===o&&J(e,r),n}function G(e,r){"writable"!==e._state?K(e):J(e,r)}function J(e,r){var t=e._writableStreamController;e._state="erroring",e._storedError=r;var o=e._writer;void 0!==o&&ie(o,r),!1===function(e){if(void 0===e._inFlightWriteRequest&&void 0===e._inFlightCloseRequest)return!1;return!0}(e)&&!0===t._started&&K(e)}function K(e){e._state="errored",e._writableStreamController[M]();for(var r=e._storedError,t=0,o=e._writeRequests;t<o.length;t++){o[t]._reject(r)}if(e._writeRequests=[],void 0!==e._pendingAbortRequest){var n=e._pendingAbortRequest;if(e._pendingAbortRequest=void 0,!0===n._wasAlreadyErroring)return n._reject(r),void $(e);e._writableStreamController[D](n._reason).then(function(){n._resolve(),$(e)},function(r){n._reject(r),$(e)})}else $(e)}function X(e){e._inFlightCloseRequest._resolve(void 0),e._inFlightCloseRequest=void 0,"erroring"===e._state&&(e._storedError=void 0,void 0!==e._pendingAbortRequest&&(e._pendingAbortRequest._resolve(),e._pendingAbortRequest=void 0)),e._state="closed";var r=e._writer;void 0!==r&&function(e){e._closedPromise_resolve(void 0),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0,e._closedPromiseState="resolved"}(r)}function Z(e){return void 0!==e._closeRequest||void 0!==e._inFlightCloseRequest}function $(e){void 0!==e._closeRequest&&(e._closeRequest._reject(e._storedError),e._closeRequest=void 0);var r=e._writer;void 0!==r&&(pe(r,e._storedError),r._closedPromise.catch(function(){}))}function ee(e,r){var t=e._writer;void 0!==t&&r!==e._backpressure&&(!0===r?function(e){e._readyPromise=new Promise(function(r,t){e._readyPromise_resolve=r,e._readyPromise_reject=t}),e._readyPromiseState="pending"}(t):Se(t)),e._backpressure=r}var re=function(){function e(e){if(!1===Q(e))throw new TypeError("WritableStreamDefaultWriter can only be constructed with a WritableStream instance");if(!0===Y(e))throw new TypeError("This stream has already been locked for exclusive writing by another writer");this._ownerWritableStream=e,e._writer=this;var r=e._state;if("writable"===r)!1===Z(e)&&!0===e._backpressure?function(e){e._readyPromise=new Promise(function(r,t){e._readyPromise_resolve=r,e._readyPromise_reject=t}),e._readyPromiseState="pending"}(this):ge(this),ye(this);else if("erroring"===r)we(this,e._storedError),this._readyPromise.catch(function(){}),ye(this);else if("closed"===r)ge(this),function(e){e._closedPromise=Promise.resolve(void 0),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0,e._closedPromiseState="resolved"}(this);else{var t=e._storedError;we(this,t),this._readyPromise.catch(function(){}),function(e,r){e._closedPromise=Promise.reject(r),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0,e._closedPromiseState="rejected"}(this,t),this._closedPromise.catch(function(){})}}var r=e.prototype;return r.abort=function(e){return!1===te(this)?Promise.reject(be("abort")):void 0===this._ownerWritableStream?Promise.reject(ve("abort")):function(e,r){return U(e._ownerWritableStream,r)}(this,e)},r.close=function(){if(!1===te(this))return Promise.reject(be("close"));var e=this._ownerWritableStream;return void 0===e?Promise.reject(ve("close")):!0===Z(e)?Promise.reject(new TypeError("cannot close an already-closing stream")):oe(this)},r.releaseLock=function(){if(!1===te(this))throw be("releaseLock");void 0!==this._ownerWritableStream&&ae(this)},r.write=function(e){return!1===te(this)?Promise.reject(be("write")):void 0===this._ownerWritableStream?Promise.reject(ve("write to")):se(this,e)},t(e,[{key:"closed",get:function(){return!1===te(this)?Promise.reject(be("closed")):this._closedPromise}},{key:"desiredSize",get:function(){if(!1===te(this))throw be("desiredSize");if(void 0===this._ownerWritableStream)throw ve("desiredSize");return function(e){var r=e._ownerWritableStream,t=r._state;if("errored"===t||"erroring"===t)return null;if("closed"===t)return 0;return ce(r._writableStreamController)}(this)}},{key:"ready",get:function(){return!1===te(this)?Promise.reject(be("ready")):this._readyPromise}}]),e}();function te(e){return!!O(e)&&!!Object.prototype.hasOwnProperty.call(e,"_ownerWritableStream")}function oe(e){var r=e._ownerWritableStream,t=r._state;if("closed"===t||"errored"===t)return Promise.reject(new TypeError("The stream (in "+t+" state) is not in the writable state and cannot be closed"));var o=new Promise(function(e,t){var o={_resolve:e,_reject:t};r._closeRequest=o});return!0===r._backpressure&&"writable"===t&&Se(e),function(e){I(e,"close",0),de(e)}(r._writableStreamController),o}function ne(e,r){"pending"===e._closedPromiseState?pe(e,r):function(e,r){e._closedPromise=Promise.reject(r),e._closedPromiseState="rejected"}(e,r),e._closedPromise.catch(function(){})}function ie(e,r){"pending"===e._readyPromiseState?function(e,r){e._readyPromise_reject(r),e._readyPromise_resolve=void 0,e._readyPromise_reject=void 0,e._readyPromiseState="rejected"}(e,r):function(e,r){e._readyPromise=Promise.reject(r),e._readyPromiseState="rejected"}(e,r),e._readyPromise.catch(function(){})}function ae(e){var r=e._ownerWritableStream,t=new TypeError("Writer was released and can no longer be used to monitor the stream's closedness");ie(e,t),ne(e,t),r._writer=void 0,e._ownerWritableStream=void 0}function se(e,r){var t=e._ownerWritableStream,o=t._writableStreamController,n=function(e,r){try{return e._strategySizeAlgorithm(r)}catch(r){return fe(e,r),1}}(o,r);if(t!==e._ownerWritableStream)return Promise.reject(ve("write to"));var i=t._state;if("errored"===i)return Promise.reject(t._storedError);if(!0===Z(t)||"closed"===i)return Promise.reject(new TypeError("The stream is closing or closed and cannot be written to"));if("erroring"===i)return Promise.reject(t._storedError);var a=function(e){return new Promise(function(r,t){var o={_resolve:r,_reject:t};e._writeRequests.push(o)})}(t);return function(e,r,t){var o={chunk:r};try{I(e,o,t)}catch(r){return void fe(e,r)}var n=e._controlledWritableStream;if(!1===Z(n)&&"writable"===n._state){var i=_e(e);ee(n,i)}de(e)}(o,r,n),a}var le=function(){function e(){throw new TypeError("WritableStreamDefaultController cannot be constructed explicitly")}var r=e.prototype;return r.error=function(e){if(!1===function(e){if(!O(e))return!1;if(!Object.prototype.hasOwnProperty.call(e,"_controlledWritableStream"))return!1;return!0}(this))throw new TypeError("WritableStreamDefaultController.prototype.error can only be used on a WritableStreamDefaultController");"writable"===this._controlledWritableStream._state&&me(this,e)},r[D]=function(e){return this._abortAlgorithm(e)},r[M]=function(){N(this)},e}();function ue(e,r,t,o,n,i,a,s){r._controlledWritableStream=e,e._writableStreamController=r,r._queue=void 0,r._queueTotalSize=void 0,N(r),r._started=!1,r._strategySizeAlgorithm=s,r._strategyHWM=a,r._writeAlgorithm=o,r._closeAlgorithm=n,r._abortAlgorithm=i;var l=_e(r);ee(e,l);var u=t();Promise.resolve(u).then(function(){r._started=!0,de(r)},function(t){r._started=!0,G(e,t)}).catch(z)}function ce(e){return e._strategyHWM-e._queueTotalSize}function de(e){var r=e._controlledWritableStream;if(!1!==e._started&&void 0===r._inFlightWriteRequest){var t=r._state;if("closed"!==t&&"errored"!==t)if("erroring"!==t){if(0!==e._queue.length){var o=F(e);"close"===o?function(e){var r=e._controlledWritableStream;(function(e){e._inFlightCloseRequest=e._closeRequest,e._closeRequest=void 0})(r),B(e),e._closeAlgorithm().then(function(){X(r)},function(e){!function(e,r){e._inFlightCloseRequest._reject(r),e._inFlightCloseRequest=void 0,void 0!==e._pendingAbortRequest&&(e._pendingAbortRequest._reject(r),e._pendingAbortRequest=void 0),G(e,r)}(r,e)}).catch(z)}(e):function(e,r){var t=e._controlledWritableStream;(function(e){e._inFlightWriteRequest=e._writeRequests.shift()})(t),e._writeAlgorithm(r).then(function(){!function(e){e._inFlightWriteRequest._resolve(void 0),e._inFlightWriteRequest=void 0}(t);var r=t._state;if(B(e),!1===Z(t)&&"writable"===r){var o=_e(e);ee(t,o)}de(e)},function(e){!function(e,r){e._inFlightWriteRequest._reject(r),e._inFlightWriteRequest=void 0,G(e,r)}(t,e)}).catch(z)}(e,o.chunk)}}else K(r)}}function fe(e,r){"writable"===e._controlledWritableStream._state&&me(e,r)}function _e(e){return ce(e)<=0}function me(e,r){J(e._controlledWritableStream,r)}function he(e){return new TypeError("WritableStream.prototype."+e+" can only be used on a WritableStream")}function be(e){return new TypeError("WritableStreamDefaultWriter.prototype."+e+" can only be used on a WritableStreamDefaultWriter")}function ve(e){return new TypeError("Cannot "+e+" a stream using a released writer")}function ye(e){e._closedPromise=new Promise(function(r,t){e._closedPromise_resolve=r,e._closedPromise_reject=t,e._closedPromiseState="pending"})}function pe(e,r){e._closedPromise_reject(r),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0,e._closedPromiseState="rejected"}function we(e,r){e._readyPromise=Promise.reject(r),e._readyPromise_resolve=void 0,e._readyPromise_reject=void 0,e._readyPromiseState="rejected"}function ge(e){e._readyPromise=Promise.resolve(void 0),e._readyPromise_resolve=void 0,e._readyPromise_reject=void 0,e._readyPromiseState="fulfilled"}function Se(e){e._readyPromise_resolve(void 0),e._readyPromise_resolve=void 0,e._readyPromise_reject=void 0,e._readyPromiseState="fulfilled"}var Pe=V.WritableStream,Re=v.ArrayBufferCopy,qe=v.CreateAlgorithmFromUnderlyingMethod,Te=v.CreateIterResultObject,je=v.IsFiniteNonNegativeNumber,Ce=v.InvokeOrNoop,Ee=v.IsDetachedBuffer,We=v.TransferArrayBuffer,Ae=v.ValidateAndNormalizeHighWaterMark,ke=(v.IsNonNegativeNumber,v.MakeSizeAlgorithmFromSizeFunction),Oe=v.createArrayFromList,ze=v.typeIsObject,Be=j.rethrowAssertionErrorRejection,Ie=C.DequeueValue,Fe=C.EnqueueValueWithSize,Ne=C.ResetQueue,De=V.AcquireWritableStreamDefaultWriter,Me=V.IsWritableStream,Le=V.IsWritableStreamLocked,Ve=V.WritableStreamAbort,He=V.WritableStreamDefaultWriterCloseWithErrorPropagation,xe=V.WritableStreamDefaultWriterRelease,Qe=V.WritableStreamDefaultWriterWrite,Ye=V.WritableStreamCloseQueuedOrInFlight,Ue=i("[[CancelSteps]]"),Ge=i("[[PullSteps]]"),Je=function(){function e(e,r){void 0===e&&(e={});var t=void 0===r?{}:r,o=t.size,i=t.highWaterMark;$e(this);var a=e.type;if("bytes"===String(a)){if(void 0===i&&(i=0),i=Ae(i),void 0!==o)throw new RangeError("The strategy for a byte stream cannot have a size function");!function(e,r,t){var o=Object.create(Ar.prototype);var i=qe(r,"pull",0,[o]),a=qe(r,"cancel",1,[]),s=r.autoAllocateChunkSize;if(void 0!==s&&(!1===n(s)||s<=0))throw new RangeError("autoAllocateChunkSize must be a positive integer");Gr(e,o,function(){return Ce(r,"start",[o])},i,a,t,s)}(this,e,i)}else{if(void 0!==a)throw new RangeError("Invalid type is specified");void 0===i&&(i=1),function(e,r,t,o){var n=Object.create(wr.prototype);var i=qe(r,"pull",0,[n]),a=qe(r,"cancel",1,[]);Er(e,n,function(){return Ce(r,"start",[n])},i,a,t,o)}(this,e,i=Ae(i),ke(o))}}var r=e.prototype;return r.cancel=function(e){return!1===er(this)?Promise.reject(Jr("cancel")):!0===rr(this)?Promise.reject(new TypeError("Cannot cancel a stream that already has a reader")):nr(this,e)},r.getReader=function(e){var r=(void 0===e?{}:e).mode;if(!1===er(this))throw Jr("getReader");if(void 0===r)return Xe(this);if("byob"===(r=String(r)))return function(e){return new _r(e)}(this);throw new RangeError("Invalid mode is specified")},r.pipeThrough=function(e,r){var t=e.writable,o=e.readable;if(void 0===t||void 0===o)throw new TypeError("readable and writable arguments must be defined");return function(e){try{Promise.prototype.then.call(e,void 0,function(){})}catch(e){}}(this.pipeTo(t,r)),o},r.pipeTo=function(e,r){var t=this,o=void 0===r?{}:r,n=o.preventClose,i=o.preventAbort,a=o.preventCancel;if(!1===er(this))return Promise.reject(Jr("pipeTo"));if(!1===Me(e))return Promise.reject(new TypeError("ReadableStream.prototype.pipeTo's first argument must be a WritableStream"));if(n=Boolean(n),i=Boolean(i),a=Boolean(a),!0===rr(this))return Promise.reject(new TypeError("ReadableStream.prototype.pipeTo cannot be used on a locked ReadableStream"));if(!0===Le(e))return Promise.reject(new TypeError("ReadableStream.prototype.pipeTo cannot be used on a locked WritableStream"));var s=Xe(this),l=De(e),u=!1,c=Promise.resolve();return new Promise(function(r,o){if(_(t,s._closedPromise,function(r){!1===i?m(function(){return Ve(e,r)},!0,r):h(!0,r)}),_(e,l._closedPromise,function(e){!1===a?m(function(){return nr(t,e)},!0,e):h(!0,e)}),function(e,r,t){"closed"===e._state?t():r.then(t).catch(Be)}(t,s._closedPromise,function(){!1===n?m(function(){return He(l)}):h()}),!0===Ye(e)||"closed"===e._state){var d=new TypeError("the destination writable stream closed before all data could be piped to it");!1===a?m(function(){return nr(t,d)},!0,d):h(!0,d)}function f(){var e=c;return c.then(function(){return e!==c?f():void 0})}function _(e,r,t){"errored"===e._state?t(e._storedError):r.catch(t).catch(Be)}function m(r,t,o){function n(){r().then(function(){return b(t,o)},function(e){return b(!0,e)}).catch(Be)}!0!==u&&(u=!0,"writable"===e._state&&!1===Ye(e)?f().then(n):n())}function h(r,t){!0!==u&&(u=!0,"writable"===e._state&&!1===Ye(e)?f().then(function(){return b(r,t)}).catch(Be):b(r,t))}function b(e,t){xe(l),yr(s),e?o(t):r(void 0)}(function e(){return!0===u?Promise.resolve():l._readyPromise.then(function(){return pr(s).then(function(e){var r=e.value;!0!==e.done&&(c=Qe(l,r).catch(function(){}))})}).then(e)})().catch(function(e){c=Promise.resolve(),Be(e)})})},r.tee=function(){if(!1===er(this))throw Jr("tee");var e=function(e,r){var t,o,n,i,a,s=Xe(e),l=!1,u=!1,c=!1,d=new Promise(function(e){a=e});function f(){return pr(s).then(function(e){var r=e.value,t=e.done;if(!0===t&&!1===l&&(!1===u&&Rr(n._readableStreamController),!1===c&&Rr(i._readableStreamController),l=!0),!0!==l){var o=r,a=r;!1===u&&qr(n._readableStreamController,o),!1===c&&qr(i._readableStreamController,a)}})}function _(){}return n=Ze(_,f,function(r){if(u=!0,t=r,!0===c){var n=Oe([t,o]),i=nr(e,n);a(i)}return d}),i=Ze(_,f,function(r){if(c=!0,o=r,!0===u){var n=Oe([t,o]),i=nr(e,n);a(i)}return d}),s._closedPromise.catch(function(e){!0!==l&&(Tr(n._readableStreamController,e),Tr(i._readableStreamController,e),l=!0)}),[n,i]}(this);return Oe(e)},t(e,[{key:"locked",get:function(){if(!1===er(this))throw Jr("locked");return rr(this)}}]),e}(),Ke={CreateReadableByteStream:function(e,r,t,o,n){void 0===o&&(o=0);void 0===n&&(n=void 0);var i=Object.create(Je.prototype);$e(i);var a=Object.create(Ar.prototype);return Gr(i,a,e,r,t,o,n),i},CreateReadableStream:Ze,ReadableStream:Je,IsReadableStreamDisturbed:function(e){return e._disturbed},ReadableStreamDefaultControllerClose:Rr,ReadableStreamDefaultControllerEnqueue:qr,ReadableStreamDefaultControllerError:Tr,ReadableStreamDefaultControllerGetDesiredSize:jr,ReadableStreamDefaultControllerHasBackpressure:function(e){if(!0===Pr(e))return!1;return!0},ReadableStreamDefaultControllerCanCloseOrEnqueue:Cr};function Xe(e){return new fr(e)}function Ze(e,r,t,o,n){void 0===o&&(o=1),void 0===n&&(n=function(){return 1});var i=Object.create(Je.prototype);return $e(i),Er(i,Object.create(wr.prototype),e,r,t,o,n),i}function $e(e){e._state="readable",e._reader=void 0,e._storedError=void 0,e._disturbed=!1}function er(e){return!!ze(e)&&!!Object.prototype.hasOwnProperty.call(e,"_readableStreamController")}function rr(e){return void 0!==e._reader}function tr(e){return new Promise(function(r,t){var o={_resolve:r,_reject:t};e._reader._readIntoRequests.push(o)})}function or(e){return new Promise(function(r,t){var o={_resolve:r,_reject:t};e._reader._readRequests.push(o)})}function nr(e,r){return e._disturbed=!0,"closed"===e._state?Promise.resolve(void 0):"errored"===e._state?Promise.reject(e._storedError):(ir(e),e._readableStreamController[Ue](r).then(function(){}))}function ir(e){e._state="closed";var r=e._reader;if(void 0!==r){if(!0===hr(r)){for(var t=0,o=r._readRequests;t<o.length;t++){(0,o[t]._resolve)(Te(void 0,!0))}r._readRequests=[]}!function(e){e._closedPromise_resolve(void 0),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0}(r)}}function ar(e,r){e._state="errored",e._storedError=r;var t=e._reader;if(void 0!==t){if(!0===hr(t)){for(var o=0,n=t._readRequests;o<n.length;o++){n[o]._reject(r)}t._readRequests=[]}else{for(var i=0,a=t._readIntoRequests;i<a.length;i++){a[i]._reject(r)}t._readIntoRequests=[]}Zr(t,r),t._closedPromise.catch(function(){})}}function sr(e,r,t){e._reader._readRequests.shift()._resolve(Te(r,t))}function lr(e){return e._reader._readIntoRequests.length}function ur(e){return e._reader._readRequests.length}function cr(e){var r=e._reader;return void 0!==r&&!1!==mr(r)}function dr(e){var r=e._reader;return void 0!==r&&!1!==hr(r)}var fr=function(){function e(e){if(!1===er(e))throw new TypeError("ReadableStreamDefaultReader can only be constructed with a ReadableStream instance");if(!0===rr(e))throw new TypeError("This stream has already been locked for exclusive reading by another reader");br(this,e),this._readRequests=[]}var r=e.prototype;return r.cancel=function(e){return!1===hr(this)?Promise.reject(Xr("cancel")):void 0===this._ownerReadableStream?Promise.reject(Kr("cancel")):vr(this,e)},r.read=function(){return!1===hr(this)?Promise.reject(Xr("read")):void 0===this._ownerReadableStream?Promise.reject(Kr("read from")):pr(this)},r.releaseLock=function(){if(!1===hr(this))throw Xr("releaseLock");if(void 0!==this._ownerReadableStream){if(this._readRequests.length>0)throw new TypeError("Tried to release a reader lock when that reader has pending read() calls un-settled");yr(this)}},t(e,[{key:"closed",get:function(){return!1===hr(this)?Promise.reject(Xr("closed")):this._closedPromise}}]),e}(),_r=function(){function e(e){if(!er(e))throw new TypeError("ReadableStreamBYOBReader can only be constructed with a ReadableStream instance given a byte source");if(!1===kr(e._readableStreamController))throw new TypeError("Cannot construct a ReadableStreamBYOBReader for a stream not constructed with a byte source");if(rr(e))throw new TypeError("This stream has already been locked for exclusive reading by another reader");br(this,e),this._readIntoRequests=[]}var r=e.prototype;return r.cancel=function(e){return mr(this)?void 0===this._ownerReadableStream?Promise.reject(Kr("cancel")):vr(this,e):Promise.reject($r("cancel"))},r.read=function(e){return mr(this)?void 0===this._ownerReadableStream?Promise.reject(Kr("read from")):ArrayBuffer.isView(e)?!0===Ee(e.buffer)?Promise.reject(new TypeError("Cannot read into a view onto a detached ArrayBuffer")):0===e.byteLength?Promise.reject(new TypeError("view must have non-zero byteLength")):function(e,r){var t=e._ownerReadableStream;if(t._disturbed=!0,"errored"===t._state)return Promise.reject(t._storedError);return function(e,r){var t=e._controlledReadableByteStream,o=1;r.constructor!==DataView&&(o=r.constructor.BYTES_PER_ELEMENT);var n=r.constructor,i={buffer:We(r.buffer),byteOffset:r.byteOffset,byteLength:r.byteLength,bytesFilled:0,elementSize:o,ctor:n,readerType:"byob"};if(e._pendingPullIntos.length>0)return e._pendingPullIntos.push(i),tr(t);if("closed"===t._state){var a=new r.constructor(i.buffer,i.byteOffset,0);return Promise.resolve(Te(a,!0))}if(e._queueTotalSize>0){if(!0===Dr(e,i)){var s=Fr(i);return Lr(e),Promise.resolve(Te(s,!1))}if(!0===e._closeRequested){var l=new TypeError("Insufficient bytes to fill elements in the given buffer");return Yr(e,l),Promise.reject(l)}}e._pendingPullIntos.push(i);var u=tr(t);return zr(e),u}(t._readableStreamController,r)}(this,e):Promise.reject(new TypeError("view must be an array buffer view")):Promise.reject($r("read"))},r.releaseLock=function(){if(!mr(this))throw $r("releaseLock");if(void 0!==this._ownerReadableStream){if(this._readIntoRequests.length>0)throw new TypeError("Tried to release a reader lock when that reader has pending read() calls un-settled");yr(this)}},t(e,[{key:"closed",get:function(){return mr(this)?this._closedPromise:Promise.reject($r("closed"))}}]),e}();function mr(e){return!!ze(e)&&!!Object.prototype.hasOwnProperty.call(e,"_readIntoRequests")}function hr(e){return!!ze(e)&&!!Object.prototype.hasOwnProperty.call(e,"_readRequests")}function br(e,r){e._ownerReadableStream=r,r._reader=e,"readable"===r._state?function(e){e._closedPromise=new Promise(function(r,t){e._closedPromise_resolve=r,e._closedPromise_reject=t})}(e):"closed"===r._state?function(e){e._closedPromise=Promise.resolve(void 0),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0}(e):(!function(e,r){e._closedPromise=Promise.reject(r),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0}(e,r._storedError),e._closedPromise.catch(function(){}))}function vr(e,r){return nr(e._ownerReadableStream,r)}function yr(e){"readable"===e._ownerReadableStream._state?Zr(e,new TypeError("Reader was released and can no longer be used to monitor the stream's closedness")):function(e,r){e._closedPromise=Promise.reject(r)}(e,new TypeError("Reader was released and can no longer be used to monitor the stream's closedness")),e._closedPromise.catch(function(){}),e._ownerReadableStream._reader=void 0,e._ownerReadableStream=void 0}function pr(e){var r=e._ownerReadableStream;return r._disturbed=!0,"closed"===r._state?Promise.resolve(Te(void 0,!0)):"errored"===r._state?Promise.reject(r._storedError):r._readableStreamController[Ge]()}var wr=function(){function e(){throw new TypeError}var r=e.prototype;return r.close=function(){if(!1===gr(this))throw et("close");if(!1===Cr(this))throw new TypeError("The stream is not in a state that permits close");Rr(this)},r.enqueue=function(e){if(!1===gr(this))throw et("enqueue");if(!1===Cr(this))throw new TypeError("The stream is not in a state that permits enqueue");return qr(this,e)},r.error=function(e){if(!1===gr(this))throw et("error");Tr(this,e)},r[Ue]=function(e){return Ne(this),this._cancelAlgorithm(e)},r[Ge]=function(){var e=this._controlledReadableStream;if(this._queue.length>0){var r=Ie(this);return!0===this._closeRequested&&0===this._queue.length?ir(e):Sr(this),Promise.resolve(Te(r,!1))}var t=or(e);return Sr(this),t},t(e,[{key:"desiredSize",get:function(){if(!1===gr(this))throw et("desiredSize");return jr(this)}}]),e}();function gr(e){return!!ze(e)&&!!Object.prototype.hasOwnProperty.call(e,"_controlledReadableStream")}function Sr(e){!1!==Pr(e)&&(!0!==e._pulling?(e._pulling=!0,e._pullAlgorithm().then(function(){if(e._pulling=!1,!0===e._pullAgain)return e._pullAgain=!1,Sr(e)},function(r){Tr(e,r)}).catch(Be)):e._pullAgain=!0)}function Pr(e){var r=e._controlledReadableStream;return!1!==Cr(e)&&(!1!==e._started&&(!0===rr(r)&&ur(r)>0||jr(e)>0))}function Rr(e){var r=e._controlledReadableStream;e._closeRequested=!0,0===e._queue.length&&ir(r)}function qr(e,r){var t=e._controlledReadableStream;if(!0===rr(t)&&ur(t)>0)sr(t,r,!1);else{var o;try{o=e._strategySizeAlgorithm(r)}catch(r){throw Tr(e,r),r}try{Fe(e,r,o)}catch(r){throw Tr(e,r),r}}Sr(e)}function Tr(e,r){var t=e._controlledReadableStream;"readable"===t._state&&(Ne(e),ar(t,r))}function jr(e){var r=e._controlledReadableStream._state;return"errored"===r?null:"closed"===r?0:e._strategyHWM-e._queueTotalSize}function Cr(e){var r=e._controlledReadableStream._state;return!1===e._closeRequested&&"readable"===r}function Er(e,r,t,o,n,i,a){r._controlledReadableStream=e,r._queue=void 0,r._queueTotalSize=void 0,Ne(r),r._started=!1,r._closeRequested=!1,r._pullAgain=!1,r._pulling=!1,r._strategySizeAlgorithm=a,r._strategyHWM=i,r._pullAlgorithm=o,r._cancelAlgorithm=n,e._readableStreamController=r;var s=t();Promise.resolve(s).then(function(){r._started=!0,Sr(r)},function(e){Tr(r,e)}).catch(Be)}var Wr=function(){function e(){throw new TypeError("ReadableStreamBYOBRequest cannot be used directly")}var r=e.prototype;return r.respond=function(e){if(!1===Or(this))throw rt("respond");if(void 0===this._associatedReadableByteStreamController)throw new TypeError("This BYOB request has been invalidated");if(!0===Ee(this._view.buffer))throw new TypeError("The BYOB request's buffer has been detached and so cannot be used as a response");!function(e,r){if(r=Number(r),!1===je(r))throw new RangeError("bytesWritten must be a finite");xr(e,r)}(this._associatedReadableByteStreamController,e)},r.respondWithNewView=function(e){if(!1===Or(this))throw rt("respond");if(void 0===this._associatedReadableByteStreamController)throw new TypeError("This BYOB request has been invalidated");if(!ArrayBuffer.isView(e))throw new TypeError("You can only respond with array buffer views");if(!0===Ee(e.buffer))throw new TypeError("The supplied view's buffer has been detached and so cannot be used as a response");!function(e,r){var t=e._pendingPullIntos[0];if(t.byteOffset+t.bytesFilled!==r.byteOffset)throw new RangeError("The region specified by view does not match byobRequest");if(t.byteLength!==r.byteLength)throw new RangeError("The buffer of view has different capacity than byobRequest");t.buffer=r.buffer,xr(e,r.byteLength)}(this._associatedReadableByteStreamController,e)},t(e,[{key:"view",get:function(){if(!1===Or(this))throw rt("view");return this._view}}]),e}(),Ar=function(){function e(){throw new TypeError("ReadableByteStreamController constructor cannot be used directly")}var r=e.prototype;return r.close=function(){if(!1===kr(this))throw tt("close");if(!0===this._closeRequested)throw new TypeError("The stream has already been closed; do not close it again!");var e=this._controlledReadableByteStream._state;if("readable"!==e)throw new TypeError("The stream (in "+e+" state) is not in the readable state and cannot be closed");!function(e){var r=e._controlledReadableByteStream;if(e._queueTotalSize>0)return void(e._closeRequested=!0);if(e._pendingPullIntos.length>0){var t=e._pendingPullIntos[0];if(t.bytesFilled>0){var o=new TypeError("Insufficient bytes to fill elements in the given buffer");throw Yr(e,o),o}}ir(r)}(this)},r.enqueue=function(e){if(!1===kr(this))throw tt("enqueue");if(!0===this._closeRequested)throw new TypeError("stream is closed or draining");var r=this._controlledReadableByteStream._state;if("readable"!==r)throw new TypeError("The stream (in "+r+" state) is not in the readable state and cannot be enqueued to");if(!ArrayBuffer.isView(e))throw new TypeError("You can only enqueue array buffer views when using a ReadableByteStreamController");if(!0===Ee(e.buffer))throw new TypeError("Cannot enqueue a view onto a detached ArrayBuffer");!function(e,r){var t=e._controlledReadableByteStream,o=r.buffer,n=r.byteOffset,i=r.byteLength,a=We(o);if(!0===dr(t))if(0===ur(t))Nr(e,a,n,i);else{var s=new Uint8Array(a,n,i);sr(t,s,!1)}else!0===cr(t)?(Nr(e,a,n,i),Hr(e)):Nr(e,a,n,i);zr(e)}(this,e)},r.error=function(e){if(!1===kr(this))throw tt("error");Yr(this,e)},r[Ue]=function(e){this._pendingPullIntos.length>0&&(this._pendingPullIntos[0].bytesFilled=0);return Ne(this),this._cancelAlgorithm(e)},r[Ge]=function(){var e=this._controlledReadableByteStream;if(this._queueTotalSize>0){var r,t=this._queue.shift();this._queueTotalSize-=t.byteLength,Lr(this);try{r=new Uint8Array(t.buffer,t.byteOffset,t.byteLength)}catch(e){return Promise.reject(e)}return Promise.resolve(Te(r,!1))}var o=this._autoAllocateChunkSize;if(void 0!==o){var n;try{n=new ArrayBuffer(o)}catch(e){return Promise.reject(e)}var i={buffer:n,byteOffset:0,byteLength:o,bytesFilled:0,elementSize:1,ctor:Uint8Array,readerType:"default"};this._pendingPullIntos.push(i)}var a=or(e);return zr(this),a},t(e,[{key:"byobRequest",get:function(){if(!1===kr(this))throw tt("byobRequest");if(void 0===this._byobRequest&&this._pendingPullIntos.length>0){var e=this._pendingPullIntos[0],r=new Uint8Array(e.buffer,e.byteOffset+e.bytesFilled,e.byteLength-e.bytesFilled),t=Object.create(Wr.prototype);!function(e,r,t){e._associatedReadableByteStreamController=r,e._view=t}(t,this,r),this._byobRequest=t}return this._byobRequest}},{key:"desiredSize",get:function(){if(!1===kr(this))throw tt("desiredSize");return Ur(this)}}]),e}();function kr(e){return!!ze(e)&&!!Object.prototype.hasOwnProperty.call(e,"_controlledReadableByteStream")}function Or(e){return!!ze(e)&&!!Object.prototype.hasOwnProperty.call(e,"_associatedReadableByteStreamController")}function zr(e){!1!==function(e){var r=e._controlledReadableByteStream;if("readable"!==r._state)return!1;if(!0===e._closeRequested)return!1;if(!1===e._started)return!1;if(!0===dr(r)&&ur(r)>0)return!0;if(!0===cr(r)&&lr(r)>0)return!0;if(Ur(e)>0)return!0;return!1}(e)&&(!0!==e._pulling?(e._pulling=!0,e._pullAlgorithm().then(function(){e._pulling=!1,!0===e._pullAgain&&(e._pullAgain=!1,zr(e))},function(r){Yr(e,r)}).catch(Be)):e._pullAgain=!0)}function Br(e){Vr(e),e._pendingPullIntos=[]}function Ir(e,r){var t=!1;"closed"===e._state&&(t=!0);var o=Fr(r);"default"===r.readerType?sr(e,o,t):function(e,r,t){e._reader._readIntoRequests.shift()._resolve(Te(r,t))}(e,o,t)}function Fr(e){var r=e.bytesFilled,t=e.elementSize;return new e.ctor(e.buffer,e.byteOffset,r/t)}function Nr(e,r,t,o){e._queue.push({buffer:r,byteOffset:t,byteLength:o}),e._queueTotalSize+=o}function Dr(e,r){var t=r.elementSize,o=r.bytesFilled-r.bytesFilled%t,n=Math.min(e._queueTotalSize,r.byteLength-r.bytesFilled),i=r.bytesFilled+n,a=i-i%t,s=n,l=!1;a>o&&(s=a-r.bytesFilled,l=!0);for(var u=e._queue;s>0;){var c=u[0],d=Math.min(s,c.byteLength),f=r.byteOffset+r.bytesFilled;Re(r.buffer,f,c.buffer,c.byteOffset,d),c.byteLength===d?u.shift():(c.byteOffset+=d,c.byteLength-=d),e._queueTotalSize-=d,Mr(e,d,r),s-=d}return l}function Mr(e,r,t){Vr(e),t.bytesFilled+=r}function Lr(e){0===e._queueTotalSize&&!0===e._closeRequested?ir(e._controlledReadableByteStream):zr(e)}function Vr(e){void 0!==e._byobRequest&&(e._byobRequest._associatedReadableByteStreamController=void 0,e._byobRequest._view=void 0,e._byobRequest=void 0)}function Hr(e){for(;e._pendingPullIntos.length>0;){if(0===e._queueTotalSize)return;var r=e._pendingPullIntos[0];!0===Dr(e,r)&&(Qr(e),Ir(e._controlledReadableByteStream,r))}}function xr(e,r){var t=e._pendingPullIntos[0];if("closed"===e._controlledReadableByteStream._state){if(0!==r)throw new TypeError("bytesWritten must be 0 when calling respond() on a closed stream");!function(e,r){r.buffer=We(r.buffer);var t=e._controlledReadableByteStream;if(!0===cr(t))for(;lr(t)>0;)Ir(t,Qr(e))}(e,t)}else!function(e,r,t){if(t.bytesFilled+r>t.byteLength)throw new RangeError("bytesWritten out of range");if(Mr(e,r,t),!(t.bytesFilled<t.elementSize)){Qr(e);var o=t.bytesFilled%t.elementSize;if(o>0){var n=t.byteOffset+t.bytesFilled,i=t.buffer.slice(n-o,n);Nr(e,i,0,i.byteLength)}t.buffer=We(t.buffer),t.bytesFilled-=o,Ir(e._controlledReadableByteStream,t),Hr(e)}}(e,r,t);zr(e)}function Qr(e){var r=e._pendingPullIntos.shift();return Vr(e),r}function Yr(e,r){var t=e._controlledReadableByteStream;"readable"===t._state&&(Br(e),Ne(e),ar(t,r))}function Ur(e){var r=e._controlledReadableByteStream._state;return"errored"===r?null:"closed"===r?0:e._strategyHWM-e._queueTotalSize}function Gr(e,r,t,o,n,i,a){r._controlledReadableByteStream=e,r._pullAgain=!1,r._pulling=!1,Br(r),r._queue=r._queueTotalSize=void 0,Ne(r),r._closeRequested=!1,r._started=!1,r._strategyHWM=Ae(i),r._pullAlgorithm=o,r._cancelAlgorithm=n,r._autoAllocateChunkSize=a,r._pendingPullIntos=[],e._readableStreamController=r;var s=t();Promise.resolve(s).then(function(){r._started=!0,zr(r)},function(e){Yr(r,e)}).catch(Be)}function Jr(e){return new TypeError("ReadableStream.prototype."+e+" can only be used on a ReadableStream")}function Kr(e){return new TypeError("Cannot "+e+" a stream using a released reader")}function Xr(e){return new TypeError("ReadableStreamDefaultReader.prototype."+e+" can only be used on a ReadableStreamDefaultReader")}function Zr(e,r){e._closedPromise_reject(r),e._closedPromise_resolve=void 0,e._closedPromise_reject=void 0}function $r(e){return new TypeError("ReadableStreamBYOBReader.prototype."+e+" can only be used on a ReadableStreamBYOBReader")}function et(e){return new TypeError("ReadableStreamDefaultController.prototype."+e+" can only be used on a ReadableStreamDefaultController")}function rt(e){return new TypeError("ReadableStreamBYOBRequest.prototype."+e+" can only be used on a ReadableStreamBYOBRequest")}function tt(e){return new TypeError("ReadableByteStreamController.prototype."+e+" can only be used on a ReadableByteStreamController")}var ot=Ke.ReadableStream,nt=v.createDataProperty,it=function(){function e(e){var r=e.highWaterMark;nt(this,"highWaterMark",r)}return e.prototype.size=function(e){return e.byteLength},e}(),at=v.createDataProperty,st=function(){function e(e){var r=e.highWaterMark;at(this,"highWaterMark",r)}return e.prototype.size=function(){return 1},e}(),lt=(T("streams:transform-stream:verbose"),v.InvokeOrNoop),ut=v.CreateAlgorithmFromUnderlyingMethod,ct=v.PromiseCall,dt=v.typeIsObject,ft=v.ValidateAndNormalizeHighWaterMark,_t=(v.IsNonNegativeNumber,v.MakeSizeAlgorithmFromSizeFunction),mt=Ke.CreateReadableStream,ht=Ke.ReadableStreamDefaultControllerClose,bt=Ke.ReadableStreamDefaultControllerEnqueue,vt=Ke.ReadableStreamDefaultControllerError,yt=Ke.ReadableStreamDefaultControllerGetDesiredSize,pt=Ke.ReadableStreamDefaultControllerHasBackpressure,wt=Ke.ReadableStreamDefaultControllerCanCloseOrEnqueue,gt=V.CreateWritableStream,St=V.WritableStreamDefaultControllerErrorIfNeeded,Pt=function(){function e(e,r,t){if(void 0===e&&(e={}),void 0===r&&(r={}),void 0===t&&(t={}),void 0!==e.readableType)throw new RangeError("Invalid readable type specified");if(void 0!==e.writableType)throw new RangeError("Invalid writable type specified");var o=r.size,n=_t(o),i=r.highWaterMark;void 0===i&&(i=1),i=ft(i);var a,s=t.size,l=_t(s),u=t.highWaterMark;void 0===u&&(u=0),u=ft(u),Rt(this,new Promise(function(e){a=e}),i,n,u,l),function(e,r){var t=Object.create(Et.prototype),o=function(e){try{return kt(t,e),Promise.resolve()}catch(e){return Promise.reject(e)}},n=r.transform;if(void 0!==n){if("function"!=typeof n)throw new TypeError("transform is not a method");o=function(o){var i=ct(n,r,[o,t]);return i.catch(function(r){throw Tt(e,r),r})}}var i=ut(r,"flush",0,[t]);At(e,t,o,i)}(this,e);var c=lt(e,"start",[this._transformStreamController]);a(c)}return t(e,[{key:"readable",get:function(){if(!1===qt(this))throw zt("readable");return this._readable}},{key:"writable",get:function(){if(!1===qt(this))throw zt("writable");return this._writable}}]),e}();function Rt(e,r,t,o,n,i){function a(){return r}e._writable=gt(a,function(r){return function(e,r){var t=e._transformStreamController;if(!0===e._backpressure){var o=e._backpressureChangePromise;return o.then(function(){var o=e._writable,n=o._state;if("erroring"===n)throw o._storedError;return t._transformAlgorithm(r)})}return t._transformAlgorithm(r)}(e,r)},function(){return function(e){var r=e._readable;return e._transformStreamController._flushAlgorithm().then(function(){if("errored"===r._state)throw r._storedError;var e=r._readableStreamController;!0===wt(e)&&ht(e)}).catch(function(t){throw Tt(e,t),r._storedError})}(e)},function(r){return function(e,r){return Tt(e,r),Promise.resolve()}(e,r)},t,o),e._readable=mt(a,function(){return function(e){return Ct(e,!1),e._backpressureChangePromise}(e)},function(r){return jt(e,r),Promise.resolve()},n,i),e._backpressure=void 0,e._backpressureChangePromise=void 0,e._backpressureChangePromise_resolve=void 0,Ct(e,!0),e._transformStreamController=void 0}function qt(e){return!!dt(e)&&!!Object.prototype.hasOwnProperty.call(e,"_transformStreamController")}function Tt(e,r){vt(e._readable._readableStreamController,r),jt(e,r)}function jt(e,r){St(e._writable._writableStreamController,r),!0===e._backpressure&&Ct(e,!1)}function Ct(e,r){void 0!==e._backpressureChangePromise&&e._backpressureChangePromise_resolve(),e._backpressureChangePromise=new Promise(function(r){e._backpressureChangePromise_resolve=r}),e._backpressure=r}var Et=function(){function e(){throw new TypeError("TransformStreamDefaultController instances cannot be created directly")}var r=e.prototype;return r.enqueue=function(e){if(!1===Wt(this))throw Ot("enqueue");kt(this,e)},r.error=function(e){if(!1===Wt(this))throw Ot("error");!function(e,r){Tt(e._controlledTransformStream,r)}(this,e)},r.terminate=function(){if(!1===Wt(this))throw Ot("terminate");!function(e){var r=e._controlledTransformStream,t=r._readable._readableStreamController;!0===wt(t)&&ht(t);var o=new TypeError("TransformStream terminated");jt(r,o)}(this)},t(e,[{key:"desiredSize",get:function(){if(!1===Wt(this))throw Ot("desiredSize");var e=this._controlledTransformStream._readable._readableStreamController;return yt(e)}}]),e}();function Wt(e){return!!dt(e)&&!!Object.prototype.hasOwnProperty.call(e,"_controlledTransformStream")}function At(e,r,t,o){r._controlledTransformStream=e,e._transformStreamController=r,r._transformAlgorithm=t,r._flushAlgorithm=o}function kt(e,r){var t=e._controlledTransformStream,o=t._readable._readableStreamController;if(!1===wt(o))throw new TypeError("Readable side is not in a state that permits enqueue");try{bt(o,r)}catch(e){throw jt(t,e),t._readable._storedError}pt(o)!==t._backpressure&&Ct(t,!0)}function Ot(e){return new TypeError("TransformStreamDefaultController.prototype."+e+" can only be used on a TransformStreamDefaultController")}function zt(e){return new TypeError("TransformStream.prototype."+e+" can only be used on a TransformStream")}var Bt={CreateTransformStream:function(e,r,t,o,n,i,a){void 0===o&&(o=1),void 0===n&&(n=function(){return 1}),void 0===i&&(i=0),void 0===a&&(a=function(){return 1});var s,l=Object.create(Pt.prototype);Rt(l,new Promise(function(e){s=e}),o,n,i,a),At(l,Object.create(Et.prototype),r,t);var u=e();return s(u),l},TransformStream:Pt}.TransformStream;void 0!==s&&o(s,{ReadableStream:ot,WritableStream:Pe,ByteLengthQueuingStrategy:it,CountQueuingStrategy:st,TransformStream:Bt}),e.ReadableStream=ot,e.WritableStream=Pe,e.ByteLengthQueuingStrategy=it,e.CountQueuingStrategy=st,e.TransformStream=Bt,Object.defineProperty(e,"__esModule",{value:!0})});
+"use strict";
+
+!function (e, t) {
+  "object" == typeof exports && "undefined" != typeof module ? t(exports) : "function" == typeof define && define.amd ? define(["exports"], t) : t((e = e || self).WebStreamsPolyfill = {});
+}(undefined, function (e) {
+  "use strict";
+  const t = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? Symbol : e => `Symbol(${e})`;const r = "undefined" != typeof self ? self : "undefined" != typeof window ? window : "undefined" != typeof global ? global : void 0,
+        o = Number.isNaN || function (e) {
+    return e != e;
+  };function n(e) {
+    return "object" == typeof e && null !== e || "function" == typeof e;
+  }function i(e, t, r) {
+    Object.defineProperty(e, t, { value: r, writable: !0, enumerable: !0, configurable: !0 });
+  }function a(e) {
+    return e.slice();
+  }function s(e, t, r, o, n) {
+    new Uint8Array(e).set(new Uint8Array(r, o, n), t);
+  }function l(e) {
+    return !1 !== function (e) {
+      if ("number" != typeof e) return !1;if (o(e)) return !1;if (e < 0) return !1;return !0;
+    }(e) && e !== 1 / 0;
+  }function c(e, t, r) {
+    if ("function" != typeof e) throw new TypeError("Argument is not a function");return Function.prototype.apply.call(e, t, r);
+  }function u(e, t, r, o) {
+    const n = e[t];if (void 0 !== n) {
+      if ("function" != typeof n) throw new TypeError(`${n} is not a method`);switch (r) {case 0:
+          return () => f(n, e, o);case 1:
+          return t => {
+            const r = [t].concat(o);return f(n, e, r);
+          };}
+    }return () => Promise.resolve();
+  }function d(e, t, r) {
+    const o = e[t];if (void 0 !== o) return c(o, e, r);
+  }function f(e, t, r) {
+    try {
+      return Promise.resolve(c(e, t, r));
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }function _(e) {
+    return e;
+  }function h(e) {
+    if (e = Number(e), o(e) || e < 0) throw new RangeError("highWaterMark property of a queuing strategy must be non-negative and non-NaN");return e;
+  }function b(e) {
+    if (void 0 === e) return () => 1;if ("function" != typeof e) throw new TypeError("size property of a queuing strategy must be a function");return t => e(t);
+  }function m(e, t, r) {
+    return Promise.prototype.then.call(e, t, r);
+  }function y(e, t, r) {
+    let o, n;const i = new Promise((e, t) => {
+      o = e, n = t;
+    });void 0 === r && (r = e => {
+      throw e;
+    });return function (e, t, r) {
+      let o = !1;const n = e => {
+        !1 === o && (o = !0, r(e));
+      };let i = 0,
+          a = 0;const s = e.length,
+            l = new Array(s);for (const r of e) {
+        const e = i;m(r, r => {
+          l[e] = r, ++a === s && t(l);
+        }, n), ++i;
+      }
+    }(e, e => {
+      try {
+        const r = t(e);o(r);
+      } catch (e) {
+        n(e);
+      }
+    }, e => {
+      try {
+        const t = r(e);o(t);
+      } catch (e) {
+        n(e);
+      }
+    }), i;
+  }function p(e) {}function w(e) {
+    e && e instanceof p.AssertionError && setTimeout(() => {
+      throw e;
+    }, 0);
+  }function g(e) {
+    const t = e._queue.shift();return e._queueTotalSize -= t.size, e._queueTotalSize < 0 && (e._queueTotalSize = 0), t.value;
+  }function S(e, t, r) {
+    if (!l(r = Number(r))) throw new RangeError("Size must be a finite, non-NaN, non-negative number.");e._queue.push({ value: t, size: r }), e._queueTotalSize += r;
+  }function v(e) {
+    e._queue = [], e._queueTotalSize = 0;
+  }p.AssertionError = function () {};const R = t("[[AbortSteps]]"),
+        P = t("[[ErrorSteps]]");class WritableStream {
+    constructor(e = {}, t = {}) {
+      q(this);const r = t.size;let o = t.highWaterMark;if (void 0 !== e.type) throw new RangeError("Invalid type is specified");const n = b(r);void 0 === o && (o = 1), function (e, t, r, o) {
+        const n = Object.create(WritableStreamDefaultController.prototype);const i = u(t, "write", 1, [n]),
+              a = u(t, "close", 0, []),
+              s = u(t, "abort", 1, []);$(e, n, function () {
+          return d(t, "start", [n]);
+        }, i, a, s, r, o);
+      }(this, e, o = h(o), n);
+    }get locked() {
+      if (!1 === E(this)) throw G("locked");return C(this);
+    }abort(e) {
+      return !1 === E(this) ? Promise.reject(G("abort")) : !0 === C(this) ? Promise.reject(new TypeError("Cannot abort a stream that already has a writer")) : j(this, e);
+    }getWriter() {
+      if (!1 === E(this)) throw G("getWriter");return T(this);
+    }
+  }function T(e) {
+    return new WritableStreamDefaultWriter(e);
+  }function q(e) {
+    e._state = "writable", e._storedError = void 0, e._writer = void 0, e._writableStreamController = void 0, e._writeRequests = [], e._inFlightWriteRequest = void 0, e._closeRequest = void 0, e._inFlightCloseRequest = void 0, e._pendingAbortRequest = void 0, e._backpressure = !1;
+  }function E(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_writableStreamController");
+  }function C(e) {
+    return void 0 !== e._writer;
+  }function j(e, t) {
+    const r = e._state;if ("closed" === r || "errored" === r) return Promise.resolve(void 0);if (void 0 !== e._pendingAbortRequest) return e._pendingAbortRequest._promise;let o = !1;"erroring" === r && (o = !0, t = void 0);const n = new Promise((r, n) => {
+      e._pendingAbortRequest = { _promise: void 0, _resolve: r, _reject: n, _reason: t, _wasAlreadyErroring: o };
+    });return e._pendingAbortRequest._promise = n, !1 === o && W(e, t), n;
+  }function A(e, t) {
+    "writable" !== e._state ? B(e) : W(e, t);
+  }function W(e, t) {
+    const r = e._writableStreamController;e._state = "erroring", e._storedError = t;const o = e._writer;void 0 !== o && D(o, t), !1 === function (e) {
+      if (void 0 === e._inFlightWriteRequest && void 0 === e._inFlightCloseRequest) return !1;return !0;
+    }(e) && !0 === r._started && B(e);
+  }function B(e) {
+    e._state = "errored", e._writableStreamController[P]();const t = e._storedError;for (const r of e._writeRequests) r._reject(t);if (e._writeRequests = [], void 0 === e._pendingAbortRequest) return void z(e);const r = e._pendingAbortRequest;if (e._pendingAbortRequest = void 0, !0 === r._wasAlreadyErroring) return r._reject(t), void z(e);e._writableStreamController[R](r._reason).then(() => {
+      r._resolve(), z(e);
+    }, t => {
+      r._reject(t), z(e);
+    });
+  }function O(e) {
+    return void 0 !== e._closeRequest || void 0 !== e._inFlightCloseRequest;
+  }function z(e) {
+    void 0 !== e._closeRequest && (e._closeRequest._reject(e._storedError), e._closeRequest = void 0);const t = e._writer;void 0 !== t && ee(t, e._storedError);
+  }function k(e, t) {
+    const r = e._writer;void 0 !== r && t !== e._backpressure && (!0 === t ? function (e) {
+      re(e);
+    }(r) : ae(r)), e._backpressure = t;
+  }class WritableStreamDefaultWriter {
+    constructor(e) {
+      if (!1 === E(e)) throw new TypeError("WritableStreamDefaultWriter can only be constructed with a WritableStream instance");if (!0 === C(e)) throw new TypeError("This stream has already been locked for exclusive writing by another writer");this._ownerWritableStream = e, e._writer = this;const t = e._state;if ("writable" === t) !1 === O(e) && !0 === e._backpressure ? re(this) : ne(this), X(this);else if ("erroring" === t) oe(this, e._storedError), X(this);else if ("closed" === t) ne(this), function (e) {
+        X(e), te(e);
+      }(this);else {
+        const t = e._storedError;oe(this, t), Z(this, t);
+      }
+    }get closed() {
+      return !1 === F(this) ? Promise.reject(J("closed")) : this._closedPromise;
+    }get desiredSize() {
+      if (!1 === F(this)) throw J("desiredSize");if (void 0 === this._ownerWritableStream) throw K("desiredSize");return function (e) {
+        const t = e._ownerWritableStream,
+              r = t._state;if ("errored" === r || "erroring" === r) return null;if ("closed" === r) return 0;return Q(t._writableStreamController);
+      }(this);
+    }get ready() {
+      return !1 === F(this) ? Promise.reject(J("ready")) : this._readyPromise;
+    }abort(e) {
+      return !1 === F(this) ? Promise.reject(J("abort")) : void 0 === this._ownerWritableStream ? Promise.reject(K("abort")) : function (e, t) {
+        return j(e._ownerWritableStream, t);
+      }(this, e);
+    }close() {
+      if (!1 === F(this)) return Promise.reject(J("close"));const e = this._ownerWritableStream;return void 0 === e ? Promise.reject(K("close")) : !0 === O(e) ? Promise.reject(new TypeError("cannot close an already-closing stream")) : L(this);
+    }releaseLock() {
+      if (!1 === F(this)) throw J("releaseLock");void 0 !== this._ownerWritableStream && M(this);
+    }write(e) {
+      return !1 === F(this) ? Promise.reject(J("write")) : void 0 === this._ownerWritableStream ? Promise.reject(K("write to")) : Y(this, e);
+    }
+  }function F(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_ownerWritableStream");
+  }function L(e) {
+    const t = e._ownerWritableStream,
+          r = t._state;if ("closed" === r || "errored" === r) return Promise.reject(new TypeError(`The stream (in ${r} state) is not in the writable state and cannot be closed`));const o = new Promise((e, r) => {
+      const o = { _resolve: e, _reject: r };t._closeRequest = o;
+    });return !0 === t._backpressure && "writable" === r && ae(e), function (e) {
+      S(e, "close", 0), x(e);
+    }(t._writableStreamController), o;
+  }function I(e, t) {
+    "pending" === e._closedPromiseState ? ee(e, t) : function (e, t) {
+      Z(e, t);
+    }(e, t);
+  }function D(e, t) {
+    "pending" === e._readyPromiseState ? ie(e, t) : function (e, t) {
+      oe(e, t);
+    }(e, t);
+  }function M(e) {
+    const t = e._ownerWritableStream,
+          r = new TypeError("Writer was released and can no longer be used to monitor the stream's closedness");D(e, r), I(e, r), t._writer = void 0, e._ownerWritableStream = void 0;
+  }function Y(e, t) {
+    const r = e._ownerWritableStream,
+          o = r._writableStreamController,
+          n = function (e, t) {
+      try {
+        return e._strategySizeAlgorithm(t);
+      } catch (t) {
+        return H(e, t), 1;
+      }
+    }(o, t);if (r !== e._ownerWritableStream) return Promise.reject(K("write to"));const i = r._state;if ("errored" === i) return Promise.reject(r._storedError);if (!0 === O(r) || "closed" === i) return Promise.reject(new TypeError("The stream is closing or closed and cannot be written to"));if ("erroring" === i) return Promise.reject(r._storedError);const a = function (e) {
+      return new Promise((t, r) => {
+        const o = { _resolve: t, _reject: r };e._writeRequests.push(o);
+      });
+    }(r);return function (e, t, r) {
+      const o = { chunk: t };try {
+        S(e, o, r);
+      } catch (t) {
+        return void H(e, t);
+      }const n = e._controlledWritableStream;if (!1 === O(n) && "writable" === n._state) {
+        const t = U(e);k(n, t);
+      }x(e);
+    }(o, t, n), a;
+  }class WritableStreamDefaultController {
+    constructor() {
+      throw new TypeError("WritableStreamDefaultController cannot be constructed explicitly");
+    }error(e) {
+      if (!1 === function (e) {
+        if (!n(e)) return !1;if (!Object.prototype.hasOwnProperty.call(e, "_controlledWritableStream")) return !1;return !0;
+      }(this)) throw new TypeError("WritableStreamDefaultController.prototype.error can only be used on a WritableStreamDefaultController");"writable" === this._controlledWritableStream._state && V(this, e);
+    }[R](e) {
+      const t = this._abortAlgorithm(e);return N(this), t;
+    }[P]() {
+      v(this);
+    }
+  }function $(e, t, r, o, n, i, a, s) {
+    t._controlledWritableStream = e, e._writableStreamController = t, t._queue = void 0, t._queueTotalSize = void 0, v(t), t._started = !1, t._strategySizeAlgorithm = s, t._strategyHWM = a, t._writeAlgorithm = o, t._closeAlgorithm = n, t._abortAlgorithm = i;const l = U(t);k(e, l);const c = r();Promise.resolve(c).then(() => {
+      t._started = !0, x(t);
+    }, r => {
+      t._started = !0, A(e, r);
+    }).catch(w);
+  }function N(e) {
+    e._writeAlgorithm = void 0, e._closeAlgorithm = void 0, e._abortAlgorithm = void 0, e._strategySizeAlgorithm = void 0;
+  }function Q(e) {
+    return e._strategyHWM - e._queueTotalSize;
+  }function x(e) {
+    const t = e._controlledWritableStream;if (!1 === e._started) return;if (void 0 !== t._inFlightWriteRequest) return;const r = t._state;if ("closed" === r || "errored" === r) return;if ("erroring" === r) return void B(t);if (0 === e._queue.length) return;const o = function (e) {
+      return e._queue[0].value;
+    }(e);"close" === o ? function (e) {
+      const t = e._controlledWritableStream;(function (e) {
+        e._inFlightCloseRequest = e._closeRequest, e._closeRequest = void 0;
+      })(t), g(e);const r = e._closeAlgorithm();N(e), r.then(() => {
+        !function (e) {
+          e._inFlightCloseRequest._resolve(void 0), e._inFlightCloseRequest = void 0, "erroring" === e._state && (e._storedError = void 0, void 0 !== e._pendingAbortRequest && (e._pendingAbortRequest._resolve(), e._pendingAbortRequest = void 0)), e._state = "closed";const t = e._writer;void 0 !== t && te(t);
+        }(t);
+      }, e => {
+        !function (e, t) {
+          e._inFlightCloseRequest._reject(t), e._inFlightCloseRequest = void 0, void 0 !== e._pendingAbortRequest && (e._pendingAbortRequest._reject(t), e._pendingAbortRequest = void 0), A(e, t);
+        }(t, e);
+      }).catch(w);
+    }(e) : function (e, t) {
+      const r = e._controlledWritableStream;(function (e) {
+        e._inFlightWriteRequest = e._writeRequests.shift();
+      })(r), e._writeAlgorithm(t).then(() => {
+        !function (e) {
+          e._inFlightWriteRequest._resolve(void 0), e._inFlightWriteRequest = void 0;
+        }(r);const t = r._state;if (g(e), !1 === O(r) && "writable" === t) {
+          const t = U(e);k(r, t);
+        }x(e);
+      }, t => {
+        "writable" === r._state && N(e), function (e, t) {
+          e._inFlightWriteRequest._reject(t), e._inFlightWriteRequest = void 0, A(e, t);
+        }(r, t);
+      }).catch(w);
+    }(e, o.chunk);
+  }function H(e, t) {
+    "writable" === e._controlledWritableStream._state && V(e, t);
+  }function U(e) {
+    return Q(e) <= 0;
+  }function V(e, t) {
+    const r = e._controlledWritableStream;N(e), W(r, t);
+  }function G(e) {
+    return new TypeError(`WritableStream.prototype.${e} can only be used on a WritableStream`);
+  }function J(e) {
+    return new TypeError(`WritableStreamDefaultWriter.prototype.${e} can only be used on a WritableStreamDefaultWriter`);
+  }function K(e) {
+    return new TypeError("Cannot " + e + " a stream using a released writer");
+  }function X(e) {
+    e._closedPromise = new Promise((t, r) => {
+      e._closedPromise_resolve = t, e._closedPromise_reject = r, e._closedPromiseState = "pending";
+    });
+  }function Z(e, t) {
+    X(e), ee(e, t);
+  }function ee(e, t) {
+    e._closedPromise.catch(() => {}), e._closedPromise_reject(t), e._closedPromise_resolve = void 0, e._closedPromise_reject = void 0, e._closedPromiseState = "rejected";
+  }function te(e) {
+    e._closedPromise_resolve(void 0), e._closedPromise_resolve = void 0, e._closedPromise_reject = void 0, e._closedPromiseState = "resolved";
+  }function re(e) {
+    e._readyPromise = new Promise((t, r) => {
+      e._readyPromise_resolve = t, e._readyPromise_reject = r;
+    }), e._readyPromiseState = "pending";
+  }function oe(e, t) {
+    re(e), ie(e, t);
+  }function ne(e) {
+    re(e), ae(e);
+  }function ie(e, t) {
+    e._readyPromise.catch(() => {}), e._readyPromise_reject(t), e._readyPromise_resolve = void 0, e._readyPromise_reject = void 0, e._readyPromiseState = "rejected";
+  }function ae(e) {
+    e._readyPromise_resolve(void 0), e._readyPromise_resolve = void 0, e._readyPromise_reject = void 0, e._readyPromiseState = "fulfilled";
+  }const se = Number.isInteger || function (e) {
+    return "number" == typeof e && isFinite(e) && Math.floor(e) === e;
+  },
+        le = t("[[CancelSteps]]"),
+        ce = t("[[PullSteps]]");class ReadableStream {
+    constructor(e = {}, t = {}) {
+      fe(this);const r = t.size;let o = t.highWaterMark;const n = e.type;if ("bytes" === String(n)) {
+        if (void 0 !== r) throw new RangeError("The strategy for a byte stream cannot have a size function");void 0 === o && (o = 0), function (e, t, r) {
+          const o = Object.create(ReadableByteStreamController.prototype);const n = u(t, "pull", 0, [o]),
+                i = u(t, "cancel", 1, []);let a = t.autoAllocateChunkSize;if (void 0 !== a && (a = Number(a), !1 === se(a) || a <= 0)) throw new RangeError("autoAllocateChunkSize must be a positive integer");!function (e, t, r, o, n, i, a) {
+            t._controlledReadableByteStream = e, t._pullAgain = !1, t._pulling = !1, He(t), t._queue = t._queueTotalSize = void 0, v(t), t._closeRequested = !1, t._started = !1, t._strategyHWM = h(i), t._pullAlgorithm = o, t._cancelAlgorithm = n, t._autoAllocateChunkSize = a, t._pendingPullIntos = [], e._readableStreamController = t;const s = r();Promise.resolve(s).then(() => {
+              t._started = !0, xe(t);
+            }, e => {
+              nt(t, e);
+            }).catch(w);
+          }(e, o, function () {
+            return d(t, "start", [o]);
+          }, n, i, r, a);
+        }(this, e, o = h(o));
+      } else {
+        if (void 0 !== n) throw new RangeError("Invalid type is specified");{
+          const t = b(r);void 0 === o && (o = 1), function (e, t, r, o) {
+            const n = Object.create(ReadableStreamDefaultController.prototype);const i = u(t, "pull", 0, [n]),
+                  a = u(t, "cancel", 1, []);$e(e, n, function () {
+              return d(t, "start", [n]);
+            }, i, a, r, o);
+          }(this, e, o = h(o), t);
+        }
+      }
+    }get locked() {
+      if (!1 === _e(this)) throw st("locked");return he(this);
+    }cancel(e) {
+      return !1 === _e(this) ? Promise.reject(st("cancel")) : !0 === he(this) ? Promise.reject(new TypeError("Cannot cancel a stream that already has a reader")) : pe(this, e);
+    }getReader({ mode: e } = {}) {
+      if (!1 === _e(this)) throw st("getReader");if (void 0 === e) return ue(this);if ("byob" === (e = String(e))) return function (e) {
+        return new ReadableStreamBYOBReader(e);
+      }(this);throw new RangeError("Invalid mode is specified");
+    }pipeThrough({ writable: e, readable: t }, { preventClose: r, preventAbort: o, preventCancel: n, signal: i } = {}) {
+      if (!1 === _e(this)) throw st("pipeThrough");if (!1 === E(e)) throw new TypeError("writable argument to pipeThrough must be a WritableStream");if (!1 === _e(t)) throw new TypeError("readable argument to pipeThrough must be a ReadableStream");if (r = Boolean(r), o = Boolean(o), n = Boolean(n), void 0 !== i && !at(i)) throw new TypeError("ReadableStream.prototype.pipeThrough's signal option must be an AbortSignal");if (!0 === he(this)) throw new TypeError("ReadableStream.prototype.pipeThrough cannot be used on a locked ReadableStream");if (!0 === C(e)) throw new TypeError("ReadableStream.prototype.pipeThrough cannot be used on a locked WritableStream");return be(this, e, r, o, n, i).catch(() => {}), t;
+    }pipeTo(e, { preventClose: t, preventAbort: r, preventCancel: o, signal: n } = {}) {
+      return !1 === _e(this) ? Promise.reject(st("pipeTo")) : !1 === E(e) ? Promise.reject(new TypeError("ReadableStream.prototype.pipeTo's first argument must be a WritableStream")) : (t = Boolean(t), r = Boolean(r), o = Boolean(o), void 0 === n || at(n) ? !0 === he(this) ? Promise.reject(new TypeError("ReadableStream.prototype.pipeTo cannot be used on a locked ReadableStream")) : !0 === C(e) ? Promise.reject(new TypeError("ReadableStream.prototype.pipeTo cannot be used on a locked WritableStream")) : be(this, e, t, r, o, n) : Promise.reject(new TypeError("ReadableStream.prototype.pipeTo's signal option must be an AbortSignal")));
+    }tee() {
+      if (!1 === _e(this)) throw st("tee");const e = function (e, t) {
+        const r = ue(e);let o,
+            n,
+            i,
+            s,
+            l,
+            c = !1,
+            u = !1,
+            d = !1;const f = new Promise(e => {
+          l = e;
+        });function _() {
+          return Be(r).then(e => {
+            const t = e.value,
+                  r = e.done;if (!0 === r && !1 === c && (!1 === u && Le(i._readableStreamController), !1 === d && Le(s._readableStreamController), c = !0), !0 === c) return;const o = t,
+                  n = t;!1 === u && Ie(i._readableStreamController, o), !1 === d && Ie(s._readableStreamController, n);
+          });
+        }function h() {}return i = de(h, _, function (t) {
+          if (u = !0, o = t, !0 === d) {
+            const t = a([o, n]),
+                  r = pe(e, t);l(r);
+          }return f;
+        }), s = de(h, _, function (t) {
+          if (d = !0, n = t, !0 === u) {
+            const t = a([o, n]),
+                  r = pe(e, t);l(r);
+          }return f;
+        }), r._closedPromise.catch(e => {
+          !0 !== c && (De(i._readableStreamController, e), De(s._readableStreamController, e), c = !0);
+        }), [i, s];
+      }(this);return a(e);
+    }
+  }function ue(e) {
+    return new ReadableStreamDefaultReader(e);
+  }function de(e, t, r, o = 1, n = () => 1) {
+    const i = Object.create(ReadableStream.prototype);return fe(i), $e(i, Object.create(ReadableStreamDefaultController.prototype), e, t, r, o, n), i;
+  }function fe(e) {
+    e._state = "readable", e._reader = void 0, e._storedError = void 0, e._disturbed = !1;
+  }function _e(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_readableStreamController");
+  }function he(e) {
+    return void 0 !== e._reader;
+  }function be(e, t, r, o, n, i) {
+    const a = ue(e),
+          s = T(t);let l = !1,
+        c = Promise.resolve();return new Promise((u, d) => {
+      let f;if (void 0 !== i) {
+        if (f = () => {
+          const r = new DOMException("Aborted", "AbortError"),
+                i = [];!1 === o && i.push(() => "writable" === t._state ? j(t, r) : Promise.resolve()), !1 === n && i.push(() => "readable" === e._state ? pe(e, r) : Promise.resolve()), b(() => y(i.map(e => e()), e => e), !0, r);
+        }, !0 === i.aborted) return void f();i.addEventListener("abort", f);
+      }if (h(e, a._closedPromise, e => {
+        !1 === o ? b(() => j(t, e), !0, e) : m(!0, e);
+      }), h(t, s._closedPromise, t => {
+        !1 === n ? b(() => pe(e, t), !0, t) : m(!0, t);
+      }), function (e, t, r) {
+        "closed" === e._state ? r() : t.then(r).catch(w);
+      }(e, a._closedPromise, () => {
+        !1 === r ? b(() => function (e) {
+          const t = e._ownerWritableStream,
+                r = t._state;return !0 === O(t) || "closed" === r ? Promise.resolve() : "errored" === r ? Promise.reject(t._storedError) : L(e);
+        }(s)) : m();
+      }), !0 === O(t) || "closed" === t._state) {
+        const t = new TypeError("the destination writable stream closed before all data could be piped to it");!1 === n ? b(() => pe(e, t), !0, t) : m(!0, t);
+      }function _() {
+        const e = c;return c.then(() => e !== c ? _() : void 0);
+      }function h(e, t, r) {
+        "errored" === e._state ? r(e._storedError) : t.catch(r).catch(w);
+      }function b(e, r, o) {
+        function n() {
+          e().then(() => p(r, o), e => p(!0, e)).catch(w);
+        }!0 !== l && (l = !0, "writable" === t._state && !1 === O(t) ? _().then(n) : n());
+      }function m(e, r) {
+        !0 !== l && (l = !0, "writable" === t._state && !1 === O(t) ? _().then(() => p(e, r)).catch(w) : p(e, r));
+      }function p(e, t) {
+        M(s), We(a), void 0 !== i && i.removeEventListener("abort", f), e ? d(t) : u(void 0);
+      }new Promise((e, t) => {
+        !function r(o) {
+          o ? e() : (!0 === l ? Promise.resolve(!0) : s._readyPromise.then(() => Be(a).then(({ value: e, done: t }) => !0 === t || (c = Y(s, e).catch(() => {}), !1)))).then(r, t);
+        }(!1);
+      }).catch(e => {
+        c = Promise.resolve(), w(e);
+      });
+    });
+  }function me(e, t) {
+    return new Promise((r, o) => {
+      const n = { _resolve: r, _reject: o, _forAuthorCode: t };e._reader._readIntoRequests.push(n);
+    });
+  }function ye(e, t) {
+    return new Promise((r, o) => {
+      const n = { _resolve: r, _reject: o, _forAuthorCode: t };e._reader._readRequests.push(n);
+    });
+  }function pe(e, t) {
+    if (e._disturbed = !0, "closed" === e._state) return Promise.resolve(void 0);if ("errored" === e._state) return Promise.reject(e._storedError);return we(e), e._readableStreamController[le](t).then(() => void 0);
+  }function we(e) {
+    e._state = "closed";const t = e._reader;if (void 0 !== t) {
+      if (Ce(t)) {
+        for (const _ref of t._readRequests) {
+          const e = _ref._resolve;
+          const r = _ref._forAuthorCode;
+          e(ge(void 0, !0, r));
+        }t._readRequests = [];
+      }_t(t);
+    }
+  }function ge(e, t, r) {
+    let o = null;!0 === r && (o = Object.prototype);const n = Object.create(o);return Object.defineProperty(n, "value", { value: e, enumerable: !0, writable: !0, configurable: !0 }), Object.defineProperty(n, "done", { value: t, enumerable: !0, writable: !0, configurable: !0 }), n;
+  }function Se(e, t) {
+    e._state = "errored", e._storedError = t;const r = e._reader;if (void 0 !== r) {
+      if (Ce(r)) {
+        for (const e of r._readRequests) e._reject(t);r._readRequests = [];
+      } else {
+        for (const e of r._readIntoRequests) e._reject(t);r._readIntoRequests = [];
+      }ft(r, t);
+    }
+  }function ve(e, t, r) {
+    const o = e._reader._readRequests.shift();o._resolve(ge(t, r, o._forAuthorCode));
+  }function Re(e) {
+    return e._reader._readIntoRequests.length;
+  }function Pe(e) {
+    return e._reader._readRequests.length;
+  }function Te(e) {
+    const t = e._reader;return void 0 !== t && !!Ee(t);
+  }function qe(e) {
+    const t = e._reader;return void 0 !== t && !!Ce(t);
+  }class ReadableStreamDefaultReader {
+    constructor(e) {
+      if (!1 === _e(e)) throw new TypeError("ReadableStreamDefaultReader can only be constructed with a ReadableStream instance");if (!0 === he(e)) throw new TypeError("This stream has already been locked for exclusive reading by another reader");je(this, e), this._readRequests = [];
+    }get closed() {
+      return Ce(this) ? this._closedPromise : Promise.reject(ct("closed"));
+    }cancel(e) {
+      return Ce(this) ? void 0 === this._ownerReadableStream ? Promise.reject(lt("cancel")) : Ae(this, e) : Promise.reject(ct("cancel"));
+    }read() {
+      return Ce(this) ? void 0 === this._ownerReadableStream ? Promise.reject(lt("read from")) : Be(this, !0) : Promise.reject(ct("read"));
+    }releaseLock() {
+      if (!Ce(this)) throw ct("releaseLock");if (void 0 !== this._ownerReadableStream) {
+        if (this._readRequests.length > 0) throw new TypeError("Tried to release a reader lock when that reader has pending read() calls un-settled");We(this);
+      }
+    }
+  }class ReadableStreamBYOBReader {
+    constructor(e) {
+      if (!_e(e)) throw new TypeError("ReadableStreamBYOBReader can only be constructed with a ReadableStream instance given a byte source");if (!1 === Ne(e._readableStreamController)) throw new TypeError("Cannot construct a ReadableStreamBYOBReader for a stream not constructed with a byte source");if (he(e)) throw new TypeError("This stream has already been locked for exclusive reading by another reader");je(this, e), this._readIntoRequests = [];
+    }get closed() {
+      return Ee(this) ? this._closedPromise : Promise.reject(ht("closed"));
+    }cancel(e) {
+      return Ee(this) ? void 0 === this._ownerReadableStream ? Promise.reject(lt("cancel")) : Ae(this, e) : Promise.reject(ht("cancel"));
+    }read(e) {
+      return Ee(this) ? void 0 === this._ownerReadableStream ? Promise.reject(lt("read from")) : ArrayBuffer.isView(e) ? (e.buffer, 0 === e.byteLength ? Promise.reject(new TypeError("view must have non-zero byteLength")) : function (e, t, r = !1) {
+        const o = e._ownerReadableStream;if (o._disturbed = !0, "errored" === o._state) return Promise.reject(o._storedError);return function (e, t, r) {
+          const o = e._controlledReadableByteStream;let n = 1;t.constructor !== DataView && (n = t.constructor.BYTES_PER_ELEMENT);const i = t.constructor,
+                a = { buffer: _(t.buffer), byteOffset: t.byteOffset, byteLength: t.byteLength, bytesFilled: 0, elementSize: n, ctor: i, readerType: "byob" };if (e._pendingPullIntos.length > 0) return e._pendingPullIntos.push(a), me(o, r);if ("closed" === o._state) {
+            const e = new i(a.buffer, a.byteOffset, 0);return Promise.resolve(ge(e, !0, r));
+          }if (e._queueTotalSize > 0) {
+            if (!0 === Je(e, a)) {
+              const t = Ve(a);return Xe(e), Promise.resolve(ge(t, !1, r));
+            }if (!0 === e._closeRequested) {
+              const t = new TypeError("Insufficient bytes to fill elements in the given buffer");return nt(e, t), Promise.reject(t);
+            }
+          }e._pendingPullIntos.push(a);const s = me(o, r);return xe(e), s;
+        }(o._readableStreamController, t, r);
+      }(this, e, !0)) : Promise.reject(new TypeError("view must be an array buffer view")) : Promise.reject(ht("read"));
+    }releaseLock() {
+      if (!Ee(this)) throw ht("releaseLock");if (void 0 !== this._ownerReadableStream) {
+        if (this._readIntoRequests.length > 0) throw new TypeError("Tried to release a reader lock when that reader has pending read() calls un-settled");We(this);
+      }
+    }
+  }function Ee(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_readIntoRequests");
+  }function Ce(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_readRequests");
+  }function je(e, t) {
+    e._ownerReadableStream = t, t._reader = e, "readable" === t._state ? ut(e) : "closed" === t._state ? function (e) {
+      ut(e), _t(e);
+    }(e) : dt(e, t._storedError);
+  }function Ae(e, t) {
+    return pe(e._ownerReadableStream, t);
+  }function We(e) {
+    "readable" === e._ownerReadableStream._state ? ft(e, new TypeError("Reader was released and can no longer be used to monitor the stream's closedness")) : function (e, t) {
+      dt(e, t);
+    }(e, new TypeError("Reader was released and can no longer be used to monitor the stream's closedness")), e._ownerReadableStream._reader = void 0, e._ownerReadableStream = void 0;
+  }function Be(e, t = !1) {
+    const r = e._ownerReadableStream;return r._disturbed = !0, "closed" === r._state ? Promise.resolve(ge(void 0, !0, t)) : "errored" === r._state ? Promise.reject(r._storedError) : r._readableStreamController[ce](t);
+  }class ReadableStreamDefaultController {
+    constructor() {
+      throw new TypeError();
+    }get desiredSize() {
+      if (!1 === Oe(this)) throw bt("desiredSize");return Me(this);
+    }close() {
+      if (!1 === Oe(this)) throw bt("close");if (!1 === Ye(this)) throw new TypeError("The stream is not in a state that permits close");Le(this);
+    }enqueue(e) {
+      if (!1 === Oe(this)) throw bt("enqueue");if (!1 === Ye(this)) throw new TypeError("The stream is not in a state that permits enqueue");return Ie(this, e);
+    }error(e) {
+      if (!1 === Oe(this)) throw bt("error");De(this, e);
+    }[le](e) {
+      v(this);const t = this._cancelAlgorithm(e);return Fe(this), t;
+    }[ce](e) {
+      const t = this._controlledReadableStream;if (this._queue.length > 0) {
+        const r = g(this);return !0 === this._closeRequested && 0 === this._queue.length ? (Fe(this), we(t)) : ze(this), Promise.resolve(ge(r, !1, e));
+      }const r = ye(t, e);return ze(this), r;
+    }
+  }function Oe(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_controlledReadableStream");
+  }function ze(e) {
+    !1 !== ke(e) && (!0 !== e._pulling ? (e._pulling = !0, e._pullAlgorithm().then(() => {
+      if (e._pulling = !1, !0 === e._pullAgain) return e._pullAgain = !1, ze(e);
+    }, t => {
+      De(e, t);
+    }).catch(w)) : e._pullAgain = !0);
+  }function ke(e) {
+    const t = e._controlledReadableStream;return !1 !== Ye(e) && !1 !== e._started && (!0 === he(t) && Pe(t) > 0 || Me(e) > 0);
+  }function Fe(e) {
+    e._pullAlgorithm = void 0, e._cancelAlgorithm = void 0, e._strategySizeAlgorithm = void 0;
+  }function Le(e) {
+    const t = e._controlledReadableStream;e._closeRequested = !0, 0 === e._queue.length && (Fe(e), we(t));
+  }function Ie(e, t) {
+    const r = e._controlledReadableStream;if (!0 === he(r) && Pe(r) > 0) ve(r, t, !1);else {
+      let r;try {
+        r = e._strategySizeAlgorithm(t);
+      } catch (t) {
+        throw De(e, t), t;
+      }try {
+        S(e, t, r);
+      } catch (t) {
+        throw De(e, t), t;
+      }
+    }ze(e);
+  }function De(e, t) {
+    const r = e._controlledReadableStream;"readable" === r._state && (v(e), Fe(e), Se(r, t));
+  }function Me(e) {
+    const t = e._controlledReadableStream._state;return "errored" === t ? null : "closed" === t ? 0 : e._strategyHWM - e._queueTotalSize;
+  }function Ye(e) {
+    const t = e._controlledReadableStream._state;return !1 === e._closeRequested && "readable" === t;
+  }function $e(e, t, r, o, n, i, a) {
+    t._controlledReadableStream = e, t._queue = void 0, t._queueTotalSize = void 0, v(t), t._started = !1, t._closeRequested = !1, t._pullAgain = !1, t._pulling = !1, t._strategySizeAlgorithm = a, t._strategyHWM = i, t._pullAlgorithm = o, t._cancelAlgorithm = n, e._readableStreamController = t;const s = r();Promise.resolve(s).then(() => {
+      t._started = !0, ze(t);
+    }, e => {
+      De(t, e);
+    }).catch(w);
+  }class ReadableStreamBYOBRequest {
+    constructor() {
+      throw new TypeError("ReadableStreamBYOBRequest cannot be used directly");
+    }get view() {
+      if (!1 === Qe(this)) throw mt("view");return this._view;
+    }respond(e) {
+      if (!1 === Qe(this)) throw mt("respond");if (void 0 === this._associatedReadableByteStreamController) throw new TypeError("This BYOB request has been invalidated");this._view.buffer, function (e, t) {
+        if (!1 === l(t = Number(t))) throw new RangeError("bytesWritten must be a finite");tt(e, t);
+      }(this._associatedReadableByteStreamController, e);
+    }respondWithNewView(e) {
+      if (!1 === Qe(this)) throw mt("respond");if (void 0 === this._associatedReadableByteStreamController) throw new TypeError("This BYOB request has been invalidated");if (!ArrayBuffer.isView(e)) throw new TypeError("You can only respond with array buffer views");e.buffer, function (e, t) {
+        const r = e._pendingPullIntos[0];if (r.byteOffset + r.bytesFilled !== t.byteOffset) throw new RangeError("The region specified by view does not match byobRequest");if (r.byteLength !== t.byteLength) throw new RangeError("The buffer of view has different capacity than byobRequest");r.buffer = t.buffer, tt(e, t.byteLength);
+      }(this._associatedReadableByteStreamController, e);
+    }
+  }class ReadableByteStreamController {
+    constructor() {
+      throw new TypeError("ReadableByteStreamController constructor cannot be used directly");
+    }get byobRequest() {
+      if (!1 === Ne(this)) throw yt("byobRequest");if (void 0 === this._byobRequest && this._pendingPullIntos.length > 0) {
+        const e = this._pendingPullIntos[0],
+              t = new Uint8Array(e.buffer, e.byteOffset + e.bytesFilled, e.byteLength - e.bytesFilled),
+              r = Object.create(ReadableStreamBYOBRequest.prototype);!function (e, t, r) {
+          e._associatedReadableByteStreamController = t, e._view = r;
+        }(r, this, t), this._byobRequest = r;
+      }return this._byobRequest;
+    }get desiredSize() {
+      if (!1 === Ne(this)) throw yt("desiredSize");return it(this);
+    }close() {
+      if (!1 === Ne(this)) throw yt("close");if (!0 === this._closeRequested) throw new TypeError("The stream has already been closed; do not close it again!");const e = this._controlledReadableByteStream._state;if ("readable" !== e) throw new TypeError(`The stream (in ${e} state) is not in the readable state and cannot be closed`);!function (e) {
+        const t = e._controlledReadableByteStream;if (e._queueTotalSize > 0) return void (e._closeRequested = !0);if (e._pendingPullIntos.length > 0) {
+          const t = e._pendingPullIntos[0];if (t.bytesFilled > 0) {
+            const t = new TypeError("Insufficient bytes to fill elements in the given buffer");throw nt(e, t), t;
+          }
+        }ot(e), we(t);
+      }(this);
+    }enqueue(e) {
+      if (!1 === Ne(this)) throw yt("enqueue");if (!0 === this._closeRequested) throw new TypeError("stream is closed or draining");const t = this._controlledReadableByteStream._state;if ("readable" !== t) throw new TypeError(`The stream (in ${t} state) is not in the readable state and cannot be enqueued to`);if (!ArrayBuffer.isView(e)) throw new TypeError("You can only enqueue array buffer views when using a ReadableByteStreamController");e.buffer, function (e, t) {
+        const r = e._controlledReadableByteStream,
+              o = t.buffer,
+              n = t.byteOffset,
+              i = t.byteLength,
+              a = _(o);if (!0 === qe(r)) {
+          if (0 === Pe(r)) Ge(e, a, n, i);else {
+            const e = new Uint8Array(a, n, i);ve(r, e, !1);
+          }
+        } else !0 === Te(r) ? (Ge(e, a, n, i), et(e)) : Ge(e, a, n, i);xe(e);
+      }(this, e);
+    }error(e) {
+      if (!1 === Ne(this)) throw yt("error");nt(this, e);
+    }[le](e) {
+      if (this._pendingPullIntos.length > 0) {
+        this._pendingPullIntos[0].bytesFilled = 0;
+      }v(this);const t = this._cancelAlgorithm(e);return ot(this), t;
+    }[ce](e) {
+      const t = this._controlledReadableByteStream;if (this._queueTotalSize > 0) {
+        const t = this._queue.shift();let r;this._queueTotalSize -= t.byteLength, Xe(this);try {
+          r = new Uint8Array(t.buffer, t.byteOffset, t.byteLength);
+        } catch (e) {
+          return Promise.reject(e);
+        }return Promise.resolve(ge(r, !1, e));
+      }const r = this._autoAllocateChunkSize;if (void 0 !== r) {
+        let e;try {
+          e = new ArrayBuffer(r);
+        } catch (e) {
+          return Promise.reject(e);
+        }const t = { buffer: e, byteOffset: 0, byteLength: r, bytesFilled: 0, elementSize: 1, ctor: Uint8Array, readerType: "default" };this._pendingPullIntos.push(t);
+      }const o = ye(t, e);return xe(this), o;
+    }
+  }function Ne(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_controlledReadableByteStream");
+  }function Qe(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_associatedReadableByteStreamController");
+  }function xe(e) {
+    !1 !== function (e) {
+      const t = e._controlledReadableByteStream;if ("readable" !== t._state) return !1;if (!0 === e._closeRequested) return !1;if (!1 === e._started) return !1;if (!0 === qe(t) && Pe(t) > 0) return !0;if (!0 === Te(t) && Re(t) > 0) return !0;if (it(e) > 0) return !0;return !1;
+    }(e) && (!0 !== e._pulling ? (e._pulling = !0, e._pullAlgorithm().then(() => {
+      e._pulling = !1, !0 === e._pullAgain && (e._pullAgain = !1, xe(e));
+    }, t => {
+      nt(e, t);
+    }).catch(w)) : e._pullAgain = !0);
+  }function He(e) {
+    Ze(e), e._pendingPullIntos = [];
+  }function Ue(e, t) {
+    let r = !1;"closed" === e._state && (r = !0);const o = Ve(t);"default" === t.readerType ? ve(e, o, r) : function (e, t, r) {
+      const o = e._reader._readIntoRequests.shift();o._resolve(ge(t, r, o._forAuthorCode));
+    }(e, o, r);
+  }function Ve(e) {
+    const t = e.bytesFilled,
+          r = e.elementSize;return new e.ctor(e.buffer, e.byteOffset, t / r);
+  }function Ge(e, t, r, o) {
+    e._queue.push({ buffer: t, byteOffset: r, byteLength: o }), e._queueTotalSize += o;
+  }function Je(e, t) {
+    const r = t.elementSize,
+          o = t.bytesFilled - t.bytesFilled % r,
+          n = Math.min(e._queueTotalSize, t.byteLength - t.bytesFilled),
+          i = t.bytesFilled + n,
+          a = i - i % r;let l = n,
+        c = !1;a > o && (l = a - t.bytesFilled, c = !0);const u = e._queue;for (; l > 0;) {
+      const r = u[0],
+            o = Math.min(l, r.byteLength),
+            n = t.byteOffset + t.bytesFilled;s(t.buffer, n, r.buffer, r.byteOffset, o), r.byteLength === o ? u.shift() : (r.byteOffset += o, r.byteLength -= o), e._queueTotalSize -= o, Ke(e, o, t), l -= o;
+    }return c;
+  }function Ke(e, t, r) {
+    Ze(e), r.bytesFilled += t;
+  }function Xe(e) {
+    0 === e._queueTotalSize && !0 === e._closeRequested ? (ot(e), we(e._controlledReadableByteStream)) : xe(e);
+  }function Ze(e) {
+    void 0 !== e._byobRequest && (e._byobRequest._associatedReadableByteStreamController = void 0, e._byobRequest._view = void 0, e._byobRequest = void 0);
+  }function et(e) {
+    for (; e._pendingPullIntos.length > 0;) {
+      if (0 === e._queueTotalSize) return;const t = e._pendingPullIntos[0];!0 === Je(e, t) && (rt(e), Ue(e._controlledReadableByteStream, t));
+    }
+  }function tt(e, t) {
+    const r = e._pendingPullIntos[0];if ("closed" === e._controlledReadableByteStream._state) {
+      if (0 !== t) throw new TypeError("bytesWritten must be 0 when calling respond() on a closed stream");!function (e, t) {
+        t.buffer = _(t.buffer);const r = e._controlledReadableByteStream;if (!0 === Te(r)) for (; Re(r) > 0;) Ue(r, rt(e));
+      }(e, r);
+    } else !function (e, t, r) {
+      if (r.bytesFilled + t > r.byteLength) throw new RangeError("bytesWritten out of range");if (Ke(e, t, r), r.bytesFilled < r.elementSize) return;rt(e);const o = r.bytesFilled % r.elementSize;if (o > 0) {
+        const t = r.byteOffset + r.bytesFilled,
+              n = r.buffer.slice(t - o, t);Ge(e, n, 0, n.byteLength);
+      }r.buffer = _(r.buffer), r.bytesFilled -= o, Ue(e._controlledReadableByteStream, r), et(e);
+    }(e, t, r);xe(e);
+  }function rt(e) {
+    const t = e._pendingPullIntos.shift();return Ze(e), t;
+  }function ot(e) {
+    e._pullAlgorithm = void 0, e._cancelAlgorithm = void 0;
+  }function nt(e, t) {
+    const r = e._controlledReadableByteStream;"readable" === r._state && (He(e), v(e), ot(e), Se(r, t));
+  }function it(e) {
+    const t = e._controlledReadableByteStream._state;return "errored" === t ? null : "closed" === t ? 0 : e._strategyHWM - e._queueTotalSize;
+  }function at(e) {
+    if ("object" != typeof e || null === e) return !1;const t = Object.getOwnPropertyDescriptor(AbortSignal.prototype, "aborted").get;try {
+      return t.call(e), !0;
+    } catch (e) {
+      return !1;
+    }
+  }function st(e) {
+    return new TypeError(`ReadableStream.prototype.${e} can only be used on a ReadableStream`);
+  }function lt(e) {
+    return new TypeError("Cannot " + e + " a stream using a released reader");
+  }function ct(e) {
+    return new TypeError(`ReadableStreamDefaultReader.prototype.${e} can only be used on a ReadableStreamDefaultReader`);
+  }function ut(e) {
+    e._closedPromise = new Promise((t, r) => {
+      e._closedPromise_resolve = t, e._closedPromise_reject = r;
+    });
+  }function dt(e, t) {
+    ut(e), ft(e, t);
+  }function ft(e, t) {
+    e._closedPromise.catch(() => {}), e._closedPromise_reject(t), e._closedPromise_resolve = void 0, e._closedPromise_reject = void 0;
+  }function _t(e) {
+    e._closedPromise_resolve(void 0), e._closedPromise_resolve = void 0, e._closedPromise_reject = void 0;
+  }function ht(e) {
+    return new TypeError(`ReadableStreamBYOBReader.prototype.${e} can only be used on a ReadableStreamBYOBReader`);
+  }function bt(e) {
+    return new TypeError(`ReadableStreamDefaultController.prototype.${e} can only be used on a ReadableStreamDefaultController`);
+  }function mt(e) {
+    return new TypeError(`ReadableStreamBYOBRequest.prototype.${e} can only be used on a ReadableStreamBYOBRequest`);
+  }function yt(e) {
+    return new TypeError(`ReadableByteStreamController.prototype.${e} can only be used on a ReadableByteStreamController`);
+  }class ByteLengthQueuingStrategy {
+    constructor({ highWaterMark: e }) {
+      i(this, "highWaterMark", e);
+    }size(e) {
+      return e.byteLength;
+    }
+  }class CountQueuingStrategy {
+    constructor({ highWaterMark: e }) {
+      i(this, "highWaterMark", e);
+    }size() {
+      return 1;
+    }
+  }class TransformStream {
+    constructor(e = {}, t = {}, r = {}) {
+      const o = t.size;let n = t.highWaterMark;const i = r.size;let a = r.highWaterMark;if (void 0 !== e.writableType) throw new RangeError("Invalid writable type specified");const s = b(o);if (void 0 === n && (n = 1), n = h(n), void 0 !== e.readableType) throw new RangeError("Invalid readable type specified");const l = b(i);let c;void 0 === a && (a = 0), a = h(a), function (e, t, r, o, n, i) {
+        function a() {
+          return t;
+        }e._writable = function (e, t, r, o, n = 1, i = () => 1) {
+          const a = Object.create(WritableStream.prototype);return q(a), $(a, Object.create(WritableStreamDefaultController.prototype), e, t, r, o, n, i), a;
+        }(a, function (t) {
+          return function (e, t) {
+            const r = e._transformStreamController;if (!0 === e._backpressure) {
+              const o = e._backpressureChangePromise;return o.then(() => {
+                const o = e._writable,
+                      n = o._state;if ("erroring" === n) throw o._storedError;return Tt(r, t);
+              });
+            }return Tt(r, t);
+          }(e, t);
+        }, function () {
+          return function (e) {
+            const t = e._readable,
+                  r = e._transformStreamController,
+                  o = r._flushAlgorithm();return Rt(r), o.then(() => {
+              if ("errored" === t._state) throw t._storedError;const e = t._readableStreamController;!0 === Ye(e) && Le(e);
+            }).catch(r => {
+              throw wt(e, r), t._storedError;
+            });
+          }(e);
+        }, function (t) {
+          return function (e, t) {
+            return wt(e, t), Promise.resolve();
+          }(e, t);
+        }, r, o), e._readable = de(a, function () {
+          return function (e) {
+            return St(e, !1), e._backpressureChangePromise;
+          }(e);
+        }, function (t) {
+          return gt(e, t), Promise.resolve();
+        }, n, i), e._backpressure = void 0, e._backpressureChangePromise = void 0, e._backpressureChangePromise_resolve = void 0, St(e, !0), e._transformStreamController = void 0;
+      }(this, new Promise(e => {
+        c = e;
+      }), n, s, a, l), function (e, t) {
+        const r = Object.create(TransformStreamDefaultController.prototype);let o = e => {
+          try {
+            return Pt(r, e), Promise.resolve();
+          } catch (e) {
+            return Promise.reject(e);
+          }
+        };const n = t.transform;if (void 0 !== n) {
+          if ("function" != typeof n) throw new TypeError("transform is not a method");o = e => f(n, t, [e, r]);
+        }const i = u(t, "flush", 0, [r]);!function (e, t, r, o) {
+          t._controlledTransformStream = e, e._transformStreamController = t, t._transformAlgorithm = r, t._flushAlgorithm = o;
+        }(e, r, o, i);
+      }(this, e);const _ = d(e, "start", [this._transformStreamController]);c(_);
+    }get readable() {
+      if (!1 === pt(this)) throw Et("readable");return this._readable;
+    }get writable() {
+      if (!1 === pt(this)) throw Et("writable");return this._writable;
+    }
+  }function pt(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_transformStreamController");
+  }function wt(e, t) {
+    De(e._readable._readableStreamController, t), gt(e, t);
+  }function gt(e, t) {
+    Rt(e._transformStreamController), H(e._writable._writableStreamController, t), !0 === e._backpressure && St(e, !1);
+  }function St(e, t) {
+    void 0 !== e._backpressureChangePromise && e._backpressureChangePromise_resolve(), e._backpressureChangePromise = new Promise(t => {
+      e._backpressureChangePromise_resolve = t;
+    }), e._backpressure = t;
+  }class TransformStreamDefaultController {
+    constructor() {
+      throw new TypeError("TransformStreamDefaultController instances cannot be created directly");
+    }get desiredSize() {
+      if (!1 === vt(this)) throw qt("desiredSize");return Me(this._controlledTransformStream._readable._readableStreamController);
+    }enqueue(e) {
+      if (!1 === vt(this)) throw qt("enqueue");Pt(this, e);
+    }error(e) {
+      if (!1 === vt(this)) throw qt("error");!function (e, t) {
+        wt(e._controlledTransformStream, t);
+      }(this, e);
+    }terminate() {
+      if (!1 === vt(this)) throw qt("terminate");!function (e) {
+        const t = e._controlledTransformStream,
+              r = t._readable._readableStreamController;!0 === Ye(r) && Le(r);const o = new TypeError("TransformStream terminated");gt(t, o);
+      }(this);
+    }
+  }function vt(e) {
+    return !!n(e) && !!Object.prototype.hasOwnProperty.call(e, "_controlledTransformStream");
+  }function Rt(e) {
+    e._transformAlgorithm = void 0, e._flushAlgorithm = void 0;
+  }function Pt(e, t) {
+    const r = e._controlledTransformStream,
+          o = r._readable._readableStreamController;if (!1 === Ye(o)) throw new TypeError("Readable side is not in a state that permits enqueue");try {
+      Ie(o, t);
+    } catch (e) {
+      throw gt(r, e), r._readable._storedError;
+    }(function (e) {
+      return !0 !== ke(e);
+    })(o) !== r._backpressure && St(r, !0);
+  }function Tt(e, t) {
+    return e._transformAlgorithm(t).catch(t => {
+      throw wt(e._controlledTransformStream, t), t;
+    });
+  }function qt(e) {
+    return new TypeError(`TransformStreamDefaultController.prototype.${e} can only be used on a TransformStreamDefaultController`);
+  }function Et(e) {
+    return new TypeError(`TransformStream.prototype.${e} can only be used on a TransformStream`);
+  }const Ct = { ReadableStream: ReadableStream, WritableStream: WritableStream, ByteLengthQueuingStrategy: ByteLengthQueuingStrategy, CountQueuingStrategy: CountQueuingStrategy, TransformStream: TransformStream };void 0 !== r && Object.assign(r, Ct), e.ReadableStream = ReadableStream, e.WritableStream = WritableStream, e.ByteLengthQueuingStrategy = ByteLengthQueuingStrategy, e.CountQueuingStrategy = CountQueuingStrategy, e.TransformStream = TransformStream, Object.defineProperty(e, "__esModule", { value: !0 });
+});
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],2:[function(require,module,exports){
-'use strict';
-
-const ea_lib = require('email-addresses');
-
-exports.parse = function parse(line, startAt) {
-    if (!line) throw 'Nothing to parse';
-
-    line = line.trim();
-
-    const addr = ea_lib({
-        input: line,
-        rfc6532: true, // unicode
-        partial: false, // return failed parses
-        simple: false, // simple AST
-        strict: false, // turn off obs- features in the rfc
-        rejectTLD: false, // domains require a "."
-        startAt: startAt || null
-    });
-
-    if (!addr) throw 'No results';
-
-    // console.log("Parsed to: ", require('util').inspect(addr, {depth: 10, colors: true}));
-
-    return addr.addresses.map(map_addresses);
-};
-
-function map_addresses(adr) {
-    if (adr.type === 'group') {
-        return new Group(adr.name, adr.addresses.map(map_addresses));
-    }
-    let comments;
-    if (adr.parts.comments) {
-        comments = adr.parts.comments.map(function (c) {
-            return c.tokens.trim();
-        }).join(' ').trim();
-        // if (comments.length) {
-        //     comments = '(' + comments + ')';
-        // }
-    }
-    let l = adr.local;
-    if (!adr.name && /:/.test(l)) l = '"' + l + '"';
-    return new Address(adr.name, l + '@' + adr.domain, comments);
-}
-
-exports.parseFrom = function (line) {
-    return exports.parse(line, 'from');
-};
-
-exports.parseSender = function (line) {
-    return exports.parse(line, 'sender');
-};
-
-exports.parseReplyTo = function (line) {
-    return exports.parse(line, 'reply-to');
-};
-
-class Group {
-    constructor(display_name, addresses) {
-        this.phrase = display_name;
-        this.addresses = addresses;
-    }
-
-    format() {
-        return this.phrase + ":" + this.addresses.map(function (a) {
-            return a.format();
-        }).join(',');
-    }
-
-    name() {
-        let phrase = this.phrase;
-
-        if (!(phrase && phrase.length)) {
-            phrase = this.comment;
-        }
-
-        const name = _extract_name(phrase);
-        return name;
-    }
-}
-
-class Address {
-    constructor(phrase, address, comment) {
-        this.phrase = phrase || '';
-        this.address = address || '';
-        this.comment = comment || '';
-    }
-
-    host() {
-        const match = /.*@(.*)$/.exec(this.address);
-        if (!match) return null;
-        return match[1];
-    }
-
-    user() {
-        const match = /^(.*)@/.exec(this.address);
-        if (!match) return null;
-        return match[1];
-    }
-
-    format() {
-        const phrase = this.phrase;
-        const email = this.address;
-        let comment = this.comment;
-
-        const addr = [];
-        const atext = new RegExp('^[\\-\\w !#$%&\'*+/=?^`{|}~]+$');
-
-        if (phrase && phrase.length) {
-            addr.push(atext.test(phrase.trim()) ? phrase : _quote_no_esc(phrase) ? phrase : '"' + phrase + '"');
-
-            if (email && email.length) {
-                addr.push("<" + email + ">");
-            }
-        } else if (email && email.length) {
-            addr.push(email);
-        }
-
-        if (comment && /\S/.test(comment)) {
-            comment = comment.replace(/^\s*\(?/, '(').replace(/\)?\s*$/, ')');
-        }
-
-        if (comment && comment.length) {
-            addr.push(comment);
-        }
-
-        return addr.join(' ');
-    }
-
-    name() {
-        let phrase = this.phrase;
-        const addr = this.address;
-
-        if (!(phrase && phrase.length)) {
-            phrase = this.comment;
-        }
-
-        let name = _extract_name(phrase);
-
-        // first.last@domain address
-        if (name === '') {
-            const match = /([^%.@_]+([._][^%.@_]+)+)[@%]/.exec(addr);
-            if (match) {
-                name = match[1].replace(/[._]+/g, ' ');
-                name = _extract_name(name);
-            }
-        }
-
-        if (name === '' && /\/g=/i.test(addr)) {
-            // X400 style address
-            let match = /\/g=([^/]*)/i.exec(addr);
-            const f = match[1];
-            match = /\/s=([^/]*)/i.exec(addr);
-            const l = match[1];
-            name = _extract_name(f + " " + l);
-        }
-
-        return name;
-    }
-}
-
-exports.Address = Address;
-
-// This is because JS regexps have no equivalent of
-// zero-width negative look-behind assertion for: /(?<!\\)"/
-function _quote_no_esc(str) {
-    if (/^"/.test(str)) return true;
-    let match;
-    while (match = /^[\s\S]*?([\s\S])"/.exec(str)) {
-        if (match[1] !== '\\') {
-            return true;
-        }
-        str = str.substr(match[0].length);
-    }
-    return false;
-}
-
-exports.isAllLower = function (string) {
-    return string === string.toLowerCase();
-};
-
-exports.isAllUpper = function (string) {
-    return string === string.toUpperCase();
-};
-
-exports.nameCase = function (string) {
-
-    return string.toLowerCase().replace(/\b(\w+)/g, function (_, d1) {
-        // Set the case of the name to first char upper rest lower
-        return d1.charAt(0).toUpperCase() + d1.slice(1);
-    }).replace(/\bMc(\w)/gi, function (_, d1) {
-        // Scottish names such as 'McLeod'
-        return 'Mc' + d1.toUpperCase();
-    }).replace(/\bo'(\w)/gi, function (_, d1) {
-        // Irish names such as 'O'Malley, O'Reilly'
-        return 'O\'' + d1.toUpperCase();
-    }).replace(/\b(x*(ix)?v*(iv)?i*)\b/ig, function (_, d1) {
-        // Roman numerals, eg 'Level III Support'
-        return d1.toUpperCase();
-    });
-};
-
-// given a comment, attempt to extract a person's name
-function _extract_name(name) {
-    // Using encodings, too hard. See Mail::Message::Field::Full.
-    if (/=?.*?\?=/.test(name)) return '';
-
-    // trim whitespace
-    name = name.trim();
-    name = name.replace(/\s+/, ' ');
-
-    // Disregard numeric names (e.g. 123456.1234@compuserve.com)
-    if (/^[\d ]+$/.test(name)) return '';
-
-    name = name.replace(/^\((.*)\)$/, '$1') // remove outermost parenthesis
-    .replace(/^"(.*)"$/, '$1') // remove outer quotation marks
-    .replace(/\(.*?\)/g, '') // remove minimal embedded comments
-    .replace(/\\/g, '') // remove all escapes
-    .replace(/^"(.*)"$/, '$1') // remove internal quotation marks
-    .replace(/^([^\s]+) ?, ?(.*)$/, '$2 $1') // reverse "Last, First M." if applicable
-    .replace(/,.*/, '');
-
-    // Change casing only when the name contains only upper or only
-    // lower cased characters.
-    if (exports.isAllUpper(name) || exports.isAllLower(name)) {
-        // console.log("Changing case of: " + name);
-        name = exports.nameCase(name);
-        // console.log("Now: " + name);
-    }
-
-    // some cleanup
-    name = name.replace(/\[[^\]]*\]/g, '').replace(/(^[\s'"]+|[\s'"]+$)/g, '').replace(/\s{2,}/g, ' ');
-
-    return name;
-}
-
-},{"email-addresses":35}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1029,7 +1639,7 @@ var AES_asm = exports.AES_asm = function () {
   return wrapper;
 }();
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1237,7 +1847,7 @@ var AES = /** @class */function () {
 }();
 exports.AES = AES;
 
-},{"../other/errors":15,"../other/utils":16,"./aes.asm":3}],5:[function(require,module,exports){
+},{"../other/errors":14,"../other/utils":15,"./aes.asm":2}],4:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1298,7 +1908,7 @@ var AES_CBC = /** @class */function (_super) {
 }(_aes.AES);
 exports.AES_CBC = AES_CBC;
 
-},{"../other/utils":16,"./aes":4}],6:[function(require,module,exports){
+},{"../other/utils":15,"./aes":3}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1352,7 +1962,7 @@ var AES_CFB = /** @class */function (_super) {
 }(_aes.AES);
 exports.AES_CFB = AES_CFB;
 
-},{"../other/utils":16,"./aes":4}],7:[function(require,module,exports){
+},{"../other/utils":15,"./aes":3}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1432,7 +2042,7 @@ var AES_CTR = /** @class */function (_super) {
 }(_aes.AES);
 exports.AES_CTR = AES_CTR;
 
-},{"../other/errors":15,"../other/utils":16,"./aes":4}],8:[function(require,module,exports){
+},{"../other/errors":14,"../other/utils":15,"./aes":3}],7:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1493,7 +2103,7 @@ var AES_ECB = /** @class */function (_super) {
 }(_aes.AES);
 exports.AES_ECB = AES_ECB;
 
-},{"../other/utils":16,"./aes":4}],9:[function(require,module,exports){
+},{"../other/utils":15,"./aes":3}],8:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1792,7 +2402,7 @@ var AES_GCM = /** @class */function (_super) {
 }(_aes.AES);
 exports.AES_GCM = AES_GCM;
 
-},{"../other/errors":15,"../other/utils":16,"./aes":4,"./aes.asm":3}],10:[function(require,module,exports){
+},{"../other/errors":14,"../other/utils":15,"./aes":3,"./aes.asm":2}],9:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1871,7 +2481,7 @@ var Hash = /** @class */function () {
 }();
 exports.Hash = Hash;
 
-},{"../other/errors":15,"../other/utils":16}],11:[function(require,module,exports){
+},{"../other/errors":14,"../other/utils":15}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2767,7 +3377,7 @@ function sha1_asm(stdlib, foreign, buffer) {
     };
 }
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -2815,7 +3425,7 @@ var Sha1 = /** @class */function (_super) {
 }(_hash.Hash);
 exports.Sha1 = Sha1;
 
-},{"../hash":10,"./sha1.asm":11}],13:[function(require,module,exports){
+},{"../hash":9,"./sha1.asm":10}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3632,7 +4242,7 @@ function sha256_asm(stdlib, foreign, buffer) {
     };
 }
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3680,7 +4290,7 @@ var Sha256 = /** @class */function (_super) {
 }(_hash.Hash);
 exports.Sha256 = Sha256;
 
-},{"../hash":10,"./sha256.asm":13}],15:[function(require,module,exports){
+},{"../hash":9,"./sha256.asm":12}],14:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3745,7 +4355,7 @@ var SecurityError = /** @class */function (_super) {
 }(Error);
 exports.SecurityError = SecurityError;
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -3919,7 +4529,7 @@ function joinBytes() {
     return ret;
 }
 
-},{"buffer":"buffer"}],17:[function(require,module,exports){
+},{"buffer":"buffer"}],16:[function(require,module,exports){
 (function (module, exports) {
   'use strict';
 
@@ -7348,7 +7958,7 @@ function joinBytes() {
   };
 })(typeof module === 'undefined' || module, this);
 
-},{"buffer":"buffer"}],18:[function(require,module,exports){
+},{"buffer":"buffer"}],17:[function(require,module,exports){
 var r;
 
 module.exports = function rand(len) {
@@ -7415,12 +8025,11 @@ if (typeof self === 'object') {
   }
 }
 
-},{"crypto":"crypto"}],19:[function(require,module,exports){
+},{"crypto":"crypto"}],18:[function(require,module,exports){
 'use strict';
 
 var elliptic = exports;
 
-elliptic.version = require('../package.json').version;
 elliptic.utils = require('./elliptic/utils');
 elliptic.rand = require('brorand');
 elliptic.curve = require('./elliptic/curve');
@@ -7430,7 +8039,7 @@ elliptic.curves = require('./elliptic/curves');
 elliptic.ec = require('./elliptic/ec');
 elliptic.eddsa = require('./elliptic/eddsa');
 
-},{"../package.json":34,"./elliptic/curve":22,"./elliptic/curves":25,"./elliptic/ec":26,"./elliptic/eddsa":29,"./elliptic/utils":33,"brorand":18}],20:[function(require,module,exports){
+},{"./elliptic/curve":21,"./elliptic/curves":24,"./elliptic/ec":25,"./elliptic/eddsa":28,"./elliptic/utils":32,"brorand":17}],19:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -7807,7 +8416,7 @@ BasePoint.prototype.dblp = function dblp(k) {
   return r;
 };
 
-},{"../../elliptic":19,"bn.js":17}],21:[function(require,module,exports){
+},{"../../elliptic":18,"bn.js":16}],20:[function(require,module,exports){
 'use strict';
 
 var curve = require('../curve');
@@ -8242,7 +8851,7 @@ Point.prototype.eqXToP = function eqXToP(x) {
 Point.prototype.toP = Point.prototype.normalize;
 Point.prototype.mixedAdd = Point.prototype.add;
 
-},{"../../elliptic":19,"../curve":22,"bn.js":17,"inherits":49}],22:[function(require,module,exports){
+},{"../../elliptic":18,"../curve":21,"bn.js":16,"inherits":47}],21:[function(require,module,exports){
 'use strict';
 
 var curve = exports;
@@ -8252,7 +8861,7 @@ curve.short = require('./short');
 curve.mont = require('./mont');
 curve.edwards = require('./edwards');
 
-},{"./base":20,"./edwards":21,"./mont":23,"./short":24}],23:[function(require,module,exports){
+},{"./base":19,"./edwards":20,"./mont":22,"./short":23}],22:[function(require,module,exports){
 'use strict';
 
 var curve = require('../curve');
@@ -8455,7 +9064,7 @@ Point.prototype.getX = function getX() {
   return this.x.fromRed();
 };
 
-},{"../../elliptic":19,"../curve":22,"bn.js":17,"inherits":49}],24:[function(require,module,exports){
+},{"../../elliptic":18,"../curve":21,"bn.js":16,"inherits":47}],23:[function(require,module,exports){
 'use strict';
 
 var curve = require('../curve');
@@ -9394,7 +10003,7 @@ JPoint.prototype.isInfinity = function isInfinity() {
   return this.z.cmpn(0) === 0;
 };
 
-},{"../../elliptic":19,"../curve":22,"bn.js":17,"inherits":49}],25:[function(require,module,exports){
+},{"../../elliptic":18,"../curve":21,"bn.js":16,"inherits":47}],24:[function(require,module,exports){
 'use strict';
 
 var curves = exports;
@@ -9665,7 +10274,7 @@ defineCurve('secp256k1', {
   ]
 });
 
-},{"../elliptic":19,"./precomputed/secp256k1":32,"hash.js":36}],26:[function(require,module,exports){
+},{"../elliptic":18,"./precomputed/secp256k1":31,"hash.js":34}],25:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -9913,7 +10522,7 @@ EC.prototype.getKeyRecoveryParam = function(e, signature, Q, enc) {
   throw new Error('Unable to find valid recovery factor');
 };
 
-},{"../../elliptic":19,"./key":27,"./signature":28,"bn.js":17,"hmac-drbg":48}],27:[function(require,module,exports){
+},{"../../elliptic":18,"./key":26,"./signature":27,"bn.js":16,"hmac-drbg":46}],26:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -10037,7 +10646,7 @@ KeyPair.prototype.inspect = function inspect() {
          ' pub: ' + (this.pub && this.pub.inspect()) + ' >';
 };
 
-},{"../../elliptic":19,"bn.js":17}],28:[function(require,module,exports){
+},{"../../elliptic":18,"bn.js":16}],27:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -10174,7 +10783,7 @@ Signature.prototype.toDER = function toDER(enc) {
   return utils.encode(res, enc);
 };
 
-},{"../../elliptic":19,"bn.js":17}],29:[function(require,module,exports){
+},{"../../elliptic":18,"bn.js":16}],28:[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -10316,7 +10925,7 @@ EDDSA.prototype.isPoint = function isPoint(val) {
   return val instanceof this.pointClass;
 };
 
-},{"../../elliptic":19,"./key":30,"./signature":31,"hash.js":36,"hmac-drbg":48}],30:[function(require,module,exports){
+},{"../../elliptic":18,"./key":29,"./signature":30,"hash.js":34,"hmac-drbg":46}],29:[function(require,module,exports){
 'use strict';
 
 var elliptic = require('../../elliptic');
@@ -10422,7 +11031,7 @@ KeyPair.prototype.getPublic = function getPublic(enc, compact) {
 
 module.exports = KeyPair;
 
-},{"../../elliptic":19}],31:[function(require,module,exports){
+},{"../../elliptic":18}],30:[function(require,module,exports){
 'use strict';
 
 var BN = require('bn.js');
@@ -10490,7 +11099,7 @@ Signature.prototype.toHex = function toHex() {
 
 module.exports = Signature;
 
-},{"../../elliptic":19,"bn.js":17}],32:[function(require,module,exports){
+},{"../../elliptic":18,"bn.js":16}],31:[function(require,module,exports){
 module.exports = {
   doubles: {
     step: 4,
@@ -11272,7 +11881,7 @@ module.exports = {
   }
 };
 
-},{}],33:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -11394,113 +12003,11 @@ function intFromLE(bytes) {
 utils.intFromLE = intFromLE;
 
 
-},{"bn.js":17,"minimalistic-assert":50,"minimalistic-crypto-utils":51}],34:[function(require,module,exports){
-module.exports={
-  "_args": [
-    [
-      "elliptic@github:openpgpjs/elliptic#ad81845",
-      "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a"
-    ]
-  ],
-  "_from": "github:openpgpjs/elliptic#ad81845",
-  "_id": "elliptic@6.4.0",
-  "_inCache": true,
-  "_location": "/elliptic",
-  "_phantomChildren": {},
-  "_requested": {
-    "hosted": {
-      "directUrl": "https://raw.githubusercontent.com/openpgpjs/elliptic/ad81845/package.json",
-      "gitUrl": "git://github.com/openpgpjs/elliptic.git#ad81845",
-      "httpsUrl": "git+https://github.com/openpgpjs/elliptic.git#ad81845",
-      "shortcut": "github:openpgpjs/elliptic#ad81845",
-      "ssh": "git@github.com:openpgpjs/elliptic.git#ad81845",
-      "sshUrl": "git+ssh://git@github.com/openpgpjs/elliptic.git#ad81845",
-      "type": "github"
-    },
-    "name": "elliptic",
-    "raw": "elliptic@github:openpgpjs/elliptic#ad81845",
-    "rawSpec": "github:openpgpjs/elliptic#ad81845",
-    "scope": null,
-    "spec": "github:openpgpjs/elliptic#ad81845",
-    "type": "hosted"
-  },
-  "_requiredBy": [
-    "/"
-  ],
-  "_resolved": "git://github.com/openpgpjs/elliptic.git#ad81845f693effa5b4b6d07db2e82112de222f48",
-  "_shasum": "b3ec9e89968fcf936840cf1439e5caa6ff7dca97",
-  "_shrinkwrap": null,
-  "_spec": "elliptic@github:openpgpjs/elliptic#ad81845",
-  "_where": "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a",
-  "author": {
-    "email": "fedor@indutny.com",
-    "name": "Fedor Indutny"
-  },
-  "bugs": {
-    "url": "https://github.com/indutny/elliptic/issues"
-  },
-  "dependencies": {
-    "bn.js": "^4.4.0",
-    "brorand": "^1.0.1",
-    "hash.js": "^1.0.0",
-    "hmac-drbg": "^1.0.0",
-    "inherits": "^2.0.1",
-    "minimalistic-assert": "^1.0.0",
-    "minimalistic-crypto-utils": "^1.0.0"
-  },
-  "description": "EC cryptography",
-  "devDependencies": {
-    "brfs": "^1.4.3",
-    "coveralls": "^2.11.3",
-    "grunt": "^0.4.5",
-    "grunt-browserify": "^5.0.0",
-    "grunt-cli": "^1.2.0",
-    "grunt-contrib-connect": "^1.0.0",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify": "^1.0.1",
-    "grunt-mocha-istanbul": "^3.0.1",
-    "grunt-saucelabs": "^8.6.2",
-    "istanbul": "^0.4.2",
-    "jscs": "^2.9.0",
-    "jshint": "^2.6.0",
-    "mocha": "^2.1.0"
-  },
-  "files": [
-    "lib"
-  ],
-  "gitHead": "ad81845f693effa5b4b6d07db2e82112de222f48",
-  "homepage": "https://github.com/indutny/elliptic",
-  "keywords": [
-    "Cryptography",
-    "EC",
-    "Elliptic",
-    "curve"
-  ],
-  "license": "MIT",
-  "main": "lib/elliptic.js",
-  "name": "elliptic",
-  "optionalDependencies": {},
-  "readme": "# Elliptic [![Build Status](https://secure.travis-ci.org/indutny/elliptic.png)](http://travis-ci.org/indutny/elliptic) [![Coverage Status](https://coveralls.io/repos/indutny/elliptic/badge.svg?branch=master&service=github)](https://coveralls.io/github/indutny/elliptic?branch=master) [![Code Climate](https://codeclimate.com/github/indutny/elliptic/badges/gpa.svg)](https://codeclimate.com/github/indutny/elliptic)\n\n[![Saucelabs Test Status](https://saucelabs.com/browser-matrix/gh-indutny-elliptic.svg)](https://saucelabs.com/u/gh-indutny-elliptic)\n\nFast elliptic-curve cryptography in a plain javascript implementation.\n\nNOTE: Please take a look at http://safecurves.cr.yp.to/ before choosing a curve\nfor your cryptography operations.\n\n## Incentive\n\nECC is much slower than regular RSA cryptography, the JS implementations are\neven more slower.\n\n## Benchmarks\n\n```bash\n$ node benchmarks/index.js\nBenchmarking: sign\nelliptic#sign x 262 ops/sec ±0.51% (177 runs sampled)\neccjs#sign x 55.91 ops/sec ±0.90% (144 runs sampled)\n------------------------\nFastest is elliptic#sign\n========================\nBenchmarking: verify\nelliptic#verify x 113 ops/sec ±0.50% (166 runs sampled)\neccjs#verify x 48.56 ops/sec ±0.36% (125 runs sampled)\n------------------------\nFastest is elliptic#verify\n========================\nBenchmarking: gen\nelliptic#gen x 294 ops/sec ±0.43% (176 runs sampled)\neccjs#gen x 62.25 ops/sec ±0.63% (129 runs sampled)\n------------------------\nFastest is elliptic#gen\n========================\nBenchmarking: ecdh\nelliptic#ecdh x 136 ops/sec ±0.85% (156 runs sampled)\n------------------------\nFastest is elliptic#ecdh\n========================\n```\n\n## API\n\n### ECDSA\n\n```javascript\nvar EC = require('elliptic').ec;\n\n// Create and initialize EC context\n// (better do it once and reuse it)\nvar ec = new EC('secp256k1');\n\n// Generate keys\nvar key = ec.genKeyPair();\n\n// Sign the message's hash (input must be an array, or a hex-string)\nvar msgHash = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];\nvar signature = key.sign(msgHash);\n\n// Export DER encoded signature in Array\nvar derSign = signature.toDER();\n\n// Verify signature\nconsole.log(key.verify(msgHash, derSign));\n\n// CHECK WITH NO PRIVATE KEY\n\nvar pubPoint = key.getPublic();\nvar x = pubPoint.getX();\nvar y = pubPoint.getY();\n\n// Public Key MUST be either:\n// 1) '04' + hex string of x + hex string of y; or\n// 2) object with two hex string properties (x and y); or\n// 3) object with two buffer properties (x and y)\nvar pub = pubPoint.encode('hex');                                 // case 1\nvar pub = { x: x.toString('hex'), y: y.toString('hex') };         // case 2\nvar pub = { x: x.toBuffer(), y: y.toBuffer() };                   // case 3\nvar pub = { x: x.toArrayLike(Buffer), y: y.toArrayLike(Buffer) }; // case 3\n\n// Import public key\nvar key = ec.keyFromPublic(pub, 'hex');\n\n// Signature MUST be either:\n// 1) DER-encoded signature as hex-string; or\n// 2) DER-encoded signature as buffer; or\n// 3) object with two hex-string properties (r and s); or\n// 4) object with two buffer properties (r and s)\n\nvar signature = '3046022100...'; // case 1\nvar signature = new Buffer('...'); // case 2\nvar signature = { r: 'b1fc...', s: '9c42...' }; // case 3\n\n// Verify signature\nconsole.log(key.verify(msgHash, signature));\n```\n\n### EdDSA\n\n```javascript\nvar EdDSA = require('elliptic').eddsa;\n\n// Create and initialize EdDSA context\n// (better do it once and reuse it)\nvar ec = new EdDSA('ed25519');\n\n// Create key pair from secret\nvar key = ec.keyFromSecret('693e3c...'); // hex string, array or Buffer\n\n// Sign the message's hash (input must be an array, or a hex-string)\nvar msgHash = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ];\nvar signature = key.sign(msgHash).toHex();\n\n// Verify signature\nconsole.log(key.verify(msgHash, signature));\n\n// CHECK WITH NO PRIVATE KEY\n\n// Import public key\nvar pub = '0a1af638...';\nvar key = ec.keyFromPublic(pub, 'hex');\n\n// Verify signature\nvar signature = '70bed1...';\nconsole.log(key.verify(msgHash, signature));\n```\n\n### ECDH\n\n```javascript\nvar EC = require('elliptic').ec;\nvar ec = new EC('curve25519');\n\n// Generate keys\nvar key1 = ec.genKeyPair();\nvar key2 = ec.genKeyPair();\n\nvar shared1 = key1.derive(key2.getPublic());\nvar shared2 = key2.derive(key1.getPublic());\n\nconsole.log('Both shared secrets are BN instances');\nconsole.log(shared1.toString(16));\nconsole.log(shared2.toString(16));\n```\n\nthree and more members:\n```javascript\nvar EC = require('elliptic').ec;\nvar ec = new EC('curve25519');\n\nvar A = ec.genKeyPair();\nvar B = ec.genKeyPair();\nvar C = ec.genKeyPair();\n\nvar AB = A.getPublic().mul(B.getPrivate())\nvar BC = B.getPublic().mul(C.getPrivate())\nvar CA = C.getPublic().mul(A.getPrivate())\n\nvar ABC = AB.mul(C.getPrivate())\nvar BCA = BC.mul(A.getPrivate())\nvar CAB = CA.mul(B.getPrivate())\n\nconsole.log(ABC.getX().toString(16))\nconsole.log(BCA.getX().toString(16))\nconsole.log(CAB.getX().toString(16))\n```\n\nNOTE: `.derive()` returns a [BN][1] instance.\n\n## Supported curves\n\nElliptic.js support following curve types:\n\n* Short Weierstrass\n* Montgomery\n* Edwards\n* Twisted Edwards\n\nFollowing curve 'presets' are embedded into the library:\n\n* `secp256k1`\n* `p192`\n* `p224`\n* `p256`\n* `p384`\n* `p521`\n* `curve25519`\n* `ed25519`\n\nNOTE: That `curve25519` could not be used for ECDSA, use `ed25519` instead.\n\n### Implementation details\n\nECDSA is using deterministic `k` value generation as per [RFC6979][0]. Most of\nthe curve operations are performed on non-affine coordinates (either projective\nor extended), various windowing techniques are used for different cases.\n\nAll operations are performed in reduction context using [bn.js][1], hashing is\nprovided by [hash.js][2]\n\n### Related projects\n\n* [eccrypto][3]: isomorphic implementation of ECDSA, ECDH and ECIES for both\n  browserify and node (uses `elliptic` for browser and [secp256k1-node][4] for\n  node)\n\n#### LICENSE\n\nThis software is licensed under the MIT License.\n\nCopyright Fedor Indutny, 2014.\n\nPermission is hereby granted, free of charge, to any person obtaining a\ncopy of this software and associated documentation files (the\n\"Software\"), to deal in the Software without restriction, including\nwithout limitation the rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the Software, and to permit\npersons to whom the Software is furnished to do so, subject to the\nfollowing conditions:\n\nThe above copyright notice and this permission notice shall be included\nin all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS\nOR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN\nNO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\nDAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR\nOTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE\nUSE OR OTHER DEALINGS IN THE SOFTWARE.\n\n[0]: http://tools.ietf.org/html/rfc6979\n[1]: https://github.com/indutny/bn.js\n[2]: https://github.com/indutny/hash.js\n[3]: https://github.com/bitchan/eccrypto\n[4]: https://github.com/wanderer/secp256k1-node\n",
-  "readmeFilename": "README.md",
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/indutny/elliptic.git"
-  },
-  "scripts": {
-    "jscs": "jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js",
-    "jshint": "jscs benchmarks/*.js lib/*.js lib/**/*.js lib/**/**/*.js test/index.js",
-    "lint": "npm run jscs && npm run jshint",
-    "test": "npm run lint && npm run unit",
-    "unit": "istanbul test _mocha --reporter=spec test/index.js",
-    "version": "grunt dist && git add dist/"
-  },
-  "version": "6.4.0"
-}
-
-},{}],35:[function(require,module,exports){
+},{"bn.js":16,"minimalistic-assert":48,"minimalistic-crypto-utils":49}],33:[function(require,module,exports){
+"use strict";
 
 // email-addresses.js - RFC 5322 email address parser
-// v 3.0.1
+// v 3.0.3
 //
 // http://tools.ietf.org/html/rfc5322
 //
@@ -11526,1051 +12033,948 @@ module.exports={
 // http://code.google.com/p/isemail/ , which helped greatly in writing this parser.
 
 (function (global) {
-"use strict";
+    "use strict";
 
-function parse5322(opts) {
+    function parse5322(opts) {
 
-    // tokenizing functions
+        // tokenizing functions
 
-    function inStr() { return pos < len; }
-    function curTok() { return parseString[pos]; }
-    function getPos() { return pos; }
-    function setPos(i) { pos = i; }
-    function nextTok() { pos += 1; }
-    function initialize() {
-        pos = 0;
-        len = parseString.length;
-    }
-
-    // parser helper functions
-
-    function o(name, value) {
-        return {
-            name: name,
-            tokens: value || "",
-            semantic: value || "",
-            children: []
-        };
-    }
-
-    function wrap(name, ast) {
-        var n;
-        if (ast === null) { return null; }
-        n = o(name);
-        n.tokens = ast.tokens;
-        n.semantic = ast.semantic;
-        n.children.push(ast);
-        return n;
-    }
-
-    function add(parent, child) {
-        if (child !== null) {
-            parent.tokens += child.tokens;
-            parent.semantic += child.semantic;
+        function inStr() {
+            return pos < len;
         }
-        parent.children.push(child);
-        return parent;
-    }
-
-    function compareToken(fxnCompare) {
-        var tok;
-        if (!inStr()) { return null; }
-        tok = curTok();
-        if (fxnCompare(tok)) {
-            nextTok();
-            return o('token', tok);
+        function curTok() {
+            return parseString[pos];
         }
-        return null;
-    }
+        function getPos() {
+            return pos;
+        }
+        function setPos(i) {
+            pos = i;
+        }
+        function nextTok() {
+            pos += 1;
+        }
+        function initialize() {
+            pos = 0;
+            len = parseString.length;
+        }
 
-    function literal(lit) {
-        return function literalFunc() {
-            return wrap('literal', compareToken(function (tok) {
-                return tok === lit;
-            }));
-        };
-    }
+        // parser helper functions
 
-    function and() {
-        var args = arguments;
-        return function andFunc() {
-            var i, s, result, start;
-            start = getPos();
-            s = o('and');
-            for (i = 0; i < args.length; i += 1) {
-                result = args[i]();
-                if (result === null) {
+        function o(name, value) {
+            return {
+                name: name,
+                tokens: value || "",
+                semantic: value || "",
+                children: []
+            };
+        }
+
+        function wrap(name, ast) {
+            var n;
+            if (ast === null) {
+                return null;
+            }
+            n = o(name);
+            n.tokens = ast.tokens;
+            n.semantic = ast.semantic;
+            n.children.push(ast);
+            return n;
+        }
+
+        function add(parent, child) {
+            if (child !== null) {
+                parent.tokens += child.tokens;
+                parent.semantic += child.semantic;
+            }
+            parent.children.push(child);
+            return parent;
+        }
+
+        function compareToken(fxnCompare) {
+            var tok;
+            if (!inStr()) {
+                return null;
+            }
+            tok = curTok();
+            if (fxnCompare(tok)) {
+                nextTok();
+                return o('token', tok);
+            }
+            return null;
+        }
+
+        function literal(lit) {
+            return function literalFunc() {
+                return wrap('literal', compareToken(function (tok) {
+                    return tok === lit;
+                }));
+            };
+        }
+
+        function and() {
+            var args = arguments;
+            return function andFunc() {
+                var i, s, result, start;
+                start = getPos();
+                s = o('and');
+                for (i = 0; i < args.length; i += 1) {
+                    result = args[i]();
+                    if (result === null) {
+                        setPos(start);
+                        return null;
+                    }
+                    add(s, result);
+                }
+                return s;
+            };
+        }
+
+        function or() {
+            var args = arguments;
+            return function orFunc() {
+                var i, result, start;
+                start = getPos();
+                for (i = 0; i < args.length; i += 1) {
+                    result = args[i]();
+                    if (result !== null) {
+                        return result;
+                    }
+                    setPos(start);
+                }
+                return null;
+            };
+        }
+
+        function opt(prod) {
+            return function optFunc() {
+                var result, start;
+                start = getPos();
+                result = prod();
+                if (result !== null) {
+                    return result;
+                } else {
+                    setPos(start);
+                    return o('opt');
+                }
+            };
+        }
+
+        function invis(prod) {
+            return function invisFunc() {
+                var result = prod();
+                if (result !== null) {
+                    result.semantic = "";
+                }
+                return result;
+            };
+        }
+
+        function colwsp(prod) {
+            return function collapseSemanticWhitespace() {
+                var result = prod();
+                if (result !== null && result.semantic.length > 0) {
+                    result.semantic = " ";
+                }
+                return result;
+            };
+        }
+
+        function star(prod, minimum) {
+            return function starFunc() {
+                var s, result, count, start, min;
+                start = getPos();
+                s = o('star');
+                count = 0;
+                min = minimum === undefined ? 0 : minimum;
+                while ((result = prod()) !== null) {
+                    count = count + 1;
+                    add(s, result);
+                }
+                if (count >= min) {
+                    return s;
+                } else {
                     setPos(start);
                     return null;
                 }
-                add(s, result);
-            }
-            return s;
-        };
-    }
+            };
+        }
 
-    function or() {
-        var args = arguments;
-        return function orFunc() {
-            var i, result, start;
-            start = getPos();
-            for (i = 0; i < args.length; i += 1) {
-                result = args[i]();
-                if (result !== null) {
-                    return result;
+        // One expects names to get normalized like this:
+        // "  First  Last " -> "First Last"
+        // "First Last" -> "First Last"
+        // "First   Last" -> "First Last"
+        function collapseWhitespace(s) {
+            return s.replace(/([ \t]|\r\n)+/g, ' ').replace(/^\s*/, '').replace(/\s*$/, '');
+        }
+
+        // UTF-8 pseudo-production (RFC 6532)
+        // RFC 6532 extends RFC 5322 productions to include UTF-8
+        // using the following productions:
+        // UTF8-non-ascii  =   UTF8-2 / UTF8-3 / UTF8-4
+        // UTF8-2          =   <Defined in Section 4 of RFC3629>
+        // UTF8-3          =   <Defined in Section 4 of RFC3629>
+        // UTF8-4          =   <Defined in Section 4 of RFC3629>
+        //
+        // For reference, the extended RFC 5322 productions are:
+        // VCHAR   =/  UTF8-non-ascii
+        // ctext   =/  UTF8-non-ascii
+        // atext   =/  UTF8-non-ascii
+        // qtext   =/  UTF8-non-ascii
+        // dtext   =/  UTF8-non-ascii
+        function isUTF8NonAscii(tok) {
+            // In JavaScript, we just deal directly with Unicode code points,
+            // so we aren't checking individual bytes for UTF-8 encoding.
+            // Just check that the character is non-ascii.
+            return tok.charCodeAt(0) >= 128;
+        }
+
+        // common productions (RFC 5234)
+        // http://tools.ietf.org/html/rfc5234
+        // B.1. Core Rules
+
+        // CR             =  %x0D
+        //                         ; carriage return
+        function cr() {
+            return wrap('cr', literal('\r')());
+        }
+
+        // CRLF           =  CR LF
+        //                         ; Internet standard newline
+        function crlf() {
+            return wrap('crlf', and(cr, lf)());
+        }
+
+        // DQUOTE         =  %x22
+        //                         ; " (Double Quote)
+        function dquote() {
+            return wrap('dquote', literal('"')());
+        }
+
+        // HTAB           =  %x09
+        //                         ; horizontal tab
+        function htab() {
+            return wrap('htab', literal('\t')());
+        }
+
+        // LF             =  %x0A
+        //                         ; linefeed
+        function lf() {
+            return wrap('lf', literal('\n')());
+        }
+
+        // SP             =  %x20
+        function sp() {
+            return wrap('sp', literal(' ')());
+        }
+
+        // VCHAR          =  %x21-7E
+        //                         ; visible (printing) characters
+        function vchar() {
+            return wrap('vchar', compareToken(function vcharFunc(tok) {
+                var code = tok.charCodeAt(0);
+                var accept = 0x21 <= code && code <= 0x7E;
+                if (opts.rfc6532) {
+                    accept = accept || isUTF8NonAscii(tok);
                 }
-                setPos(start);
-            }
-            return null;
-        };
-    }
+                return accept;
+            }));
+        }
 
-    function opt(prod) {
-        return function optFunc() {
-            var result, start;
-            start = getPos();
-            result = prod();
-            if (result !== null) {
-                return result;
-            }
-            else {
-                setPos(start);
-                return o('opt');
-            }
-        };
-    }
+        // WSP            =  SP / HTAB
+        //                         ; white space
+        function wsp() {
+            return wrap('wsp', or(sp, htab)());
+        }
 
-    function invis(prod) {
-        return function invisFunc() {
-            var result = prod();
-            if (result !== null) {
-                result.semantic = "";
-            }
-            return result;
-        };
-    }
+        // email productions (RFC 5322)
+        // http://tools.ietf.org/html/rfc5322
+        // 3.2.1. Quoted characters
 
-    function colwsp(prod) {
-        return function collapseSemanticWhitespace() {
-            var result = prod();
-            if (result !== null && result.semantic.length > 0) {
-                result.semantic = " ";
-            }
-            return result;
-        };
-    }
-
-    function star(prod, minimum) {
-        return function starFunc() {
-            var s, result, count, start, min;
-            start = getPos();
-            s = o('star');
-            count = 0;
-            min = minimum === undefined ? 0 : minimum;
-            while ((result = prod()) !== null) {
-                count = count + 1;
-                add(s, result);
-            }
-            if (count >= min) {
-                return s;
-            }
-            else {
-                setPos(start);
+        // quoted-pair     =   ("\" (VCHAR / WSP)) / obs-qp
+        function quotedPair() {
+            var qp = wrap('quoted-pair', or(and(literal('\\'), or(vchar, wsp)), obsQP)());
+            if (qp === null) {
                 return null;
             }
-        };
-    }
+            // a quoted pair will be two characters, and the "\" character
+            // should be semantically "invisible" (RFC 5322 3.2.1)
+            qp.semantic = qp.semantic[1];
+            return qp;
+        }
 
-    // One expects names to get normalized like this:
-    // "  First  Last " -> "First Last"
-    // "First Last" -> "First Last"
-    // "First   Last" -> "First Last"
-    function collapseWhitespace(s) {
-        return s.replace(/([ \t]|\r\n)+/g, ' ').replace(/^\s*/, '').replace(/\s*$/, '');
-    }
+        // 3.2.2. Folding White Space and Comments
 
-    // UTF-8 pseudo-production (RFC 6532)
-    // RFC 6532 extends RFC 5322 productions to include UTF-8
-    // using the following productions:
-    // UTF8-non-ascii  =   UTF8-2 / UTF8-3 / UTF8-4
-    // UTF8-2          =   <Defined in Section 4 of RFC3629>
-    // UTF8-3          =   <Defined in Section 4 of RFC3629>
-    // UTF8-4          =   <Defined in Section 4 of RFC3629>
-    //
-    // For reference, the extended RFC 5322 productions are:
-    // VCHAR   =/  UTF8-non-ascii
-    // ctext   =/  UTF8-non-ascii
-    // atext   =/  UTF8-non-ascii
-    // qtext   =/  UTF8-non-ascii
-    // dtext   =/  UTF8-non-ascii
-    function isUTF8NonAscii(tok) {
-        // In JavaScript, we just deal directly with Unicode code points,
-        // so we aren't checking individual bytes for UTF-8 encoding.
-        // Just check that the character is non-ascii.
-        return tok.charCodeAt(0) >= 128;
-    }
+        // FWS             =   ([*WSP CRLF] 1*WSP) /  obs-FWS
+        function fws() {
+            return wrap('fws', or(obsFws, and(opt(and(star(wsp), invis(crlf))), star(wsp, 1)))());
+        }
 
-
-    // common productions (RFC 5234)
-    // http://tools.ietf.org/html/rfc5234
-    // B.1. Core Rules
-
-    // CR             =  %x0D
-    //                         ; carriage return
-    function cr() { return wrap('cr', literal('\r')()); }
-
-    // CRLF           =  CR LF
-    //                         ; Internet standard newline
-    function crlf() { return wrap('crlf', and(cr, lf)()); }
-
-    // DQUOTE         =  %x22
-    //                         ; " (Double Quote)
-    function dquote() { return wrap('dquote', literal('"')()); }
-
-    // HTAB           =  %x09
-    //                         ; horizontal tab
-    function htab() { return wrap('htab', literal('\t')()); }
-
-    // LF             =  %x0A
-    //                         ; linefeed
-    function lf() { return wrap('lf', literal('\n')()); }
-
-    // SP             =  %x20
-    function sp() { return wrap('sp', literal(' ')()); }
-
-    // VCHAR          =  %x21-7E
-    //                         ; visible (printing) characters
-    function vchar() {
-        return wrap('vchar', compareToken(function vcharFunc(tok) {
-            var code = tok.charCodeAt(0);
-            var accept = (0x21 <= code && code <= 0x7E);
-            if (opts.rfc6532) {
-                accept = accept || isUTF8NonAscii(tok);
-            }
-            return accept;
-        }));
-    }
-
-    // WSP            =  SP / HTAB
-    //                         ; white space
-    function wsp() { return wrap('wsp', or(sp, htab)()); }
-
-
-    // email productions (RFC 5322)
-    // http://tools.ietf.org/html/rfc5322
-    // 3.2.1. Quoted characters
-
-    // quoted-pair     =   ("\" (VCHAR / WSP)) / obs-qp
-    function quotedPair() {
-        var qp = wrap('quoted-pair',
-        or(
-            and(literal('\\'), or(vchar, wsp)),
-            obsQP
-        )());
-        if (qp === null) { return null; }
-        // a quoted pair will be two characters, and the "\" character
-        // should be semantically "invisible" (RFC 5322 3.2.1)
-        qp.semantic = qp.semantic[1];
-        return qp;
-    }
-
-    // 3.2.2. Folding White Space and Comments
-
-    // FWS             =   ([*WSP CRLF] 1*WSP) /  obs-FWS
-    function fws() {
-        return wrap('fws', or(
-            obsFws,
-            and(
-                opt(and(
-                    star(wsp),
-                    invis(crlf)
-                   )),
-                star(wsp, 1)
-            )
-        )());
-    }
-
-    // ctext           =   %d33-39 /          ; Printable US-ASCII
-    //                     %d42-91 /          ;  characters not including
-    //                     %d93-126 /         ;  "(", ")", or "\"
-    //                     obs-ctext
-    function ctext() {
-        return wrap('ctext', or(
-            function ctextFunc1() {
+        // ctext           =   %d33-39 /          ; Printable US-ASCII
+        //                     %d42-91 /          ;  characters not including
+        //                     %d93-126 /         ;  "(", ")", or "\"
+        //                     obs-ctext
+        function ctext() {
+            return wrap('ctext', or(function ctextFunc1() {
                 return compareToken(function ctextFunc2(tok) {
                     var code = tok.charCodeAt(0);
-                    var accept =
-                        (33 <= code && code <= 39) ||
-                        (42 <= code && code <= 91) ||
-                        (93 <= code && code <= 126);
+                    var accept = 33 <= code && code <= 39 || 42 <= code && code <= 91 || 93 <= code && code <= 126;
                     if (opts.rfc6532) {
                         accept = accept || isUTF8NonAscii(tok);
                     }
                     return accept;
                 });
-            },
-            obsCtext
-        )());
-    }
-
-    // ccontent        =   ctext / quoted-pair / comment
-    function ccontent() {
-        return wrap('ccontent', or(ctext, quotedPair, comment)());
-    }
-
-    // comment         =   "(" *([FWS] ccontent) [FWS] ")"
-    function comment() {
-        return wrap('comment', and(
-            literal('('),
-            star(and(opt(fws), ccontent)),
-            opt(fws),
-            literal(')')
-        )());
-    }
-
-    // CFWS            =   (1*([FWS] comment) [FWS]) / FWS
-    function cfws() {
-        return wrap('cfws', or(
-            and(
-                star(
-                    and(opt(fws), comment),
-                    1
-                ),
-                opt(fws)
-            ),
-            fws
-        )());
-    }
-
-    // 3.2.3. Atom
-
-    //atext           =   ALPHA / DIGIT /    ; Printable US-ASCII
-    //                       "!" / "#" /        ;  characters not including
-    //                       "$" / "%" /        ;  specials.  Used for atoms.
-    //                       "&" / "'" /
-    //                       "*" / "+" /
-    //                       "-" / "/" /
-    //                       "=" / "?" /
-    //                       "^" / "_" /
-    //                       "`" / "{" /
-    //                       "|" / "}" /
-    //                       "~"
-    function atext() {
-        return wrap('atext', compareToken(function atextFunc(tok) {
-            var accept =
-                ('a' <= tok && tok <= 'z') ||
-                ('A' <= tok && tok <= 'Z') ||
-                ('0' <= tok && tok <= '9') ||
-                (['!', '#', '$', '%', '&', '\'', '*', '+', '-', '/',
-                  '=', '?', '^', '_', '`', '{', '|', '}', '~'].indexOf(tok) >= 0);
-            if (opts.rfc6532) {
-                accept = accept || isUTF8NonAscii(tok);
-            }
-            return accept;
-        }));
-    }
-
-    // atom            =   [CFWS] 1*atext [CFWS]
-    function atom() {
-        return wrap('atom', and(colwsp(opt(cfws)), star(atext, 1), colwsp(opt(cfws)))());
-    }
-
-    // dot-atom-text   =   1*atext *("." 1*atext)
-    function dotAtomText() {
-        var s, maybeText;
-        s = wrap('dot-atom-text', star(atext, 1)());
-        if (s === null) { return s; }
-        maybeText = star(and(literal('.'), star(atext, 1)))();
-        if (maybeText !== null) {
-            add(s, maybeText);
+            }, obsCtext)());
         }
-        return s;
-    }
 
-    // dot-atom        =   [CFWS] dot-atom-text [CFWS]
-    function dotAtom() {
-        return wrap('dot-atom', and(invis(opt(cfws)), dotAtomText, invis(opt(cfws)))());
-    }
+        // ccontent        =   ctext / quoted-pair / comment
+        function ccontent() {
+            return wrap('ccontent', or(ctext, quotedPair, comment)());
+        }
 
-    // 3.2.4. Quoted Strings
+        // comment         =   "(" *([FWS] ccontent) [FWS] ")"
+        function comment() {
+            return wrap('comment', and(literal('('), star(and(opt(fws), ccontent)), opt(fws), literal(')'))());
+        }
 
-    //  qtext           =   %d33 /             ; Printable US-ASCII
-    //                      %d35-91 /          ;  characters not including
-    //                      %d93-126 /         ;  "\" or the quote character
-    //                      obs-qtext
-    function qtext() {
-        return wrap('qtext', or(
-            function qtextFunc1() {
+        // CFWS            =   (1*([FWS] comment) [FWS]) / FWS
+        function cfws() {
+            return wrap('cfws', or(and(star(and(opt(fws), comment), 1), opt(fws)), fws)());
+        }
+
+        // 3.2.3. Atom
+
+        //atext           =   ALPHA / DIGIT /    ; Printable US-ASCII
+        //                       "!" / "#" /        ;  characters not including
+        //                       "$" / "%" /        ;  specials.  Used for atoms.
+        //                       "&" / "'" /
+        //                       "*" / "+" /
+        //                       "-" / "/" /
+        //                       "=" / "?" /
+        //                       "^" / "_" /
+        //                       "`" / "{" /
+        //                       "|" / "}" /
+        //                       "~"
+        function atext() {
+            return wrap('atext', compareToken(function atextFunc(tok) {
+                var accept = 'a' <= tok && tok <= 'z' || 'A' <= tok && tok <= 'Z' || '0' <= tok && tok <= '9' || ['!', '#', '$', '%', '&', '\'', '*', '+', '-', '/', '=', '?', '^', '_', '`', '{', '|', '}', '~'].indexOf(tok) >= 0;
+                if (opts.rfc6532) {
+                    accept = accept || isUTF8NonAscii(tok);
+                }
+                return accept;
+            }));
+        }
+
+        // atom            =   [CFWS] 1*atext [CFWS]
+        function atom() {
+            return wrap('atom', and(colwsp(opt(cfws)), star(atext, 1), colwsp(opt(cfws)))());
+        }
+
+        // dot-atom-text   =   1*atext *("." 1*atext)
+        function dotAtomText() {
+            var s, maybeText;
+            s = wrap('dot-atom-text', star(atext, 1)());
+            if (s === null) {
+                return s;
+            }
+            maybeText = star(and(literal('.'), star(atext, 1)))();
+            if (maybeText !== null) {
+                add(s, maybeText);
+            }
+            return s;
+        }
+
+        // dot-atom        =   [CFWS] dot-atom-text [CFWS]
+        function dotAtom() {
+            return wrap('dot-atom', and(invis(opt(cfws)), dotAtomText, invis(opt(cfws)))());
+        }
+
+        // 3.2.4. Quoted Strings
+
+        //  qtext           =   %d33 /             ; Printable US-ASCII
+        //                      %d35-91 /          ;  characters not including
+        //                      %d93-126 /         ;  "\" or the quote character
+        //                      obs-qtext
+        function qtext() {
+            return wrap('qtext', or(function qtextFunc1() {
                 return compareToken(function qtextFunc2(tok) {
                     var code = tok.charCodeAt(0);
-                    var accept =
-                        (33 === code) ||
-                        (35 <= code && code <= 91) ||
-                        (93 <= code && code <= 126);
+                    var accept = 33 === code || 35 <= code && code <= 91 || 93 <= code && code <= 126;
                     if (opts.rfc6532) {
                         accept = accept || isUTF8NonAscii(tok);
                     }
                     return accept;
                 });
-            },
-            obsQtext
-        )());
-    }
+            }, obsQtext)());
+        }
 
-    // qcontent        =   qtext / quoted-pair
-    function qcontent() {
-        return wrap('qcontent', or(qtext, quotedPair)());
-    }
+        // qcontent        =   qtext / quoted-pair
+        function qcontent() {
+            return wrap('qcontent', or(qtext, quotedPair)());
+        }
 
-    //  quoted-string   =   [CFWS]
-    //                      DQUOTE *([FWS] qcontent) [FWS] DQUOTE
-    //                      [CFWS]
-    function quotedString() {
-        return wrap('quoted-string', and(
-            invis(opt(cfws)),
-            invis(dquote), star(and(opt(colwsp(fws)), qcontent)), opt(invis(fws)), invis(dquote),
-            invis(opt(cfws))
-        )());
-    }
+        //  quoted-string   =   [CFWS]
+        //                      DQUOTE *([FWS] qcontent) [FWS] DQUOTE
+        //                      [CFWS]
+        function quotedString() {
+            return wrap('quoted-string', and(invis(opt(cfws)), invis(dquote), star(and(opt(colwsp(fws)), qcontent)), opt(invis(fws)), invis(dquote), invis(opt(cfws)))());
+        }
 
-    // 3.2.5 Miscellaneous Tokens
+        // 3.2.5 Miscellaneous Tokens
 
-    // word            =   atom / quoted-string
-    function word() {
-        return wrap('word', or(atom, quotedString)());
-    }
+        // word            =   atom / quoted-string
+        function word() {
+            return wrap('word', or(atom, quotedString)());
+        }
 
-    // phrase          =   1*word / obs-phrase
-    function phrase() {
-        return wrap('phrase', or(obsPhrase, star(word, 1))());
-    }
+        // phrase          =   1*word / obs-phrase
+        function phrase() {
+            return wrap('phrase', or(obsPhrase, star(word, 1))());
+        }
 
-    // 3.4. Address Specification
-    //   address         =   mailbox / group
-    function address() {
-        return wrap('address', or(mailbox, group)());
-    }
+        // 3.4. Address Specification
+        //   address         =   mailbox / group
+        function address() {
+            return wrap('address', or(mailbox, group)());
+        }
 
-    //   mailbox         =   name-addr / addr-spec
-    function mailbox() {
-        return wrap('mailbox', or(nameAddr, addrSpec)());
-    }
+        //   mailbox         =   name-addr / addr-spec
+        function mailbox() {
+            return wrap('mailbox', or(nameAddr, addrSpec)());
+        }
 
-    //   name-addr       =   [display-name] angle-addr
-    function nameAddr() {
-        return wrap('name-addr', and(opt(displayName), angleAddr)());
-    }
+        //   name-addr       =   [display-name] angle-addr
+        function nameAddr() {
+            return wrap('name-addr', and(opt(displayName), angleAddr)());
+        }
 
-    //   angle-addr      =   [CFWS] "<" addr-spec ">" [CFWS] /
-    //                       obs-angle-addr
-    function angleAddr() {
-        return wrap('angle-addr', or(
-            and(
-                invis(opt(cfws)),
-                literal('<'),
-                addrSpec,
-                literal('>'),
-                invis(opt(cfws))
-            ),
-            obsAngleAddr
-        )());
-    }
+        //   angle-addr      =   [CFWS] "<" addr-spec ">" [CFWS] /
+        //                       obs-angle-addr
+        function angleAddr() {
+            return wrap('angle-addr', or(and(invis(opt(cfws)), literal('<'), addrSpec, literal('>'), invis(opt(cfws))), obsAngleAddr)());
+        }
 
-    //   group           =   display-name ":" [group-list] ";" [CFWS]
-    function group() {
-        return wrap('group', and(
-            displayName,
-            literal(':'),
-            opt(groupList),
-            literal(';'),
-            invis(opt(cfws))
-        )());
-    }
+        //   group           =   display-name ":" [group-list] ";" [CFWS]
+        function group() {
+            return wrap('group', and(displayName, literal(':'), opt(groupList), literal(';'), invis(opt(cfws)))());
+        }
 
-    //   display-name    =   phrase
-    function displayName() {
-        return wrap('display-name', function phraseFixedSemantic() {
-            var result = phrase();
-            if (result !== null) {
-                result.semantic = collapseWhitespace(result.semantic);
-            }
-            return result;
-        }());
-    }
+        //   display-name    =   phrase
+        function displayName() {
+            return wrap('display-name', function phraseFixedSemantic() {
+                var result = phrase();
+                if (result !== null) {
+                    result.semantic = collapseWhitespace(result.semantic);
+                }
+                return result;
+            }());
+        }
 
-    //   mailbox-list    =   (mailbox *("," mailbox)) / obs-mbox-list
-    function mailboxList() {
-        return wrap('mailbox-list', or(
-            and(
-                mailbox,
-                star(and(literal(','), mailbox))
-            ),
-            obsMboxList
-        )());
-    }
+        //   mailbox-list    =   (mailbox *("," mailbox)) / obs-mbox-list
+        function mailboxList() {
+            return wrap('mailbox-list', or(and(mailbox, star(and(literal(','), mailbox))), obsMboxList)());
+        }
 
-    //   address-list    =   (address *("," address)) / obs-addr-list
-    function addressList() {
-        return wrap('address-list', or(
-            and(
-                address,
-                star(and(literal(','), address))
-            ),
-            obsAddrList
-        )());
-    }
+        //   address-list    =   (address *("," address)) / obs-addr-list
+        function addressList() {
+            return wrap('address-list', or(and(address, star(and(literal(','), address))), obsAddrList)());
+        }
 
-    //   group-list      =   mailbox-list / CFWS / obs-group-list
-    function groupList() {
-        return wrap('group-list', or(
-            mailboxList,
-            invis(cfws),
-            obsGroupList
-        )());
-    }
+        //   group-list      =   mailbox-list / CFWS / obs-group-list
+        function groupList() {
+            return wrap('group-list', or(mailboxList, invis(cfws), obsGroupList)());
+        }
 
-    // 3.4.1 Addr-Spec Specification
+        // 3.4.1 Addr-Spec Specification
 
-    // local-part      =   dot-atom / quoted-string / obs-local-part
-    function localPart() {
-        // note: quoted-string, dotAtom are proper subsets of obs-local-part
-        // so we really just have to look for obsLocalPart, if we don't care about the exact parse tree
-        return wrap('local-part', or(obsLocalPart, dotAtom, quotedString)());
-    }
+        // local-part      =   dot-atom / quoted-string / obs-local-part
+        function localPart() {
+            // note: quoted-string, dotAtom are proper subsets of obs-local-part
+            // so we really just have to look for obsLocalPart, if we don't care about the exact parse tree
+            return wrap('local-part', or(obsLocalPart, dotAtom, quotedString)());
+        }
 
-    //  dtext           =   %d33-90 /          ; Printable US-ASCII
-    //                      %d94-126 /         ;  characters not including
-    //                      obs-dtext          ;  "[", "]", or "\"
-    function dtext() {
-        return wrap('dtext', or(
-            function dtextFunc1() {
+        //  dtext           =   %d33-90 /          ; Printable US-ASCII
+        //                      %d94-126 /         ;  characters not including
+        //                      obs-dtext          ;  "[", "]", or "\"
+        function dtext() {
+            return wrap('dtext', or(function dtextFunc1() {
                 return compareToken(function dtextFunc2(tok) {
                     var code = tok.charCodeAt(0);
-                    var accept =
-                        (33 <= code && code <= 90) ||
-                        (94 <= code && code <= 126);
+                    var accept = 33 <= code && code <= 90 || 94 <= code && code <= 126;
                     if (opts.rfc6532) {
                         accept = accept || isUTF8NonAscii(tok);
                     }
                     return accept;
                 });
-            },
-            obsDtext
-            )()
-        );
-    }
+            }, obsDtext)());
+        }
 
-    // domain-literal  =   [CFWS] "[" *([FWS] dtext) [FWS] "]" [CFWS]
-    function domainLiteral() {
-        return wrap('domain-literal', and(
-            invis(opt(cfws)),
-            literal('['),
-            star(and(opt(fws), dtext)),
-            opt(fws),
-            literal(']'),
-            invis(opt(cfws))
-        )());
-    }
+        // domain-literal  =   [CFWS] "[" *([FWS] dtext) [FWS] "]" [CFWS]
+        function domainLiteral() {
+            return wrap('domain-literal', and(invis(opt(cfws)), literal('['), star(and(opt(fws), dtext)), opt(fws), literal(']'), invis(opt(cfws)))());
+        }
 
-    // domain          =   dot-atom / domain-literal / obs-domain
-    function domain() {
-        return wrap('domain', function domainCheckTLD() {
-            var result = or(obsDomain, dotAtom, domainLiteral)();
-            if (opts.rejectTLD) {
-                if (result.semantic.indexOf('.') < 0) {
-                    return null;
+        // domain          =   dot-atom / domain-literal / obs-domain
+        function domain() {
+            return wrap('domain', function domainCheckTLD() {
+                var result = or(obsDomain, dotAtom, domainLiteral)();
+                if (opts.rejectTLD) {
+                    if (result && result.semantic && result.semantic.indexOf('.') < 0) {
+                        return null;
+                    }
                 }
-            }
-            // strip all whitespace from domains
-            if (result) {
-                result.semantic = result.semantic.replace(/\s+/g, '');
-            }
-            return result;
-        }());
-    }
-
-    // addr-spec       =   local-part "@" domain
-    function addrSpec() {
-        return wrap('addr-spec', and(
-            localPart, literal('@'), domain
-        )());
-    }
-
-    // 3.6.2 Originator Fields
-    // Below we only parse the field body, not the name of the field
-    // like "From:", "Sender:", or "Reply-To:". Other libraries that
-    // parse email headers can parse those and defer to these productions
-    // for the "RFC 5322" part.
-
-    // RFC 6854 2.1. Replacement of RFC 5322, Section 3.6.2. Originator Fields
-    // from = "From:" (mailbox-list / address-list) CRLF
-    function fromSpec() {
-        return wrap('from', or(
-            mailboxList,
-            addressList
-        )());
-    }
-
-    // RFC 6854 2.1. Replacement of RFC 5322, Section 3.6.2. Originator Fields
-    // sender = "Sender:" (mailbox / address) CRLF
-    function senderSpec() {
-        return wrap('sender', or(
-            mailbox,
-            address
-        )());
-    }
-
-    // RFC 6854 2.1. Replacement of RFC 5322, Section 3.6.2. Originator Fields
-    // reply-to = "Reply-To:" address-list CRLF
-    function replyToSpec() {
-        return wrap('reply-to', addressList());
-    }
-
-    // 4.1. Miscellaneous Obsolete Tokens
-
-    //  obs-NO-WS-CTL   =   %d1-8 /            ; US-ASCII control
-    //                      %d11 /             ;  characters that do not
-    //                      %d12 /             ;  include the carriage
-    //                      %d14-31 /          ;  return, line feed, and
-    //                      %d127              ;  white space characters
-    function obsNoWsCtl() {
-        return opts.strict ? null : wrap('obs-NO-WS-CTL', compareToken(function (tok) {
-            var code = tok.charCodeAt(0);
-            return ((1 <= code && code <= 8) ||
-                    (11 === code || 12 === code) ||
-                    (14 <= code && code <= 31) ||
-                    (127 === code));
-        }));
-    }
-
-    // obs-ctext       =   obs-NO-WS-CTL
-    function obsCtext() { return opts.strict ? null : wrap('obs-ctext', obsNoWsCtl()); }
-
-    // obs-qtext       =   obs-NO-WS-CTL
-    function obsQtext() { return opts.strict ? null : wrap('obs-qtext', obsNoWsCtl()); }
-
-    // obs-qp          =   "\" (%d0 / obs-NO-WS-CTL / LF / CR)
-    function obsQP() {
-        return opts.strict ? null : wrap('obs-qp', and(
-            literal('\\'),
-            or(literal('\0'), obsNoWsCtl, lf, cr)
-        )());
-    }
-
-    // obs-phrase      =   word *(word / "." / CFWS)
-    function obsPhrase() {
-        return opts.strict ? null : wrap('obs-phrase', and(
-            word,
-            star(or(word, literal('.'), colwsp(cfws)))
-        )());
-    }
-
-    // 4.2. Obsolete Folding White Space
-
-    // NOTE: read the errata http://www.rfc-editor.org/errata_search.php?rfc=5322&eid=1908
-    // obs-FWS         =   1*([CRLF] WSP)
-    function obsFws() {
-        return opts.strict ? null : wrap('obs-FWS', star(
-            and(invis(opt(crlf)), wsp),
-            1
-        )());
-    }
-
-    // 4.4. Obsolete Addressing
-
-    // obs-angle-addr  =   [CFWS] "<" obs-route addr-spec ">" [CFWS]
-    function obsAngleAddr() {
-        return opts.strict ? null : wrap('obs-angle-addr', and(
-            invis(opt(cfws)),
-            literal('<'),
-            obsRoute,
-            addrSpec,
-            literal('>'),
-            invis(opt(cfws))
-        )());
-    }
-
-    // obs-route       =   obs-domain-list ":"
-    function obsRoute() {
-        return opts.strict ? null : wrap('obs-route', and(
-            obsDomainList,
-            literal(':')
-        )());
-    }
-
-    //   obs-domain-list =   *(CFWS / ",") "@" domain
-    //                       *("," [CFWS] ["@" domain])
-    function obsDomainList() {
-        return opts.strict ? null : wrap('obs-domain-list', and(
-            star(or(invis(cfws), literal(','))),
-            literal('@'),
-            domain,
-            star(and(
-                literal(','),
-                invis(opt(cfws)),
-                opt(and(literal('@'), domain))
-            ))
-        )());
-    }
-
-    // obs-mbox-list   =   *([CFWS] ",") mailbox *("," [mailbox / CFWS])
-    function obsMboxList() {
-        return opts.strict ? null : wrap('obs-mbox-list', and(
-            star(and(
-                invis(opt(cfws)),
-                literal(',')
-            )),
-            mailbox,
-            star(and(
-                literal(','),
-                opt(and(
-                    mailbox,
-                    invis(cfws)
-                ))
-            ))
-        )());
-    }
-
-    // obs-addr-list   =   *([CFWS] ",") address *("," [address / CFWS])
-    function obsAddrList() {
-        return opts.strict ? null : wrap('obs-addr-list', and(
-            star(and(
-                invis(opt(cfws)),
-                literal(',')
-            )),
-            address,
-            star(and(
-                literal(','),
-                opt(and(
-                    address,
-                    invis(cfws)
-                ))
-            ))
-        )());
-    }
-
-    // obs-group-list  =   1*([CFWS] ",") [CFWS]
-    function obsGroupList() {
-        return opts.strict ? null : wrap('obs-group-list', and(
-            star(and(
-                invis(opt(cfws)),
-                literal(',')
-            ), 1),
-            invis(opt(cfws))
-        )());
-    }
-
-    // obs-local-part = word *("." word)
-    function obsLocalPart() {
-        return opts.strict ? null : wrap('obs-local-part', and(word, star(and(literal('.'), word)))());
-    }
-
-    // obs-domain       = atom *("." atom)
-    function obsDomain() {
-        return opts.strict ? null : wrap('obs-domain', and(atom, star(and(literal('.'), atom)))());
-    }
-
-    // obs-dtext       =   obs-NO-WS-CTL / quoted-pair
-    function obsDtext() {
-        return opts.strict ? null : wrap('obs-dtext', or(obsNoWsCtl, quotedPair)());
-    }
-
-    /////////////////////////////////////////////////////
-
-    // ast analysis
-
-    function findNode(name, root) {
-        var i, stack, node;
-        if (root === null || root === undefined) { return null; }
-        stack = [root];
-        while (stack.length > 0) {
-            node = stack.pop();
-            if (node.name === name) {
-                return node;
-            }
-            for (i = node.children.length - 1; i >= 0; i -= 1) {
-                stack.push(node.children[i]);
-            }
-        }
-        return null;
-    }
-
-    function findAllNodes(name, root) {
-        var i, stack, node, result;
-        if (root === null || root === undefined) { return null; }
-        stack = [root];
-        result = [];
-        while (stack.length > 0) {
-            node = stack.pop();
-            if (node.name === name) {
-                result.push(node);
-            }
-            for (i = node.children.length - 1; i >= 0; i -= 1) {
-                stack.push(node.children[i]);
-            }
-        }
-        return result;
-    }
-
-    function findAllNodesNoChildren(names, root) {
-        var i, stack, node, result, namesLookup;
-        if (root === null || root === undefined) { return null; }
-        stack = [root];
-        result = [];
-        namesLookup = {};
-        for (i = 0; i < names.length; i += 1) {
-            namesLookup[names[i]] = true;
+                // strip all whitespace from domains
+                if (result) {
+                    result.semantic = result.semantic.replace(/\s+/g, '');
+                }
+                return result;
+            }());
         }
 
-        while (stack.length > 0) {
-            node = stack.pop();
-            if (node.name in namesLookup) {
-                result.push(node);
-                // don't look at children (hence findAllNodesNoChildren)
-            } else {
+        // addr-spec       =   local-part "@" domain
+        function addrSpec() {
+            return wrap('addr-spec', and(localPart, literal('@'), domain)());
+        }
+
+        // 3.6.2 Originator Fields
+        // Below we only parse the field body, not the name of the field
+        // like "From:", "Sender:", or "Reply-To:". Other libraries that
+        // parse email headers can parse those and defer to these productions
+        // for the "RFC 5322" part.
+
+        // RFC 6854 2.1. Replacement of RFC 5322, Section 3.6.2. Originator Fields
+        // from = "From:" (mailbox-list / address-list) CRLF
+        function fromSpec() {
+            return wrap('from', or(mailboxList, addressList)());
+        }
+
+        // RFC 6854 2.1. Replacement of RFC 5322, Section 3.6.2. Originator Fields
+        // sender = "Sender:" (mailbox / address) CRLF
+        function senderSpec() {
+            return wrap('sender', or(mailbox, address)());
+        }
+
+        // RFC 6854 2.1. Replacement of RFC 5322, Section 3.6.2. Originator Fields
+        // reply-to = "Reply-To:" address-list CRLF
+        function replyToSpec() {
+            return wrap('reply-to', addressList());
+        }
+
+        // 4.1. Miscellaneous Obsolete Tokens
+
+        //  obs-NO-WS-CTL   =   %d1-8 /            ; US-ASCII control
+        //                      %d11 /             ;  characters that do not
+        //                      %d12 /             ;  include the carriage
+        //                      %d14-31 /          ;  return, line feed, and
+        //                      %d127              ;  white space characters
+        function obsNoWsCtl() {
+            return opts.strict ? null : wrap('obs-NO-WS-CTL', compareToken(function (tok) {
+                var code = tok.charCodeAt(0);
+                return 1 <= code && code <= 8 || 11 === code || 12 === code || 14 <= code && code <= 31 || 127 === code;
+            }));
+        }
+
+        // obs-ctext       =   obs-NO-WS-CTL
+        function obsCtext() {
+            return opts.strict ? null : wrap('obs-ctext', obsNoWsCtl());
+        }
+
+        // obs-qtext       =   obs-NO-WS-CTL
+        function obsQtext() {
+            return opts.strict ? null : wrap('obs-qtext', obsNoWsCtl());
+        }
+
+        // obs-qp          =   "\" (%d0 / obs-NO-WS-CTL / LF / CR)
+        function obsQP() {
+            return opts.strict ? null : wrap('obs-qp', and(literal('\\'), or(literal('\0'), obsNoWsCtl, lf, cr))());
+        }
+
+        // obs-phrase      =   word *(word / "." / CFWS)
+        function obsPhrase() {
+            return opts.strict ? null : wrap('obs-phrase', and(word, star(or(word, literal('.'), literal('@'), colwsp(cfws))))());
+        }
+
+        // 4.2. Obsolete Folding White Space
+
+        // NOTE: read the errata http://www.rfc-editor.org/errata_search.php?rfc=5322&eid=1908
+        // obs-FWS         =   1*([CRLF] WSP)
+        function obsFws() {
+            return opts.strict ? null : wrap('obs-FWS', star(and(invis(opt(crlf)), wsp), 1)());
+        }
+
+        // 4.4. Obsolete Addressing
+
+        // obs-angle-addr  =   [CFWS] "<" obs-route addr-spec ">" [CFWS]
+        function obsAngleAddr() {
+            return opts.strict ? null : wrap('obs-angle-addr', and(invis(opt(cfws)), literal('<'), obsRoute, addrSpec, literal('>'), invis(opt(cfws)))());
+        }
+
+        // obs-route       =   obs-domain-list ":"
+        function obsRoute() {
+            return opts.strict ? null : wrap('obs-route', and(obsDomainList, literal(':'))());
+        }
+
+        //   obs-domain-list =   *(CFWS / ",") "@" domain
+        //                       *("," [CFWS] ["@" domain])
+        function obsDomainList() {
+            return opts.strict ? null : wrap('obs-domain-list', and(star(or(invis(cfws), literal(','))), literal('@'), domain, star(and(literal(','), invis(opt(cfws)), opt(and(literal('@'), domain)))))());
+        }
+
+        // obs-mbox-list   =   *([CFWS] ",") mailbox *("," [mailbox / CFWS])
+        function obsMboxList() {
+            return opts.strict ? null : wrap('obs-mbox-list', and(star(and(invis(opt(cfws)), literal(','))), mailbox, star(and(literal(','), opt(and(mailbox, invis(cfws))))))());
+        }
+
+        // obs-addr-list   =   *([CFWS] ",") address *("," [address / CFWS])
+        function obsAddrList() {
+            return opts.strict ? null : wrap('obs-addr-list', and(star(and(invis(opt(cfws)), literal(','))), address, star(and(literal(','), opt(and(address, invis(cfws))))))());
+        }
+
+        // obs-group-list  =   1*([CFWS] ",") [CFWS]
+        function obsGroupList() {
+            return opts.strict ? null : wrap('obs-group-list', and(star(and(invis(opt(cfws)), literal(',')), 1), invis(opt(cfws)))());
+        }
+
+        // obs-local-part = word *("." word)
+        function obsLocalPart() {
+            return opts.strict ? null : wrap('obs-local-part', and(word, star(and(literal('.'), word)))());
+        }
+
+        // obs-domain       = atom *("." atom)
+        function obsDomain() {
+            return opts.strict ? null : wrap('obs-domain', and(atom, star(and(literal('.'), atom)))());
+        }
+
+        // obs-dtext       =   obs-NO-WS-CTL / quoted-pair
+        function obsDtext() {
+            return opts.strict ? null : wrap('obs-dtext', or(obsNoWsCtl, quotedPair)());
+        }
+
+        /////////////////////////////////////////////////////
+
+        // ast analysis
+
+        function findNode(name, root) {
+            var i, stack, node;
+            if (root === null || root === undefined) {
+                return null;
+            }
+            stack = [root];
+            while (stack.length > 0) {
+                node = stack.pop();
+                if (node.name === name) {
+                    return node;
+                }
                 for (i = node.children.length - 1; i >= 0; i -= 1) {
                     stack.push(node.children[i]);
                 }
             }
-        }
-        return result;
-    }
-
-    function giveResult(ast) {
-        var addresses, groupsAndMailboxes, i, groupOrMailbox, result;
-        if (ast === null) {
             return null;
         }
-        addresses = [];
 
-        // An address is a 'group' (i.e. a list of mailboxes) or a 'mailbox'.
-        groupsAndMailboxes = findAllNodesNoChildren(['group', 'mailbox'], ast);
-        for (i = 0; i <  groupsAndMailboxes.length; i += 1) {
-            groupOrMailbox = groupsAndMailboxes[i];
-            if (groupOrMailbox.name === 'group') {
-                addresses.push(giveResultGroup(groupOrMailbox));
-            } else if (groupOrMailbox.name === 'mailbox') {
-                addresses.push(giveResultMailbox(groupOrMailbox));
+        function findAllNodes(name, root) {
+            var i, stack, node, result;
+            if (root === null || root === undefined) {
+                return null;
             }
-        }
-
-        result = {
-            ast: ast,
-            addresses: addresses,
-        };
-        if (opts.simple) {
-            result = simplifyResult(result);
-        }
-        if (opts.oneResult) {
-            return oneResult(result);
-        }
-        if (opts.simple) {
-            return result && result.addresses;
-        } else {
+            stack = [root];
+            result = [];
+            while (stack.length > 0) {
+                node = stack.pop();
+                if (node.name === name) {
+                    result.push(node);
+                }
+                for (i = node.children.length - 1; i >= 0; i -= 1) {
+                    stack.push(node.children[i]);
+                }
+            }
             return result;
         }
-    }
 
-    function giveResultGroup(group) {
-        var i;
-        var groupName = findNode('display-name', group);
-        var groupResultMailboxes = [];
-        var mailboxes = findAllNodesNoChildren(['mailbox'], group);
-        for (i = 0; i < mailboxes.length; i += 1) {
-            groupResultMailboxes.push(giveResultMailbox(mailboxes[i]));
+        function findAllNodesNoChildren(names, root) {
+            var i, stack, node, result, namesLookup;
+            if (root === null || root === undefined) {
+                return null;
+            }
+            stack = [root];
+            result = [];
+            namesLookup = {};
+            for (i = 0; i < names.length; i += 1) {
+                namesLookup[names[i]] = true;
+            }
+
+            while (stack.length > 0) {
+                node = stack.pop();
+                if (node.name in namesLookup) {
+                    result.push(node);
+                    // don't look at children (hence findAllNodesNoChildren)
+                } else {
+                    for (i = node.children.length - 1; i >= 0; i -= 1) {
+                        stack.push(node.children[i]);
+                    }
+                }
+            }
+            return result;
         }
-        return {
-            node: group,
-            parts: {
-                name: groupName,
-            },
-            type: group.name, // 'group'
-            name: grabSemantic(groupName),
-            addresses: groupResultMailboxes,
-        };
-    }
 
-    function giveResultMailbox(mailbox) {
-        var name = findNode('display-name', mailbox);
-        var aspec = findNode('addr-spec', mailbox);
-        var comments = findAllNodes('cfws', mailbox);
+        function giveResult(ast) {
+            var addresses, groupsAndMailboxes, i, groupOrMailbox, result;
+            if (ast === null) {
+                return null;
+            }
+            addresses = [];
 
-        var local = findNode('local-part', aspec);
-        var domain = findNode('domain', aspec);
-        return {
-            node: mailbox,
-            parts: {
-                name: name,
-                address: aspec,
-                local: local,
-                domain: domain,
-                comments: comments
-            },
-            type: mailbox.name, // 'mailbox'
-            name: grabSemantic(name),
-            address: grabSemantic(aspec),
-            local: grabSemantic(local),
-            domain: grabSemantic(domain),
-            groupName: grabSemantic(mailbox.groupName),
-        };
-    }
+            // An address is a 'group' (i.e. a list of mailboxes) or a 'mailbox'.
+            groupsAndMailboxes = findAllNodesNoChildren(['group', 'mailbox'], ast);
+            for (i = 0; i < groupsAndMailboxes.length; i += 1) {
+                groupOrMailbox = groupsAndMailboxes[i];
+                if (groupOrMailbox.name === 'group') {
+                    addresses.push(giveResultGroup(groupOrMailbox));
+                } else if (groupOrMailbox.name === 'mailbox') {
+                    addresses.push(giveResultMailbox(groupOrMailbox));
+                }
+            }
 
-    function grabSemantic(n) {
-        return n !== null && n !== undefined ? n.semantic : null;
-    }
-
-    function simplifyResult(result) {
-        var i;
-        if (result && result.addresses) {
-            for (i = 0; i < result.addresses.length; i += 1) {
-                delete result.addresses[i].node;
+            result = {
+                ast: ast,
+                addresses: addresses
+            };
+            if (opts.simple) {
+                result = simplifyResult(result);
+            }
+            if (opts.oneResult) {
+                return oneResult(result);
+            }
+            if (opts.simple) {
+                return result && result.addresses;
+            } else {
+                return result;
             }
         }
-        return result;
-    }
 
-    function oneResult(result) {
-        if (!result) { return null; }
-        if (!opts.partial && result.addresses.length > 1) { return null; }
-        return result.addresses && result.addresses[0];
-    }
+        function giveResultGroup(group) {
+            var i;
+            var groupName = findNode('display-name', group);
+            var groupResultMailboxes = [];
+            var mailboxes = findAllNodesNoChildren(['mailbox'], group);
+            for (i = 0; i < mailboxes.length; i += 1) {
+                groupResultMailboxes.push(giveResultMailbox(mailboxes[i]));
+            }
+            return {
+                node: group,
+                parts: {
+                    name: groupName
+                },
+                type: group.name, // 'group'
+                name: grabSemantic(groupName),
+                addresses: groupResultMailboxes
+            };
+        }
 
-    /////////////////////////////////////////////////////
+        function giveResultMailbox(mailbox) {
+            var name = findNode('display-name', mailbox);
+            var aspec = findNode('addr-spec', mailbox);
+            var comments = findAllNodesNoChildren(['comment'], mailbox);
 
-    var parseString, pos, len, parsed, startProduction;
+            var local = findNode('local-part', aspec);
+            var domain = findNode('domain', aspec);
+            return {
+                node: mailbox,
+                parts: {
+                    name: name,
+                    address: aspec,
+                    local: local,
+                    domain: domain,
+                    comments: comments
+                },
+                type: mailbox.name, // 'mailbox'
+                name: grabSemantic(name),
+                address: grabSemantic(aspec),
+                local: grabSemantic(local),
+                domain: grabSemantic(domain),
+                comments: concatComments(comments),
+                groupName: grabSemantic(mailbox.groupName)
+            };
+        }
 
-    opts = handleOpts(opts, {});
-    if (opts === null) { return null; }
+        function grabSemantic(n) {
+            return n !== null && n !== undefined ? n.semantic : null;
+        }
 
-    parseString = opts.input;
+        function simplifyResult(result) {
+            var i;
+            if (result && result.addresses) {
+                for (i = 0; i < result.addresses.length; i += 1) {
+                    delete result.addresses[i].node;
+                }
+            }
+            return result;
+        }
 
-    startProduction = {
-        'address': address,
-        'address-list': addressList,
-        'angle-addr': angleAddr,
-        'from': fromSpec,
-        'group': group,
-        'mailbox': mailbox,
-        'mailbox-list': mailboxList,
-        'reply-to': replyToSpec,
-        'sender': senderSpec,
-    }[opts.startAt] || addressList;
+        function concatComments(comments) {
+            let result = '';
+            if (comments) {
+                for (let i = 0; i < comments.length; i += 1) {
+                    result += grabSemantic(comments[i]);
+                }
+            }
+            return result;
+        }
 
-    if (!opts.strict) {
+        function oneResult(result) {
+            if (!result) {
+                return null;
+            }
+            if (!opts.partial && result.addresses.length > 1) {
+                return null;
+            }
+            return result.addresses && result.addresses[0];
+        }
+
+        /////////////////////////////////////////////////////
+
+        var parseString, pos, len, parsed, startProduction;
+
+        opts = handleOpts(opts, {});
+        if (opts === null) {
+            return null;
+        }
+
+        parseString = opts.input;
+
+        startProduction = {
+            'address': address,
+            'address-list': addressList,
+            'angle-addr': angleAddr,
+            'from': fromSpec,
+            'group': group,
+            'mailbox': mailbox,
+            'mailbox-list': mailboxList,
+            'reply-to': replyToSpec,
+            'sender': senderSpec
+        }[opts.startAt] || addressList;
+
+        if (!opts.strict) {
+            initialize();
+            opts.strict = true;
+            parsed = startProduction(parseString);
+            if (opts.partial || !inStr()) {
+                return giveResult(parsed);
+            }
+            opts.strict = false;
+        }
+
         initialize();
-        opts.strict = true;
         parsed = startProduction(parseString);
-        if (opts.partial || !inStr()) {
-            return giveResult(parsed);
+        if (!opts.partial && inStr()) {
+            return null;
         }
-        opts.strict = false;
+        return giveResult(parsed);
     }
 
-    initialize();
-    parsed = startProduction(parseString);
-    if (!opts.partial && inStr()) { return null; }
-    return giveResult(parsed);
-}
-
-function parseOneAddressSimple(opts) {
-    return parse5322(handleOpts(opts, {
-        oneResult: true,
-        rfc6532: true,
-        simple: true,
-        startAt: 'address-list',
-    }));
-}
-
-function parseAddressListSimple(opts) {
-    return parse5322(handleOpts(opts, {
-        rfc6532: true,
-        simple: true,
-        startAt: 'address-list',
-    }));
-}
-
-function parseFromSimple(opts) {
-    return parse5322(handleOpts(opts, {
-        rfc6532: true,
-        simple: true,
-        startAt: 'from',
-    }));
-}
-
-function parseSenderSimple(opts) {
-    return parse5322(handleOpts(opts, {
-        oneResult: true,
-        rfc6532: true,
-        simple: true,
-        startAt: 'sender',
-    }));
-}
-
-function parseReplyToSimple(opts) {
-    return parse5322(handleOpts(opts, {
-        rfc6532: true,
-        simple: true,
-        startAt: 'reply-to',
-    }));
-}
-
-function handleOpts(opts, defs) {
-    function isString(str) {
-        return Object.prototype.toString.call(str) === '[object String]';
+    function parseOneAddressSimple(opts) {
+        return parse5322(handleOpts(opts, {
+            oneResult: true,
+            rfc6532: true,
+            simple: true,
+            startAt: 'address-list'
+        }));
     }
 
-    function isObject(o) {
-        return o === Object(o);
+    function parseAddressListSimple(opts) {
+        return parse5322(handleOpts(opts, {
+            rfc6532: true,
+            simple: true,
+            startAt: 'address-list'
+        }));
     }
 
-    function isNullUndef(o) {
-        return o === null || o === undefined;
+    function parseFromSimple(opts) {
+        return parse5322(handleOpts(opts, {
+            rfc6532: true,
+            simple: true,
+            startAt: 'from'
+        }));
     }
 
-    var defaults, o;
-
-    if (isString(opts)) {
-        opts = { input: opts };
-    } else if (!isObject(opts)) {
-        return null;
+    function parseSenderSimple(opts) {
+        return parse5322(handleOpts(opts, {
+            oneResult: true,
+            rfc6532: true,
+            simple: true,
+            startAt: 'sender'
+        }));
     }
 
-    if (!isString(opts.input)) { return null; }
-    if (!defs) { return null; }
+    function parseReplyToSimple(opts) {
+        return parse5322(handleOpts(opts, {
+            rfc6532: true,
+            simple: true,
+            startAt: 'reply-to'
+        }));
+    }
 
-    defaults = {
-        oneResult: false,
-        partial: false,
-        rejectTLD: false,
-        rfc6532: false,
-        simple: false,
-        startAt: 'address-list',
-        strict: false,
-    };
-
-    for (o in defaults) {
-        if (isNullUndef(opts[o])) {
-            opts[o] = !isNullUndef(defs[o]) ? defs[o] : defaults[o];
+    function handleOpts(opts, defs) {
+        function isString(str) {
+            return Object.prototype.toString.call(str) === '[object String]';
         }
+
+        function isObject(o) {
+            return o === Object(o);
+        }
+
+        function isNullUndef(o) {
+            return o === null || o === undefined;
+        }
+
+        var defaults, o;
+
+        if (isString(opts)) {
+            opts = { input: opts };
+        } else if (!isObject(opts)) {
+            return null;
+        }
+
+        if (!isString(opts.input)) {
+            return null;
+        }
+        if (!defs) {
+            return null;
+        }
+
+        defaults = {
+            oneResult: false,
+            partial: false,
+            rejectTLD: false,
+            rfc6532: false,
+            simple: false,
+            startAt: 'address-list',
+            strict: false
+        };
+
+        for (o in defaults) {
+            if (isNullUndef(opts[o])) {
+                opts[o] = !isNullUndef(defs[o]) ? defs[o] : defaults[o];
+            }
+        }
+        return opts;
     }
-    return opts;
-}
 
-parse5322.parseOneAddress = parseOneAddressSimple;
-parse5322.parseAddressList = parseAddressListSimple;
-parse5322.parseFrom = parseFromSimple;
-parse5322.parseSender = parseSenderSimple;
-parse5322.parseReplyTo = parseReplyToSimple;
+    parse5322.parseOneAddress = parseOneAddressSimple;
+    parse5322.parseAddressList = parseAddressListSimple;
+    parse5322.parseFrom = parseFromSimple;
+    parse5322.parseSender = parseSenderSimple;
+    parse5322.parseReplyTo = parseReplyToSimple;
 
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-    module.exports = parse5322;
-} else {
-    global.emailAddresses = parse5322;
-}
+    if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+        module.exports = parse5322;
+    } else {
+        global.emailAddresses = parse5322;
+    }
+})(undefined);
 
-}(this));
-
-},{}],36:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var hash = exports;
 
 hash.utils = require('./hash/utils');
@@ -12587,7 +12991,7 @@ hash.sha384 = hash.sha.sha384;
 hash.sha512 = hash.sha.sha512;
 hash.ripemd160 = hash.ripemd.ripemd160;
 
-},{"./hash/common":37,"./hash/hmac":38,"./hash/ripemd":39,"./hash/sha":40,"./hash/utils":47}],37:[function(require,module,exports){
+},{"./hash/common":35,"./hash/hmac":36,"./hash/ripemd":37,"./hash/sha":38,"./hash/utils":45}],35:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -12681,7 +13085,7 @@ BlockHash.prototype._pad = function pad() {
   return res;
 };
 
-},{"./utils":47,"minimalistic-assert":50}],38:[function(require,module,exports){
+},{"./utils":45,"minimalistic-assert":48}],36:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -12730,7 +13134,7 @@ Hmac.prototype.digest = function digest(enc) {
   return this.outer.digest(enc);
 };
 
-},{"./utils":47,"minimalistic-assert":50}],39:[function(require,module,exports){
+},{"./utils":45,"minimalistic-assert":48}],37:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -12878,7 +13282,7 @@ var sh = [
   8, 5, 12, 9, 12, 5, 14, 6, 8, 13, 6, 5, 15, 13, 11, 11
 ];
 
-},{"./common":37,"./utils":47}],40:[function(require,module,exports){
+},{"./common":35,"./utils":45}],38:[function(require,module,exports){
 'use strict';
 
 exports.sha1 = require('./sha/1');
@@ -12887,7 +13291,7 @@ exports.sha256 = require('./sha/256');
 exports.sha384 = require('./sha/384');
 exports.sha512 = require('./sha/512');
 
-},{"./sha/1":41,"./sha/224":42,"./sha/256":43,"./sha/384":44,"./sha/512":45}],41:[function(require,module,exports){
+},{"./sha/1":39,"./sha/224":40,"./sha/256":41,"./sha/384":42,"./sha/512":43}],39:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -12963,7 +13367,7 @@ SHA1.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":37,"../utils":47,"./common":46}],42:[function(require,module,exports){
+},{"../common":35,"../utils":45,"./common":44}],40:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -12995,7 +13399,7 @@ SHA224.prototype._digest = function digest(enc) {
 };
 
 
-},{"../utils":47,"./256":43}],43:[function(require,module,exports){
+},{"../utils":45,"./256":41}],41:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -13102,7 +13506,7 @@ SHA256.prototype._digest = function digest(enc) {
     return utils.split32(this.h, 'big');
 };
 
-},{"../common":37,"../utils":47,"./common":46,"minimalistic-assert":50}],44:[function(require,module,exports){
+},{"../common":35,"../utils":45,"./common":44,"minimalistic-assert":48}],42:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -13139,7 +13543,7 @@ SHA384.prototype._digest = function digest(enc) {
     return utils.split32(this.h.slice(0, 12), 'big');
 };
 
-},{"../utils":47,"./512":45}],45:[function(require,module,exports){
+},{"../utils":45,"./512":43}],43:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -13471,7 +13875,7 @@ function g1_512_lo(xh, xl) {
   return r;
 }
 
-},{"../common":37,"../utils":47,"minimalistic-assert":50}],46:[function(require,module,exports){
+},{"../common":35,"../utils":45,"minimalistic-assert":48}],44:[function(require,module,exports){
 'use strict';
 
 var utils = require('../utils');
@@ -13522,7 +13926,7 @@ function g1_256(x) {
 }
 exports.g1_256 = g1_256;
 
-},{"../utils":47}],47:[function(require,module,exports){
+},{"../utils":45}],45:[function(require,module,exports){
 'use strict';
 
 var assert = require('minimalistic-assert');
@@ -13777,7 +14181,7 @@ function shr64_lo(ah, al, num) {
 }
 exports.shr64_lo = shr64_lo;
 
-},{"inherits":49,"minimalistic-assert":50}],48:[function(require,module,exports){
+},{"inherits":47,"minimalistic-assert":48}],46:[function(require,module,exports){
 'use strict';
 
 var hash = require('hash.js');
@@ -13892,7 +14296,7 @@ HmacDRBG.prototype.generate = function generate(len, enc, add, addEnc) {
   return utils.encode(res, enc);
 };
 
-},{"hash.js":36,"minimalistic-assert":50,"minimalistic-crypto-utils":51}],49:[function(require,module,exports){
+},{"hash.js":34,"minimalistic-assert":48,"minimalistic-crypto-utils":49}],47:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -13917,7 +14321,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],50:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = assert;
 
 function assert(val, msg) {
@@ -13930,7 +14334,7 @@ assert.equal = function assertEqual(l, r, msg) {
     throw new Error(msg || ('Assertion failed: ' + l + ' != ' + r));
 };
 
-},{}],51:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 var utils = exports;
@@ -13990,7 +14394,7 @@ utils.encode = function encode(arr, enc) {
     return arr;
 };
 
-},{}],52:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 // Top level file is just a mixin of submodules & constants
 'use strict';
 
@@ -14006,7 +14410,7 @@ assign(pako, deflate, inflate, constants);
 
 module.exports = pako;
 
-},{"./lib/deflate":53,"./lib/inflate":54,"./lib/utils/common":55,"./lib/zlib/constants":58}],53:[function(require,module,exports){
+},{"./lib/deflate":51,"./lib/inflate":52,"./lib/utils/common":53,"./lib/zlib/constants":56}],51:[function(require,module,exports){
 'use strict';
 
 
@@ -14408,7 +14812,7 @@ exports.deflate = deflate;
 exports.deflateRaw = deflateRaw;
 exports.gzip = gzip;
 
-},{"./utils/common":55,"./utils/strings":56,"./zlib/deflate":60,"./zlib/messages":65,"./zlib/zstream":67}],54:[function(require,module,exports){
+},{"./utils/common":53,"./utils/strings":54,"./zlib/deflate":58,"./zlib/messages":63,"./zlib/zstream":65}],52:[function(require,module,exports){
 'use strict';
 
 
@@ -14828,7 +15232,7 @@ exports.inflate = inflate;
 exports.inflateRaw = inflateRaw;
 exports.ungzip  = inflate;
 
-},{"./utils/common":55,"./utils/strings":56,"./zlib/constants":58,"./zlib/gzheader":61,"./zlib/inflate":63,"./zlib/messages":65,"./zlib/zstream":67}],55:[function(require,module,exports){
+},{"./utils/common":53,"./utils/strings":54,"./zlib/constants":56,"./zlib/gzheader":59,"./zlib/inflate":61,"./zlib/messages":63,"./zlib/zstream":65}],53:[function(require,module,exports){
 'use strict';
 
 
@@ -14935,7 +15339,7 @@ exports.setTyped = function (on) {
 
 exports.setTyped(TYPED_OK);
 
-},{}],56:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 // String encode/decode helpers
 'use strict';
 
@@ -15122,7 +15526,7 @@ exports.utf8border = function (buf, max) {
   return (pos + _utf8len[buf[pos]] > max) ? pos : max;
 };
 
-},{"./common":55}],57:[function(require,module,exports){
+},{"./common":53}],55:[function(require,module,exports){
 'use strict';
 
 // Note: adler32 takes 12% for level 0 and 2% for level 6.
@@ -15175,7 +15579,7 @@ function adler32(adler, buf, len, pos) {
 
 module.exports = adler32;
 
-},{}],58:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -15245,7 +15649,7 @@ module.exports = {
   //Z_NULL:                 null // Use -1 or null inline, depending on var type
 };
 
-},{}],59:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 
 // Note: we can't get significant speed boost here.
@@ -15306,7 +15710,7 @@ function crc32(crc, buf, len, pos) {
 
 module.exports = crc32;
 
-},{}],60:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -17182,7 +17586,7 @@ exports.deflatePrime = deflatePrime;
 exports.deflateTune = deflateTune;
 */
 
-},{"../utils/common":55,"./adler32":57,"./crc32":59,"./messages":65,"./trees":66}],61:[function(require,module,exports){
+},{"../utils/common":53,"./adler32":55,"./crc32":57,"./messages":63,"./trees":64}],59:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -17242,7 +17646,7 @@ function GZheader() {
 
 module.exports = GZheader;
 
-},{}],62:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -17589,7 +17993,7 @@ module.exports = function inflate_fast(strm, start) {
   return;
 };
 
-},{}],63:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -19147,7 +19551,7 @@ exports.inflateSyncPoint = inflateSyncPoint;
 exports.inflateUndermine = inflateUndermine;
 */
 
-},{"../utils/common":55,"./adler32":57,"./crc32":59,"./inffast":62,"./inftrees":64}],64:[function(require,module,exports){
+},{"../utils/common":53,"./adler32":55,"./crc32":57,"./inffast":60,"./inftrees":62}],62:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -19492,7 +19896,7 @@ module.exports = function inflate_table(type, lens, lens_index, codes, table, ta
   return 0;
 };
 
-},{"../utils/common":55}],65:[function(require,module,exports){
+},{"../utils/common":53}],63:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -19526,7 +19930,7 @@ module.exports = {
   '-6':   'incompatible version' /* Z_VERSION_ERROR (-6) */
 };
 
-},{}],66:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -20748,7 +21152,7 @@ exports._tr_flush_block  = _tr_flush_block;
 exports._tr_tally = _tr_tally;
 exports._tr_align = _tr_align;
 
-},{"../utils/common":55}],67:[function(require,module,exports){
+},{"../utils/common":53}],65:[function(require,module,exports){
 'use strict';
 
 // (C) 1995-2013 Jean-loup Gailly and Mark Adler
@@ -20797,7 +21201,7 @@ function ZStream() {
 
 module.exports = ZStream;
 
-},{}],68:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -20983,7 +21387,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],69:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 'use strict';
 
 /*
@@ -21081,7 +21485,7 @@ function bufToHex(buf) {
 
 module.exports = BitReader;
 
-},{}],70:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 "use strict";
 
 /* CRC32, used in Bzip2 implementation.
@@ -21156,7 +21560,7 @@ module.exports = function () {
   return CRC32;
 }();
 
-},{}],71:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 'use strict';
 
 /*
@@ -21194,7 +21598,6 @@ Robert Sedgewick, and Jon L. Bentley.
 var BitReader = require('./bitreader');
 var Stream = require('./stream');
 var CRC32 = require('./crc32');
-var pjson = require('../package.json');
 
 var MAX_HUFCODE_BITS = 20;
 var MAX_SYMBOLS = 258;
@@ -21753,12 +22156,9 @@ Bunzip.table = function (input, callback, multistream) {
 
 Bunzip.Stream = Stream;
 
-Bunzip.version = pjson.version;
-Bunzip.license = pjson.license;
-
 module.exports = Bunzip;
 
-},{"../package.json":73,"./bitreader":69,"./crc32":70,"./stream":72}],72:[function(require,module,exports){
+},{"./bitreader":67,"./crc32":68,"./stream":70}],70:[function(require,module,exports){
 "use strict";
 
 /* very simple input/output stream interface */
@@ -21803,99 +22203,7 @@ Stream.prototype.flush = function () {};
 
 module.exports = Stream;
 
-},{}],73:[function(require,module,exports){
-module.exports={
-  "_args": [
-    [
-      "seek-bzip@github:openpgpjs/seek-bzip#3aca608",
-      "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a"
-    ]
-  ],
-  "_from": "github:openpgpjs/seek-bzip#3aca608",
-  "_id": "seek-bzip@1.0.5-git",
-  "_inCache": true,
-  "_location": "/seek-bzip",
-  "_phantomChildren": {
-    "graceful-readlink": "1.0.1"
-  },
-  "_requested": {
-    "hosted": {
-      "directUrl": "https://raw.githubusercontent.com/openpgpjs/seek-bzip/3aca608/package.json",
-      "gitUrl": "git://github.com/openpgpjs/seek-bzip.git#3aca608",
-      "httpsUrl": "git+https://github.com/openpgpjs/seek-bzip.git#3aca608",
-      "shortcut": "github:openpgpjs/seek-bzip#3aca608",
-      "ssh": "git@github.com:openpgpjs/seek-bzip.git#3aca608",
-      "sshUrl": "git+ssh://git@github.com/openpgpjs/seek-bzip.git#3aca608",
-      "type": "github"
-    },
-    "name": "seek-bzip",
-    "raw": "seek-bzip@github:openpgpjs/seek-bzip#3aca608",
-    "rawSpec": "github:openpgpjs/seek-bzip#3aca608",
-    "scope": null,
-    "spec": "github:openpgpjs/seek-bzip#3aca608",
-    "type": "hosted"
-  },
-  "_requiredBy": [
-    "/"
-  ],
-  "_resolved": "git://github.com/openpgpjs/seek-bzip.git#3aca608ffedc055a1da1d898ecb244804ef32209",
-  "_shasum": "27346aff9be494bed122a1f71fccf20885fca40e",
-  "_shrinkwrap": null,
-  "_spec": "seek-bzip@github:openpgpjs/seek-bzip#3aca608",
-  "_where": "/home/luke/git/openpgpjs-d60efff61d024421e7985e25e7156cb4856d9d9a",
-  "bin": {
-    "seek-bunzip": "./bin/seek-bunzip",
-    "seek-table": "./bin/seek-bzip-table"
-  },
-  "bugs": {
-    "url": "https://github.com/cscott/seek-bzip/issues"
-  },
-  "contributors": [
-    {
-      "name": "C. Scott Ananian",
-      "url": "http://cscott.net"
-    },
-    {
-      "name": "Eli Skeggs"
-    },
-    {
-      "name": "Kevin Kwok"
-    },
-    {
-      "name": "Rob Landley",
-      "url": "http://landley.net"
-    }
-  ],
-  "dependencies": {
-    "commander": "~2.8.1"
-  },
-  "description": "a pure-JavaScript Node.JS module for random-access decoding bzip2 data",
-  "devDependencies": {
-    "fibers": "~1.0.6",
-    "mocha": "~2.2.5"
-  },
-  "directories": {
-    "test": "test"
-  },
-  "gitHead": "3aca608ffedc055a1da1d898ecb244804ef32209",
-  "homepage": "https://github.com/cscott/seek-bzip#readme",
-  "license": "MIT",
-  "main": "./lib/index.js",
-  "name": "seek-bzip",
-  "optionalDependencies": {},
-  "readme": "# seek-bzip\n\n[![Build Status][1]][2] [![dependency status][3]][4] [![dev dependency status][5]][6]\n\n`seek-bzip` is a pure-javascript Node.JS module adapted from [node-bzip](https://github.com/skeggse/node-bzip) and before that [antimatter15's pure-javascript bzip2 decoder](https://github.com/antimatter15/bzip2.js).  Like these projects, `seek-bzip` only does decompression (see [compressjs](https://github.com/cscott/compressjs) if you need compression code).  Unlike those other projects, `seek-bzip` can seek to and decode single blocks from the bzip2 file.\n\n`seek-bzip` primarily decodes buffers into other buffers, synchronously.\nWith the help of the [fibers](https://github.com/laverdet/node-fibers)\npackage, it can operate on node streams; see `test/stream.js` for an\nexample.\n\n## How to Install\n\n```\nnpm install seek-bzip\n```\n\nThis package uses\n[Typed Arrays](https://developer.mozilla.org/en-US/docs/JavaScript/Typed_arrays), which are present in node.js >= 0.5.5.\n\n## Usage\n\nAfter compressing some example data into `example.bz2`, the following will recreate that original data and save it to `example`:\n\n```\nvar Bunzip = require('seek-bzip');\nvar fs = require('fs');\n\nvar compressedData = fs.readFileSync('example.bz2');\nvar data = Bunzip.decode(compressedData);\n\nfs.writeFileSync('example', data);\n```\n\nSee the tests in the `tests/` directory for further usage examples.\n\nFor uncompressing single blocks of bzip2-compressed data, you will need\nan out-of-band index listing the start of each bzip2 block.  (Presumably\nyou generate this at the same time as you index the start of the information\nyou wish to seek to inside the compressed file.)  The `seek-bzip` module\nhas been designed to be compatible with the C implementation `seek-bzip2`\navailable from https://bitbucket.org/james_taylor/seek-bzip2.  That codebase\ncontains a `bzip-table` tool which will generate bzip2 block start indices.\nThere is also a pure-JavaScript `seek-bzip-table` tool in this package's\n`bin` directory.\n\n## Documentation\n\n`require('seek-bzip')` returns a `Bunzip` object.  It contains three static\nmethods.  The first is a function accepting one or two parameters:\n\n`Bunzip.decode = function(input, [Number expectedSize] or [output], [boolean multistream])`\n\nThe `input` argument can be a \"stream\" object (which must implement the\n`readByte` method), or a `Buffer`.\n\nIf `expectedSize` is not present, `decodeBzip` simply decodes `input` and\nreturns the resulting `Buffer`.\n\nIf `expectedSize` is present (and numeric), `decodeBzip` will store\nthe results in a `Buffer` of length `expectedSize`, and throw an error\nin the case that the size of the decoded data does not match\n`expectedSize`.\n\nIf you pass a non-numeric second parameter, it can either be a `Buffer`\nobject (which must be of the correct length; an error will be thrown if\nthe size of the decoded data does not match the buffer length) or\na \"stream\" object (which must implement a `writeByte` method).\n\nThe optional third `multistream` parameter, if true, attempts to continue\nreading past the end of the bzip2 file.  This supports \"multistream\"\nbzip2 files, which are simply multiple bzip2 files concatenated together.\nIf this argument is true, the input stream must have an `eof` method\nwhich returns true when the end of the input has been reached.\n\nThe second exported method is a function accepting two or three parameters:\n\n`Bunzip.decodeBlock = function(input, Number blockStartBits, [Number expectedSize] or [output])`\n\nThe `input` and `expectedSize`/`output` parameters are as above.\nThe `blockStartBits` parameter gives the start of the desired block, in bits.\n\nIf passing a stream as the `input` parameter, it must implement the\n`seek` method.\n\nThe final exported method is a function accepting two or three parameters:\n\n`Bunzip.table = function(input, Function callback, [boolean multistream])`\n\nThe `input` and `multistream` parameters are identical to those for the\n`decode` method.\n\nThis function will invoke `callback(position, size)` once per bzip2 block,\nwhere `position` gives the starting position of the block (in *bits*), and\n`size` gives the uncompressed size of the block (in bytes).\n\nThis can be used to construct an index allowing direct access to a particular\nblock inside a bzip2 file, using the `decodeBlock` method.\n\n## Command-line\nThere are binaries available in bin.  The first generates an index of all\nthe blocks in a bzip2-compressed file:\n```\n$ bin/seek-bzip-table test/sample4.bz2\n32\t99981\n320555\t99981\n606348\t99981\n847568\t99981\n1089094\t99981\n1343625\t99981\n1596228\t99981\n1843336\t99981\n2090919\t99981\n2342106\t39019\n$\n```\nThe first field is the starting position of the block, in bits, and the\nsecond field is the length of the block, in bytes.\n\nThe second binary decodes an arbitrary block of a bzip2 file:\n```\n$ bin/seek-bunzip -d -b 2342106 test/sample4.bz2 | tail\nélan's\némigré\némigré's\némigrés\népée\népée's\népées\nétude\nétude's\nétudes\n$\n```\n\nUse `--help` to see other options.\n\n## Help wanted\n\nImprovements to this module would be generally useful.\nFeel free to fork on github and submit pull requests!\n\n## Related projects\n\n* https://github.com/skeggse/node-bzip node-bzip (original upstream source)\n* https://github.com/cscott/compressjs\n  Lots of compression/decompression algorithms from the same author as this\n  module, including bzip2 compression code.\n* https://github.com/cscott/lzjb fast LZJB compression/decompression\n\n## License\n\n#### MIT License\n\n> Copyright &copy; 2013-2015 C. Scott Ananian\n>\n> Copyright &copy; 2012-2015 Eli Skeggs\n>\n> Copyright &copy; 2011 Kevin Kwok\n>\n> Permission is hereby granted, free of charge, to any person obtaining\n> a copy of this software and associated documentation files (the\n> \"Software\"), to deal in the Software without restriction, including\n> without limitation the rights to use, copy, modify, merge, publish,\n> distribute, sublicense, and/or sell copies of the Software, and to\n> permit persons to whom the Software is furnished to do so, subject to\n> the following conditions:\n>\n> The above copyright notice and this permission notice shall be\n> included in all copies or substantial portions of the Software.\n>\n> THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\n> EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\n> MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\n> NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE\n> LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION\n> OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION\n> WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n\n[1]: https://travis-ci.org/cscott/seek-bzip.png\n[2]: https://travis-ci.org/cscott/seek-bzip\n[3]: https://david-dm.org/cscott/seek-bzip.png\n[4]: https://david-dm.org/cscott/seek-bzip\n[5]: https://david-dm.org/cscott/seek-bzip/dev-status.png\n[6]: https://david-dm.org/cscott/seek-bzip#info=devDependencies\n",
-  "readmeFilename": "README.md",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cscott/seek-bzip.git"
-  },
-  "scripts": {
-    "test": "mocha"
-  },
-  "version": "1.0.5-git"
-}
-
-},{}],74:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 'use strict';
 
 // This is free and unencumbered software released into the public domain.
@@ -22538,7 +22846,945 @@ function UTF8Encoder(options) {
 
 exports.TextEncoder = TextEncoder;
 exports.TextDecoder = TextDecoder;
-},{}],75:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
+/*jshint bitwise: false*/
+
+(function(nacl) {
+'use strict';
+
+// Ported in 2014 by Dmitry Chestnykh and Devi Mandiri.
+// Public domain.
+//
+// Implementation derived from TweetNaCl version 20140427.
+// See for details: http://tweetnacl.cr.yp.to/
+
+var gf = function(init) {
+  var i, r = new Float64Array(16);
+  if (init) for (i = 0; i < init.length; i++) r[i] = init[i];
+  return r;
+};
+
+//  Pluggable, initialized in high-level API below.
+var randombytes = function(/* x, n */) { throw new Error('no PRNG'); };
+
+var _9 = new Uint8Array(32); _9[0] = 9;
+
+var gf0 = gf(),
+    gf1 = gf([1]),
+    _121665 = gf([0xdb41, 1]),
+    D = gf([0x78a3, 0x1359, 0x4dca, 0x75eb, 0xd8ab, 0x4141, 0x0a4d, 0x0070, 0xe898, 0x7779, 0x4079, 0x8cc7, 0xfe73, 0x2b6f, 0x6cee, 0x5203]),
+    D2 = gf([0xf159, 0x26b2, 0x9b94, 0xebd6, 0xb156, 0x8283, 0x149a, 0x00e0, 0xd130, 0xeef3, 0x80f2, 0x198e, 0xfce7, 0x56df, 0xd9dc, 0x2406]),
+    X = gf([0xd51a, 0x8f25, 0x2d60, 0xc956, 0xa7b2, 0x9525, 0xc760, 0x692c, 0xdc5c, 0xfdd6, 0xe231, 0xc0a4, 0x53fe, 0xcd6e, 0x36d3, 0x2169]),
+    Y = gf([0x6658, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666, 0x6666]),
+    I = gf([0xa0b0, 0x4a0e, 0x1b27, 0xc4ee, 0xe478, 0xad2f, 0x1806, 0x2f43, 0xd7a7, 0x3dfb, 0x0099, 0x2b4d, 0xdf0b, 0x4fc1, 0x2480, 0x2b83]);
+
+function vn(x, xi, y, yi, n) {
+  var i,d = 0;
+  for (i = 0; i < n; i++) d |= x[xi+i]^y[yi+i];
+  return (1 & ((d - 1) >>> 8)) - 1;
+}
+
+function crypto_verify_32(x, xi, y, yi) {
+  return vn(x,xi,y,yi,32);
+}
+
+function set25519(r, a) {
+  var i;
+  for (i = 0; i < 16; i++) r[i] = a[i]|0;
+}
+
+function car25519(o) {
+  var i, v, c = 1;
+  for (i = 0; i < 16; i++) {
+    v = o[i] + c + 65535;
+    c = Math.floor(v / 65536);
+    o[i] = v - c * 65536;
+  }
+  o[0] += c-1 + 37 * (c-1);
+}
+
+function sel25519(p, q, b) {
+  var t, c = ~(b-1);
+  for (var i = 0; i < 16; i++) {
+    t = c & (p[i] ^ q[i]);
+    p[i] ^= t;
+    q[i] ^= t;
+  }
+}
+
+function pack25519(o, n) {
+  var i, j, b;
+  var m = gf(), t = gf();
+  for (i = 0; i < 16; i++) t[i] = n[i];
+  car25519(t);
+  car25519(t);
+  car25519(t);
+  for (j = 0; j < 2; j++) {
+    m[0] = t[0] - 0xffed;
+    for (i = 1; i < 15; i++) {
+      m[i] = t[i] - 0xffff - ((m[i-1]>>16) & 1);
+      m[i-1] &= 0xffff;
+    }
+    m[15] = t[15] - 0x7fff - ((m[14]>>16) & 1);
+    b = (m[15]>>16) & 1;
+    m[14] &= 0xffff;
+    sel25519(t, m, 1-b);
+  }
+  for (i = 0; i < 16; i++) {
+    o[2*i] = t[i] & 0xff;
+    o[2*i+1] = t[i]>>8;
+  }
+}
+
+function neq25519(a, b) {
+  var c = new Uint8Array(32), d = new Uint8Array(32);
+  pack25519(c, a);
+  pack25519(d, b);
+  return crypto_verify_32(c, 0, d, 0);
+}
+
+function par25519(a) {
+  var d = new Uint8Array(32);
+  pack25519(d, a);
+  return d[0] & 1;
+}
+
+function unpack25519(o, n) {
+  var i;
+  for (i = 0; i < 16; i++) o[i] = n[2*i] + (n[2*i+1] << 8);
+  o[15] &= 0x7fff;
+}
+
+function A(o, a, b) {
+  for (var i = 0; i < 16; i++) o[i] = a[i] + b[i];
+}
+
+function Z(o, a, b) {
+  for (var i = 0; i < 16; i++) o[i] = a[i] - b[i];
+}
+
+function M(o, a, b) {
+  var v, c,
+     t0 = 0,  t1 = 0,  t2 = 0,  t3 = 0,  t4 = 0,  t5 = 0,  t6 = 0,  t7 = 0,
+     t8 = 0,  t9 = 0, t10 = 0, t11 = 0, t12 = 0, t13 = 0, t14 = 0, t15 = 0,
+    t16 = 0, t17 = 0, t18 = 0, t19 = 0, t20 = 0, t21 = 0, t22 = 0, t23 = 0,
+    t24 = 0, t25 = 0, t26 = 0, t27 = 0, t28 = 0, t29 = 0, t30 = 0,
+    b0 = b[0],
+    b1 = b[1],
+    b2 = b[2],
+    b3 = b[3],
+    b4 = b[4],
+    b5 = b[5],
+    b6 = b[6],
+    b7 = b[7],
+    b8 = b[8],
+    b9 = b[9],
+    b10 = b[10],
+    b11 = b[11],
+    b12 = b[12],
+    b13 = b[13],
+    b14 = b[14],
+    b15 = b[15];
+
+  v = a[0];
+  t0 += v * b0;
+  t1 += v * b1;
+  t2 += v * b2;
+  t3 += v * b3;
+  t4 += v * b4;
+  t5 += v * b5;
+  t6 += v * b6;
+  t7 += v * b7;
+  t8 += v * b8;
+  t9 += v * b9;
+  t10 += v * b10;
+  t11 += v * b11;
+  t12 += v * b12;
+  t13 += v * b13;
+  t14 += v * b14;
+  t15 += v * b15;
+  v = a[1];
+  t1 += v * b0;
+  t2 += v * b1;
+  t3 += v * b2;
+  t4 += v * b3;
+  t5 += v * b4;
+  t6 += v * b5;
+  t7 += v * b6;
+  t8 += v * b7;
+  t9 += v * b8;
+  t10 += v * b9;
+  t11 += v * b10;
+  t12 += v * b11;
+  t13 += v * b12;
+  t14 += v * b13;
+  t15 += v * b14;
+  t16 += v * b15;
+  v = a[2];
+  t2 += v * b0;
+  t3 += v * b1;
+  t4 += v * b2;
+  t5 += v * b3;
+  t6 += v * b4;
+  t7 += v * b5;
+  t8 += v * b6;
+  t9 += v * b7;
+  t10 += v * b8;
+  t11 += v * b9;
+  t12 += v * b10;
+  t13 += v * b11;
+  t14 += v * b12;
+  t15 += v * b13;
+  t16 += v * b14;
+  t17 += v * b15;
+  v = a[3];
+  t3 += v * b0;
+  t4 += v * b1;
+  t5 += v * b2;
+  t6 += v * b3;
+  t7 += v * b4;
+  t8 += v * b5;
+  t9 += v * b6;
+  t10 += v * b7;
+  t11 += v * b8;
+  t12 += v * b9;
+  t13 += v * b10;
+  t14 += v * b11;
+  t15 += v * b12;
+  t16 += v * b13;
+  t17 += v * b14;
+  t18 += v * b15;
+  v = a[4];
+  t4 += v * b0;
+  t5 += v * b1;
+  t6 += v * b2;
+  t7 += v * b3;
+  t8 += v * b4;
+  t9 += v * b5;
+  t10 += v * b6;
+  t11 += v * b7;
+  t12 += v * b8;
+  t13 += v * b9;
+  t14 += v * b10;
+  t15 += v * b11;
+  t16 += v * b12;
+  t17 += v * b13;
+  t18 += v * b14;
+  t19 += v * b15;
+  v = a[5];
+  t5 += v * b0;
+  t6 += v * b1;
+  t7 += v * b2;
+  t8 += v * b3;
+  t9 += v * b4;
+  t10 += v * b5;
+  t11 += v * b6;
+  t12 += v * b7;
+  t13 += v * b8;
+  t14 += v * b9;
+  t15 += v * b10;
+  t16 += v * b11;
+  t17 += v * b12;
+  t18 += v * b13;
+  t19 += v * b14;
+  t20 += v * b15;
+  v = a[6];
+  t6 += v * b0;
+  t7 += v * b1;
+  t8 += v * b2;
+  t9 += v * b3;
+  t10 += v * b4;
+  t11 += v * b5;
+  t12 += v * b6;
+  t13 += v * b7;
+  t14 += v * b8;
+  t15 += v * b9;
+  t16 += v * b10;
+  t17 += v * b11;
+  t18 += v * b12;
+  t19 += v * b13;
+  t20 += v * b14;
+  t21 += v * b15;
+  v = a[7];
+  t7 += v * b0;
+  t8 += v * b1;
+  t9 += v * b2;
+  t10 += v * b3;
+  t11 += v * b4;
+  t12 += v * b5;
+  t13 += v * b6;
+  t14 += v * b7;
+  t15 += v * b8;
+  t16 += v * b9;
+  t17 += v * b10;
+  t18 += v * b11;
+  t19 += v * b12;
+  t20 += v * b13;
+  t21 += v * b14;
+  t22 += v * b15;
+  v = a[8];
+  t8 += v * b0;
+  t9 += v * b1;
+  t10 += v * b2;
+  t11 += v * b3;
+  t12 += v * b4;
+  t13 += v * b5;
+  t14 += v * b6;
+  t15 += v * b7;
+  t16 += v * b8;
+  t17 += v * b9;
+  t18 += v * b10;
+  t19 += v * b11;
+  t20 += v * b12;
+  t21 += v * b13;
+  t22 += v * b14;
+  t23 += v * b15;
+  v = a[9];
+  t9 += v * b0;
+  t10 += v * b1;
+  t11 += v * b2;
+  t12 += v * b3;
+  t13 += v * b4;
+  t14 += v * b5;
+  t15 += v * b6;
+  t16 += v * b7;
+  t17 += v * b8;
+  t18 += v * b9;
+  t19 += v * b10;
+  t20 += v * b11;
+  t21 += v * b12;
+  t22 += v * b13;
+  t23 += v * b14;
+  t24 += v * b15;
+  v = a[10];
+  t10 += v * b0;
+  t11 += v * b1;
+  t12 += v * b2;
+  t13 += v * b3;
+  t14 += v * b4;
+  t15 += v * b5;
+  t16 += v * b6;
+  t17 += v * b7;
+  t18 += v * b8;
+  t19 += v * b9;
+  t20 += v * b10;
+  t21 += v * b11;
+  t22 += v * b12;
+  t23 += v * b13;
+  t24 += v * b14;
+  t25 += v * b15;
+  v = a[11];
+  t11 += v * b0;
+  t12 += v * b1;
+  t13 += v * b2;
+  t14 += v * b3;
+  t15 += v * b4;
+  t16 += v * b5;
+  t17 += v * b6;
+  t18 += v * b7;
+  t19 += v * b8;
+  t20 += v * b9;
+  t21 += v * b10;
+  t22 += v * b11;
+  t23 += v * b12;
+  t24 += v * b13;
+  t25 += v * b14;
+  t26 += v * b15;
+  v = a[12];
+  t12 += v * b0;
+  t13 += v * b1;
+  t14 += v * b2;
+  t15 += v * b3;
+  t16 += v * b4;
+  t17 += v * b5;
+  t18 += v * b6;
+  t19 += v * b7;
+  t20 += v * b8;
+  t21 += v * b9;
+  t22 += v * b10;
+  t23 += v * b11;
+  t24 += v * b12;
+  t25 += v * b13;
+  t26 += v * b14;
+  t27 += v * b15;
+  v = a[13];
+  t13 += v * b0;
+  t14 += v * b1;
+  t15 += v * b2;
+  t16 += v * b3;
+  t17 += v * b4;
+  t18 += v * b5;
+  t19 += v * b6;
+  t20 += v * b7;
+  t21 += v * b8;
+  t22 += v * b9;
+  t23 += v * b10;
+  t24 += v * b11;
+  t25 += v * b12;
+  t26 += v * b13;
+  t27 += v * b14;
+  t28 += v * b15;
+  v = a[14];
+  t14 += v * b0;
+  t15 += v * b1;
+  t16 += v * b2;
+  t17 += v * b3;
+  t18 += v * b4;
+  t19 += v * b5;
+  t20 += v * b6;
+  t21 += v * b7;
+  t22 += v * b8;
+  t23 += v * b9;
+  t24 += v * b10;
+  t25 += v * b11;
+  t26 += v * b12;
+  t27 += v * b13;
+  t28 += v * b14;
+  t29 += v * b15;
+  v = a[15];
+  t15 += v * b0;
+  t16 += v * b1;
+  t17 += v * b2;
+  t18 += v * b3;
+  t19 += v * b4;
+  t20 += v * b5;
+  t21 += v * b6;
+  t22 += v * b7;
+  t23 += v * b8;
+  t24 += v * b9;
+  t25 += v * b10;
+  t26 += v * b11;
+  t27 += v * b12;
+  t28 += v * b13;
+  t29 += v * b14;
+  t30 += v * b15;
+
+  t0  += 38 * t16;
+  t1  += 38 * t17;
+  t2  += 38 * t18;
+  t3  += 38 * t19;
+  t4  += 38 * t20;
+  t5  += 38 * t21;
+  t6  += 38 * t22;
+  t7  += 38 * t23;
+  t8  += 38 * t24;
+  t9  += 38 * t25;
+  t10 += 38 * t26;
+  t11 += 38 * t27;
+  t12 += 38 * t28;
+  t13 += 38 * t29;
+  t14 += 38 * t30;
+  // t15 left as is
+
+  // first car
+  c = 1;
+  v =  t0 + c + 65535; c = Math.floor(v / 65536);  t0 = v - c * 65536;
+  v =  t1 + c + 65535; c = Math.floor(v / 65536);  t1 = v - c * 65536;
+  v =  t2 + c + 65535; c = Math.floor(v / 65536);  t2 = v - c * 65536;
+  v =  t3 + c + 65535; c = Math.floor(v / 65536);  t3 = v - c * 65536;
+  v =  t4 + c + 65535; c = Math.floor(v / 65536);  t4 = v - c * 65536;
+  v =  t5 + c + 65535; c = Math.floor(v / 65536);  t5 = v - c * 65536;
+  v =  t6 + c + 65535; c = Math.floor(v / 65536);  t6 = v - c * 65536;
+  v =  t7 + c + 65535; c = Math.floor(v / 65536);  t7 = v - c * 65536;
+  v =  t8 + c + 65535; c = Math.floor(v / 65536);  t8 = v - c * 65536;
+  v =  t9 + c + 65535; c = Math.floor(v / 65536);  t9 = v - c * 65536;
+  v = t10 + c + 65535; c = Math.floor(v / 65536); t10 = v - c * 65536;
+  v = t11 + c + 65535; c = Math.floor(v / 65536); t11 = v - c * 65536;
+  v = t12 + c + 65535; c = Math.floor(v / 65536); t12 = v - c * 65536;
+  v = t13 + c + 65535; c = Math.floor(v / 65536); t13 = v - c * 65536;
+  v = t14 + c + 65535; c = Math.floor(v / 65536); t14 = v - c * 65536;
+  v = t15 + c + 65535; c = Math.floor(v / 65536); t15 = v - c * 65536;
+  t0 += c-1 + 37 * (c-1);
+
+  // second car
+  c = 1;
+  v =  t0 + c + 65535; c = Math.floor(v / 65536);  t0 = v - c * 65536;
+  v =  t1 + c + 65535; c = Math.floor(v / 65536);  t1 = v - c * 65536;
+  v =  t2 + c + 65535; c = Math.floor(v / 65536);  t2 = v - c * 65536;
+  v =  t3 + c + 65535; c = Math.floor(v / 65536);  t3 = v - c * 65536;
+  v =  t4 + c + 65535; c = Math.floor(v / 65536);  t4 = v - c * 65536;
+  v =  t5 + c + 65535; c = Math.floor(v / 65536);  t5 = v - c * 65536;
+  v =  t6 + c + 65535; c = Math.floor(v / 65536);  t6 = v - c * 65536;
+  v =  t7 + c + 65535; c = Math.floor(v / 65536);  t7 = v - c * 65536;
+  v =  t8 + c + 65535; c = Math.floor(v / 65536);  t8 = v - c * 65536;
+  v =  t9 + c + 65535; c = Math.floor(v / 65536);  t9 = v - c * 65536;
+  v = t10 + c + 65535; c = Math.floor(v / 65536); t10 = v - c * 65536;
+  v = t11 + c + 65535; c = Math.floor(v / 65536); t11 = v - c * 65536;
+  v = t12 + c + 65535; c = Math.floor(v / 65536); t12 = v - c * 65536;
+  v = t13 + c + 65535; c = Math.floor(v / 65536); t13 = v - c * 65536;
+  v = t14 + c + 65535; c = Math.floor(v / 65536); t14 = v - c * 65536;
+  v = t15 + c + 65535; c = Math.floor(v / 65536); t15 = v - c * 65536;
+  t0 += c-1 + 37 * (c-1);
+
+  o[ 0] = t0;
+  o[ 1] = t1;
+  o[ 2] = t2;
+  o[ 3] = t3;
+  o[ 4] = t4;
+  o[ 5] = t5;
+  o[ 6] = t6;
+  o[ 7] = t7;
+  o[ 8] = t8;
+  o[ 9] = t9;
+  o[10] = t10;
+  o[11] = t11;
+  o[12] = t12;
+  o[13] = t13;
+  o[14] = t14;
+  o[15] = t15;
+}
+
+function S(o, a) {
+  M(o, a, a);
+}
+
+function inv25519(o, i) {
+  var c = gf();
+  var a;
+  for (a = 0; a < 16; a++) c[a] = i[a];
+  for (a = 253; a >= 0; a--) {
+    S(c, c);
+    if(a !== 2 && a !== 4) M(c, c, i);
+  }
+  for (a = 0; a < 16; a++) o[a] = c[a];
+}
+
+function pow2523(o, i) {
+  var c = gf();
+  var a;
+  for (a = 0; a < 16; a++) c[a] = i[a];
+  for (a = 250; a >= 0; a--) {
+      S(c, c);
+      if(a !== 1) M(c, c, i);
+  }
+  for (a = 0; a < 16; a++) o[a] = c[a];
+}
+
+function crypto_scalarmult(q, n, p) {
+  var z = new Uint8Array(32);
+  var x = new Float64Array(80), r, i;
+  var a = gf(), b = gf(), c = gf(),
+      d = gf(), e = gf(), f = gf();
+  for (i = 0; i < 31; i++) z[i] = n[i];
+  z[31]=(n[31]&127)|64;
+  z[0]&=248;
+  unpack25519(x,p);
+  for (i = 0; i < 16; i++) {
+    b[i]=x[i];
+    d[i]=a[i]=c[i]=0;
+  }
+  a[0]=d[0]=1;
+  for (i=254; i>=0; --i) {
+    r=(z[i>>>3]>>>(i&7))&1;
+    sel25519(a,b,r);
+    sel25519(c,d,r);
+    A(e,a,c);
+    Z(a,a,c);
+    A(c,b,d);
+    Z(b,b,d);
+    S(d,e);
+    S(f,a);
+    M(a,c,a);
+    M(c,b,e);
+    A(e,a,c);
+    Z(a,a,c);
+    S(b,a);
+    Z(c,d,f);
+    M(a,c,_121665);
+    A(a,a,d);
+    M(c,c,a);
+    M(a,d,f);
+    M(d,b,x);
+    S(b,e);
+    sel25519(a,b,r);
+    sel25519(c,d,r);
+  }
+  for (i = 0; i < 16; i++) {
+    x[i+16]=a[i];
+    x[i+32]=c[i];
+    x[i+48]=b[i];
+    x[i+64]=d[i];
+  }
+  var x32 = x.subarray(32);
+  var x16 = x.subarray(16);
+  inv25519(x32,x32);
+  M(x16,x16,x32);
+  pack25519(q,x16);
+  return 0;
+}
+
+function crypto_scalarmult_base(q, n) {
+  return crypto_scalarmult(q, n, _9);
+}
+
+function crypto_box_keypair(y, x) {
+  randombytes(x, 32);
+  return crypto_scalarmult_base(y, x);
+}
+
+function add(p, q) {
+  var a = gf(), b = gf(), c = gf(),
+      d = gf(), e = gf(), f = gf(),
+      g = gf(), h = gf(), t = gf();
+
+  Z(a, p[1], p[0]);
+  Z(t, q[1], q[0]);
+  M(a, a, t);
+  A(b, p[0], p[1]);
+  A(t, q[0], q[1]);
+  M(b, b, t);
+  M(c, p[3], q[3]);
+  M(c, c, D2);
+  M(d, p[2], q[2]);
+  A(d, d, d);
+  Z(e, b, a);
+  Z(f, d, c);
+  A(g, d, c);
+  A(h, b, a);
+
+  M(p[0], e, f);
+  M(p[1], h, g);
+  M(p[2], g, f);
+  M(p[3], e, h);
+}
+
+function cswap(p, q, b) {
+  var i;
+  for (i = 0; i < 4; i++) {
+    sel25519(p[i], q[i], b);
+  }
+}
+
+function pack(r, p) {
+  var tx = gf(), ty = gf(), zi = gf();
+  inv25519(zi, p[2]);
+  M(tx, p[0], zi);
+  M(ty, p[1], zi);
+  pack25519(r, ty);
+  r[31] ^= par25519(tx) << 7;
+}
+
+function scalarmult(p, q, s) {
+  var b, i;
+  set25519(p[0], gf0);
+  set25519(p[1], gf1);
+  set25519(p[2], gf1);
+  set25519(p[3], gf0);
+  for (i = 255; i >= 0; --i) {
+    b = (s[(i/8)|0] >> (i&7)) & 1;
+    cswap(p, q, b);
+    add(q, p);
+    add(p, p);
+    cswap(p, q, b);
+  }
+}
+
+function scalarbase(p, s) {
+  var q = [gf(), gf(), gf(), gf()];
+  set25519(q[0], X);
+  set25519(q[1], Y);
+  set25519(q[2], gf1);
+  M(q[3], X, Y);
+  scalarmult(p, q, s);
+}
+
+function crypto_sign_keypair(pk, sk, seeded) {
+  var d;
+  var p = [gf(), gf(), gf(), gf()];
+  var i;
+
+  if (!seeded) randombytes(sk, 32);
+  d = nacl.hash(sk.subarray(0, 32));
+  d[0] &= 248;
+  d[31] &= 127;
+  d[31] |= 64;
+
+  scalarbase(p, d);
+  pack(pk, p);
+
+  for (i = 0; i < 32; i++) sk[i+32] = pk[i];
+  return 0;
+}
+
+var L = new Float64Array([0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58, 0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x10]);
+
+function modL(r, x) {
+  var carry, i, j, k;
+  for (i = 63; i >= 32; --i) {
+    carry = 0;
+    for (j = i - 32, k = i - 12; j < k; ++j) {
+      x[j] += carry - 16 * x[i] * L[j - (i - 32)];
+      carry = (x[j] + 128) >> 8;
+      x[j] -= carry * 256;
+    }
+    x[j] += carry;
+    x[i] = 0;
+  }
+  carry = 0;
+  for (j = 0; j < 32; j++) {
+    x[j] += carry - (x[31] >> 4) * L[j];
+    carry = x[j] >> 8;
+    x[j] &= 255;
+  }
+  for (j = 0; j < 32; j++) x[j] -= carry * L[j];
+  for (i = 0; i < 32; i++) {
+    x[i+1] += x[i] >> 8;
+    r[i] = x[i] & 255;
+  }
+}
+
+function reduce(r) {
+  var x = new Float64Array(64), i;
+  for (i = 0; i < 64; i++) x[i] = r[i];
+  for (i = 0; i < 64; i++) r[i] = 0;
+  modL(r, x);
+}
+
+// Note: difference from C - smlen returned, not passed as argument.
+function crypto_sign(sm, m, n, sk) {
+  var d, h, r;
+  var i, j, x = new Float64Array(64);
+  var p = [gf(), gf(), gf(), gf()];
+
+  d = nacl.hash(sk.subarray(0, 32));
+  d[0] &= 248;
+  d[31] &= 127;
+  d[31] |= 64;
+
+  var smlen = n + 64;
+  for (i = 0; i < n; i++) sm[64 + i] = m[i];
+  for (i = 0; i < 32; i++) sm[32 + i] = d[32 + i];
+
+  r = nacl.hash(sm.subarray(32, smlen));
+  reduce(r);
+  scalarbase(p, r);
+  pack(sm, p);
+
+  for (i = 32; i < 64; i++) sm[i] = sk[i];
+  h = nacl.hash(sm.subarray(0, smlen));
+  reduce(h);
+
+  for (i = 0; i < 64; i++) x[i] = 0;
+  for (i = 0; i < 32; i++) x[i] = r[i];
+  for (i = 0; i < 32; i++) {
+    for (j = 0; j < 32; j++) {
+      x[i+j] += h[i] * d[j];
+    }
+  }
+
+  modL(sm.subarray(32), x);
+  return smlen;
+}
+
+function unpackneg(r, p) {
+  var t = gf(), chk = gf(), num = gf(),
+      den = gf(), den2 = gf(), den4 = gf(),
+      den6 = gf();
+
+  set25519(r[2], gf1);
+  unpack25519(r[1], p);
+  S(num, r[1]);
+  M(den, num, D);
+  Z(num, num, r[2]);
+  A(den, r[2], den);
+
+  S(den2, den);
+  S(den4, den2);
+  M(den6, den4, den2);
+  M(t, den6, num);
+  M(t, t, den);
+
+  pow2523(t, t);
+  M(t, t, num);
+  M(t, t, den);
+  M(t, t, den);
+  M(r[0], t, den);
+
+  S(chk, r[0]);
+  M(chk, chk, den);
+  if (neq25519(chk, num)) M(r[0], r[0], I);
+
+  S(chk, r[0]);
+  M(chk, chk, den);
+  if (neq25519(chk, num)) return -1;
+
+  if (par25519(r[0]) === (p[31]>>7)) Z(r[0], gf0, r[0]);
+
+  M(r[3], r[0], r[1]);
+  return 0;
+}
+
+function crypto_sign_open(m, sm, n, pk) {
+  var i, mlen;
+  var t = new Uint8Array(32), h;
+  var p = [gf(), gf(), gf(), gf()],
+      q = [gf(), gf(), gf(), gf()];
+
+  mlen = -1;
+  if (n < 64) return -1;
+
+  if (unpackneg(q, pk)) return -1;
+
+  for (i = 0; i < n; i++) m[i] = sm[i];
+  for (i = 0; i < 32; i++) m[i+32] = pk[i];
+  h = nacl.hash(m.subarray(0, n));
+  reduce(h);
+  scalarmult(p, q, h);
+
+  scalarbase(q, sm.subarray(32));
+  add(p, q);
+  pack(t, p);
+
+  n -= 64;
+  if (crypto_verify_32(sm, 0, t, 0)) {
+    for (i = 0; i < n; i++) m[i] = 0;
+    return -1;
+  }
+
+  for (i = 0; i < n; i++) m[i] = sm[i + 64];
+  mlen = n;
+  return mlen;
+}
+
+var crypto_scalarmult_BYTES = 32,
+    crypto_scalarmult_SCALARBYTES = 32,
+    crypto_box_PUBLICKEYBYTES = 32,
+    crypto_box_SECRETKEYBYTES = 32,
+    crypto_sign_BYTES = 64,
+    crypto_sign_PUBLICKEYBYTES = 32,
+    crypto_sign_SECRETKEYBYTES = 64,
+    crypto_sign_SEEDBYTES = 32;
+
+function checkArrayTypes() {
+  for (var i = 0; i < arguments.length; i++) {
+    if (!(arguments[i] instanceof Uint8Array))
+      throw new TypeError('unexpected type, use Uint8Array');
+  }
+}
+
+function cleanup(arr) {
+  for (var i = 0; i < arr.length; i++) arr[i] = 0;
+}
+
+nacl.scalarMult = function(n, p) {
+  checkArrayTypes(n, p);
+  if (n.length !== crypto_scalarmult_SCALARBYTES) throw new Error('bad n size');
+  if (p.length !== crypto_scalarmult_BYTES) throw new Error('bad p size');
+  var q = new Uint8Array(crypto_scalarmult_BYTES);
+  crypto_scalarmult(q, n, p);
+  return q;
+};
+
+nacl.box = {};
+
+nacl.box.keyPair = function() {
+  var pk = new Uint8Array(crypto_box_PUBLICKEYBYTES);
+  var sk = new Uint8Array(crypto_box_SECRETKEYBYTES);
+  crypto_box_keypair(pk, sk);
+  return {publicKey: pk, secretKey: sk};
+};
+
+nacl.box.keyPair.fromSecretKey = function(secretKey) {
+  checkArrayTypes(secretKey);
+  if (secretKey.length !== crypto_box_SECRETKEYBYTES)
+    throw new Error('bad secret key size');
+  var pk = new Uint8Array(crypto_box_PUBLICKEYBYTES);
+  crypto_scalarmult_base(pk, secretKey);
+  return {publicKey: pk, secretKey: new Uint8Array(secretKey)};
+};
+
+nacl.sign = function(msg, secretKey) {
+  checkArrayTypes(msg, secretKey);
+  if (secretKey.length !== crypto_sign_SECRETKEYBYTES)
+    throw new Error('bad secret key size');
+  var signedMsg = new Uint8Array(crypto_sign_BYTES+msg.length);
+  crypto_sign(signedMsg, msg, msg.length, secretKey);
+  return signedMsg;
+};
+
+nacl.sign.detached = function(msg, secretKey) {
+  var signedMsg = nacl.sign(msg, secretKey);
+  var sig = new Uint8Array(crypto_sign_BYTES);
+  for (var i = 0; i < sig.length; i++) sig[i] = signedMsg[i];
+  return sig;
+};
+
+nacl.sign.detached.verify = function(msg, sig, publicKey) {
+  checkArrayTypes(msg, sig, publicKey);
+  if (sig.length !== crypto_sign_BYTES)
+    throw new Error('bad signature size');
+  if (publicKey.length !== crypto_sign_PUBLICKEYBYTES)
+    throw new Error('bad public key size');
+  var sm = new Uint8Array(crypto_sign_BYTES + msg.length);
+  var m = new Uint8Array(crypto_sign_BYTES + msg.length);
+  var i;
+  for (i = 0; i < crypto_sign_BYTES; i++) sm[i] = sig[i];
+  for (i = 0; i < msg.length; i++) sm[i+crypto_sign_BYTES] = msg[i];
+  return (crypto_sign_open(m, sm, sm.length, publicKey) >= 0);
+};
+
+nacl.sign.keyPair = function() {
+  var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
+  var sk = new Uint8Array(crypto_sign_SECRETKEYBYTES);
+  crypto_sign_keypair(pk, sk);
+  return {publicKey: pk, secretKey: sk};
+};
+
+nacl.sign.keyPair.fromSecretKey = function(secretKey) {
+  checkArrayTypes(secretKey);
+  if (secretKey.length !== crypto_sign_SECRETKEYBYTES)
+    throw new Error('bad secret key size');
+  var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
+  for (var i = 0; i < pk.length; i++) pk[i] = secretKey[32+i];
+  return {publicKey: pk, secretKey: new Uint8Array(secretKey)};
+};
+
+nacl.sign.keyPair.fromSeed = function(seed) {
+  checkArrayTypes(seed);
+  if (seed.length !== crypto_sign_SEEDBYTES)
+    throw new Error('bad seed size');
+  var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
+  var sk = new Uint8Array(crypto_sign_SECRETKEYBYTES);
+  for (var i = 0; i < 32; i++) sk[i] = seed[i];
+  crypto_sign_keypair(pk, sk, true);
+  return {publicKey: pk, secretKey: sk};
+};
+
+nacl.setPRNG = function(fn) {
+  randombytes = fn;
+};
+
+(function() {
+  // Initialize PRNG if environment provides CSPRNG.
+  // If not, methods calling randombytes will throw.
+  var crypto = typeof self !== 'undefined' ? (self.crypto || self.msCrypto) : null;
+  if (crypto && crypto.getRandomValues) {
+    // Browsers.
+    var QUOTA = 65536;
+    nacl.setPRNG(function(x, n) {
+      var i, v = new Uint8Array(n);
+      for (i = 0; i < n; i += QUOTA) {
+        crypto.getRandomValues(v.subarray(i, i + Math.min(n - i, QUOTA)));
+      }
+      for (i = 0; i < n; i++) x[i] = v[i];
+      cleanup(v);
+    });
+  } else if (typeof require !== 'undefined') {
+    // Node.js.
+    crypto = require('crypto');
+    if (crypto && crypto.randomBytes) {
+      nacl.setPRNG(function(x, n) {
+        var i, v = crypto.randomBytes(n);
+        for (i = 0; i < n; i++) x[i] = v[i];
+        cleanup(v);
+      });
+    }
+  }
+})();
+
+})(typeof module !== 'undefined' && module.exports ? module.exports : (self.nacl = self.nacl || {}));
+
+},{"crypto":"crypto"}],73:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -22546,13 +23792,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.webToNode = exports.nodeToWeb = undefined;
 
+var _util = require('./util');
+
 var _streams = require('./streams');
 
 var _streams2 = _interopRequireDefault(_streams);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const NodeReadableStream = typeof window === 'undefined' && require('stream').Readable;
+const NodeReadableStream = _util.isNode && require('stream').Readable;
 
 /**
  * Web / node stream conversion functions
@@ -22652,7 +23900,7 @@ if (NodeReadableStream) {
 exports.nodeToWeb = nodeToWeb;
 exports.webToNode = webToNode;
 
-},{"./streams":77,"stream":"stream"}],76:[function(require,module,exports){
+},{"./streams":75,"./util":76,"stream":"stream"}],74:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -22856,7 +24104,7 @@ Reader.prototype.readToEnd = async function (join = _streams2.default.concat) {
 exports.Reader = Reader;
 exports.externalBuffer = externalBuffer;
 
-},{"./streams":77}],77:[function(require,module,exports){
+},{"./streams":75}],75:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -22870,7 +24118,7 @@ var _nodeConversions = require('./node-conversions');
 
 var _reader = require('./reader');
 
-const NodeBuffer = typeof window === 'undefined' && require('buffer').Buffer;
+const NodeBuffer = _util.isNode && require('buffer').Buffer;
 
 /**
  * Convert data to Stream
@@ -23318,13 +24566,16 @@ function fromAsync(fn) {
 exports.default = { isStream: _util.isStream, isUint8Array: _util.isUint8Array, toStream, concatUint8Array: _util.concatUint8Array, concatStream, concat, getReader, getWriter, pipe, transformRaw, transform, transformPair, parse, clone, passiveClone, slice, readToEnd, cancel, fromAsync, nodeToWeb: _nodeConversions.nodeToWeb, webToNode: _nodeConversions.webToNode };
 
 }).call(this,require('_process'))
-},{"./node-conversions":75,"./reader":76,"./util":78,"_process":68,"buffer":"buffer"}],78:[function(require,module,exports){
+},{"./node-conversions":73,"./reader":74,"./util":76,"_process":66,"buffer":"buffer"}],76:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-const NodeReadableStream = typeof window === 'undefined' && require('stream').Readable;
+const isNode = typeof global.process === 'object' && typeof global.process.versions === 'object';
+
+const NodeReadableStream = isNode && require('stream').Readable;
 
 /**
  * Check whether data is a Stream, and if so of which type
@@ -23377,11 +24628,13 @@ function concatUint8Array(arrays) {
   return result;
 }
 
+exports.isNode = isNode;
 exports.isStream = isStream;
 exports.isUint8Array = isUint8Array;
 exports.concatUint8Array = concatUint8Array;
 
-},{"stream":"stream"}],79:[function(require,module,exports){
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"stream":"stream"}],77:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -23497,7 +24750,7 @@ CleartextMessage.prototype.signDetached = async function (privateKeys, signature
   const literalDataPacket = new _packet2.default.Literal();
   literalDataPacket.setText(this.text);
 
-  return new _signature.Signature((await (0, _message.createSignaturePackets)(literalDataPacket, privateKeys, signature, date, userIds)));
+  return new _signature.Signature((await (0, _message.createSignaturePackets)(literalDataPacket, privateKeys, signature, date, userIds, true)));
 };
 
 /**
@@ -23523,7 +24776,7 @@ CleartextMessage.prototype.verifyDetached = function (signature, keys, date = ne
   const literalDataPacket = new _packet2.default.Literal();
   // we assume that cleartext signature is generated based on UTF8 cleartext
   literalDataPacket.setText(this.text);
-  return (0, _message.createVerificationObjects)(signatureList, [literalDataPacket], keys, date);
+  return (0, _message.createVerificationObjects)(signatureList, [literalDataPacket], keys, date, true);
 };
 
 /**
@@ -23628,7 +24881,7 @@ function fromText(text) {
   return new CleartextMessage(text);
 }
 
-},{"./encoding/armor":113,"./enums":115,"./message":122,"./packet":127,"./signature":147,"./util":154}],80:[function(require,module,exports){
+},{"./encoding/armor":111,"./enums":113,"./message":120,"./packet":125,"./signature":145,"./util":152}],78:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -23667,19 +24920,11 @@ exports.default = {
    * Use Authenticated Encryption with Additional Data (AEAD) protection for symmetric encryption.
    * **NOT INTEROPERABLE WITH OTHER OPENPGP IMPLEMENTATIONS**
    * **FUTURE OPENPGP.JS VERSIONS MAY BREAK COMPATIBILITY WHEN USING THIS OPTION**
+   * @see {@link https://tools.ietf.org/html/draft-ietf-openpgp-rfc4880bis-07|RFC4880bis-07}
    * @memberof module:config
    * @property {Boolean} aead_protect
    */
   aead_protect: false,
-  /**
-   * Use Authenticated Encryption with Additional Data (AEAD) protection for symmetric encryption.
-   * 0 means we implement a variant of {@link https://tools.ietf.org/html/draft-ford-openpgp-format-00|this IETF draft}.
-   * 4 means we implement {@link https://tools.ietf.org/html/draft-ietf-openpgp-rfc4880bis-04|RFC4880bis-04}.
-   * Note that this determines how AEAD packets are parsed even when aead_protect is set to false
-   * @memberof module:config
-   * @property {Integer} aead_protect_version
-   */
-  aead_protect_version: 4,
   /**
    * Default Authenticated Encryption with Additional Data (AEAD) encryption mode
    * Only has an effect when aead_protect is set to true.
@@ -23695,6 +24940,14 @@ exports.default = {
    * @property {Integer} aead_chunk_size_byte
    */
   aead_chunk_size_byte: 12,
+  /**
+   * Use V5 keys.
+   * **NOT INTEROPERABLE WITH OTHER OPENPGP IMPLEMENTATIONS**
+   * **FUTURE OPENPGP.JS VERSIONS MAY BREAK COMPATIBILITY WHEN USING THIS OPTION**
+   * @memberof module:config
+   * @property {Boolean} v5_keys
+   */
+  v5_keys: false,
   /**
    * {@link https://tools.ietf.org/html/rfc4880#section-3.7.1.3|RFC4880 3.7.1.3}:
    * Iteration Count Byte for S2K (String to Key)
@@ -23780,7 +25033,7 @@ exports.default = {
    * @memberof module:config
    * @property {String} versionstring A version string to be included in armored messages
    */
-  versionstring: "OpenPGP.js v4.4.7",
+  versionstring: "OpenPGP.js v4.6.0",
   /**
    * @memberof module:config
    * @property {String} commentstring A comment string to be included in armored messages
@@ -23802,7 +25055,14 @@ exports.default = {
    * @memberof module:config
    * @property {Integer} max_userid_length
    */
-  max_userid_length: 1024 * 5
+  max_userid_length: 1024 * 5,
+  /**
+   * Contains notatations that are considered "known". Known notations do not trigger
+   * validation error when the notation is marked as critical.
+   * @memberof module:config
+   * @property {Array} known_notations
+   */
+  known_notations: ["preferred-email-encoding@pgp.com", "pka-address@gnupg.org"]
 }; // GPG4Browsers - An OpenPGP implementation in javascript
 // Copyright (C) 2011 Recurity Labs GmbH
 //
@@ -23825,7 +25085,7 @@ exports.default = {
  * @requires enums
  */
 
-},{"../enums":115}],81:[function(require,module,exports){
+},{"../enums":113}],79:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -23843,7 +25103,7 @@ Object.defineProperty(exports, 'default', {
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-},{"./config.js":80}],82:[function(require,module,exports){
+},{"./config.js":78}],80:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -24013,7 +25273,7 @@ exports.default = {
   unwrap
 };
 
-},{"../util":154,"./cipher":88}],83:[function(require,module,exports){
+},{"../util":152,"./cipher":86}],81:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -24186,7 +25446,7 @@ function nodeDecrypt(algo, key, ct, iv) {
   return _webStreamTools2.default.transform(ct, value => new Uint8Array(decipherObj.update(new Buffer(value))));
 }
 
-},{"../config":81,"../util":154,"./cipher":88,"asmcrypto.js/dist_es5/aes/cfb":6,"web-stream-tools":77}],84:[function(require,module,exports){
+},{"../config":79,"../util":152,"./cipher":86,"asmcrypto.js/dist_es5/aes/cfb":5,"web-stream-tools":75}],82:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -24219,7 +25479,7 @@ function aes(length) {
 
 exports.default = aes;
 
-},{"asmcrypto.js/dist_es5/aes/ecb":8}],85:[function(require,module,exports){
+},{"asmcrypto.js/dist_es5/aes/ecb":7}],83:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -24439,7 +25699,7 @@ BF.blockSize = BF.prototype.blockSize = 16;
 
 exports.default = BF;
 
-},{}],86:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -24789,7 +26049,7 @@ Cast5.keySize = Cast5.prototype.keySize = 16;
 
 exports.default = Cast5;
 
-},{}],87:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -25169,7 +26429,7 @@ function DES(key) {
 
 exports.default = { DES, TripleDES };
 
-},{}],88:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -25282,7 +26542,7 @@ exports.default = {
     * @module crypto/cipher
     */
 
-},{"./aes":84,"./blowfish":85,"./cast5":86,"./des.js":87,"./twofish":89}],89:[function(require,module,exports){
+},{"./aes":82,"./blowfish":83,"./cast5":84,"./des.js":85,"./twofish":87}],87:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -25598,7 +26858,7 @@ TF.blockSize = TF.prototype.blockSize = 16;
 
 exports.default = TF;
 
-},{}],90:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -25709,7 +26969,7 @@ async function CBC(key) {
   };
 }
 
-},{"../util":154,"asmcrypto.js/dist_es5/aes/cbc":5}],91:[function(require,module,exports){
+},{"../util":152,"asmcrypto.js/dist_es5/aes/cbc":4}],89:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -25818,48 +27078,46 @@ exports.default = {
    */
   publicKeyEncrypt: async function publicKeyEncrypt(algo, pub_params, data, fingerprint) {
     const types = this.getEncSessionKeyParamTypes(algo);
-    return async function () {
-      switch (algo) {
-        case _enums2.default.publicKey.rsa_encrypt:
-        case _enums2.default.publicKey.rsa_encrypt_sign:
-          {
-            const m = data.toBN();
-            const n = pub_params[0].toBN();
-            const e = pub_params[1].toBN();
-            const res = await _public_key2.default.rsa.encrypt(m, n, e);
-            return constructParams(types, [res]);
-          }
-        case _enums2.default.publicKey.elgamal:
-          {
-            const m = data.toBN();
-            const p = pub_params[0].toBN();
-            const g = pub_params[1].toBN();
-            const y = pub_params[2].toBN();
-            const res = await _public_key2.default.elgamal.encrypt(m, p, g, y);
-            return constructParams(types, [res.c1, res.c2]);
-          }
-        case _enums2.default.publicKey.ecdh:
-          {
-            const oid = pub_params[0];
-            const Q = pub_params[1].toUint8Array();
-            const kdf_params = pub_params[2];
+    switch (algo) {
+      case _enums2.default.publicKey.rsa_encrypt:
+      case _enums2.default.publicKey.rsa_encrypt_sign:
+        {
+          const m = data.toBN();
+          const n = pub_params[0].toBN();
+          const e = pub_params[1].toBN();
+          const res = await _public_key2.default.rsa.encrypt(m, n, e);
+          return constructParams(types, [res]);
+        }
+      case _enums2.default.publicKey.elgamal:
+        {
+          const m = data.toBN();
+          const p = pub_params[0].toBN();
+          const g = pub_params[1].toBN();
+          const y = pub_params[2].toBN();
+          const res = await _public_key2.default.elgamal.encrypt(m, p, g, y);
+          return constructParams(types, [res.c1, res.c2]);
+        }
+      case _enums2.default.publicKey.ecdh:
+        {
+          const oid = pub_params[0];
+          const Q = pub_params[1].toUint8Array();
+          const kdf_params = pub_params[2];
 
-            var _ref = await _public_key2.default.elliptic.ecdh.encrypt(oid, kdf_params.cipher, kdf_params.hash, data, Q, fingerprint);
+          var _ref = await _public_key2.default.elliptic.ecdh.encrypt(oid, kdf_params.cipher, kdf_params.hash, data, Q, fingerprint);
 
-            const V = _ref.V,
-                  C = _ref.C;
+          const V = _ref.publicKey,
+                C = _ref.wrappedKey;
 
-            return constructParams(types, [new _bn2.default(V), C]);
-          }
-        default:
-          return [];
-      }
-    }();
+          return constructParams(types, [new _bn2.default(V), C]);
+        }
+      default:
+        return [];
+    }
   },
 
   /**
    * Decrypts data using specified algorithm and private key parameters.
-   * See {@link https://tools.ietf.org/html/rfc4880#section-9.1|RFC 4880 9.1} for public key algorithms.
+   * See {@link https://tools.ietf.org/html/rfc4880#section-5.5.3|RFC 4880 5.5.3}
    * @param {module:enums.publicKey}        algo        Public key algorithm
    * @param {Array<module:type/mpi|
                    module:type/oid|
@@ -25868,45 +27126,44 @@ exports.default = {
                    module:type/ecdh_symkey>}
                                             data_params encrypted session key parameters
    * @param {String}                        fingerprint Recipient fingerprint
-   * @returns {module:type/mpi}                         An MPI containing the decrypted data
+   * @returns {BN}                          A BN containing the decrypted data
    * @async
    */
   publicKeyDecrypt: async function publicKeyDecrypt(algo, key_params, data_params, fingerprint) {
-    return new _mpi2.default((await async function () {
-      switch (algo) {
-        case _enums2.default.publicKey.rsa_encrypt_sign:
-        case _enums2.default.publicKey.rsa_encrypt:
-          {
-            const c = data_params[0].toBN();
-            const n = key_params[0].toBN(); // n = pq
-            const e = key_params[1].toBN();
-            const d = key_params[2].toBN(); // de = 1 mod (p-1)(q-1)
-            const p = key_params[3].toBN();
-            const q = key_params[4].toBN();
-            const u = key_params[5].toBN(); // q^-1 mod p
-            return _public_key2.default.rsa.decrypt(c, n, e, d, p, q, u);
-          }
-        case _enums2.default.publicKey.elgamal:
-          {
-            const c1 = data_params[0].toBN();
-            const c2 = data_params[1].toBN();
-            const p = key_params[0].toBN();
-            const x = key_params[3].toBN();
-            return _public_key2.default.elgamal.decrypt(c1, c2, p, x);
-          }
-        case _enums2.default.publicKey.ecdh:
-          {
-            const oid = key_params[0];
-            const kdf_params = key_params[2];
-            const V = data_params[0].toUint8Array();
-            const C = data_params[1].data;
-            const d = key_params[3].toUint8Array();
-            return _public_key2.default.elliptic.ecdh.decrypt(oid, kdf_params.cipher, kdf_params.hash, V, C, d, fingerprint);
-          }
-        default:
-          throw new Error('Invalid public key encryption algorithm.');
-      }
-    }()));
+    switch (algo) {
+      case _enums2.default.publicKey.rsa_encrypt_sign:
+      case _enums2.default.publicKey.rsa_encrypt:
+        {
+          const c = data_params[0].toBN();
+          const n = key_params[0].toBN(); // n = pq
+          const e = key_params[1].toBN();
+          const d = key_params[2].toBN(); // de = 1 mod (p-1)(q-1)
+          const p = key_params[3].toBN();
+          const q = key_params[4].toBN();
+          const u = key_params[5].toBN(); // p^-1 mod q
+          return _public_key2.default.rsa.decrypt(c, n, e, d, p, q, u);
+        }
+      case _enums2.default.publicKey.elgamal:
+        {
+          const c1 = data_params[0].toBN();
+          const c2 = data_params[1].toBN();
+          const p = key_params[0].toBN();
+          const x = key_params[3].toBN();
+          return _public_key2.default.elgamal.decrypt(c1, c2, p, x);
+        }
+      case _enums2.default.publicKey.ecdh:
+        {
+          const oid = key_params[0];
+          const kdf_params = key_params[2];
+          const V = data_params[0].toUint8Array();
+          const C = data_params[1].data;
+          const Q = key_params[1].toUint8Array();
+          const d = key_params[3].toUint8Array();
+          return _public_key2.default.elliptic.ecdh.decrypt(oid, kdf_params.cipher, kdf_params.hash, V, C, Q, d, fingerprint);
+        }
+      default:
+        throw new Error('Invalid public key encryption algorithm.');
+    }
   },
 
   /** Returns the types comprising the private key of an algorithm
@@ -26075,7 +27332,7 @@ exports.default = {
   constructParams: constructParams
 };
 
-},{"../enums":115,"../type/ecdh_symkey":148,"../type/kdf_params":149,"../type/mpi":151,"../type/oid":152,"../util":154,"./cipher":88,"./public_key":108,"./random":111,"bn.js":17}],92:[function(require,module,exports){
+},{"../enums":113,"../type/ecdh_symkey":146,"../type/kdf_params":147,"../type/mpi":149,"../type/oid":150,"../util":152,"./cipher":86,"./public_key":106,"./random":109,"bn.js":16}],90:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -26255,7 +27512,7 @@ EAX.tagLength = tagLength;
 
 exports.default = EAX;
 
-},{"../util":154,"./cmac":90,"asmcrypto.js/dist_es5/aes/ctr":7}],93:[function(require,module,exports){
+},{"../util":152,"./cmac":88,"asmcrypto.js/dist_es5/aes/ctr":6}],91:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -26408,7 +27665,7 @@ GCM.tagLength = tagLength;
 
 exports.default = GCM;
 
-},{"../util":154,"asmcrypto.js/dist_es5/aes/gcm":9}],94:[function(require,module,exports){
+},{"../util":152,"asmcrypto.js/dist_es5/aes/gcm":8}],92:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -26612,7 +27869,7 @@ exports.default = {
   }
 };
 
-},{"../../config":81,"../../util":154,"./md5":95,"asmcrypto.js/dist_es5/hash/sha1/sha1":12,"asmcrypto.js/dist_es5/hash/sha256/sha256":14,"hash.js/lib/hash/ripemd":39,"hash.js/lib/hash/sha/224":42,"hash.js/lib/hash/sha/384":44,"hash.js/lib/hash/sha/512":45,"web-stream-tools":77}],95:[function(require,module,exports){
+},{"../../config":79,"../../util":152,"./md5":93,"asmcrypto.js/dist_es5/hash/sha1/sha1":11,"asmcrypto.js/dist_es5/hash/sha256/sha256":13,"hash.js/lib/hash/ripemd":37,"hash.js/lib/hash/sha/224":40,"hash.js/lib/hash/sha/384":42,"hash.js/lib/hash/sha/512":43,"web-stream-tools":75}],93:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -26827,7 +28084,7 @@ function add32(a, b) {
 
 exports.default = md5;
 
-},{"../../util":154}],96:[function(require,module,exports){
+},{"../../util":152}],94:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -26930,7 +28187,7 @@ Object.assign(mod, _crypto2.default);
 
 exports.default = mod;
 
-},{"./aes_kw":82,"./cfb":83,"./cipher":88,"./crypto":91,"./eax":92,"./gcm":93,"./hash":94,"./ocb":97,"./pkcs1":98,"./pkcs5":99,"./public_key":108,"./random":111,"./signature":112}],97:[function(require,module,exports){
+},{"./aes_kw":80,"./cfb":81,"./cipher":86,"./crypto":89,"./eax":90,"./gcm":91,"./hash":92,"./ocb":95,"./pkcs1":96,"./pkcs5":97,"./public_key":106,"./random":109,"./signature":110}],95:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27214,7 +28471,7 @@ OCB.tagLength = tagLength;
 
 exports.default = OCB;
 
-},{"../util":154,"./cipher":88}],98:[function(require,module,exports){
+},{"../util":152,"./cipher":86}],96:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27389,7 +28646,7 @@ emsa.encode = async function (algo, hashed, emLen) {
 
 exports.default = { eme, emsa };
 
-},{"../util":154,"./hash":94,"./random":111}],99:[function(require,module,exports){
+},{"../util":152,"./hash":92,"./random":109}],97:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27451,7 +28708,7 @@ function decode(msg) {
 
 exports.default = { encode, decode };
 
-},{}],100:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27531,7 +28788,7 @@ exports.default = {
     // of leftmost bits equal to the number of bits of q.  This (possibly
     // truncated) hash function result is treated as a number and used
     // directly in the DSA signature algorithm.
-    const h = new _bn2.default(_util2.default.getLeftNBits(hashed, q.bitLength())).toRed(redq);
+    const h = new _bn2.default(hashed.subarray(0, q.byteLength())).toRed(redq);
     // FIPS-186-4, section 4.6:
     // The values of r and s shall be checked to determine if r = 0 or s = 0.
     // If either r = 0 or s = 0, a new value of k shall be generated, and the
@@ -27551,8 +28808,10 @@ exports.default = {
       }
       break;
     }
-    return { r: r.toArrayLike(Uint8Array),
-      s: s.toArrayLike(Uint8Array) };
+    return {
+      r: r.toArrayLike(Uint8Array, 'be', q.byteLength()),
+      s: s.toArrayLike(Uint8Array, 'be', q.byteLength())
+    };
   },
 
   /**
@@ -27575,7 +28834,7 @@ exports.default = {
     }
     const redp = new _bn2.default.red(p);
     const redq = new _bn2.default.red(q);
-    const h = new _bn2.default(_util2.default.getLeftNBits(hashed, q.bitLength()));
+    const h = new _bn2.default(hashed.subarray(0, q.byteLength()));
     const w = s.toRed(redq).redInvm(); // s**-1 mod q
     if (zero.cmp(w) === 0) {
       _util2.default.print_debug("invalid DSA Signature");
@@ -27590,7 +28849,7 @@ exports.default = {
   }
 };
 
-},{"../../util":154,"../random":111,"bn.js":17}],101:[function(require,module,exports){
+},{"../../util":152,"../random":109,"bn.js":16}],99:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27673,7 +28932,7 @@ exports.default = {
   }
 };
 
-},{"../random":111,"bn.js":17}],102:[function(require,module,exports){
+},{"../random":109,"bn.js":16}],100:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -27766,7 +29025,8 @@ const curves = {
     cipher: _enums2.default.symmetric.aes128,
     node: nodeCurves.p256,
     web: webCurves.p256,
-    payloadSize: 32
+    payloadSize: 32,
+    sharedSize: 256
   },
   p384: {
     oid: [0x06, 0x05, 0x2B, 0x81, 0x04, 0x00, 0x22],
@@ -27775,7 +29035,8 @@ const curves = {
     cipher: _enums2.default.symmetric.aes192,
     node: nodeCurves.p384,
     web: webCurves.p384,
-    payloadSize: 48
+    payloadSize: 48,
+    sharedSize: 384
   },
   p521: {
     oid: [0x06, 0x05, 0x2B, 0x81, 0x04, 0x00, 0x23],
@@ -27784,7 +29045,8 @@ const curves = {
     cipher: _enums2.default.symmetric.aes256,
     node: nodeCurves.p521,
     web: webCurves.p521,
-    payloadSize: 66
+    payloadSize: 66,
+    sharedSize: 528
   },
   secp256k1: {
     oid: [0x06, 0x05, 0x2B, 0x81, 0x04, 0x00, 0x0A],
@@ -27872,11 +29134,6 @@ function Curve(oid_or_name, params) {
 Curve.prototype.keyFromPrivate = function (priv) {
   // Not for ed25519
   return new _key2.default(this, { priv: priv });
-};
-
-Curve.prototype.keyFromSecret = function (secret) {
-  // Only for ed25519
-  return new _key2.default(this, { secret: secret });
 };
 
 Curve.prototype.keyFromPublic = function (pub) {
@@ -27972,16 +29229,51 @@ async function nodeGenKeyPair(name) {
   };
 }
 
-},{"../../../enums":115,"../../../type/oid":152,"../../../util":154,"../../random":111,"./key":107,"bn.js":17,"elliptic":19}],103:[function(require,module,exports){
+},{"../../../enums":113,"../../../type/oid":150,"../../../util":152,"../../random":109,"./key":105,"bn.js":16,"elliptic":18}],101:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); // OpenPGP.js - An OpenPGP implementation in javascript
+// Copyright (C) 2015-2016 Decentral
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/**
+ * @fileoverview Key encryption and decryption for RFC 6637 ECDH
+ * @requires bn.js
+ * @requires tweetnacl
+ * @requires crypto/public_key/elliptic/curve
+ * @requires crypto/aes_kw
+ * @requires crypto/cipher
+ * @requires crypto/hash
+ * @requires type/kdf_params
+ * @requires enums
+ * @requires util
+ * @module crypto/public_key/elliptic/ecdh
+ */
+
 var _bn = require('bn.js');
 
 var _bn2 = _interopRequireDefault(_bn);
+
+var _naclFastLight = require('tweetnacl/nacl-fast-light.js');
+
+var _naclFastLight2 = _interopRequireDefault(_naclFastLight);
 
 var _curves = require('./curves');
 
@@ -28013,48 +29305,31 @@ var _util2 = _interopRequireDefault(_util);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const webCrypto = _util2.default.getWebCrypto();
+const nodeCrypto = _util2.default.getNodeCrypto();
+
 // Build Param for ECDH algorithm (RFC 6637)
-// OpenPGP.js - An OpenPGP implementation in javascript
-// Copyright (C) 2015-2016 Decentral
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3.0 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
-/**
- * @fileoverview Key encryption and decryption for RFC 6637 ECDH
- * @requires bn.js
- * @requires crypto/public_key/elliptic/curve
- * @requires crypto/aes_kw
- * @requires crypto/cipher
- * @requires crypto/hash
- * @requires type/kdf_params
- * @requires enums
- * @requires util
- * @module crypto/public_key/elliptic/ecdh
- */
-
 function buildEcdhParam(public_algo, oid, cipher_algo, hash_algo, fingerprint) {
   const kdf_params = new _kdf_params2.default([hash_algo, cipher_algo]);
   return _util2.default.concatUint8Array([oid.write(), new Uint8Array([public_algo]), kdf_params.write(), _util2.default.str_to_Uint8Array("Anonymous Sender    "), fingerprint.subarray(0, 20)]);
 }
 
 // Key Derivation Function (RFC 6637)
-async function kdf(hash_algo, S, length, param, curve, compat) {
-  const len = compat ? S.byteLength() : curve.curve.curve.p.byteLength();
-  // Note: this is not ideal, but the RFC's are unclear
+async function kdf(hash_algo, X, length, param, stripLeading = false, stripTrailing = false) {
+  // Note: X is little endian for Curve25519, big-endian for all others.
+  // This is not ideal, but the RFC's are unclear
   // https://tools.ietf.org/html/draft-ietf-openpgp-rfc4880bis-02#appendix-B
-  const X = curve.curve.curve.type === 'mont' ? S.toArrayLike(Uint8Array, 'le', len) : S.toArrayLike(Uint8Array, 'be', len);
+  let i;
+  if (stripLeading) {
+    // Work around old go crypto bug
+    for (i = 0; i < X.length && X[i] === 0; i++);
+    X = X.subarray(i);
+  }
+  if (stripTrailing) {
+    // Work around old OpenPGP.js bug
+    for (i = X.length - 1; i >= 0 && X[i] === 0; i--);
+    X = X.subarray(0, i + 1);
+  }
   const digest = await _hash2.default.digest(hash_algo, _util2.default.concatUint8Array([new Uint8Array([0, 0, 0, 1]), X, param]));
   return digest.subarray(0, length);
 }
@@ -28063,16 +29338,47 @@ async function kdf(hash_algo, S, length, param, curve, compat) {
  * Generate ECDHE ephemeral key and secret from public key
  *
  * @param  {Curve}                  curve        Elliptic curve object
- * @param  {Uint8Array}             Q                   Recipient public key
- * @returns {Promise<{V: Uint8Array, S: BN}>}   Returns public part of ephemeral key and generated ephemeral secret
+ * @param  {Uint8Array}             Q            Recipient public key
+ * @returns {Promise<{publicKey: Uint8Array, sharedKey: Uint8Array}>}
  * @async
  */
 async function genPublicEphemeralKey(curve, Q) {
-  const v = await curve.genKeyPair();
-  Q = curve.keyFromPublic(Q);
-  const V = new Uint8Array(v.getPublic());
-  const S = v.derive(Q);
-  return { V, S };
+  switch (curve.name) {
+    case 'curve25519':
+      {
+        var _nacl$box$keyPair = _naclFastLight2.default.box.keyPair();
+
+        const d = _nacl$box$keyPair.secretKey;
+
+        var _ref = await genPrivateEphemeralKey(curve, Q, null, d);
+
+        const secretKey = _ref.secretKey,
+              sharedKey = _ref.sharedKey;
+
+        var _nacl$box$keyPair$fro = _naclFastLight2.default.box.keyPair.fromSecretKey(secretKey);
+
+        let publicKey = _nacl$box$keyPair$fro.publicKey;
+
+        publicKey = _util2.default.concatUint8Array([new Uint8Array([0x40]), publicKey]);
+        return { publicKey, sharedKey }; // Note: sharedKey is little-endian here, unlike below
+      }
+    case 'p256':
+    case 'p384':
+    case 'p521':
+      {
+        if (curve.web && _util2.default.getWebCrypto()) {
+          try {
+            return await webPublicEphemeralKey(curve, Q);
+          } catch (err) {
+            _util2.default.print_debug_error(err);
+          }
+        }
+      }
+  }
+  if (curve.node && nodeCrypto) {
+    return nodePublicEphemeralKey(curve, Q);
+  }
+  return ellipticPublicEphemeralKey(curve, Q);
 }
 
 /**
@@ -28084,22 +29390,22 @@ async function genPublicEphemeralKey(curve, Q) {
  * @param  {module:type/mpi}        m            Value derived from session key (RFC 6637)
  * @param  {Uint8Array}             Q            Recipient public key
  * @param  {String}                 fingerprint  Recipient fingerprint
- * @returns {Promise<{V: BN, C: BN}>}            Returns public part of ephemeral key and encoded session key
+ * @returns {Promise<{publicKey: Uint8Array, wrappedKey: Uint8Array}>}
  * @async
  */
 async function encrypt(oid, cipher_algo, hash_algo, m, Q, fingerprint) {
   const curve = new _curves2.default(oid);
 
-  var _ref = await genPublicEphemeralKey(curve, Q);
+  var _ref2 = await genPublicEphemeralKey(curve, Q);
 
-  const V = _ref.V,
-        S = _ref.S;
+  const publicKey = _ref2.publicKey,
+        sharedKey = _ref2.sharedKey;
 
   const param = buildEcdhParam(_enums2.default.publicKey.ecdh, oid, cipher_algo, hash_algo, fingerprint);
   cipher_algo = _enums2.default.read(_enums2.default.symmetric, cipher_algo);
-  const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param, curve, false);
-  const C = _aes_kw2.default.wrap(Z, m.toString());
-  return { V, C };
+  const Z = await kdf(hash_algo, sharedKey, _cipher2.default[cipher_algo].keySize, param);
+  const wrappedKey = _aes_kw2.default.wrap(Z, m.toString());
+  return { publicKey, wrappedKey };
 }
 
 /**
@@ -28107,14 +29413,41 @@ async function encrypt(oid, cipher_algo, hash_algo, m, Q, fingerprint) {
  *
  * @param  {Curve}                  curve        Elliptic curve object
  * @param  {Uint8Array}             V            Public part of ephemeral key
+ * @param  {Uint8Array}             Q            Recipient public key
  * @param  {Uint8Array}             d            Recipient private key
- * @returns {Promise<BN>}                        Generated ephemeral secret
+ * @returns {Promise<{secretKey: Uint8Array, sharedKey: Uint8Array}>}
  * @async
  */
-async function genPrivateEphemeralKey(curve, V, d) {
-  V = curve.keyFromPublic(V);
-  d = curve.keyFromPrivate(d);
-  return d.derive(V);
+async function genPrivateEphemeralKey(curve, V, Q, d) {
+  switch (curve.name) {
+    case 'curve25519':
+      {
+        const one = new _bn2.default(1);
+        const mask = one.ushln(255 - 3).sub(one).ushln(3);
+        let secretKey = new _bn2.default(d);
+        secretKey = secretKey.or(one.ushln(255 - 1));
+        secretKey = secretKey.and(mask);
+        secretKey = secretKey.toArrayLike(Uint8Array, 'le', 32);
+        const sharedKey = _naclFastLight2.default.scalarMult(secretKey, V.subarray(1));
+        return { secretKey, sharedKey }; // Note: sharedKey is little-endian here, unlike below
+      }
+    case 'p256':
+    case 'p384':
+    case 'p521':
+      {
+        if (curve.web && _util2.default.getWebCrypto()) {
+          try {
+            return await webPrivateEphemeralKey(curve, V, Q, d);
+          } catch (err) {
+            _util2.default.print_debug_error(err);
+          }
+        }
+      }
+  }
+  if (curve.node && nodeCrypto) {
+    return nodePrivateEphemeralKey(curve, V, d);
+  }
+  return ellipticPrivateEphemeralKey(curve, V, d);
 }
 
 /**
@@ -28125,28 +29458,248 @@ async function genPrivateEphemeralKey(curve, V, d) {
  * @param  {module:enums.hash}      hash_algo    Hash algorithm to use
  * @param  {Uint8Array}             V            Public part of ephemeral key
  * @param  {Uint8Array}             C            Encrypted and wrapped value derived from session key
+ * @param  {Uint8Array}             Q            Recipient public key
  * @param  {Uint8Array}             d            Recipient private key
  * @param  {String}                 fingerprint  Recipient fingerprint
- * @returns {Promise<BN>}                        Value derived from session
+ * @returns {Promise<BN>}                        Value derived from session key
  * @async
  */
-async function decrypt(oid, cipher_algo, hash_algo, V, C, d, fingerprint) {
+async function decrypt(oid, cipher_algo, hash_algo, V, C, Q, d, fingerprint) {
   const curve = new _curves2.default(oid);
-  const S = await genPrivateEphemeralKey(curve, V, d);
+
+  var _ref3 = await genPrivateEphemeralKey(curve, V, Q, d);
+
+  const sharedKey = _ref3.sharedKey;
+
   const param = buildEcdhParam(_enums2.default.publicKey.ecdh, oid, cipher_algo, hash_algo, fingerprint);
   cipher_algo = _enums2.default.read(_enums2.default.symmetric, cipher_algo);
-  try {
-    const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param, curve, false);
-    return new _bn2.default(_aes_kw2.default.unwrap(Z, C));
-  } catch (e) {}
-  // Work around old OpenPGP.js bug.
-  const Z = await kdf(hash_algo, S, _cipher2.default[cipher_algo].keySize, param, curve, true);
-  return new _bn2.default(_aes_kw2.default.unwrap(Z, C));
+  let err;
+  for (let i = 0; i < 3; i++) {
+    try {
+      // Work around old go crypto bug and old OpenPGP.js bug, respectively.
+      const Z = await kdf(hash_algo, sharedKey, _cipher2.default[cipher_algo].keySize, param, i === 1, i === 2);
+      return new _bn2.default(_aes_kw2.default.unwrap(Z, C));
+    } catch (e) {
+      err = e;
+    }
+  }
+  throw err;
 }
 
-exports.default = { encrypt, decrypt, genPublicEphemeralKey, genPrivateEphemeralKey, buildEcdhParam, kdf };
+/**
+ * Generate ECDHE secret from private key and public part of ephemeral key using webCrypto
+ *
+ * @param  {Curve}                  curve         Elliptic curve object
+ * @param  {Uint8Array}             V             Public part of ephemeral key
+ * @param  {Uint8Array}             Q             Recipient public key
+ * @param  {Uint8Array}             d             Recipient private key
+ * @returns {Promise<{secretKey: Uint8Array, sharedKey: Uint8Array}>}
+ * @async
+ */
+async function webPrivateEphemeralKey(curve, V, Q, d) {
+  const recipient = privateToJwk(curve.payloadSize, curve.web.web, d, Q);
+  let privateKey = webCrypto.importKey("jwk", recipient, {
+    name: "ECDH",
+    namedCurve: curve.web.web
+  }, true, ["deriveKey", "deriveBits"]);
+  const jwk = rawPublicToJwk(curve.payloadSize, curve.web.web, V);
+  let sender = webCrypto.importKey("jwk", jwk, {
+    name: "ECDH",
+    namedCurve: curve.web.web
+  }, true, []);
 
-},{"../../../enums":115,"../../../type/kdf_params":149,"../../../util":154,"../../aes_kw":82,"../../cipher":88,"../../hash":94,"./curves":102,"bn.js":17}],104:[function(require,module,exports){
+  var _ref4 = await Promise.all([privateKey, sender]);
+
+  var _ref5 = _slicedToArray(_ref4, 2);
+
+  privateKey = _ref5[0];
+  sender = _ref5[1];
+
+  let S = webCrypto.deriveBits({
+    name: "ECDH",
+    namedCurve: curve.web.web,
+    public: sender
+  }, privateKey, curve.web.sharedSize);
+  let secret = webCrypto.exportKey("jwk", privateKey);
+
+  var _ref6 = await Promise.all([S, secret]);
+
+  var _ref7 = _slicedToArray(_ref6, 2);
+
+  S = _ref7[0];
+  secret = _ref7[1];
+
+  const sharedKey = new Uint8Array(S);
+  const secretKey = _util2.default.b64_to_Uint8Array(secret.d, true);
+  return { secretKey, sharedKey };
+}
+
+/**
+ * Generate ECDHE ephemeral key and secret from public key using webCrypto
+ *
+ * @param  {Curve}                  curve        Elliptic curve object
+ * @param  {Uint8Array}             Q            Recipient public key
+ * @returns {Promise<{publicKey: Uint8Array, sharedKey: Uint8Array}>}
+ * @async
+ */
+async function webPublicEphemeralKey(curve, Q) {
+  const jwk = rawPublicToJwk(curve.payloadSize, curve.web.web, Q);
+  let keyPair = webCrypto.generateKey({
+    name: "ECDH",
+    namedCurve: curve.web.web
+  }, true, ["deriveKey", "deriveBits"]);
+  let recipient = webCrypto.importKey("jwk", jwk, {
+    name: "ECDH",
+    namedCurve: curve.web.web
+  }, false, []);
+
+  var _ref8 = await Promise.all([keyPair, recipient]);
+
+  var _ref9 = _slicedToArray(_ref8, 2);
+
+  keyPair = _ref9[0];
+  recipient = _ref9[1];
+
+  let s = webCrypto.deriveBits({
+    name: "ECDH",
+    namedCurve: curve.web.web,
+    public: recipient
+  }, keyPair.privateKey, curve.web.sharedSize);
+  let p = webCrypto.exportKey("jwk", keyPair.publicKey);
+
+  var _ref10 = await Promise.all([s, p]);
+
+  var _ref11 = _slicedToArray(_ref10, 2);
+
+  s = _ref11[0];
+  p = _ref11[1];
+
+  const sharedKey = new Uint8Array(s);
+  const publicKey = new Uint8Array(jwkToRawPublic(p));
+  return { publicKey, sharedKey };
+}
+
+/**
+ * Generate ECDHE secret from private key and public part of ephemeral key using indutny/elliptic
+ *
+ * @param  {Curve}                  curve        Elliptic curve object
+ * @param  {Uint8Array}             V            Public part of ephemeral key
+ * @param  {Uint8Array}             d            Recipient private key
+ * @returns {Promise<{secretKey: Uint8Array, sharedKey: Uint8Array}>}
+ * @async
+ */
+async function ellipticPrivateEphemeralKey(curve, V, d) {
+  V = curve.keyFromPublic(V);
+  d = curve.keyFromPrivate(d);
+  const secretKey = new Uint8Array(d.getPrivate());
+  const S = d.derive(V);
+  const len = curve.curve.curve.p.byteLength();
+  const sharedKey = S.toArrayLike(Uint8Array, 'be', len);
+  return { secretKey, sharedKey };
+}
+
+/**
+ * Generate ECDHE ephemeral key and secret from public key using indutny/elliptic
+ *
+ * @param  {Curve}                  curve        Elliptic curve object
+ * @param  {Uint8Array}             Q            Recipient public key
+ * @returns {Promise<{publicKey: Uint8Array, sharedKey: Uint8Array}>}
+ * @async
+ */
+async function ellipticPublicEphemeralKey(curve, Q) {
+  const v = await curve.genKeyPair();
+  Q = curve.keyFromPublic(Q);
+  const publicKey = new Uint8Array(v.getPublic());
+  const S = v.derive(Q);
+  const len = curve.curve.curve.p.byteLength();
+  const sharedKey = S.toArrayLike(Uint8Array, 'be', len);
+  return { publicKey, sharedKey };
+}
+
+/**
+ * Generate ECDHE secret from private key and public part of ephemeral key using nodeCrypto
+ *
+ * @param  {Curve}                  curve          Elliptic curve object
+ * @param  {Uint8Array}             V              Public part of ephemeral key
+ * @param  {Uint8Array}             d              Recipient private key
+ * @returns {Promise<{secretKey: Uint8Array, sharedKey: Uint8Array}>}
+ * @async
+ */
+async function nodePrivateEphemeralKey(curve, V, d) {
+  const recipient = nodeCrypto.createECDH(curve.node.node);
+  recipient.setPrivateKey(d);
+  const sharedKey = new Uint8Array(recipient.computeSecret(V));
+  const secretKey = new Uint8Array(recipient.getPrivateKey());
+  return { secretKey, sharedKey };
+}
+
+/**
+ * Generate ECDHE ephemeral key and secret from public key using nodeCrypto
+ *
+ * @param  {Curve}                  curve        Elliptic curve object
+ * @param  {Uint8Array}             Q            Recipient public key
+ * @returns {Promise<{publicKey: Uint8Array, sharedKey: Uint8Array}>}
+ * @async
+ */
+async function nodePublicEphemeralKey(curve, Q) {
+  const sender = nodeCrypto.createECDH(curve.node.node);
+  sender.generateKeys();
+  const sharedKey = new Uint8Array(sender.computeSecret(Q));
+  const publicKey = new Uint8Array(sender.getPublicKey());
+  return { publicKey, sharedKey };
+}
+
+/**
+ * @param  {Integer}                payloadSize  ec payload size
+ * @param  {String}                 name         curve name
+ * @param  {Uint8Array}             publicKey    public key
+ * @returns {JsonWebKey}                         public key in jwk format
+ */
+function rawPublicToJwk(payloadSize, name, publicKey) {
+  const len = payloadSize;
+  const bufX = publicKey.slice(1, len + 1);
+  const bufY = publicKey.slice(len + 1, len * 2 + 1);
+  // https://www.rfc-editor.org/rfc/rfc7518.txt
+  const jwKey = {
+    kty: "EC",
+    crv: name,
+    x: _util2.default.Uint8Array_to_b64(bufX, true),
+    y: _util2.default.Uint8Array_to_b64(bufY, true),
+    ext: true
+  };
+  return jwKey;
+}
+
+/**
+ * @param  {Integer}                payloadSize  ec payload size
+ * @param  {String}                 name         curve name
+ * @param  {Uint8Array}             publicKey    public key
+ * @param  {Uint8Array}             privateKey   private key
+ * @returns {JsonWebKey}                         private key in jwk format
+ */
+function privateToJwk(payloadSize, name, privateKey, publicKey) {
+  const jwk = rawPublicToJwk(payloadSize, name, publicKey);
+  jwk.d = _util2.default.Uint8Array_to_b64(privateKey, true);
+  return jwk;
+}
+
+/**
+ * @param  {JsonWebKey}                jwk  key for conversion
+ * @returns {Uint8Array}                    raw public key
+ */
+function jwkToRawPublic(jwk) {
+  const bufX = _util2.default.b64_to_Uint8Array(jwk.x);
+  const bufY = _util2.default.b64_to_Uint8Array(jwk.y);
+  const publicKey = new Uint8Array(bufX.length + bufY.length + 1);
+  publicKey[0] = 0x04;
+  publicKey.set(bufX, 1);
+  publicKey.set(bufY, bufX.length + 1);
+  return publicKey;
+}
+
+exports.default = { encrypt, decrypt, genPublicEphemeralKey, genPrivateEphemeralKey, buildEcdhParam, kdf, webPublicEphemeralKey, webPrivateEphemeralKey, ellipticPublicEphemeralKey, ellipticPrivateEphemeralKey, nodePublicEphemeralKey, nodePrivateEphemeralKey };
+
+},{"../../../enums":113,"../../../type/kdf_params":147,"../../../util":152,"../../aes_kw":80,"../../cipher":86,"../../hash":92,"./curves":100,"bn.js":16,"tweetnacl/nacl-fast-light.js":72}],102:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28174,8 +29727,10 @@ async function sign(oid, hash_algo, m, d, hashed) {
   const curve = new _curves2.default(oid);
   const key = curve.keyFromPrivate(d);
   const signature = await key.sign(m, hash_algo, hashed);
-  return { r: signature.r.toArrayLike(Uint8Array),
-    s: signature.s.toArrayLike(Uint8Array) };
+  return {
+    r: signature.r.toArrayLike(Uint8Array),
+    s: signature.s.toArrayLike(Uint8Array)
+  };
 }
 
 /**
@@ -28221,18 +29776,28 @@ async function verify(oid, hash_algo, signature, m, Q, hashed) {
 
 exports.default = { sign, verify };
 
-},{"./curves":102}],105:[function(require,module,exports){
+},{"./curves":100}],103:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _curves = require('./curves');
+var _ = require('hash.js/lib/hash/sha/512');
 
-var _curves2 = _interopRequireDefault(_curves);
+var _2 = _interopRequireDefault(_);
+
+var _naclFastLight = require('tweetnacl/nacl-fast-light.js');
+
+var _naclFastLight2 = _interopRequireDefault(_naclFastLight);
+
+var _util = require('../../../util');
+
+var _util2 = _interopRequireDefault(_util);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_naclFastLight2.default.hash = bytes => new Uint8Array((0, _2.default)().update(bytes).digest());
 
 /**
  * Sign a message using the provided key
@@ -28243,27 +29808,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @param  {Uint8Array}        hashed    The hashed message
  * @returns {{R: Uint8Array,
  *            S: Uint8Array}}            Signature of the message
- * @async
- */
-async function sign(oid, hash_algo, m, d, hashed) {
-  const curve = new _curves2.default(oid);
-  const key = curve.keyFromSecret(d);
-  const signature = await key.sign(m, hash_algo, hashed);
-  // EdDSA signature params are returned in little-endian format
-  return { R: new Uint8Array(signature.Rencoded()),
-    S: new Uint8Array(signature.Sencoded()) };
-}
-
-/**
- * Verifies if a signature is valid for a message
- * @param  {module:type/oid}   oid       Elliptic curve object identifier
- * @param  {module:enums.hash} hash_algo Hash algorithm used in the signature
- * @param  {{R: Uint8Array,
-             S: Uint8Array}}   signature Signature to verify the message
- * @param  {Uint8Array}        m         Message to verify
- * @param  {Uint8Array}        Q         Public key used to verify the message
- * @param  {Uint8Array}        hashed    The hashed message
- * @returns {Boolean}
  * @async
  */
 // OpenPGP.js - An OpenPGP implementation in javascript
@@ -28285,19 +29829,46 @@ async function sign(oid, hash_algo, m, d, hashed) {
 
 /**
  * @fileoverview Implementation of EdDSA following RFC4880bis-03 for OpenPGP
+ * @requires hash.js
+ * @requires tweetnacl
  * @requires crypto/public_key/elliptic/curve
+ * @requires util
  * @module crypto/public_key/elliptic/eddsa
  */
 
-async function verify(oid, hash_algo, signature, m, Q, hashed) {
-  const curve = new _curves2.default(oid);
-  const key = curve.keyFromPublic(Q);
-  return key.verify(m, signature, hash_algo, hashed);
+async function sign(oid, hash_algo, m, d, hashed) {
+  var _nacl$sign$keyPair$fr = _naclFastLight2.default.sign.keyPair.fromSeed(d);
+
+  const secretKey = _nacl$sign$keyPair$fr.secretKey;
+
+  const signature = _naclFastLight2.default.sign.detached(hashed, secretKey);
+  // EdDSA signature params are returned in little-endian format
+  return {
+    R: signature.subarray(0, 32),
+    S: signature.subarray(32)
+  };
+}
+
+/**
+ * Verifies if a signature is valid for a message
+ * @param  {module:type/oid}   oid       Elliptic curve object identifier
+ * @param  {module:enums.hash} hash_algo Hash algorithm used in the signature
+ * @param  {{R: Uint8Array,
+             S: Uint8Array}}   signature Signature to verify the message
+ * @param  {Uint8Array}        m         Message to verify
+ * @param  {Uint8Array}        publicKey Public key used to verify the message
+ * @param  {Uint8Array}        hashed    The hashed message
+ * @returns {Boolean}
+ * @async
+ */
+async function verify(oid, hash_algo, { R, S }, m, publicKey, hashed) {
+  const signature = _util2.default.concatUint8Array([R, S]);
+  return _naclFastLight2.default.sign.detached.verify(hashed, signature, publicKey.subarray(1));
 }
 
 exports.default = { sign, verify };
 
-},{"./curves":102}],106:[function(require,module,exports){
+},{"../../../util":152,"hash.js/lib/hash/sha/512":43,"tweetnacl/nacl-fast-light.js":72}],104:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28352,7 +29923,7 @@ exports.default = {
   Curve: _curves2.default, ecdh: _ecdh2.default, ecdsa: _ecdsa2.default, eddsa: _eddsa2.default, generate: _curves.generate, getPreferredHashAlgo: _curves.getPreferredHashAlgo
 };
 
-},{"./curves":102,"./ecdh":103,"./ecdsa":104,"./eddsa":105}],107:[function(require,module,exports){
+},{"./curves":100,"./ecdh":101,"./ecdsa":102,"./eddsa":103}],105:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28604,12 +30175,16 @@ const SubjectPublicKeyInfo = nodeCrypto ? asn1.define('SubjectPublicKeyInfo', fu
   this.seq().obj(this.key('algorithm').use(AlgorithmIdentifier), this.key('subjectPublicKey').bitstr());
 }) : undefined;
 
-},{"../../../enums":115,"../../../util":154,"./curves":102,"asn1.js":"asn1.js","bn.js":17,"web-stream-tools":77}],108:[function(require,module,exports){
+},{"../../../enums":113,"../../../util":152,"./curves":100,"asn1.js":"asn1.js","bn.js":16,"web-stream-tools":75}],106:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _naclFastLight = require('tweetnacl/nacl-fast-light.js');
+
+var _naclFastLight2 = _interopRequireDefault(_naclFastLight);
 
 var _rsa = require('./rsa');
 
@@ -28629,15 +30204,6 @@ var _dsa2 = _interopRequireDefault(_dsa);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/**
- * @fileoverview Asymmetric cryptography functions
- * @requires crypto/public_key/dsa
- * @requires crypto/public_key/elgamal
- * @requires crypto/public_key/elliptic
- * @requires crypto/public_key/rsa
- * @module crypto/public_key
- */
-
 exports.default = {
   /** @see module:crypto/public_key/rsa */
   rsa: _rsa2.default,
@@ -28646,10 +30212,20 @@ exports.default = {
   /** @see module:crypto/public_key/elliptic */
   elliptic: _elliptic2.default,
   /** @see module:crypto/public_key/dsa */
-  dsa: _dsa2.default
-};
+  dsa: _dsa2.default,
+  /** @see tweetnacl */
+  nacl: _naclFastLight2.default
+}; /**
+    * @fileoverview Asymmetric cryptography functions
+    * @requires tweetnacl
+    * @requires crypto/public_key/dsa
+    * @requires crypto/public_key/elgamal
+    * @requires crypto/public_key/elliptic
+    * @requires crypto/public_key/rsa
+    * @module crypto/public_key
+    */
 
-},{"./dsa":100,"./elgamal":101,"./elliptic":106,"./rsa":110}],109:[function(require,module,exports){
+},{"./dsa":98,"./elgamal":99,"./elliptic":104,"./rsa":108,"tweetnacl/nacl-fast-light.js":72}],107:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -28861,7 +30437,7 @@ async function millerRabin(n, k, rand) {
   return true;
 }
 
-},{"../random":111,"bn.js":17}],110:[function(require,module,exports){
+},{"../random":109,"bn.js":16}],108:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29122,7 +30698,7 @@ exports.default = {
   prime: _prime2.default
 };
 
-},{"../../config":81,"../../util":154,"../random":111,"./prime":109,"bn.js":17}],111:[function(require,module,exports){
+},{"../../config":79,"../../util":152,"../random":109,"./prime":107,"bn.js":16}],109:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29283,7 +30859,7 @@ RandomBuffer.prototype.get = async function (buf) {
   }
 };
 
-},{"../util":154,"bn.js":17,"crypto":"crypto"}],112:[function(require,module,exports){
+},{"../util":152,"bn.js":16,"crypto":"crypto"}],110:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29293,6 +30869,10 @@ Object.defineProperty(exports, "__esModule", {
 var _bn = require('bn.js');
 
 var _bn2 = _interopRequireDefault(_bn);
+
+var _crypto = require('./crypto');
+
+var _crypto2 = _interopRequireDefault(_crypto);
 
 var _public_key = require('./public_key');
 
@@ -29312,6 +30892,17 @@ var _util2 = _interopRequireDefault(_util);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * @fileoverview Provides functions for asymmetric signing and signature verification
+ * @requires bn.js
+ * @requires crypto/crypto
+ * @requires crypto/public_key
+ * @requires crypto/pkcs1
+ * @requires enums
+ * @requires util
+ * @module crypto/signature
+*/
+
 exports.default = {
   /**
    * Verifies the signature provided for data using specified algorithms and public key parameters.
@@ -29328,6 +30919,10 @@ exports.default = {
    * @async
    */
   verify: async function verify(algo, hash_algo, msg_MPIs, pub_MPIs, data, hashed) {
+    const types = _crypto2.default.getPubKeyParamTypes(algo);
+    if (pub_MPIs.length < types.length) {
+      throw new Error('Missing public key parameters');
+    }
     switch (algo) {
       case _enums2.default.publicKey.rsa_encrypt_sign:
       case _enums2.default.publicKey.rsa_encrypt:
@@ -29360,11 +30955,12 @@ exports.default = {
       case _enums2.default.publicKey.eddsa:
         {
           const oid = pub_MPIs[0];
-          // TODO refactor elliptic to accept Uint8Array
           // EdDSA signature params are expected in little-endian format
-          const signature = { R: Array.from(msg_MPIs[0].toUint8Array('le', 32)),
-            S: Array.from(msg_MPIs[1].toUint8Array('le', 32)) };
-          const Q = Array.from(pub_MPIs[1].toUint8Array('be', 33));
+          const signature = {
+            R: msg_MPIs[0].toUint8Array('le', 32),
+            S: msg_MPIs[1].toUint8Array('le', 32)
+          };
+          const Q = pub_MPIs[1].toUint8Array('be', 33);
           return _public_key2.default.elliptic.eddsa.verify(oid, hash_algo, signature, data, Q, hashed);
         }
       default:
@@ -29386,6 +30982,10 @@ exports.default = {
    * @async
    */
   sign: async function sign(algo, hash_algo, key_params, data, hashed) {
+    const types = [].concat(_crypto2.default.getPubKeyParamTypes(algo), _crypto2.default.getPrivKeyParamTypes(algo));
+    if (key_params.length < types.length) {
+      throw new Error('Missing private key parameters');
+    }
     switch (algo) {
       case _enums2.default.publicKey.rsa_encrypt_sign:
       case _enums2.default.publicKey.rsa_encrypt:
@@ -29421,7 +31021,7 @@ exports.default = {
       case _enums2.default.publicKey.eddsa:
         {
           const oid = key_params[0];
-          const d = Array.from(key_params[2].toUint8Array('be', 32));
+          const d = key_params[2].toUint8Array('be', 32);
           const signature = await _public_key2.default.elliptic.eddsa.sign(oid, hash_algo, data, d, hashed);
           return _util2.default.concatUint8Array([_util2.default.Uint8Array_to_MPI(signature.R), _util2.default.Uint8Array_to_MPI(signature.S)]);
         }
@@ -29429,17 +31029,9 @@ exports.default = {
         throw new Error('Invalid signature algorithm.');
     }
   }
-}; /**
-    * @fileoverview Provides functions for asymmetric signing and signature verification
-    * @requires bn.js
-    * @requires crypto/public_key
-    * @requires crypto/pkcs1
-    * @requires enums
-    * @requires util
-    * @module crypto/signature
-   */
+};
 
-},{"../enums":115,"../util":154,"./pkcs1":98,"./public_key":108,"bn.js":17}],113:[function(require,module,exports){
+},{"../enums":113,"../util":152,"./crypto":89,"./pkcs1":96,"./public_key":106,"bn.js":16}],111:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29853,7 +31445,7 @@ exports.default = {
   decode: dearmor
 };
 
-},{"../config":81,"../enums.js":115,"../util":154,"./base64.js":114,"web-stream-tools":77}],114:[function(require,module,exports){
+},{"../config":79,"../enums.js":113,"../util":152,"./base64.js":112,"web-stream-tools":75}],112:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -29999,7 +31591,7 @@ exports.default = {
   decode: r2s
 };
 
-},{"web-stream-tools":77}],115:[function(require,module,exports){
+},{"web-stream-tools":75}],113:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30498,7 +32090,7 @@ exports.default = {
 
 };
 
-},{}],116:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -30599,7 +32191,7 @@ HKP.prototype.upload = function (publicKeyArmored) {
 
 exports.default = HKP;
 
-},{"./config":81,"node-fetch":"node-fetch"}],117:[function(require,module,exports){
+},{"./config":79,"node-fetch":"node-fetch"}],115:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -30913,7 +32505,7 @@ const cleartext = exports.cleartext = cleartextMod;
  * @name module:openpgp.util
  */
 
-},{"./cleartext":79,"./config/config":80,"./crypto":96,"./encoding/armor":113,"./enums":115,"./hkp":116,"./key":118,"./keyring":119,"./message":122,"./openpgp":123,"./packet":127,"./signature":147,"./type/ecdh_symkey":148,"./type/kdf_params":149,"./type/keyid":150,"./type/mpi":151,"./type/oid":152,"./type/s2k":153,"./util":154,"./wkd":155,"./worker/async_proxy":156,"web-stream-tools":77}],118:[function(require,module,exports){
+},{"./cleartext":77,"./config/config":78,"./crypto":94,"./encoding/armor":111,"./enums":113,"./hkp":114,"./key":116,"./keyring":117,"./message":120,"./openpgp":121,"./packet":125,"./signature":145,"./type/ecdh_symkey":146,"./type/kdf_params":147,"./type/keyid":148,"./type/mpi":149,"./type/oid":150,"./type/s2k":151,"./util":152,"./wkd":153,"./worker/async_proxy":154,"web-stream-tools":75}],116:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -31852,9 +33444,10 @@ User.prototype.isRevoked = async function (primaryKey, certificate, key, date = 
  * @param  {Object} signatureProperties      (optional) properties to write on the signature packet before signing
  * @param  {Date} date                       (optional) override the creationtime of the signature
  * @param  {Object} userId                   (optional) user ID
+ * @param  {Object} detached                 (optional) whether to create a detached signature packet
  * @returns {module:packet/signature}         signature packet
  */
-async function createSignaturePacket(dataToSign, privateKey, signingKeyPacket, signatureProperties, date, userId) {
+async function createSignaturePacket(dataToSign, privateKey, signingKeyPacket, signatureProperties, date, userId, detached = false) {
   if (!signingKeyPacket.isDecrypted()) {
     throw new Error('Private key is not decrypted.');
   }
@@ -31862,7 +33455,7 @@ async function createSignaturePacket(dataToSign, privateKey, signingKeyPacket, s
   Object.assign(signaturePacket, signatureProperties);
   signaturePacket.publicKeyAlgorithm = signingKeyPacket.algorithm;
   signaturePacket.hashAlgorithm = await getPreferredHashAlgo(privateKey, signingKeyPacket, date, userId);
-  await signaturePacket.sign(signingKeyPacket, dataToSign);
+  await signaturePacket.sign(signingKeyPacket, dataToSign, detached);
   return signaturePacket;
 }
 
@@ -31889,13 +33482,13 @@ User.prototype.verifyCertificate = async function (primaryKey, certificate, keys
       return;
     }
     const signingKey = await key.getSigningKey(keyid, date);
-    if (certificate.revoked || (await that.isRevoked(primaryKey, certificate, signingKey.keyPacket))) {
+    if (certificate.revoked || (await that.isRevoked(primaryKey, certificate, signingKey.keyPacket, date))) {
       return _enums2.default.keyStatus.revoked;
     }
     if (!(certificate.verified || (await certificate.verify(signingKey.keyPacket, _enums2.default.signature.cert_generic, dataToVerify)))) {
       return _enums2.default.keyStatus.invalid;
     }
-    if (certificate.isExpired()) {
+    if (certificate.isExpired(date)) {
       return _enums2.default.keyStatus.expired;
     }
     return _enums2.default.keyStatus.valid;
@@ -31908,15 +33501,16 @@ User.prototype.verifyCertificate = async function (primaryKey, certificate, keys
  * @param  {module:packet.SecretKey|
  *          module:packet.PublicKey} primaryKey The primary key packet
  * @param  {Array<module:key.Key>}    keys       Array of keys to verify certificate signatures
+ * @param  {Date}                     date        Use the given date instead of the current time
  * @returns {Promise<Array<{keyid: module:type/keyid,
  *                          valid: Boolean}>>}   List of signer's keyid and validity of signature
  * @async
  */
-User.prototype.verifyAllCertifications = async function (primaryKey, keys) {
+User.prototype.verifyAllCertifications = async function (primaryKey, keys, date = new Date()) {
   const that = this;
   const certifications = this.selfCertifications.concat(this.otherCertifications);
   return Promise.all(certifications.map(async function (certification) {
-    const status = await that.verifyCertificate(primaryKey, certification, keys);
+    const status = await that.verifyCertificate(primaryKey, certification, keys, date);
     return {
       keyid: certification.issuerKeyId,
       valid: status === undefined ? null : status === _enums2.default.keyStatus.valid
@@ -31929,10 +33523,11 @@ User.prototype.verifyAllCertifications = async function (primaryKey, keys) {
  * and validity of self signature
  * @param  {module:packet.SecretKey|
  *          module:packet.PublicKey} primaryKey The primary key packet
+ * @param  {Date}                    date       Use the given date instead of the current time
  * @returns {Promise<module:enums.keyStatus>}    Status of user
  * @async
  */
-User.prototype.verify = async function (primaryKey) {
+User.prototype.verify = async function (primaryKey, date = new Date()) {
   if (!this.selfCertifications.length) {
     return _enums2.default.keyStatus.no_self_cert;
   }
@@ -31944,13 +33539,13 @@ User.prototype.verify = async function (primaryKey) {
   };
   // TODO replace when Promise.some or Promise.any are implemented
   const results = [_enums2.default.keyStatus.invalid].concat((await Promise.all(this.selfCertifications.map(async function (selfCertification) {
-    if (selfCertification.revoked || (await that.isRevoked(primaryKey, selfCertification))) {
+    if (selfCertification.revoked || (await that.isRevoked(primaryKey, selfCertification, undefined, date))) {
       return _enums2.default.keyStatus.revoked;
     }
     if (!(selfCertification.verified || (await selfCertification.verify(primaryKey, _enums2.default.signature.cert_generic, dataToVerify)))) {
       return _enums2.default.keyStatus.invalid;
     }
-    if (selfCertification.isExpired()) {
+    if (selfCertification.isExpired(date)) {
       return _enums2.default.keyStatus.expired;
     }
     return _enums2.default.keyStatus.valid;
@@ -32110,10 +33705,10 @@ SubKey.prototype.update = async function (subKey, primaryKey) {
     }
     for (let i = 0; i < that.bindingSignatures.length; i++) {
       if (that.bindingSignatures[i].issuerKeyId.equals(srcBindSig.issuerKeyId)) {
-        if (srcBindSig.created < that.bindingSignatures[i].created) {
+        if (srcBindSig.created > that.bindingSignatures[i].created) {
           that.bindingSignatures[i] = srcBindSig;
-          return false;
         }
+        return false;
       }
     }
     return true;
@@ -32349,7 +33944,9 @@ async function reformat(options) {
   }
 
   if (!options.subkeys) {
-    options.subkeys = secretSubkeyPackets.map(() => ({}));
+    options.subkeys = await Promise.all(secretSubkeyPackets.map(async secretSubkeyPacket => ({
+      sign: (await options.privateKey.getSigningKey(secretSubkeyPacket.getKeyId(), null)) && !(await options.privateKey.getEncryptionKey(secretSubkeyPacket.getKeyId(), null))
+    })));
   }
 
   if (options.subkeys.length !== secretSubkeyPackets.length) {
@@ -32419,7 +34016,7 @@ async function wrapKeyObject(secretKeyPacket, secretSubkeyPackets, options) {
     signaturePacket.preferredSymmetricAlgorithms = createdPreferredAlgos([
     // prefer aes256, aes128, then aes192 (no WebCrypto support: https://www.chromium.org/blink/webcrypto#TOC-AES-support)
     _enums2.default.symmetric.aes256, _enums2.default.symmetric.aes128, _enums2.default.symmetric.aes192, _enums2.default.symmetric.cast5, _enums2.default.symmetric.tripledes], _config2.default.encryption_cipher);
-    if (_config2.default.aead_protect && _config2.default.aead_protect_version === 4) {
+    if (_config2.default.aead_protect) {
       signaturePacket.preferredAeadAlgorithms = createdPreferredAlgos([_enums2.default.aead.eax, _enums2.default.aead.ocb], _config2.default.aead_mode);
     }
     signaturePacket.preferredHashAlgorithms = createdPreferredAlgos([
@@ -32433,9 +34030,12 @@ async function wrapKeyObject(secretKeyPacket, secretSubkeyPackets, options) {
       signaturePacket.features = [0];
       signaturePacket.features[0] |= _enums2.default.features.modification_detection;
     }
-    if (_config2.default.aead_protect && _config2.default.aead_protect_version === 4) {
+    if (_config2.default.aead_protect) {
       signaturePacket.features || (signaturePacket.features = [0]);
       signaturePacket.features[0] |= _enums2.default.features.aead;
+    }
+    if (_config2.default.v5_keys) {
+      signaturePacket.features || (signaturePacket.features = [0]);
       signaturePacket.features[0] |= _enums2.default.features.v5_keys;
     }
     if (options.keyExpirationTime > 0) {
@@ -32676,7 +34276,7 @@ async function isAeadSupported(keys, date = new Date(), userIds = []) {
   return supported;
 }
 
-},{"./config":81,"./crypto":96,"./encoding/armor":113,"./enums":115,"./packet":127,"./util":154}],119:[function(require,module,exports){
+},{"./config":79,"./crypto":94,"./encoding/armor":111,"./enums":113,"./packet":125,"./util":152}],117:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -32703,7 +34303,7 @@ _keyring2.default.localstore = _localstore2.default;
 
 exports.default = _keyring2.default;
 
-},{"./keyring.js":120,"./localstore.js":121}],120:[function(require,module,exports){
+},{"./keyring.js":118,"./localstore.js":119}],118:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -32942,7 +34542,7 @@ KeyArray.prototype.removeForId = function (keyId) {
 
 exports.default = Keyring;
 
-},{"../key":118,"./localstore":121}],121:[function(require,module,exports){
+},{"../key":116,"./localstore":119}],119:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -33080,7 +34680,7 @@ async function storeKeys(storage, itemname, keys) {
 
 exports.default = LocalStore;
 
-},{"../config":81,"../key":118,"../util":154,"node-localstorage":"node-localstorage","web-stream-tools":77}],122:[function(require,module,exports){
+},{"../config":79,"../key":116,"../util":152,"node-localstorage":"node-localstorage","web-stream-tools":75}],120:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -33234,22 +34834,22 @@ Message.prototype.decrypt = async function (privateKeys, passwords, sessionKeys,
 
   const symEncryptedPacket = symEncryptedPacketlist[0];
   let exception = null;
-  for (let i = 0; i < keyObjs.length; i++) {
-    if (!keyObjs[i] || !_util2.default.isUint8Array(keyObjs[i].data) || !_util2.default.isString(keyObjs[i].algorithm)) {
+  const decryptedPromise = Promise.all(keyObjs.map(async keyObj => {
+    if (!keyObj || !_util2.default.isUint8Array(keyObj.data) || !_util2.default.isString(keyObj.algorithm)) {
       throw new Error('Invalid session key for decryption.');
     }
 
     try {
-      await symEncryptedPacket.decrypt(keyObjs[i].algorithm, keyObjs[i].data, streaming);
-      break;
+      await symEncryptedPacket.decrypt(keyObj.algorithm, keyObj.data, streaming);
     } catch (e) {
       _util2.default.print_debug_error(e);
       exception = e;
     }
-  }
+  }));
   // We don't await stream.cancel here because it only returns when the other copy is canceled too.
   _webStreamTools2.default.cancel(symEncryptedPacket.encrypted); // Don't keep copy of encrypted data in memory.
   symEncryptedPacket.encrypted = null;
+  await decryptedPromise;
 
   if (!symEncryptedPacket.packets || !symEncryptedPacket.packets.length) {
     throw exception || new Error('Decryption failed.');
@@ -33417,7 +35017,7 @@ Message.prototype.encrypt = async function (keys, passwords, sessionKey, wildcar
     sessionKey = sessionKey.data;
   } else if (keys && keys.length) {
     symAlgo = _enums2.default.read(_enums2.default.symmetric, (await (0, _key.getPreferredAlgo)('symmetric', keys, date, userIds)));
-    if (_config2.default.aead_protect && _config2.default.aead_protect_version === 4 && (await (0, _key.isAeadSupported)(keys, date, userIds))) {
+    if (_config2.default.aead_protect && (await (0, _key.isAeadSupported)(keys, date, userIds))) {
       aeadAlgo = _enums2.default.read(_enums2.default.aead, (await (0, _key.getPreferredAlgo)('aead', keys, date, userIds)));
     }
   } else if (passwords && passwords.length) {
@@ -33433,7 +35033,7 @@ Message.prototype.encrypt = async function (keys, passwords, sessionKey, wildcar
 
   const msg = await encryptSessionKey(sessionKey, symAlgo, aeadAlgo, keys, passwords, wildcard, date, userIds);
 
-  if (_config2.default.aead_protect && (_config2.default.aead_protect_version !== 4 || aeadAlgo)) {
+  if (_config2.default.aead_protect && aeadAlgo) {
     symEncryptedPacket = new _packet2.default.SymEncryptedAEADProtected();
     symEncryptedPacket.aeadAlgorithm = aeadAlgo;
   } else if (_config2.default.integrity_protect) {
@@ -33589,7 +35189,7 @@ Message.prototype.sign = async function (privateKeys = [], signature = null, dat
   });
 
   packetlist.push(literalDataPacket);
-  packetlist.concat((await createSignaturePackets(literalDataPacket, privateKeys, signature, date)));
+  packetlist.concat((await createSignaturePackets(literalDataPacket, privateKeys, signature, date, false)));
 
   return new Message(packetlist);
 };
@@ -33628,7 +35228,7 @@ Message.prototype.signDetached = async function (privateKeys = [], signature = n
   if (!literalDataPacket) {
     throw new Error('No literal data packet to sign.');
   }
-  return new _signature.Signature((await createSignaturePackets(literalDataPacket, privateKeys, signature, date, userIds)));
+  return new _signature.Signature((await createSignaturePackets(literalDataPacket, privateKeys, signature, date, userIds, true)));
 };
 
 /**
@@ -33638,10 +35238,11 @@ Message.prototype.signDetached = async function (privateKeys = [], signature = n
  * @param  {Signature} signature               (optional) any existing detached signature to append
  * @param  {Date} date                         (optional) override the creationtime of the signature
  * @param  {Array} userIds                     (optional) user IDs to sign with, e.g. [{ name:'Steve Sender', email:'steve@openpgp.org' }]
+ * @param  {Boolean} detached                  (optional) whether to create detached signature packets
  * @returns {Promise<module:packet.List>} list of signature packets
  * @async
  */
-async function createSignaturePackets(literalDataPacket, privateKeys, signature = null, date = new Date(), userIds = []) {
+async function createSignaturePackets(literalDataPacket, privateKeys, signature = null, date = new Date(), userIds = [], detached = false) {
   const packetlist = new _packet2.default.List();
 
   // If data packet was created from Uint8Array, use binary, otherwise use text
@@ -33656,7 +35257,7 @@ async function createSignaturePackets(literalDataPacket, privateKeys, signature 
     if (!signingKey) {
       throw new Error(`Could not find valid signing key packet in key ${privateKey.getKeyId().toHex()}`);
     }
-    return (0, _key.createSignaturePacket)(literalDataPacket, privateKey, signingKey.keyPacket, { signatureType }, date, userId);
+    return (0, _key.createSignaturePacket)(literalDataPacket, privateKey, signingKey.keyPacket, { signatureType }, date, userId, detached);
   })).then(signatureList => {
     signatureList.forEach(signaturePacket => packetlist.push(signaturePacket));
   });
@@ -33691,7 +35292,7 @@ Message.prototype.verify = async function (keys, date = new Date(), streaming) {
         onePassSig.correspondingSigReject = reject;
       });
       onePassSig.signatureData = _webStreamTools2.default.fromAsync(async () => (await onePassSig.correspondingSig).signatureData);
-      onePassSig.hashed = await onePassSig.hash(onePassSig.signatureType, literalDataList[0], undefined, streaming);
+      onePassSig.hashed = await onePassSig.hash(onePassSig.signatureType, literalDataList[0], undefined, false, streaming);
     }));
     msg.packets.stream = _webStreamTools2.default.transformPair(msg.packets.stream, async (readable, writable) => {
       const reader = _webStreamTools2.default.getReader(readable);
@@ -33714,9 +35315,9 @@ Message.prototype.verify = async function (keys, date = new Date(), streaming) {
         await writer.abort(e);
       }
     });
-    return createVerificationObjects(onePassSigList, literalDataList, keys, date);
+    return createVerificationObjects(onePassSigList, literalDataList, keys, date, false);
   }
-  return createVerificationObjects(signatureList, literalDataList, keys, date);
+  return createVerificationObjects(signatureList, literalDataList, keys, date, false);
 };
 
 /**
@@ -33734,7 +35335,7 @@ Message.prototype.verifyDetached = function (signature, keys, date = new Date())
     throw new Error('Can only verify message with one literal data packet.');
   }
   const signatureList = signature.packets;
-  return createVerificationObjects(signatureList, literalDataList, keys, date);
+  return createVerificationObjects(signatureList, literalDataList, keys, date, true);
 };
 
 /**
@@ -33744,11 +35345,12 @@ Message.prototype.verifyDetached = function (signature, keys, date = new Date())
  * @param {Array<module:key.Key>} keys array of keys to verify signatures
  * @param {Date} date Verify the signature against the given date,
  *                    i.e. check signature creation time < date < expiration time
+ * @param {Boolean} detached (optional) whether to verify detached signature packets
  * @returns {Promise<Array<{keyid: module:type/keyid,
  *                          valid: Boolean}>>} list of signer's keyid and validity of signature
  * @async
  */
-async function createVerificationObject(signature, literalDataList, keys, date = new Date()) {
+async function createVerificationObject(signature, literalDataList, keys, date = new Date(), detached = false) {
   let primaryKey = null;
   let signingKey = null;
   await Promise.all(keys.map(async function (key) {
@@ -33767,7 +35369,7 @@ async function createVerificationObject(signature, literalDataList, keys, date =
       if (!signingKey) {
         return null;
       }
-      const verified = await signature.verify(signingKey.keyPacket, signature.signatureType, literalDataList[0]);
+      const verified = await signature.verify(signingKey.keyPacket, signature.signatureType, literalDataList[0], detached);
       const sig = await signaturePacket;
       if (sig.isExpired(date) || !(sig.created >= signingKey.getCreationTime() && sig.created < (await (signingKey === primaryKey ? signingKey.getExpirationTime() : signingKey.getExpirationTime(primaryKey, date))))) {
         return null;
@@ -33799,15 +35401,16 @@ async function createVerificationObject(signature, literalDataList, keys, date =
  * @param {Array<module:key.Key>} keys array of keys to verify signatures
  * @param {Date} date Verify the signature against the given date,
  *                    i.e. check signature creation time < date < expiration time
+ * @param {Boolean} detached (optional) whether to verify detached signature packets
  * @returns {Promise<Array<{keyid: module:type/keyid,
  *                          valid: Boolean}>>} list of signer's keyid and validity of signature
  * @async
  */
-async function createVerificationObjects(signatureList, literalDataList, keys, date = new Date()) {
+async function createVerificationObjects(signatureList, literalDataList, keys, date = new Date(), detached = false) {
   return Promise.all(signatureList.filter(function (signature) {
     return ['text', 'binary'].includes(_enums2.default.read(_enums2.default.signature, signature.signatureType));
   }).map(async function (signature) {
-    return createVerificationObject(signature, literalDataList, keys, date);
+    return createVerificationObject(signature, literalDataList, keys, date, detached);
   }));
 }
 
@@ -33934,7 +35537,7 @@ function fromBinary(bytes, filename, date = new Date(), type = 'binary') {
   return message;
 }
 
-},{"./config":81,"./crypto":96,"./encoding/armor":113,"./enums":115,"./key":118,"./packet":127,"./signature":147,"./type/keyid":150,"./util":154,"web-stream-tools":77}],123:[function(require,module,exports){
+},{"./config":79,"./crypto":94,"./encoding/armor":111,"./enums":113,"./key":116,"./packet":125,"./signature":145,"./type/keyid":148,"./util":152,"web-stream-tools":75}],121:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -34003,6 +35606,8 @@ let asyncProxy; // instance of the asyncproxy
  * @param {String} path            relative path to the worker scripts, default: 'openpgp.worker.js'
  * @param {Number} n               number of workers to initialize
  * @param {Array<Object>} workers  alternative to path parameter: web workers initialized with 'openpgp.worker.js'
+ * @returns {Promise<Boolean>}     returns a promise that resolves to true if all workers have succesfully finished loading
+ * @async
  */
 // OpenPGP.js - An OpenPGP implementation in javascript
 // Copyright (C) 2016 Tankred Hase
@@ -34045,11 +35650,16 @@ let asyncProxy; // instance of the asyncproxy
  * {@link module:openpgp}
  */
 
-function initWorker({ path = 'openpgp.worker.js', n = 1, workers = [] } = {}) {
+async function initWorker({ path = 'openpgp.worker.js', n = 1, workers = [] } = {}) {
   if (workers.length || typeof window !== 'undefined' && window.Worker && window.MessageChannel) {
-    asyncProxy = new _async_proxy2.default({ path, n, workers, config: _config2.default });
-    return true;
+    const proxy = new _async_proxy2.default({ path, n, workers, config: _config2.default });
+    const loaded = await proxy.loaded();
+    if (loaded) {
+      asyncProxy = proxy;
+      return true;
+    }
   }
+  return false;
 }
 
 /**
@@ -34367,7 +35977,7 @@ function decrypt({ message, privateKeys, passwords, sessionKeys, publicKeys, for
     result.signatures = signature ? await decrypted.verifyDetached(signature, publicKeys, date, streaming) : await decrypted.verify(publicKeys, date, streaming);
     result.data = format === 'binary' ? decrypted.getLiteralData() : decrypted.getText();
     result.filename = decrypted.getFilename();
-    if (streaming) linkStreams(result, message, decrypted.packets.stream);
+    if (streaming) linkStreams(result, message);
     result.data = await convertStream(result.data, streaming);
     if (!streaming) await prepareSignatures(result.signatures);
     return result;
@@ -34422,6 +36032,11 @@ function sign({ message, privateKeys, armor = true, streaming = message && messa
     if (detached) {
       const signature = await message.signDetached(privateKeys, undefined, date, fromUserIds);
       result.signature = armor ? signature.armor() : signature;
+      if (message.packets) {
+        result.signature = _webStreamTools2.default.transformPair(message.packets.write(), async (readable, writable) => {
+          await Promise.all([_webStreamTools2.default.pipe(result.signature, writable), _webStreamTools2.default.readToEnd(readable).catch(() => {})]);
+        });
+      }
     } else {
       message = await message.sign(privateKeys, undefined, date, fromUserIds);
       if (armor) {
@@ -34629,25 +36244,13 @@ async function convertStreams(obj, streaming, keys = []) {
 
 /**
  * Link result.data to the message stream for cancellation.
- * Also, forward errors in the message to result.data.
  * @param  {Object} result                  the data to convert
  * @param  {Message} message                message object
- * @param  {ReadableStream} erroringStream  (optional) stream which either errors or gets closed without data
  * @returns {Object}
  */
-function linkStreams(result, message, erroringStream) {
+function linkStreams(result, message) {
   result.data = _webStreamTools2.default.transformPair(message.packets.stream, async (readable, writable) => {
-    await _webStreamTools2.default.pipe(result.data, writable, {
-      preventClose: true
-    });
-    const writer = _webStreamTools2.default.getWriter(writable);
-    try {
-      // Forward errors in erroringStream (defaulting to the message stream) to result.data.
-      await _webStreamTools2.default.readToEnd(erroringStream || readable, arr => arr);
-      await writer.close();
-    } catch (e) {
-      await writer.abort(e);
-    }
+    await _webStreamTools2.default.pipe(result.data, writable);
   });
 }
 
@@ -34693,10 +36296,10 @@ function onError(message, error) {
  * @returns {Boolean}   If authenticated encryption should be used
  */
 function nativeAEAD() {
-  return _config2.default.aead_protect && ((_config2.default.aead_protect_version !== 4 || _config2.default.aead_mode === _enums2.default.aead.experimental_gcm) && _util2.default.getWebCrypto() || _config2.default.aead_protect_version === 4 && _config2.default.aead_mode === _enums2.default.aead.eax && _util2.default.getWebCrypto());
+  return _config2.default.aead_protect && (_config2.default.aead_mode === _enums2.default.aead.eax || _config2.default.aead_mode === _enums2.default.aead.experimental_gcm) && _util2.default.getWebCrypto();
 }
 
-},{"./cleartext":79,"./config/config":80,"./enums":115,"./key":118,"./message":122,"./polyfills":146,"./util":154,"./worker/async_proxy":156,"web-stream-tools":77}],124:[function(require,module,exports){
+},{"./cleartext":77,"./config/config":78,"./enums":113,"./key":116,"./message":120,"./polyfills":144,"./util":152,"./worker/async_proxy":154,"web-stream-tools":75}],122:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -34910,7 +36513,7 @@ function packetClassFromTagName(tag) {
   return tag.substr(0, 1).toUpperCase() + tag.substr(1);
 }
 
-},{"../enums.js":115,"./all_packets.js":124,"./compressed.js":126,"./literal.js":128,"./marker.js":129,"./one_pass_signature.js":130,"./public_key.js":133,"./public_key_encrypted_session_key.js":134,"./public_subkey.js":135,"./secret_key.js":136,"./secret_subkey.js":137,"./signature.js":138,"./sym_encrypted_aead_protected.js":139,"./sym_encrypted_integrity_protected.js":140,"./sym_encrypted_session_key.js":141,"./symmetrically_encrypted.js":142,"./trust.js":143,"./user_attribute.js":144,"./userid.js":145}],125:[function(require,module,exports){
+},{"../enums.js":113,"./all_packets.js":122,"./compressed.js":124,"./literal.js":126,"./marker.js":127,"./one_pass_signature.js":128,"./public_key.js":131,"./public_key_encrypted_session_key.js":132,"./public_subkey.js":133,"./secret_key.js":134,"./secret_subkey.js":135,"./signature.js":136,"./sym_encrypted_aead_protected.js":137,"./sym_encrypted_integrity_protected.js":138,"./sym_encrypted_session_key.js":139,"./symmetrically_encrypted.js":140,"./trust.js":141,"./user_attribute.js":142,"./userid.js":143}],123:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -35018,12 +36621,17 @@ function verificationObjectToClone(verObject) {
     const signature = verObject.signature;
     verObject.signature = _webStreamTools2.default.fromAsync(async () => {
       const packets = (await signature).packets;
-      await verified;
-      delete packets[0].signature;
+      try {
+        await verified;
+        delete packets[0].signature;
+      } catch (e) {}
       return packets;
     });
   } else {
     verObject.signature = verObject.signature.packets;
+  }
+  if (verObject.error) {
+    verObject.error = verObject.error.message;
   }
   return verObject;
 }
@@ -35088,10 +36696,15 @@ function packetlistCloneToSignatures(clone) {
   clone.keyid = _keyid2.default.fromClone(clone.keyid);
   if (_util2.default.isStream(clone.signature)) {
     clone.signature = _webStreamTools2.default.readToEnd(clone.signature, ([signature]) => new _signature.Signature(_packetlist2.default.fromStructuredClone(signature)));
+    clone.signature.catch(() => {});
   } else {
     clone.signature = new _signature.Signature(_packetlist2.default.fromStructuredClone(clone.signature));
   }
   clone.verified = _webStreamTools2.default.readToEnd(clone.verified, ([verified]) => verified);
+  clone.verified.catch(() => {});
+  if (clone.error) {
+    clone.error = new Error(clone.error);
+  }
   return clone;
 }
 
@@ -35104,7 +36717,7 @@ function packetlistCloneToSignature(clone) {
   return new _signature.Signature(packetlist);
 }
 
-},{"../cleartext":79,"../key":118,"../message":122,"../signature":147,"../type/keyid":150,"../util":154,"./packetlist":132,"web-stream-tools":77}],126:[function(require,module,exports){
+},{"../cleartext":77,"../key":116,"../message":120,"../signature":145,"../type/keyid":148,"../util":152,"./packetlist":130,"web-stream-tools":75}],124:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -35319,7 +36932,7 @@ if (nodeZlib) {
   };
 }
 
-},{"../config":81,"../enums":115,"../util":154,"pako":52,"seek-bzip":71,"web-stream-tools":77}],127:[function(require,module,exports){
+},{"../config":79,"../enums":113,"../util":152,"pako":50,"seek-bzip":69,"web-stream-tools":75}],125:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -35357,7 +36970,7 @@ Object.assign(mod, packets);
 
 exports.default = mod;
 
-},{"./all_packets":124,"./clone":125,"./packetlist":132}],128:[function(require,module,exports){
+},{"./all_packets":122,"./clone":123,"./packetlist":130}],126:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -35512,24 +37125,35 @@ Literal.prototype.read = async function (bytes) {
 };
 
 /**
- * Creates a string representation of the packet
+ * Creates a Uint8Array representation of the packet, excluding the data
  *
- * @returns {Uint8Array | ReadableStream<Uint8Array>} Uint8Array representation of the packet
+ * @returns {Uint8Array} Uint8Array representation of the packet
  */
-Literal.prototype.write = function () {
+Literal.prototype.writeHeader = function () {
   const filename = _util2.default.encode_utf8(this.filename);
   const filename_length = new Uint8Array([filename.length]);
 
   const format = new Uint8Array([_enums2.default.write(_enums2.default.literal, this.format)]);
   const date = _util2.default.writeDate(this.date);
+
+  return _util2.default.concatUint8Array([format, filename_length, filename, date]);
+};
+
+/**
+ * Creates a Uint8Array representation of the packet
+ *
+ * @returns {Uint8Array | ReadableStream<Uint8Array>} Uint8Array representation of the packet
+ */
+Literal.prototype.write = function () {
+  const header = this.writeHeader();
   const data = this.getBytes();
 
-  return _util2.default.concat([format, filename_length, filename, date, data]);
+  return _util2.default.concat([header, data]);
 };
 
 exports.default = Literal;
 
-},{"../enums":115,"../util":154,"web-stream-tools":77}],129:[function(require,module,exports){
+},{"../enums":113,"../util":152,"web-stream-tools":75}],127:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -35604,12 +37228,16 @@ Marker.prototype.read = function (bytes) {
 
 exports.default = Marker;
 
-},{"../enums":115}],130:[function(require,module,exports){
+},{"../enums":113}],128:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _webStreamTools = require('web-stream-tools');
+
+var _webStreamTools2 = _interopRequireDefault(_webStreamTools);
 
 var _signature = require('./signature');
 
@@ -35641,30 +37269,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @memberof module:packet
  * @constructor
  */
-// GPG4Browsers - An OpenPGP implementation in javascript
-// Copyright (C) 2011 Recurity Labs GmbH
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3.0 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
-/**
- * @requires packet/signature
- * @requires type/keyid
- * @requires enums
- * @requires util
- */
-
 function OnePassSignature() {
   /**
    * Packet type
@@ -35704,6 +37308,31 @@ function OnePassSignature() {
  * @param {Uint8Array} bytes payload of a tag 4 packet
  * @returns {module:packet.OnePassSignature} object representation
  */
+// GPG4Browsers - An OpenPGP implementation in javascript
+// Copyright (C) 2011 Recurity Labs GmbH
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/**
+ * @requires web-stream-tools
+ * @requires packet/signature
+ * @requires type/keyid
+ * @requires enums
+ * @requires util
+ */
+
 OnePassSignature.prototype.read = function (bytes) {
   let mypos = 0;
   // A one-octet version number.  The current version is 3.
@@ -35751,18 +37380,12 @@ OnePassSignature.prototype.postCloneTypeFix = function () {
   this.issuerKeyId = _keyid2.default.fromClone(this.issuerKeyId);
 };
 
-OnePassSignature.prototype.hash = function () {
-  const version = this.version;
-  this.version = 4;
-  try {
-    return _signature2.default.prototype.hash.apply(this, arguments);
-  } finally {
-    this.version = version;
-  }
-};
+OnePassSignature.prototype.hash = _signature2.default.prototype.hash;
 OnePassSignature.prototype.toHash = _signature2.default.prototype.toHash;
 OnePassSignature.prototype.toSign = _signature2.default.prototype.toSign;
-OnePassSignature.prototype.calculateTrailer = _signature2.default.prototype.calculateTrailer;
+OnePassSignature.prototype.calculateTrailer = function (...args) {
+  return _webStreamTools2.default.fromAsync(async () => (await this.correspondingSig).calculateTrailer(...args));
+};
 
 OnePassSignature.prototype.verify = async function () {
   const correspondingSig = await this.correspondingSig;
@@ -35778,7 +37401,7 @@ OnePassSignature.prototype.verify = async function () {
 
 exports.default = OnePassSignature;
 
-},{"../enums":115,"../type/keyid":150,"../util":154,"./signature":138}],131:[function(require,module,exports){
+},{"../enums":113,"../type/keyid":148,"../util":152,"./signature":136,"web-stream-tools":75}],129:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -35898,23 +37521,6 @@ exports.default = {
   },
 
   /**
-   * Writes a packet header Version 3 with the given tag_type and length to a
-   * string
-   *
-   * @param {Integer} tag_type Tag type
-   * @param {Integer} length Length of the payload
-   * @returns {String} String of the header
-   */
-  writeOldHeader: function writeOldHeader(tag_type, length) {
-    if (length < 256) {
-      return new Uint8Array([0x80 | tag_type << 2, length]);
-    } else if (length < 65536) {
-      return _util2.default.concatUint8Array([new Uint8Array([0x80 | tag_type << 2 | 1]), _util2.default.writeNumber(length, 2)]);
-    }
-    return _util2.default.concatUint8Array([new Uint8Array([0x80 | tag_type << 2 | 2]), _util2.default.writeNumber(length, 4)]);
-  },
-
-  /**
    * Whether the packet type supports partial lengths per RFC4880
    * @param {Integer} tag_type Tag type
    * @returns {Boolean} String of the header
@@ -35933,6 +37539,7 @@ exports.default = {
   read: async function read(input, streaming, callback) {
     const reader = _webStreamTools2.default.getReader(input);
     let writer;
+    let callbackReturned;
     try {
       const peekedBytes = await reader.peekBytes(2);
       // some sanity checks
@@ -35961,7 +37568,6 @@ exports.default = {
 
       const supportsStreaming = this.supportsStreaming(tag);
       let packet = null;
-      let callbackReturned;
       if (streaming && supportsStreaming) {
         const transform = new TransformStream();
         writer = _webStreamTools2.default.getWriter(transform.writable);
@@ -36027,7 +37633,7 @@ exports.default = {
             packet_length = (await reader.readByte()) << 24 | (await reader.readByte()) << 16 | (await reader.readByte()) << 8 | (await reader.readByte());
           }
         }
-        if (packet_length >= 0) {
+        if (packet_length > 0) {
           let bytesRead = 0;
           while (true) {
             if (writer) await writer.ready;
@@ -36041,7 +37647,7 @@ exports.default = {
               if (packet_length === Infinity) break;
               throw new Error('Unexpected end of packet');
             }
-            const chunk = value.subarray(0, packet_length - bytesRead);
+            const chunk = packet_length === Infinity ? value : value.subarray(0, packet_length - bytesRead);
             if (writer) await writer.write(chunk);else packet.push(chunk);
             bytesRead += value.length;
             if (bytesRead >= packet_length) {
@@ -36052,15 +37658,48 @@ exports.default = {
         }
       } while (wasPartialLength);
 
-      if (!writer) {
-        packet = _util2.default.concatUint8Array(packet);
-        await callback({ tag, packet });
-      }
-      const nextPacket = await reader.peekBytes(2);
+      // If this was not a packet that "supports streaming", we peek to check
+      // whether it is the last packet in the message. We peek 2 bytes instead
+      // of 1 because the beginning of this function also peeks 2 bytes, and we
+      // want to cut a `subarray` of the correct length into `web-stream-tools`'
+      // `externalBuffer` as a tiny optimization here.
+      //
+      // If it *was* a streaming packet (i.e. the data packets), we peek at the
+      // entire remainder of the stream, in order to forward errors in the
+      // remainder of the stream to the packet data. (Note that this means we
+      // read/peek at all signature packets before closing the literal data
+      // packet, for example.) This forwards armor checksum errors to the
+      // encrypted data stream, for example, so that they don't get lost /
+      // forgotten on encryptedMessage.packets.stream, which we never look at.
+      //
+      // Note that subsequent packet parsing errors could still end up there if
+      // `config.tolerant` is set to false, or on malformed messages with
+      // multiple data packets, but usually it shouldn't happen.
+      //
+      // An example of what we do when stream-parsing a message containing
+      // [ one-pass signature packet, literal data packet, signature packet ]:
+      // 1. Read the one-pass signature packet
+      // 2. Peek 2 bytes of the literal data packet
+      // 3. Parse the one-pass signature packet
+      //
+      // 4. Read the literal data packet, simultaneously stream-parsing it
+      // 5. Peek until the end of the message
+      // 6. Finish parsing the literal data packet
+      //
+      // 7. Read the signature packet again (we already peeked at it in step 5)
+      // 8. Peek at the end of the stream again (`peekBytes` returns undefined)
+      // 9. Parse the signature packet
+      //
+      // Note that this means that if there's an error in the very end of the
+      // stream, such as an MDC error, we throw in step 5 instead of in step 8
+      // (or never), which is the point of this exercise.
+      const nextPacket = await reader.peekBytes(supportsStreaming ? Infinity : 2);
       if (writer) {
         await writer.ready;
         await writer.close();
-        await callbackReturned;
+      } else {
+        packet = _util2.default.concatUint8Array(packet);
+        await callback({ tag, packet });
       }
       return !nextPacket || !nextPacket.length;
     } catch (e) {
@@ -36071,12 +37710,15 @@ exports.default = {
         throw e;
       }
     } finally {
+      if (writer) {
+        await callbackReturned;
+      }
       reader.releaseLock();
     }
   }
 };
 
-},{"../enums":115,"../util":154,"web-stream-tools":77}],132:[function(require,module,exports){
+},{"../enums":113,"../util":152,"web-stream-tools":75}],130:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36333,12 +37975,15 @@ List.fromStructuredClone = function (packetlistClone) {
       packet.packets = new List();
     }
   }
+  if (packetlistClone.stream) {
+    packetlist.stream = _webStreamTools2.default.transform(packetlistClone.stream, packet => packets.fromStructuredClone(packet));
+  }
   return packetlist;
 };
 
 exports.default = List;
 
-},{"../config":81,"../enums":115,"../util":154,"./all_packets":124,"./packet":131,"web-stream-tools":77}],133:[function(require,module,exports){
+},{"../config":79,"../enums":113,"../util":152,"./all_packets":122,"./packet":129,"web-stream-tools":75}],131:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36424,7 +38069,7 @@ function PublicKey(date = new Date()) {
    * Packet version
    * @type {Integer}
    */
-  this.version = _config2.default.aead_protect && _config2.default.aead_protect_version === 4 ? 5 : 4;
+  this.version = _config2.default.v5_keys ? 5 : 4;
   /**
    * Key creation date.
    * @type {Date}
@@ -36537,11 +38182,14 @@ PublicKey.prototype.write = function () {
 PublicKey.prototype.writePublicKey = PublicKey.prototype.write;
 
 /**
- * Write an old version packet - it's used by some of the internal routines.
+ * Write packet in order to be hashed; either for a signature or a fingerprint.
  */
-PublicKey.prototype.writeOld = function () {
+PublicKey.prototype.writeForHash = function (version) {
   const bytes = this.writePublicKey();
 
+  if (version === 5) {
+    return _util2.default.concatUint8Array([new Uint8Array([0x9A]), _util2.default.writeNumber(bytes.length, 4), bytes]);
+  }
   return _util2.default.concatUint8Array([new Uint8Array([0x99]), _util2.default.writeNumber(bytes.length, 2), bytes]);
 };
 
@@ -36586,13 +38234,10 @@ PublicKey.prototype.getFingerprintBytes = function () {
   if (this.fingerprint) {
     return this.fingerprint;
   }
-  let toHash;
+  const toHash = this.writeForHash(this.version);
   if (this.version === 5) {
-    const bytes = this.writePublicKey();
-    toHash = _util2.default.concatUint8Array([new Uint8Array([0x9A]), _util2.default.writeNumber(bytes.length, 4), bytes]);
     this.fingerprint = _sha2.Sha256.bytes(toHash);
   } else if (this.version === 4) {
-    toHash = this.writeOld();
     this.fingerprint = _sha.Sha1.bytes(toHash);
   }
   return this.fingerprint;
@@ -36646,7 +38291,7 @@ PublicKey.prototype.postCloneTypeFix = function () {
 
 exports.default = PublicKey;
 
-},{"../config":81,"../crypto":96,"../enums":115,"../type/keyid":150,"../type/mpi":151,"../util":154,"asmcrypto.js/dist_es5/hash/sha1/sha1":12,"asmcrypto.js/dist_es5/hash/sha256/sha256":14}],134:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../type/keyid":148,"../type/mpi":149,"../util":152,"asmcrypto.js/dist_es5/hash/sha1/sha1":11,"asmcrypto.js/dist_es5/hash/sha256/sha256":13}],132:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36807,7 +38452,7 @@ PublicKeyEncryptedSessionKey.prototype.encrypt = async function (key) {
  */
 PublicKeyEncryptedSessionKey.prototype.decrypt = async function (key) {
   const algo = _enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm);
-  const result = await _crypto2.default.publicKeyDecrypt(algo, key.params, this.encrypted, key.getFingerprintBytes());
+  const result = new _mpi2.default((await _crypto2.default.publicKeyDecrypt(algo, key.params, this.encrypted, key.getFingerprintBytes())));
 
   let checksum;
   let decoded;
@@ -36844,7 +38489,7 @@ PublicKeyEncryptedSessionKey.prototype.postCloneTypeFix = function () {
 
 exports.default = PublicKeyEncryptedSessionKey;
 
-},{"../crypto":96,"../enums":115,"../type/keyid":150,"../type/mpi":151,"../util":154}],135:[function(require,module,exports){
+},{"../crypto":94,"../enums":113,"../type/keyid":148,"../type/mpi":149,"../util":152}],133:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36903,7 +38548,7 @@ PublicSubkey.prototype.constructor = PublicSubkey;
 
 exports.default = PublicSubkey;
 
-},{"../enums":115,"./public_key":133}],136:[function(require,module,exports){
+},{"../enums":113,"./public_key":131}],134:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -36978,13 +38623,33 @@ function SecretKey(date = new Date()) {
    */
   this.tag = _enums2.default.packet.secretKey;
   /**
-   * Encrypted secret-key data
+   * Secret-key data
    */
-  this.encrypted = null;
+  this.keyMaterial = null;
   /**
-   * Indicator if secret-key data is encrypted. `this.isEncrypted === false` means data is available in decrypted form.
+   * Indicates whether secret-key data is encrypted. `this.isEncrypted === false` means data is available in decrypted form.
    */
   this.isEncrypted = null;
+  /**
+   * S2K usage
+   * @type {Integer}
+   */
+  this.s2k_usage = 0;
+  /**
+   * S2K object
+   * @type {type/s2k}
+   */
+  this.s2k = null;
+  /**
+   * Symmetric algorithm
+   * @type {String}
+   */
+  this.symmetric = 'aes256';
+  /**
+   * AEAD algorithm
+   * @type {String}
+   */
+  this.aead = 'eax';
 }
 
 SecretKey.prototype = new _public_key2.default();
@@ -37029,30 +38694,75 @@ function write_cleartext_params(params, algorithm) {
  */
 SecretKey.prototype.read = function (bytes) {
   // - A Public-Key or Public-Subkey packet, as described above.
-  const len = this.readPublicKey(bytes);
-
-  bytes = bytes.subarray(len, bytes.length);
+  let i = this.readPublicKey(bytes);
 
   // - One octet indicating string-to-key usage conventions.  Zero
   //   indicates that the secret-key data is not encrypted.  255 or 254
   //   indicates that a string-to-key specifier is being given.  Any
   //   other value is a symmetric-key encryption algorithm identifier.
-  const isEncrypted = bytes[0];
+  this.s2k_usage = bytes[i++];
 
-  if (isEncrypted) {
-    this.encrypted = bytes;
-    this.isEncrypted = true;
-  } else {
-    // - Plain or encrypted multiprecision integers comprising the secret
-    //   key data.  These algorithm-specific fields are as described
-    //   below.
-    const cleartext = bytes.subarray(1, -2);
-    if (!_util2.default.equalsUint8Array(_util2.default.write_checksum(cleartext), bytes.subarray(-2))) {
+  // - Only for a version 5 packet, a one-octet scalar octet count of
+  //   the next 4 optional fields.
+  if (this.version === 5) {
+    i++;
+  }
+
+  // - [Optional] If string-to-key usage octet was 255, 254, or 253, a
+  //   one-octet symmetric encryption algorithm.
+  if (this.s2k_usage === 255 || this.s2k_usage === 254 || this.s2k_usage === 253) {
+    this.symmetric = bytes[i++];
+    this.symmetric = _enums2.default.read(_enums2.default.symmetric, this.symmetric);
+
+    // - [Optional] If string-to-key usage octet was 253, a one-octet
+    //   AEAD algorithm.
+    if (this.s2k_usage === 253) {
+      this.aead = bytes[i++];
+      this.aead = _enums2.default.read(_enums2.default.aead, this.aead);
+    }
+
+    // - [Optional] If string-to-key usage octet was 255, 254, or 253, a
+    //   string-to-key specifier.  The length of the string-to-key
+    //   specifier is implied by its type, as described above.
+    this.s2k = new _s2k2.default();
+    i += this.s2k.read(bytes.subarray(i, bytes.length));
+
+    if (this.s2k.type === 'gnu-dummy') {
+      return;
+    }
+  } else if (this.s2k_usage) {
+    this.symmetric = this.s2k_usage;
+    this.symmetric = _enums2.default.read(_enums2.default.symmetric, this.symmetric);
+  }
+
+  // - [Optional] If secret data is encrypted (string-to-key usage octet
+  //   not zero), an Initial Vector (IV) of the same length as the
+  //   cipher's block size.
+  if (this.s2k_usage) {
+    this.iv = bytes.subarray(i, i + _crypto2.default.cipher[this.symmetric].blockSize);
+
+    i += this.iv.length;
+  }
+
+  // - Only for a version 5 packet, a four-octet scalar octet count for
+  //   the following key material.
+  if (this.version === 5) {
+    i += 4;
+  }
+
+  // - Plain or encrypted multiprecision integers comprising the secret
+  //   key data.  These algorithm-specific fields are as described
+  //   below.
+  this.keyMaterial = bytes.subarray(i);
+  this.isEncrypted = !!this.s2k_usage;
+
+  if (!this.isEncrypted) {
+    const cleartext = this.keyMaterial.subarray(0, -2);
+    if (!_util2.default.equalsUint8Array(_util2.default.write_checksum(cleartext), this.keyMaterial.subarray(-2))) {
       throw new Error('Key checksum mismatch');
     }
     const privParams = parse_cleartext_params(cleartext, this.algorithm);
     this.params = this.params.concat(privParams);
-    this.isEncrypted = false;
   }
 };
 
@@ -37063,13 +38773,48 @@ SecretKey.prototype.read = function (bytes) {
 SecretKey.prototype.write = function () {
   const arr = [this.writePublicKey()];
 
-  if (!this.encrypted) {
-    arr.push(new Uint8Array([0]));
-    const cleartextParams = write_cleartext_params(this.params, this.algorithm);
-    arr.push(cleartextParams);
-    arr.push(_util2.default.write_checksum(cleartextParams));
-  } else {
-    arr.push(this.encrypted);
+  arr.push(new Uint8Array([this.s2k_usage]));
+
+  const optionalFieldsArr = [];
+  // - [Optional] If string-to-key usage octet was 255, 254, or 253, a
+  //   one- octet symmetric encryption algorithm.
+  if (this.s2k_usage === 255 || this.s2k_usage === 254 || this.s2k_usage === 253) {
+    optionalFieldsArr.push(_enums2.default.write(_enums2.default.symmetric, this.symmetric));
+
+    // - [Optional] If string-to-key usage octet was 253, a one-octet
+    //   AEAD algorithm.
+    if (this.s2k_usage === 253) {
+      optionalFieldsArr.push(_enums2.default.write(_enums2.default.aead, this.aead));
+    }
+
+    // - [Optional] If string-to-key usage octet was 255, 254, or 253, a
+    //   string-to-key specifier.  The length of the string-to-key
+    //   specifier is implied by its type, as described above.
+    optionalFieldsArr.push(...this.s2k.write());
+  }
+
+  // - [Optional] If secret data is encrypted (string-to-key usage octet
+  //   not zero), an Initial Vector (IV) of the same length as the
+  //   cipher's block size.
+  if (this.s2k_usage && this.s2k.type !== 'gnu-dummy') {
+    optionalFieldsArr.push(...this.iv);
+  }
+
+  if (this.version === 5) {
+    arr.push(new Uint8Array([optionalFieldsArr.length]));
+  }
+  arr.push(new Uint8Array(optionalFieldsArr));
+
+  if (!this.s2k || this.s2k.type !== 'gnu-dummy') {
+    if (!this.s2k_usage) {
+      const cleartextParams = write_cleartext_params(this.params, this.algorithm);
+      this.keyMaterial = _util2.default.concatUint8Array([cleartextParams, _util2.default.write_checksum(cleartextParams)]);
+    }
+
+    if (this.version === 5) {
+      arr.push(_util2.default.writeNumber(this.keyMaterial.length, 4));
+    }
+    arr.push(this.keyMaterial);
   }
 
   return _util2.default.concatUint8Array(arr);
@@ -37093,41 +38838,33 @@ SecretKey.prototype.isDecrypted = function () {
  * @async
  */
 SecretKey.prototype.encrypt = async function (passphrase) {
+  if (this.s2k && this.s2k.type === 'gnu-dummy') {
+    return false;
+  }
+
   if (this.isDecrypted() && !passphrase) {
-    this.encrypted = null;
+    this.s2k_usage = 0;
     return false;
   } else if (!passphrase) {
     throw new Error('The key must be decrypted before removing passphrase protection.');
   }
 
-  const s2k = new _s2k2.default();
-  s2k.salt = await _crypto2.default.random.getRandomBytes(8);
-  const symmetric = 'aes256';
+  this.s2k = new _s2k2.default();
+  this.s2k.salt = await _crypto2.default.random.getRandomBytes(8);
   const cleartext = write_cleartext_params(this.params, this.algorithm);
-  const key = await produceEncryptionKey(s2k, passphrase, symmetric);
-  const blockLen = _crypto2.default.cipher[symmetric].blockSize;
-  const iv = await _crypto2.default.random.getRandomBytes(blockLen);
-
-  let arr;
+  const key = await produceEncryptionKey(this.s2k, passphrase, this.symmetric);
+  const blockLen = _crypto2.default.cipher[this.symmetric].blockSize;
+  this.iv = await _crypto2.default.random.getRandomBytes(blockLen);
 
   if (this.version === 5) {
-    const aead = 'eax';
-    const optionalFields = _util2.default.concatUint8Array([new Uint8Array([_enums2.default.write(_enums2.default.symmetric, symmetric), _enums2.default.write(_enums2.default.aead, aead)]), s2k.write(), iv]);
-    arr = [new Uint8Array([253, optionalFields.length])];
-    arr.push(optionalFields);
-    const mode = _crypto2.default[aead];
-    const modeInstance = await mode(symmetric, key);
-    const encrypted = await modeInstance.encrypt(cleartext, iv.subarray(0, mode.ivLength), new Uint8Array());
-    arr.push(_util2.default.writeNumber(encrypted.length, 4));
-    arr.push(encrypted);
+    this.s2k_usage = 253;
+    const mode = _crypto2.default[this.aead];
+    const modeInstance = await mode(this.symmetric, key);
+    this.keyMaterial = await modeInstance.encrypt(cleartext, this.iv.subarray(0, mode.ivLength), new Uint8Array());
   } else {
-    arr = [new Uint8Array([254, _enums2.default.write(_enums2.default.symmetric, symmetric)])];
-    arr.push(s2k.write());
-    arr.push(iv);
-    arr.push(_crypto2.default.cfb.encrypt(symmetric, key, _util2.default.concatUint8Array([cleartext, await _crypto2.default.hash.sha1(cleartext)]), iv));
+    this.s2k_usage = 254;
+    this.keyMaterial = _crypto2.default.cfb.encrypt(this.symmetric, key, _util2.default.concatUint8Array([cleartext, await _crypto2.default.hash.sha1(cleartext)]), this.iv);
   }
-
-  this.encrypted = _util2.default.concatUint8Array(arr);
   return true;
 };
 
@@ -37144,83 +38881,40 @@ async function produceEncryptionKey(s2k, passphrase, algorithm) {
  * @async
  */
 SecretKey.prototype.decrypt = async function (passphrase) {
+  if (this.s2k.type === 'gnu-dummy') {
+    this.isEncrypted = false;
+    return false;
+  }
+
   if (this.isDecrypted()) {
     throw new Error('Key packet is already decrypted.');
   }
 
-  let i = 0;
-  let symmetric;
-  let aead;
   let key;
-
-  const s2k_usage = this.encrypted[i++];
-
-  // - Only for a version 5 packet, a one-octet scalar octet count of
-  //   the next 4 optional fields.
-  if (this.version === 5) {
-    i++;
-  }
-
-  // - [Optional] If string-to-key usage octet was 255, 254, or 253, a
-  //   one-octet symmetric encryption algorithm.
-  if (s2k_usage === 255 || s2k_usage === 254 || s2k_usage === 253) {
-    symmetric = this.encrypted[i++];
-    symmetric = _enums2.default.read(_enums2.default.symmetric, symmetric);
-
-    // - [Optional] If string-to-key usage octet was 253, a one-octet
-    //   AEAD algorithm.
-    if (s2k_usage === 253) {
-      aead = this.encrypted[i++];
-      aead = _enums2.default.read(_enums2.default.aead, aead);
-    }
-
-    // - [Optional] If string-to-key usage octet was 255, 254, or 253, a
-    //   string-to-key specifier.  The length of the string-to-key
-    //   specifier is implied by its type, as described above.
-    const s2k = new _s2k2.default();
-    i += s2k.read(this.encrypted.subarray(i, this.encrypted.length));
-
-    if (s2k.type === 'gnu-dummy') {
-      return true;
-    }
-    key = await produceEncryptionKey(s2k, passphrase, symmetric);
+  if (this.s2k_usage === 255 || this.s2k_usage === 254 || this.s2k_usage === 253) {
+    key = await produceEncryptionKey(this.s2k, passphrase, this.symmetric);
   } else {
-    symmetric = s2k_usage;
-    symmetric = _enums2.default.read(_enums2.default.symmetric, symmetric);
     key = await _crypto2.default.hash.md5(passphrase);
   }
 
-  // - [Optional] If secret data is encrypted (string-to-key usage octet
-  //   not zero), an Initial Vector (IV) of the same length as the
-  //   cipher's block size.
-  const iv = this.encrypted.subarray(i, i + _crypto2.default.cipher[symmetric].blockSize);
-
-  i += iv.length;
-
-  // - Only for a version 5 packet, a four-octet scalar octet count for
-  //   the following key material.
-  if (this.version === 5) {
-    i += 4;
-  }
-
-  const ciphertext = this.encrypted.subarray(i, this.encrypted.length);
   let cleartext;
-  if (aead) {
-    const mode = _crypto2.default[aead];
+  if (this.s2k_usage === 253) {
+    const mode = _crypto2.default[this.aead];
     try {
-      const modeInstance = await mode(symmetric, key);
-      cleartext = await modeInstance.decrypt(ciphertext, iv.subarray(0, mode.ivLength), new Uint8Array());
+      const modeInstance = await mode(this.symmetric, key);
+      cleartext = await modeInstance.decrypt(this.keyMaterial, this.iv.subarray(0, mode.ivLength), new Uint8Array());
     } catch (err) {
       if (err.message === 'Authentication tag mismatch') {
         throw new Error('Incorrect key passphrase: ' + err.message);
       }
+      throw err;
     }
   } else {
-    const cleartextWithHash = await _crypto2.default.cfb.decrypt(symmetric, key, ciphertext, iv);
+    const cleartextWithHash = await _crypto2.default.cfb.decrypt(this.symmetric, key, this.keyMaterial, this.iv);
 
     let hash;
     let hashlen;
-    if (s2k_usage === 255) {
+    if (this.s2k_usage === 255) {
       hashlen = 2;
       cleartext = cleartextWithHash.subarray(0, -hashlen);
       hash = _util2.default.write_checksum(cleartext);
@@ -37238,7 +38932,8 @@ SecretKey.prototype.decrypt = async function (passphrase) {
   const privParams = parse_cleartext_params(cleartext, this.algorithm);
   this.params = this.params.concat(privParams);
   this.isEncrypted = false;
-  this.encrypted = null;
+  this.keyMaterial = null;
+  this.s2k_usage = 0;
 
   return true;
 };
@@ -37253,7 +38948,12 @@ SecretKey.prototype.generate = async function (bits, curve) {
  * Clear private params, return to initial state
  */
 SecretKey.prototype.clearPrivateParams = function () {
-  if (!this.encrypted) {
+  if (this.s2k && this.s2k.type === 'gnu-dummy') {
+    this.isEncrypted = true;
+    return;
+  }
+
+  if (!this.keyMaterial) {
     throw new Error('If secret key is not encrypted, clearing private params is irreversible.');
   }
   const algo = _enums2.default.write(_enums2.default.publicKey, this.algorithm);
@@ -37278,7 +38978,7 @@ SecretKey.prototype.postCloneTypeFix = function () {
 
 exports.default = SecretKey;
 
-},{"../crypto":96,"../enums":115,"../type/keyid.js":150,"../type/s2k":153,"../util":154,"./public_key":133}],137:[function(require,module,exports){
+},{"../crypto":94,"../enums":113,"../type/keyid.js":148,"../type/s2k":151,"../util":152,"./public_key":131}],135:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -37334,7 +39034,7 @@ SecretSubkey.prototype.constructor = SecretSubkey;
 
 exports.default = SecretSubkey;
 
-},{"../enums":115,"./secret_key":136}],138:[function(require,module,exports){
+},{"../enums":113,"./secret_key":134}],136:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -37369,6 +39069,10 @@ var _util = require('../util');
 
 var _util2 = _interopRequireDefault(_util);
 
+var _config = require('../config');
+
+var _config2 = _interopRequireDefault(_config);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -37382,9 +39086,36 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * @constructor
  * @param {Date} date the creation date of the signature
  */
+// GPG4Browsers - An OpenPGP implementation in javascript
+// Copyright (C) 2011 Recurity Labs GmbH
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+/**
+ * @requires web-stream-tools
+ * @requires packet/packet
+ * @requires type/keyid
+ * @requires type/mpi
+ * @requires crypto
+ * @requires enums
+ * @requires util
+ */
+
 function Signature(date = new Date()) {
   this.tag = _enums2.default.packet.signature;
-  this.version = 4;
+  this.version = 4; // This is set to 5 below if we sign with a V5 key.
   this.signatureType = null;
   this.hashAlgorithm = null;
   this.publicKeyAlgorithm = null;
@@ -37408,7 +39139,7 @@ function Signature(date = new Date()) {
   this.revocationKeyAlgorithm = null;
   this.revocationKeyFingerprint = null;
   this.issuerKeyId = new _keyid2.default();
-  this.notation = null;
+  this.notations = [];
   this.preferredHashAlgorithms = null;
   this.preferredCompressionAlgorithms = null;
   this.keyServerPreferences = null;
@@ -37439,38 +39170,11 @@ function Signature(date = new Date()) {
  * @param {Integer} len length of the packet or the remaining length of bytes at position
  * @returns {module:packet.Signature} object representation
  */
-// GPG4Browsers - An OpenPGP implementation in javascript
-// Copyright (C) 2011 Recurity Labs GmbH
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3.0 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-
-/**
- * @requires web-stream-tools
- * @requires packet/packet
- * @requires type/keyid
- * @requires type/mpi
- * @requires crypto
- * @requires enums
- * @requires util
- */
-
 Signature.prototype.read = function (bytes) {
   let i = 0;
   this.version = bytes[i++];
 
-  if (this.version !== 4) {
+  if (this.version !== 4 && this.version !== 5) {
     throw new Error('Version ' + this.version + ' of the signature is unsupported.');
   }
 
@@ -37512,15 +39216,19 @@ Signature.prototype.write = function () {
  * Signs provided data. This needs to be done prior to serialization.
  * @param {module:packet.SecretKey} key private key used to sign the message.
  * @param {Object} data Contains packets to be signed.
+ * @param {Boolean} detached (optional) whether to create a detached signature
  * @returns {Promise<Boolean>}
  * @async
  */
-Signature.prototype.sign = async function (key, data) {
+Signature.prototype.sign = async function (key, data, detached = false) {
   const signatureType = _enums2.default.write(_enums2.default.signature, this.signatureType);
   const publicKeyAlgorithm = _enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm);
   const hashAlgorithm = _enums2.default.write(_enums2.default.hash, this.hashAlgorithm);
 
-  const arr = [new Uint8Array([4, signatureType, publicKeyAlgorithm, hashAlgorithm])];
+  if (key.version === 5) {
+    this.version = 5;
+  }
+  const arr = [new Uint8Array([this.version, signatureType, publicKeyAlgorithm, hashAlgorithm])];
 
   if (key.version === 5) {
     // We could also generate this subpacket for version 4 keys, but for
@@ -37536,8 +39244,8 @@ Signature.prototype.sign = async function (key, data) {
 
   this.signatureData = _util2.default.concat(arr);
 
-  const toHash = this.toHash(signatureType, data);
-  const hash = await this.hash(signatureType, data, toHash);
+  const toHash = this.toHash(signatureType, data, detached);
+  const hash = await this.hash(signatureType, data, toHash, detached);
 
   this.signedHashValue = _webStreamTools2.default.slice(_webStreamTools2.default.clone(hash), 0, 2);
 
@@ -37591,18 +39299,16 @@ Signature.prototype.write_hashed_sub_packets = function () {
     bytes = _util2.default.concat([bytes, this.revocationKeyFingerprint]);
     arr.push(write_sub_packet(sub.revocation_key, bytes));
   }
-  if (this.notation !== null) {
-    Object.entries(this.notation).forEach(([name, value]) => {
-      bytes = [new Uint8Array([0x80, 0, 0, 0])];
-      // 2 octets of name length
-      bytes.push(_util2.default.writeNumber(name.length, 2));
-      // 2 octets of value length
-      bytes.push(_util2.default.writeNumber(value.length, 2));
-      bytes.push(_util2.default.str_to_Uint8Array(name + value));
-      bytes = _util2.default.concat(bytes);
-      arr.push(write_sub_packet(sub.notation_data, bytes));
-    });
-  }
+  this.notations.forEach(([name, value]) => {
+    bytes = [new Uint8Array([0x80, 0, 0, 0])];
+    // 2 octets of name length
+    bytes.push(_util2.default.writeNumber(name.length, 2));
+    // 2 octets of value length
+    bytes.push(_util2.default.writeNumber(value.length, 2));
+    bytes.push(_util2.default.str_to_Uint8Array(name + value));
+    bytes = _util2.default.concat(bytes);
+    arr.push(write_sub_packet(sub.notation_data, bytes));
+  });
   if (this.preferredHashAlgorithms !== null) {
     bytes = _util2.default.str_to_Uint8Array(_util2.default.Uint8Array_to_str(this.preferredHashAlgorithms));
     arr.push(write_sub_packet(sub.preferred_hash_algorithms, bytes));
@@ -37808,8 +39514,11 @@ Signature.prototype.read_sub_packet = function (bytes, trusted = true) {
         const name = _util2.default.Uint8Array_to_str(bytes.subarray(mypos, mypos + m));
         const value = _util2.default.Uint8Array_to_str(bytes.subarray(mypos + m, mypos + m + n));
 
-        this.notation = this.notation || {};
-        this.notation[name] = value;
+        this.notations.push([name, value]);
+
+        if (critical && _config2.default.known_notations.indexOf(name) === -1) {
+          throw new Error("Unknown critical notation: " + name);
+        }
       } else {
         _util2.default.print_debug("Unsupported notation flag " + bytes[mypos]);
       }
@@ -37973,7 +39682,7 @@ Signature.prototype.toSign = function (type, data) {
       if (data.key === undefined) {
         throw new Error('Key packet is required for this signature.');
       }
-      return data.key.writeOld();
+      return data.key.writeForHash(this.version);
 
     case t.key_revocation:
       return this.toSign(t.key, data);
@@ -37986,27 +39695,41 @@ Signature.prototype.toSign = function (type, data) {
   }
 };
 
-Signature.prototype.calculateTrailer = function () {
+Signature.prototype.calculateTrailer = function (data, detached) {
   let length = 0;
   return _webStreamTools2.default.transform(_webStreamTools2.default.clone(this.signatureData), value => {
     length += value.length;
   }, () => {
-    const first = new Uint8Array([4, 0xFF]); //Version, ?
-    return _util2.default.concat([first, _util2.default.writeNumber(length, 4)]);
+    const arr = [];
+    if (this.version === 5 && (this.signatureType === _enums2.default.signature.binary || this.signatureType === _enums2.default.signature.text)) {
+      if (detached) {
+        arr.push(new Uint8Array(6));
+      } else {
+        arr.push(data.writeHeader());
+      }
+    }
+    arr.push(new Uint8Array([this.version, 0xFF]));
+    if (this.version === 5) {
+      arr.push(new Uint8Array(4));
+    }
+    arr.push(_util2.default.writeNumber(length, 4));
+    // For v5, this should really be writeNumber(length, 8) rather than the
+    // hardcoded 4 zero bytes above
+    return _util2.default.concat(arr);
   });
 };
 
-Signature.prototype.toHash = function (signatureType, data) {
+Signature.prototype.toHash = function (signatureType, data, detached = false) {
   const bytes = this.toSign(signatureType, data);
 
-  return _util2.default.concat([bytes, this.signatureData, this.calculateTrailer()]);
+  return _util2.default.concat([bytes, this.signatureData, this.calculateTrailer(data, detached)]);
 };
 
-Signature.prototype.hash = async function (signatureType, data, toHash, streaming = true) {
+Signature.prototype.hash = async function (signatureType, data, toHash, detached = false, streaming = true) {
   const hashAlgorithm = _enums2.default.write(_enums2.default.hash, this.hashAlgorithm);
-  if (!toHash) toHash = this.toHash(signatureType, data);
+  if (!toHash) toHash = this.toHash(signatureType, data, detached);
   if (!streaming && _util2.default.isStream(toHash)) {
-    return _webStreamTools2.default.fromAsync(async () => this.hash(signatureType, data, (await _webStreamTools2.default.readToEnd(toHash))));
+    return _webStreamTools2.default.fromAsync(async () => this.hash(signatureType, data, (await _webStreamTools2.default.readToEnd(toHash)), detached));
   }
   return _crypto2.default.hash.digest(hashAlgorithm, toHash);
 };
@@ -38017,10 +39740,11 @@ Signature.prototype.hash = async function (signatureType, data, toHash, streamin
  *         module:packet.SecretSubkey|module:packet.SecretKey} key the public key to verify the signature
  * @param {module:enums.signature} signatureType expected signature type
  * @param {String|Object} data data which on the signature applies
+ * @param {Boolean} detached (optional) whether to verify a detached signature
  * @returns {Promise<Boolean>} True if message is verified, else false.
  * @async
  */
-Signature.prototype.verify = async function (key, signatureType, data) {
+Signature.prototype.verify = async function (key, signatureType, data, detached = false) {
   const publicKeyAlgorithm = _enums2.default.write(_enums2.default.publicKey, this.publicKeyAlgorithm);
   const hashAlgorithm = _enums2.default.write(_enums2.default.hash, this.hashAlgorithm);
 
@@ -38033,7 +39757,7 @@ Signature.prototype.verify = async function (key, signatureType, data) {
   if (this.hashed) {
     hash = this.hashed;
   } else {
-    toHash = this.toHash(signatureType, data);
+    toHash = this.toHash(signatureType, data, detached);
     hash = await this.hash(signatureType, data, toHash);
   }
   hash = await _webStreamTools2.default.readToEnd(hash);
@@ -38101,7 +39825,7 @@ Signature.prototype.postCloneTypeFix = function () {
 
 exports.default = Signature;
 
-},{"../crypto":96,"../enums":115,"../type/keyid.js":150,"../type/mpi.js":151,"../util":154,"./packet":131,"web-stream-tools":77}],139:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../type/keyid.js":148,"../type/mpi.js":149,"../util":152,"./packet":129,"web-stream-tools":75}],137:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38191,13 +39915,9 @@ SymEncryptedAEADProtected.prototype.read = async function (bytes) {
       // The only currently defined value is 1.
       throw new Error('Invalid packet version.');
     }
-    if (_config2.default.aead_protect_version === 4) {
-      this.cipherAlgo = await reader.readByte();
-      this.aeadAlgo = await reader.readByte();
-      this.chunkSizeByte = await reader.readByte();
-    } else {
-      this.aeadAlgo = _enums2.default.aead.experimental_gcm;
-    }
+    this.cipherAlgo = await reader.readByte();
+    this.aeadAlgo = await reader.readByte();
+    this.chunkSizeByte = await reader.readByte();
     const mode = _crypto2.default[_enums2.default.read(_enums2.default.aead, this.aeadAlgo)];
     this.iv = await reader.readBytes(mode.ivLength);
     this.encrypted = reader.remainder();
@@ -38209,10 +39929,7 @@ SymEncryptedAEADProtected.prototype.read = async function (bytes) {
  * @returns {Uint8Array | ReadableStream<Uint8Array>} The encrypted payload
  */
 SymEncryptedAEADProtected.prototype.write = function () {
-  if (_config2.default.aead_protect_version === 4) {
-    return _util2.default.concat([new Uint8Array([this.version, this.cipherAlgo, this.aeadAlgo, this.chunkSizeByte]), this.iv, this.encrypted]);
-  }
-  return _util2.default.concat([new Uint8Array([this.version]), this.iv, this.encrypted]);
+  return _util2.default.concat([new Uint8Array([this.version, this.cipherAlgo, this.aeadAlgo, this.chunkSizeByte]), this.iv, this.encrypted]);
 };
 
 /**
@@ -38224,9 +39941,6 @@ SymEncryptedAEADProtected.prototype.write = function () {
  * @async
  */
 SymEncryptedAEADProtected.prototype.decrypt = async function (sessionKeyAlgorithm, key, streaming) {
-  if (_config2.default.aead_protect_version !== 4) {
-    this.cipherAlgo = _enums2.default.write(_enums2.default.symmetric, sessionKeyAlgorithm);
-  }
   await this.packets.read((await this.crypt('decrypt', key, _webStreamTools2.default.clone(this.encrypted), streaming)), streaming);
   return true;
 };
@@ -38240,7 +39954,7 @@ SymEncryptedAEADProtected.prototype.decrypt = async function (sessionKeyAlgorith
  */
 SymEncryptedAEADProtected.prototype.encrypt = async function (sessionKeyAlgorithm, key, streaming) {
   this.cipherAlgo = _enums2.default.write(_enums2.default.symmetric, sessionKeyAlgorithm);
-  this.aeadAlgo = _config2.default.aead_protect_version === 4 ? _enums2.default.write(_enums2.default.aead, this.aeadAlgorithm) : _enums2.default.aead.experimental_gcm;
+  this.aeadAlgo = _enums2.default.write(_enums2.default.aead, this.aeadAlgorithm);
   const mode = _crypto2.default[_enums2.default.read(_enums2.default.aead, this.aeadAlgo)];
   this.iv = await _crypto2.default.random.getRandomBytes(mode.ivLength); // generate new random IV
   this.chunkSizeByte = _config2.default.aead_chunk_size_byte;
@@ -38261,74 +39975,70 @@ SymEncryptedAEADProtected.prototype.crypt = async function (fn, key, data, strea
   const cipher = _enums2.default.read(_enums2.default.symmetric, this.cipherAlgo);
   const mode = _crypto2.default[_enums2.default.read(_enums2.default.aead, this.aeadAlgo)];
   const modeInstance = await mode(cipher, key);
-  if (_config2.default.aead_protect_version === 4) {
-    const tagLengthIfDecrypting = fn === 'decrypt' ? mode.tagLength : 0;
-    const chunkSize = 2 ** (this.chunkSizeByte + 6) + tagLengthIfDecrypting; // ((uint64_t)1 << (c + 6))
-    const adataBuffer = new ArrayBuffer(21);
-    const adataArray = new Uint8Array(adataBuffer, 0, 13);
-    const adataTagArray = new Uint8Array(adataBuffer);
-    const adataView = new DataView(adataBuffer);
-    const chunkIndexArray = new Uint8Array(adataBuffer, 5, 8);
-    adataArray.set([0xC0 | this.tag, this.version, this.cipherAlgo, this.aeadAlgo, this.chunkSizeByte], 0);
-    let chunkIndex = 0;
-    let latestPromise = Promise.resolve();
-    let cryptedBytes = 0;
-    let queuedBytes = 0;
-    const iv = this.iv;
-    return _webStreamTools2.default.transformPair(data, async (readable, writable) => {
-      const reader = _webStreamTools2.default.getReader(readable);
-      const buffer = new TransformStream({}, {
-        highWaterMark: streaming ? _util2.default.getHardwareConcurrency() * 2 ** (_config2.default.aead_chunk_size_byte + 6) : Infinity,
-        size: array => array.length
-      });
-      _webStreamTools2.default.pipe(buffer.readable, writable);
-      const writer = _webStreamTools2.default.getWriter(buffer.writable);
-      try {
-        while (true) {
-          let chunk = (await reader.readBytes(chunkSize + tagLengthIfDecrypting)) || new Uint8Array();
-          const finalChunk = chunk.subarray(chunk.length - tagLengthIfDecrypting);
-          chunk = chunk.subarray(0, chunk.length - tagLengthIfDecrypting);
-          let cryptedPromise;
-          let done;
-          if (!chunkIndex || chunk.length) {
-            reader.unshift(finalChunk);
-            cryptedPromise = modeInstance[fn](chunk, mode.getNonce(iv, chunkIndexArray), adataArray);
-          } else {
-            // After the last chunk, we either encrypt a final, empty
-            // data chunk to get the final authentication tag or
-            // validate that final authentication tag.
-            adataView.setInt32(13 + 4, cryptedBytes); // Should be setInt64(13, ...)
-            cryptedPromise = modeInstance[fn](finalChunk, mode.getNonce(iv, chunkIndexArray), adataTagArray);
-            done = true;
-          }
-          cryptedBytes += chunk.length - tagLengthIfDecrypting;
-          queuedBytes += chunk.length - tagLengthIfDecrypting;
-          // eslint-disable-next-line no-loop-func
-          latestPromise = latestPromise.then(() => cryptedPromise).then(async crypted => {
-            await writer.ready;
-            await writer.write(crypted);
-            queuedBytes -= chunk.length;
-          }).catch(err => writer.abort(err));
-          if (done || queuedBytes > writer.desiredSize) {
-            await latestPromise; // Respect backpressure
-          }
-          if (!done) {
-            adataView.setInt32(5 + 4, ++chunkIndex); // Should be setInt64(5, ...)
-          } else {
-            await writer.close();
-            break;
-          }
-        }
-      } catch (e) {
-        await writer.abort(e);
-      }
+  const tagLengthIfDecrypting = fn === 'decrypt' ? mode.tagLength : 0;
+  const chunkSize = 2 ** (this.chunkSizeByte + 6) + tagLengthIfDecrypting; // ((uint64_t)1 << (c + 6))
+  const adataBuffer = new ArrayBuffer(21);
+  const adataArray = new Uint8Array(adataBuffer, 0, 13);
+  const adataTagArray = new Uint8Array(adataBuffer);
+  const adataView = new DataView(adataBuffer);
+  const chunkIndexArray = new Uint8Array(adataBuffer, 5, 8);
+  adataArray.set([0xC0 | this.tag, this.version, this.cipherAlgo, this.aeadAlgo, this.chunkSizeByte], 0);
+  let chunkIndex = 0;
+  let latestPromise = Promise.resolve();
+  let cryptedBytes = 0;
+  let queuedBytes = 0;
+  const iv = this.iv;
+  return _webStreamTools2.default.transformPair(data, async (readable, writable) => {
+    const reader = _webStreamTools2.default.getReader(readable);
+    const buffer = new TransformStream({}, {
+      highWaterMark: streaming ? _util2.default.getHardwareConcurrency() * 2 ** (_config2.default.aead_chunk_size_byte + 6) : Infinity,
+      size: array => array.length
     });
-  } else {
-    return modeInstance[fn]((await _webStreamTools2.default.readToEnd(data)), this.iv);
-  }
+    _webStreamTools2.default.pipe(buffer.readable, writable);
+    const writer = _webStreamTools2.default.getWriter(buffer.writable);
+    try {
+      while (true) {
+        let chunk = (await reader.readBytes(chunkSize + tagLengthIfDecrypting)) || new Uint8Array();
+        const finalChunk = chunk.subarray(chunk.length - tagLengthIfDecrypting);
+        chunk = chunk.subarray(0, chunk.length - tagLengthIfDecrypting);
+        let cryptedPromise;
+        let done;
+        if (!chunkIndex || chunk.length) {
+          reader.unshift(finalChunk);
+          cryptedPromise = modeInstance[fn](chunk, mode.getNonce(iv, chunkIndexArray), adataArray);
+        } else {
+          // After the last chunk, we either encrypt a final, empty
+          // data chunk to get the final authentication tag or
+          // validate that final authentication tag.
+          adataView.setInt32(13 + 4, cryptedBytes); // Should be setInt64(13, ...)
+          cryptedPromise = modeInstance[fn](finalChunk, mode.getNonce(iv, chunkIndexArray), adataTagArray);
+          done = true;
+        }
+        cryptedBytes += chunk.length - tagLengthIfDecrypting;
+        queuedBytes += chunk.length - tagLengthIfDecrypting;
+        // eslint-disable-next-line no-loop-func
+        latestPromise = latestPromise.then(() => cryptedPromise).then(async crypted => {
+          await writer.ready;
+          await writer.write(crypted);
+          queuedBytes -= chunk.length;
+        }).catch(err => writer.abort(err));
+        if (done || queuedBytes > writer.desiredSize) {
+          await latestPromise; // Respect backpressure
+        }
+        if (!done) {
+          adataView.setInt32(5 + 4, ++chunkIndex); // Should be setInt64(5, ...)
+        } else {
+          await writer.close();
+          break;
+        }
+      }
+    } catch (e) {
+      await writer.abort(e);
+    }
+  });
 };
 
-},{"../config":81,"../crypto":96,"../enums":115,"../util":154,"web-stream-tools":77}],140:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../util":152,"web-stream-tools":75}],138:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38462,8 +40172,8 @@ SymEncryptedIntegrityProtected.prototype.encrypt = async function (sessionKeyAlg
  * @async
  */
 SymEncryptedIntegrityProtected.prototype.decrypt = async function (sessionKeyAlgorithm, key, streaming) {
-  if (!streaming) this.encrypted = await _webStreamTools2.default.readToEnd(this.encrypted);
-  const encrypted = _webStreamTools2.default.clone(this.encrypted);
+  let encrypted = _webStreamTools2.default.clone(this.encrypted);
+  if (!streaming) encrypted = await _webStreamTools2.default.readToEnd(encrypted);
   const decrypted = await _crypto2.default.cfb.decrypt(sessionKeyAlgorithm, key, encrypted, new Uint8Array(_crypto2.default.cipher[sessionKeyAlgorithm].blockSize));
 
   // there must be a modification detection code packet as the
@@ -38488,7 +40198,7 @@ SymEncryptedIntegrityProtected.prototype.decrypt = async function (sessionKeyAlg
 
 exports.default = SymEncryptedIntegrityProtected;
 
-},{"../config":81,"../crypto":96,"../enums":115,"../util":154,"web-stream-tools":77}],141:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../util":152,"web-stream-tools":75}],139:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38537,7 +40247,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 function SymEncryptedSessionKey() {
   this.tag = _enums2.default.packet.symEncryptedSessionKey;
-  this.version = _config2.default.aead_protect && _config2.default.aead_protect_version === 4 ? 5 : 4;
+  this.version = _config2.default.aead_protect ? 5 : 4;
   this.sessionKey = null;
   this.sessionKeyEncryptionAlgorithm = null;
   this.sessionKeyAlgorithm = 'aes256';
@@ -38710,7 +40420,7 @@ SymEncryptedSessionKey.prototype.postCloneTypeFix = function () {
 
 exports.default = SymEncryptedSessionKey;
 
-},{"../config":81,"../crypto":96,"../enums":115,"../type/s2k":153,"../util":154}],142:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../type/s2k":151,"../util":152}],140:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38847,7 +40557,7 @@ SymmetricallyEncrypted.prototype.encrypt = async function (algo, key) {
 
 exports.default = SymmetricallyEncrypted;
 
-},{"../config":81,"../crypto":96,"../enums":115,"../util":154,"web-stream-tools":77}],143:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums":113,"../util":152,"web-stream-tools":75}],141:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -38894,7 +40604,7 @@ Trust.prototype.read = function () {}; // TODO
 
 exports.default = Trust;
 
-},{"../enums":115}],144:[function(require,module,exports){
+},{"../enums":113}],142:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39006,7 +40716,7 @@ UserAttribute.prototype.equals = function (usrAttr) {
 
 exports.default = UserAttribute;
 
-},{"../enums":115,"../util":154,"./packet":131}],145:[function(require,module,exports){
+},{"../enums":113,"../util":152,"./packet":129}],143:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39108,7 +40818,7 @@ Userid.prototype.format = function (userid) {
 
 exports.default = Userid;
 
-},{"../enums":115,"../util":154}],146:[function(require,module,exports){
+},{"../enums":113,"../util":152}],144:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -39117,8 +40827,6 @@ var _util = require('./util');
 var _util2 = _interopRequireDefault(_util);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/* eslint-disable import/no-extraneous-dependencies */
 
 if (typeof window !== 'undefined') {
   /********************************************************************
@@ -39168,7 +40876,7 @@ if (typeof window !== 'undefined') {
    */
 
 if (typeof TransformStream === 'undefined') {
-  require('@mattiasbuelens/web-streams-polyfill');
+  require('@mattiasbuelens/web-streams-polyfill/es6');
 }
 if (typeof TextEncoder === 'undefined') {
   const nodeUtil = _util2.default.nodeRequire('util') || {};
@@ -39182,7 +40890,7 @@ if (typeof TextEncoder === 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./util":154,"@mattiasbuelens/web-streams-polyfill":1,"core-js/fn/array/fill":"core-js/fn/array/fill","core-js/fn/array/find":"core-js/fn/array/find","core-js/fn/array/from":"core-js/fn/array/from","core-js/fn/array/includes":"core-js/fn/array/includes","core-js/fn/object/assign":"core-js/fn/object/assign","core-js/fn/promise":"core-js/fn/promise","core-js/fn/string/repeat":"core-js/fn/string/repeat","core-js/fn/symbol":"core-js/fn/symbol","core-js/fn/typed/uint8-array":"core-js/fn/typed/uint8-array","text-encoding-utf-8":74,"whatwg-fetch":"whatwg-fetch"}],147:[function(require,module,exports){
+},{"./util":152,"@mattiasbuelens/web-streams-polyfill/es6":1,"core-js/fn/array/fill":"core-js/fn/array/fill","core-js/fn/array/find":"core-js/fn/array/find","core-js/fn/array/from":"core-js/fn/array/from","core-js/fn/array/includes":"core-js/fn/array/includes","core-js/fn/object/assign":"core-js/fn/object/assign","core-js/fn/promise":"core-js/fn/promise","core-js/fn/string/repeat":"core-js/fn/string/repeat","core-js/fn/symbol":"core-js/fn/symbol","core-js/fn/typed/uint8-array":"core-js/fn/typed/uint8-array","text-encoding-utf-8":71,"whatwg-fetch":"whatwg-fetch"}],145:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39275,7 +40983,7 @@ async function read(input) {
   return new Signature(packetlist);
 }
 
-},{"./encoding/armor":113,"./enums":115,"./packet":127}],148:[function(require,module,exports){
+},{"./encoding/armor":111,"./enums":113,"./packet":125}],146:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39356,7 +41064,7 @@ ECDHSymmetricKey.fromClone = function (clone) {
 
 exports.default = ECDHSymmetricKey;
 
-},{"../util":154}],149:[function(require,module,exports){
+},{"../util":152}],147:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39441,7 +41149,7 @@ KDFParams.fromClone = function (clone) {
 
 exports.default = KDFParams;
 
-},{"../enums.js":115}],150:[function(require,module,exports){
+},{"../enums.js":113}],148:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39548,7 +41256,7 @@ Keyid.wildcard = function () {
 
 exports.default = Keyid;
 
-},{"../util.js":154}],151:[function(require,module,exports){
+},{"../util.js":152}],149:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39706,7 +41414,7 @@ MPI.fromClone = function (clone) {
 
 exports.default = MPI;
 
-},{"../util":154,"bn.js":17}],152:[function(require,module,exports){
+},{"../util":152,"bn.js":16}],150:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39831,7 +41539,7 @@ OID.fromClone = function (clone) {
 
 exports.default = OID;
 
-},{"../enums":115,"../util":154}],153:[function(require,module,exports){
+},{"../enums":113,"../util":152}],151:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -39969,6 +41677,10 @@ S2K.prototype.read = function (bytes) {
  * @returns {Uint8Array} binary representation of s2k
  */
 S2K.prototype.write = function () {
+  if (this.type === 'gnu-dummy') {
+    return new Uint8Array([101, 0, ..._util2.default.str_to_Uint8Array('GNU'), 1]);
+  }
+
   const arr = [new Uint8Array([_enums2.default.write(_enums2.default.s2k, this.type), _enums2.default.write(_enums2.default.hash, this.algorithm)])];
 
   switch (this.type) {
@@ -40060,47 +41772,17 @@ S2K.fromClone = function (clone) {
 
 exports.default = S2K;
 
-},{"../config":81,"../crypto":96,"../enums.js":115,"../util.js":154}],154:[function(require,module,exports){
+},{"../config":79,"../crypto":94,"../enums.js":113,"../util.js":152}],152:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); // GPG4Browsers - An OpenPGP implementation in javascript
-// Copyright (C) 2011 Recurity Labs GmbH
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 3.0 of the License, or (at your option) any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+var _emailAddresses = require('email-addresses');
 
-/* eslint-disable no-console */
-
-/**
- * This object contains utility functions
- * @requires address-rfc2822
- * @requires web-stream-tools
- * @requires config
- * @requires encoding/base64
- * @module util
- */
-
-// re-import module to access util functions
-
-
-var _addressRfc = require('address-rfc2822');
-
-var _addressRfc2 = _interopRequireDefault(_addressRfc);
+var _emailAddresses2 = _interopRequireDefault(_emailAddresses);
 
 var _webStreamTools = require('web-stream-tools');
 
@@ -40176,10 +41858,15 @@ exports.default = {
 
               port1.onmessage = async function ({ data: { action } }) {
                 if (action === 'read') {
-                  const result = await reader.read();
-                  port1.postMessage(result, _util2.default.getTransferables(result, true));
+                  try {
+                    const result = await reader.read();
+                    port1.postMessage(result, _util2.default.getTransferables(result));
+                  } catch (e) {
+                    port1.postMessage({ error: e.message });
+                  }
                 } else if (action === 'cancel') {
-                  port1.postMessage((await transformed.cancel()));
+                  await transformed.cancel();
+                  port1.postMessage();
                 }
               };
               obj[key] = port2;
@@ -40212,9 +41899,12 @@ exports.default = {
                 value.onmessage = evt => {
                   var _evt$data = evt.data;
                   const done = _evt$data.done,
-                        value = _evt$data.value;
+                        value = _evt$data.value,
+                        error = _evt$data.error;
 
-                  if (!done) {
+                  if (error) {
+                    controller.error(new Error(error));
+                  } else if (!done) {
                     controller.enqueue(value);
                   } else {
                     controller.close();
@@ -40556,16 +42246,6 @@ exports.default = {
     });
   },
 
-  getLeftNBits: function getLeftNBits(array, bitcount) {
-    const rest = bitcount % 8;
-    if (rest === 0) {
-      return array.subarray(0, bitcount / 8);
-    }
-    const bytes = (bitcount - rest) / 8 + 1;
-    const result = array.subarray(0, bytes);
-    return _util2.default.shiftRight(result, 8 - rest); // +String.fromCharCode(string.charCodeAt(bytes -1) << (8-rest) & 0xFF);
-  },
-
   // returns bit length of the integer x
   nbits: function nbits(x) {
     let r = 1;
@@ -40675,7 +42355,7 @@ exports.default = {
    * Detect Node.js runtime.
    */
   detectNode: function detectNode() {
-    return typeof window === 'undefined';
+    return typeof global.process === 'object' && typeof global.process.versions === 'object';
   },
 
   /**
@@ -40749,11 +42429,21 @@ exports.default = {
    * Format user id for internal use.
    */
   formatUserId: function formatUserId(id) {
-    // name and email address can be empty but must be of the correct type
-    if (id.name && !_util2.default.isString(id.name) || id.email && !_util2.default.isEmailAddress(id.email)) {
+    // name, email address and comment can be empty but must be of the correct type
+    if (id.name && !_util2.default.isString(id.name) || id.email && !_util2.default.isEmailAddress(id.email) || id.comment && !_util2.default.isString(id.comment)) {
       throw new Error('Invalid user id format');
     }
-    return new _addressRfc2.default.Address(id.name, id.email, id.comment).format();
+    const components = [];
+    if (id.name) {
+      components.push(id.name);
+    }
+    if (id.comment) {
+      components.push(`(${id.comment})`);
+    }
+    if (id.email) {
+      components.push(`<${id.email}>`);
+    }
+    return components.join(' ');
   },
 
   /**
@@ -40764,15 +42454,13 @@ exports.default = {
       throw new Error('User id string is too long');
     }
     try {
-      var _rfc2822$parse = _addressRfc2.default.parse(userid),
-          _rfc2822$parse2 = _slicedToArray(_rfc2822$parse, 1),
-          _rfc2822$parse2$ = _rfc2822$parse2[0];
+      var _emailAddresses$parse = _emailAddresses2.default.parseOneAddress(userid);
 
-      const name = _rfc2822$parse2$.phrase,
-            email = _rfc2822$parse2$.address,
-            comment = _rfc2822$parse2$.comment;
+      const name = _emailAddresses$parse.name,
+            email = _emailAddresses$parse.address,
+            comments = _emailAddresses$parse.comments;
 
-      return { name, email, comment: comment.replace(/^\(|\)$/g, '') };
+      return { name, email, comment: comments.replace(/^\(|\)$/g, '') };
     } catch (e) {
       throw new Error('Invalid user id format');
     }
@@ -40848,9 +42536,37 @@ exports.default = {
     }
     return result;
   }
-};
+}; // re-import module to access util functions
+// GPG4Browsers - An OpenPGP implementation in javascript
+// Copyright (C) 2011 Recurity Labs GmbH
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-},{"./config":81,"./encoding/base64":114,"./util":154,"address-rfc2822":2,"web-stream-tools":77}],155:[function(require,module,exports){
+/* eslint-disable no-console */
+
+/**
+ * This object contains utility functions
+ * @requires email-addresses
+ * @requires web-stream-tools
+ * @requires config
+ * @requires encoding/base64
+ * @module util
+ */
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./config":79,"./encoding/base64":112,"./util":152,"email-addresses":33,"web-stream-tools":75}],153:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -40952,7 +42668,7 @@ WKD.prototype.lookup = async function (options) {
 
 exports.default = WKD;
 
-},{"./crypto":96,"./key":118,"./util":154,"node-fetch":"node-fetch"}],156:[function(require,module,exports){
+},{"./crypto":94,"./key":116,"./util":152,"node-fetch":"node-fetch"}],154:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -41022,6 +42738,9 @@ function AsyncProxy({ path = 'openpgp.worker.js', n = 1, workers = [], config } 
   const handleMessage = workerId => event => {
     const msg = event.data;
     switch (msg.event) {
+      case 'loaded':
+        this.workers[workerId].loadedResolve(true);
+        break;
       case 'method-return':
         if (msg.err) {
           // fail
@@ -41055,10 +42774,15 @@ function AsyncProxy({ path = 'openpgp.worker.js', n = 1, workers = [], config } 
 
   let workerId = 0;
   this.workers.forEach(worker => {
+    worker.loadedPromise = new Promise(resolve => {
+      worker.loadedResolve = resolve;
+    });
     worker.requests = 0;
     worker.onmessage = handleMessage(workerId++);
     worker.onerror = e => {
-      throw new Error('Unhandled error in openpgp worker: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')');
+      worker.loadedResolve(false);
+      console.error('Unhandled error in openpgp worker: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')');
+      return false;
     };
 
     if (config) {
@@ -41070,6 +42794,15 @@ function AsyncProxy({ path = 'openpgp.worker.js', n = 1, workers = [], config } 
   this.tasks = {};
   this.currentID = 0;
 }
+
+/**
+ * Returns a promise that resolves when all workers have finished loading
+ * @returns {Promise<Boolean>} Resolves to true if all workers have loaded succesfully; false otherwise
+*/
+AsyncProxy.prototype.loaded = async function () {
+  const loaded = await Promise.all(this.workers.map(worker => worker.loadedPromise));
+  return loaded.every(Boolean);
+};
 
 /**
  * Get new request ID
@@ -41129,5 +42862,5 @@ AsyncProxy.prototype.delegate = function (method, options) {
 
 exports.default = AsyncProxy;
 
-},{"../config":81,"../crypto":96,"../packet":127,"../util.js":154}]},{},[117])(117)
+},{"../config":79,"../crypto":94,"../packet":125,"../util.js":152}]},{},[115])(115)
 });

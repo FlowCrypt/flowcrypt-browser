@@ -13,29 +13,23 @@
       "problemMatcher": []
     },
     {
-      "type": "gulp",
-      "task": "release",
-      "group": "none",
-      "problemMatcher": []
-    },
-    {
-      "type": "gulp",
-      "task": "runFirefox",
-      "group": "none",
+      "type": "npm",
+      "script": "test_local_chrome_consumer_live_gmail",
       "problemMatcher": []
     },
     {
       "type": "npm",
-      "script": "test",
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
+      "script": "test_local_chrome_consumer_mock",
       "problemMatcher": []
     },
     {
       "type": "npm",
-      "script": "run_firefox",
+      "script": "test_local_chrome_consumer_mock_headless",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "dev_start_gmail_mock_api",
       "problemMatcher": []
     },
     {
@@ -45,22 +39,12 @@
     },
     {
       "type": "npm",
-      "script": "test_0_tslint",
+      "script": "test_local_chrome_enterprise_mock",
       "problemMatcher": []
     },
     {
       "type": "npm",
-      "script": "test_1_patterns",
-      "problemMatcher": []
-    },
-    {
-      "type": "npm",
-      "script": "internal_tslint_dev_run",
-      "problemMatcher": []
-    },
-    {
-      "type": "npm",
-      "script": "internal_run_rebuilt_puppeteer",
+      "script": "run_firefox",
       "problemMatcher": []
     }
   ]

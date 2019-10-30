@@ -20,16 +20,17 @@
     </div>
     <div class="line">You can use other OpenPGP compatible software to update your private key (change expiration,
       change user ids) and load updated key below.</div>
-    <div class="line">FlowCrypt will recreate a new public key from your updated private key and save it locally.</div>
-    <div class="line bad">Public key will not be replaced on Attester automatically. Please send new pubkey to
-      human@flowcrypt.com</div>
+    <div class="line">FlowCrypt will also recreate a new public key from your updated private key.</div>
     <div class="line">
-      <textarea class="input_private_key armored" placeholder="Updated ASCII Armored Private Key"></textarea>
+      <textarea class="input_private_key armored" data-test="input-prv-key"
+        placeholder="Updated ASCII Armored Private Key"></textarea>
     </div>
     <div class="line">
-      <input class="input_passphrase" type="password" placeholder="Private Key Passphrase" />
+      <input class="input_passphrase" type="password" data-test="input-passphrase"
+        placeholder="Private Key Passphrase" />
     </div>
-    <div class="line"><span class="button green long action_update_private_key">update private key</span></div>
+    <div class="line"><span class="button green long action_update_private_key" data-test="action-update-key">update
+        private key</span></div>
     <div class="line"><a href="#" class="action_show_public_key">Back to Public Key</a></div>
   </div>
 

@@ -1,5 +1,3 @@
-// tslint:disable
-
 declare module 'sweetalert2' {
   /**
    * A namespace inside the default function, containing utility function for controlling the currently-displayed
@@ -22,7 +20,7 @@ declare module 'sweetalert2' {
      *   import Swal from 'sweetalert2';
      *   Swal.fire('The Internet?', 'That thing is still around?', 'question');
      */
-    function fire(title: string, message?: string, type?: SweetAlertType): Promise<SweetAlertResult>;
+    function fire(...options: SweetAlertArrayOptions): Promise<SweetAlertResult>;
 
     /**
      * Function to display a SweetAlert2 modal, with an object of options, all being optional.
@@ -36,7 +34,7 @@ declare module 'sweetalert2' {
      *     timer: 2000
      *   })
      */
-    function fire(settings: SweetAlertOptions): Promise<SweetAlertResult>;
+    function fire(options: SweetAlertOptions): Promise<SweetAlertResult>;
 
     /**
      * Reuse configuration by creating a Swal instance.
@@ -60,14 +58,20 @@ declare module 'sweetalert2' {
      *     type: 'error'
      *   })
      */
-    function update(newSettings: SweetAlertOptions): void;
+    function update(options: SweetAlertOptions): void;
 
     /**
      * Closes the currently open SweetAlert2 modal programmatically.
      *
-     * @param onComplete An optional callback to be called when the alert has finished closing.
+     * @param result The promise originally returned by {@link Swal.fire} will be resolved with this value.
+     *               If no object is given, the promise is resolved with an empty ({}) {@link SweetAlertResult} object.
      */
-    function close(onComplete?: (modalElement: HTMLElement) => void): void;
+    function close(result?: SweetAlertResult): void;
+
+    /**
+     * Gets the popup.
+     */
+    function getPopup(): HTMLElement;
 
     /**
      * Gets the modal title.
@@ -90,10 +94,15 @@ declare module 'sweetalert2' {
     function getCloseButton(): HTMLElement;
 
     /**
+     * Gets the current visible icon.
+     */
+    function getIcon(): HTMLElement | null;
+
+    /**
      * Gets all icons. The current visible icon will have `style="display: flex"`,
      * all other will be hidden by `style="display: none"`.
      */
-    function getIcons(): Array<HTMLElement>;
+    function getIcons(): HTMLElement[];
 
     /**
      * Gets the "Confirm" button.
@@ -118,7 +127,7 @@ declare module 'sweetalert2' {
     /**
      * Gets all focusable elements in the popup.
      */
-    function getFocusableElements(): Array<HTMLElement>;
+    function getFocusableElements(): HTMLElement[];
 
     /**
      * Enables "Confirm" and "Cancel" buttons.
@@ -131,11 +140,13 @@ declare module 'sweetalert2' {
     function disableButtons(): void;
 
     /**
+     * @deprecated
      * Enables the "Confirm"-button only.
      */
     function enableConfirmButton(): void;
 
     /**
+     * @deprecated
      * Disables the "Confirm"-button only.
      */
     function disableConfirmButton(): void;
@@ -180,7 +191,7 @@ declare module 'sweetalert2' {
     /**
      * Gets the input DOM node, this method works with input parameter.
      */
-    function getInput(): HTMLElement;
+    function getInput(): HTMLInputElement;
 
     /**
      * Disables the modal input. A disabled input element is unusable and un-clickable.
@@ -265,11 +276,13 @@ declare module 'sweetalert2' {
     function deleteQueueStep(index: number): void;
 
     /**
+     * @deprecated
      * Gets progress steps.
      */
     function getProgressSteps(): string[];
 
     /**
+     * @deprecated
      * Sets progress steps.
      *
      * @param steps The modal steps
@@ -325,11 +338,27 @@ declare module 'sweetalert2' {
     dismiss?: Swal.DismissReason;
   }
 
+  export interface SweetAlertCustomClass {
+    container?: string;
+    popup?: string;
+    header?: string;
+    title?: string;
+    closeButton?: string;
+    icon?: string;
+    image?: string;
+    content?: string;
+    input?: string;
+    actions?: string;
+    confirmButton?: string;
+    cancelButton?: string;
+    footer?: string;
+  }
+
   type SyncOrAsync<T> = T | Promise<T>;
 
   type ValueOrThunk<T> = T | (() => T);
 
-  export type SweetAlertArrayOptions = [string] | [string, string] | [string, string, string];
+  export type SweetAlertArrayOptions = [string?, string?, SweetAlertType?];
 
   export interface SweetAlertOptions {
     /**
@@ -338,7 +367,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    title?: string;
+    title?: string | HTMLElement | JQuery;
 
     /**
      * The title of the modal, as text. Useful to avoid HTML injection.
@@ -368,7 +397,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    footer?: string | JQuery;
+    footer?: string | HTMLElement | JQuery;
 
     /**
      * The type of the modal.
@@ -402,7 +431,7 @@ declare module 'sweetalert2' {
      *
      * @default 'body'
      */
-    target?: string;
+    target?: string | HTMLElement;
 
     /**
      * Input field type, can be text, email, password, number, tel, range, textarea, select, radio, checkbox, file
@@ -426,7 +455,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    padding?: number;
+    padding?: number | string;
 
     /**
      * Modal window background (CSS background property).
@@ -454,12 +483,34 @@ declare module 'sweetalert2' {
 
     /**
      * A custom CSS class for the modal.
+     * If a string value is provided, the classname will be applied to the popup.
+     * If an object is provided, the classnames will be applied to the corresponding fields:
+     *
+     * ex.
+     *   Swal.fire({
+     *     customClass: {
+     *       container: 'container-class',
+     *       popup: 'popup-class',
+     *       header: 'header-class',
+     *       title: 'title-class',
+     *       closeButton: 'close-button-class',
+     *       icon: 'icon-class',
+     *       image: 'image-class',
+     *       content: 'content-class',
+     *       input: 'input-class',
+     *       actions: 'actions-class',
+     *       confirmButton: 'confirm-button-class',
+     *       cancelButton: 'cancel-button-class',
+     *       footer: 'footer-class'
+     *     }
+     *   })
      *
      * @default ''
      */
-    customClass?: string;
+    customClass?: string | SweetAlertCustomClass;
 
     /**
+     * @deprecated
      * A custom CSS class for the container.
      *
      * @default ''
@@ -576,6 +627,7 @@ declare module 'sweetalert2' {
     cancelButtonColor?: string;
 
     /**
+     * @deprecated
      * A custom CSS class for the "Confirm"-button.
      *
      * @default ''
@@ -583,6 +635,7 @@ declare module 'sweetalert2' {
     confirmButtonClass?: string;
 
     /**
+     * @deprecated
      * A custom CSS class for the "Cancel"-button.
      *
      * @default ''
@@ -640,6 +693,13 @@ declare module 'sweetalert2' {
     showCloseButton?: boolean;
 
     /**
+     * Use this to change the content of the close button.
+     *
+     * @default '&times;'
+     */
+    closeButtonHtml?: string;
+
+    /**
      * Use this to change the `aria-label` for the close button.
      *
      * @default 'Close this dialog'
@@ -671,7 +731,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    preConfirm?: (inputValue: any) => SyncOrAsync<any | void>;
+    preConfirm?(inputValue: any): SyncOrAsync<any | void>;
 
     /**
      * Add a customized icon for the modal. Should contain a string with the path or URL to the image.
@@ -702,6 +762,7 @@ declare module 'sweetalert2' {
     imageAlt?: string;
 
     /**
+     * @deprecated
      * A custom CSS class for the customized icon.
      *
      * @default ''
@@ -750,7 +811,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    inputAttributes?: { [attribute: string]: string; };
+    inputAttributes?: { [attribute: string]: string };
 
     /**
      * Validator for input field, may be async (Promise-returning) or sync.
@@ -764,7 +825,7 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    inputValidator?: (inputValue: string) => SyncOrAsync<string | null>;
+    inputValidator?(inputValue: string): SyncOrAsync<string | null>;
 
     /**
      * A custom validation message for default validators (email, url).
@@ -780,6 +841,7 @@ declare module 'sweetalert2' {
     validationMessage?: string;
 
     /**
+     * @deprecated
      * A custom CSS class for the input field.
      *
      * @default ''
@@ -812,39 +874,65 @@ declare module 'sweetalert2' {
      *
      * @default null
      */
-    onBeforeOpen?: (modalElement: HTMLElement) => void;
-
-    /**
-     * Function to run after modal has been disposed.
-     *
-     * @default null
-     */
-    onAfterClose?: () => void;
+    onBeforeOpen?(modalElement: HTMLElement): void;
 
     /**
      * Function to run when modal opens, provides modal DOM element as the first argument.
      *
      * @default null
      */
-    onOpen?: (modalElement: HTMLElement) => void;
+    onOpen?(modalElement: HTMLElement): void;
+
+    /**
+     * Function to run after modal DOM has been updated.
+     * Typically, this will happen after Swal.fire() or Swal.update().
+     * If you want to perform changes in the modal's DOM, that survive Swal.update(), onRender is a good place for that.
+     *
+     * @default null
+     */
+    onRender?(modalElement: HTMLElement): void;
 
     /**
      * Function to run when modal closes, provides modal DOM element as the first argument.
      *
      * @default null
      */
-    onClose?: (modalElement: HTMLElement) => void;
+    onClose?(modalElement: HTMLElement): void;
+
+    /**
+     * Function to run after modal has been disposed.
+     *
+     * @default null
+     */
+    onAfterClose?(): void;
+
+    /**
+     * Set to false to disable body padding adjustment when scrollbar is present.
+     *
+     * @default true
+     */
+    scrollbarPadding?: boolean;
   }
 
-  export default Swal;
+  export default Swal
+}
+
+declare module 'sweetalert2/*/sweetalert2.js' {
+  export * from 'sweetalert2'
+  // "export *" does not matches the default export, so do it explicitly.
+  export { default } from 'sweetalert2' // eslint-disable-line
+}
+
+declare module 'sweetalert2/*/sweetalert2.all.js' {
+  export * from 'sweetalert2'
+  // "export *" does not matches the default export, so do it explicitly.
+  export { default } from 'sweetalert2' // eslint-disable-line
 }
 
 /**
  * These interfaces aren't provided by SweetAlert2, but its definitions use them.
  * They will be merged with 'true' definitions.
  */
-
-// tslint:disable:no-empty-interface
 
 interface JQuery {
 }

@@ -8,18 +8,24 @@ export type Dict<T> = { [key: string]: T; };
 
 export class Str {
 
-  public static parseEmail = (full: string) => {
-    if (Value.is('<').in(full) && Value.is('>').in(full)) {
-      const email = full.substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase();
-      const name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
-      return { email, name, full };
+  public static parseEmail = (full: string, flag: 'VALIDATE' | 'DO-NOT-VALIDATE' = 'VALIDATE') => {
+    let email: string | undefined;
+    let name: string | undefined;
+    if (full.includes('<') && full.includes('>')) {
+      email = full.substr(full.indexOf('<') + 1, full.indexOf('>') - full.indexOf('<') - 1).replace(/["']/g, '').trim().toLowerCase();
+      name = full.substr(0, full.indexOf('<')).replace(/["']/g, '').trim();
+    } else {
+      email = full.replace(/["']/g, '').trim().toLowerCase();
     }
-    return { email: full.replace(/["']/g, '').trim().toLowerCase(), name: undefined, full };
+    if (flag === 'VALIDATE' && !Str.isEmailValid(email)) {
+      email = undefined;
+    }
+    return { email, name, full };
   }
 
-  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br>') : String(obj);
+  public static prettyPrint = (obj: any) => (typeof obj === 'object') ? JSON.stringify(obj, undefined, 2).replace(/ /g, '&nbsp;').replace(/\n/g, '<br />') : String(obj);
 
-  public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)).replace(/\n /g, '\n');
+  public static normalizeSpaces = (str: string) => str.replace(RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
 
   public static normalizeDashes = (str: string) => str.replace(/^—–|—–$/gm, '-----');
 
@@ -58,7 +64,7 @@ export class Str {
   public static regexEscape = (toBeUsedInRegex: string) => toBeUsedInRegex.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   public static asEscapedHtml = (text: string) => {
-    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br>');
+    return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\//g, '&#x2F;').replace(/\n/g, '<br />');
   }
 
   public static htmlAttrEncode = (values: Dict<any>): string => Str.base64urlUtfEncode(JSON.stringify(values));
@@ -76,6 +82,8 @@ export class Str {
   public static toUtcTimestamp = (datetimeStr: string, asStr: boolean = false) => asStr ? String(Date.parse(datetimeStr)) : Date.parse(datetimeStr);
 
   public static datetimeToDate = (date: string) => date.substr(0, 10).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+
+  public static fromDate = (date: Date) => date.toISOString().replace(/T/, ' ').replace(/:[^:]+$/, '');
 
   private static base64urlUtfEncode = (str: string) => {
     // https://stackoverflow.com/questions/30106476/using-javascripts-atob-to-decode-base64-doesnt-properly-decode-utf-8-strings
@@ -105,7 +113,7 @@ export class Value {
     unique: <T>(array: T[]): T[] => {
       const unique: T[] = [];
       for (const v of array) {
-        if (!Value.is(v).in(unique)) {
+        if (!unique.includes(v)) {
           unique.push(v);
         }
       }
@@ -124,7 +132,7 @@ export class Value {
     contains: <T>(arr: T[] | string, value: T): boolean => Boolean(arr && typeof arr.indexOf === 'function' && (arr as any[]).indexOf(value) !== -1),
     sum: (arr: number[]) => arr.reduce((a, b) => a + b, 0),
     average: (arr: number[]) => Value.arr.sum(arr) / arr.length,
-    zeroes: (length: number): number[] => new Array(length).map(() => 0),
+    zeroes: (length: number): number[] => new Array(length).map(() => 0)
   };
 
   public static obj = {
@@ -145,7 +153,5 @@ export class Value {
   };
 
   public static noop = (): void => undefined;
-
-  public static is = <T>(v: T) => ({ in: (arrayOrStr: T[] | string): boolean => Value.arr.contains(arrayOrStr, v) });  // Value.this(v).in(array_or_string)
 
 }

@@ -19,7 +19,7 @@ export class BrowserPool {
     private reuse: boolean,
     private extensionBuildDir: string,
     private width = 1280,
-    private height = 900
+    private height = 850
   ) {
     this.semaphore = new Semaphore(poolSize, name);
   }
@@ -38,8 +38,7 @@ export class BrowserPool {
     if (Config.secrets.proxy && Config.secrets.proxy.enabled) {
       args.push(`--proxy-server=${Config.secrets.proxy.server}`);
     }
-    // to run headless-like: "xvfb-run node test.js"
-    const browser = await launch({ args, headless: false, slowMo: 50, devtools: false });
+    const browser = await launch({ args, headless: false, slowMo: 60, devtools: false });
     const handle = new BrowserHandle(browser, this.semaphore, this.height, this.width);
     if (closeInitialPage) {
       await this.closeInitialExtensionPage(t, handle);
@@ -49,14 +48,25 @@ export class BrowserPool {
 
   public getExtensionId = async (t: AvaContext): Promise<string> => {
     const browser = await this.newBrowserHandle(t, false);
-    const initialPage = await browser.newPageTriggeredBy(t, () => Promise.resolve()); // the page triggered on its own
-    const url = initialPage.page.url();
-    const match = url.match(/[a-z]{32}/);
-    if (match !== null) {
-      await browser.close();
-      return match[0];
+    for (const i of [1, 2, 3, 4, 5]) {
+      await Util.sleep(2);
+      const pages = await browser.browser.pages();
+      const urls = pages.map(page => page.url());
+      const extensionUrl = urls.find(url => url !== 'about:blank');
+      if (extensionUrl) {
+        const match = extensionUrl.match(/[a-z]{32}/);
+        if (match !== null) {
+          await browser.close();
+          return match[0];
+        }
+      }
+      if (i === 5) {
+        await browser.close();
+        throw new Error(`Cannot determine extension id from urls |${urls.join('|')}|`);
+      }
     }
-    throw new Error(`Cannot determine extension id from url: ${url}`);
+    await browser.close();
+    throw new Error(`Cannot determine extension id from urls.`);
   }
 
   public close = async () => {
@@ -164,7 +174,7 @@ export class BrowserPool {
     t.totalAttempts = consts.ATTEMPTS;
     for (let attemptNumber = 1; attemptNumber <= consts.ATTEMPTS; attemptNumber++) {
       t.attemptNumber = attemptNumber;
-      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts - 1})`;
+      t.attemptText = `(attempt ${t.attemptNumber} of ${t.totalAttempts})`;
       try {
         await browser.closeAllPages();
         try {

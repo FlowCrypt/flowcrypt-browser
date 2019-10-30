@@ -13,7 +13,7 @@
     "sourceMap": false,
     "checkJs": false,
     "strict": true,
-    "outDir": "build/chrome-consumer",
+    "outDir": "build/generic-extension-wip",
     "baseUrl": "./extension",
     "paths": {
       "jquery": [
@@ -31,10 +31,6 @@
       "dompurify": [
         "types/purify.d.ts",
         "lib/purify.min.js",
-        "COMMENT"
-      ],
-      "anchorme": [
-        "lib/anchorme.js",
         "COMMENT"
       ],
       "fine-uploader": [
@@ -67,6 +63,7 @@
       ]
     },
     "typeRoots": [
+      "./extension/js/common/core/types",
       "./extension/types"
     ]
   },
