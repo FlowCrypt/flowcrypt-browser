@@ -366,9 +366,6 @@ Catch.try(async () => {
     collectAllAvailablePublicKeys
   }, processedUrlParams);
 
-  // TODO: change renderPasswordStrength function
-  // $('#input_password').on('keyup', Ui.event.prevent('spree', () => Settings.renderPasswordStrength('#password_or_pubkey_container', '#input_password', '.none')));
-
   BrowserMsg.addListener('close_dialog', async () => {
     $('.featherlight.featherlight-iframe').remove();
   });
