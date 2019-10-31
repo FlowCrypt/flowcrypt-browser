@@ -282,7 +282,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
-    ava.default.skip('compose[global:compatibility] - reply - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+    ava.default('compose[global:compatibility] - reply - CC&BCC test reply', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const appendUrl = 'threadId=16ce2c965c75e5a6&skipClickPrompt=___cu_false___&ignoreDraft=___cu_false___&threadMsgId=16ce2c965c75e5a6';
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility', { appendUrl, hasReplyPrompt: true });
       await composePage.waitAndClick('@action-accept-reply-all-prompt', { delay: 2 });
@@ -487,13 +487,15 @@ const baseQuotingTest = async (composePage: Controllable, textToInclude: string)
 
 const expectRecipientElements = async (controllable: ControllablePage, expected: { to?: string[], cc?: string[], bcc?: string[] }) => {
   for (const type of ['to', 'cc', 'bcc']) {
-    const expectedEmails: string[] = (expected as Dict<string[]>)[type] || []; // tslint:disable-line:no-unsafe-any
-    const container = await controllable.waitAny(`@container-${type}`, { visible: false });
-    const recipientElements = await container.$$('.recipients > span');
-    expect(recipientElements.length).to.equal(expectedEmails.length);
-    for (const recipientElement of recipientElements) {
-      const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
-      expect(expectedEmails).to.include(textContent.trim());
+    const expectedEmails: string[] | undefined = (expected as Dict<string[]>)[type] || undefined; // tslint:disable-line:no-unsafe-any
+    if (expectedEmails) {
+      const container = await controllable.waitAny(`@container-${type}`, { visible: false });
+      const recipientElements = await container.$$('.recipients > span');
+      expect(recipientElements.length).to.equal(expectedEmails.length);
+      for (const recipientElement of recipientElements) {
+        const textContent = await (await recipientElement.getProperty('textContent')).jsonValue() as string;
+        expect(expectedEmails).to.include(textContent.trim());
+      }
     }
   }
 };
