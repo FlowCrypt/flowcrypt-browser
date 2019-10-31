@@ -105,8 +105,11 @@ Catch.try(async () => {
     }
   }
   const processedUrlParams = { acctEmail, draftId, threadId, ...replyParams, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
-  const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
-    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const storageGetKey = async (senderEmail: string, getAcctKeyIfSenderKeyNotFound?: boolean): Promise<KeyInfo> => {
+    let [primaryKi] = await Store.keysGet(senderEmail);
+    if (!primaryKi && getAcctKeyIfSenderKeyNotFound) {
+      [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+    }
     Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
     return primaryKi;
   };
