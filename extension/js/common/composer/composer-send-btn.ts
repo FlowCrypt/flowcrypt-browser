@@ -622,14 +622,20 @@ export class ComposerSendBtn extends ComposerComponent {
                 const pp = await this.app.storagePassphraseGet();
                 if (pp) {
                     if (pp.toLowerCase().includes(challenge.answer.toLowerCase())) {
-                        throw new ComposerUserError('Please do not use your private key passphrase as a password for this message.');
+                        throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message. You should come up with some other unique password that you can share with recipient.');
                     }
                     if (subject.toLowerCase().includes(challenge.answer.toLowerCase())) {
-                        throw new ComposerUserError('Please do not include the password in the subject line.');
+                        throw new ComposerUserError(`Please do not include the password in the subject line.` + 
+                                                    `Sharing password over email undermines password based encryption.\n\n` + 
+                                                    `If sharing password with recipient is inconvenient, you can ask the recipient to also install FlowCrypt ` + 
+                                                    `(messages between FlowCrypt users don't use a password in this way)`);
                     }
                     const intro = this.composer.S.cached('input_intro').length ? this.composer.extractAsText('input_intro') : '';
                     if (intro.toLowerCase().includes(challenge.answer.toLowerCase())) {
-                        throw new ComposerUserError('Please do not include the password in the intro.');
+                        throw new ComposerUserError('Please do not include the password in the intro.' + 
+                                                   `Sharing password over email undermines password based encryption.\n\n` + 
+                                                    `If sharing password with recipient is inconvenient, you can ask the recipient to also install FlowCrypt ` + 
+                                                    `(messages between FlowCrypt users don't use a password in this way)`);
                     }
                 }
             } else {
