@@ -620,7 +620,7 @@ export class ComposerSendBtn extends ComposerComponent {
     if (shouldEncrypt && emailsWithoutPubkeys.length) {
       if (challenge && challenge.answer) {
         const pp = await this.app.storagePassphraseGet();
-        if (pp && pp.toLowerCase().includes(challenge.answer.toLowerCase())) {
+        if (pp && challenge.answer.toLowerCase() === pp.toLowerCase()) {
           throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
             'You should come up with some other unique password that you can share with recipient.');
         }
