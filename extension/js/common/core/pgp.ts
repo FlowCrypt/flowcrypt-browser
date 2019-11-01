@@ -589,8 +589,9 @@ export class Pgp {
   };
 
   public static password = {
-    estimateStrength: (zxcvbnResultGuesses: number, decreaseTimeToCrack?: number): PasswordStrengthResult => {
-      const timeToCrack = zxcvbnResultGuesses / (Pgp.PASSWORD_GUESSES_PER_SECOND / (decreaseTimeToCrack ? decreaseTimeToCrack * 5000000000 : 1));
+    estimateStrength: (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PasswordStrengthResult => {
+      // todo - use "type"
+      const timeToCrack = zxcvbnResultGuesses / Pgp.PASSWORD_GUESSES_PER_SECOND;
       for (const word of Pgp.PASSWORD_CRACK_TIME_WORDS) {
         const readableTime = Pgp.internal.readableCrackTime(timeToCrack);
         if (readableTime.includes(word.match)) { // looks for a word match from readable_crack_time, defaults on "weak"

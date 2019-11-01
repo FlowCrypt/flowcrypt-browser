@@ -383,7 +383,7 @@ table#compose.not-encrypted .recipients span.wrong .close-icon { display: inline
 table#compose.not-encrypted .recipients span.wrong .close-icon.display_when_sign { display: none !important; }
 table#compose.not-encrypted .recipients img, table#compose.not-encrypted .recipients i { display: none !important; }
 table#compose.not-encrypted .recipients img.display_when_sign { display: inline-block !important; }
-table#compose.not-encrypted #password_or_pubkey_container { display: none !important; }
+table#compose.not-encrypted #password_or_pubkey_container { display: none !important;}
 
 table#compose th div.header { display: flex; height: 36px; }
 table#compose th div.header > div.actions_container { display: flex; align-items: center; }
@@ -485,10 +485,11 @@ table#compose tr#password_or_pubkey_container { display: none; }
 table#compose tr#password_or_pubkey_container .password_input_container { display: inline-block; }
 table#compose tr#password_or_pubkey_container .password_input_container .password_bar div { height: 2px; }
 table#compose tr#password_or_pubkey_container .password_input_container .line.password_feedback { display: none !important; }
-table#compose tr#password_or_pubkey_container td { height: 66px; padding: 5px 14px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s; }
+table#compose tr#password_or_pubkey_container td { height: 66px; padding: 5px 14px; -webkit-animation: fadeInUp 1s; animation: fadeInUp 1s; border-top: 1px solid #cfcfcf;
+  line-height: 1.5; }
 table#compose tr#password_or_pubkey_container td input#input_password::-webkit-input-placeholder { color: #d14836; }
 table#compose tr#password_or_pubkey_container td input { padding-left: 3px; padding-right: 3px; border-bottom: 1px solid #cacaca; font-family: 'Open Sans', Arial; color: #d14836; }
-table#compose tr#password_or_pubkey_container td input#input_password { width: 150px; color: #31A217; padding: 3px 12px; height: 20px; text-align: center; }
+table#compose tr#password_or_pubkey_container td input#input_password { width: 160px; color: #31A217; padding: 3px; height: 20px; text-align: center; }
 table#compose tr#password_or_pubkey_container td .label_password { position: absolute; margin-left: 10px; margin-top: 22px; font-size: 10px; text-transform: uppercase;
   color: #777; display: none; -webkit-animation: fadeInDown 0.5s; animation: fadeInDown 0.5s; }
 table#compose tr#password_or_pubkey_container td .grey { padding: 1px 5px; background: #B7B7B7; color: white; display: inline-block; border-radius: 5px; }

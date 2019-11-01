@@ -306,7 +306,7 @@ export class Composer {
       this.S.cached('input_password').attr('placeholder', '');
     } else {
       this.S.cached('password_label').css('display', 'none');
-      this.S.cached('input_password').attr('placeholder', 'one time password');
+      this.S.cached('input_password').attr('placeholder', 'message password');
     }
     if (this.S.cached('input_intro').is(':visible')) {
       this.S.cached('add_intro').css('display', 'none');
@@ -315,7 +315,7 @@ export class Composer {
     }
     this.setInputTextHeightManuallyIfNeeded();
     if (!this.rmPwdStrengthValidationElements) {
-      const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), $("#send_btn"), 2);
+      const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), $("#send_btn"), 'pwd');
       this.rmPwdStrengthValidationElements = removeValidationElements;
     }
   }

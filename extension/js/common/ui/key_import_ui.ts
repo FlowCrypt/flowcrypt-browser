@@ -133,7 +133,7 @@ export class KeyImportUi {
     return normalized;
   }
 
-  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>, decreaseTimeToCrack?: number) => {
+  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
       submitButton.addClass(type === 'gray' ? 'gray' : 'green');
@@ -145,7 +145,7 @@ export class KeyImportUi {
         Catch.report('render_password_strength: Selected password is not a string', typeof password);
         return;
       }
-      const result = Settings.evalPasswordStrength(password, decreaseTimeToCrack);
+      const result = Settings.evalPasswordStrength(password, type);
       validationElements.passwordResultElement.css('display', 'block');
       validationElements.passwordResultElement.css('color', result.word.color);
       validationElements.passwordResultElement.find('.password_result').text(result.word.word);
