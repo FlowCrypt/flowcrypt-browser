@@ -207,13 +207,25 @@ export class Pgp {
     encryptedMsgLink: { begin: 'This message is encrypted: Open Message', end: /https:(\/|&#x2F;){2}(cryptup\.org|flowcrypt\.com)(\/|&#x2F;)[a-zA-Z0-9]{10}(\n|$)/, replace: true },
   };
   // (10k pc)*(2 core p/pc)*(4k guess p/core) httpshttps://www.abuse.ch/?p=3294://threatpost.com/how-much-does-botnet-cost-022813/77573/ https://www.abuse.ch/?p=3294
-  private static PASSWORD_GUESSES_PER_SECOND = 10000 * 2 * 4000;
-  private static PASSWORD_CRACK_TIME_WORDS = [
+  private static CRACK_GUESSES_PER_SECOND = 10000 * 2 * 4000;
+  private static CRACK_TIME_WORDS_PASS_PHRASE = [ // the requirements for a pass phrase are meant to be strict
     { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
     { match: 'centu', word: 'great', bar: 80, color: 'green', pass: true },
     { match: 'year', word: 'good', bar: 60, color: 'orange', pass: true },
     { match: 'month', word: 'reasonable', bar: 40, color: 'darkorange', pass: true },
+    { match: 'week', word: 'poor', bar: 30, color: 'darkred', pass: false },
     { match: 'day', word: 'poor', bar: 20, color: 'darkred', pass: false },
+    { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
+  ];
+  private static CRACK_TIME_WORDS_PWD = [ // the requirements for a one-time password are less strict
+    { match: 'millenni', word: 'perfect', bar: 100, color: 'green', pass: true },
+    { match: 'centu', word: 'perfect', bar: 95, color: 'green', pass: true },
+    { match: 'year', word: 'great', bar: 80, color: 'orange', pass: true },
+    { match: 'month', word: 'good', bar: 70, color: 'darkorange', pass: true },
+    { match: 'week', word: 'good', bar: 30, color: 'darkred', pass: true },
+    { match: 'day', word: 'reasonable', bar: 40, color: 'darkorange', pass: true },
+    { match: 'hour', word: 'bare minimum', bar: 20, color: 'darkred', pass: true },
+    { match: 'minute', word: 'poor', bar: 15, color: 'red', pass: false },
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
@@ -590,9 +602,8 @@ export class Pgp {
 
   public static password = {
     estimateStrength: (zxcvbnResultGuesses: number, type: 'passphrase' | 'pwd' = 'passphrase'): PasswordStrengthResult => {
-      // todo - use "type"
-      const timeToCrack = zxcvbnResultGuesses / Pgp.PASSWORD_GUESSES_PER_SECOND;
-      for (const word of Pgp.PASSWORD_CRACK_TIME_WORDS) {
+      const timeToCrack = zxcvbnResultGuesses / Pgp.CRACK_GUESSES_PER_SECOND;
+      for (const word of type === 'pwd' ? Pgp.CRACK_TIME_WORDS_PWD : Pgp.CRACK_TIME_WORDS_PASS_PHRASE) {
         const readableTime = Pgp.internal.readableCrackTime(timeToCrack);
         if (readableTime.includes(word.match)) { // looks for a word match from readable_crack_time, defaults on "weak"
           return { word, seconds: Math.round(timeToCrack), time: readableTime };
@@ -815,6 +826,10 @@ export class Pgp {
       const months = Math.round(totalSeconds / (86400 * 30));
       if (months) {
         return months + ' month' + numberWordEnding(months);
+      }
+      const weeks = Math.round(totalSeconds / (86400 * 7));
+      if (weeks) {
+        return weeks + ' week' + numberWordEnding(weeks);
       }
       const days = Math.round(totalSeconds / 86400);
       if (days) {
