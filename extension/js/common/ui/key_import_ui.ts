@@ -133,11 +133,13 @@ export class KeyImportUi {
     return normalized;
   }
 
-  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
+  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
-      submitButton.addClass(type === 'gray' ? 'gray' : 'green');
-      submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
+      if (submitButton) { // submitButton may be undefined if we don't want password strength to affect color of any action button
+        submitButton.addClass(type === 'gray' ? 'gray' : 'green');
+        submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
+      }
     };
     const validate = () => {
       const password = input.val();

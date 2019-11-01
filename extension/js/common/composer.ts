@@ -315,7 +315,7 @@ export class Composer {
     }
     this.setInputTextHeightManuallyIfNeeded();
     if (!this.rmPwdStrengthValidationElements) {
-      const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), $("#send_btn"), 'pwd');
+      const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
       this.rmPwdStrengthValidationElements = removeValidationElements;
     }
   }
