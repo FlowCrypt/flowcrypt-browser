@@ -85,7 +85,7 @@ export class Composer {
   private refBodyHeight?: number;
   private urlParams: ComposerUrlParams;
   private keyImportUI = new KeyImportUi({});
-  private removeValidationElements: (() => void) | undefined;
+  private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   public canReadEmails: boolean;
   public initialized: Promise<void>;
@@ -314,9 +314,9 @@ export class Composer {
       this.S.cached('add_intro').css('display', 'block');
     }
     this.setInputTextHeightManuallyIfNeeded();
-    if (!this.removeValidationElements) {
+    if (!this.rmPwdStrengthValidationElements) {
       const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), $("#send_btn"), 2);
-      this.removeValidationElements = removeValidationElements;
+      this.rmPwdStrengthValidationElements = removeValidationElements;
     }
   }
 
@@ -349,9 +349,9 @@ export class Composer {
     this.S.cached('add_intro').css('display', 'none');
     this.S.cached('input_intro').text('');
     this.S.cached('intro_container').css('display', 'none');
-    if (this.removeValidationElements) {
-      this.removeValidationElements();
-      this.removeValidationElements = undefined;
+    if (this.rmPwdStrengthValidationElements) {
+      this.rmPwdStrengthValidationElements();
+      this.rmPwdStrengthValidationElements = undefined;
     }
     this.setInputTextHeightManuallyIfNeeded();
   }
