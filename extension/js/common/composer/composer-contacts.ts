@@ -575,7 +575,7 @@ export class ComposerContacts extends ComposerComponent {
       .click(Ui.event.handle(target => this.removeRecipient(target.parentElement!), this.composer.getErrHandlers('remove recipient')));
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatuses.FAILED;
-      $(recipient.element).attr('title', 'Loading contact information failed, please try to add their email again.');
+      $(recipient.element).attr('title', 'Failed to load, click to retry');
       $(recipient.element).addClass("failed");
       Xss.sanitizeReplace($(recipient.element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');

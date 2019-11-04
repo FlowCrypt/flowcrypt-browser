@@ -424,7 +424,7 @@ export class ComposerSendBtn extends ComposerComponent {
                 }
             }
         } else if (e instanceof ComposerUserError) {
-            await Ui.modal.error(`Could not send message: ${String(e)}`);
+            await Ui.modal.error(e.message);
         } else {
             if (!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
                 Catch.reportErr(e);
@@ -615,9 +615,28 @@ export class ComposerSendBtn extends ComposerComponent {
         if (!recipients.length) {
             throw new ComposerUserError('Please add receiving email address.');
         }
-        if (shouldEncrypt && emailsWithoutPubkeys.length && (!challenge || !challenge.answer)) {
-            this.composer.S.cached('input_password').focus();
-            throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
+        if (shouldEncrypt && emailsWithoutPubkeys.length) {
+            if (challenge && challenge.answer) {
+                const pp = await this.app.storagePassphraseGet();
+                if (pp && challenge.answer.toLowerCase() === pp.toLowerCase()) {
+                    throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
+                        'You should come up with some other unique password that you can share with recipient.');
+                }
+                if (subject.toLowerCase().includes(challenge.answer.toLowerCase())) {
+                    throw new ComposerUserError(`Please do not include the password in the email subject. ` +
+                        `Sharing password over email undermines password based encryption.\n\n` +
+                        `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
+                }
+                const intro = this.composer.S.cached('input_intro').length ? this.composer.extractAsText('input_intro') : '';
+                if (intro.toLowerCase().includes(challenge.answer.toLowerCase())) {
+                    throw new ComposerUserError('Please do not include the password in the email intro. ' +
+                        `Sharing password over email undermines password based encryption.\n\n` +
+                        `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
+                }
+            } else {
+                this.composer.S.cached('input_password').focus();
+                throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
+            }
         }
         if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
             throw new ComposerResetBtnTrigger();
