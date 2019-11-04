@@ -249,6 +249,8 @@ export class Composer {
       const footer = this.getFooter();
       if (footer) {
         this.composerQuote.setFooter(footer);
+      } else {
+        this.S.cached('icon_show_prev_msg').remove();
       }
     } else {
       if (this.urlParams.isReplyBox) {

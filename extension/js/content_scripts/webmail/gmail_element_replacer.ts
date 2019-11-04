@@ -132,13 +132,13 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const visibleReplyBtns = $('td.acX:visible');
     if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
       const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced, .inserted');
-      const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
-      // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
-      for (const elem of convoReplyBtnsToReplaceArr) {
+      const convoReplyBtnsArr = convoReplyBtnsToReplace.get();
+      // only replace the last one FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
+      for (const elem of convoReplyBtnsArr) {
         $(elem).addClass('inserted');
         const element = $(this.factory.btnReply()).insertBefore($(elem).children().last());  // xss-safe-factory
-        const messageContainer = $(elem.closest('.h7') as HTMLElement);
         element.click(Ui.event.prevent('double', Catch.try(async () => {
+          const messageContainer = $(elem.closest('.h7') as HTMLElement);
           if (messageContainer.is(':last-child')) {
             if (isEncrypted) {
               await this.setReplyBoxEditable();
@@ -146,7 +146,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               await this.replaceStandardReplyBox(undefined, true, true);
             }
           } else {
-            await this.insertEncryptedReplyBox(messageContainer);
+            this.insertEncryptedReplyBox(messageContainer);
           }
         })));
       }
@@ -430,10 +430,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   }
 
-  private insertEncryptedReplyBox = async (messageContainer: JQuery<HTMLElement>) => {
-    if (!messageContainer.hasClass('h7')) {
-      throw new Error("Incorrect message container");
-    }
+  private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
     const replyParams: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId: msgId, removeAfterClose: true };
