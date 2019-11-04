@@ -115,7 +115,7 @@ Catch.try(async () => {
       }
     }
     if (!result) {
-      result = keys.find(x => x.longid === 'primary');
+      result = keys.find(x => x.primary);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     }
     return result!;
