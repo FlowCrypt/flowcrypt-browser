@@ -105,13 +105,20 @@ Catch.try(async () => {
     }
   }
   const processedUrlParams = { acctEmail, draftId, threadId, ...replyParams, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
-  const storageGetKey = async (senderEmail: string, getAcctKeyIfSenderKeyNotFound?: boolean): Promise<KeyInfo> => {
-    let [primaryKi] = await Store.keysGet(senderEmail);
-    if (!primaryKi && getAcctKeyIfSenderKeyNotFound) {
-      [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
+    let result: KeyInfo | undefined;
+    const keys = await Store.keysGet(senderEmail);
+    for (const key of keys) {
+      const parsedkey = await Pgp.key.read(key.public);
+      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(senderEmail.toLowerCase()))) {
+        result = key;
+      }
     }
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    return primaryKi;
+    if (!result) {
+      result = keys.find(x => x.longid === 'primary');
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
+    }
+    return result!;
   };
   const storageContactGet = (email: string[]) => Store.dbContactGet(undefined, email);
   const checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {

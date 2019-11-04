@@ -304,7 +304,7 @@ export class ComposerSendBtn extends ComposerComponent {
             a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
         }
         if (this.composer.S.cached('icon_pubkey').is('.active')) {
-            msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.composer.getSender(), true)));
+            msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.composer.getSender())));
         }
         await this.addNamesToMsg(msg);
         let msgSentRes: GmailRes.GmailMsgSend;
@@ -378,7 +378,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
 
     private getDecryptedPrimaryPrvOrShowError = async (senderEmail: string): Promise<OpenPGP.key.Key | undefined> => {
-        const key = await this.app.storageGetKey(senderEmail, true);
+        const key = await this.app.storageGetKey(senderEmail);
         if (key) {
             const { keys: [prv] } = await openpgp.key.readArmored(key.private);
             const passphrase = await this.app.storagePassphraseGet();
