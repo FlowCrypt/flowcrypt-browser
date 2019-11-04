@@ -89,7 +89,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   reinsertReplyBox = (subject: string, threadId: string) => {
-    const params: FactoryReplyParams = { subject, sendAs: this.sendAs, threadId, threadMsgId: threadId };
+    const params: FactoryReplyParams = { subject, sendAs: this.sendAs, replyMsgId: threadId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
@@ -423,11 +423,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   }
 
   private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
-    return {
-      sendAs: this.sendAs,
-      threadId: this.determineThreadId(convoRootEl),
-      threadMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),
-    };
+    return { sendAs: this.sendAs, replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   }
 
   private getGonvoRootEl = (anyInnerElement: HTMLElement) => {
@@ -438,11 +434,9 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     if (!messageContainer.hasClass('h7')) {
       throw new Error("Incorrect message container");
     }
-    const convoRoot = $(this.sel.convoRoot);
-    const threadId = convoRoot.find('[data-legacy-thread-id]').attr('data-legacy-thread-id');
     const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
     const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
-    const replyParams: FactoryReplyParams = { sendAs: this.sendAs, threadId, threadMsgId: msgId, removeAfterClose: true };
+    const replyParams: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId: msgId, removeAfterClose: true };
     const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(replyParams, true, true)}</div>`;
     messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
   }
@@ -454,10 +448,11 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       const { drafts_reply } = await Store.getAcct(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
       const replyParams = this.getLastMsgReplyParams(convoRootEl!);
+      const threadId = this.determineThreadId(convoRootEl!);
       if (msgId) {
-        replyParams.threadMsgId = msgId;
+        replyParams.replyMsgId = msgId;
       }
-      const hasDraft = drafts_reply && replyParams.threadId && !!drafts_reply[replyParams.threadId];
+      const hasDraft = drafts_reply && threadId && !!drafts_reply[threadId];
       const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length
         || (convoRootEl.is(':visible') && force)
         || hasDraft);

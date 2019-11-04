@@ -31,8 +31,8 @@ Catch.try(async () => {
 
   const ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId', 'threadId',
-    'threadMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId',
+    'replyMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
@@ -43,9 +43,9 @@ Catch.try(async () => {
   const disableDraftSaving = false;
   const debug = uncheckedUrlParams.debug === true;
   let draftId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'draftId') || '';
-  let threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
-  const threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
-  const isReplyBox = !!threadId;
+  const replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
+  let threadId: string = '';
+  const isReplyBox = !!replyMsgId;
   let passphraseInterval: number;
 
   const storage = await Store.getAcct(acctEmail, ['google_token_scopes', 'addresses', 'sendAs', 'addresses_keyserver', 'email_provider',
@@ -73,19 +73,16 @@ Catch.try(async () => {
     };
     return storage.sendAs || (storage.addresses && arrayToSendAs(storage.addresses));
   };
-  if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
-    draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
-  }
   const replyParams: { from: string, subject: string, to: string[], cc: string[], bcc: string[] } = { from: '', subject: '', to: [], cc: [], bcc: [] };
-  if (threadMsgId) {
+  if (replyMsgId) {
     const fetchSuccess = await (async () => {
       Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
       try {
-        const gmailMsg = await Google.gmail.msgGet(acctEmail, threadMsgId, 'metadata');
+        const gmailMsg = await Google.gmail.msgGet(acctEmail, replyMsgId, 'metadata');
         const aliases = AccountStoreExtension.getEmailAliasesIncludingPrimary(acctEmail, storageGetAddresses());
         Object.assign(replyParams, Google.determineReplyCorrespondents(acctEmail, aliases, gmailMsg));
         replyParams.subject = Google.gmail.findHeader(gmailMsg, 'subject') || '';
-        threadId = gmailMsg.threadId ? gmailMsg.threadId : threadId;
+        threadId = gmailMsg.threadId || '';
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
           BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
@@ -106,8 +103,11 @@ Catch.try(async () => {
       return;
     }
   }
+  if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
+    draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
+  }
   const processedUrlParams = {
-    acctEmail, draftId, threadId, threadMsgId, ...replyParams, frameId, tabId, isReplyBox,
+    acctEmail, draftId, threadId, replyMsgId, ...replyParams, frameId, tabId, isReplyBox,
     skipClickPrompt, parentTabId, disableDraftSaving, debug, removeAfterClose
   };
   const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
@@ -312,10 +312,10 @@ Catch.try(async () => {
     emailProviderExtractArmoredBlock: (msgId: string) => Google.gmail.extractArmoredBlock(acctEmail, msgId, 'full'),
     // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),
     // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
-    renderReinsertReplyBox: (lastMsgId: string, recipients: string[]) => {
+    renderReinsertReplyBox: (msgId: string, recipients: string[]) => {
       BrowserMsg.send.reinsertReplyBox(parentTabId, {
         acctEmail, myEmail: replyParams.from || acctEmail, subject: replyParams.subject,
-        theirEmail: recipients, threadId, threadMsgId: lastMsgId
+        theirEmail: recipients, replyMsgId: msgId
       });
     },
     renderAddPubkeyDialog: (emails: string[]) => {

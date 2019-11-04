@@ -51,7 +51,7 @@ export type ComposerUrlParams = {
   tabId: string;
   acctEmail: string;
   threadId: string;
-  threadMsgId: string;
+  replyMsgId: string;
   draftId: string;
   subject: string;
   from: string | undefined;

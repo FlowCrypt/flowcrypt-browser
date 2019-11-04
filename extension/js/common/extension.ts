@@ -34,7 +34,7 @@ export namespace Bm {
   export type SubscribeDialog = { isAuthErr?: boolean };
   export type FocusFrame = { frameId: string };
   export type CloseReplyMessage = { frameId: string, threadId: string };
-  export type ReinsertReplyBox = { acctEmail: string, myEmail: string, subject: string, theirEmail: string[], threadId: string, threadMsgId: string };
+  export type ReinsertReplyBox = { acctEmail: string, myEmail: string, subject: string, theirEmail: string[], replyMsgId: string };
   export type AddPubkeyDialog = { emails: string[] };
   export type SetFooter = { email: string, footer: string | undefined };
   export type Reload = { advanced?: boolean };

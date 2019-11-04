@@ -18,15 +18,15 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'threadId', 'threadMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft', 'debug']);
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'replyMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');
-  const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId') || '';
-  const threadMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadMsgId') || '';
+  const replyMsgId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'replyMsgId') || '';
   const debug = uncheckedUrlParams.debug === true;
   const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
+  let threadId = '';
   let to = uncheckedUrlParams.to ? String(uncheckedUrlParams.to).split(',') : [];
   let subject = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'subject') || '';
 
@@ -67,14 +67,14 @@ Catch.try(async () => {
     lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: () => Promise.reject(undefined)
   };
   await (async () => {
-    if (!threadId) {
+    if (!replyMsgId) {
       return; // either not a reply box, or reply box & has all needed params
     }
     Xss.sanitizePrepend('#new_message', Ui.e('div', { id: 'loader', html: 'Loading secure reply box..' + Ui.spinner('green') }));
     let gmailMsg;
     try {
-      const thread = await Google.gmail.threadGet(acctEmail, threadId, 'metadata');
-      gmailMsg = await Google.gmail.msgGet(acctEmail, thread.messages[thread.messages.length - 1].id, 'metadata');
+      gmailMsg = await Google.gmail.msgGet(acctEmail, replyMsgId, 'metadata');
+      threadId = gmailMsg.threadId || '';
     } catch (e) {
       if (Api.err.isAuthPopupNeeded(e)) {
         BrowserMsg.send.notificationShowAuthPopupNeeded(parentTabId, { acctEmail });
@@ -94,7 +94,7 @@ Catch.try(async () => {
   })();
   const tabId = await BrowserMsg.requiredTabId();
   const processedUrlParams = {
-    acctEmail, draftId: '', threadId, threadMsgId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
+    acctEmail, draftId: '', threadId, replyMsgId, subject, from, to, cc: [], bcc: [], frameId, tabId, debug,
     isReplyBox: true, skipClickPrompt: false, // do not skip, would cause errors. This page is using custom template w/o a prompt
     parentTabId, disableDraftSaving: true, removeAfterClose: false
   };
@@ -120,9 +120,9 @@ Catch.try(async () => {
   const determineReplyHeaders = async () => {
     const thread = await Google.gmail.threadGet(acctEmail, threadId, 'full');
     if (thread.messages && thread.messages.length > 0) {
-      const threadMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
+      const replyMsgIdLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'Message-ID') || '';
       const threadMsgRefsLast = Google.gmail.findHeader(thread.messages[thread.messages.length - 1], 'In-Reply-To') || '';
-      return { 'In-Reply-To': threadMsgIdLast, 'References': threadMsgRefsLast + ' ' + threadMsgIdLast };
+      return { 'In-Reply-To': replyMsgIdLast, 'References': threadMsgRefsLast + ' ' + replyMsgIdLast };
     }
     return { 'In-Reply-To': '', 'References': '' };
   };

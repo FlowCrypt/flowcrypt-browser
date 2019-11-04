@@ -94,8 +94,8 @@ Catch.try(async () => {
   BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
     $(`iframe#${frameId}`).remove();
   });
-  BrowserMsg.addListener('reinsert_reply_box', async ({ threadId, threadMsgId }: Bm.ReinsertReplyBox) => {
-    renderReplyBox(threadId, threadMsgId);
+  BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
+    renderReplyBox(replyMsgId);
   });
   BrowserMsg.addListener('passphrase_dialog', async ({ longids, type }: Bm.PassphraseDialog) => {
     if (!$('#cryptup_dialog').length) {
@@ -378,7 +378,10 @@ Catch.try(async () => {
           $(".action_see_original_message").text('See Decrypted');
         }
       }
-      renderReplyBox(threadId, thread.messages[thread.messages.length - 1].id, thread.messages[thread.messages.length - 1]);
+      const lastMsg = thread.messages[thread.messages.length - 1];
+      if (lastMsg) {
+        renderReplyBox(lastMsg.id);
+      }
       // await Google.gmail.threadModify(acctEmail, threadId, [LABEL.UNREAD], []); // missing permission https://github.com/FlowCrypt/flowcrypt-browser/issues/1304
     } catch (e) {
       if (Api.err.isNetErr(e)) {
@@ -400,7 +403,7 @@ Catch.try(async () => {
   };
 
   const renderMsg = async (message: GmailRes.GmailMsg) => {
-    const htmlId = threadMsgId(message.id);
+    const htmlId = replyMsgId(message.id);
     const from = Google.gmail.findHeader(message, 'from') || 'unknown';
     try {
       const { raw } = await Google.gmail.msgGet(acctEmail, message.id, 'raw');
@@ -443,18 +446,12 @@ Catch.try(async () => {
     }
   };
 
-  const renderReplyBox = (threadId: string, threadMsgId: string, lastMsg?: GmailRes.GmailMsg) => {
-    let params: FactoryReplyParams;
-    if (lastMsg) {
-      const subject = Google.gmail.findHeader(lastMsg, 'subject') || undefined;
-      params = { subject, sendAs: storage.sendAs, threadId, threadMsgId };
-    } else {
-      params = { threadId, threadMsgId };
-    }
+  const renderReplyBox = (replyMsgId: string) => {
+    const params: FactoryReplyParams = { replyMsgId };
     S.cached('thread').append(Ui.e('div', { class: 'reply line', html: factory.embeddedReply(params, false, false) })); // xss-safe-factory
   };
 
-  const threadMsgId = (msgId: string) => {
+  const replyMsgId = (msgId: string) => {
     return 'message_id_' + msgId;
   };
 

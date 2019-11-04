@@ -17,8 +17,7 @@ type Placement = 'settings' | 'settings_compose' | 'default' | 'dialog' | 'gmail
 export type WebmailVariantString = undefined | 'html' | 'standard' | 'new';
 export type PassphraseDialogType = 'embedded' | 'message' | 'attachment' | 'draft' | 'sign' | `quote` | `backup`;
 export type FactoryReplyParams = {
-  threadId?: string,
-  threadMsgId?: string,
+  replyMsgId?: string,
   sendAs?: Dict<SendAsAlias>,
   subject?: string,
   removeAfterClose?: boolean,
@@ -104,10 +103,9 @@ export class XssSafeFactory {
       isReplyBox: true,
       frameId: `frame_${Str.sloppyRandom(10)}`,
       placement: 'gmail',
-      threadId: convoParams.threadId,
       skipClickPrompt: Boolean(skipClickPrompt),
       ignoreDraft: Boolean(ignoreDraft),
-      threadMsgId: convoParams.threadMsgId,
+      replyMsgId: convoParams.replyMsgId,
       removeAfterClose: convoParams.removeAfterClose
     };
     return this.frameSrc(this.extUrl('chrome/elements/compose.htm'), params);

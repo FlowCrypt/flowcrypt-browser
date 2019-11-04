@@ -416,7 +416,7 @@ export class Composer {
       if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
         (async () => { // not awaited because can take a long time & blocks rendering
           const footer = this.getFooter();
-          await this.composerQuote.addTripleDotQuoteExpandBtn(this.urlParams.threadMsgId, method, footer);
+          await this.composerQuote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
           if (this.composerQuote.messageToReplyOrForward) {
             this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = this.composerQuote.messageToReplyOrForward.headers['in-reply-to'];
             this.composerSendBtn.additionalMsgHeaders.References = this.composerQuote.messageToReplyOrForward.headers.references;
