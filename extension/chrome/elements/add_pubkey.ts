@@ -11,6 +11,7 @@ import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
 import { AttUI } from '../../js/common/ui/att_ui.js';
 import { Pgp } from '../../js/common/core/pgp.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { FetchKeyUI } from '../../js/common/ui/fetch_key_ui.js';
 
 Catch.try(async () => {
 
@@ -22,6 +23,8 @@ Catch.try(async () => {
   const missingPubkeyEmails = Assert.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');
   const placement = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'placement');
 
+  const fetchKeyUi = new FetchKeyUI();
+
   for (const missingPubkeyEmail of missingPubkeyEmails) {
     Xss.sanitizeAppend('select.email', `<option value="${Xss.escape(missingPubkeyEmail)}">${Xss.escape(missingPubkeyEmail)}</option>`);
   }
@@ -30,6 +33,8 @@ Catch.try(async () => {
   }
 
   const closeDialog = () => BrowserMsg.send.closeDialog(parentTabId);
+
+  fetchKeyUi.handleOnPaste($('.pubkey'));
 
   $('select.copy_from_email').change(Ui.event.handle(async target => {
     if ($(target).val()) {

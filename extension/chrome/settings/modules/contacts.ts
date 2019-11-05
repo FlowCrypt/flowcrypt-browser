@@ -18,6 +18,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Str } from '../../../js/common/core/common.js';
+import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
@@ -50,21 +51,8 @@ Catch.try(async () => {
     }
   });
 
-  const inputPubKeyHandlePaste = Ui.event.handle(async (elem: HTMLInputElement, event) => {
-    const clipboardEvent = event.originalEvent as ClipboardEvent;
-    if (clipboardEvent.clipboardData) {
-      const possiblyURL = clipboardEvent.clipboardData.getData('text');
-      const pattern = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
-      if (pattern.test(possiblyURL)) {
-        const pubkey = await fetchPubkey(possiblyURL);
-        if (pubkey) {
-          elem.value = pubkey;
-        }
-      }
-    }
-  });
-
-  $('.input_pubkey').on('paste', inputPubKeyHandlePaste);
+  const fetchKeyUI = new FetchKeyUI();
+  fetchKeyUI.handleOnPaste($('.input_pubkey'));
 
   const renderViewPublicKey = async (viewPubkeyButton: HTMLElement) => {
     const [contact] = await Store.dbContactGet(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
@@ -208,16 +196,6 @@ Catch.try(async () => {
     $('#edit_contact .action_save_edited_pubkey').off().click(Ui.event.prevent('double', actionSaveEditedPublicKey));
     $('#bulk_import .action_process').off().click(Ui.event.prevent('double', actionProcessBulkImportTextInput));
     $('a.action_remove').off().click(Ui.event.prevent('double', actionRemovePublicKey));
-  };
-
-  const fetchPubkey = async (url: string) => {
-    try {
-      const result = (await Api.ajax({ url, type: 'GET', dataType: 'text', async: true }, Catch.stackTrace())) as string;
-      const keyImportUi = new KeyImportUi({ checkEncryption: true });
-      return await keyImportUi.checkPub(result);
-    } catch (e) {
-      return;
-    }
   };
 
   await renderContactList();
