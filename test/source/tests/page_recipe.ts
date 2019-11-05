@@ -233,31 +233,12 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.closeDialog(settingsPage);
   }
 
-  public static changePassphraseRequirement = async (settingsPage: ControllablePage, passphrase: string, outcome: "session" | "storage") => {
+  public static forgotAllPPInStorage = async (settingsPage: ControllablePage, passphrase: string) => {
     await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
-    await securityFrame.waitAll('@input-toggle-require-pass-phrase');
-    await Util.sleep(1); // wait for form to init / fill
-    let requirePassphraseIsChecked = await securityFrame.isChecked('@input-toggle-require-pass-phrase');
-    if (requirePassphraseIsChecked && outcome === 'session') {
-      throw new Error('change_pass_phrase_requirement: already checked to be in session only');
-    }
-    if (!requirePassphraseIsChecked && outcome === 'storage') {
-      throw new Error('change_pass_phrase_requirement: already checked to be in storage');
-    }
-    await securityFrame.click('@input-toggle-require-pass-phrase');
+    await securityFrame.waitAndClick('@action-forget-pp');
     await securityFrame.waitAndType('@input-confirm-pass-phrase', passphrase);
     await securityFrame.waitAndClick('@action-confirm-pass-phrase-requirement-change');
-    await Util.sleep(1); // frame will now reload
-    await securityFrame.waitAll('@input-toggle-require-pass-phrase');
-    await Util.sleep(1); // wait to init
-    requirePassphraseIsChecked = await securityFrame.isChecked('@input-toggle-require-pass-phrase');
-    if (!requirePassphraseIsChecked && outcome === 'session') {
-      throw new Error('change_pass_phrase_requirement: did not remember to only save in sesion');
-    }
-    if (requirePassphraseIsChecked && outcome === 'storage') {
-      throw new Error('change_pass_phrase_requirement: did not remember to save in storage');
-    }
     await SettingsPageRecipe.closeDialog(settingsPage);
   }
 
@@ -291,14 +272,17 @@ export class SettingsPageRecipe extends PageRecipe {
 
 }
 
-type CheckDecryptMsg$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string };
+type CheckDecryptMsg$opt = { acctEmail: string, threadId: string, expectedContent: string, enterPp?: string, finishCurrentSession?: boolean };
 type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: string, isEncrypted?: boolean, isSigned?: boolean, sender?: string };
 
 export class InboxPageRecipe extends PageRecipe {
 
-  public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent }: CheckDecryptMsg$opt) => {
+  public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt) => {
     const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
+    if (finishCurrentSession) {
+      await inboxPage.waitAndClick('@finish-session');
+    }
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
     await pgpBlockFrame.waitAll('@pgp-block-content');
     await pgpBlockFrame.waitForSelTestState('ready');

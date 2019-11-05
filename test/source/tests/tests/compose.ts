@@ -20,7 +20,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const k = Config.key('test.ci.compose');
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
       const settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
-      await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
+      await SettingsPageRecipe.forgotAllPPInStorage(settingsPage, k.passphrase);
       const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', 'signed');
       await composeFrame.waitAndClick('@action-send');
@@ -465,7 +465,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {
   const settingsPage = await browser.newPage(t, Url.extensionSettings());
-  await SettingsPageRecipe.changePassphraseRequirement(settingsPage, passpharase, 'session');
+  await SettingsPageRecipe.forgotAllPPInStorage(settingsPage, passpharase);
   // Open Message Page
   const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`));
   await inboxPage.waitAll('iframe');
