@@ -63,37 +63,32 @@ Catch.try(async () => {
       $('.forget_passphrase').css('display', 'none');
       $('.passphrase_entry_container').css('display', '');
     }));
-  }
+    $('.confirm_passphrase_requirement_change').click(Ui.event.handle(async () => {
+      const primaryKiPP = await Store.passphraseGet(acctEmail, primaryKi.longid);
+      if ($('input#passphrase_entry').val() === primaryKiPP) {
+        for (const key of keys) {
+          await Store.passphraseSave('local', acctEmail, key.longid, undefined);
+          await Store.passphraseSave('session', acctEmail, key.longid, undefined);
+        }
+        window.location.reload();
+      } else {
+        await Ui.modal.warning('Pass phrase did not match, please try again.');
+        $('input#passphrase_entry').val('').focus();
+      }
+    }));
 
-  $('#passphrase_to_open_email').change(Ui.event.handle(() => {
-    $('.passhprase_checkbox_container').css('display', 'none');
-    $('.passphrase_entry_container').css('display', 'block');
-  }));
-  $('#passphrase_entry').keydown(event => {
-    if (event.which === 13) {
-      $('.confirm_passphrase_requirement_change').click();
-    }
-  });
+    $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
+
+    $('#passphrase_entry').keydown(event => {
+      if (event.which === 13) {
+        $('.confirm_passphrase_requirement_change').click();
+      }
+    });
+  }
 
   $('.action_change_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/change_passphrase.htm')));
 
   $('.action_test_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
-
-  $('.confirm_passphrase_requirement_change').click(Ui.event.handle(async () => {
-    const primaryKiPP = await Store.passphraseGet(acctEmail, primaryKi.longid);
-    if ($('input#passphrase_entry').val() === primaryKiPP) {
-      for (const key of keys) {
-        await Store.passphraseSave('local', acctEmail, key.longid, undefined);
-        await Store.passphraseSave('session', acctEmail, key.longid, undefined);
-      }
-      window.location.reload();
-    } else {
-      await Ui.modal.warning('Pass phrase did not match, please try again.');
-      $('input#passphrase_entry').val('').focus();
-    }
-  }));
-
-  $('.cancel_passphrase_requirement_change').click(() => window.location.reload());
 
   $('#hide_message_password').prop('checked', storage.hide_message_password === true);
   $('.password_message_language').val(storage.outgoing_language || 'EN');
