@@ -84,6 +84,8 @@ export class Composer {
   private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
   private urlParams: ComposerUrlParams;
+  private keyImportUI = new KeyImportUi({});
+  private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   public canReadEmails: boolean;
   public initialized: Promise<void>;
@@ -296,13 +298,6 @@ export class Composer {
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
 
-  private getPwdValidationWarning = () => {
-    if (!this.S.cached('input_password').val()) {
-      return 'No password entered';
-    }
-    return;
-  }
-
   private showMsgPwdUiAndColorBtn = () => {
     this.S.cached('password_or_pubkey').css('display', 'table-row');
     this.S.cached('password_or_pubkey').css('display', 'table-row');
@@ -311,15 +306,18 @@ export class Composer {
       this.S.cached('input_password').attr('placeholder', '');
     } else {
       this.S.cached('password_label').css('display', 'none');
-      this.S.cached('input_password').attr('placeholder', 'one time password');
+      this.S.cached('input_password').attr('placeholder', 'message password');
     }
-    this.composerSendBtn.setBtnColor(this.getPwdValidationWarning() ? 'gray' : 'green');
     if (this.S.cached('input_intro').is(':visible')) {
       this.S.cached('add_intro').css('display', 'none');
     } else {
       this.S.cached('add_intro').css('display', 'block');
     }
     this.setInputTextHeightManuallyIfNeeded();
+    if (!this.rmPwdStrengthValidationElements) {
+      const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
+      this.rmPwdStrengthValidationElements = removeValidationElements;
+    }
   }
 
   /**
@@ -351,6 +349,10 @@ export class Composer {
     this.S.cached('add_intro').css('display', 'none');
     this.S.cached('input_intro').text('');
     this.S.cached('intro_container').css('display', 'none');
+    if (this.rmPwdStrengthValidationElements) {
+      this.rmPwdStrengthValidationElements();
+      this.rmPwdStrengthValidationElements = undefined;
+    }
     this.setInputTextHeightManuallyIfNeeded();
   }
 

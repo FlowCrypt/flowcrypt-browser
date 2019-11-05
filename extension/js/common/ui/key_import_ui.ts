@@ -133,11 +133,13 @@ export class KeyImportUi {
     return normalized;
   }
 
-  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton: JQuery<HTMLElement>) => {
+  renderPassPhraseStrengthValidationInput = (input: JQuery<HTMLElement>, submitButton?: JQuery<HTMLElement>, type: 'passphrase' | 'pwd' = 'passphrase') => {
     const validationElements = this.getPPValidationElements();
     const setBtnColor = (type: 'gray' | 'green') => {
-      submitButton.addClass(type === 'gray' ? 'gray' : 'green');
-      submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
+      if (submitButton) { // submitButton may be undefined if we don't want password strength to affect color of any action button
+        submitButton.addClass(type === 'gray' ? 'gray' : 'green');
+        submitButton.removeClass(type === 'gray' ? 'green' : 'gray');
+      }
     };
     const validate = () => {
       const password = input.val();
@@ -145,7 +147,7 @@ export class KeyImportUi {
         Catch.report('render_password_strength: Selected password is not a string', typeof password);
         return;
       }
-      const result = Settings.evalPasswordStrength(password);
+      const result = Settings.evalPasswordStrength(password, type);
       validationElements.passwordResultElement.css('display', 'block');
       validationElements.passwordResultElement.css('color', result.word.color);
       validationElements.passwordResultElement.find('.password_result').text(result.word.word);
@@ -154,6 +156,8 @@ export class KeyImportUi {
       validationElements.progressBarElement.find('div').css('background-color', result.word.color);
       setBtnColor(result.word.pass ? 'green' : 'gray');
     };
+    validationElements.progressBarElement
+      .find('input').css('width', input.outerWidth() + 'px');
     input.parent().append(validationElements.progressBarElement); // xss-direct
     input.parent().append(validationElements.passwordResultElement); // xss-direct
     const validation = Ui.event.prevent('spree', validate);

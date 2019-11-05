@@ -30,8 +30,8 @@ export class Settings {
     return result;
   }
 
-  static evalPasswordStrength = (passphrase: string) => {
-    return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses); // tslint:disable-line:no-unsafe-any
+  static evalPasswordStrength = (passphrase: string, type: 'passphrase' | 'pwd' = 'passphrase') => {
+    return Pgp.password.estimateStrength(zxcvbn(passphrase, Pgp.password.weakWords()).guesses, type); // tslint:disable-line:no-unsafe-any
   }
 
   static submitPubkeys = async (acctEmail: string, addresses: string[], pubkey: string) => {
