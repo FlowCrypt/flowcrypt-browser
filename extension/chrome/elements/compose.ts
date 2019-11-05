@@ -49,12 +49,26 @@ Catch.try(async () => {
     'hide_message_password', 'drafts_reply']);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
-  const storagePassphraseGet = async () => {
-    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if (!primaryKi) {
+  const findKeyByEmail = async (keys: KeyInfo[], email: string) => {
+    let result: KeyInfo | undefined;
+    for (const key of keys) {
+      const parsedkey = await Pgp.key.read(key.public);
+      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
+        result = key;
+      }
+    }
+    return result;
+  };
+  const storagePassphraseGet = async (senderEmail?: string) => {
+    if (!senderEmail) {
+      senderEmail = acctEmail;
+    }
+    const keys = await Store.keysGet(senderEmail);
+    const key = await findKeyByEmail(keys, senderEmail);
+    if (!key) {
       return undefined; // flowcrypt just uninstalled or reset?
     }
-    return await Store.passphraseGet(acctEmail, primaryKi.longid);
+    return await Store.passphraseGet(acctEmail, key.longid);
   };
   const storageGetAddresses = () => {
     const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
@@ -108,12 +122,7 @@ Catch.try(async () => {
   const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
     let result: KeyInfo | undefined;
     const keys = await Store.keysGet(senderEmail);
-    for (const key of keys) {
-      const parsedkey = await Pgp.key.read(key.public);
-      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(senderEmail.toLowerCase()))) {
-        result = key;
-      }
-    }
+    result = await findKeyByEmail(keys, senderEmail);
     if (!result) {
       result = keys.find(x => x.primary);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);

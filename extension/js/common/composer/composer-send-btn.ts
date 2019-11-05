@@ -209,7 +209,7 @@ export class ComposerSendBtn extends ComposerComponent {
       if (this.encryptionType === 'signed') {
         await this.signSend(recipients, subject, plaintext);
       } else if (['encrypted', 'encryptedAndSigned'].includes(this.encryptionType)) {
-        const prv = this.encryptionType === 'encryptedAndSigned' ? await this.getDecryptedPrimaryPrvOrShowError() : undefined;
+        const prv = this.encryptionType === 'encryptedAndSigned' ? await this.getDecryptedPrimaryPrvOrShowError(this.composer.getSender()) : undefined;
         if (this.encryptionType === 'encryptedAndSigned' && !prv) {
           return;
         }
@@ -264,7 +264,7 @@ export class ComposerSendBtn extends ComposerComponent {
 
   private signSend = async (recipients: Recipients, subject: string, plaintext: string) => {
     this.composer.S.now('send_btn_text').text('Signing');
-    const prv = await this.getDecryptedPrimaryPrvOrShowError();
+    const prv = await this.getDecryptedPrimaryPrvOrShowError(this.composer.getSender());
     if (prv) {
       // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
       // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
@@ -302,7 +302,7 @@ export class ComposerSendBtn extends ComposerComponent {
       a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
     }
     if (this.composer.S.cached('icon_pubkey').is('.active')) {
-      msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.urlParams.acctEmail)));
+      msg.atts.push(Att.keyinfoAsPubkeyAtt(await this.app.storageGetKey(this.composer.getSender())));
     }
     await this.addNamesToMsg(msg);
     let msgSentRes: GmailRes.GmailMsgSend;
@@ -375,21 +375,25 @@ export class ComposerSendBtn extends ComposerComponent {
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private getDecryptedPrimaryPrvOrShowError = async (): Promise<OpenPGP.key.Key | undefined> => {
-    const [primaryKi] = await Store.keysGet(this.urlParams.acctEmail, ['primary']);
-    if (primaryKi) {
-      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-      const passphrase = await this.app.storagePassphraseGet();
+  private getDecryptedPrimaryPrvOrShowError = async (senderEmail: string): Promise<OpenPGP.key.Key | undefined> => {
+    const key = await this.app.storageGetKey(senderEmail);
+    if (key) {
+      const { keys: [prv] } = await openpgp.key.readArmored(key.private);
+      console.log(prv);
+      const passphrase = await this.app.storagePassphraseGet(senderEmail);
+      console.log(passphrase);
       if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
         BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
         if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
-          return await this.getDecryptedPrimaryPrvOrShowError();
+          return await this.getDecryptedPrimaryPrvOrShowError(senderEmail);
         } else { // timeout - reset - no passphrase entered
           this.resetSendBtn();
         }
       } else {
         if (!prv.isFullyDecrypted()) {
+          console.log('decrypting');
           await Pgp.key.decrypt(prv, passphrase!); // checked !== undefined above
+          console.log('decrypted');
         }
         return prv;
       }
