@@ -5,15 +5,12 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
-import { Pgp } from '../../../js/common/core/pgp.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-
-declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
@@ -52,10 +49,22 @@ Catch.try(async () => {
     }
   };
 
-  const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid, true);
-  if (typeof storedPassphrase === 'undefined') {
-    $('#passphrase_to_open_email').prop('checked', true);
+  let storedInSession: boolean = false;
+  const keys = await Store.keysGet(acctEmail);
+  for (const key of keys) {
+    if (await Store.passphraseGet(acctEmail, key.longid, true)) {
+      storedInSession = true;
+      break;
+    }
   }
+  if (storedInSession) {
+    $('.forget_passphrase').css('display', '');
+    $('.action_forget_pp').click(Ui.event.handle(() => {
+      $('.forget_passphrase').css('display', 'none');
+      $('.passphrase_entry_container').css('display', '');
+    }));
+  }
+
   $('#passphrase_to_open_email').change(Ui.event.handle(() => {
     $('.passhprase_checkbox_container').css('display', 'none');
     $('.passphrase_entry_container').css('display', 'block');
@@ -71,25 +80,16 @@ Catch.try(async () => {
   $('.action_test_passphrase').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/test_passphrase.htm')));
 
   $('.confirm_passphrase_requirement_change').click(Ui.event.handle(async () => {
-    if ($('#passphrase_to_open_email').is(':checked')) { // todo - forget pass all phrases, not just master
-      const storedPassphrase = await Store.passphraseGet(acctEmail, primaryKi.longid);
-      if ($('input#passphrase_entry').val() === storedPassphrase) {
-        await Store.passphraseSave('local', acctEmail, primaryKi.longid, undefined);
-        await Store.passphraseSave('session', acctEmail, primaryKi.longid, undefined);
-        window.location.reload();
-      } else {
-        await Ui.modal.warning('Pass phrase did not match, please try again.');
-        $('input#passphrase_entry').val('').focus();
+    const primaryKiPP = await Store.passphraseGet(acctEmail, primaryKi.longid);
+    if ($('input#passphrase_entry').val() === primaryKiPP) {
+      for (const key of keys) {
+        await Store.passphraseSave('local', acctEmail, key.longid, undefined);
+        await Store.passphraseSave('session', acctEmail, key.longid, undefined);
       }
-    } else { // save pass phrase
-      const { keys: [prv] } = await openpgp.key.readArmored(primaryKi.private);
-      if (await Pgp.key.decrypt(prv, String($('input#passphrase_entry').val())) === true) {
-        await Store.passphraseSave('local', acctEmail, primaryKi.longid, String($('input#passphrase_entry').val()));
-        window.location.reload();
-      } else {
-        await Ui.modal.warning('Pass phrase did not match, please try again.');
-        $('input#passphrase_entry').val('').focus();
-      }
+      window.location.reload();
+    } else {
+      await Ui.modal.warning('Pass phrase did not match, please try again.');
+      $('input#passphrase_entry').val('').focus();
     }
   }));
 
