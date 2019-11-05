@@ -233,7 +233,7 @@ export class SettingsPageRecipe extends PageRecipe {
     await SettingsPageRecipe.closeDialog(settingsPage);
   }
 
-  public static forgotAllPPInStorage = async (settingsPage: ControllablePage, passphrase: string) => {
+  public static forgetAllPassPhrasesInStorage = async (settingsPage: ControllablePage, passphrase: string) => {
     await SettingsPageRecipe.ready(settingsPage);
     const securityFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-security-page', ['security.htm', 'placement=settings']);
     await securityFrame.waitAndClick('@action-forget-pp');

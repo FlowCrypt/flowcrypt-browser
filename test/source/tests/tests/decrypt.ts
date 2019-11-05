@@ -122,7 +122,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const settingsPage = await browser.newPage(t, Url.extensionSettings());
-      await SettingsPageRecipe.forgotAllPPInStorage(settingsPage, pp);
+      await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
       // requires pp entry
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent, enterPp: Config.key('flowcrypt.compatibility.1pp1').passphrase });
       // now remembers pp in session
