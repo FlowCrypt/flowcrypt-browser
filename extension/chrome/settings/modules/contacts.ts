@@ -18,6 +18,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Keyserver } from '../../../js/common/api/keyserver.js';
 import { Str } from '../../../js/common/core/common.js';
+import { FetchKeyUI } from '../../../js/common/ui/fetch_key_ui.js';
 
 Catch.try(async () => {
   const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
@@ -49,6 +50,9 @@ Catch.try(async () => {
       await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
     }
   });
+
+  const fetchKeyUI = new FetchKeyUI();
+  fetchKeyUI.handleOnPaste($('.input_pubkey'));
 
   const renderViewPublicKey = async (viewPubkeyButton: HTMLElement) => {
     const [contact] = await Store.dbContactGet(undefined, [$(viewPubkeyButton).closest('tr').attr('email')!]); // defined above
