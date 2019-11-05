@@ -1,6 +1,6 @@
 /* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypt.com */
 
-'use-strict';
+'use strict';
 
 import { Ui } from '../browser.js';
 import { Catch } from '../platform/catch.js';
