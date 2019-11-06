@@ -35,7 +35,7 @@ export interface ComposerAppFunctionsInterface {
   emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
   emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
   renderAddPubkeyDialog: (emails: string[]) => void;
-  renderReinsertReplyBox: (msgId: string, recipients: string[]) => void;
+  renderReinsertReplyBox: (msgId: string) => void;
   renderHelpDialog: () => void;
   factoryAtt: (att: Att, isEncrypted: boolean) => string;
   closeMsg: () => void;

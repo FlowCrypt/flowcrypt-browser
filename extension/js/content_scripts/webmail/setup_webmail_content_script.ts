@@ -24,7 +24,7 @@ type WebmailSpecificInfo = {
 export interface WebmailElementReplacer {
   getIntervalFunctions: () => Array<IntervalFunction>;
   setReplyBoxEditable: () => Promise<void>;
-  reinsertReplyBox: (subject: string, myEmail: string, replyTo: string[], replyMsgId: string) => void;
+  reinsertReplyBox: (replyMsgId: string) => void;
   scrollToElement: (selector: string) => void;
 }
 
@@ -118,8 +118,8 @@ export const contentScriptSetupIfVacant = async (webmailSpecific: WebmailSpecifi
     BrowserMsg.addListener('close_reply_message', async ({ frameId }: Bm.CloseReplyMessage) => {
       $(`iframe#${frameId}`).remove();
     });
-    BrowserMsg.addListener('reinsert_reply_box', async ({ subject, myEmail, theirEmail, replyMsgId }: Bm.ReinsertReplyBox) => {
-      webmailSpecific.getReplacer().reinsertReplyBox(subject, myEmail, theirEmail, replyMsgId);
+    BrowserMsg.addListener('reinsert_reply_box', async ({ replyMsgId }: Bm.ReinsertReplyBox) => {
+      webmailSpecific.getReplacer().reinsertReplyBox(replyMsgId);
     });
     BrowserMsg.addListener('render_public_keys', async ({ traverseUp, afterFrameId, publicKeys }: Bm.RenderPublicKeys) => {
       const traverseUpLevels = traverseUp as number || 0;

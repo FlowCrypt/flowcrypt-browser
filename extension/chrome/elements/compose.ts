@@ -312,10 +312,9 @@ Catch.try(async () => {
     emailProviderExtractArmoredBlock: (msgId: string) => Google.gmail.extractArmoredBlock(acctEmail, msgId, 'full'),
     // sendMsgToMainWin: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(parentTabId, channel, data),
     // sendMsgToBgScript: (channel: string, data: Dict<Serializable>) => BrowserMsg.send(null, channel, data),
-    renderReinsertReplyBox: (msgId: string, recipients: string[]) => {
+    renderReinsertReplyBox: (msgId: string) => {
       BrowserMsg.send.reinsertReplyBox(parentTabId, {
-        acctEmail, myEmail: replyParams.from || acctEmail, subject: replyParams.subject,
-        theirEmail: recipients, replyMsgId: msgId
+        replyMsgId: msgId
       });
     },
     renderAddPubkeyDialog: (emails: string[]) => {

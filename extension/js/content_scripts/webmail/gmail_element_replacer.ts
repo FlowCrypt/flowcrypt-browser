@@ -88,8 +88,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     }
   }
 
-  reinsertReplyBox = (subject: string, threadId: string) => {
-    const params: FactoryReplyParams = { subject, sendAs: this.sendAs, replyMsgId: threadId };
+  reinsertReplyBox = (replyMsgId: string) => {
+    const params: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
@@ -450,7 +450,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
         replyParams.replyMsgId = msgId;
       }
       const hasDraft = drafts_reply && threadId && !!drafts_reply[threadId];
-      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length
+      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
         || (convoRootEl.is(':visible') && force)
         || hasDraft);
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);

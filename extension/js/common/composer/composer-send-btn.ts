@@ -568,7 +568,7 @@ export class ComposerSendBtn extends ComposerComponent {
 
     private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
         const isSigned = this.encryptionType === 'signed';
-        this.app.renderReinsertReplyBox(msgId, msg.headers.To.split(',').map(a => Str.parseEmail(a).email).filter(e => !!e) as string[]);
+        this.app.renderReinsertReplyBox(msgId);
         if (isSigned) {
             this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
         }
