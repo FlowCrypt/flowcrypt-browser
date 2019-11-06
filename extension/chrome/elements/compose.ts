@@ -55,16 +55,19 @@ Catch.try(async () => {
       const parsedkey = await Pgp.key.read(key.public);
       if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
         result = key;
+        break;
       }
     }
     return result;
   };
   const storagePassphraseGet = async (senderEmail?: string) => {
-    if (!senderEmail) {
-      senderEmail = acctEmail;
+    let key: KeyInfo | undefined;
+    const keys = await Store.keysGet(acctEmail);
+    if (senderEmail) {
+      key = await findKeyByEmail(keys, senderEmail);
+    } else {
+      key = keys.find(ki => ki.primary);
     }
-    const keys = await Store.keysGet(senderEmail);
-    const key = await findKeyByEmail(keys, senderEmail);
     if (!key) {
       return undefined; // flowcrypt just uninstalled or reset?
     }
@@ -119,12 +122,14 @@ Catch.try(async () => {
     }
   }
   const processedUrlParams = { acctEmail, draftId, threadId, ...replyParams, frameId, tabId, isReplyBox, skipClickPrompt, parentTabId, disableDraftSaving, debug };
-  const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
+  const storageGetKey = async (acctEmail: string, senderEmail?: string): Promise<KeyInfo> => {
     let result: KeyInfo | undefined;
-    const keys = await Store.keysGet(senderEmail);
-    result = await findKeyByEmail(keys, senderEmail);
+    const keys = await Store.keysGet(acctEmail);
+    if (senderEmail) {
+      result = await findKeyByEmail(keys, senderEmail);
+    }
     if (!result) {
-      result = keys.find(x => x.primary);
+      result = keys.find(ki => ki.primary);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
     }
     return result!;
