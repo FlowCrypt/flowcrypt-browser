@@ -339,7 +339,8 @@ export class Composer {
       }
       const attListHeight = $("#att_list").height() || 0;
       const inputTextVerticalPadding = parseInt(this.S.cached('input_text').css('padding-top')) + parseInt(this.S.cached('input_text').css('padding-bottom'));
-      this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding);
+      const iconShowPrevMsgHeight = this.S.cached('icon_show_prev_msg').outerHeight(true) || 0;
+      this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
     }
   }
 
