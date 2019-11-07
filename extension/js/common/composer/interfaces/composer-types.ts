@@ -35,6 +35,8 @@ export interface RecipientElement extends BaseRecipient {
 
 export type MessageToReplyOrForward = {
   headers: {
+    references: string,
+    'message-id': string,
     date?: string,
     from?: string
   },
@@ -49,6 +51,7 @@ export type ComposerUrlParams = {
   tabId: string;
   acctEmail: string;
   threadId: string;
+  replyMsgId: string;
   draftId: string;
   subject: string;
   from: string | undefined;
@@ -59,6 +62,7 @@ export type ComposerUrlParams = {
   parentTabId: string;
   skipClickPrompt: boolean;
   debug: boolean;
+  removeAfterClose: boolean;
 };
 
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };

@@ -251,6 +251,8 @@ export class Composer {
       const footer = this.getFooter();
       if (footer) {
         this.composerQuote.setFooter(footer);
+      } else {
+        this.S.cached('icon_show_prev_msg').remove();
       }
     } else {
       if (this.urlParams.isReplyBox) {
@@ -415,22 +417,20 @@ export class Composer {
     await this.composerContacts.setEmailsPreview(this.getRecipients());
     await this.renderComposeTable();
     if (this.canReadEmails) {
-      const determined = await this.app.emailProviderDetermineReplyMsgHeaderVariables();
-      if (determined) {
-        this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
-        this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = determined.headers['In-Reply-To'];
-        this.composerSendBtn.additionalMsgHeaders.References = determined.headers.References;
-        if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
-          (async () => { // not awaited because can take a long time & blocks rendering
-            const footer = this.getFooter();
-            await this.composerQuote.addTripleDotQuoteExpandBtn(determined.lastMsgId, method, footer);
-            if (this.composerQuote.messageToReplyOrForward && this.composerQuote.messageToReplyOrForward.isSigned) {
+      this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
+      if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
+        (async () => { // not awaited because can take a long time & blocks rendering
+          const footer = this.getFooter();
+          await this.composerQuote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
+          if (this.composerQuote.messageToReplyOrForward) {
+            const msgId = this.composerQuote.messageToReplyOrForward.headers['message-id'];
+            this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
+            this.composerSendBtn.additionalMsgHeaders.References = this.composerQuote.messageToReplyOrForward.headers.references + ' ' + msgId;
+            if (this.composerQuote.messageToReplyOrForward.isSigned) {
               this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
             }
-          })().catch(Catch.reportErr);
-        }
-      } else {
-        this.urlParams.threadId = '';
+          }
+        })().catch(Catch.reportErr);
       }
     } else {
       Xss.sanitizeRender(this.S.cached('prompt'),
@@ -447,7 +447,7 @@ export class Composer {
     if (method === 'forward') {
       this.S.cached('recipients_placeholder').click();
     }
-    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToBottomOfConversation(this.urlParams.parentTabId), 300);
+    Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.urlParams.parentTabId, { selector: `#${this.urlParams.frameId}` }), 300);
   }
 
   public resizeInput = (inputs?: JQuery<HTMLElement>) => {

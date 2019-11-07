@@ -82,22 +82,24 @@ export class GmailElementReplacer implements WebmailElementReplacer {
   setReplyBoxEditable = async () => {
     const replyContainerIframe = $('.reply_message_iframe_container > iframe').last();
     if (replyContainerIframe.length) {
-      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
+      $(replyContainerIframe).replaceWith(this.factory.embeddedReply(this.getLastMsgReplyParams(this.getGonvoRootEl(replyContainerIframe[0])), true)); // xss-safe-value
     } else {
-      await this.replaceStandardReplyBox(true);
+      await this.replaceStandardReplyBox(undefined, true);
     }
-    this.scrollToBottomOfConvo();
   }
 
-  reinsertReplyBox = (subject: string, myEmail: string, replyTo: string[], threadId: string) => {
-    const params: FactoryReplyParams = { subject, sendAs: this.sendAs, threadId, threadMsgId: threadId };
+  reinsertReplyBox = (replyMsgId: string) => {
+    const params: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId };
     $('.reply_message_iframe_container:visible').last().append(this.factory.embeddedReply(params, false, true)); // xss-safe-value
   }
 
-  scrollToBottomOfConvo = () => {
+  scrollToElement = (selector: string) => {
     const scrollableEl = $(this.sel.convoRootScrollable).get(0);
     if (scrollableEl) {
-      scrollableEl.scrollTop = scrollableEl.scrollHeight; // scroll to the bottom of conversation where the reply box is
+      const element = $(selector).get(0);
+      if (element) {
+        scrollableEl.scrollTop = element.offsetTop; // scroll to the bottom of conversation where the reply box is
+      }
     } else if (window.location.hash.match(/^#inbox\/[a-zA-Z]+$/)) { // is a conversation view, but no scrollable conversation element
       Catch.report(`Cannot find Gmail scrollable element: ${this.sel.convoRootScrollable}`);
     }
@@ -130,28 +132,23 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     const visibleReplyBtns = $('td.acX:visible');
     if (visibleReplyBtns.not('.replaced, .inserted').length) { // last reply button in convo gets replaced
       const convoReplyBtnsToReplace = visibleReplyBtns.not('.replaced, .inserted');
-      const hasVisibleReplacements = visibleReplyBtns.filter('.replaced, .inserted').length > 0;
-      const convoReplyBtnsToReplaceArr = convoReplyBtnsToReplace.get();
-      if (!hasVisibleReplacements && convoReplyBtnsToReplaceArr.length) {
-        // only replace with FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
-        const lastReplyBtn = $(convoReplyBtnsToReplaceArr.pop()!);
-        $(lastReplyBtn).addClass('inserted');
-        const element = $(this.factory.btnReply()).insertBefore($(lastReplyBtn).children().last());  // xss-safe-factory
-        if (isEncrypted) {
-          element.click(Ui.event.prevent('double', () => this.setReplyBoxEditable().catch(Catch.reportErr)));
-        } else {
-          element.click(Ui.event.prevent('double', Catch.try(() => this.replaceStandardReplyBox(true, true)))); // xss-safe-factory
-        }
-      }
-      if (isEncrypted) {
-        // hide original gmail reply buttons, except for the last one, but ONLY IF this is an encrypted conversation
-        // the reason is that currently encrypted replies only support replying to last message. If some other reply button
-        // was clicked, and FlowCrypt replaced the reply box with an encrypted one mid-message, it would create a false imagination
-        // for the user that they are replying mid-convo, when in fact it would end up replying to the last message anyway
-        // todo - revisit this (and potentially remove) when we support encrypted replies mid-convo
-        for (const replyBtn of convoReplyBtnsToReplaceArr) { // all other non-last reply buttons to be hidden
-          $(replyBtn).addClass('replaced').text(''); // hide all except last
-        }
+      const convoReplyBtnsArr = convoReplyBtnsToReplace.get();
+      // only replace the last one FlowCrypt reply button if does not have any buttons replaced yet, and only replace the last one
+      for (const elem of convoReplyBtnsArr) {
+        $(elem).addClass('inserted');
+        const element = $(this.factory.btnReply()).insertBefore($(elem).children().last());  // xss-safe-factory
+        element.click(Ui.event.prevent('double', Catch.try(async () => {
+          const messageContainer = $(elem.closest('.h7') as HTMLElement);
+          if (messageContainer.is(':last-child')) {
+            if (isEncrypted) {
+              await this.setReplyBoxEditable();
+            } else {
+              await this.replaceStandardReplyBox(undefined, true, true);
+            }
+          } else {
+            this.insertEncryptedReplyBox(messageContainer);
+          }
+        })));
       }
     }
     // conversation top-right icon buttons
@@ -425,27 +422,35 @@ export class GmailElementReplacer implements WebmailElementReplacer {
     return ($(msgEl).closest('.gs').find('span.gD').attr('email') || '').toLowerCase();
   }
 
-  private getReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
-    return {
-      sendAs: this.sendAs,
-      threadId: this.determineThreadId(convoRootEl),
-      threadMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()),
-    };
+  private getLastMsgReplyParams = (convoRootEl: JQueryEl): FactoryReplyParams => {
+    return { sendAs: this.sendAs, replyMsgId: this.determineMsgId($(convoRootEl).find(this.sel.msgInner).last()) };
   }
 
   private getGonvoRootEl = (anyInnerElement: HTMLElement) => {
     return $(anyInnerElement).closest('div.if, td.Bu').first();
   }
 
-  private replaceStandardReplyBox = async (editable: boolean = false, force: boolean = false) => {
+  private insertEncryptedReplyBox = (messageContainer: JQuery<HTMLElement>) => {
+    const msgIdElement = messageContainer.find('[data-legacy-message-id], [data-message-id]');
+    const msgId = msgIdElement.attr('data-legacy-message-id') || msgIdElement.attr('data-message-id');
+    const replyParams: FactoryReplyParams = { sendAs: this.sendAs, replyMsgId: msgId, removeAfterClose: true };
+    const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container inserted">${this.factory.embeddedReply(replyParams, true, true)}</div>`;
+    messageContainer.find('.adn.ads').parent().append(secureReplyBoxXssSafe); // xss-safe-factory
+  }
+
+  private replaceStandardReplyBox = async (msgId?: string, editable: boolean = false, force: boolean = false) => {
     const newReplyBoxes = $('div.nr.tMHS5d, td.amr > div.nr, div.gA td.I5').not('.reply_message_evaluated').filter(':visible').get();
     if (newReplyBoxes.length) {
       // cache for subseqent loop runs
       const { drafts_reply } = await Store.getAcct(this.acctEmail, ['drafts_reply']);
       const convoRootEl = this.getGonvoRootEl(newReplyBoxes[0]);
-      const replyParams = this.getReplyParams(convoRootEl!);
-      const hasDraft = drafts_reply && replyParams.threadId && !!drafts_reply[replyParams.threadId];
-      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').length
+      const replyParams = this.getLastMsgReplyParams(convoRootEl!);
+      const threadId = this.determineThreadId(convoRootEl!);
+      if (msgId) {
+        replyParams.replyMsgId = msgId;
+      }
+      const hasDraft = drafts_reply && threadId && !!drafts_reply[threadId];
+      const doReplace = Boolean(convoRootEl.find('iframe.pgp_block').filter(':visible').closest('.h7').is(':last-child')
         || (convoRootEl.is(':visible') && force)
         || hasDraft);
       const alreadyHasEncryptedReplyBox = Boolean(convoRootEl.find('div.reply_message_iframe_container').filter(':visible').length);
@@ -453,11 +458,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
       if (doReplace) {
         for (const replyBoxEl of newReplyBoxes.reverse()) { // looping in reverse
           const replyBox = $(replyBoxEl);
-          if (midConvoDraft || alreadyHasEncryptedReplyBox) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
-            replyBox.attr('class', 'reply_message_evaluated');
-            Xss.sanitizeAppend(replyBox, '<font>&nbsp;&nbsp;Draft skipped</font>');
-            replyBox.children(':not(font)').hide();
-          } else {
+          if (!midConvoDraft && !alreadyHasEncryptedReplyBox) { // either is a draft in the middle, or the convo already had (last) box replaced: should also be useless draft
             const secureReplyBoxXssSafe = `<div class="remove_borders reply_message_iframe_container">${this.factory.embeddedReply(replyParams, editable)}</div>`;
             if (replyBox.hasClass('I5')) { // activated standard reply box: cannot remove because would cause issues / gmail freezing
               const origChildren = replyBox.children();
@@ -470,8 +471,8 @@ export class GmailElementReplacer implements WebmailElementReplacer {
             } else { // non-activated reply box: replaced so that originally bound events would go with it (prevents inbox freezing)
               replyBox.replaceWith(secureReplyBoxXssSafe); // xss-safe-factory
             }
+            midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
           }
-          midConvoDraft = true; // last box was processed first (looping in reverse), and all the rest must be drafts
         }
       }
     }
