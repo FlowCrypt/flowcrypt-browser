@@ -64,7 +64,8 @@ Catch.try(async () => {
     factoryAtt: (att) => `<div>${Xss.escape(att.name)}</div>`,
     whenMasterPassphraseEntered: () => Promise.resolve(undefined),
     collectAllAvailablePublicKeys: () => Promise.reject(undefined),
-    lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: () => Promise.reject(undefined)
+    lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: () => Promise.reject(undefined),
+    updateSendAs: () => undefined
   };
   await (async () => {
     if (!threadId) {

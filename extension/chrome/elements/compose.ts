@@ -363,7 +363,10 @@ Catch.try(async () => {
       });
     },
     lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded,
-    collectAllAvailablePublicKeys
+    collectAllAvailablePublicKeys,
+    updateSendAs: (sendAs: Dict<SendAsAlias>) => {
+      storage.sendAs = sendAs;
+    }
   }, processedUrlParams);
 
   BrowserMsg.addListener('close_dialog', async () => {
