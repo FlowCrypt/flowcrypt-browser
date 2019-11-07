@@ -668,27 +668,25 @@ export class Composer {
   }
 
   private async checkEmailAliases() {
-    if (!this.urlParams.isReplyBox) {
-      try {
-        const refreshResult = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
-        if (refreshResult) {
-          this.app.updateSendAs(refreshResult.sendAs);
-          if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
-            this.renderSenderAliasesOptions(refreshResult.sendAs);
-          }
-          if (refreshResult.isFooterChanged) {
-            const alias = refreshResult.sendAs[this.getSender()];
-            if (alias) {
-              this.composerQuote.replaceFooter(alias.footer || undefined);
-            }
+    try {
+      const refreshResult = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
+      if (refreshResult) {
+        this.app.updateSendAs(refreshResult.sendAs);
+        if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
+          this.renderSenderAliasesOptions(refreshResult.sendAs);
+        }
+        if (refreshResult.isFooterChanged) {
+          const alias = refreshResult.sendAs[this.getSender()];
+          if (alias) {
+            this.composerQuote.replaceFooter(alias.footer || undefined);
           }
         }
-      } catch (e) {
-        if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-        } else if (Api.err.isSignificant(e)) {
-          Catch.reportErr(e);
-        }
+      }
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+      } else if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
       }
     }
   }
