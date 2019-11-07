@@ -675,7 +675,7 @@ export class Composer {
         if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
           this.renderSenderAliasesOptions(refreshResult.sendAs);
         }
-        if (refreshResult.isFooterChanged) {
+        if (refreshResult.isFooterChanged && !this.urlParams.draftId) {
           const alias = refreshResult.sendAs[this.getSender()];
           if (alias) {
             this.composerQuote.replaceFooter(alias.footer || undefined);
