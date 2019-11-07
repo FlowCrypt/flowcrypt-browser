@@ -1,5 +1,7 @@
 <div>
 
+version 7.0.8 on Nov 7, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/361?closed=1" target="_blank">Reply to any message</a>
+
 version 7.0.7 on Nov 5, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/360?closed=1" target="_blank">Footer</a>
 
 version 7.0.6 on Oct 20, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/359?closed=1" target="_blank">Contact search bugfix</a>
