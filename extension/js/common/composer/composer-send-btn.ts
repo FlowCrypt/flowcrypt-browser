@@ -203,7 +203,7 @@ export class ComposerSendBtn extends ComposerComponent {
       Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
       this.composer.S.cached('send_btn_note').text('');
       const subscription = await this.app.storageGetSubscription();
-      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.urlParams.acctEmail, recipientElements.map(r => r.email));
+      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.composer.getSender(), recipientElements.map(r => r.email));
       const pwd = emailsWithoutPubkeys.length ? { answer: String(this.composer.S.cached('input_password').val()) } : undefined;
       await this.throwIfFormValsInvalid(recipientElements, emailsWithoutPubkeys, subject, plaintext, pwd);
       if (this.encryptionType === 'signed') {
