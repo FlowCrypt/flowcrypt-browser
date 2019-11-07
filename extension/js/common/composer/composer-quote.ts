@@ -139,8 +139,8 @@ export class ComposerQuote extends ComposerComponent {
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
       const headers = {
         date: String(decoded.headers.date), from: decoded.from,
-        'in-reply-to': decoded.headers['message-id'] as string,
-        references: decoded.headers['message-id'] as string,
+        references: String(decoded.headers.references || ''),
+        'message-id': String(decoded.headers['message-id'] || ''),
       };
       const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : await Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];

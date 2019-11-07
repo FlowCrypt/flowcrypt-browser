@@ -35,7 +35,6 @@ export interface RecipientElement extends BaseRecipient {
 
 export type MessageToReplyOrForward = {
   headers: {
-    'in-reply-to': string,
     references: string,
     'message-id': string,
     date?: string,

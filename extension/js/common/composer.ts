@@ -422,9 +422,9 @@ export class Composer {
           const footer = this.getFooter();
           await this.composerQuote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
           if (this.composerQuote.messageToReplyOrForward) {
-            const lastMessageIdHeader = this.composerQuote.messageToReplyOrForward.headers['message-id'] || '';
-            this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = lastMessageIdHeader;
-            this.composerSendBtn.additionalMsgHeaders.References = this.composerQuote.messageToReplyOrForward.headers.references + ' ' + lastMessageIdHeader;
+            const msgId = this.composerQuote.messageToReplyOrForward.headers['message-id'];
+            this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
+            this.composerSendBtn.additionalMsgHeaders.References = this.composerQuote.messageToReplyOrForward.headers.references + ' ' + msgId;
             if (this.composerQuote.messageToReplyOrForward.isSigned) {
               this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
             }
