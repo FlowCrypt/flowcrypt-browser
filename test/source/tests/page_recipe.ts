@@ -6,6 +6,7 @@ import { AvaContext } from '.';
 import { CommonBrowserGroup } from '../test';
 import { FlowCryptApi } from './api';
 import { EvaluateFn, ElementHandle } from 'puppeteer';
+import { totp as produce2faToken } from 'speakeasy';
 
 export class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
@@ -456,6 +457,7 @@ export class OauthPageRecipe extends PageRecipe {
       approve_button: '#submit_approve_access',
       pwd_input: 'input[type="password"]', // pwd_input: '.zHQkBf',
       pwd_confirm_btn: '.CwaK9',
+      secret_2fa: '#totpPin',
     };
     const enterPwdAndConfirm = async () => {
       await Util.sleep(OauthPageRecipe.oauthPwdDelay);
@@ -481,6 +483,7 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('.zZhnYe', { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
         await enterPwdAndConfirm();
+        console.log('a');
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
@@ -489,17 +492,23 @@ export class OauthPageRecipe extends PageRecipe {
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       }
       await Util.sleep(isMock ? 0 : 5);
-      const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice, selectors.pwd_input]);
+      const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice, selectors.pwd_input, selectors.secret_2fa]);
       await Util.sleep(isMock ? 0 : 1);
       if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email
         await element.click();
         await oauthPage.waitAndType('#knowledge-preregistered-email-response', auth.backup, { delay: 2 });
         await oauthPage.waitAndClick('#next', { delay: 2 });
       } else if (await oauthPage.isElementPresent(selectors.pwd_input)) {
-        await enterPwdAndConfirm();
+        await enterPwdAndConfirm(); // unsure why it requires a password second time, but sometimes happens
+      } else if (await oauthPage.isElementPresent(selectors.secret_2fa)) {
+        if (!auth.secret_2fa) {
+          throw Error(`Google account ${auth.email} requires a 2fa but missing 2fa secret`);
+        }
+        const token = produce2faToken({ secret: auth.secret_2fa, encoding: 'base32' });
+        await oauthPage.waitAndType(selectors.secret_2fa, token);
+        await oauthPage.waitAndClick('#totpNext', { delay: 2 });
       }
-      // if the following succeeds, we are logged in and presented with approve/deny choice
-      await oauthPage.waitAll('#submit_approve_access');
+      await oauthPage.waitAll('#submit_approve_access'); // if succeeds, we are logged in and presented with approve/deny choice
       // since we are successfully logged in, we may save cookies to keep them fresh
       // no need to await the API call because it's not crucial to always save it, can mostly skip errors
       FlowCryptApi.hookCiCookiesSet(auth.email, await oauthPage.page.cookies()).catch(e => console.error(String(e)));
