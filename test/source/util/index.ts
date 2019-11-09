@@ -32,7 +32,7 @@ interface TestSecretsInterface {
   ci_dev_account: string;
   data_encryption_password: string;
   proxy?: { enabled: boolean, server: string, auth: { username: string, password: string } };
-  auth: { google: { email: string, password: string, backup: string }[], };
+  auth: { google: { email: string, password: string, backup: string, secret_2fa: string | undefined }[], };
   keys: { title: string, passphrase: string, armored: string | null, keywords: string | null }[];
   keyInfo: Array<{ email: string, key: KeyInfo[] }>;
 }
