@@ -1018,7 +1018,7 @@ export class PgpMsg {
   /**
    * textBlockType - choose if textual block should be returned as escaped html (for direct browser rendering) or text (other platforms)
    */
-  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<MsgBlock[]> => {
+  static fmtDecryptedAsSanitizedHtmlBlocks = async (decryptedContent: Uint8Array): Promise<{ blocks: MsgBlock[], subject: string | undefined }> => {
     const blocks: MsgBlock[] = [];
     if (!Mime.resemblesMsg(decryptedContent)) {
       let utf = Buf.fromUint8(decryptedContent).toUtfStr();
@@ -1028,24 +1028,24 @@ export class PgpMsg {
       utf = PgpMsg.stripPublicKeys(utf, armoredPubKeys);
       blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(utf))); // escaped text as html
       await PgpMsg.pushArmoredPubkeysToBlocks(armoredPubKeys, blocks);
+      return { blocks, subject: undefined };
+    }
+    const decoded = await Mime.decode(decryptedContent);
+    if (typeof decoded.html !== 'undefined') {
+      blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
+    } else if (typeof decoded.text !== 'undefined') {
+      blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
     } else {
-      const decoded = await Mime.decode(decryptedContent);
-      if (typeof decoded.html !== 'undefined') {
-        blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Xss.htmlSanitizeKeepBasicTags(decoded.html))); // sanitized html
-      } else if (typeof decoded.text !== 'undefined') {
-        blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(decoded.text))); // escaped text as html
+      blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
+    }
+    for (const att of decoded.atts) {
+      if (att.treatAs() === 'publicKey') {
+        await PgpMsg.pushArmoredPubkeysToBlocks([att.getData().toUtfStr()], blocks);
       } else {
-        blocks.push(Pgp.internal.msgBlockObj('decryptedHtml', Str.asEscapedHtml(Buf.with(decryptedContent).toUtfStr()))); // escaped mime text as html
-      }
-      for (const att of decoded.atts) {
-        if (att.treatAs() === 'publicKey') {
-          await PgpMsg.pushArmoredPubkeysToBlocks([att.getData().toUtfStr()], blocks);
-        } else {
-          blocks.push(Pgp.internal.msgBlockAttObj('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
-        }
+        blocks.push(Pgp.internal.msgBlockAttObj('decryptedAtt', '', { name: att.name, data: att.getData(), length: att.length, type: att.type }));
       }
     }
-    return blocks;
+    return { blocks, subject: decoded.subject };
   }
 
   public static extractFcAtts = (decryptedContent: string, blocks: MsgBlock[]) => {

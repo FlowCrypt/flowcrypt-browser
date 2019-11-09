@@ -142,7 +142,7 @@ export class ComposerQuote extends ComposerComponent {
         references: String(decoded.headers.references || ''),
         'message-id': String(decoded.headers['message-id'] || ''),
       };
-      const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : await Mime.processDecoded(decoded);
+      const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
       const decryptedBlockTypes = ['decryptedHtml'];
       if (method === 'forward') {
@@ -155,7 +155,7 @@ export class ComposerQuote extends ComposerComponent {
           const stringContent = block.content.toString();
           const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
           const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
-          readableBlocks.push(...msgBlocks.filter(b => decryptedBlockTypes.includes(b.type)));
+          readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
           readableBlocks.push(block);
         }
