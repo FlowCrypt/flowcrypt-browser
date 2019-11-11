@@ -63,13 +63,17 @@ Catch.try(async () => {
     }
     return result;
   };
-  const storagePassphraseGet = async (senderEmail?: string) => {
+  const storagePassphraseGet = async (senderEmailOrKey?: string | KeyInfo) => {
     let key: KeyInfo | undefined;
-    const keys = await Store.keysGet(acctEmail);
-    if (senderEmail) {
-      key = await chooseMyPublicKeyBySenderEmail(keys, senderEmail);
+    if (!senderEmailOrKey || typeof senderEmailOrKey === 'string') {
+      const keys = await Store.keysGet(acctEmail);
+      if (senderEmailOrKey) {
+        key = await chooseMyPublicKeyBySenderEmail(keys, senderEmailOrKey);
+      } else {
+        key = keys.find(ki => ki.primary);
+      }
     } else {
-      key = keys.find(ki => ki.primary);
+      key = senderEmailOrKey;
     }
     if (!key) {
       return undefined; // flowcrypt just uninstalled or reset?

@@ -20,7 +20,7 @@ export interface ComposerAppFunctionsInterface {
   storageGetSubscription: () => Promise<Subscription>;
   storageGetKey: (acctEmail: string, senderEmail: string) => Promise<KeyInfo>;
   storageSetDraftMeta: (storeIfTrue: boolean, draftId: string, threadId: string, recipients?: string[], subject?: string) => Promise<void>;
-  storagePassphraseGet: (senderEmail?: string) => Promise<string | undefined>;
+  storagePassphraseGet: (senderEmailOrKey?: string | KeyInfo) => Promise<string | undefined>;
   storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise<void>;
   storageContactGet: (email: string[]) => Promise<(Contact | undefined)[]>;
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;

@@ -379,7 +379,7 @@ export class ComposerSendBtn extends ComposerComponent {
         const key = await this.app.storageGetKey(this.urlParams.acctEmail, senderEmail);
         if (key) {
             const { keys: [prv] } = await openpgp.key.readArmored(key.private);
-            const passphrase = await this.app.storagePassphraseGet(senderEmail);
+            const passphrase = await this.app.storagePassphraseGet(key);
             if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
                 BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: ['primary'] });
                 if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
