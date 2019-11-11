@@ -53,15 +53,13 @@ Catch.try(async () => {
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
   const chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
-    let result: KeyInfo | undefined;
     for (const key of keys) {
       const parsedkey = await Pgp.key.read(key.public);
       if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
-        result = key;
-        break;
+        return key;
       }
     }
-    return result;
+    return undefined;
   };
   const storagePassphraseGet = async (senderEmail?: string) => {
     let key: KeyInfo | undefined;
