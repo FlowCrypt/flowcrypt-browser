@@ -449,7 +449,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       expect(await PageRecipe.getElementPropertyJson((await contacts.$('ul li:first-child'))!, 'textContent')).to.eq('contact.test@flowcrypt.com');
     }));
 
-    ava.default.only('[compose[global:compatibility] - standalone - different send from, new signed message, verification in mock', testWithNewBrowser(async (t, browser) => {
+    ava.default('[compose[global:compatibility] - standalone - different send from, new signed message, verification in mock', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
       const settingsPage = await browser.newPage(t, '/chrome/settings/modules/add_key.htm?acctEmail=flowcrypt.compatibility%40gmail.com&parent_tab_id=0');
       const key = Config.key('flowcryptcompatibility.from.address');
