@@ -63,15 +63,15 @@ Catch.try(async () => {
   };
   const storagePassphraseGet = async (senderEmailOrKey?: string | KeyInfo) => {
     let key: KeyInfo | undefined;
-    if (!senderEmailOrKey || typeof senderEmailOrKey === 'string') {
+    if (senderEmailOrKey && typeof senderEmailOrKey !== 'string') {
+      key = senderEmailOrKey;
+    } else {
       const keys = await Store.keysGet(acctEmail);
       if (senderEmailOrKey) {
         key = await chooseMyPublicKeyBySenderEmail(keys, senderEmailOrKey);
       } else {
         key = keys.find(ki => ki.primary);
       }
-    } else {
-      key = senderEmailOrKey;
     }
     if (!key) {
       return undefined; // flowcrypt just uninstalled or reset?
