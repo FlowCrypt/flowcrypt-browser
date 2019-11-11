@@ -89,27 +89,28 @@ export class Settings {
     }
   }
 
-  static refreshAcctAliases = async (acctEmail: string): Promise<boolean> => {
+  static refreshAcctAliases = async (acctEmail: string) => {
     const fetchedSendAs = await Settings.fetchAcctAliasesFromGmail(acctEmail);
+    const result = { isDefaultEmailChanged: false, isAliasesChanged: false, isFooterChanged: false, sendAs: fetchedSendAs };
     const { sendAs: storedAliases, addresses: oldStoredAddresses } = (await Store.getAcct(acctEmail, ['sendAs', 'addresses']));
     await Store.setAcct(acctEmail, { sendAs: fetchedSendAs });
     if (!storedAliases) { // Aliases changed (it was previously undefined)
       if (oldStoredAddresses) { // Temporary solution
-        return Object.keys(fetchedSendAs).sort().join(',') !== oldStoredAddresses.sort().join(',');
+        result.isAliasesChanged = true;
       }
-      return true;
+      return result;
     }
     if (Settings.getDefaultEmailAlias(fetchedSendAs) !== Settings.getDefaultEmailAlias(storedAliases)) { // Changed (default email alias was changed)
-      return true;
+      result.isDefaultEmailChanged = true;
     }
     if (Object.keys(fetchedSendAs).sort().join(',') !== Object.keys(storedAliases).sort().join(',')) { // Changed (added/removed email alias)
-      return true;
+      result.isAliasesChanged = true;
     }
-    if (Object.keys(fetchedSendAs).filter(email => fetchedSendAs[email].footer).map(email => fetchedSendAs[email].footer).sort().join(',') !==
-      Object.keys(storedAliases).filter(email => storedAliases[email].footer).map(email => storedAliases[email].footer).sort().join(',')) {
-      return true;
+    if (Object.keys(fetchedSendAs).filter(email => fetchedSendAs[email].footer).map(email => fetchedSendAs[email].footer).join(',') !==
+      Object.keys(storedAliases).filter(email => storedAliases[email].footer).map(email => storedAliases[email].footer).join(',')) {
+      result.isFooterChanged = true;
     }
-    return false; // Nothing changed
+    return result.isAliasesChanged || result.isDefaultEmailChanged || result.isFooterChanged ? { ...result } : undefined;
   }
 
   static acctStorageReset = (acctEmail: string) => new Promise(async (resolve, reject) => {
