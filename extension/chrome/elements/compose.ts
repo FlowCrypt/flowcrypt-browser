@@ -52,7 +52,7 @@ Catch.try(async () => {
     'hide_message_password', 'drafts_reply']);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
-  const findKeyByEmail = async (keys: KeyInfo[], email: string) => {
+  const chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
     let result: KeyInfo | undefined;
     for (const key of keys) {
       const parsedkey = await Pgp.key.read(key.public);
@@ -67,7 +67,7 @@ Catch.try(async () => {
     let key: KeyInfo | undefined;
     const keys = await Store.keysGet(acctEmail);
     if (senderEmail) {
-      key = await findKeyByEmail(keys, senderEmail);
+      key = await chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     } else {
       key = keys.find(ki => ki.primary);
     }
@@ -131,7 +131,7 @@ Catch.try(async () => {
     let result: KeyInfo | undefined;
     const keys = await Store.keysGet(acctEmail);
     if (senderEmail) {
-      result = await findKeyByEmail(keys, senderEmail);
+      result = await chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     }
     if (!result) {
       result = keys.find(ki => ki.primary);
@@ -224,10 +224,10 @@ Catch.try(async () => {
       BrowserMsg.send.closeNewMessage(parentTabId);
     }
   };
-  const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]): Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }> => {
+  const collectAllAvailablePublicKeys = async (senderEmail: string, recipients: string[]): Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }> => {
     const contacts = await storageContactGet(recipients);
-    const { public: senderArmoredPubkey } = await storageGetKey(acctEmail);
-    const armoredPubkeys = [{ pubkey: senderArmoredPubkey, email: acctEmail, isMine: true }];
+    const { public: senderArmoredPubkey } = await storageGetKey(acctEmail, senderEmail);
+    const armoredPubkeys = [{ pubkey: senderArmoredPubkey, email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];

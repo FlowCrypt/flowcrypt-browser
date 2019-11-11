@@ -18,7 +18,7 @@ export interface ComposerAppFunctionsInterface {
   storageGetAddressesKeyserver: () => string[];
   storageGetHideMsgPassword: () => boolean;
   storageGetSubscription: () => Promise<Subscription>;
-  storageGetKey: (acctEmail: string, senderEmail?: string) => Promise<KeyInfo>;
+  storageGetKey: (acctEmail: string, senderEmail: string) => Promise<KeyInfo>;
   storageSetDraftMeta: (storeIfTrue: boolean, draftId: string, threadId: string, recipients?: string[], subject?: string) => Promise<void>;
   storagePassphraseGet: (senderEmail?: string) => Promise<string | undefined>;
   storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise<void>;
