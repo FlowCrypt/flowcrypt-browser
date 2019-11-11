@@ -1,6 +1,6 @@
 {
   "name": "flowcrypt-browser",
-  "version": "7.0.6",
+  "version": "7.0.8",
   "description": "Simple end-to-end encryption to secure email and attachments on Google.",
   "resolutions": {
     "graceful-fs": "4.1.13"
@@ -10,17 +10,19 @@
     "@types/chrome": "0.0.65",
     "@types/dompurify": "0.0.31",
     "@types/jquery": "3.3.31",
+    "@types/mailparser": "2.4.0",
     "@types/puppeteer": "1.11.1",
     "@types/request": "2.47.1",
-    "@types/mailparser": "2.4.0",
+    "@types/speakeasy": "2.0.5",
     "ava": "1.4.1",
     "chai": "4.1.2",
     "del": "3.0.0",
     "fc-node-requests": "git+https://git@github.com/FlowCrypt/node-requests.git",
     "json-stable-stringify": "1.0.1",
-    "openpgp": "4.5.4",
     "mailparser": "2.7.1",
+    "openpgp": "4.5.4",
     "puppeteer": "1.11.0",
+    "speakeasy": "2.0.0",
     "sweetalert2": "8.18.3",
     "tslint": "5.11.0",
     "typescript": "3.6.2",
@@ -46,7 +48,6 @@
     "dev_start_gmail_mock_api": "./build.sh && cd ./conf && node ../build/tooling/tsc-compiler --project tsconfig.test.json && cd .. && node ./build/test/test/source/mock.js",
     "run_firefox": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile ~/.mozilla/firefox/flowcrypt-dev --keep-profile-changes",
     "run_firefox_windows": "npm run-script build && npx web-ext run --source-dir ./build/firefox-consumer/ --firefox-profile %userprofile%/AppData/Local/Mozilla/Firefox/Profiles/flowcrypt-dev --keep-profile-changes",
-    "test_chrome_consumer_live_gmail": "echo 'deprecated, call test_ci_chrome_consumer_live_gmail instead' && sleep 10 && npm run-script test_ci_chrome_consumer_live_gmail",
     "test_chrome_consumer": "echo 'deprecated, call test_ci_chrome_consumer instead' && sleep 10 && npm run-script test_ci_chrome_consumer",
     "test_chrome_enterprise": "echo 'deprecated, call test_ci_chrome_enterprise instead' && sleep 10 && npm run-script test_ci_chrome_enterprise",
     "release": "npm run-script build && node ./tooling/release.js"

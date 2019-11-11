@@ -137,7 +137,12 @@ export class ComposerQuote extends ComposerComponent {
     try {
       const { raw } = await Google.gmail.msgGet(this.urlParams.acctEmail, msgId, 'raw', progressCb ? (progress: number) => progressCb(progress * 0.6) : undefined);
       const decoded = await Mime.decode(Buf.fromBase64UrlStr(raw!));
-      const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : await Mime.processDecoded(decoded);
+      const headers = {
+        date: String(decoded.headers.date), from: decoded.from,
+        references: String(decoded.headers.references || ''),
+        'message-id': String(decoded.headers['message-id'] || ''),
+      };
+      const message = decoded.rawSignedContent ? await Mime.process(Buf.fromUtfStr(decoded.rawSignedContent)) : Mime.processDecoded(decoded);
       const readableBlockTypes = ['encryptedMsg', 'plainText', 'plainHtml', 'signedMsg'];
       const decryptedBlockTypes = ['decryptedHtml'];
       if (method === 'forward') {
@@ -150,7 +155,7 @@ export class ComposerQuote extends ComposerComponent {
           const stringContent = block.content.toString();
           const decrypted = await this.decryptMessage(Buf.fromUtfStr(stringContent));
           const msgBlocks = await PgpMsg.fmtDecryptedAsSanitizedHtmlBlocks(Buf.fromUtfStr(decrypted));
-          readableBlocks.push(...msgBlocks.filter(b => decryptedBlockTypes.includes(b.type)));
+          readableBlocks.push(...msgBlocks.blocks.filter(b => decryptedBlockTypes.includes(b.type)));
         } else {
           readableBlocks.push(block);
         }
@@ -191,7 +196,7 @@ export class ComposerQuote extends ComposerComponent {
         }
       }
       return {
-        headers: { date: String(decoded.headers.date), from: decoded.from },
+        headers,
         text: decryptedAndFormatedContent.join('\n').trim(),
         isSigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles

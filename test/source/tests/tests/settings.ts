@@ -102,33 +102,33 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     ava.default('[standalone] settings - change passphrase - current in session known', testWithNewBrowser(async (t, browser) => {
       const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
-      await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
+      await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
       // decrypt msg and enter pp so that it's remembered in session
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: k.passphrase });
       // change pp - should not ask for pp because already in session
       await SettingsPageRecipe.changePassphrase(settingsPage, undefined, newPp);
       // now it will remember the pass phrase so decrypts without asking
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted' });
-      // make it forget pass phrase by switching requirement to storage then back to session
-      await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'storage');
-      await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'session');
       // test decrypt - should ask for new pass phrase
-      await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp });
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail, threadId: '16819bec18d4e011',
+        expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp, finishCurrentSession: true
+      });
     }));
 
     ava.default('[standalone] settings - change passphrase - current in session unknown', testWithNewBrowser(async (t, browser) => {
       const { acctEmail, k, settingsPage } = await BrowserRecipe.setUpFcPpChangeAcct(t, browser);
       const newPp = `temp ci test pp: ${Util.lousyRandom()}`;
-      await SettingsPageRecipe.changePassphraseRequirement(settingsPage, k.passphrase, 'session');
+      await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
       // pp wiped after switching to session - should be needed to change pp
       await SettingsPageRecipe.changePassphrase(settingsPage, k.passphrase, newPp);
       // now it will remember the pass phrase so decrypts without asking
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted' });
-      // make it forget pass phrase by switching requirement to storage then back to session
-      await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'storage');
-      await SettingsPageRecipe.changePassphraseRequirement(settingsPage, newPp, 'session');
       // test decrypt - should ask for new pass phrase
-      await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId: '16819bec18d4e011', expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp });
+      await InboxPageRecipe.checkDecryptMsg(t, browser, {
+        acctEmail, threadId: '16819bec18d4e011',
+        expectedContent: 'changed correctly if this can be decrypted', enterPp: newPp, finishCurrentSession: true
+      });
     }));
 
     ava.todo('[standalone] settings - change passphrase - mismatch curent pp');
