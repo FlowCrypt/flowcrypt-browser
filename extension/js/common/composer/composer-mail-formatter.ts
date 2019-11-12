@@ -33,13 +33,13 @@ class BaseMailFormatter {
     protected subject: string;
     protected plainText: string;
 
-    constructor (composer: Composer, urlParams: ComposerUrlParams,
-          {recipients, plaintext, subject} : { recipients: Recipients, subject: string, plaintext: string }) {
-            this.composer = composer;
-            this.urlParams = urlParams;
-            this.recipients = recipients;
-            this.subject = subject;
-            this.plainText = plaintext;
+    constructor(composer: Composer, urlParams: ComposerUrlParams,
+        { recipients, plaintext, subject }: { recipients: Recipients, subject: string, plaintext: string }) {
+        this.composer = composer;
+        this.urlParams = urlParams;
+        this.recipients = recipients;
+        this.subject = subject;
+        this.plainText = plaintext;
     }
 }
 
@@ -49,11 +49,11 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
 
     private signingPrv: OpenPGP.key.Key;
 
-    constructor (composer: Composer, signingPrv: OpenPGP.key.Key, app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams,
-          {recipients, plaintext, subject} : { recipients: Recipients, subject: string, plaintext: string }) {
-            super(composer, urlParams, { recipients, plaintext, subject });
-            this.app = app;
-            this.signingPrv = signingPrv;
+    constructor(composer: Composer, signingPrv: OpenPGP.key.Key, app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams,
+        { recipients, plaintext, subject }: { recipients: Recipients, subject: string, plaintext: string }) {
+        super(composer, urlParams, { recipients, plaintext, subject });
+        this.app = app;
+        this.signingPrv = signingPrv;
     }
 
     async createMsgObject(): Promise<SendableMsg> {
@@ -89,21 +89,21 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
 
     private FC_WEB_URL = 'https://flowcrypt.com'; // todo Send plain (not encrypted)uld use Api.url()
 
-    constructor (composer: Composer, copmoserSendBtn: ComposerSendBtn, app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams,
+    constructor(composer: Composer, copmoserSendBtn: ComposerSendBtn, app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams,
         armoredPubkeys: PubkeyResult[], signingPrv: OpenPGP.key.Key | undefined,
-         { recipients, plaintext, subject, pwd } : { recipients: Recipients, subject: string, plaintext: string, pwd: Pwd | undefined }) {
-          super(composer, urlParams, { recipients, plaintext, subject });
-          this.copmoserSendBtn = copmoserSendBtn;
-          this.app = app; 
-          this.armoredPubkeys = armoredPubkeys;
-          this.signingPrv = signingPrv;
-          this.pwd = pwd;
-        }
-    
+        { recipients, plaintext, subject, pwd }: { recipients: Recipients, subject: string, plaintext: string, pwd: Pwd | undefined }) {
+        super(composer, urlParams, { recipients, plaintext, subject });
+        this.copmoserSendBtn = copmoserSendBtn;
+        this.app = app;
+        this.armoredPubkeys = armoredPubkeys;
+        this.signingPrv = signingPrv;
+        this.pwd = pwd;
+    }
+
     async createMsgObject(): Promise<SendableMsg> {
         const subscription = await this.app.storageGetSubscription();
         this.plainText = await this.addReplyTokenToMsgBodyIfNeeded(Array.prototype.concat.apply([], Object.values(this.recipients)),
-             this.subject, this.plainText, this.pwd, subscription);
+            this.subject, this.plainText, this.pwd, subscription);
         const atts = await this.composer.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), this.pwd);
         if (atts.length && this.pwd) { // these will be password encrypted attachments
             this.copmoserSendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnButtonTexts.BTN_SENDING), 500);
@@ -111,7 +111,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         }
         const pubkeysOnly = this.armoredPubkeys.map(p => p.pubkey);
         const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(this.armoredPubkeys);
-        const encrypted = await PgpMsg.encrypt({ pubkeys: pubkeysOnly, signingPrv: this.signingPrv, pwd: this.pwd, data: Buf.fromUtfStr(this.plainText), armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
+        const encrypted = await PgpMsg.encrypt({
+            pubkeys: pubkeysOnly, signingPrv: this.signingPrv, pwd: this.pwd,
+            data: Buf.fromUtfStr(this.plainText), armor: true, date: encryptAsOfDate
+        }) as OpenPGP.EncryptArmorResult;
         let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
         await this.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(this.recipients)), { last_use: Date.now() });
         this.composer.S.now('send_btn_text').text(SendBtnButtonTexts.BTN_SENDING);
@@ -127,7 +130,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         return await Google.createMsgObj(this.urlParams.acctEmail, this.composer.getSender(), this.recipients, this.subject, encryptedBody, atts, this.urlParams.threadId);
     }
 
-    private async addReplyTokenToMsgBodyIfNeeded (recipients: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription): Promise<string> {
+    private async addReplyTokenToMsgBodyIfNeeded(recipients: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription): Promise<string> {
         if (!challenge || !subscription.active) {
             return plaintext;
         }
@@ -252,17 +255,15 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
 }
 
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatter {
-    constructor (composer: Composer, urlParams: ComposerUrlParams,
-          {recipients, plaintext, subject} : { recipients: Recipients, subject: string, plaintext: string }) {
-            super(composer, urlParams, { recipients, plaintext, subject });
+    constructor(composer: Composer, urlParams: ComposerUrlParams,
+        { recipients, plaintext, subject }: { recipients: Recipients, subject: string, plaintext: string }) {
+        super(composer, urlParams, { recipients, plaintext, subject });
     }
-
 
     async createMsgObject(): Promise<SendableMsg> {
         this.composer.S.now('send_btn_text').text(SendBtnButtonTexts.BTN_SENDING);
         const atts = await this.composer.attach.collectAtts();
         const body = { 'text/plain': this.plainText };
-        return await Google.createMsgObj(this.urlParams.acctEmail, this.composer.getSender(), this.recipients, this.subject, body, atts, this.urlParams.threadId)
+        return await Google.createMsgObj(this.urlParams.acctEmail, this.composer.getSender(), this.recipients, this.subject, body, atts, this.urlParams.threadId);
     }
-
 }
