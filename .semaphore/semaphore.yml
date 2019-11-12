@@ -46,6 +46,7 @@ blocks:
         - name: code quality
           commands:
             - npm run-script test_tslint
+            - npm run-script test_stylelint
             - npm run-script test_patterns
 
         # - name: consumer live gmail

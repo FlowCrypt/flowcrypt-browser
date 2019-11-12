@@ -22,7 +22,6 @@
   border-radius: 2px;
   font-size: 14px;
   text-align: center;
-  white-space: nowrap;
   min-height: 25px;
   min-width: 56px;
   line-height: 25px;
@@ -78,7 +77,6 @@ span.gray { color: #b7b7b7; }
 .gray_label {
   display: inline-block;
   min-width: 150px;
-  padding: 0 5px 1px 5px;
   text-transform: uppercase;
   border-radius: 4px;
   padding: 2px 6px;
@@ -505,7 +503,6 @@ body#settings > div#content.contacts #emails tr[email]::before {
 body#settings > div#content.contacts table#emails td {
   font-size: 13px;
   height: auto;
-  padding: 10px 0;
   display: block;
   width: 15px;
   text-align: left;
@@ -516,6 +513,7 @@ body#settings > div#content.contacts table#emails td {
 body#settings > div#content.contacts table#emails {
   margin: 50px auto;
   color: #666;
+  min-width: 100%;
 }
 body#settings > div#content.contacts table#emails tr { height: 32px; }
 body#settings > div#content textarea { width: 100%; }
@@ -527,7 +525,6 @@ body#settings .subscribe--header-row th:nth-child(3) {
   position: relative;
   top: -3px;
 }
-body#settings > div#content.contacts table#emails { min-width: 100%; }
 
 body#settings #emails td {
   display: block;
@@ -1068,7 +1065,7 @@ body#settings > div#content.dialog.add_pubkey.inside_compose textarea.pubkey {
   width: 462px;
   height: 200px;
 }
-body#settings > div#content.dialog.add_pubkey.inside_compose separator { display: none; }
+body#settings > div#content.dialog.add_pubkey.inside_compose .separator { display: none; }
 
 body#settings > div#content.storage {
   padding-top: 30px;
@@ -1270,7 +1267,7 @@ td {
 }
 
 #pgp_signature > .cursive {
-  font-family: signature;
+  font-family: signature; /* stylelint-disable-line font-family-no-missing-generic-family-keyword */
   font-size: 24px;
   text-transform: capitalize;
   font-weight: bold;
@@ -1915,7 +1912,6 @@ table#compose .intro_container > td > .input_intro {
   width: 100%;
   height: 100%;
   text-align: center;
-  font-size: 18px;
   font-weight: 500;
   font-size: 45px;
   color: #31a217;
@@ -1989,7 +1985,6 @@ div#contacts {
 body#reply_message div#contacts { top: 39px; }
 
 div#contacts ul {
-  padding: 0;
   margin: 0;
   width: 320px;
   padding: 6px 0;
@@ -2049,7 +2044,7 @@ table#compose tr#password_or_pubkey_container td input {
   padding-left: 3px;
   padding-right: 3px;
   border-bottom: 1px solid #cacaca;
-  font-family: 'Open Sans', Arial;
+  font-family: 'Open Sans', Arial, sans-serif;
   color: #d14836;
 }
 
@@ -2086,7 +2081,7 @@ table#compose span.end {
   font-weight: 900;
   position: absolute;
   font-size: 16px;
-  font-family: 'Open Sans', Arial;
+  font-family: 'Open Sans', Arial, sans-serif;
 }
 table#compose span.end { margin-left: -8px; }
 
@@ -2353,7 +2348,13 @@ body.attachment .file-download-right-click-link {
 }
 
 /* Select Account */
-body#select_account { font-family: 'Open Sans', sans-serif; }
+body#select_account {
+  font-family: 'Open Sans', sans-serif;
+  width: 340px;
+  padding: 0;
+  font-size: 14px;
+  zoom: reset;
+}
 
 body#select_account #title {
   margin-bottom: 15px;
@@ -2362,7 +2363,6 @@ body#select_account #title {
   font-weight: 400;
   text-align: center;
 }
-body#select_account { width: 340px; padding: 0; font-size: 14px; zoom: reset; }
 
 body#select_account ul.emails {
   margin-top: 0;
@@ -2376,7 +2376,6 @@ body#select_account .emails li {
   position: relative;
   cursor: pointer;
   height: auto;
-  position: relative;
   padding-top: 1px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
@@ -2391,7 +2390,6 @@ body#select_account .emails li a {
   text-align: left;
   font-size: 13px;
   text-transform: none;
-  font-weight: 400;
   color: #337ab7;
   transition: 0.5s;
   letter-spacing: 0.35;
