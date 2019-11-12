@@ -63,15 +63,15 @@ Catch.try(async () => {
   };
   const storagePassphraseGet = async (senderEmailOrKey?: string | KeyInfo) => {
     let key: KeyInfo | undefined;
-    if (!senderEmailOrKey || typeof senderEmailOrKey === 'string') {
+    if (senderEmailOrKey && typeof senderEmailOrKey !== 'string') {
+      key = senderEmailOrKey;
+    } else {
       const keys = await Store.keysGet(acctEmail);
       if (senderEmailOrKey) {
         key = await chooseMyPublicKeyBySenderEmail(keys, senderEmailOrKey);
       } else {
         key = keys.find(ki => ki.primary);
       }
-    } else {
-      key = senderEmailOrKey;
     }
     if (!key) {
       return undefined; // flowcrypt just uninstalled or reset?
@@ -129,12 +129,9 @@ Catch.try(async () => {
     acctEmail, draftId, threadId, replyMsgId, ...replyParams, frameId, tabId, isReplyBox,
     skipClickPrompt, parentTabId, disableDraftSaving, debug, removeAfterClose
   };
-  const storageGetKey = async (acctEmail: string, senderEmail?: string): Promise<KeyInfo> => {
-    let result: KeyInfo | undefined;
+  const storageGetKey = async (acctEmail: string, senderEmail: string): Promise<KeyInfo> => {
     const keys = await Store.keysGet(acctEmail);
-    if (senderEmail) {
-      result = await chooseMyPublicKeyBySenderEmail(keys, senderEmail);
-    }
+    let result = await chooseMyPublicKeyBySenderEmail(keys, senderEmail);
     if (!result) {
       result = keys.find(ki => ki.primary);
       Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
