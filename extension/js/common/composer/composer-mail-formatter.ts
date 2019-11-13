@@ -117,7 +117,6 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         }) as OpenPGP.EncryptArmorResult;
         let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
         await this.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(this.recipients)), { last_use: Date.now() });
-        this.composer.S.now('send_btn_text').text(SendBtnButtonTexts.BTN_SENDING);
         if (this.pwd) {
             // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
             // admin_code stays locally and helps the sender extend life of the message or delete it
@@ -134,9 +133,16 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         if (!challenge || !subscription.active) {
             return plaintext;
         }
-        let response;
         try {
-            response = await Backend.messageToken();
+            const response = await Backend.messageToken();
+            return plaintext + '\n\n' + Ui.e('div', {
+                'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.htmlAttrEncode({
+                    sender: this.composer.getSender(),
+                    recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.composer.getSender()), this.urlParams.acctEmail),
+                    subject,
+                    token: response.token,
+                })
+            });
         } catch (msgTokenErr) {
             if (Api.err.isAuthErr(msgTokenErr)) {
                 if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
@@ -145,18 +151,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
                 throw new ComposerResetBtnTrigger();
             } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
                 return plaintext;
-            } else {
-                throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
             }
+            throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
         }
-        return plaintext + '\n\n' + Ui.e('div', {
-            'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.htmlAttrEncode({
-                sender: this.composer.getSender(),
-                recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.composer.getSender()), this.urlParams.acctEmail),
-                subject,
-                token: response.token,
-            })
-        });
     }
 
     private async uploadAttsToFc(atts: Att[], subscription: Subscription): Promise<string[]> {
@@ -234,7 +231,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">
                     ${Lang.compose.openMsg[lang]}
                    </a>`;
-        const intro = this.composer.S.cached('input_intro').length ? this.composer.extractAsText('input_intro') : '';
+        const intro = this.composer.S.cached('input_intro').length && this.composer.extractAsText('input_intro');
         const text = [];
         const html = [];
         if (intro) {
@@ -242,11 +239,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
             html.push(intro.replace(/\n/g, '<br>') + '<br><br>');
         }
         text.push(Lang.compose.msgEncryptedText[lang] + msgUrl + '\n');
-        html.push('<div class="cryptup_encrypted_message_replaceable">');
-        html.push('<div style="opacity: 0;">' + Pgp.armor.headers('null').begin + '</div>');
-        html.push(Lang.compose.msgEncryptedHtml[lang] + a + '<br><br>');
-        html.push(Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl) + '<br><br><br>');
-        html.push('</div>');
+        html.push(`
+                <div class="cryptup_encrypted_message_replaceable">
+                    <div style="opacity: 0;">${Pgp.armor.headers('null').begin}</div>
+                    ${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>
+                    ${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/><br/>
+                </div>`);
         if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
             atts.push(new Att({ data: Buf.fromUtfStr(encryptedBody['text/plain']!), name: 'encrypted.asc' }));
         }
