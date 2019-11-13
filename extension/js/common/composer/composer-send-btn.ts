@@ -16,8 +16,6 @@ import { SendableMsg } from '../api/email_provider_api.js';
 import { Att } from '../core/att.js';
 import { MailFormatter, SignedMsgMailFormatter, EncryptedMsgMailFormatter, PlainMsgMailFormatter } from './composer-mail-formatter.js';
 
-declare const openpgp: typeof OpenPGP;
-
 export class ComposerSendBtn extends ComposerComponent {
 
   private app: ComposerAppFunctionsInterface;
@@ -190,7 +188,6 @@ export class ComposerSendBtn extends ComposerComponent {
       await this.throwIfFormValsInvalid(newMsgData);
       const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
       const senderKi = await this.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
-      const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.composer.getSender(), senderKi, recipientsEmails);
       let mailFormatter: MailFormatter | undefined;
       let signingPrv: OpenPGP.key.Key | undefined;
       if (['signed', 'encryptedAndSigned'].includes(this.encryptionType)) {
@@ -203,6 +200,7 @@ export class ComposerSendBtn extends ComposerComponent {
         this.composer.S.now('send_btn_text').text('Signing');
         mailFormatter = new SignedMsgMailFormatter(this.composer, signingPrv!, this.app, this.urlParams, newMsgData);
       } else if (['encrypted', 'encryptedAndSigned'].includes(this.encryptionType)) {
+        const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.composer.getSender(), senderKi, recipientsEmails);
         if (emailsWithoutPubkeys.length) {
           await this.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
         }
@@ -261,7 +259,7 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
-    const { keys: [prv] } = await openpgp.key.readArmored(senderKi.private);
+    const prv = await Pgp.key.read(senderKi.private);
     const passphrase = await this.app.storagePassphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: [senderKi.longid] });
