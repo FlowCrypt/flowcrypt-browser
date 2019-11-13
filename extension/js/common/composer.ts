@@ -288,6 +288,7 @@ export class Composer {
       await this.renderComposeTable();
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
+    this.composerSendBtn.resetSendBtn();
     this.composerSendBtn.initComposerPopover();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
