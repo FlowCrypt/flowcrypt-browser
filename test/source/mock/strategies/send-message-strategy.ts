@@ -11,7 +11,8 @@ class SignedMessageTestStrategy implements ITestMsgStrategy {
   async test(mimeMsg: ParsedMail) {
     const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
     const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
-    if (decrypted.success && decrypted.signature) {
+    // maybe would be better to move the longid in the secrets file, I didn't move it because it's the only one use
+    if (decrypted.success && decrypted.signature && decrypted.signature.signer === 'B6BE3C4293DDCF66') {
       const content = decrypted.content.toUtfStr();
       if (!content.includes(this.expectedText)) {
         throw new HttpClientErr(`Error: Contents don't match. Expected: '${this.expectedText}' but got: '${content}'.`);

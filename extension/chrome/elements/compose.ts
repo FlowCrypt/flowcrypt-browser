@@ -18,7 +18,7 @@ import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/composer-errors.js';
-import { PubkeyResult } from '../../js/common/composer/interfaces/composer-types.js';
+import { CollectPubkeysResult } from '../../js/common/composer/interfaces/composer-types.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -52,12 +52,21 @@ Catch.try(async () => {
     'hide_message_password', 'drafts_reply']);
   const tabId = await BrowserMsg.requiredTabId();
   const factory = new XssSafeFactory(acctEmail, tabId);
-  const storagePassphraseGet = async () => {
-    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    if (!primaryKi) {
-      return undefined; // flowcrypt just uninstalled or reset?
+  const chooseMyPublicKeyBySenderEmail = async (keys: KeyInfo[], email: string) => {
+    for (const key of keys) {
+      const parsedkey = await Pgp.key.read(key.public);
+      if (parsedkey.users.find(u => !!u.userId && u.userId.userid.toLowerCase().includes(email.toLowerCase()))) {
+        return key;
+      }
     }
-    return await Store.passphraseGet(acctEmail, primaryKi.longid);
+    return undefined;
+  };
+  const storagePassphraseGet = async (senderKi?: KeyInfo) => {
+    if (!senderKi) {
+      [senderKi] = await Store.keysGet(acctEmail, ['primary']);
+      Assert.abortAndRenderErrorIfKeyinfoEmpty(senderKi);
+    }
+    return await Store.passphraseGet(acctEmail, senderKi.longid);
   };
   const storageGetAddresses = () => {
     const arrayToSendAs = (arr: string[]): Dict<SendAsAlias> => {
@@ -109,11 +118,6 @@ Catch.try(async () => {
   const processedUrlParams = {
     acctEmail, draftId, threadId, replyMsgId, ...replyParams, frameId, tabId, isReplyBox,
     skipClickPrompt, parentTabId, disableDraftSaving, debug, removeAfterClose
-  };
-  const storageGetKey = async (senderEmail: string): Promise<KeyInfo> => {
-    const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
-    Assert.abortAndRenderErrorIfKeyinfoEmpty(primaryKi);
-    return primaryKi;
   };
   const storageContactGet = (email: string[]) => Store.dbContactGet(undefined, email);
   const checkKeyserverForNewerVersionOfKnownPubkeyIfNeeded = async (contact: Contact) => {
@@ -200,10 +204,9 @@ Catch.try(async () => {
       BrowserMsg.send.closeNewMessage(parentTabId);
     }
   };
-  const collectAllAvailablePublicKeys = async (acctEmail: string, recipients: string[]): Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }> => {
+  const collectAllAvailablePublicKeys = async (senderEmail: string, senderKi: KeyInfo, recipients: string[]): Promise<CollectPubkeysResult> => {
     const contacts = await storageContactGet(recipients);
-    const { public: senderArmoredPubkey } = await storageGetKey(acctEmail);
-    const armoredPubkeys = [{ pubkey: senderArmoredPubkey, email: acctEmail, isMine: true }];
+    const armoredPubkeys = [{ pubkey: senderKi.public, email: senderEmail, isMine: true }];
     const emailsWithoutPubkeys = [];
     for (const i of contacts.keys()) {
       const contact = contacts[i];
@@ -256,7 +259,15 @@ Catch.try(async () => {
     storageGetAddresses,
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
     storageGetSubscription: () => Store.subscription(),
-    storageGetKey,
+    storageGetKey: async (acctEmail: string, senderEmail: string): Promise<KeyInfo> => {
+      const keys = await Store.keysGet(acctEmail);
+      let result = await chooseMyPublicKeyBySenderEmail(keys, senderEmail);
+      if (!result) {
+        result = keys.find(ki => ki.primary);
+        Assert.abortAndRenderErrorIfKeyinfoEmpty(result);
+      }
+      return result!;
+    },
     storageSetDraftMeta: async (storeIfTrue: boolean, draftId: string, threadId: string, recipients: string[], subject: string) => {
       const draftStorage = await Store.getAcct(acctEmail, ['drafts_reply', 'drafts_compose']);
       if (threadId) { // it's a reply
