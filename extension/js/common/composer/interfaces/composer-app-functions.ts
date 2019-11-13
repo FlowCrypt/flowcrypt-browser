@@ -42,4 +42,5 @@ export interface ComposerAppFunctionsInterface {
   whenMasterPassphraseEntered: (secondsTimeout?: number) => Promise<string | undefined>;
   lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: (email: string) => Promise<Contact | "fail">;
   collectAllAvailablePublicKeys: (acctEmail: string, recipients: string[]) => Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }>;
+  updateSendAs: (sendAs: Dict<SendAsAlias>) => void;
 }

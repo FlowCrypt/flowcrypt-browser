@@ -645,8 +645,9 @@ export class Composer {
 
   private renderSenderAliasesOptions(sendAs: Dict<SendAsAlias>) {
     let emailAliases = Object.keys(sendAs);
+    const inputAddrContainer = $('.recipients-inputs');
+    inputAddrContainer.find('#input_from').remove();
     if (emailAliases.length > 1) {
-      const inputAddrContainer = $('.recipients-inputs');
       inputAddrContainer.addClass('show_send_from');
       Xss.sanitizeAppend(inputAddrContainer, '<select id="input_from" tabindex="1" data-test="input-from"></select>');
       const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
@@ -667,18 +668,25 @@ export class Composer {
   }
 
   private async checkEmailAliases() {
-    if (!this.urlParams.isReplyBox) {
-      try {
-        const isRefreshed = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
-        if (isRefreshed && await Ui.modal.confirm(Lang.general.emailAliasChangedAskForReload)) {
-          window.location.reload();
+    try {
+      const refreshResult = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
+      if (refreshResult) {
+        this.app.updateSendAs(refreshResult.sendAs);
+        if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
+          this.renderSenderAliasesOptions(refreshResult.sendAs);
         }
-      } catch (e) {
-        if (Api.err.isAuthPopupNeeded(e)) {
-          BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-        } else if (Api.err.isSignificant(e)) {
-          Catch.reportErr(e);
+        if (refreshResult.isFooterChanged && !this.urlParams.draftId) {
+          const alias = refreshResult.sendAs[this.getSender()];
+          if (alias) {
+            this.composerQuote.replaceFooter(alias.footer || undefined);
+          }
         }
+      }
+    } catch (e) {
+      if (Api.err.isAuthPopupNeeded(e)) {
+        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
+      } else if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
       }
     }
   }
