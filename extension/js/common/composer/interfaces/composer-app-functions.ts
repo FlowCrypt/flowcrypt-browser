@@ -20,7 +20,7 @@ export interface ComposerAppFunctionsInterface {
   storageGetSubscription: () => Promise<Subscription>;
   storageGetKey: (acctEmail: string, senderEmail: string) => Promise<KeyInfo>;
   storageSetDraftMeta: (storeIfTrue: boolean, draftId: string, threadId: string, recipients?: string[], subject?: string) => Promise<void>;
-  storagePassphraseGet: (senderEmailOrKey?: string | KeyInfo) => Promise<string | undefined>;
+  storagePassphraseGet: (senderKi?: KeyInfo) => Promise<string | undefined>;
   storageAddAdminCodes: (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => Promise<void>;
   storageContactGet: (email: string[]) => Promise<(Contact | undefined)[]>;
   storageContactUpdate: (email: string | string[], update: ContactUpdate) => Promise<void>;
@@ -41,6 +41,6 @@ export interface ComposerAppFunctionsInterface {
   closeMsg: () => void;
   whenMasterPassphraseEntered: (secondsTimeout?: number) => Promise<string | undefined>;
   lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded: (email: string) => Promise<Contact | "fail">;
-  collectAllAvailablePublicKeys: (acctEmail: string, recipients: string[]) => Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }>;
+  collectAllAvailablePublicKeys: (senderEmail: string, senderKi: KeyInfo, recipients: string[]) => Promise<{ armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] }>;
   updateSendAs: (sendAs: Dict<SendAsAlias>) => void;
 }
