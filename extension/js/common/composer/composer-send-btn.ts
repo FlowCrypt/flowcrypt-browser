@@ -27,7 +27,7 @@ export class ComposerSendBtn extends ComposerComponent {
     plain: { text: 'Send plain (not encrypted)', iconPath: '/img/svgs/gmail.svg' }
   };
 
-  public encryptionType: EncryptionType = 'encrypted';
+  public encryptionType: EncryptionType = 'encryptedAndSigned';
   public additionalMsgHeaders: { [key: string]: string } = {};
 
   private DEFAULT_BTN_TEXTS: { [key in EncryptionType]: string } = {
