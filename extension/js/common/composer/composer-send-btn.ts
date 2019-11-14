@@ -351,7 +351,7 @@ export class ComposerSendBtn extends ComposerComponent {
             name = contact.name;
           }
         }
-        return name ? `${name.replace(/[<>'"/\\\n\r\t]/g, '')} <${email}>` : email;
+        return name ? `${name.replace(/[<>,'"/\\\n\r\t]/g, '')} <${email}>` : email;
       }));
     };
     msg.recipients.to = await addNameToEmail(msg.recipients.to || []);
