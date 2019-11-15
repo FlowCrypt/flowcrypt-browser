@@ -65,7 +65,7 @@ export const defineSetupTests = (testVariant: TestVariant, testWithNewBrowser: T
       await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'none', { submitPubkey: false, usedPgpBefore: true });
     }));
 
-    ava.default.only('[standalone] setup - craete key- backup as file', testWithNewBrowser(async (t, browser) => {
+    ava.default('[standalone] setup - craete key- backup as file', testWithNewBrowser(async (t, browser) => {
       const settingsPage = await BrowserRecipe.openSettingsLoginApprove(t, browser, 'flowcrypt.test.key.new.manual@gmail.com');
       await SetupPageRecipe.createAdvanced(settingsPage, 'flowcrypt.test.key.used.pgp', 'file', { submitPubkey: false, usedPgpBefore: true });
     }));
