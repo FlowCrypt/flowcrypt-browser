@@ -26,7 +26,7 @@ export class Injector {
       'settings': '#does_not_have',
     },
     finishSesionBtnSel: {
-      gmail: 'div.gb_ue',
+      gmail: 'div.gb_1d',
       outlook: '#does_not_have',
       settings: '#settings > div.header'
     }
@@ -67,7 +67,11 @@ export class Injector {
   }
 
   insertEndSessionBtn = async (acctEmail: string) => {
-    $(this.factory.btnEndPPSession(this.webmailName)).insertBefore($(this.container.finishSesionBtnSel[this.webmailName]).children().last()) // xss-safe-factory
+    const insertBeforeElem = $(this.container.finishSesionBtnSel[this.webmailName]).children().last();
+    if (!insertBeforeElem.length) {
+      Catch.report(`Selector for locking session not found on Gmail webpage: '${this.container.finishSesionBtnSel[this.webmailName]}'`);
+    }
+    $(this.factory.btnEndPPSession(this.webmailName)).insertBefore(insertBeforeElem) // xss-direct
       .click(Ui.event.prevent('double', async el => {
         const keysInSession = await Store.getKeysCurrentlyInSession(acctEmail);
         if (keysInSession.length) {
