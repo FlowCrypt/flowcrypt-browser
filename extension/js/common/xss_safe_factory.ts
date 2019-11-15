@@ -196,7 +196,7 @@ export class XssSafeFactory {
 
   btnEndPPSession = (webmailName: string) => {
     return `<div class="finish_session zo" ${webmailName === 'gmail' ? 'data-tooltip' : 'title'}="End Current Session" data-test="finish-session">
-                <a class="gb_xe gb_ve gb_pb t6" ${webmailName === 'gmail' ? 'style="text-align: center;"' : ''}>
+                <a class="gb_xe gb_ve gb_pb t6" ${webmailName === 'gmail' ? 'style="text-align: center; width: 18px;"' : ''}>
                   <img src="${this.srcImg('svgs/unlock.svg')}"  ${webmailName === 'gmail' ? 'style="width: 18px;"' : ''} />
                 </a>
               </div>`;
