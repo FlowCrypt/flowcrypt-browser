@@ -466,6 +466,19 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
+    ava.default('[compose[global:compatibility]] - standalone - new message, open footer', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer New Message', 'encrypted', 'new');
+      await composePage.waitAndClick('@action-expand-quoted-text');
+      expect(await composePage.read('@input-body')).to.include('The best footer ever!');
+    }));
+
+    ava.default('[compose[global:compatibility]] - standalone - new message, Footer Mock Test', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
+      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', 'encrypted', 'new');
+      await ComposePageRecipe.sendAndClose(composePage);
+    }));
+
     ava.todo('compose[global:compose] - reply - new gmail threadId fmt');
 
     ava.todo('compose[global:compose] - reply - skip click prompt');

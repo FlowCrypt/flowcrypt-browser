@@ -5,6 +5,22 @@ import { PgpMsg, Pgp } from "../../core/pgp.js";
 import { Buf } from '../../core/buf.js';
 import { Config } from '../../util/index.js';
 
+class MessageWithFooterTestStrategy implements ITestMsgStrategy {
+  private readonly footer = 'The best footer ever!';
+
+  async test(mimeMsg: ParsedMail) {
+    const keyInfo = Config.secrets.keyInfo.find(k => k.email === 'flowcrypt.compatibility@gmail.com')!.key;
+    const decrypted = await PgpMsg.decrypt({ kisWithPp: keyInfo!, encryptedData: Buf.fromUtfStr(mimeMsg.text) });
+    if (!decrypted.success) {
+      throw new HttpClientErr(`Error: can't decrypt message`);
+    }
+    const textContent = decrypted.content.toUtfStr();
+    if (!textContent.includes(this.footer)) {
+      throw new HttpClientErr(`Error: Msg Text doesn't contain footer. Current: '${mimeMsg.text}', expected footer: '${this.footer}'`);
+    }
+  }
+}
+
 class SignedMessageTestStrategy implements ITestMsgStrategy {
   private readonly expectedText = 'New Signed Message (Mock Test)';
 
@@ -87,6 +103,8 @@ export class TestBySubjectStrategyContext {
       this.strategy = new PlainTextMessageTestStrategy();
     } else if (subject.includes('New Signed Message (Mock Test)')) {
       this.strategy = new SignedMessageTestStrategy();
+    } else if (subject.includes('Test Footer (Mock Test)')) {
+      this.strategy = new MessageWithFooterTestStrategy();
     } else {
       throw new UnsuportableStrategyError(`There isn't any strategy for this subject: ${subject}`);
     }
