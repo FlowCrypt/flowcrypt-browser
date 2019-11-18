@@ -401,7 +401,7 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
-    if (sendingType !== 'encrypted') { // Encrypted is by default
+    if (sendingType !== 'encryptedAndSigned') { // Encrypted And Signed is by default
       await composePageOrFrame.waitAndClick('@action-show-options-popover');
       await composePageOrFrame.waitAndClick(`@action-choose-${sendingType}`);
     }
