@@ -10,7 +10,7 @@ import { Ui } from '../browser.js';
 
 export class ComposerSendBtnPopover extends ComposerComponent {
 
-  public choices: PopoverChoices = { encrypt: true, sign: true }; // default, can be changed by user
+  public choices: PopoverChoices = { encrypt: true, sign: true, richText: false }; // defaults, may be changed by user using the popover
 
   initActions(): void {
     this.composer.S.cached('toggle_send_options').on('click', this.toggleVisible);
@@ -18,25 +18,28 @@ export class ComposerSendBtnPopover extends ComposerComponent {
 
   render() {
     const popoverItems = {
+      richText: { text: 'Rich text (PGP/MIME)', iconPath: undefined },
       encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
       sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' },
     };
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
+      if (popoverOpt === 'richText') {
+        continue; // richText not supported yet. Only used for local dev
+      }
       const item = popoverItems[popoverOpt];
       const elem = $(`
         <div class="action-toggle-${Xss.escape(popoverOpt)}-sending-option sending-option" data-test="action-toggle-${Xss.escape(popoverOpt)}">
             <span class="option-name">${Xss.escape(item.text)}</span>
         </div>`);
+      this.renderCrossOrTick(elem, popoverOpt, this.choices[popoverOpt]);
       elem.on('click', Ui.event.handle(() => this.toggleItemTick(elem, popoverOpt)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       }
       this.composer.S.cached('sending_options_container').append(elem); // xss-safe-factory
-      if (this.choices[popoverOpt]) {
-        this.toggleItemTick(elem, popoverOpt, true);
-      }
     }
+    this.composer.S.cached('title').text(this.composeHeaderText());
   }
 
   private toggleVisible = (event: JQuery.Event<HTMLElement, null>) => {
@@ -100,12 +103,10 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
     this.choices[popoverOpt] = newToggleTicked;
     if (currentlyTicked && !newToggleTicked) {
-      elem.find('img.icon-tick').remove();
-      elem.css('opacity', '0.5');
+      this.renderCrossOrTick(elem, popoverOpt, false);
     }
     if (!currentlyTicked && newToggleTicked) {
-      elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
-      elem.css('opacity', '1');
+      this.renderCrossOrTick(elem, popoverOpt, true);
     }
     this.composer.S.cached('title').text(this.composeHeaderText());
     if (this.choices.encrypt) {
@@ -117,6 +118,18 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
     this.composer.composerSendBtn.resetSendBtn();
     this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
+  }
+
+  private renderCrossOrTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) {
+    if (renderTick) {
+      elem.find('img.icon-tick,img.icon-cross').remove();
+      elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
+      elem.css('opacity', '1');
+    } else {
+      elem.find('img.icon-tick,img.icon-cross').remove();
+      elem.append(`<img class="icon-cross" src="/img/red-cross-mark.png" data-test="icon-toggle-${Xss.escape(popoverOpt)}-cross" />`); // xss-escaped
+      elem.css('opacity', '0.5');
+    }
   }
 
   private isTicked(popoverItemElem: JQuery<HTMLElement>) {

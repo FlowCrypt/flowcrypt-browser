@@ -68,7 +68,7 @@ export type ComposerUrlParams = {
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 export type CollectPubkeysResult = { armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] };
 
-export type PopoverOpt = 'encrypt' | 'sign';
+export type PopoverOpt = 'encrypt' | 'sign' | 'richText';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
 export class SendBtnButtonTexts {
