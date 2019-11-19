@@ -401,8 +401,9 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
-    for (const opt of Object.keys(sendingOpt)) {
-      const shouldBeTicked = sendingOpt[opt];
+    const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
+    for (const opt of Object.keys(sendingOpts)) {
+      const shouldBeTicked = sendingOpts[opt];
       if (typeof shouldBeTicked !== 'undefined') {
         await composePageOrFrame.waitAndClick('@action-show-options-popover');
         await composePageOrFrame.waitAll('@container-sending-options');
