@@ -12,7 +12,7 @@ import { Api, AjaxError } from '../api/api.js';
 import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
-import { Composer } from '../composer.js';
+import { Composer } from './composer.js';
 import { ComposerUrlParams, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 

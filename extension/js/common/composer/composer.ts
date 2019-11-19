@@ -2,25 +2,25 @@
 
 'use strict';
 
-import { Catch } from './platform/catch.js';
-import { Store, SendAsAlias } from './platform/store.js';
-import { Lang } from './lang.js';
-import { Str, Dict } from './core/common.js';
-import { BrowserMsg } from './extension.js';
-import { Pgp, } from './core/pgp.js';
-import { Api, RecipientType } from './api/api.js';
-import { Ui, BrowserEventErrHandler } from './browser.js';
-import { AttUI, AttLimits } from './ui/att_ui.js';
-import { Settings } from './settings.js';
-import { KeyImportUi } from './ui/key_import_ui.js';
-import { Xss } from './platform/xss.js';
-import { Rules } from './rules.js';
-import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams, Recipients, RecipientStatuses, SendBtnButtonTexts, } from './composer/interfaces/composer-types.js';
-import { ComposerDraft } from './composer/composer-draft.js';
-import { ComposerQuote } from './composer/composer-quote.js';
-import { ComposerContacts } from './composer/composer-contacts.js';
-import { ComposerSendBtn } from './composer/composer-send-btn.js';
+import { Catch } from '../platform/catch.js';
+import { Store, SendAsAlias } from '../platform/store.js';
+import { Lang } from '../lang.js';
+import { Str, Dict } from '../core/common.js';
+import { BrowserMsg } from '../extension.js';
+import { Pgp, } from '../core/pgp.js';
+import { Api, RecipientType } from '../api/api.js';
+import { Ui, BrowserEventErrHandler } from '../browser.js';
+import { AttUI, AttLimits } from '../ui/att_ui.js';
+import { Settings } from '../settings.js';
+import { KeyImportUi } from '../ui/key_import_ui.js';
+import { Xss } from '../platform/xss.js';
+import { Rules } from '../rules.js';
+import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
+import { ComposerUrlParams, Recipients, RecipientStatuses, SendBtnButtonTexts, } from './interfaces/composer-types.js';
+import { ComposerDraft } from './composer-draft.js';
+import { ComposerQuote } from './composer-quote.js';
+import { ComposerContacts } from './composer-contacts.js';
+import { ComposerSendBtn } from './composer-send-btn.js';
 
 export class Composer {
   private debugId = Str.sloppyRandom();

@@ -1,4 +1,4 @@
-import { Composer } from '../../composer';
+import { Composer } from '../composer';
 import { ComposerUrlParams } from './composer-types';
 
 export abstract class ComposerComponent {

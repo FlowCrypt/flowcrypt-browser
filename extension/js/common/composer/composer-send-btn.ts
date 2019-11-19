@@ -1,7 +1,7 @@
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { EncryptionType, ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts, ComposerPopoverItems } from './interfaces/composer-types.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
-import { Composer } from '../composer.js';
+import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
 import { Lang } from '../lang.js';
 import { Ui } from '../browser.js';
