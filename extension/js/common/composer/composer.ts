@@ -2,25 +2,25 @@
 
 'use strict';
 
-import { Catch } from './platform/catch.js';
-import { Store, SendAsAlias } from './platform/store.js';
-import { Lang } from './lang.js';
-import { Str, Dict } from './core/common.js';
-import { BrowserMsg } from './extension.js';
-import { Pgp, } from './core/pgp.js';
-import { Api, RecipientType } from './api/api.js';
-import { Ui, BrowserEventErrHandler } from './browser.js';
-import { AttUI, AttLimits } from './ui/att_ui.js';
-import { Settings } from './settings.js';
-import { KeyImportUi } from './ui/key_import_ui.js';
-import { Xss } from './platform/xss.js';
-import { Rules } from './rules.js';
-import { ComposerAppFunctionsInterface } from './composer/interfaces/composer-app-functions.js';
-import { ComposerUrlParams, Recipients, RecipientStatuses, SendBtnButtonTexts, } from './composer/interfaces/composer-types.js';
-import { ComposerDraft } from './composer/composer-draft.js';
-import { ComposerQuote } from './composer/composer-quote.js';
-import { ComposerContacts } from './composer/composer-contacts.js';
-import { ComposerSendBtn } from './composer/composer-send-btn.js';
+import { Catch } from '../platform/catch.js';
+import { Store, SendAsAlias } from '../platform/store.js';
+import { Lang } from '../lang.js';
+import { Str, Dict } from '../core/common.js';
+import { BrowserMsg } from '../extension.js';
+import { Pgp, } from '../core/pgp.js';
+import { Api, RecipientType } from '../api/api.js';
+import { Ui, BrowserEventErrHandler } from '../browser.js';
+import { AttUI, AttLimits } from '../ui/att_ui.js';
+import { Settings } from '../settings.js';
+import { KeyImportUi } from '../ui/key_import_ui.js';
+import { Xss } from '../platform/xss.js';
+import { Rules } from '../rules.js';
+import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
+import { ComposerUrlParams, Recipients, RecipientStatuses, SendBtnButtonTexts, } from './interfaces/composer-types.js';
+import { ComposerDraft } from './composer-draft.js';
+import { ComposerQuote } from './composer-quote.js';
+import { ComposerContacts } from './composer-contacts.js';
+import { ComposerSendBtn } from './composer-send-btn.js';
 
 export class Composer {
   private debugId = Str.sloppyRandom();
@@ -289,7 +289,7 @@ export class Composer {
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
     this.composerSendBtn.resetSendBtn();
-    this.composerSendBtn.initComposerPopover();
+    this.composerSendBtn.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 
@@ -365,7 +365,7 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!this.getRecipients().length || ['signed', 'plain'].includes(this.composerSendBtn.encryptionType)) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
+    if (!this.getRecipients().length || !this.composerSendBtn.popover.choices.encrypt) { // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.hideMsgPwdUi();
       this.composerSendBtn.setBtnColor('green');
     } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
@@ -427,8 +427,9 @@ export class Composer {
             const msgId = this.composerQuote.messageToReplyOrForward.headers['message-id'];
             this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
             this.composerSendBtn.additionalMsgHeaders.References = this.composerQuote.messageToReplyOrForward.headers.references + ' ' + msgId;
-            if (this.composerQuote.messageToReplyOrForward.isSigned) {
-              this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
+            if (this.composerQuote.messageToReplyOrForward.isOnlySigned) {
+              this.composerSendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
+              this.composerSendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
             }
           }
         })().catch(Catch.reportErr);
@@ -443,7 +444,6 @@ export class Composer {
       $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
     }
-    this.composerSendBtn.setPopoverTopPosition();
     this.resizeComposeBox();
     if (method === 'forward') {
       this.S.cached('recipients_placeholder').click();

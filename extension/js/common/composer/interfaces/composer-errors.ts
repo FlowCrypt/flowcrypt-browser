@@ -1,3 +1,6 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypcom */
+
+'use strict';
 
 export type RecipientErrsMode = 'harshRecipientErrs' | 'gentleRecipientErrs';
 

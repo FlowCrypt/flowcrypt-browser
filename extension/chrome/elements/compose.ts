@@ -7,7 +7,7 @@ import { Store, ContactUpdate, DbContactFilter, AccountStoreExtension, SendAsAli
 import { Str, Dict } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
 import { Ui, Env, JQS } from '../../js/common/browser.js';
-import { Composer } from '../../js/common/composer.js';
+import { Composer } from '../../js/common/composer/composer.js';
 import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Google } from '../../js/common/api/google.js';

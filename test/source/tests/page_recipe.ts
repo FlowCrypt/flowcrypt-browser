@@ -389,7 +389,7 @@ export class ComposePageRecipe extends PageRecipe {
     composePageOrFrame: Controllable,
     recipients: Recipients,
     subject?: string | undefined,
-    sendingType: 'encrypted' | 'encryptedAndSigned' | 'signed' | 'plain' = 'encrypted',
+    sendingOpt: { encrypt?: boolean, sign?: boolean } = {}, // undefined means leave default
     windowType: 'new' | 'reply' = 'new'
   ) => {
     await Util.sleep(0.5);
@@ -401,9 +401,20 @@ export class ComposePageRecipe extends PageRecipe {
     }
     const body = `This is an automated puppeteer test: ${subject || '(no-subject)'}`;
     await composePageOrFrame.type('@input-body', body);
-    if (sendingType !== 'encryptedAndSigned') { // Encrypted And Signed is by default
-      await composePageOrFrame.waitAndClick('@action-show-options-popover');
-      await composePageOrFrame.waitAndClick(`@action-choose-${sendingType}`);
+    const sendingOpts = sendingOpt as { [key: string]: boolean | undefined };
+    for (const opt of Object.keys(sendingOpts)) {
+      const shouldBeTicked = sendingOpts[opt];
+      if (typeof shouldBeTicked !== 'undefined') {
+        await composePageOrFrame.waitAndClick('@action-show-options-popover');
+        await composePageOrFrame.waitAll('@container-sending-options');
+        const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-tick`);
+        if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) { // not in desired state
+          await composePageOrFrame.waitAndClick(`@action-toggle-${opt}`); // toggling should set it to desired state
+        } else { // in desired state
+          await composePageOrFrame.waitAndClick('@input-body'); // close popover
+        }
+        await composePageOrFrame.waitTillGone('@container-sending-options');
+      }
     }
     return { subject, body };
   }

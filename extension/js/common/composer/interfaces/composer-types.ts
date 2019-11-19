@@ -40,7 +40,7 @@ export type MessageToReplyOrForward = {
     date?: string,
     from?: string
   },
-  isSigned?: boolean,
+  isOnlySigned?: boolean,
   text?: string,
   decryptedFiles: File[]
 };
@@ -68,8 +68,8 @@ export type ComposerUrlParams = {
 export type PubkeyResult = { pubkey: string, email: string, isMine: boolean };
 export type CollectPubkeysResult = { armoredPubkeys: PubkeyResult[], emailsWithoutPubkeys: string[] };
 
-export type ComposerPopoverItems = { [key in EncryptionType]: { text: string, iconPath?: string } };
-export type EncryptionType = 'encrypted' | 'signed' | 'encryptedAndSigned' | 'plain';
+export type PopoverOpt = 'encrypt' | 'sign' | 'richText';
+export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
 export class SendBtnButtonTexts {
   public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";

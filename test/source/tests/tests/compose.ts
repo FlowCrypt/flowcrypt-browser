@@ -22,7 +22,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       const settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
       const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
-      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', 'signed');
+      await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', { encrypt: false });
       await composeFrame.waitAndClick('@action-send');
       await settingsPage.waitAll('@dialog-passphrase');
       const passphraseDialog = await settingsPage.getFrame(['passphrase.htm']);
@@ -31,7 +31,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await settingsPage.waitTillGone('@dialog'); // however the @dialog would not go away - so that is a (weak but sufficient) telling sign
       // signed - done, now try to see if it remembered pp in session
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session', 'signed');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message pp in session', { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
       await settingsPage.close();
     }));
@@ -102,7 +102,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('compose[global:compose] - signed message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message', 'signed');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'signed message', { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -252,9 +252,9 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await composePage.waitAndClick('@action-accept-reply-prompt', { delay: 1 });
       expect(await PageRecipe.getElementPropertyJson((await composePage.waitAny('@action-send'))!, 'textContent')).to.eq('Sign and Send');
       await composePage.waitAndClick('@action-show-options-popover');
-      const sendingOptionSigned = (await composePage.waitAny('@action-choose-signed'))!;
-      expect(await PageRecipe.getElementPropertyJson(sendingOptionSigned, 'className')).to.include('active');
-      await ComposePageRecipe.fillMsg(composePage, {}, undefined, 'signed', 'reply');
+      await composePage.waitAll(['@action-toggle-sign', '@action-toggle-encrypt', '@icon-toggle-sign-tick']);
+      await composePage.notPresent(['@icon-toggle-encrypt-tick']); // response to signed message should not be auto-encrypted
+      await ComposePageRecipe.fillMsg(composePage, {}, undefined, {}, 'reply');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
@@ -269,7 +269,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('compose[global:compose] - standalone- hide/show btns after signing', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', 'signed');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'test.no.pgp@test.com' }, 'Signed Message', { encrypt: false });
       expect(await composePage.isElementPresent('@add-intro')).to.be.true;
       expect(await composePage.isElementPresent('@password-or-pubkey-container')).to.be.true;
       await composePage.notPresent('@add-intro');
@@ -405,26 +405,8 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 
     ava.default('compose[global:compose] - standalone - send new plain message', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', 'plain');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Plain Message', { encrypt: false, sign: false });
       await ComposePageRecipe.sendAndClose(composePage);
-    }));
-
-    ava.default('compose[global:compose] - standalone - testing sending options popover', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
-      const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compose');
-      await composePage.waitAndClick('@action-show-options-popover');
-      for (const element of await composePage.target.$$('.sending-options-container')) {
-        if (!element) {
-          throw new Error('Error: option cannot be empty');
-        }
-        const optionName = (await element.$('.option-name'))!;
-        const elementText = await PageRecipe.getElementPropertyJson(optionName, 'textContent');
-        expect(elementText).not.to.be.empty;
-        expect(await element!.$('.option-name img')!).not.to.be.empty;
-        await optionName.click();
-        expect(elementText).to.include(await PageRecipe.getElementPropertyJson(await composePage.waitAny('@action-send'), 'textContent'));
-        await composePage.waitAndClick('@action-show-options-popover');
-        expect(await element.$('img.icon-tick')).to.not.be.empty;
-      }
     }));
 
     ava.default('compose[global:compose] - standalone - load contacts through API', testWithNewBrowser(async (t, browser) => {
@@ -462,20 +444,20 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
       await settingsPage.close();
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
       await composePage.selectOption('@input-from', 'flowcryptcompatibility@gmail.com');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', 'signed');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'New Signed Message (Mock Test)', { encrypt: false });
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 
     ava.default('[compose[global:compatibility]] - standalone - new message, open footer', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer New Message', 'encrypted', 'new');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer New Message', {}, 'new');
       await composePage.waitAndClick('@action-expand-quoted-text');
       expect(await composePage.read('@input-body')).to.include('The best footer ever!');
     }));
 
     ava.default('[compose[global:compatibility]] - standalone - new message, Footer Mock Test', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
       const composePage = await ComposePageRecipe.openStandalone(t, browser, 'compatibility');
-      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', 'encrypted', 'new');
+      await ComposePageRecipe.fillMsg(composePage, { to: 'human@flowcrypt.com' }, 'Test Footer (Mock Test)', {}, 'new');
       await ComposePageRecipe.sendAndClose(composePage);
     }));
 

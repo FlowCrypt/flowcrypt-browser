@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { Composer } from '../composer.js';
+import { Composer } from './composer.js';
 import { Str, Value } from '../core/common.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { ProviderContactsQuery } from '../api/email_provider_api.js';
