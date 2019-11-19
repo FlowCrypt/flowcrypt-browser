@@ -1,9 +1,8 @@
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { PopoverOpt, ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts, PopoverChoices } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts } from './interfaces/composer-types.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
-import { Lang } from '../lang.js';
 import { Ui } from '../browser.js';
 import { Catch, UnreportableError } from '../platform/catch.js';
 import { Api } from '../api/api.js';
@@ -15,6 +14,7 @@ import { GmailRes } from '../api/google.js';
 import { SendableMsg } from '../api/email_provider_api.js';
 import { Att } from '../core/att.js';
 import { MailFormatter, SignedMsgMailFormatter, EncryptedMsgMailFormatter, PlainMsgMailFormatter } from './composer-mail-formatter.js';
+import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
@@ -22,73 +22,26 @@ export class ComposerSendBtn extends ComposerComponent {
 
   public additionalMsgHeaders: { [key: string]: string } = {};
 
-  public popoverChoices: PopoverChoices = { encrypt: true, sign: true }; // default, can be changed by user
-
-  private btnText(): string {
-    if (this.popoverChoices.encrypt && this.popoverChoices.sign) {
-      return SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND;
-    } else if (this.popoverChoices.encrypt) {
-      return SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND;
-    } else if (this.popoverChoices.sign) {
-      return SendBtnButtonTexts.BTN_SIGN_AND_SEND;
-    } else {
-      return SendBtnButtonTexts.BTN_PLAIN_SEND;
-    }
-  }
-
-  private composeHeaderText(): string {
-    if (this.popoverChoices.encrypt && this.popoverChoices.sign) {
-      return Lang.compose.headers.encryptedAndSigned;
-    } else if (this.popoverChoices.encrypt) {
-      return Lang.compose.headers.encrypted;
-    } else if (this.popoverChoices.sign) {
-      return Lang.compose.headers.signed;
-    } else {
-      return Lang.compose.headers.plain;
-    }
-  }
-
   public btnUpdateTimeout?: number;
 
   private isSendMessageInProgress = false;
 
+  public popover: ComposerSendBtnPopover;
+
   constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
     super(composer, urlParams);
     this.app = app;
+    this.popover = new ComposerSendBtnPopover(composer, urlParams);
   }
 
   initActions(): void {
     this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.isMinimized() && this.extractProcessSendMsg()));
     this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
-    this.composer.S.cached('toggle_send_options').on('click', this.toggleSendOptions);
+    this.popover.initActions();
   }
 
   isSendMessageInProgres(): boolean {
     return this.isSendMessageInProgress;
-  }
-
-  initComposerPopover() {
-    const popoverItems = {
-      encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
-      sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' },
-    };
-    for (const key of Object.keys(popoverItems)) {
-      const popoverOpt = key as PopoverOpt;
-      const item = popoverItems[popoverOpt];
-      const elem = $(`
-        <div class="action-toggle-${Xss.escape(popoverOpt)}-sending-option sending-option" data-test="action-toggle-${Xss.escape(popoverOpt)}">
-            <span class="option-name">${Xss.escape(item.text)}</span>
-        </div>`);
-      elem.on('click', Ui.event.handle(() => this.togglePopoverOpt(elem, popoverOpt)));
-      if (item.iconPath) {
-        elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
-      }
-      this.composer.S.cached('sending_options_container').append(elem); // xss-safe-factory
-      if (this.popoverChoices[popoverOpt]) {
-        this.togglePopoverOpt(elem, popoverOpt, true);
-      }
-    }
-    this.setPopoverTopPosition();
   }
 
   resetSendBtn(delay?: number) {
@@ -113,91 +66,15 @@ export class ComposerSendBtn extends ComposerComponent {
     this.composer.S.cached('toggle_send_options').removeClass(classToRemove).addClass(classToAdd);
   }
 
-  setPopoverTopPosition() {
-    this.composer.S.cached('sending_options_container').css('top', - (this.composer.S.cached('sending_options_container').outerHeight()! + 3) + 'px');
-  }
-
-  public togglePopoverOpt(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, forceStateTo?: boolean) {
-    const currentlyTicked = this.isPopoverToggleTicked(elem);
-    const newToggleTicked = (typeof forceStateTo !== 'undefined') ? forceStateTo : !currentlyTicked;
-    if (newToggleTicked === this.popoverChoices[popoverOpt] && newToggleTicked === currentlyTicked) {
-      return; // internal state as well as UI state is in sync with newly desired result, nothing to do
-    }
-    this.popoverChoices[popoverOpt] = newToggleTicked;
-    if (currentlyTicked && !newToggleTicked) {
-      elem.find('img.icon-tick').remove();
-      elem.css('opacity', '0.5');
-    }
-    if (!currentlyTicked && newToggleTicked) {
-      elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
-      elem.css('opacity', '1');
-    }
-    this.composer.S.cached('title').text(this.composeHeaderText());
-    if (this.popoverChoices.encrypt) {
-      this.composer.S.cached('compose_table').removeClass('not-encrypted');
-      this.composer.S.now('attached_files').removeClass('not-encrypted');
+  private btnText(): string {
+    if (this.popover.choices.encrypt && this.popover.choices.sign) {
+      return SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND;
+    } else if (this.popover.choices.encrypt) {
+      return SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND;
+    } else if (this.popover.choices.sign) {
+      return SendBtnButtonTexts.BTN_SIGN_AND_SEND;
     } else {
-      this.composer.S.cached('compose_table').addClass('not-encrypted');
-      this.composer.S.now('attached_files').addClass('not-encrypted');
-    }
-    this.resetSendBtn();
-    this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
-  }
-
-  private isPopoverToggleTicked(popoverItemElem: JQuery<HTMLElement>) {
-    return !!popoverItemElem.find('img.icon-tick').length;
-  }
-
-  private toggleSendOptions = (event: JQuery.Event<HTMLElement, null>) => {
-    event.stopPropagation();
-    const sendingContainer = $('.sending-container');
-    sendingContainer.toggleClass('popover-opened');
-    if (sendingContainer.hasClass('popover-opened')) {
-      $('body').click(Ui.event.handle((elem, event) => {
-        if (!this.composer.S.cached('sending_options_container')[0].contains(event.relatedTarget)) {
-          sendingContainer.removeClass('popover-opened');
-          $('body').off('click');
-          this.composer.S.cached('toggle_send_options').off('keydown');
-        }
-      }));
-      this.composer.S.cached('toggle_send_options').on('keydown', Ui.event.handle(async (target, e) => this.sendingOptionsKeydownHandler(e)));
-      const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
-      sendingOptions.hover(function () {
-        sendingOptions.removeClass('active');
-        $(this).addClass('active');
-      });
-    } else {
-      $('body').off('click');
-      this.composer.S.cached('toggle_send_options').off('keydown');
-    }
-  }
-
-  private sendingOptionsKeydownHandler = (e: JQuery.Event<HTMLElement, null>): void => {
-    const sendingOptions = this.composer.S.cached('sending_options_container').find('.sending-option');
-    const currentActive = sendingOptions.filter('.active');
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      this.toggleSendOptions(e);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      let prev = currentActive.prev();
-      if (!prev.length) {
-        prev = sendingOptions.last();
-      }
-      currentActive.removeClass('active');
-      prev.addClass('active');
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      let next = currentActive.next();
-      if (!next.length) {
-        next = sendingOptions.first();
-      }
-      currentActive.removeClass('active');
-      next.addClass('active');
-    } else if (e.key === 'Enter') {
-      e.stopPropagation();
-      e.preventDefault();
-      currentActive.click();
+      return SendBtnButtonTexts.BTN_PLAIN_SEND;
     }
   }
 
@@ -214,15 +91,15 @@ export class ComposerSendBtn extends ComposerComponent {
       const senderKi = await this.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
       let mailFormatter: MailFormatter;
       let signingPrv: OpenPGP.key.Key | undefined;
-      if (this.popoverChoices.sign) {
+      if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
         if (!signingPrv) {
           return; // user has canceled the pass phrase dialog, or didn't respond to it in time
         }
       }
-      if (!this.popoverChoices.encrypt && !this.popoverChoices.sign) {
+      if (!this.popover.choices.encrypt && !this.popover.choices.sign) {
         mailFormatter = new PlainMsgMailFormatter(this.composer, this.urlParams, newMsgData);
-      } else if (!this.popoverChoices.encrypt && this.popoverChoices.sign) {
+      } else if (!this.popover.choices.encrypt && this.popover.choices.sign) {
         this.composer.S.now('send_btn_text').text('Signing');
         mailFormatter = new SignedMsgMailFormatter(this.composer, signingPrv!, this.app, this.urlParams, newMsgData);
       } else {
@@ -381,7 +258,7 @@ export class ComposerSendBtn extends ComposerComponent {
 
   private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
     this.app.renderReinsertReplyBox(msgId);
-    if (!this.popoverChoices.encrypt) {
+    if (!this.popover.choices.encrypt) {
       this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
     this.composer.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);

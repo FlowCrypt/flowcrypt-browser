@@ -289,7 +289,7 @@ export class Composer {
       await this.composerContacts.setEmailsPreview(this.getRecipients());
     }
     this.composerSendBtn.resetSendBtn();
-    this.composerSendBtn.initComposerPopover();
+    this.composerSendBtn.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 
@@ -365,7 +365,7 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!this.getRecipients().length || !this.composerSendBtn.popoverChoices.encrypt) { // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
+    if (!this.getRecipients().length || !this.composerSendBtn.popover.choices.encrypt) { // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.hideMsgPwdUi();
       this.composerSendBtn.setBtnColor('green');
     } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
@@ -428,8 +428,8 @@ export class Composer {
             this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
             this.composerSendBtn.additionalMsgHeaders.References = this.composerQuote.messageToReplyOrForward.headers.references + ' ' + msgId;
             if (this.composerQuote.messageToReplyOrForward.isOnlySigned) {
-              this.composerSendBtn.togglePopoverOpt($('.action-toggle-signed-sending-option'), 'encrypt', false);
-              this.composerSendBtn.togglePopoverOpt($('.action-toggle-signed-sending-option'), 'sign', true);
+              this.composerSendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
+              this.composerSendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
             }
           }
         })().catch(Catch.reportErr);
@@ -444,7 +444,6 @@ export class Composer {
       $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
     }
-    this.composerSendBtn.setPopoverTopPosition();
     this.resizeComposeBox();
     if (method === 'forward') {
       this.S.cached('recipients_placeholder').click();
