@@ -1,3 +1,7 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypcom */
+
+'use strict';
+
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts } from './interfaces/composer-types.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';

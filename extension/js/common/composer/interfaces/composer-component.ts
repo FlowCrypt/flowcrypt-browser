@@ -1,3 +1,7 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypcom */
+
+'use strict';
+
 import { Composer } from '../composer';
 import { ComposerUrlParams } from './composer-types';
 

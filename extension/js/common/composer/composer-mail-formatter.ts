@@ -1,3 +1,7 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypcom */
+
+'use strict';
+
 import { SendableMsg } from "../api/email_provider_api.js";
 import { Recipients, ComposerUrlParams, PubkeyResult, SendBtnButtonTexts } from "./interfaces/composer-types.js";
 import { ComposerAppFunctionsInterface } from "./interfaces/composer-app-functions.js";

@@ -1,3 +1,7 @@
+/* © 2016-2018 FlowCrypt Limited. Limitations apply. Contact human@flowcrypcom */
+
+'use strict';
+
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { PopoverOpt, PopoverChoices } from './interfaces/composer-types.js';
 import { Xss } from '../platform/xss.js';
