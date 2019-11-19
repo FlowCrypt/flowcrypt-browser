@@ -71,7 +71,6 @@ export class Composer {
 
   public attach: AttUI;
 
-  private app: ComposerAppFunctionsInterface;
   private composerQuote: ComposerQuote;
   public composerSendBtn: ComposerSendBtn;
   public composerDraft: ComposerDraft;
@@ -83,10 +82,11 @@ export class Composer {
   private composeWindowIsMinimized = false;
   private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
-  private urlParams: ComposerUrlParams;
   private keyImportUI = new KeyImportUi({});
   private rmPwdStrengthValidationElements: (() => void) | undefined;
 
+  public app: ComposerAppFunctionsInterface;
+  public urlParams: ComposerUrlParams;
   public canReadEmails: boolean;
   public initialized: Promise<void>;
 

@@ -3,7 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts, NewMsgData } from './interfaces/composer-types.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
@@ -17,7 +17,7 @@ import { Store } from '../platform/store.js';
 import { GmailRes } from '../api/google.js';
 import { SendableMsg } from '../api/email_provider_api.js';
 import { Att } from '../core/att.js';
-import { MailFormatter, SignedMsgMailFormatter, EncryptedMsgMailFormatter, PlainMsgMailFormatter } from './composer-mail-formatter.js';
+import { GeneralMailFormatter } from './composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 
 export class ComposerSendBtn extends ComposerComponent {
@@ -91,9 +91,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.collectNewMsgData();
       await this.throwIfFormValsInvalid(newMsgData);
-      const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
       const senderKi = await this.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
-      let mailFormatter: MailFormatter;
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -101,20 +99,7 @@ export class ComposerSendBtn extends ComposerComponent {
           return; // user has canceled the pass phrase dialog, or didn't respond to it in time
         }
       }
-      if (!this.popover.choices.encrypt && !this.popover.choices.sign) {
-        mailFormatter = new PlainMsgMailFormatter(this.composer, this.urlParams, newMsgData);
-      } else if (!this.popover.choices.encrypt && this.popover.choices.sign) {
-        this.composer.S.now('send_btn_text').text('Signing');
-        mailFormatter = new SignedMsgMailFormatter(this.composer, signingPrv!, this.app, this.urlParams, newMsgData);
-      } else {
-        const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.composer.getSender(), senderKi, recipientsEmails);
-        if (emailsWithoutPubkeys.length) {
-          await this.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
-        }
-        this.composer.S.now('send_btn_text').text('Encrypting');
-        mailFormatter = new EncryptedMsgMailFormatter(this.composer, this, this.app, this.urlParams, armoredPubkeys, signingPrv, newMsgData);
-      }
-      const msgObj = await mailFormatter.createMsgObject();
+      const msgObj = await GeneralMailFormatter.processNewMsg(this.composer, newMsgData, senderKi, signingPrv);
       await this.doSendMsg(msgObj, senderKi);
     } catch (e) {
       await this.handleSendErr(e);
@@ -313,7 +298,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
+  public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
     if (pwd && pwd.answer) {
       const pp = await this.app.storagePassphraseGet(senderKi);
       if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {
@@ -337,13 +322,14 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private collectNewMsgData = () => {
+  private collectNewMsgData = (): NewMsgData => {
     const recipientElements = this.composer.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
     const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
     const plaintext = this.composer.extractAsText('input_text');
     const password = this.composer.S.cached('input_password').val();
     const pwd = password ? { answer: String(password) } : undefined;
-    return { recipients, subject, plaintext, pwd };
+    const sender = this.composer.getSender();
+    return { recipients, subject, plaintext, pwd, sender };
   }
 }

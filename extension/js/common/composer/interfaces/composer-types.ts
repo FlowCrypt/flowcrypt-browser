@@ -3,6 +3,7 @@
 'use strict';
 
 import { RecipientType } from '../../api/api';
+import { Pwd } from '../../core/pgp';
 
 export type RecipientStatus = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -70,6 +71,8 @@ export type CollectPubkeysResult = { armoredPubkeys: PubkeyResult[], emailsWitho
 
 export type PopoverOpt = 'encrypt' | 'sign' | 'richText';
 export type PopoverChoices = { [key in PopoverOpt]: boolean };
+
+export type NewMsgData = { recipients: Recipients, subject: string, plaintext: string, pwd: Pwd | undefined, sender: string };
 
 export class SendBtnButtonTexts {
   public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";
