@@ -74,7 +74,7 @@ export type PopoverChoices = { [key in PopoverOpt]: boolean };
 
 export type NewMsgData = { recipients: Recipients, subject: string, plaintext: string, pwd: Pwd | undefined, sender: string };
 
-export class SendBtnButtonTexts {
+export class SendBtnTexts {
   public static readonly BTN_ENCRYPT_AND_SEND: string = "Encrypt and Send";
   public static readonly BTN_SIGN_AND_SEND: string = "Sign and Send";
   public static readonly BTN_ENCRYPT_SIGN_AND_SEND: string = "Encrypt, Sign and Send";

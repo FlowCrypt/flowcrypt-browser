@@ -16,7 +16,7 @@ import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Xss } from '../platform/xss.js';
 import { Rules } from '../rules.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
-import { ComposerUrlParams, Recipients, RecipientStatuses, SendBtnButtonTexts, } from './interfaces/composer-types.js';
+import { ComposerUrlParams, Recipients, RecipientStatuses, SendBtnTexts, } from './interfaces/composer-types.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
 import { ComposerContacts } from './composer-contacts.js';
@@ -371,7 +371,7 @@ export class Composer {
     } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
       this.showMsgPwdUiAndColorBtn();
     } else if (this.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
-      this.S.now('send_btn_text').text(SendBtnButtonTexts.BTN_WRONG_ENTRY);
+      this.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
       this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
       this.composerSendBtn.setBtnColor('gray');
     } else {

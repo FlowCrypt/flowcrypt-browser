@@ -3,7 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts, NewMsgData } from './interfaces/composer-types.js';
+import { ComposerUrlParams, RecipientElement, Recipients, SendBtnTexts, NewMsgData } from './interfaces/composer-types.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
@@ -72,13 +72,13 @@ export class ComposerSendBtn extends ComposerComponent {
 
   private btnText(): string {
     if (this.popover.choices.encrypt && this.popover.choices.sign) {
-      return SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND;
+      return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
     } else if (this.popover.choices.encrypt) {
-      return SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND;
+      return SendBtnTexts.BTN_ENCRYPT_AND_SEND;
     } else if (this.popover.choices.sign) {
-      return SendBtnButtonTexts.BTN_SIGN_AND_SEND;
+      return SendBtnTexts.BTN_SIGN_AND_SEND;
     } else {
-      return SendBtnButtonTexts.BTN_PLAIN_SEND;
+      return SendBtnTexts.BTN_PLAIN_SEND;
     }
   }
 
@@ -219,7 +219,7 @@ export class ComposerSendBtn extends ComposerComponent {
   public renderUploadProgress = (progress: number) => {
     if (this.composer.attach.hasAtt()) {
       progress = Math.floor(progress);
-      this.composer.S.now('send_btn_text').text(`${SendBtnButtonTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
+      this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 
@@ -274,16 +274,16 @@ export class ComposerSendBtn extends ComposerComponent {
       throw new ComposerNotReadyError('Retrieving previous message, please wait.');
     }
     const btnReadyTexts = [
-      SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND,
-      SendBtnButtonTexts.BTN_SIGN_AND_SEND,
-      SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND,
-      SendBtnButtonTexts.BTN_PLAIN_SEND
+      SendBtnTexts.BTN_ENCRYPT_AND_SEND,
+      SendBtnTexts.BTN_SIGN_AND_SEND,
+      SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND,
+      SendBtnTexts.BTN_PLAIN_SEND
     ];
     const recipients = this.composer.getRecipients();
     if (btnReadyTexts.includes(this.composer.S.now('send_btn_text').text().trim()) && recipients.length) {
       return; // all good
     }
-    if (this.composer.S.now('send_btn_text').text().trim() === SendBtnButtonTexts.BTN_WRONG_ENTRY) {
+    if (this.composer.S.now('send_btn_text').text().trim() === SendBtnTexts.BTN_WRONG_ENTRY) {
       throw new ComposerUserError('Please re-enter recipients marked in red color.');
     }
     if (!recipients.length) {
