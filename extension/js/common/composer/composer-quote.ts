@@ -198,7 +198,7 @@ export class ComposerQuote extends ComposerComponent {
       return {
         headers,
         text: decryptedAndFormatedContent.join('\n').trim(),
-        isSigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
+        isOnlySigned: !!(decoded.rawSignedContent || (message.blocks.length > 0 && message.blocks[0].type === 'signedMsg')),
         decryptedFiles
       };
     } catch (e) {

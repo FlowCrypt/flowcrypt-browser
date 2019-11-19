@@ -365,7 +365,7 @@ export class Composer {
     this.S.cached('send_btn_note').text('');
     this.S.cached('send_btn').removeAttr('title');
     const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!this.getRecipients().length || ['signed', 'plain'].includes(this.composerSendBtn.encryptionType)) { // Hide 'Add Pasword' prompt if there are no recipients or message is signed.
+    if (!this.getRecipients().length || !this.composerSendBtn.popoverChoices.encrypt) { // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
       this.hideMsgPwdUi();
       this.composerSendBtn.setBtnColor('green');
     } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
@@ -427,8 +427,9 @@ export class Composer {
             const msgId = this.composerQuote.messageToReplyOrForward.headers['message-id'];
             this.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
             this.composerSendBtn.additionalMsgHeaders.References = this.composerQuote.messageToReplyOrForward.headers.references + ' ' + msgId;
-            if (this.composerQuote.messageToReplyOrForward.isSigned) {
-              this.composerSendBtn.handleEncryptionTypeSelected($('.action-choose-signed-sending-option'), 'signed');
+            if (this.composerQuote.messageToReplyOrForward.isOnlySigned) {
+              this.composerSendBtn.togglePopoverOpt($('.action-toggle-signed-sending-option'), 'encrypt', false);
+              this.composerSendBtn.togglePopoverOpt($('.action-toggle-signed-sending-option'), 'sign', true);
             }
           }
         })().catch(Catch.reportErr);

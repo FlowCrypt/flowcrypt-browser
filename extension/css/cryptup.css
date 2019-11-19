@@ -1666,6 +1666,7 @@ table#compose td.bottom div.sending-container div.sending-options-container {
   box-sizing: border-box;
   z-index: 1;
   box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
+  min-width: 256px;
 }
 
 table#compose td.bottom div.sending-container.popover-opened div.sending-options-container {

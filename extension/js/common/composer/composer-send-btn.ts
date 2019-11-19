@@ -1,5 +1,5 @@
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { EncryptionType, ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts, ComposerPopoverItems } from './interfaces/composer-types.js';
+import { PopoverOpt, ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts, PopoverChoices } from './interfaces/composer-types.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
@@ -20,22 +20,33 @@ export class ComposerSendBtn extends ComposerComponent {
 
   private app: ComposerAppFunctionsInterface;
 
-  private popoverItems: ComposerPopoverItems = {
-    encrypted: { text: 'Encrypt and Send', iconPath: '/img/svgs/locked-icon-green.svg' },
-    encryptedAndSigned: { text: 'Encrypt, Sign and Send', iconPath: '/img/svgs/locked-icon-green.svg' },
-    signed: { text: 'Sign and Send', iconPath: '/img/svgs/signature-gray.svg' },
-    plain: { text: 'Send plain (not encrypted)', iconPath: '/img/svgs/gmail.svg' }
-  };
-
-  public encryptionType: EncryptionType = 'encryptedAndSigned';
   public additionalMsgHeaders: { [key: string]: string } = {};
 
-  private DEFAULT_BTN_TEXTS: { [key in EncryptionType]: string } = {
-    "encrypted": SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND,
-    "encryptedAndSigned": SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND,
-    "signed": SendBtnButtonTexts.BTN_SIGN_AND_SEND,
-    "plain": SendBtnButtonTexts.BTN_PLAIN_SEND
-  };
+  public popoverChoices: PopoverChoices = { encrypt: true, sign: true }; // default, can be changed by user
+
+  private btnText(): string {
+    if (this.popoverChoices.encrypt && this.popoverChoices.sign) {
+      return SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND;
+    } else if (this.popoverChoices.encrypt) {
+      return SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND;
+    } else if (this.popoverChoices.sign) {
+      return SendBtnButtonTexts.BTN_SIGN_AND_SEND;
+    } else {
+      return SendBtnButtonTexts.BTN_PLAIN_SEND;
+    }
+  }
+
+  private composeHeaderText(): string {
+    if (this.popoverChoices.encrypt && this.popoverChoices.sign) {
+      return Lang.compose.headers.encryptedAndSigned;
+    } else if (this.popoverChoices.encrypt) {
+      return Lang.compose.headers.encrypted;
+    } else if (this.popoverChoices.sign) {
+      return Lang.compose.headers.signed;
+    } else {
+      return Lang.compose.headers.plain;
+    }
+  }
 
   public btnUpdateTimeout?: number;
 
@@ -57,29 +68,32 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   initComposerPopover() {
-    for (const key of Object.keys(this.popoverItems)) {
-      const encryptionType = key as EncryptionType;
-      const item = this.popoverItems[encryptionType];
+    const popoverItems = {
+      encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
+      sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' },
+    };
+    for (const key of Object.keys(popoverItems)) {
+      const popoverOpt = key as PopoverOpt;
+      const item = popoverItems[popoverOpt];
       const elem = $(`
-            <div class="action-choose-${encryptionType}-sending-option sending-option" data-test="action-choose-${encryptionType}">
-                <span class="option-name">${Xss.htmlSanitize(item.text)}</span>
-            </div>`);
-      elem.on('click', Ui.event.handle(() => this.handleEncryptionTypeSelected(elem, encryptionType)));
+        <div class="action-toggle-${Xss.escape(popoverOpt)}-sending-option sending-option" data-test="action-toggle-${Xss.escape(popoverOpt)}">
+            <span class="option-name">${Xss.escape(item.text)}</span>
+        </div>`);
+      elem.on('click', Ui.event.handle(() => this.togglePopoverOpt(elem, popoverOpt)));
       if (item.iconPath) {
         elem.find('.option-name').prepend(`<img src="${item.iconPath}" />`); // xss-direct
       }
       this.composer.S.cached('sending_options_container').append(elem); // xss-safe-factory
-      if (encryptionType === this.encryptionType) {
-        this.addTickToPopover(elem);
+      if (this.popoverChoices[popoverOpt]) {
+        this.togglePopoverOpt(elem, popoverOpt, true);
       }
     }
     this.setPopoverTopPosition();
   }
 
   resetSendBtn(delay?: number) {
-    const btnText: string = this.DEFAULT_BTN_TEXTS[this.encryptionType];
     const doReset = () => {
-      Xss.sanitizeRender(this.composer.S.cached('send_btn_text'), `<i></i>${btnText}`);
+      Xss.sanitizeRender(this.composer.S.cached('send_btn_text'), `<i></i>${this.btnText()}`);
       this.composer.S.cached('toggle_send_options').show();
     };
     if (typeof this.btnUpdateTimeout !== 'undefined') {
@@ -103,25 +117,35 @@ export class ComposerSendBtn extends ComposerComponent {
     this.composer.S.cached('sending_options_container').css('top', - (this.composer.S.cached('sending_options_container').outerHeight()! + 3) + 'px');
   }
 
-  handleEncryptionTypeSelected(elem: JQuery<HTMLElement>, encryptionType: EncryptionType) {
-    if (this.encryptionType === encryptionType) {
-      return;
+  public togglePopoverOpt(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, forceStateTo?: boolean) {
+    const currentlyTicked = this.isPopoverToggleTicked(elem);
+    const newToggleTicked = (typeof forceStateTo !== 'undefined') ? forceStateTo : !currentlyTicked;
+    if (newToggleTicked === this.popoverChoices[popoverOpt] && newToggleTicked === currentlyTicked) {
+      return; // internal state as well as UI state is in sync with newly desired result, nothing to do
     }
-    elem.parent().children().removeClass('active');
-    const method = ['signed', 'plain'].includes(encryptionType) ? 'addClass' : 'removeClass';
-    this.encryptionType = encryptionType;
-    this.addTickToPopover(elem);
-    this.composer.S.cached('title').text(Lang.compose.headers[encryptionType]);
-    this.composer.S.cached('compose_table')[method]('not-encrypted');
-    this.composer.S.now('attached_files')[method]('not-encrypted');
+    this.popoverChoices[popoverOpt] = newToggleTicked;
+    if (currentlyTicked && !newToggleTicked) {
+      elem.find('img.icon-tick').remove();
+      elem.css('opacity', '0.5');
+    }
+    if (!currentlyTicked && newToggleTicked) {
+      elem.append(`<img class="icon-tick" src="/img/svgs/tick.svg" data-test="icon-toggle-${Xss.escape(popoverOpt)}-tick" />`); // xss-escaped
+      elem.css('opacity', '1');
+    }
+    this.composer.S.cached('title').text(this.composeHeaderText());
+    if (this.popoverChoices.encrypt) {
+      this.composer.S.cached('compose_table').removeClass('not-encrypted');
+      this.composer.S.now('attached_files').removeClass('not-encrypted');
+    } else {
+      this.composer.S.cached('compose_table').addClass('not-encrypted');
+      this.composer.S.now('attached_files').addClass('not-encrypted');
+    }
     this.resetSendBtn();
-    $('.sending-container').removeClass('popover-opened');
     this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
   }
 
-  private addTickToPopover = (elem: JQuery<HTMLElement>) => {
-    elem.parent().find('img.icon-tick').remove();
-    elem.append('<img class="icon-tick" src="/img/svgs/tick.svg" />').addClass('active'); // xss-direct
+  private isPopoverToggleTicked(popoverItemElem: JQuery<HTMLElement>) {
+    return !!popoverItemElem.find('img.icon-tick').length;
   }
 
   private toggleSendOptions = (event: JQuery.Event<HTMLElement, null>) => {
@@ -188,31 +212,29 @@ export class ComposerSendBtn extends ComposerComponent {
       await this.throwIfFormValsInvalid(newMsgData);
       const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
       const senderKi = await this.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
-      let mailFormatter: MailFormatter | undefined;
+      let mailFormatter: MailFormatter;
       let signingPrv: OpenPGP.key.Key | undefined;
-      if (['signed', 'encryptedAndSigned'].includes(this.encryptionType)) {
+      if (this.popoverChoices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
         if (!signingPrv) {
           return; // user has canceled the pass phrase dialog, or didn't respond to it in time
         }
       }
-      if (this.encryptionType === 'signed') {
+      if (!this.popoverChoices.encrypt && !this.popoverChoices.sign) {
+        mailFormatter = new PlainMsgMailFormatter(this.composer, this.urlParams, newMsgData);
+      } else if (!this.popoverChoices.encrypt && this.popoverChoices.sign) {
         this.composer.S.now('send_btn_text').text('Signing');
         mailFormatter = new SignedMsgMailFormatter(this.composer, signingPrv!, this.app, this.urlParams, newMsgData);
-      } else if (['encrypted', 'encryptedAndSigned'].includes(this.encryptionType)) {
+      } else {
         const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.composer.getSender(), senderKi, recipientsEmails);
         if (emailsWithoutPubkeys.length) {
           await this.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
         }
         this.composer.S.now('send_btn_text').text('Encrypting');
         mailFormatter = new EncryptedMsgMailFormatter(this.composer, this, this.app, this.urlParams, armoredPubkeys, signingPrv, newMsgData);
-      } else if (this.encryptionType === 'plain') {
-        mailFormatter = new PlainMsgMailFormatter(this.composer, this.urlParams, newMsgData);
       }
-      if (mailFormatter) {
-        const msgObj = await mailFormatter.createMsgObject();
-        await this.doSendMsg(msgObj, senderKi);
-      }
+      const msgObj = await mailFormatter.createMsgObject();
+      await this.doSendMsg(msgObj, senderKi);
     } catch (e) {
       await this.handleSendErr(e);
     } finally {
@@ -244,10 +266,7 @@ export class ComposerSendBtn extends ComposerComponent {
         throw e;
       }
     }
-    const isSigned = this.encryptionType === 'signed';
-    BrowserMsg.send.notificationShow(this.urlParams.parentTabId, {
-      notification: `Your ${isSigned ? 'signed' : 'encrypted'} ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.`
-    });
+    BrowserMsg.send.notificationShow(this.urlParams.parentTabId, { notification: `Your ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.urlParams.parentTabId); // Bring focus back to body so Gmails shortcuts will work
     await this.composer.composerDraft.draftDelete();
     this.isSendMessageInProgress = false;
@@ -361,9 +380,8 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
-    const isSigned = this.encryptionType === 'signed';
     this.app.renderReinsertReplyBox(msgId);
-    if (isSigned) {
+    if (!this.popoverChoices.encrypt) {
       this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
     this.composer.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
