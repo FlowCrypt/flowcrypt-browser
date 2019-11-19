@@ -407,9 +407,9 @@ export class ComposePageRecipe extends PageRecipe {
       if (typeof shouldBeTicked !== 'undefined') {
         await composePageOrFrame.waitAndClick('@action-show-options-popover');
         await composePageOrFrame.waitAll('@container-sending-options');
-        const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${sendingOpt}-check`);
+        const isCurrentlyTicked = await composePageOrFrame.isElementPresent(`@icon-toggle-${opt}-check`);
         if ((!isCurrentlyTicked && shouldBeTicked) || (isCurrentlyTicked && !shouldBeTicked)) { // not in desired state
-          await composePageOrFrame.waitAndClick(`@action-toggle-${sendingOpt}`); // toggling should set it to desired state
+          await composePageOrFrame.waitAndClick(`@action-toggle-${opt}`); // toggling should set it to desired state
         } else { // in desired state
           await composePageOrFrame.waitAndClick('@input-body'); // close popover
         }
