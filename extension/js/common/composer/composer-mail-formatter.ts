@@ -14,7 +14,7 @@ import { SendableMsg } from '../api/email_provider_api.js';
 export class GeneralMailFormatter {
 
   static async processNewMsg(composer: Composer, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
-    const choices = composer.composerSendBtn.popover.choices;
+    const choices = composer.sendBtn.popover.choices;
     const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
     let mailFormatter: MailFormatterInterface;
     if (!choices.encrypt && !choices.sign) {
@@ -25,7 +25,7 @@ export class GeneralMailFormatter {
     } else {
       const { armoredPubkeys, emailsWithoutPubkeys } = await composer.app.collectAllAvailablePublicKeys(newMsgData.sender, senderKi, recipientsEmails);
       if (emailsWithoutPubkeys.length) {
-        await composer.composerErrs.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
+        await composer.errs.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
       }
       composer.S.now('send_btn_text').text('Encrypting');
       mailFormatter = new EncryptedMsgMailFormatter(composer, newMsgData, armoredPubkeys, signingPrv);

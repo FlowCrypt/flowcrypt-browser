@@ -10,7 +10,7 @@ import { SendBtnTexts } from '../interfaces/composer-types.js';
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
   async createMsgObject(): Promise<SendableMsg> {
     this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
-    const atts = await this.composer.composerAtts.attach.collectAtts();
+    const atts = await this.composer.atts.attach.collectAtts();
     const body = { 'text/plain': this.newMsgData.plaintext };
     return await Google.createMsgObj(this.urlParams.acctEmail, this.newMsgData.sender, this.newMsgData.recipients, this.newMsgData.subject, body, atts, this.urlParams.threadId);
   }

@@ -34,7 +34,7 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   initActions(): void {
-    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.composerWindowSize.isMinimized() && this.extractProcessSendMsg()));
+    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.windowSize.isMinimized() && this.extractProcessSendMsg()));
     this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
@@ -80,13 +80,13 @@ export class ComposerSendBtn extends ComposerComponent {
   private extractProcessSendMsg = async () => {
     this.composer.S.cached('toggle_send_options').hide();
     try {
-      this.composer.composerErrs.throwIfFormNotReady();
+      this.composer.errs.throwIfFormNotReady();
       this.composer.S.now('send_btn_text').text('Loading');
       Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.collectNewMsgData();
-      await this.composer.composerErrs.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.composerSender.getSender());
+      await this.composer.errs.throwIfFormValsInvalid(newMsgData);
+      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -98,14 +98,14 @@ export class ComposerSendBtn extends ComposerComponent {
       await this.finalizeSendableMsg(msgObj, senderKi);
       await this.doSendMsg(msgObj);
     } catch (e) {
-      await this.composer.composerErrs.handleSendErr(e);
+      await this.composer.errs.handleSendErr(e);
     } finally {
       this.composer.S.cached('toggle_send_options').show();
     }
   }
 
   private async finalizeSendableMsg(msg: SendableMsg, senderKi: KeyInfo) {
-    const choices = this.composer.composerSendBtn.popover.choices;
+    const choices = this.composer.sendBtn.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
@@ -136,7 +136,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
     BrowserMsg.send.notificationShow(this.urlParams.parentTabId, { notification: `Your ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.urlParams.parentTabId); // Bring focus back to body so Gmails shortcuts will work
-    await this.composer.composerDraft.draftDelete();
+    await this.composer.draft.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.urlParams.isReplyBox) {
       this.renderReplySuccess(msg, msgSentRes.id);
@@ -183,7 +183,7 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   public renderUploadProgress = (progress: number) => {
-    if (this.composer.composerAtts.attach.hasAtt()) {
+    if (this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
       this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
@@ -218,10 +218,10 @@ export class ComposerSendBtn extends ComposerComponent {
     }
     this.composer.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.composer.S.cached('compose_table').css('display', 'none');
-    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.composerSender.getSender());
+    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.sender.getSender());
     this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
     const repliedBodyEl = this.composer.S.cached('reply_msg_successful').find('div.replied_body');
-    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.composerTextInput.extractAsText('input_text', 'SKIP-ADDONS')));
+    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.textInput.extractAsText('input_text', 'SKIP-ADDONS')));
     const t = new Date();
     const time = ((t.getHours() !== 12) ?
       (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -233,17 +233,17 @@ export class ComposerSendBtn extends ComposerComponent {
         return this.composer.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
-    this.composer.composerWindowSize.resizeComposeBox();
+    this.composer.windowSize.resizeComposeBox();
   }
 
   private collectNewMsgData = (): NewMsgData => {
-    const recipientElements = this.composer.composerContacts.getRecipients();
+    const recipientElements = this.composer.contacts.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
     const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
-    const plaintext = this.composer.composerTextInput.extractAsText('input_text');
+    const plaintext = this.composer.textInput.extractAsText('input_text');
     const password = this.composer.S.cached('input_password').val();
     const pwd = password ? { answer: String(password) } : undefined;
-    const sender = this.composer.composerSender.getSender();
+    const sender = this.composer.sender.getSender();
     return { recipients, subject, plaintext, pwd, sender };
   }
 

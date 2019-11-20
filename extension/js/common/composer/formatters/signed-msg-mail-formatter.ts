@@ -34,7 +34,7 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
     // Removing them here will prevent Gmail from screwing up the signature
     this.newMsgData.plaintext = this.newMsgData.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
     const signedData = await PgpMsg.sign(this.signingPrv, this.newMsgData.plaintext);
-    const atts = await this.composer.composerAtts.attach.collectAtts(); // todo - not signing attachments
+    const atts = await this.composer.atts.attach.collectAtts(); // todo - not signing attachments
     const allContacts = [...this.newMsgData.recipients.to || [], ...this.newMsgData.recipients.cc || [], ...this.newMsgData.recipients.bcc || []];
     this.composer.app.storageContactUpdate(allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
     const body = { 'text/plain': signedData };

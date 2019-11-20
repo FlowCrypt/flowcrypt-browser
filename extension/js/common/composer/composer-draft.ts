@@ -40,9 +40,9 @@ export class ComposerDraft extends ComposerComponent {
       } else { // close new msg
         this.composer.app.closeMsg();
       }
-    }, this.composer.composerErrs.handlers('delete draft')));
+    }, this.composer.errs.handlers('delete draft')));
     await this.composer.initPromise;
-    this.composer.composerContacts.onRecipientAdded(async () => {
+    this.composer.contacts.onRecipientAdded(async () => {
       await this.draftSave(true);
     });
   }
@@ -90,8 +90,8 @@ export class ComposerDraft extends ComposerComponent {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.composerSender.getSender());
-        const plainText = this.composer.composerTextInput.extractAsText('input_text');
+        const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
+        const plainText = this.composer.textInput.extractAsText('input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
         if (this.urlParams.threadId) { // reply draft
@@ -102,16 +102,16 @@ export class ComposerDraft extends ComposerComponent {
           body = encrypted.data;
         }
         const subject = String(this.composer.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
-        const to = this.composer.composerContacts.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
+        const to = this.composer.contacts.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         const recipients: Recipients = { to: [], cc: [], bcc: [] };
-        for (const recipient of this.composer.composerContacts.getRecipients()) {
+        for (const recipient of this.composer.contacts.getRecipients()) {
           recipients[recipient.sendingType]!.push(recipient.email);
         }
         const mimeMsg = await Mime.encode(body, {
           To: recipients.to!.join(','),
           Cc: recipients.cc!.join(','),
           Bcc: recipients.bcc!.join(','),
-          From: this.composer.composerSender.getSender(),
+          From: this.composer.sender.getSender(),
           Subject: subject
         }, []);
         if (!this.urlParams.draftId) {
@@ -183,7 +183,7 @@ export class ComposerDraft extends ComposerComponent {
         }
         this.composer.S.cached('prompt').css({ display: 'none' });
         Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
-        await this.composer.composerContacts.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
+        await this.composer.contacts.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         if (this.urlParams.isReplyBox) {
           await this.composer.composerRender.renderReplyMsgComposeTable();
         }
@@ -223,7 +223,7 @@ export class ComposerDraft extends ComposerComponent {
     const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
     if (this.urlParams.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });
-      this.composer.composerWindowSize.resizeComposeBox();
+      this.composer.windowSize.resizeComposeBox();
     } else {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
     }

@@ -37,7 +37,7 @@ export class ComposerSender extends ComposerComponent {
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
         this.renderSenderAliasesOptions(sendAs);
         el.remove();
-      }, this.composer.composerErrs.handlers(`show sending address options`)));
+      }, this.composer.errs.handlers(`show sending address options`)));
     }
   }
 
@@ -52,15 +52,15 @@ export class ComposerSender extends ComposerComponent {
       emailAliases = emailAliases.sort((a, b) => {
         return (sendAs[a].isDefault === sendAs[b].isDefault) ? 0 : sendAs[a].isDefault ? -1 : 1;
       });
-      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.composer.composerContacts.updatePubkeyIcon());
+      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.composer.contacts.updatePubkeyIcon());
       this.composer.S.now('input_from').change(async () => {
-        await this.composer.composerContacts.reEvaluateRecipients(this.composer.composerContacts.getRecipients());
-        await this.composer.composerContacts.setEmailsPreview(this.composer.composerContacts.getRecipients());
-        this.composer.composerContacts.updatePubkeyIcon();
-        this.composer.composerQuote.replaceFooter(this.getFooter());
+        await this.composer.contacts.reEvaluateRecipients(this.composer.contacts.getRecipients());
+        await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
+        this.composer.contacts.updatePubkeyIcon();
+        this.composer.quote.replaceFooter(this.getFooter());
       });
       if (this.urlParams.isReplyBox) {
-        this.composer.composerWindowSize.resizeComposeBox();
+        this.composer.windowSize.resizeComposeBox();
       }
     }
   }
@@ -76,7 +76,7 @@ export class ComposerSender extends ComposerComponent {
         if (refreshResult.isFooterChanged && !this.urlParams.draftId) {
           const alias = refreshResult.sendAs[this.getSender()];
           if (alias) {
-            this.composer.composerQuote.replaceFooter(alias.footer || undefined);
+            this.composer.quote.replaceFooter(alias.footer || undefined);
           }
         }
       }

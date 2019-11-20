@@ -20,12 +20,12 @@ export class ComposerRender extends ComposerComponent {
   async initActions() {
     await this.initComposeBox();
     this.composer.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.composer.app.renderHelpDialog(), this.composer.composerErrs.handlers(`render help dialog`)));
+    this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.composer.app.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
-    this.composer.composerDraft.initActions().catch(Catch.reportErr);
-    this.composer.composerWindowSize.initActions();
-    this.composer.composerTextInput.initActions();
-    await this.composer.composerSender.checkEmailAliases();
+    this.composer.draft.initActions().catch(Catch.reportErr);
+    this.composer.windowSize.initActions();
+    this.composer.textInput.initActions();
+    await this.composer.sender.checkEmailAliases();
   }
 
   private initComposeBox = async () => {
@@ -43,17 +43,17 @@ export class ComposerRender extends ComposerComponent {
       this.composer.S.cached('compose_table').css({ 'height': '100%' });
     }
     if (this.urlParams.draftId) {
-      await this.composer.composerDraft.initialDraftLoad(this.urlParams.draftId);
-      const footer = this.composer.composerSender.getFooter();
+      await this.composer.draft.initialDraftLoad(this.urlParams.draftId);
+      const footer = this.composer.sender.getFooter();
       if (footer) {
-        this.composer.composerQuote.setFooter(footer);
+        this.composer.quote.setFooter(footer);
       } else {
         this.composer.S.cached('icon_show_prev_msg').remove();
       }
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
-        this.composer.composerContacts.addRecipients(recipients, false).catch(Catch
+        this.composer.contacts.addRecipients(recipients, false).catch(Catch
           .reportErr);
         // await this.composer.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
@@ -72,42 +72,42 @@ export class ComposerRender extends ComposerComponent {
                 typesToDelete.push('bcc');
                 break;
             }
-            this.composer.composerContacts.deleteRecipientsBySendingType(typesToDelete);
+            this.composer.contacts.deleteRecipientsBySendingType(typesToDelete);
             await this.renderReplyMsgComposeTable(method);
-          }, this.composer.composerErrs.handlers(`activate repply box`)));
+          }, this.composer.errs.handlers(`activate repply box`)));
         }
       }
     }
     if (this.urlParams.isReplyBox) {
-      $(document).ready(() => this.composer.composerWindowSize.resizeComposeBox());
+      $(document).ready(() => this.composer.windowSize.resizeComposeBox());
     } else {
       this.composer.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
-      await this.composer.composerContacts.setEmailsPreview(this.composer.composerContacts.getRecipients());
+      await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
     }
-    this.composer.composerSendBtn.resetSendBtn();
-    this.composer.composerSendBtn.popover.render();
+    this.composer.sendBtn.resetSendBtn();
+    this.composer.sendBtn.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.composer.S.cached('prompt').css({ display: 'none' });
-    this.composer.composerContacts.showHideCcAndBccInputsIfNeeded();
-    await this.composer.composerContacts.setEmailsPreview(this.composer.composerContacts.getRecipients());
+    this.composer.contacts.showHideCcAndBccInputsIfNeeded();
+    await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
     await this.renderComposeTable();
     if (this.composer.canReadEmails) {
       this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
       if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
         (async () => { // not awaited because can take a long time & blocks rendering
-          const footer = this.composer.composerSender.getFooter();
-          await this.composer.composerQuote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
-          if (this.composer.composerQuote.messageToReplyOrForward) {
-            const msgId = this.composer.composerQuote.messageToReplyOrForward.headers['message-id'];
-            this.composer.composerSendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
-            this.composer.composerSendBtn.additionalMsgHeaders.References = this.composer.composerQuote.messageToReplyOrForward.headers.references + ' ' + msgId;
-            if (this.composer.composerQuote.messageToReplyOrForward.isOnlySigned) {
-              this.composer.composerSendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
-              this.composer.composerSendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
+          const footer = this.composer.sender.getFooter();
+          await this.composer.quote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
+          if (this.composer.quote.messageToReplyOrForward) {
+            const msgId = this.composer.quote.messageToReplyOrForward.headers['message-id'];
+            this.composer.sendBtn.additionalMsgHeaders['In-Reply-To'] = msgId;
+            this.composer.sendBtn.additionalMsgHeaders.References = this.composer.quote.messageToReplyOrForward.headers.references + ' ' + msgId;
+            if (this.composer.quote.messageToReplyOrForward.isOnlySigned) {
+              this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-encrypt-sending-option'), 'encrypt', false); // don't encrypt
+              this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-sign-sending-option'), 'sign', true); // do sign
             }
           }
         })().catch(Catch.reportErr);
@@ -122,7 +122,7 @@ export class ComposerRender extends ComposerComponent {
       $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
     }
-    this.composer.composerWindowSize.resizeComposeBox();
+    this.composer.windowSize.resizeComposeBox();
     if (method === 'forward') {
       this.composer.S.cached('recipients_placeholder').click();
     }
@@ -141,10 +141,10 @@ export class ComposerRender extends ComposerComponent {
   })
 
   private renderComposeTable = async () => {
-    this.composer.composerErrs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
+    this.composer.errs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.composer.S.cached('compose_table').css('display', 'table');
     this.composer.S.cached('body').keydown(Ui.event.handle((_, e) => {
-      if (this.composer.composerWindowSize.composeWindowIsMinimized) {
+      if (this.composer.windowSize.composeWindowIsMinimized) {
         return e.preventDefault();
       }
       Ui.escape(() => !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
@@ -161,8 +161,8 @@ export class ComposerRender extends ComposerComponent {
         })(e);
       }
     }));
-    this.composer.composerContacts.initActions();
-    this.composer.composerSendBtn.initActions();
+    this.composer.contacts.initActions();
+    this.composer.sendBtn.initActions();
     this.composer.S.cached('input_to').bind('paste', Ui.event.handle(async (elem, event) => {
       if (event.originalEvent instanceof ClipboardEvent && event.originalEvent.clipboardData) {
         const textData = event.originalEvent.clipboardData.getData('text/plain');
@@ -186,7 +186,7 @@ export class ComposerRender extends ComposerComponent {
             }));
           }
           this.composer.S.cached('input_to').val(keyUser.email);
-          await this.composer.composerContacts.parseRenderRecipients(this.composer.S.cached('input_to'));
+          await this.composer.contacts.parseRenderRecipients(this.composer.S.cached('input_to'));
         } else {
           await Ui.modal.warning(`The email listed in this public key does not seem valid: ${keyUser}`);
         }
@@ -195,32 +195,32 @@ export class ComposerRender extends ComposerComponent {
     this.composer.S.cached('input_text').keyup(() => this.composer.S.cached('send_btn_note').text(''));
     this.composer.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.composer.S.cached('input_to').is(':focus')) {
-        this.composer.composerErrs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.composer.S.cached('input_to').val()})`);
+        this.composer.errs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.composer.S.cached('input_to').val()})`);
         this.composer.S.cached('input_to').focus();
       }
-    }, this.composer.composerErrs.handlers(`focus on recipient field`))).children().click(() => false);
-    this.composer.composerAtts.onComposeTableRender();
+    }, this.composer.errs.handlers(`focus on recipient field`))).children().click(() => false);
+    this.composer.atts.onComposeTableRender();
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur()
         // Recipients may be left unrendered, as standard text, with a trailing comma
-        await this.composer.composerContacts.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
+        await this.composer.contacts.parseRenderRecipients(this.composer.S.cached('input_to')); // this will force firefox to render them on load
       }
-      this.composer.composerSender.renderSenderAliasesOptionsToggle();
+      this.composer.sender.renderSenderAliasesOptionsToggle();
     } else {
       $('.close_new_message').click(Ui.event.handle(async () => {
-        if (!this.composer.composerSendBtn.isSendMessageInProgres() ||
+        if (!this.composer.sendBtn.isSendMessageInProgres() ||
           await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
           this.composer.app.closeMsg();
         }
-      }, this.composer.composerErrs.handlers(`close message`)));
+      }, this.composer.errs.handlers(`close message`)));
       this.composer.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
       if (this.composer.app.storageGetAddresses()) {
-        this.composer.composerSender.renderSenderAliasesOptions(this.composer.app.storageGetAddresses()!);
+        this.composer.sender.renderSenderAliasesOptions(this.composer.app.storageGetAddresses()!);
       }
-      const footer = this.composer.composerSender.getFooter();
-      await this.composer.composerQuote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
-      this.composer.composerWindowSize.setInputTextHeightManuallyIfNeeded();
+      const footer = this.composer.sender.getFooter();
+      await this.composer.quote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
+      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
     BrowserMsg.send.focusFrame(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
@@ -228,11 +228,11 @@ export class ComposerRender extends ComposerComponent {
       this.composer.S.cached(this.urlParams.isReplyBox && this.urlParams.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
-    this.composer.composerWindowSize.onComposeTableRender();
+    this.composer.windowSize.onComposeTableRender();
   }
 
   private loadRecipientsThenSetTestStateReady = async () => {
-    await Promise.all(this.composer.composerContacts.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
+    await Promise.all(this.composer.contacts.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 

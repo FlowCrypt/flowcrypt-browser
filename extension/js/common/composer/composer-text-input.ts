@@ -13,9 +13,9 @@ export class ComposerTextInput extends ComposerComponent {
       $(target).css('display', 'none');
       this.composer.S.cached('intro_container').css('display', 'table-row');
       this.composer.S.cached('input_intro').focus();
-      this.composer.composerWindowSize.setInputTextHeightManuallyIfNeeded();
-    }, this.composer.composerErrs.handlers(`add intro`)));
-    this.composer.S.cached('input_text').get(0).onpaste = this.composer.composerTextInput.inputTextPasteHtmlAsText;
+      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+    }, this.composer.errs.handlers(`add intro`)));
+    this.composer.S.cached('input_text').get(0).onpaste = this.composer.textInput.inputTextPasteHtmlAsText;
   }
 
   public inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
@@ -39,8 +39,8 @@ export class ComposerTextInput extends ComposerComponent {
 
   public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
     let html = this.composer.S.cached(elSel)[0].innerHTML;
-    if (elSel === 'input_text' && this.composer.composerQuote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
-      html += `<br /><br />${this.composer.composerQuote.expandingHTMLPart}`;
+    if (elSel === 'input_text' && this.composer.quote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
+      html += `<br /><br />${this.composer.quote.expandingHTMLPart}`;
     }
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }

@@ -41,9 +41,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   async createMsgObject(): Promise<SendableMsg> {
     const subscription = await this.composer.app.storageGetSubscription();
     this.newMsgData.plaintext = await this.addReplyTokenToMsgBodyIfNeeded(subscription);
-    const atts = await this.composer.composerAtts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), this.pwd);
+    const atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), this.pwd);
     if (atts.length && this.pwd) { // these will be password encrypted attachments
-      this.composer.composerSendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
+      this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
       this.newMsgData.plaintext = this.addUploadedFileLinksToMsgBody(this.newMsgData.plaintext, atts);
     }
     const pubkeysOnly = this.armoredPubkeys.map(p => p.pubkey);
@@ -100,7 +100,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     for (const i of pfRes.approvals.keys()) {
       items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
     }
-    await Backend.s3Upload(items, this.composer.composerSendBtn.renderUploadProgress);
+    await Backend.s3Upload(items, this.composer.sendBtn.renderUploadProgress);
     const { admin_codes, confirmed } = await Backend.messageConfirmFiles(items.map(item => item.fields.key));
     if (!confirmed || confirmed.length !== items.length) {
       throw new Error('Attachments did not upload properly, please try again');
@@ -169,7 +169,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">
                     ${Lang.compose.openMsg[lang]}
                    </a>`;
-    const intro = this.composer.S.cached('input_intro').length && this.composer.composerTextInput.extractAsText('input_intro');
+    const intro = this.composer.S.cached('input_intro').length && this.composer.textInput.extractAsText('input_intro');
     const text = [];
     const html = [];
     if (intro) {

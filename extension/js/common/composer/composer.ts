@@ -64,16 +64,16 @@ export class Composer {
     sending_options_container: '#sending-options-container'
   });
 
-  public composerQuote: ComposerQuote;
-  public composerSendBtn: ComposerSendBtn;
-  public composerDraft: ComposerDraft;
-  public composerContacts: ComposerContacts;
-  public composerPwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
-  public composerWindowSize: ComposerWindowSize;
-  public composerSender: ComposerSender;
-  public composerAtts: ComposerAtts;
-  public composerErrs: ComposerErrs;
-  public composerTextInput: ComposerTextInput;
+  public quote: ComposerQuote;
+  public sendBtn: ComposerSendBtn;
+  public draft: ComposerDraft;
+  public contacts: ComposerContacts;
+  public pwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
+  public windowSize: ComposerWindowSize;
+  public sender: ComposerSender;
+  public atts: ComposerAtts;
+  public errs: ComposerErrs;
+  public textInput: ComposerTextInput;
   public composerRender: ComposerRender;
 
   public app: ComposerAppFunctionsInterface;
@@ -85,16 +85,16 @@ export class Composer {
     this.app = appFunctions;
     this.urlParams = urlParams;
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
-    this.composerDraft = new ComposerDraft(this);
-    this.composerQuote = new ComposerQuote(this);
-    this.composerContacts = new ComposerContacts(this);
-    this.composerSendBtn = new ComposerSendBtn(this);
-    this.composerPwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
-    this.composerWindowSize = new ComposerWindowSize(this);
-    this.composerSender = new ComposerSender(this);
-    this.composerAtts = new ComposerAtts(this);
-    this.composerErrs = new ComposerErrs(this);
-    this.composerTextInput = new ComposerTextInput(this);
+    this.draft = new ComposerDraft(this);
+    this.quote = new ComposerQuote(this);
+    this.contacts = new ComposerContacts(this);
+    this.sendBtn = new ComposerSendBtn(this);
+    this.pwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
+    this.windowSize = new ComposerWindowSize(this);
+    this.sender = new ComposerSender(this);
+    this.atts = new ComposerAtts(this);
+    this.errs = new ComposerErrs(this);
+    this.textInput = new ComposerTextInput(this);
     this.composerRender = new ComposerRender(this);
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;

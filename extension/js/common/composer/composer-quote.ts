@@ -34,7 +34,7 @@ export class ComposerQuote extends ComposerComponent {
     if (!this.messageToReplyOrForward && msgId && method) {
       this.composer.S.cached('icon_show_prev_msg').addClass('progress');
       Xss.sanitizeAppend(this.composer.S.cached('icon_show_prev_msg'), '<div id="loader">0%</div>');
-      this.composer.composerWindowSize.resizeComposeBox();
+      this.composer.windowSize.resizeComposeBox();
       try {
         this.messageToReplyOrForward = await this.getAndDecryptMessage(msgId, method, (progress) => this.setQuoteLoaderProgress(progress + '%'));
       } catch (e) {
@@ -68,7 +68,7 @@ export class ComposerQuote extends ComposerComponent {
       }
       if (method === 'forward' && this.messageToReplyOrForward.decryptedFiles.length) {
         for (const file of this.messageToReplyOrForward.decryptedFiles) {
-          await this.composer.composerAtts.attach.addFile(file);
+          await this.composer.atts.attach.addFile(file);
         }
       }
     }
@@ -79,7 +79,7 @@ export class ComposerQuote extends ComposerComponent {
     if (method === 'forward') {
       this.composer.S.cached('icon_show_prev_msg').remove();
       Xss.sanitizeAppend(this.composer.S.cached('input_text'), safePreviousMsg);
-      this.composer.composerWindowSize.resizeComposeBox();
+      this.composer.windowSize.resizeComposeBox();
     } else {
       this.msgExpandingHTMLPart = safePreviousMsg;
       this.setExpandingTextAfterClick();
@@ -249,7 +249,7 @@ export class ComposerQuote extends ComposerComponent {
         Xss.sanitizeAppend(this.composer.S.cached('input_text'), this.msgExpandingHTMLPart || '');
         this.msgExpandingHTMLPart = undefined;
         this.composer.S.cached('input_text').focus();
-        this.composer.composerWindowSize.resizeComposeBox();
+        this.composer.windowSize.resizeComposeBox();
       }));
   }
 

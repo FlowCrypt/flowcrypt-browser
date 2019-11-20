@@ -367,7 +367,7 @@ Catch.try(async () => {
   BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
     if (!entered) {
       clearInterval(passphraseInterval);
-      composer.composerSendBtn.resetSendBtn();
+      composer.sendBtn.resetSendBtn();
     }
   });
   BrowserMsg.listen(tabId);

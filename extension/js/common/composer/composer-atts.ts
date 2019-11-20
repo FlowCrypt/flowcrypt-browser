@@ -26,18 +26,18 @@ export class ComposerAtts extends ComposerComponent {
   onComposeTableRender() {
     this.attach.initAttDialog('fineuploader', 'fineuploader_button');
     this.attach.setAttAddedCb(async () => {
-      this.composer.composerWindowSize.setInputTextHeightManuallyIfNeeded();
-      this.composer.composerWindowSize.resizeComposeBox();
+      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+      this.composer.windowSize.resizeComposeBox();
     });
     this.attach.setAttRemovedCb(() => {
-      this.composer.composerWindowSize.setInputTextHeightManuallyIfNeeded();
-      this.composer.composerWindowSize.resizeComposeBox();
+      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+      this.composer.windowSize.resizeComposeBox();
     });
   }
 
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await this.composer.app.storageGetSubscription();
-    if (!Rules.relaxSubscriptionRequirements(this.composer.composerSender.getSender()) && !subscription.active) {
+    if (!Rules.relaxSubscriptionRequirements(this.composer.sender.getSender()) && !subscription.active) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,
