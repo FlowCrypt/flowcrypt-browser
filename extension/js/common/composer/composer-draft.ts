@@ -40,7 +40,7 @@ export class ComposerDraft extends ComposerComponent {
       } else { // close new msg
         this.composer.app.closeMsg();
       }
-    }, this.composer.getErrHandlers('delete draft')));
+    }, this.composer.composerErrs.getErrHandlers('delete draft')));
     await this.composer.initialized;
     this.composer.composerContacts.onRecipientAdded(async () => {
       await this.draftSave(true);

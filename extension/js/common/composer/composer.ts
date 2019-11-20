@@ -9,7 +9,7 @@ import { Str } from '../core/common.js';
 import { BrowserMsg } from '../extension.js';
 import { Pgp, } from '../core/pgp.js';
 import { RecipientType } from '../api/api.js';
-import { Ui, BrowserEventErrHandler } from '../browser.js';
+import { Ui } from '../browser.js';
 import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Xss } from '../platform/xss.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
@@ -22,9 +22,9 @@ import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container
 import { ComposerWindowSize } from './composer-window-size.js';
 import { ComposerSender } from './composer-sender.js';
 import { ComposerAtts } from './composer-atts.js';
+import { ComposerErrs } from './composer-errs.js';
 
 export class Composer {
-  private debugId = Str.sloppyRandom();
 
   public S = Ui.buildJquerySels({
     body: 'body',
@@ -78,6 +78,7 @@ export class Composer {
   public composerWindowSize: ComposerWindowSize;
   public composerSender: ComposerSender;
   public composerAtts: ComposerAtts;
+  public composerErrs: ComposerErrs;
 
   public app: ComposerAppFunctionsInterface;
   public urlParams: ComposerUrlParams;
@@ -95,6 +96,7 @@ export class Composer {
     this.composerWindowSize = new ComposerWindowSize(this);
     this.composerSender = new ComposerSender(this);
     this.composerAtts = new ComposerAtts(this);
+    this.composerErrs = new ComposerErrs(this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
@@ -109,37 +111,6 @@ export class Composer {
     })().catch(Catch.reportErr);
   }
 
-  public debug = (msg: string) => {
-    if (this.urlParams.debug) {
-      console.log(`[${this.debugId}] ${msg}`);
-    }
-  }
-
-  public getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
-    return {
-      network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
-      authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail }),
-      auth: async () => {
-        if (await Ui.modal.confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
-        }
-      },
-      other: async (e: any) => {
-        if (e instanceof Error) {
-          e.stack = (e.stack || '') + `\n\n[compose action: ${couldNotDoWhat}]`;
-        } else if (typeof e === 'object' && e && typeof (e as any).stack === 'undefined') {
-          try {
-            (e as any).stack = `[compose action: ${couldNotDoWhat}]`;
-          } catch (e) {
-            // no need
-          }
-        }
-        Catch.reportErr(e);
-        await Ui.modal.info(`Could not ${couldNotDoWhat} (unknown error). If this repeats, please contact human@flowcrypt.com.\n\n(${String(e)})`);
-      },
-    };
-  }
-
   private initActions = () => {
     this.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
     this.S.cached('add_intro').click(Ui.event.handle(target => {
@@ -147,8 +118,8 @@ export class Composer {
       this.S.cached('intro_container').css('display', 'table-row');
       this.S.cached('input_intro').focus();
       this.composerWindowSize.setInputTextHeightManuallyIfNeeded();
-    }, this.getErrHandlers(`add intro`)));
-    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.getErrHandlers(`render help dialog`)));
+    }, this.composerErrs.getErrHandlers(`add intro`)));
+    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.composerErrs.getErrHandlers(`render help dialog`)));
     this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
     this.composerDraft.initActions().catch(Catch.reportErr);
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
@@ -219,7 +190,7 @@ export class Composer {
             }
             this.composerContacts.deleteRecipientsBySendingType(typesToDelete);
             await this.renderReplyMsgComposeTable(method);
-          }, this.getErrHandlers(`activate repply box`)));
+          }, this.composerErrs.getErrHandlers(`activate repply box`)));
         }
       }
     }
@@ -282,14 +253,6 @@ export class Composer {
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.urlParams.parentTabId, { selector: `#${this.urlParams.frameId}` }), 300);
   }
 
-  private debugFocusEvents = (...selNames: string[]) => {
-    for (const selName of selNames) {
-      this.S.cached(selName)
-        .focusin(e => this.debug(`** ${selName} receiving focus from(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`))
-        .focusout(e => this.debug(`** ${selName} giving focus to(${e.relatedTarget ? e.relatedTarget.outerHTML : undefined})`));
-    }
-  }
-
   private getFocusableEls = () => this.S.cached('compose_table').find('[tabindex]:not([tabindex="-1"]):visible').toArray().sort((a, b) => {
     const tabindexA = parseInt(a.getAttribute('tabindex') || '');
     const tabindexB = parseInt(b.getAttribute('tabindex') || '');
@@ -302,7 +265,7 @@ export class Composer {
   })
 
   private renderComposeTable = async () => {
-    this.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
+    this.composerErrs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.S.cached('compose_table').css('display', 'table');
     this.S.cached('body').keydown(Ui.event.handle((_, e) => {
       if (this.composerWindowSize.composeWindowIsMinimized) {
@@ -356,10 +319,10 @@ export class Composer {
     this.S.cached('input_text').keyup(() => this.S.cached('send_btn_note').text(''));
     this.S.cached('input_addresses_container_inner').click(Ui.event.handle(() => {
       if (!this.S.cached('input_to').is(':focus')) {
-        this.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
+        this.composerErrs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
         this.S.cached('input_to').focus();
       }
-    }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
+    }, this.composerErrs.getErrHandlers(`focus on recipient field`))).children().click(() => false);
     this.composerAtts.onComposeTableRender();
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
@@ -374,7 +337,7 @@ export class Composer {
           await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
           this.app.closeMsg();
         }
-      }, this.getErrHandlers(`close message`)));
+      }, this.composerErrs.getErrHandlers(`close message`)));
       this.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
       if (this.app.storageGetAddresses()) {
         this.composerSender.renderSenderAliasesOptions(this.app.storageGetAddresses()!);
