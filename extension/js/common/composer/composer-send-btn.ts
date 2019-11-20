@@ -100,7 +100,8 @@ export class ComposerSendBtn extends ComposerComponent {
         }
       }
       const msgObj = await GeneralMailFormatter.processNewMsg(this.composer, newMsgData, senderKi, signingPrv);
-      await this.doSendMsg(msgObj, senderKi);
+      await this.finalizeSendableMsg(msgObj, senderKi);
+      await this.doSendMsg(msgObj);
     } catch (e) {
       await this.handleSendErr(e);
     } finally {
@@ -108,17 +109,23 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private doSendMsg = async (msg: SendableMsg, senderKi: KeyInfo) => {
+  private async finalizeSendableMsg(msg: SendableMsg, senderKi: KeyInfo) {
+    const choices = this.composer.composerSendBtn.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
-    for (const a of msg.atts) {
-      a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+    if (choices.encrypt) {
+      for (const a of msg.atts) {
+        a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+      }
     }
     if (this.composer.S.cached('icon_pubkey').is('.active')) {
       msg.atts.push(Att.keyinfoAsPubkeyAtt(senderKi));
     }
     await this.addNamesToMsg(msg);
+  }
+
+  private doSendMsg = async (msg: SendableMsg) => {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;

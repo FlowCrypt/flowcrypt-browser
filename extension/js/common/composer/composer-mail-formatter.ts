@@ -9,10 +9,11 @@ import { MailFormatterInterface } from './formatters/base-mail-formatter.js';
 import { PlainMsgMailFormatter } from './formatters/plain-mail-msg-formatter.js';
 import { SignedMsgMailFormatter } from './formatters/signed-msg-mail-formatter.js';
 import { EncryptedMsgMailFormatter } from './formatters/encrypted-mail-msg-formatter.js';
+import { SendableMsg } from '../api/email_provider_api.js';
 
 export class GeneralMailFormatter {
 
-  static async processNewMsg(composer: Composer, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key) {
+  static async processNewMsg(composer: Composer, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
     const choices = composer.composerSendBtn.popover.choices;
     const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
     let mailFormatter: MailFormatterInterface;

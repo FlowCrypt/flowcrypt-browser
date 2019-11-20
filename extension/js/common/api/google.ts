@@ -202,7 +202,8 @@ export class Google extends EmailProviderApi {
       for (const key of Object.keys(message.recipients)) {
         const sendingType = key as RecipientType;
         if (message.recipients[sendingType] && message.recipients[sendingType]!.length) {
-          message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.join(',');
+          // todo - properly escape/encode this header using emailjs
+          message.headers[sendingType[0].toUpperCase() + sendingType.slice(1)] = message.recipients[sendingType]!.map(h => h.replace(/[,]/g, '')).join(',');
         }
       }
       message.headers.Subject = message.subject;
