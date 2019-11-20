@@ -884,9 +884,19 @@ export class PgpMsg {
     return undefined;
   }
 
-  static sign = async (signingPrv: OpenPGP.key.Key, data: string): Promise<string> => {
+  /**
+   * Returns signed data if detached=false, armored
+   * Returns signature if detached=true, armored
+   */
+  static sign = async (signingPrv: OpenPGP.key.Key, data: string, detached = false): Promise<string> => {
     const message = openpgp.cleartext.fromText(data);
-    const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv] });
+    const signRes = await openpgp.sign({ message, armor: true, privateKeys: [signingPrv], detached });
+    if (detached) {
+      if (typeof signRes.signature !== 'string') {
+        throw new Error('signRes.signature unexpectedly not a string when creating detached signature');
+      }
+      return signRes.signature;
+    }
     return await openpgp.stream.readToEnd((signRes as OpenPGP.SignArmorResult).data);
   }
 

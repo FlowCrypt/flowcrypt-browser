@@ -27,44 +27,45 @@ declare const openpgp: typeof OpenPGP;
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   private armoredPubkeys: PubkeyResult[];
-
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo Send plain (not encrypted)uld use Api.url()
+  private pgpMimeRootType = `multipart/encrypted; protocol="application/pgp-encrypted";`;
 
   constructor(composer: Composer, armoredPubkeys: PubkeyResult[]) {
     super(composer);
     this.armoredPubkeys = armoredPubkeys;
   }
 
-  async sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
+  async sendableMsg(newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
     const subscription = await this.composer.app.storageGetSubscription();
     const pubkeysOnly = this.armoredPubkeys.map(p => p.pubkey);
-    const encryptedBody: SendableMsgBody = {};
-    const atts: Att[] = [];
     if (!this.richText) { // simple text
-      await this.addReplyTokenToMsgBodyIfNeeded(newMsgData, subscription);
-      atts.push(...await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsgData.pwd));
-      if (newMsgData.pwd && atts.length) { // these will be password encrypted attachments
+      await this.addReplyTokenToMsgBodyIfNeeded(newMsg, subscription);
+      const atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
+      if (newMsg.pwd && atts.length) { // these will be password encrypted attachments
         this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
-        newMsgData.plaintext = this.addUploadedFileLinksToMsgBody(newMsgData.plaintext, atts);
+        newMsg.plaintext = this.addUploadedFileLinksToMsgBody(newMsg.plaintext, atts);
       }
-      const encrypted = await this.encryptData(Buf.fromUtfStr(newMsgData.plaintext), newMsgData.pwd, pubkeysOnly, signingPrv);
-      encryptedBody['text/plain'] = encrypted.data;
-      await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(newMsgData.recipients)), { last_use: Date.now() });
-      if (newMsgData.pwd) {
+      const encrypted = await this.encryptData(Buf.fromUtfStr(newMsg.plaintext), newMsg.pwd, pubkeysOnly, signingPrv);
+      const encryptedBody = { 'text/plain': encrypted.data };
+      await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
+      if (newMsg.pwd) {
         await this.fmtPwdProtectedEmailAndUploadAtts(encryptedBody, pubkeysOnly, atts, subscription);
       }
+      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.urlParams.threadId);
     } else { // rich text: PGP/MIME
-      if (newMsgData.pwd) {
+      if (newMsg.pwd) {
         this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
         throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
       }
       const plainAtts = await this.composer.atts.attach.collectAtts();
-      const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsgData.plaintext, 'text/html': newMsgData.plainhtml }, { Subject: newMsgData.subject }, plainAtts);
+      const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
       const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeysOnly, signingPrv);
-      atts.push(new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }));
-      atts.push(new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc' }));
+      const atts = [
+        new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
+        new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc' }),
+      ];
+      return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, {}, atts, this.composer.urlParams.threadId, this.pgpMimeRootType);
     }
-    return await Google.createMsgObj(this.composer.urlParams.acctEmail, newMsgData.sender, newMsgData.recipients, newMsgData.subject, encryptedBody, atts, this.composer.urlParams.threadId);
   }
 
   private async encryptData(data: Buf, pwd: Pwd | undefined, pubkeys: string[], signingPrv?: OpenPGP.key.Key): Promise<OpenPGP.EncryptArmorResult> {

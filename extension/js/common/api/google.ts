@@ -137,7 +137,7 @@ export class Google extends EmailProviderApi {
   }
 
   private static encodeAsMultipartRelated = (parts: Dict<string>) => { // todo - this could probably be achieved with emailjs-mime-builder
-    const boundary = 'this_sucks_' + Str.sloppyRandom(10);
+    const boundary = 'the_boundary_is_' + Str.sloppyRandom(10);
     let body = '';
     for (const type of Object.keys(parts)) {
       body += '--' + boundary + '\n';
@@ -207,7 +207,7 @@ export class Google extends EmailProviderApi {
         }
       }
       message.headers.Subject = message.subject;
-      const mimeMsg = await Mime.encode(message.body, message.headers, message.atts);
+      const mimeMsg = await Mime.encode(message.body, message.headers, message.atts, message.mimeRootType, message.sign);
       const request = Google.encodeAsMultipartRelated({ 'application/json; charset=UTF-8': JSON.stringify({ threadId: message.thread }), 'message/rfc822': mimeMsg });
       return Google.gmailCall(acctEmail, 'POST', 'messages/send', request.body, { upload: progressCb || Value.noop }, request.contentType);
     },
