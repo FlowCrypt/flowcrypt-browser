@@ -35,7 +35,7 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   initActions(): void {
-    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.isMinimized() && this.extractProcessSendMsg()));
+    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.composerWindowSize.isMinimized() && this.extractProcessSendMsg()));
     this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
@@ -269,7 +269,7 @@ export class ComposerSendBtn extends ComposerComponent {
         return this.composer.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
-    this.composer.resizeComposeBox();
+    this.composer.composerWindowSize.resizeComposeBox();
   }
 
   private throwIfFormNotReady = (): void => {

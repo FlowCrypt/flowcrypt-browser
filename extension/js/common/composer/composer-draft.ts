@@ -220,7 +220,7 @@ export class ComposerDraft extends ComposerComponent {
     const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
     if (this.urlParams.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });
-      this.composer.resizeComposeBox();
+      this.composer.composerWindowSize.resizeComposeBox();
     } else {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
     }
