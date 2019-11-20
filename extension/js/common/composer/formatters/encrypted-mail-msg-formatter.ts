@@ -4,7 +4,6 @@
 
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../interfaces/composer-types.js';
 import { SendableMsg } from '../../api/email_provider_api.js';
-import { BaseMailFormatter, MailFormatterInterface } from './composer-mail-formatter.js';
 import { Composer } from '../composer.js';
 import { PgpMsg, Pgp } from '../../core/pgp.js';
 import { Google } from '../../api/google.js';
@@ -20,7 +19,8 @@ import { Api } from '../../api/api.js';
 import { Att } from '../../core/att.js';
 import { Xss } from '../../platform/xss.js';
 import { Lang } from '../../lang.js';
-import { ComposerResetBtnTrigger } from '../composer-errs.js';
+import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
+import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -36,6 +36,9 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   }
 
   async sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
+    if (this.richText) {
+      throw new ComposerUserError('Rich text is not yet supported for encrypted messages, try a plain message.');
+    }
     const subscription = await this.composer.app.storageGetSubscription();
     newMsgData.plaintext = await this.addReplyTokenToMsgBodyIfNeeded(newMsgData, subscription);
     const atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsgData.pwd);

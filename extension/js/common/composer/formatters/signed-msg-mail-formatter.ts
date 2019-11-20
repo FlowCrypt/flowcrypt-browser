@@ -4,15 +4,19 @@
 
 import { NewMsgData } from '../interfaces/composer-types.js';
 import { SendableMsg } from '../../api/email_provider_api.js';
-import { BaseMailFormatter, MailFormatterInterface } from './composer-mail-formatter.js';
 import { PgpMsg } from '../../core/pgp.js';
 import { BrowserWidnow } from '../../extension.js';
 import { Google } from '../../api/google.js';
 import { Catch } from '../../platform/catch.js';
+import { ComposerUserError } from '../composer-errs.js';
+import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
 
 export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   async sendableMsg(newMsgData: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> {
+    if (this.richText) {
+      throw new ComposerUserError('Rich text is not yet supported for signed messages, try a plain message.');
+    }
     // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
     // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
     // resulting in.. wait for it.. signatures that don't match

@@ -10,21 +10,6 @@ import { SignedMsgMailFormatter } from './signed-msg-mail-formatter.js';
 import { EncryptedMsgMailFormatter } from './encrypted-mail-msg-formatter.js';
 import { SendableMsg } from '../../api/email_provider_api.js';
 
-export interface MailFormatterInterface {
-  sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg>;
-}
-
-export class BaseMailFormatter {
-
-  protected composer: Composer;
-  protected richText: boolean;
-
-  constructor(composer: Composer) {
-    this.composer = composer;
-    this.richText = composer.sendBtn.popover.choices.richText;
-  }
-}
-
 export class GeneralMailFormatter {
 
   static async processNewMsg(composer: Composer, newMsgData: NewMsgData, senderKi: KeyInfo, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
