@@ -16,7 +16,7 @@ export class ComposerErrs extends ComposerComponent {
     // none
   }
 
-  public getErrHandlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
+  public handlers = (couldNotDoWhat: string): BrowserEventErrHandler => {
     return {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail }),

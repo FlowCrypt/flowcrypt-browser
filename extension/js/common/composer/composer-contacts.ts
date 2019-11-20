@@ -133,7 +133,7 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.S.cached('input_to').on('focus', focusRecipients);
     this.composer.S.cached('cc').on('focus', focusRecipients);
     this.composer.S.cached('bcc').on('focus', focusRecipients);
-    this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.composerErrs.getErrHandlers(`hide contact box`)));
+    this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.composerErrs.handlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
       this.composer.app.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
@@ -151,13 +151,13 @@ export class ComposerContacts extends ComposerComponent {
         await this.evaluateRecipients(recipientsHasPgp);
         await this.setEmailsPreview(this.getRecipients());
       }, 1000);
-    }, this.composer.composerErrs.getErrHandlers('add recipient public key')));
+    }, this.composer.composerErrs.handlers('add recipient public key')));
     this.composer.S.cached('icon_pubkey').click(Ui.event.handle(target => {
       this.includePubkeyToggledManually = true;
       const includePub = !$(target).is('.active'); // evaluating what the state of the icon was BEFORE clicking
       Ui.toast(`${includePub ? 'Attaching' : 'Removing'} your Public Key`).catch(Catch.reportErr);
       this.updatePubkeyIcon(includePub);
-    }, this.composer.composerErrs.getErrHandlers(`set/unset pubkey attachment`)));
+    }, this.composer.composerErrs.handlers(`set/unset pubkey attachment`)));
     BrowserMsg.addListener('addToContacts', this.checkReciepientsKeys);
     BrowserMsg.listen(this.urlParams.parentTabId);
   }
@@ -323,13 +323,13 @@ export class ComposerContacts extends ComposerComponent {
         if (email) {
           await this.selectContact(input, email, query);
         }
-      }, this.composer.composerErrs.getErrHandlers(`select contact`)));
+      }, this.composer.composerErrs.handlers(`select contact`)));
       contactItems.hover(function () {
         contactItems.removeClass('active');
         $(this).addClass('active');
       });
       this.composer.S.cached('contacts').find('ul li.auth_contacts').click(Ui.event.handle(() =>
-        this.authContacts(this.urlParams.acctEmail), this.composer.composerErrs.getErrHandlers(`authorize contact search`)));
+        this.authContacts(this.urlParams.acctEmail), this.composer.composerErrs.handlers(`authorize contact search`)));
       const offset = input.offset()!;
       const inputToPadding = parseInt(input.css('padding-left'));
       let leftOffset: number;
@@ -549,6 +549,7 @@ export class ComposerContacts extends ComposerComponent {
   }
 
   private renderPubkeyResult = async (recipient: RecipientElement, contact: Contact | 'fail' | 'wrong') => {
+    const el = recipient.element;
     this.composer.composerErrs.debug(`renderPubkeyResult.emailEl(${String(recipient.email)})`);
     this.composer.composerErrs.debug(`renderPubkeyResult.email(${recipient.email})`);
     this.composer.composerErrs.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
@@ -564,41 +565,41 @@ export class ComposerContacts extends ComposerComponent {
       }
       this.updatePubkeyIcon();
     }
-    $(recipient.element).children('img, i').remove();
+    $(el).children('img, i').remove();
     // tslint:disable-next-line:max-line-length
     const contentHtml = '<img src="/img/svgs/close-icon.svg" alt="close" class="close-icon svg" /><img src="/img/svgs/close-icon-black.svg" alt="close" class="close-icon svg display_when_sign" />';
-    Xss.sanitizeAppend(recipient.element, contentHtml)
+    Xss.sanitizeAppend(el, contentHtml)
       .find('img.close-icon')
-      .click(Ui.event.handle(target => this.removeRecipient(target.parentElement!), this.composer.composerErrs.getErrHandlers('remove recipient')));
+      .click(Ui.event.handle(target => this.removeRecipient(target.parentElement!), this.composer.composerErrs.handlers('remove recipient')));
     if (contact === PUBKEY_LOOKUP_RESULT_FAIL) {
       recipient.status = RecipientStatuses.FAILED;
-      $(recipient.element).attr('title', 'Failed to load, click to retry');
-      $(recipient.element).addClass("failed");
-      Xss.sanitizeReplace($(recipient.element).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
+      $(el).attr('title', 'Failed to load, click to retry');
+      $(el).addClass("failed");
+      Xss.sanitizeReplace($(el).children('img:visible'), '<img src="/img/svgs/repeat-icon.svg" class="repeat-icon action_retry_pubkey_fetch">' +
         '<img src="/img/svgs/close-icon-black.svg" class="close-icon-black svg remove-reciepient">');
-      $(recipient.element).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshRecipients(), this.composer.composerErrs.getErrHandlers('refresh recipient')));
-      $(recipient.element).find('.remove-reciepient').click(Ui.event.handle(element => this.removeRecipient(element.parentElement!), this.composer.composerErrs.getErrHandlers('remove recipient')));
+      $(el).find('.action_retry_pubkey_fetch').click(Ui.event.handle(async () => await this.refreshRecipients(), this.composer.composerErrs.handlers('refresh recipient')));
+      $(el).find('.remove-reciepient').click(Ui.event.handle(element => this.removeRecipient(element.parentElement!), this.composer.composerErrs.handlers('remove recipient')));
     } else if (contact === PUBKEY_LOOKUP_RESULT_WRONG) {
       recipient.status = RecipientStatuses.WRONG;
       this.composer.composerErrs.debug(`renderPubkeyResult: Setting email to wrong / misspelled in harsh mode: ${recipient.email}`);
-      $(recipient.element).attr('title', 'This email address looks misspelled. Please try again.');
-      $(recipient.element).addClass("wrong");
+      $(el).attr('title', 'This email address looks misspelled. Please try again.');
+      $(el).addClass("wrong");
     } else if (contact.pubkey && ((contact.expiresOn || Infinity) <= Date.now() || await Pgp.key.usableButExpired(await Pgp.key.read(contact.pubkey)))) {
       recipient.status = RecipientStatuses.EXPIRED;
-      $(recipient.element).addClass("expired");
-      Xss.sanitizePrepend(recipient.element, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
-      $(recipient.element).attr('title', 'Does use encryption but their public key is expired. You should ask them to send ' +
+      $(el).addClass("expired");
+      Xss.sanitizePrepend(el, '<img src="/img/svgs/expired-timer.svg" class="expired-time">');
+      $(el).attr('title', 'Does use encryption but their public key is expired. You should ask them to send ' +
         'you an updated public key.' + this.recipientKeyIdText(contact));
     } else if (contact.pubkey) {
       recipient.status = RecipientStatuses.HAS_PGP;
-      $(recipient.element).addClass("has_pgp");
-      Xss.sanitizePrepend(recipient.element, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-      $(recipient.element).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
+      $(el).addClass("has_pgp");
+      Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
+      $(el).attr('title', 'Does use encryption' + this.recipientKeyIdText(contact));
     } else {
       recipient.status = RecipientStatuses.NO_PGP;
-      $(recipient.element).addClass("no_pgp");
-      Xss.sanitizePrepend(recipient.element, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
-      $(recipient.element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
+      $(el).addClass("no_pgp");
+      Xss.sanitizePrepend(el, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
+      $(el).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
     this.composer.composerPwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
   }

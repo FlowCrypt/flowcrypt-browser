@@ -23,6 +23,7 @@ import { ComposerWindowSize } from './composer-window-size.js';
 import { ComposerSender } from './composer-sender.js';
 import { ComposerAtts } from './composer-atts.js';
 import { ComposerErrs } from './composer-errs.js';
+import { ComposerTextInput } from './composer-text-input.js';
 
 export class Composer {
 
@@ -79,6 +80,7 @@ export class Composer {
   public composerSender: ComposerSender;
   public composerAtts: ComposerAtts;
   public composerErrs: ComposerErrs;
+  public composerTextInput: ComposerTextInput;
 
   public app: ComposerAppFunctionsInterface;
   public urlParams: ComposerUrlParams;
@@ -97,6 +99,7 @@ export class Composer {
     this.composerSender = new ComposerSender(this);
     this.composerAtts = new ComposerAtts(this);
     this.composerErrs = new ComposerErrs(this);
+    this.composerTextInput = new ComposerTextInput(this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
@@ -113,36 +116,11 @@ export class Composer {
 
   private initActions = () => {
     this.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.S.cached('add_intro').click(Ui.event.handle(target => {
-      $(target).css('display', 'none');
-      this.S.cached('intro_container').css('display', 'table-row');
-      this.S.cached('input_intro').focus();
-      this.composerWindowSize.setInputTextHeightManuallyIfNeeded();
-    }, this.composerErrs.getErrHandlers(`add intro`)));
-    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.composerErrs.getErrHandlers(`render help dialog`)));
-    this.S.cached('input_text').get(0).onpaste = this.inputTextPasteHtmlAsText;
+    this.S.cached('icon_help').click(Ui.event.handle(() => this.app.renderHelpDialog(), this.composerErrs.handlers(`render help dialog`)));
     this.composerDraft.initActions().catch(Catch.reportErr);
     this.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.composerWindowSize.initActions();
-  }
-
-  private inputTextPasteHtmlAsText = (clipboardEvent: ClipboardEvent) => {
-    if (!clipboardEvent.clipboardData) {
-      return;
-    }
-    const clipboardHtmlData = clipboardEvent.clipboardData.getData('text/html');
-    if (!clipboardHtmlData) {
-      return; // if it's text, let the original handlers paste it
-    }
-    clipboardEvent.preventDefault();
-    clipboardEvent.stopPropagation();
-    const sanitized = Xss.htmlSanitizeAndStripAllTags(clipboardHtmlData, '<br>');
-    // the lines below simulate ctrl+v, but not perfectly (old selected text does not get deleted)
-    const selection = window.getSelection();
-    if (selection) {
-      const r = selection.getRangeAt(0);
-      r.insertNode(r.createContextualFragment(sanitized));
-    }
+    this.composerTextInput.initActions();
   }
 
   private initComposeBox = async () => {
@@ -190,7 +168,7 @@ export class Composer {
             }
             this.composerContacts.deleteRecipientsBySendingType(typesToDelete);
             await this.renderReplyMsgComposeTable(method);
-          }, this.composerErrs.getErrHandlers(`activate repply box`)));
+          }, this.composerErrs.handlers(`activate repply box`)));
         }
       }
     }
@@ -204,14 +182,6 @@ export class Composer {
     this.composerSendBtn.resetSendBtn();
     this.composerSendBtn.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
-  }
-
-  public extractAsText = (elSel: 'input_text' | 'input_intro', flag: 'SKIP-ADDONS' | undefined = undefined) => {
-    let html = this.S.cached(elSel)[0].innerHTML;
-    if (elSel === 'input_text' && this.composerQuote.expandingHTMLPart && flag !== 'SKIP-ADDONS') {
-      html += `<br /><br />${this.composerQuote.expandingHTMLPart}`;
-    }
-    return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
 
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
@@ -322,7 +292,7 @@ export class Composer {
         this.composerErrs.debug(`input_addresses_container_inner.click -> calling input_to.focus() when input_to.val(${this.S.cached('input_to').val()})`);
         this.S.cached('input_to').focus();
       }
-    }, this.composerErrs.getErrHandlers(`focus on recipient field`))).children().click(() => false);
+    }, this.composerErrs.handlers(`focus on recipient field`))).children().click(() => false);
     this.composerAtts.onComposeTableRender();
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
@@ -337,7 +307,7 @@ export class Composer {
           await Ui.modal.confirm('A message is currently being sent. Closing the compose window may abort sending the message.\nAbort sending?')) {
           this.app.closeMsg();
         }
-      }, this.composerErrs.getErrHandlers(`close message`)));
+      }, this.composerErrs.handlers(`close message`)));
       this.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
       if (this.app.storageGetAddresses()) {
         this.composerSender.renderSenderAliasesOptions(this.app.storageGetAddresses()!);

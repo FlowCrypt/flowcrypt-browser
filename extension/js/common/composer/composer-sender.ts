@@ -37,7 +37,7 @@ export class ComposerSender extends ComposerComponent {
       inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
         this.renderSenderAliasesOptions(sendAs);
         el.remove();
-      }, this.composer.composerErrs.getErrHandlers(`show sending address options`)));
+      }, this.composer.composerErrs.handlers(`show sending address options`)));
     }
   }
 

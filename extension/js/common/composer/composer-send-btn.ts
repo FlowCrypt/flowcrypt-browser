@@ -257,7 +257,8 @@ export class ComposerSendBtn extends ComposerComponent {
     this.composer.S.cached('compose_table').css('display', 'none');
     this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.composerSender.getSender());
     this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
-    Xss.sanitizeRender(this.composer.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escapeTextAsRenderableHtml(this.composer.extractAsText('input_text', 'SKIP-ADDONS')));
+    const repliedBodyEl = this.composer.S.cached('reply_msg_successful').find('div.replied_body');
+    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.composerTextInput.extractAsText('input_text', 'SKIP-ADDONS')));
     const t = new Date();
     const time = ((t.getHours() !== 12) ?
       (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -313,7 +314,7 @@ export class ComposerSendBtn extends ComposerComponent {
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
       }
-      const intro = this.composer.S.cached('input_intro').length ? this.composer.extractAsText('input_intro') : '';
+      const intro = this.composer.S.cached('input_intro').length ? this.composer.composerTextInput.extractAsText('input_intro') : '';
       if (intro.toLowerCase().includes(pwd.answer.toLowerCase())) {
         throw new ComposerUserError('Please do not include the password in the email intro. ' +
           `Sharing password over email undermines password based encryption.\n\n` +
@@ -329,7 +330,7 @@ export class ComposerSendBtn extends ComposerComponent {
     const recipientElements = this.composer.composerContacts.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
     const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
-    const plaintext = this.composer.extractAsText('input_text');
+    const plaintext = this.composer.composerTextInput.extractAsText('input_text');
     const password = this.composer.S.cached('input_password').val();
     const pwd = password ? { answer: String(password) } : undefined;
     const sender = this.composer.composerSender.getSender();

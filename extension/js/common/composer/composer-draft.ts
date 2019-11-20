@@ -40,7 +40,7 @@ export class ComposerDraft extends ComposerComponent {
       } else { // close new msg
         this.composer.app.closeMsg();
       }
-    }, this.composer.composerErrs.getErrHandlers('delete draft')));
+    }, this.composer.composerErrs.handlers('delete draft')));
     await this.composer.initialized;
     this.composer.composerContacts.onRecipientAdded(async () => {
       await this.draftSave(true);
@@ -91,7 +91,7 @@ export class ComposerDraft extends ComposerComponent {
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
         const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.composerSender.getSender());
-        const plainText = this.composer.extractAsText('input_text');
+        const plainText = this.composer.composerTextInput.extractAsText('input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
         if (this.urlParams.threadId) { // reply draft

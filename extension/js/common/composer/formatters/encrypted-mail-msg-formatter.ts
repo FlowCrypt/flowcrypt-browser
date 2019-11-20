@@ -169,7 +169,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const a = `<a href="${Xss.escape(msgUrl)}" style="padding: 2px 6px; background: #2199e8; color: #fff; display: inline-block; text-decoration: none;">
                     ${Lang.compose.openMsg[lang]}
                    </a>`;
-    const intro = this.composer.S.cached('input_intro').length && this.composer.extractAsText('input_intro');
+    const intro = this.composer.S.cached('input_intro').length && this.composer.composerTextInput.extractAsText('input_intro');
     const text = [];
     const html = [];
     if (intro) {
