@@ -1696,6 +1696,10 @@ table#compose td.bottom div.sending-container div.sending-options-container .sen
   margin-left: 12px;
 }
 
+table#compose td.bottom div.sending-container div.sending-options-container .sending-option img.icon-cross {
+  margin-left: 12px;
+}
+
 table#compose td.bottom div.sending-container .button {
   padding: 3px 10px;
   border-radius: 0;
