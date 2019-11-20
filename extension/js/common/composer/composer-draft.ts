@@ -185,7 +185,7 @@ export class ComposerDraft extends ComposerComponent {
         Xss.sanitizeRender(this.composer.S.cached('input_text'), await Xss.htmlSanitizeKeepBasicTags(result.content.toUtfStr().replace(/\n/g, '<br>')));
         await this.composer.contacts.addRecipientsAndShowPreview({ to: headers.to, cc: headers.cc, bcc: headers.bcc });
         if (this.urlParams.isReplyBox) {
-          await this.composer.composerRender.renderReplyMsgComposeTable();
+          await this.composer.render.renderReplyMsgComposeTable();
         }
         if (headers.from) {
           this.composer.S.now('input_from').val(headers.from);
@@ -237,7 +237,7 @@ export class ComposerDraft extends ComposerComponent {
   private async abortAndRenderReplyMsgComposeTableIfIsReplyBox(reason: string) {
     console.info(`Google.gmail.initialDraftLoad: ${reason}`);
     if (this.urlParams.isReplyBox) {
-      await this.composer.composerRender.renderReplyMsgComposeTable();
+      await this.composer.render.renderReplyMsgComposeTable();
     }
   }
 }

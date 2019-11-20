@@ -74,7 +74,7 @@ export class Composer {
   public atts: ComposerAtts;
   public errs: ComposerErrs;
   public textInput: ComposerTextInput;
-  public composerRender: ComposerRender;
+  public render: ComposerRender;
 
   public app: ComposerAppFunctionsInterface;
   public urlParams: ComposerUrlParams;
@@ -95,10 +95,10 @@ export class Composer {
     this.atts = new ComposerAtts(this);
     this.errs = new ComposerErrs(this);
     this.textInput = new ComposerTextInput(this);
-    this.composerRender = new ComposerRender(this);
+    this.render = new ComposerRender(this);
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
-    this.initPromise = this.composerRender.initActions().catch(Catch.reportErr);
+    this.initPromise = this.render.initActions().catch(Catch.reportErr);
   }
 
 }
