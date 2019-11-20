@@ -15,6 +15,9 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     this.composer.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHideContainerAndColorSendBtn()));
     this.composer.S.cached('input_password').focus(() => this.showHideContainerAndColorSendBtn());
     this.composer.S.cached('input_password').blur(() => this.showHideContainerAndColorSendBtn());
+    if (this.composer.app.storageGetHideMsgPassword()) {
+      this.composer.S.cached('input_password').attr('type', 'password');
+    }
   }
 
   private rmPwdStrengthValidationElements: (() => void) | undefined;
