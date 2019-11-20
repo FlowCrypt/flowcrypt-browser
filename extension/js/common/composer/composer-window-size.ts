@@ -46,7 +46,7 @@ export class ComposerWindowSize extends ComposerComponent {
     this.resizeComposeBox();
     this.setInputTextHeightManuallyIfNeeded(true);
     if (this.composer.S.cached('recipients_placeholder').is(':visible')) {
-      await this.composer.composerContacts.setEmailsPreview(this.composer.getRecipients());
+      await this.composer.composerContacts.setEmailsPreview(this.composer.composerContacts.getRecipients());
     }
   }
 

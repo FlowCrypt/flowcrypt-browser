@@ -87,7 +87,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.collectNewMsgData();
       await this.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
+      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.composerSender.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -255,7 +255,7 @@ export class ComposerSendBtn extends ComposerComponent {
     }
     this.composer.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.composer.S.cached('compose_table').css('display', 'none');
-    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.getSender());
+    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.composerSender.getSender());
     this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
     Xss.sanitizeRender(this.composer.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escapeTextAsRenderableHtml(this.composer.extractAsText('input_text', 'SKIP-ADDONS')));
     const t = new Date();
@@ -282,7 +282,7 @@ export class ComposerSendBtn extends ComposerComponent {
       SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND,
       SendBtnTexts.BTN_PLAIN_SEND
     ];
-    const recipients = this.composer.getRecipients();
+    const recipients = this.composer.composerContacts.getRecipients();
     if (btnReadyTexts.includes(this.composer.S.now('send_btn_text').text().trim()) && recipients.length) {
       return; // all good
     }
@@ -326,13 +326,14 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private collectNewMsgData = (): NewMsgData => {
-    const recipientElements = this.composer.getRecipients();
+    const recipientElements = this.composer.composerContacts.getRecipients();
     const recipients = this.mapRecipients(recipientElements);
     const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
     const plaintext = this.composer.extractAsText('input_text');
     const password = this.composer.S.cached('input_password').val();
     const pwd = password ? { answer: String(password) } : undefined;
-    const sender = this.composer.getSender();
+    const sender = this.composer.composerSender.getSender();
     return { recipients, subject, plaintext, pwd, sender };
   }
+
 }

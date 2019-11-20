@@ -554,7 +554,7 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.debug(`renderPubkeyResult.contact(${JSON.stringify(contact)})`);
     if ($('body#new_message').length) {
       if (typeof contact === 'object' && contact.has_pgp) {
-        const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.composer.getSender());
+        const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.composer.composerSender.getSender());
         if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
           // new message, and my key is not uploaded where the recipient would look for it
           if (await this.composer.app.doesRecipientHaveMyPubkey(recipient.email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey

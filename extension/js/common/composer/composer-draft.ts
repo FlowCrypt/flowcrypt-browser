@@ -90,7 +90,7 @@ export class ComposerDraft extends ComposerComponent {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
+        const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.composerSender.getSender());
         const plainText = this.composer.extractAsText('input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
@@ -102,14 +102,17 @@ export class ComposerDraft extends ComposerComponent {
           body = encrypted.data;
         }
         const subject = String(this.composer.S.cached('input_subject').val() || this.urlParams.subject || 'FlowCrypt draft');
-        const to = this.composer.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
+        const to = this.composer.composerContacts.getRecipients().map(r => r.email); // else google complains https://github.com/FlowCrypt/flowcrypt-browser/issues/1370
         const recipients: Recipients = { to: [], cc: [], bcc: [] };
-        for (const recipient of this.composer.getRecipients()) {
+        for (const recipient of this.composer.composerContacts.getRecipients()) {
           recipients[recipient.sendingType]!.push(recipient.email);
         }
         const mimeMsg = await Mime.encode(body, {
-          To: recipients.to!.join(','), Cc: recipients.cc!.join(','), Bcc: recipients.bcc!.join(','),
-          From: this.composer.getSender(), Subject: subject
+          To: recipients.to!.join(','),
+          Cc: recipients.cc!.join(','),
+          Bcc: recipients.bcc!.join(','),
+          From: this.composer.composerSender.getSender(),
+          Subject: subject
         }, []);
         if (!this.urlParams.draftId) {
           const { id } = await this.composer.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);

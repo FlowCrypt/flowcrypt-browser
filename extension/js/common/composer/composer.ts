@@ -3,15 +3,14 @@
 'use strict';
 
 import { Catch } from '../platform/catch.js';
-import { Store, SendAsAlias } from '../platform/store.js';
+import { Store } from '../platform/store.js';
 import { Lang } from '../lang.js';
-import { Str, Dict } from '../core/common.js';
+import { Str } from '../core/common.js';
 import { BrowserMsg } from '../extension.js';
 import { Pgp, } from '../core/pgp.js';
-import { Api, RecipientType } from '../api/api.js';
+import { RecipientType } from '../api/api.js';
 import { Ui, BrowserEventErrHandler } from '../browser.js';
 import { AttUI, AttLimits } from '../ui/att_ui.js';
-import { Settings } from '../settings.js';
 import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Xss } from '../platform/xss.js';
 import { Rules } from '../rules.js';
@@ -23,6 +22,7 @@ import { ComposerContacts } from './composer-contacts.js';
 import { ComposerSendBtn } from './composer-send-btn.js';
 import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container.js';
 import { ComposerWindowSize } from './composer-window-size.js';
+import { ComposerSender } from './composer-sender.js';
 
 export class Composer {
   private debugId = Str.sloppyRandom();
@@ -73,12 +73,13 @@ export class Composer {
 
   public attach: AttUI;
 
-  private composerQuote: ComposerQuote;
+  public composerQuote: ComposerQuote;
   public composerSendBtn: ComposerSendBtn;
   public composerDraft: ComposerDraft;
   public composerContacts: ComposerContacts;
   public composerPwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
   public composerWindowSize: ComposerWindowSize;
+  public composerSender: ComposerSender;
 
   public app: ComposerAppFunctionsInterface;
   public urlParams: ComposerUrlParams;
@@ -95,7 +96,9 @@ export class Composer {
     this.composerSendBtn = new ComposerSendBtn(this);
     this.composerPwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
     this.composerWindowSize = new ComposerWindowSize(this);
+    this.composerSender = new ComposerSender(this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
+    const checkEmailAliases = this.composerSender.checkEmailAliases; // else TS will complain below
 
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
@@ -106,7 +109,7 @@ export class Composer {
     this.initialized = (async () => {
       await this.initComposeBox();
       this.initActions();
-      await this.checkEmailAliases();
+      await checkEmailAliases();
     })().catch(Catch.reportErr);
   }
 
@@ -116,11 +119,9 @@ export class Composer {
     }
   }
 
-  public getRecipients = () => this.composerContacts.getRecipients();
-
   private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
     const subscription = await this.app.storageGetSubscription();
-    if (!Rules.relaxSubscriptionRequirements(this.getSender()) && !subscription.active) {
+    if (!Rules.relaxSubscriptionRequirements(this.composerSender.getSender()) && !subscription.active) {
       return {
         sizeMb: 5,
         size: 5 * 1024 * 1024,
@@ -237,7 +238,7 @@ export class Composer {
     }
     if (this.urlParams.draftId) {
       await this.composerDraft.initialDraftLoad(this.urlParams.draftId);
-      const footer = this.getFooter();
+      const footer = this.composerSender.getFooter();
       if (footer) {
         this.composerQuote.setFooter(footer);
       } else {
@@ -275,7 +276,7 @@ export class Composer {
     } else {
       this.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
-      await this.composerContacts.setEmailsPreview(this.getRecipients());
+      await this.composerContacts.setEmailsPreview(this.composerContacts.getRecipients());
     }
     this.composerSendBtn.resetSendBtn();
     this.composerSendBtn.popover.render();
@@ -293,13 +294,13 @@ export class Composer {
   public renderReplyMsgComposeTable = async (method: 'forward' | 'reply' = 'reply'): Promise<void> => {
     this.S.cached('prompt').css({ display: 'none' });
     this.composerContacts.showHideCcAndBccInputsIfNeeded();
-    await this.composerContacts.setEmailsPreview(this.getRecipients());
+    await this.composerContacts.setEmailsPreview(this.composerContacts.getRecipients());
     await this.renderComposeTable();
     if (this.canReadEmails) {
       this.urlParams.subject = `${(method === 'reply' ? 'Re' : 'Fwd')}: ${this.urlParams.subject}`;
       if (!this.urlParams.draftId) { // if there is a draft, don't attempt to pull quoted content. It's assumed to be already present in the draft
         (async () => { // not awaited because can take a long time & blocks rendering
-          const footer = this.getFooter();
+          const footer = this.composerSender.getFooter();
           await this.composerQuote.addTripleDotQuoteExpandBtn(this.urlParams.replyMsgId, method, footer);
           if (this.composerQuote.messageToReplyOrForward) {
             const msgId = this.composerQuote.messageToReplyOrForward.headers['message-id'];
@@ -327,16 +328,6 @@ export class Composer {
       this.S.cached('recipients_placeholder').click();
     }
     Catch.setHandledTimeout(() => BrowserMsg.send.scrollToElement(this.urlParams.parentTabId, { selector: `#${this.urlParams.frameId}` }), 300);
-  }
-
-  public getSender = (): string => {
-    if (this.S.now('input_from').length) {
-      return String(this.S.now('input_from').val());
-    }
-    if (this.urlParams.from) {
-      return this.urlParams.from;
-    }
-    return this.urlParams.acctEmail;
   }
 
   private debugFocusEvents = (...selNames: string[]) => {
@@ -432,7 +423,7 @@ export class Composer {
         // Recipients may be left unrendered, as standard text, with a trailing comma
         await this.composerContacts.parseRenderRecipients(this.S.cached('input_to')); // this will force firefox to render them on load
       }
-      this.renderSenderAliasesOptionsToggle();
+      this.composerSender.renderSenderAliasesOptionsToggle();
     } else {
       $('.close_new_message').click(Ui.event.handle(async () => {
         if (!this.composerSendBtn.isSendMessageInProgres() ||
@@ -442,9 +433,9 @@ export class Composer {
       }, this.getErrHandlers(`close message`)));
       this.S.cached('header').find('#header_title').click(() => $('.minimize_new_message').click());
       if (this.app.storageGetAddresses()) {
-        this.renderSenderAliasesOptions(this.app.storageGetAddresses()!);
+        this.composerSender.renderSenderAliasesOptions(this.app.storageGetAddresses()!);
       }
-      const footer = this.getFooter();
+      const footer = this.composerSender.getFooter();
       await this.composerQuote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
       this.composerWindowSize.setInputTextHeightManuallyIfNeeded();
     }
@@ -457,75 +448,8 @@ export class Composer {
     this.composerWindowSize.onComposeTableRender();
   }
 
-  private renderSenderAliasesOptionsToggle() {
-    const sendAs = this.app.storageGetAddresses();
-    if (sendAs && Object.keys(sendAs).length > 1) {
-      const showAliasChevronHtml = '<img tabindex="22" id="show_sender_aliases_options" src="/img/svgs/chevron-left.svg" title="Choose sending address">';
-      const inputAddrContainer = this.S.cached('email_copy_actions');
-      Xss.sanitizeAppend(inputAddrContainer, showAliasChevronHtml);
-      inputAddrContainer.find('#show_sender_aliases_options').click(Ui.event.handle((el) => {
-        this.renderSenderAliasesOptions(sendAs);
-        el.remove();
-      }, this.getErrHandlers(`show sending address options`)));
-    }
-  }
-
-  private renderSenderAliasesOptions(sendAs: Dict<SendAsAlias>) {
-    let emailAliases = Object.keys(sendAs);
-    const inputAddrContainer = $('.recipients-inputs');
-    inputAddrContainer.find('#input_from').remove();
-    if (emailAliases.length > 1) {
-      inputAddrContainer.addClass('show_send_from');
-      Xss.sanitizeAppend(inputAddrContainer, '<select id="input_from" tabindex="1" data-test="input-from"></select>');
-      const fmtOpt = (addr: string) => `<option value="${Xss.escape(addr)}" ${this.getSender() === addr ? 'selected' : ''}>${Xss.escape(addr)}</option>`;
-      emailAliases = emailAliases.sort((a, b) => {
-        return (sendAs[a].isDefault === sendAs[b].isDefault) ? 0 : sendAs[a].isDefault ? -1 : 1;
-      });
-      Xss.sanitizeAppend(inputAddrContainer.find('#input_from'), emailAliases.map(fmtOpt).join('')).change(() => this.composerContacts.updatePubkeyIcon());
-      this.S.now('input_from').change(async () => {
-        await this.composerContacts.reEvaluateRecipients(this.getRecipients());
-        await this.composerContacts.setEmailsPreview(this.getRecipients());
-        this.composerContacts.updatePubkeyIcon();
-        this.composerQuote.replaceFooter(this.getFooter());
-      });
-      if (this.urlParams.isReplyBox) {
-        this.composerWindowSize.resizeComposeBox();
-      }
-    }
-  }
-
-  private async checkEmailAliases() {
-    try {
-      const refreshResult = await Settings.refreshAcctAliases(this.urlParams.acctEmail);
-      if (refreshResult) {
-        this.app.updateSendAs(refreshResult.sendAs);
-        if (refreshResult.isAliasesChanged || refreshResult.isDefaultEmailChanged) {
-          this.renderSenderAliasesOptions(refreshResult.sendAs);
-        }
-        if (refreshResult.isFooterChanged && !this.urlParams.draftId) {
-          const alias = refreshResult.sendAs[this.getSender()];
-          if (alias) {
-            this.composerQuote.replaceFooter(alias.footer || undefined);
-          }
-        }
-      }
-    } catch (e) {
-      if (Api.err.isAuthPopupNeeded(e)) {
-        BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-      } else if (Api.err.isSignificant(e)) {
-        Catch.reportErr(e);
-      }
-    }
-  }
-
-  public getFooter = () => {
-    const addresses = this.app.storageGetAddresses();
-    const sender = this.getSender();
-    return addresses && addresses[sender] && addresses[sender].footer || undefined;
-  }
-
   private loadRecipientsThenSetTestStateReady = async () => {
-    await Promise.all(this.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
+    await Promise.all(this.composerContacts.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 }
