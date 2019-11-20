@@ -3,26 +3,22 @@
 'use strict';
 
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { ComposerUrlParams, RecipientElement, Recipients, SendBtnButtonTexts } from './interfaces/composer-types.js';
-import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
+import { SendBtnTexts } from './interfaces/composer-types.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
-import { Catch, UnreportableError } from '../platform/catch.js';
+import { Catch } from '../platform/catch.js';
 import { Api } from '../api/api.js';
-import { BrowserMsg, Extension } from '../extension.js';
-import { ComposerUserError, ComposerResetBtnTrigger, ComposerNotReadyError } from './interfaces/composer-errors.js';
-import { Pwd, Pgp, KeyInfo } from '../core/pgp.js';
+import { BrowserMsg } from '../extension.js';
+import { Pgp, KeyInfo } from '../core/pgp.js';
 import { Store } from '../platform/store.js';
 import { GmailRes } from '../api/google.js';
 import { SendableMsg } from '../api/email_provider_api.js';
 import { Att } from '../core/att.js';
-import { MailFormatter, SignedMsgMailFormatter, EncryptedMsgMailFormatter, PlainMsgMailFormatter } from './composer-mail-formatter.js';
+import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 
 export class ComposerSendBtn extends ComposerComponent {
-
-  private app: ComposerAppFunctionsInterface;
 
   public additionalMsgHeaders: { [key: string]: string } = {};
 
@@ -32,14 +28,13 @@ export class ComposerSendBtn extends ComposerComponent {
 
   public popover: ComposerSendBtnPopover;
 
-  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
-    super(composer, urlParams);
-    this.app = app;
-    this.popover = new ComposerSendBtnPopover(composer, urlParams);
+  constructor(composer: Composer) {
+    super(composer);
+    this.popover = new ComposerSendBtnPopover(composer);
   }
 
   initActions(): void {
-    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.isMinimized() && this.extractProcessSendMsg()));
+    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.size.isMinimized() && this.extractProcessSendMsg()));
     this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
@@ -72,28 +67,26 @@ export class ComposerSendBtn extends ComposerComponent {
 
   private btnText(): string {
     if (this.popover.choices.encrypt && this.popover.choices.sign) {
-      return SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND;
+      return SendBtnTexts.BTN_ENCRYPT_SIGN_AND_SEND;
     } else if (this.popover.choices.encrypt) {
-      return SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND;
+      return SendBtnTexts.BTN_ENCRYPT_AND_SEND;
     } else if (this.popover.choices.sign) {
-      return SendBtnButtonTexts.BTN_SIGN_AND_SEND;
+      return SendBtnTexts.BTN_SIGN_AND_SEND;
     } else {
-      return SendBtnButtonTexts.BTN_PLAIN_SEND;
+      return SendBtnTexts.BTN_PLAIN_SEND;
     }
   }
 
   private extractProcessSendMsg = async () => {
     this.composer.S.cached('toggle_send_options').hide();
     try {
-      this.throwIfFormNotReady();
+      this.composer.errs.throwIfFormNotReady();
       this.composer.S.now('send_btn_text').text('Loading');
       Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
       this.composer.S.cached('send_btn_note').text('');
-      const newMsgData = this.collectNewMsgData();
-      await this.throwIfFormValsInvalid(newMsgData);
-      const recipientsEmails = Array.prototype.concat.apply([], Object.values(newMsgData.recipients).filter(arr => !!arr)) as string[];
-      const senderKi = await this.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
-      let mailFormatter: MailFormatter;
+      const newMsgData = this.composer.input.extractAll();
+      await this.composer.errs.throwIfFormValsInvalid(newMsgData);
+      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -101,47 +94,41 @@ export class ComposerSendBtn extends ComposerComponent {
           return; // user has canceled the pass phrase dialog, or didn't respond to it in time
         }
       }
-      if (!this.popover.choices.encrypt && !this.popover.choices.sign) {
-        mailFormatter = new PlainMsgMailFormatter(this.composer, this.urlParams, newMsgData);
-      } else if (!this.popover.choices.encrypt && this.popover.choices.sign) {
-        this.composer.S.now('send_btn_text').text('Signing');
-        mailFormatter = new SignedMsgMailFormatter(this.composer, signingPrv!, this.app, this.urlParams, newMsgData);
-      } else {
-        const { armoredPubkeys, emailsWithoutPubkeys } = await this.app.collectAllAvailablePublicKeys(this.composer.getSender(), senderKi, recipientsEmails);
-        if (emailsWithoutPubkeys.length) {
-          await this.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
-        }
-        this.composer.S.now('send_btn_text').text('Encrypting');
-        mailFormatter = new EncryptedMsgMailFormatter(this.composer, this, this.app, this.urlParams, armoredPubkeys, signingPrv, newMsgData);
-      }
-      const msgObj = await mailFormatter.createMsgObject();
-      await this.doSendMsg(msgObj, senderKi);
+      const msgObj = await GeneralMailFormatter.processNewMsg(this.composer, newMsgData, senderKi, signingPrv);
+      await this.finalizeSendableMsg(msgObj, senderKi);
+      await this.doSendMsg(msgObj);
     } catch (e) {
-      await this.handleSendErr(e);
+      await this.composer.errs.handleSendErr(e);
     } finally {
       this.composer.S.cached('toggle_send_options').show();
     }
   }
 
-  private doSendMsg = async (msg: SendableMsg, senderKi: KeyInfo) => {
+  private async finalizeSendableMsg(msg: SendableMsg, senderKi: KeyInfo) {
+    const choices = this.composer.sendBtn.popover.choices;
     for (const k of Object.keys(this.additionalMsgHeaders)) {
       msg.headers[k] = this.additionalMsgHeaders[k];
     }
-    for (const a of msg.atts) {
-      a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+    if (choices.encrypt && !choices.richText) {
+      for (const a of msg.atts) {
+        a.type = 'application/octet-stream'; // so that Enigmail+Thunderbird does not attempt to display without decrypting
+      }
     }
     if (this.composer.S.cached('icon_pubkey').is('.active')) {
       msg.atts.push(Att.keyinfoAsPubkeyAtt(senderKi));
     }
     await this.addNamesToMsg(msg);
+  }
+
+  private doSendMsg = async (msg: SendableMsg) => {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
-      msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+      msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
     } catch (e) {
       if (msg.thread && Api.err.isNotFound(e) && this.urlParams.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+        msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
       } else {
         this.isSendMessageInProgress = false;
         throw e;
@@ -149,21 +136,21 @@ export class ComposerSendBtn extends ComposerComponent {
     }
     BrowserMsg.send.notificationShow(this.urlParams.parentTabId, { notification: `Your ${this.urlParams.isReplyBox ? 'reply' : 'message'} has been sent.` });
     BrowserMsg.send.focusBody(this.urlParams.parentTabId); // Bring focus back to body so Gmails shortcuts will work
-    await this.composer.composerDraft.draftDelete();
+    await this.composer.draft.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.urlParams.isReplyBox) {
       this.renderReplySuccess(msg, msgSentRes.id);
     } else {
-      this.app.closeMsg();
+      this.composer.app.closeMsg();
     }
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
     const prv = await Pgp.key.read(senderKi.private);
-    const passphrase = await this.app.storagePassphraseGet(senderKi);
+    const passphrase = await this.composer.app.storagePassphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+      if ((typeof await this.composer.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
         return await this.decryptSenderKey(senderKi);
       } else { // timeout - reset - no passphrase entered
         this.resetSendBtn();
@@ -177,64 +164,10 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private handleSendErr = async (e: any) => {
-    if (Api.err.isNetErr(e)) {
-      await Ui.modal.error('Could not send message due to network error. Please check your internet connection and try again.');
-    } else if (Api.err.isAuthPopupNeeded(e)) {
-      BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
-      await Ui.modal.error('Could not send message because FlowCrypt needs to be re-connected to google account.');
-    } else if (Api.err.isAuthErr(e)) {
-      if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
-      }
-    } else if (Api.err.isReqTooLarge(e)) {
-      await Ui.modal.error(`Could not send: message or attachments too large.`);
-    } else if (Api.err.isBadReq(e)) {
-      const errMsg = e.parseErrResMsg('google');
-      if (errMsg === e.STD_ERR_MSGS.GOOGLE_INVALID_TO_HEADER || errMsg === e.STD_ERR_MSGS.GOOGLE_RECIPIENT_ADDRESS_REQUIRED) {
-        await Ui.modal.error('Error from google: Invalid recipients\n\nPlease remove recipients, add them back and re-send the message.');
-      } else {
-        if (await Ui.modal.confirm(`Google returned an error when sending message. Please help us improve FlowCrypt by reporting the error to us.`)) {
-          const page = '/chrome/settings/modules/help.htm';
-          const pageUrlParams = { bugReport: Extension.prepareBugReport(`composer: send: bad request (errMsg: ${errMsg})`, {}, e) };
-          BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page, pageUrlParams });
-        }
-      }
-    } else if (e instanceof ComposerUserError) {
-      await Ui.modal.error(e.message);
-    } else {
-      if (!(e instanceof ComposerResetBtnTrigger || e instanceof UnreportableError || e instanceof ComposerNotReadyError)) {
-        Catch.reportErr(e);
-        await Ui.modal.error(`Failed to send message due to: ${String(e)}`);
-      }
-    }
-    if (!(e instanceof ComposerNotReadyError)) {
-      this.resetSendBtn(100);
-    }
-  }
-
-  private mapRecipients = (recipients: RecipientElement[]) => {
-    const result: Recipients = { to: [], cc: [], bcc: [] };
-    for (const recipient of recipients) {
-      switch (recipient.sendingType) {
-        case "to":
-          result.to!.push(recipient.email);
-          break;
-        case "cc":
-          result.cc!.push(recipient.email);
-          break;
-        case "bcc":
-          result.bcc!.push(recipient.email);
-          break;
-      }
-    }
-    return result;
-  }
-
   public renderUploadProgress = (progress: number) => {
-    if (this.composer.attach.hasAtt()) {
+    if (this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
-      this.composer.S.now('send_btn_text').text(`${SendBtnButtonTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
+      this.composer.S.now('send_btn_text').text(`${SendBtnTexts.BTN_SENDING} ${progress < 100 ? `${progress}%` : ''}`);
     }
   }
 
@@ -246,7 +179,7 @@ export class ComposerSendBtn extends ComposerComponent {
         if (sendAs && sendAs[email] && sendAs[email].name) {
           name = sendAs[email].name!;
         } else {
-          const [contact] = await this.app.storageContactGet([email]);
+          const [contact] = await this.composer.app.storageContactGet([email]);
           if (contact && contact.name) {
             name = contact.name;
           }
@@ -261,15 +194,16 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
-    this.app.renderReinsertReplyBox(msgId);
+    this.composer.app.renderReinsertReplyBox(msgId);
     if (!this.popover.choices.encrypt) {
       this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
     this.composer.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
     this.composer.S.cached('compose_table').css('display', 'none');
-    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.getSender());
+    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.sender.getSender());
     this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
-    Xss.sanitizeRender(this.composer.S.cached('reply_msg_successful').find('div.replied_body'), Xss.escapeTextAsRenderableHtml(this.composer.extractAsText('input_text', 'SKIP-ADDONS')));
+    const repliedBodyEl = this.composer.S.cached('reply_msg_successful').find('div.replied_body');
+    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.input.extract('text', 'input_text', 'SKIP-ADDONS')));
     const t = new Date();
     const time = ((t.getHours() !== 12) ?
       (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -278,72 +212,10 @@ export class ComposerSendBtn extends ComposerComponent {
     if (msg.atts.length) {
       this.composer.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
         a.msgId = msgId;
-        return this.app.factoryAtt(a, true);
+        return this.composer.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
-    this.composer.resizeComposeBox();
+    this.composer.size.resizeComposeBox();
   }
 
-  private throwIfFormNotReady = (): void => {
-    if (this.composer.S.cached('icon_show_prev_msg').hasClass('progress')) {
-      throw new ComposerNotReadyError('Retrieving previous message, please wait.');
-    }
-    const btnReadyTexts = [
-      SendBtnButtonTexts.BTN_ENCRYPT_AND_SEND,
-      SendBtnButtonTexts.BTN_SIGN_AND_SEND,
-      SendBtnButtonTexts.BTN_ENCRYPT_SIGN_AND_SEND,
-      SendBtnButtonTexts.BTN_PLAIN_SEND
-    ];
-    const recipients = this.composer.getRecipients();
-    if (btnReadyTexts.includes(this.composer.S.now('send_btn_text').text().trim()) && recipients.length) {
-      return; // all good
-    }
-    if (this.composer.S.now('send_btn_text').text().trim() === SendBtnButtonTexts.BTN_WRONG_ENTRY) {
-      throw new ComposerUserError('Please re-enter recipients marked in red color.');
-    }
-    if (!recipients.length) {
-      throw new ComposerUserError('Please add a recipient first');
-    }
-    throw new ComposerNotReadyError('Still working, please wait.');
-  }
-
-  private throwIfFormValsInvalid = async ({ subject, plaintext }: { subject: string, plaintext: string }) => {
-    if (!((plaintext !== '' || await Ui.modal.confirm('Send empty message?')) && (subject !== '' || await Ui.modal.confirm('Send without a subject?')))) {
-      throw new ComposerResetBtnTrigger();
-    }
-  }
-
-  private throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
-    if (pwd && pwd.answer) {
-      const pp = await this.app.storagePassphraseGet(senderKi);
-      if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {
-        throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
-          'You should come up with some other unique password that you can share with recipient.');
-      }
-      if (subject.toLowerCase().includes(pwd.answer.toLowerCase())) {
-        throw new ComposerUserError(`Please do not include the password in the email subject. ` +
-          `Sharing password over email undermines password based encryption.\n\n` +
-          `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
-      }
-      const intro = this.composer.S.cached('input_intro').length ? this.composer.extractAsText('input_intro') : '';
-      if (intro.toLowerCase().includes(pwd.answer.toLowerCase())) {
-        throw new ComposerUserError('Please do not include the password in the email intro. ' +
-          `Sharing password over email undermines password based encryption.\n\n` +
-          `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
-      }
-    } else {
-      this.composer.S.cached('input_password').focus();
-      throw new ComposerUserError('Some recipients don\'t have encryption set up. Please add a password.');
-    }
-  }
-
-  private collectNewMsgData = () => {
-    const recipientElements = this.composer.getRecipients();
-    const recipients = this.mapRecipients(recipientElements);
-    const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
-    const plaintext = this.composer.extractAsText('input_text');
-    const password = this.composer.S.cached('input_password').val();
-    const pwd = password ? { answer: String(password) } : undefined;
-    return { recipients, subject, plaintext, pwd };
-  }
 }

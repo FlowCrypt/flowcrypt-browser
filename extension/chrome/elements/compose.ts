@@ -17,8 +17,8 @@ import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/interfaces/composer-errors.js';
 import { CollectPubkeysResult } from '../../js/common/composer/interfaces/composer-types.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/composer-errs.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -367,7 +367,7 @@ Catch.try(async () => {
   BrowserMsg.addListener('passphrase_entry', async ({ entered }: Bm.PassphraseEntry) => {
     if (!entered) {
       clearInterval(passphraseInterval);
-      composer.composerSendBtn.resetSendBtn();
+      composer.sendBtn.resetSendBtn();
     }
   });
   BrowserMsg.listen(tabId);

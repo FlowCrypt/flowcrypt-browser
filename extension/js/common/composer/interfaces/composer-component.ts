@@ -9,9 +9,9 @@ export abstract class ComposerComponent {
   protected composer: Composer;
   protected urlParams: ComposerUrlParams;
 
-  constructor(composer: Composer, urlParams: ComposerUrlParams) {
+  constructor(composer: Composer) {
     this.composer = composer;
-    this.urlParams = urlParams;
+    this.urlParams = composer.urlParams;
   }
 
   abstract initActions(): void;

@@ -18,14 +18,14 @@ export class ComposerSendBtnPopover extends ComposerComponent {
 
   render() {
     const popoverItems = {
-      richText: { text: 'Rich text (PGP/MIME)', iconPath: undefined },
+      richText: { text: 'Rich text (PGP/MIME) - experimental', iconPath: undefined },
       encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
       sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' },
     };
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richText') {
-        continue; // richText not supported yet. Only used for local dev
+      if (popoverOpt === 'richText' && !['flowcrypt.compatibility@gmail.com', 'tom@flowcrypt.com'].includes(this.urlParams.acctEmail)) {
+        continue; // richText not supported yet. Only used for testing
       }
       const item = popoverItems[popoverOpt];
       const elem = $(`
@@ -116,8 +116,8 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       this.composer.S.cached('compose_table').addClass('not-encrypted');
       this.composer.S.now('attached_files').addClass('not-encrypted');
     }
-    this.composer.composerSendBtn.resetSendBtn();
-    this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
+    this.composer.sendBtn.resetSendBtn();
+    this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
   }
 
   private renderCrossOrTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) {

@@ -13,12 +13,23 @@ import { Recipients } from '../composer/interfaces/composer-types.js';
 import { GmailRes, Google } from './google.js';
 
 export type ProviderContactsQuery = { substring: string };
-export type SendableMsg = { headers: Dict<string>; from: string; recipients: Recipients; subject: string; body: SendableMsgBody; atts: Att[]; thread?: string; };
+export type SendableMsg = {
+  headers: Dict<string>;
+  from: string;
+  recipients: Recipients;
+  subject: string;
+  body: SendableMsgBody;
+  atts: Att[];
+  thread?: string;
+  mimeRootType: string,
+  sign?: (signable: string) => Promise<string>,
+};
 
 export class EmailProviderApi extends Api {
 
   public static createMsgObj = async (
-    acctEmail: string, from: string = '', recipients: Recipients, subject: string = '', by: SendableMsgBody, atts?: Att[], threadRef?: string
+    acctEmail: string, from: string = '', recipients: Recipients, subject: string = '', body: SendableMsgBody, atts?: Att[], threadRef?: string,
+    mimeRootType?: string, sign?: (content: string) => Promise<string>,
   ): Promise<SendableMsg> => {
     const allEmails = [...recipients.to || [], ...recipients.cc || [], ...recipients.bcc || []];
     const [primaryKi] = await Store.keysGet(acctEmail, ['primary']);
@@ -34,9 +45,11 @@ export class EmailProviderApi extends Api {
       from,
       recipients,
       subject,
-      body: typeof by === 'object' ? by : { 'text/plain': by },
+      body: typeof body === 'object' ? body : { 'text/plain': body },
       atts: atts || [],
       thread: threadRef,
+      mimeRootType: mimeRootType || 'multipart/mixed',
+      sign,
     };
   }
 
