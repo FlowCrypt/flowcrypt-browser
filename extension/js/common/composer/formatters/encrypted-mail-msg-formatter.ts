@@ -15,12 +15,12 @@ import { Backend, BackendRes, AwsS3UploadItem } from '../../api/backend.js';
 import { Store, Subscription } from '../../platform/store.js';
 import { Value, Str } from '../../core/common.js';
 import { Ui } from '../../browser.js';
-import { ComposerResetBtnTrigger } from '../interfaces/composer-errors.js';
 import { BrowserMsg } from '../../extension.js';
 import { Api } from '../../api/api.js';
 import { Att } from '../../core/att.js';
 import { Xss } from '../../platform/xss.js';
 import { Lang } from '../../lang.js';
+import { ComposerResetBtnTrigger } from '../composer-errs.js';
 
 declare const openpgp: typeof OpenPGP;
 

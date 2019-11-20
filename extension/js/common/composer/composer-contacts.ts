@@ -13,11 +13,11 @@ import { Lang } from '../lang.js';
 import { RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
-import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
 import { Catch } from '../platform/catch.js';
 import { moveElementInArray } from '../platform/util.js';
 import { RecipientType } from '../api/api.js';
 import { Store } from '../platform/store.js';
+import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './composer-errs.js';
 
 export class ComposerContacts extends ComposerComponent {
   private addedRecipients: RecipientElement[] = [];

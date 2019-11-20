@@ -8,9 +8,15 @@ import { BrowserMsg, Extension } from '../extension.js';
 import { Catch, UnreportableError } from '../platform/catch.js';
 import { Str } from '../core/common.js';
 import { Api } from '../api/api.js';
-import { ComposerUserError, ComposerResetBtnTrigger, ComposerNotReadyError } from './interfaces/composer-errors.js';
 import { SendBtnTexts } from './interfaces/composer-types.js';
 import { KeyInfo, Pwd } from '../core/pgp.js';
+
+export class ComposerUserError extends Error { }
+export class ComposerNotReadyError extends ComposerUserError { }
+export class ComposerResetBtnTrigger extends Error { }
+
+export const PUBKEY_LOOKUP_RESULT_FAIL: 'fail' = 'fail';
+export const PUBKEY_LOOKUP_RESULT_WRONG: 'wrong' = 'wrong';
 
 export class ComposerErrs extends ComposerComponent {
 
