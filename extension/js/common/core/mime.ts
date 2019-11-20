@@ -231,23 +231,25 @@ export class Mime {
       body = { 'text/plain': body };
     }
     if (sign) { // PGP/MIME detached signature
-      return Mime.encodePgpMimeSigned(body, headers, atts, sign);
+      return await Mime.encodePgpMimeSigned(body, headers, atts, sign);
     }
     // other type of message
     const rootNode = new MimeBuilder(rootType, { includeBccInHeader: true }); // tslint:disable-line:no-unsafe-any
     for (const key of Object.keys(headers)) {
       rootNode.addHeader(key, headers[key]); // tslint:disable-line:no-unsafe-any
     }
-    let contentNode: MimeParserNode;
-    if (Object.keys(body).length === 1) {
-      contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain" | "text/html"] || '');
-    } else {
-      contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
-      for (const type of Object.keys(body)) {
-        contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
+    if (!rootType.startsWith('multipart/encrypted')) { // pgp/mime encrypted messages have no body - just attachments. Skip if this is pgp/mime encrypted
+      let contentNode: MimeParserNode;
+      if (Object.keys(body).length === 1) {
+        contentNode = Mime.newContentNode(MimeBuilder, Object.keys(body)[0], body[Object.keys(body)[0] as "text/plain" | "text/html"] || '');
+      } else {
+        contentNode = new MimeBuilder('multipart/alternative'); // tslint:disable-line:no-unsafe-any
+        for (const type of Object.keys(body)) {
+          contentNode.appendChild(Mime.newContentNode(MimeBuilder, type, body[type]!)); // already present, that's why part of for loop
+        }
       }
+      rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
     }
-    rootNode.appendChild(contentNode); // tslint:disable-line:no-unsafe-any
     for (const att of atts) {
       rootNode.appendChild(Mime.createAttNode(att)); // tslint:disable-line:no-unsafe-any
     }

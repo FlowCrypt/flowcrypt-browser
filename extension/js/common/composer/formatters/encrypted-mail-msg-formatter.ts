@@ -52,7 +52,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         await this.fmtPwdProtectedEmailAndUploadAtts(encryptedBody, pubkeysOnly, atts, subscription);
       }
       return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.urlParams.threadId);
-    } else { // rich text: PGP/MIME
+    } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
       if (newMsg.pwd) {
         this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
         throw new ComposerUserError('Rich text is not yet supported for password encrypted messages, please retry (formatting will be removed).');
