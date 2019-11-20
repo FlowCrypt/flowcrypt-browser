@@ -3,8 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { ComposerUrlParams, RecipientElement, Recipients, SendBtnTexts, NewMsgData } from './interfaces/composer-types.js';
-import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
+import { RecipientElement, Recipients, SendBtnTexts, NewMsgData } from './interfaces/composer-types.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
@@ -22,8 +21,6 @@ import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 
 export class ComposerSendBtn extends ComposerComponent {
 
-  private app: ComposerAppFunctionsInterface;
-
   public additionalMsgHeaders: { [key: string]: string } = {};
 
   public btnUpdateTimeout?: number;
@@ -32,10 +29,9 @@ export class ComposerSendBtn extends ComposerComponent {
 
   public popover: ComposerSendBtnPopover;
 
-  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
-    super(composer, urlParams);
-    this.app = app;
-    this.popover = new ComposerSendBtnPopover(composer, urlParams);
+  constructor(composer: Composer) {
+    super(composer);
+    this.popover = new ComposerSendBtnPopover(composer);
   }
 
   initActions(): void {
@@ -91,7 +87,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.composer.S.cached('send_btn_note').text('');
       const newMsgData = this.collectNewMsgData();
       await this.throwIfFormValsInvalid(newMsgData);
-      const senderKi = await this.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
+      const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
       if (this.popover.choices.sign) {
         signingPrv = await this.decryptSenderKey(senderKi);
@@ -129,11 +125,11 @@ export class ComposerSendBtn extends ComposerComponent {
     let msgSentRes: GmailRes.GmailMsgSend;
     try {
       this.isSendMessageInProgress = true;
-      msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+      msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
     } catch (e) {
       if (msg.thread && Api.err.isNotFound(e) && this.urlParams.threadId) { // cannot send msg because threadId not found - eg user since deleted it
         msg.thread = undefined;
-        msgSentRes = await this.app.emailProviderMsgSend(msg, this.renderUploadProgress);
+        msgSentRes = await this.composer.app.emailProviderMsgSend(msg, this.renderUploadProgress);
       } else {
         this.isSendMessageInProgress = false;
         throw e;
@@ -146,16 +142,16 @@ export class ComposerSendBtn extends ComposerComponent {
     if (this.urlParams.isReplyBox) {
       this.renderReplySuccess(msg, msgSentRes.id);
     } else {
-      this.app.closeMsg();
+      this.composer.app.closeMsg();
     }
   }
 
   private decryptSenderKey = async (senderKi: KeyInfo): Promise<OpenPGP.key.Key | undefined> => {
     const prv = await Pgp.key.read(senderKi.private);
-    const passphrase = await this.app.storagePassphraseGet(senderKi);
+    const passphrase = await this.composer.app.storagePassphraseGet(senderKi);
     if (typeof passphrase === 'undefined' && !prv.isFullyDecrypted()) {
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'sign', longids: [senderKi.longid] });
-      if ((typeof await this.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
+      if ((typeof await this.composer.app.whenMasterPassphraseEntered(60)) !== 'undefined') { // pass phrase entered
         return await this.decryptSenderKey(senderKi);
       } else { // timeout - reset - no passphrase entered
         this.resetSendBtn();
@@ -238,7 +234,7 @@ export class ComposerSendBtn extends ComposerComponent {
         if (sendAs && sendAs[email] && sendAs[email].name) {
           name = sendAs[email].name!;
         } else {
-          const [contact] = await this.app.storageContactGet([email]);
+          const [contact] = await this.composer.app.storageContactGet([email]);
           if (contact && contact.name) {
             name = contact.name;
           }
@@ -253,7 +249,7 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
-    this.app.renderReinsertReplyBox(msgId);
+    this.composer.app.renderReinsertReplyBox(msgId);
     if (!this.popover.choices.encrypt) {
       this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
     }
@@ -270,7 +266,7 @@ export class ComposerSendBtn extends ComposerComponent {
     if (msg.atts.length) {
       this.composer.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
         a.msgId = msgId;
-        return this.app.factoryAtt(a, true);
+        return this.composer.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
     this.composer.resizeComposeBox();
@@ -307,7 +303,7 @@ export class ComposerSendBtn extends ComposerComponent {
 
   public throwIfEncryptionPasswordInvalid = async (senderKi: KeyInfo, { subject, pwd }: { subject: string, pwd?: Pwd }) => {
     if (pwd && pwd.answer) {
-      const pp = await this.app.storagePassphraseGet(senderKi);
+      const pp = await this.composer.app.storagePassphraseGet(senderKi);
       if (pp && pwd.answer.toLowerCase() === pp.toLowerCase()) {
         throw new ComposerUserError('Please do not use your private key pass phrase as a password for this message.\n\n' +
           'You should come up with some other unique password that you can share with recipient.');

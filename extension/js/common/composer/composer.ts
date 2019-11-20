@@ -16,11 +16,12 @@ import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Xss } from '../platform/xss.js';
 import { Rules } from '../rules.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
-import { ComposerUrlParams, Recipients, RecipientStatuses, SendBtnTexts, } from './interfaces/composer-types.js';
+import { ComposerUrlParams, Recipients } from './interfaces/composer-types.js';
 import { ComposerDraft } from './composer-draft.js';
 import { ComposerQuote } from './composer-quote.js';
 import { ComposerContacts } from './composer-contacts.js';
 import { ComposerSendBtn } from './composer-send-btn.js';
+import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container.js';
 
 export class Composer {
   private debugId = Str.sloppyRandom();
@@ -75,6 +76,7 @@ export class Composer {
   public composerSendBtn: ComposerSendBtn;
   public composerDraft: ComposerDraft;
   public composerContacts: ComposerContacts;
+  public composerPwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
 
   private FULL_WINDOW_CLASS = 'full_window';
 
@@ -82,8 +84,6 @@ export class Composer {
   private composeWindowIsMinimized = false;
   private composeWindowIsMaximized = false;
   private refBodyHeight?: number;
-  private keyImportUI = new KeyImportUi({});
-  private rmPwdStrengthValidationElements: (() => void) | undefined;
 
   public app: ComposerAppFunctionsInterface;
   public urlParams: ComposerUrlParams;
@@ -94,10 +94,11 @@ export class Composer {
     this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
     this.urlParams = urlParams;
-    this.composerDraft = new ComposerDraft(appFunctions, urlParams, this);
-    this.composerQuote = new ComposerQuote(this, urlParams);
-    this.composerContacts = new ComposerContacts(appFunctions, urlParams, this);
-    this.composerSendBtn = new ComposerSendBtn(appFunctions, urlParams, this);
+    this.composerDraft = new ComposerDraft(this);
+    this.composerQuote = new ComposerQuote(this);
+    this.composerContacts = new ComposerContacts(this);
+    this.composerSendBtn = new ComposerSendBtn(this);
+    this.composerPwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
 
     const scopes = this.app.getScopes();
@@ -192,9 +193,6 @@ export class Composer {
 
   private initActions = () => {
     this.S.cached('icon_pubkey').attr('title', Lang.compose.includePubkeyIconTitle);
-    this.S.cached('input_password').keyup(Ui.event.prevent('spree', () => this.showHidePwdOrPubkeyContainerAndColorSendBtn()));
-    this.S.cached('input_password').focus(() => this.showHidePwdOrPubkeyContainerAndColorSendBtn());
-    this.S.cached('input_password').blur(() => this.showHidePwdOrPubkeyContainerAndColorSendBtn());
     this.S.cached('add_intro').click(Ui.event.handle(target => {
       $(target).css('display', 'none');
       this.S.cached('intro_container').css('display', 'table-row');
@@ -301,28 +299,6 @@ export class Composer {
     return Xss.htmlUnescape(Xss.htmlSanitizeAndStripAllTags(html, '\n')).trim();
   }
 
-  private showMsgPwdUiAndColorBtn = () => {
-    this.S.cached('password_or_pubkey').css('display', 'table-row');
-    this.S.cached('password_or_pubkey').css('display', 'table-row');
-    if (this.S.cached('input_password').val() || this.S.cached('input_password').is(':focus')) {
-      this.S.cached('password_label').css('display', 'inline-block');
-      this.S.cached('input_password').attr('placeholder', '');
-    } else {
-      this.S.cached('password_label').css('display', 'none');
-      this.S.cached('input_password').attr('placeholder', 'message password');
-    }
-    if (this.S.cached('input_intro').is(':visible')) {
-      this.S.cached('add_intro').css('display', 'none');
-    } else {
-      this.S.cached('add_intro').css('display', 'block');
-    }
-    this.setInputTextHeightManuallyIfNeeded();
-    if (!this.rmPwdStrengthValidationElements) {
-      const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
-      this.rmPwdStrengthValidationElements = removeValidationElements;
-    }
-  }
-
   /**
 * On Firefox, we have to manage textbox height manually. Only applies to composing new messages
 * (else ff will keep expanding body element beyond frame view)
@@ -345,47 +321,6 @@ export class Composer {
       const iconShowPrevMsgHeight = this.S.cached('icon_show_prev_msg').outerHeight(true) || 0;
       this.S.cached('input_text').css('height', this.refBodyHeight - cellHeightExceptText - attListHeight - inputTextVerticalPadding - iconShowPrevMsgHeight);
     }
-  }
-
-  private hideMsgPwdUi = () => {
-    this.S.cached('password_or_pubkey').css('display', 'none');
-    this.S.cached('input_password').val('');
-    this.S.cached('add_intro').css('display', 'none');
-    this.S.cached('input_intro').text('');
-    this.S.cached('intro_container').css('display', 'none');
-    if (this.rmPwdStrengthValidationElements) {
-      this.rmPwdStrengthValidationElements();
-      this.rmPwdStrengthValidationElements = undefined;
-    }
-    this.setInputTextHeightManuallyIfNeeded();
-  }
-
-  public showHidePwdOrPubkeyContainerAndColorSendBtn = () => {
-    this.composerSendBtn.resetSendBtn();
-    this.S.cached('send_btn_note').text('');
-    this.S.cached('send_btn').removeAttr('title');
-    const wasPreviouslyVisible = this.S.cached('password_or_pubkey').css('display') === 'table-row';
-    if (!this.getRecipients().length || !this.composerSendBtn.popover.choices.encrypt) { // Hide 'Add Pasword' prompt if there are no recipients or message is not encrypted
-      this.hideMsgPwdUi();
-      this.composerSendBtn.setBtnColor('green');
-    } else if (this.getRecipients().find(r => r.status === RecipientStatuses.NO_PGP)) {
-      this.showMsgPwdUiAndColorBtn();
-    } else if (this.getRecipients().find(r => [RecipientStatuses.FAILED, RecipientStatuses.WRONG].includes(r.status))) {
-      this.S.now('send_btn_text').text(SendBtnTexts.BTN_WRONG_ENTRY);
-      this.S.cached('send_btn').attr('title', 'Notice the recipients marked in red: please remove them and try to enter them egain.');
-      this.composerSendBtn.setBtnColor('gray');
-    } else {
-      this.hideMsgPwdUi();
-      this.composerSendBtn.setBtnColor('green');
-    }
-    if (this.urlParams.isReplyBox) {
-      if (!wasPreviouslyVisible && this.S.cached('password_or_pubkey').css('display') === 'table-row') {
-        this.resizeComposeBox((this.S.cached('password_or_pubkey').first().height() || 66) + 20);
-      } else {
-        this.resizeComposeBox();
-      }
-    }
-    this.setInputTextHeightManuallyIfNeeded();
   }
 
   resizeComposeBox = (addExtra: number = 0) => {

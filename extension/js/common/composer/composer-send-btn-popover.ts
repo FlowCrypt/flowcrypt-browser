@@ -117,7 +117,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
       this.composer.S.now('attached_files').addClass('not-encrypted');
     }
     this.composer.composerSendBtn.resetSendBtn();
-    this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
+    this.composer.composerPwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
   }
 
   private renderCrossOrTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) {

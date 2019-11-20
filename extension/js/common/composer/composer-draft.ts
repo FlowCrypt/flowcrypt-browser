@@ -2,7 +2,6 @@
 
 'use strict';
 
-import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { Ui, Env } from '../browser.js';
 import { Xss } from '../platform/xss.js';
 import { Mime } from '../core/mime.js';
@@ -13,12 +12,10 @@ import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { Store } from '../platform/store.js';
 import { Composer } from './composer.js';
-import { ComposerUrlParams, Recipients } from './interfaces/composer-types.js';
+import { Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 
 export class ComposerDraft extends ComposerComponent {
-
-  private app: ComposerAppFunctionsInterface;
 
   private currentlySavingDraft = false;
   private saveDraftInterval?: number;
@@ -27,9 +24,8 @@ export class ComposerDraft extends ComposerComponent {
 
   private SAVE_DRAFT_FREQUENCY = 3000;
 
-  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
-    super(composer, urlParams);
-    this.app = app;
+  constructor(composer: Composer) {
+    super(composer);
     if (!this.urlParams.disableDraftSaving) {
       this.saveDraftInterval = Catch.setHandledInterval(() => this.draftSave(), this.SAVE_DRAFT_FREQUENCY);
     }
@@ -42,7 +38,7 @@ export class ComposerDraft extends ComposerComponent {
         this.urlParams.skipClickPrompt = false;
         window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
       } else { // close new msg
-        this.app.closeMsg();
+        this.composer.app.closeMsg();
       }
     }, this.composer.getErrHandlers('delete draft')));
     await this.composer.initialized;
@@ -56,7 +52,7 @@ export class ComposerDraft extends ComposerComponent {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `Loading draft.. ${Ui.spinner('green')}`);
     }
     try {
-      const draftGetRes = await this.app.emailProviderDraftGet(draftId);
+      const draftGetRes = await this.composer.app.emailProviderDraftGet(draftId);
       if (!draftGetRes) {
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('!draftGetRes');
         return false;
@@ -77,7 +73,7 @@ export class ComposerDraft extends ComposerComponent {
       } else if (this.urlParams.isReplyBox && Api.err.isNotFound(e)) {
         Catch.log('about to reload reply_message automatically: get draft 404', this.urlParams.acctEmail);
         await Ui.time.sleep(500);
-        await this.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
+        await this.composer.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.urlParams.draftId = '';
         window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
@@ -94,7 +90,7 @@ export class ComposerDraft extends ComposerComponent {
       this.currentlySavingDraft = true;
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
-        const primaryKi = await this.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
+        const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.getSender());
         const plainText = this.composer.extractAsText('input_text');
         const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
@@ -116,16 +112,16 @@ export class ComposerDraft extends ComposerComponent {
           From: this.composer.getSender(), Subject: subject
         }, []);
         if (!this.urlParams.draftId) {
-          const { id } = await this.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);
+          const { id } = await this.composer.app.emailProviderDraftCreate(this.urlParams.acctEmail, mimeMsg, this.urlParams.threadId);
           this.composer.S.cached('send_btn_note').text('Saved');
           this.urlParams.draftId = id;
-          await this.app.storageSetDraftMeta(true, id, this.urlParams.threadId, to, String(this.composer.S.cached('input_subject').val()));
+          await this.composer.app.storageSetDraftMeta(true, id, this.urlParams.threadId, to, String(this.composer.S.cached('input_subject').val()));
           // recursing one more time, because we need the draftId we get from this reply in the message itself
           // essentially everytime we save draft for the first time, we have to save it twice
           // currentlySavingDraft will remain true for now
           await this.draftSave(true); // forceSave = true
         } else {
-          await this.app.emailProviderDraftUpdate(this.urlParams.draftId, mimeMsg);
+          await this.composer.app.emailProviderDraftUpdate(this.urlParams.draftId, mimeMsg);
           this.composer.S.cached('send_btn_note').text('Saved');
         }
       } catch (e) {
@@ -158,9 +154,9 @@ export class ComposerDraft extends ComposerComponent {
     clearInterval(this.saveDraftInterval);
     await Ui.time.wait(() => !this.currentlySavingDraft ? true : undefined);
     if (this.urlParams.draftId) {
-      await this.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
+      await this.composer.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
       try {
-        await this.app.emailProviderDraftDelete(this.urlParams.draftId);
+        await this.composer.app.emailProviderDraftDelete(this.urlParams.draftId);
         this.urlParams.draftId = '';
       } catch (e) {
         if (Api.err.isAuthPopupNeeded(e)) {
@@ -175,7 +171,7 @@ export class ComposerDraft extends ComposerComponent {
   }
 
   private async decryptAndRenderDraft(encryptedArmoredDraft: string, headers: { subject?: string, from?: string; to: string[], cc: string[], bcc: string[] }): Promise<boolean> {
-    const passphrase = await this.app.storagePassphraseGet();
+    const passphrase = await this.composer.app.storagePassphraseGet();
     if (typeof passphrase !== 'undefined') {
       const result = await PgpMsg.decrypt({ kisWithPp: await Store.keysGetAllWithPp(this.urlParams.acctEmail), encryptedData: Buf.fromUtfStr(encryptedArmoredDraft) });
       if (result.success) {
@@ -231,8 +227,8 @@ export class ComposerDraft extends ComposerComponent {
     this.composer.S.cached('prompt').find('a.action_open_passphrase_dialog').click(Ui.event.handle(() => {
       BrowserMsg.send.passphraseDialog(this.urlParams.parentTabId, { type: 'draft', longids: ['primary'] });
     }));
-    this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.app.closeMsg()));
-    await this.app.whenMasterPassphraseEntered();
+    this.composer.S.cached('prompt').find('a.action_close').click(Ui.event.handle(() => this.composer.app.closeMsg()));
+    await this.composer.app.whenMasterPassphraseEntered();
   }
 
   private async abortAndRenderReplyMsgComposeTableIfIsReplyBox(reason: string) {

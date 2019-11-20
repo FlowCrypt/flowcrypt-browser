@@ -4,14 +4,13 @@
 
 import { Composer } from './composer.js';
 import { Str, Value } from '../core/common.js';
-import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { ProviderContactsQuery } from '../api/email_provider_api.js';
 import { Contact, Pgp } from '../core/pgp.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
 import { GoogleAuth, Google } from '../api/google.js';
 import { Lang } from '../lang.js';
-import { ComposerUrlParams, RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
+import { RecipientElement, RecipientStatus, RecipientStatuses, Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
 import { BrowserMsg } from '../extension.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL, PUBKEY_LOOKUP_RESULT_WRONG } from './interfaces/composer-errors.js';
@@ -21,7 +20,6 @@ import { RecipientType } from '../api/api.js';
 import { Store } from '../platform/store.js';
 
 export class ComposerContacts extends ComposerComponent {
-  private app: ComposerAppFunctionsInterface;
   private addedRecipients: RecipientElement[] = [];
   private BTN_LOADING = 'Loading..';
 
@@ -40,11 +38,10 @@ export class ComposerContacts extends ComposerComponent {
 
   private canSearchContacts: boolean;
 
-  constructor(app: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams, composer: Composer) {
-    super(composer, urlParams);
-    this.app = app;
-    this.myAddrsOnKeyserver = this.app.storageGetAddressesKeyserver() || [];
-    this.canSearchContacts = app.getScopes().readContacts;
+  constructor(composer: Composer) {
+    super(composer);
+    this.myAddrsOnKeyserver = this.composer.app.storageGetAddressesKeyserver() || [];
+    this.canSearchContacts = this.composer.app.getScopes().readContacts;
   }
 
   initActions(): void {
@@ -139,12 +136,12 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.S.cached('compose_table').click(Ui.event.handle(() => this.hideContacts(), this.composer.getErrHandlers(`hide contact box`)));
     this.composer.S.cached('add_their_pubkey').click(Ui.event.handle(() => {
       const noPgpRecipients = this.addedRecipients.filter(r => r.element.className.includes('no_pgp'));
-      this.app.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
+      this.composer.app.renderAddPubkeyDialog(noPgpRecipients.map(r => r.email));
       clearInterval(this.addedPubkeyDbLookupInterval); // todo - get rid of Catch.set_interval. just supply tabId and wait for direct callback
       this.addedPubkeyDbLookupInterval = Catch.setHandledInterval(async () => {
         const recipientsHasPgp: RecipientElement[] = [];
         for (const recipient of noPgpRecipients) {
-          const [contact] = await this.app.storageContactGet([recipient.email]);
+          const [contact] = await this.composer.app.storageContactGet([recipient.email]);
           if (contact && contact.has_pgp) {
             $(recipient.element).removeClass('no_pgp').find('i').remove();
             clearInterval(this.addedPubkeyDbLookupInterval);
@@ -249,7 +246,7 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.debug(`searchContacts.query.substring(${JSON.stringify(substring)})`);
     if (substring) {
       const query = { substring };
-      const contacts = await this.app.storageContactSearch(query);
+      const contacts = await this.composer.app.storageContactSearch(query);
       const canLoadContactsFromAPI = this.composer.canReadEmails || this.canSearchContacts;
       if (dbOnly || contacts.length >= this.MAX_CONTACTS_LENGTH || !canLoadContactsFromAPI) {
         this.composer.debug(`searchContacts 1`);
@@ -269,7 +266,7 @@ export class ComposerContacts extends ComposerComponent {
           }
         } else if (this.composer.canReadEmails) {
           this.composer.debug(`searchContacts (Gmail Sent Messages) 3`);
-          this.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
+          this.composer.app.emailProviderGuessContactsFromSentEmails(query.substring, contacts, contacts => this.renderAndAddToDBAPILoadedContacts(input, contacts.new));
         }
         this.composer.debug(`searchContacts 4`);
         this.renderSearchResultsLoadingDone();
@@ -504,14 +501,14 @@ export class ComposerContacts extends ComposerComponent {
   private renderAndAddToDBAPILoadedContacts = async (input: JQuery<HTMLElement>, contacts: Contact[]) => {
     if (contacts.length) {
       for (const contact of contacts) {
-        const [inDb] = await this.app.storageContactGet([contact.email]);
+        const [inDb] = await this.composer.app.storageContactGet([contact.email]);
         if (!inDb) {
-          await this.app.storageContactSave(await this.app.storageContactObj({
+          await this.composer.app.storageContactSave(await this.composer.app.storageContactObj({
             email: contact.email, name: contact.name, pendingLookup: true, lastUse: contact.last_use
           }));
         } else if (!inDb.name && contact.name) {
           const toUpdate = { name: contact.name };
-          await this.app.storageContactUpdate(contact.email, toUpdate);
+          await this.composer.app.storageContactUpdate(contact.email, toUpdate);
         }
       }
       await this.searchContacts(input, true);
@@ -543,7 +540,7 @@ export class ComposerContacts extends ComposerComponent {
   private checkReciepientsKeys = async () => {
     for (const recipientEl of this.addedRecipients.filter(r => r.element.className.includes('no_pgp'))) {
       const email = $(recipientEl).text().trim();
-      const [dbContact] = await this.app.storageContactGet([email]);
+      const [dbContact] = await this.composer.app.storageContactGet([email]);
       if (dbContact) {
         recipientEl.element.classList.remove('no_pgp');
         await this.renderPubkeyResult(recipientEl, dbContact);
@@ -560,7 +557,7 @@ export class ComposerContacts extends ComposerComponent {
         const sendingAddrOnKeyserver = this.myAddrsOnKeyserver.includes(this.composer.getSender());
         if ((contact.client === 'cryptup' && !sendingAddrOnKeyserver) || (contact.client !== 'cryptup')) {
           // new message, and my key is not uploaded where the recipient would look for it
-          if (await this.app.doesRecipientHaveMyPubkey(recipient.email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
+          if (await this.composer.app.doesRecipientHaveMyPubkey(recipient.email) !== true) { // either don't know if they need pubkey (can_read_emails false), or they do need pubkey
             this.recipientsMissingMyKey.push(recipient.email);
           }
         }
@@ -603,7 +600,7 @@ export class ComposerContacts extends ComposerComponent {
       Xss.sanitizePrepend(recipient.element, '<img class="lock-icon" src="/img/svgs/locked-icon.svg" />');
       $(recipient.element).attr('title', 'Could not verify their encryption setup. You can encrypt the message with a password below. Alternatively, add their pubkey.');
     }
-    this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
+    this.composer.composerPwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
   }
 
   private removeRecipient = (element: HTMLElement) => {
@@ -614,7 +611,7 @@ export class ComposerContacts extends ComposerComponent {
     this.composer.resizeInput($(container).find('input'));
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
-    this.composer.showHidePwdOrPubkeyContainerAndColorSendBtn();
+    this.composer.composerPwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
     this.updatePubkeyIcon();
   }
 
@@ -647,7 +644,7 @@ export class ComposerContacts extends ComposerComponent {
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatuses.WRONG) {
-          pubkeyLookupRes = await this.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
+          pubkeyLookupRes = await this.composer.app.lookupPubkeyFromDbOrKeyserverAndUpdateDbIfneeded(recipient.email);
         } else {
           pubkeyLookupRes = 'wrong';
         }
