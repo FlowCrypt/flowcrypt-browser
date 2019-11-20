@@ -25,7 +25,7 @@ export class GeneralMailFormatter {
     } else {
       const { armoredPubkeys, emailsWithoutPubkeys } = await composer.app.collectAllAvailablePublicKeys(newMsgData.sender, senderKi, recipientsEmails);
       if (emailsWithoutPubkeys.length) {
-        await composer.composerSendBtn.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
+        await composer.composerErrs.throwIfEncryptionPasswordInvalid(senderKi, newMsgData);
       }
       composer.S.now('send_btn_text').text('Encrypting');
       mailFormatter = new EncryptedMsgMailFormatter(composer, newMsgData, armoredPubkeys, signingPrv);
