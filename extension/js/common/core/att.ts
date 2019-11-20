@@ -8,6 +8,7 @@ type Att$treatAs = "publicKey" | 'privateKey' | "encryptedMsg" | "hidden" | "sig
 export type AttMeta = {
   data?: Uint8Array; type?: string; name?: string; length?: number; url?: string;
   inline?: boolean; id?: string; msgId?: string; treatAs?: Att$treatAs; cid?: string;
+  contentDescription?: string,
 };
 
 export type FcAttLinkData = { name: string, type: string, size: number };
@@ -25,8 +26,9 @@ export class Att {
   public msgId: string | undefined;
   public inline: boolean;
   public cid: string | undefined;
+  public contentDescription: string | undefined;
 
-  constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid }: AttMeta) {
+  constructor({ data, type, name, length, url, inline, id, msgId, treatAs, cid, contentDescription }: AttMeta) {
     if (typeof data === 'undefined' && typeof url === 'undefined' && typeof id === 'undefined') {
       throw new Error('Att: one of data|url|id has to be set');
     }
@@ -47,6 +49,7 @@ export class Att {
     this.msgId = msgId || undefined;
     this.treatAsValue = treatAs || undefined;
     this.cid = cid || undefined;
+    this.contentDescription = contentDescription || undefined;
   }
 
   public hasData = () => this.bytes instanceof Uint8Array;

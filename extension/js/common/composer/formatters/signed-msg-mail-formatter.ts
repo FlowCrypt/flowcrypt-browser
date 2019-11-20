@@ -15,7 +15,8 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
 
   async sendableMsg(newMsgData: NewMsgData, signingPrv: OpenPGP.key.Key): Promise<SendableMsg> {
     if (this.richText) {
-      throw new ComposerUserError('Rich text is not yet supported for signed messages, try a plain message.');
+      this.composer.sendBtn.popover.toggleItemTick($('.action-toggle-richText-sending-option'), 'richText', false); // do not use rich text
+      throw new ComposerUserError('Rich text is not yet supported for signed messages, please retry (formatting will be removed).');
     }
     // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
     // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
