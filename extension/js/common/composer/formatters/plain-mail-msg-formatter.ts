@@ -3,15 +3,17 @@
 'use strict';
 
 import { SendableMsg } from '../../api/email_provider_api.js';
-import { MailFormatterInterface, BaseMailFormatter } from './base-mail-formatter.js';
 import { Google } from '../../api/google.js';
-import { SendBtnTexts } from '../interfaces/composer-types.js';
+import { SendBtnTexts, NewMsgData } from '../interfaces/composer-types.js';
+import { BaseMailFormatter, MailFormatterInterface } from './composer-mail-formatter.js';
 
 export class PlainMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
-  async createMsgObject(): Promise<SendableMsg> {
+
+  async sendableMsg(newMsgData: NewMsgData): Promise<SendableMsg> {
     this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING);
     const atts = await this.composer.atts.attach.collectAtts();
-    const body = { 'text/plain': this.newMsgData.plaintext };
-    return await Google.createMsgObj(this.urlParams.acctEmail, this.newMsgData.sender, this.newMsgData.recipients, this.newMsgData.subject, body, atts, this.urlParams.threadId);
+    const body = { 'text/plain': newMsgData.plaintext };
+    return await Google.createMsgObj(this.composer.urlParams.acctEmail, newMsgData.sender, newMsgData.recipients, newMsgData.subject, body, atts, this.composer.urlParams.threadId);
   }
+
 }

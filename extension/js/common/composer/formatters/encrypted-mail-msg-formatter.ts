@@ -4,9 +4,9 @@
 
 import { NewMsgData, PubkeyResult, SendBtnTexts } from '../interfaces/composer-types.js';
 import { SendableMsg } from '../../api/email_provider_api.js';
-import { MailFormatterInterface, BaseMailFormatter } from './base-mail-formatter.js';
+import { BaseMailFormatter, MailFormatterInterface } from './composer-mail-formatter.js';
 import { Composer } from '../composer.js';
-import { PgpMsg, Pwd, Pgp } from '../../core/pgp.js';
+import { PgpMsg, Pgp } from '../../core/pgp.js';
 import { Google } from '../../api/google.js';
 import { Catch } from '../../platform/catch.js';
 import { SendableMsgBody } from '../../core/mime.js';
@@ -27,68 +27,69 @@ declare const openpgp: typeof OpenPGP;
 export class EncryptedMsgMailFormatter extends BaseMailFormatter implements MailFormatterInterface {
 
   private armoredPubkeys: PubkeyResult[];
-  private signingPrv: OpenPGP.key.Key | undefined;
-  private pwd: Pwd | undefined;
 
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo Send plain (not encrypted)uld use Api.url()
 
-  constructor(composer: Composer, newMsgData: NewMsgData, armoredPubkeys: PubkeyResult[], signingPrv: OpenPGP.key.Key | undefined) {
-    super(composer, newMsgData);
+  constructor(composer: Composer, armoredPubkeys: PubkeyResult[]) {
+    super(composer);
     this.armoredPubkeys = armoredPubkeys;
-    this.signingPrv = signingPrv;
   }
 
-  async createMsgObject(): Promise<SendableMsg> {
+  async sendableMsg(newMsgData: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
     const subscription = await this.composer.app.storageGetSubscription();
-    this.newMsgData.plaintext = await this.addReplyTokenToMsgBodyIfNeeded(subscription);
-    const atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), this.pwd);
-    if (atts.length && this.pwd) { // these will be password encrypted attachments
+    newMsgData.plaintext = await this.addReplyTokenToMsgBodyIfNeeded(newMsgData, subscription);
+    const atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsgData.pwd);
+    if (atts.length && newMsgData.pwd) { // these will be password encrypted attachments
       this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
-      this.newMsgData.plaintext = this.addUploadedFileLinksToMsgBody(this.newMsgData.plaintext, atts);
+      newMsgData.plaintext = this.addUploadedFileLinksToMsgBody(newMsgData.plaintext, atts);
     }
     const pubkeysOnly = this.armoredPubkeys.map(p => p.pubkey);
     const encryptAsOfDate = await this.encryptMsgAsOfDateIfSomeAreExpiredAndUserConfirmedModal(this.armoredPubkeys);
     const encrypted = await PgpMsg.encrypt({
-      pubkeys: pubkeysOnly, signingPrv: this.signingPrv, pwd: this.pwd,
-      data: Buf.fromUtfStr(this.newMsgData.plaintext), armor: true, date: encryptAsOfDate
+      pubkeys: pubkeysOnly,
+      signingPrv,
+      pwd: newMsgData.pwd,
+      data: Buf.fromUtfStr(newMsgData.plaintext),
+      armor: true,
+      date: encryptAsOfDate
     }) as OpenPGP.EncryptArmorResult;
     let encryptedBody: SendableMsgBody = { 'text/plain': encrypted.data };
-    await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(this.newMsgData.recipients)), { last_use: Date.now() });
-    if (this.pwd) {
+    await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(newMsgData.recipients)), { last_use: Date.now() });
+    if (newMsgData.pwd) {
       // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
       // admin_code stays locally and helps the sender extend life of the message or delete it
       const { short, admin_code } = await Backend.messageUpload(encryptedBody['text/plain']!, subscription.active ? 'uuid' : undefined);
-      const storage = await Store.getAcct(this.urlParams.acctEmail, ['outgoing_language']);
+      const storage = await Store.getAcct(this.composer.urlParams.acctEmail, ['outgoing_language']);
       encryptedBody = this.fmtPwdProtectedEmail(short, encryptedBody, pubkeysOnly, atts, storage.outgoing_language || 'EN');
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       await this.composer.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
     }
-    return await Google.createMsgObj(this.urlParams.acctEmail, this.newMsgData.sender, this.newMsgData.recipients, this.newMsgData.subject, encryptedBody, atts, this.urlParams.threadId);
+    return await Google.createMsgObj(this.composer.urlParams.acctEmail, newMsgData.sender, newMsgData.recipients, newMsgData.subject, encryptedBody, atts, this.composer.urlParams.threadId);
   }
 
-  private async addReplyTokenToMsgBodyIfNeeded(subscription: Subscription): Promise<string> {
-    if (!this.newMsgData.pwd || !subscription.active) {
-      return this.newMsgData.plaintext;
+  private async addReplyTokenToMsgBodyIfNeeded(newMsgData: NewMsgData, subscription: Subscription): Promise<string> {
+    if (!newMsgData.pwd || !subscription.active) {
+      return newMsgData.plaintext;
     }
-    const recipients = Array.prototype.concat.apply([], Object.values(this.newMsgData.recipients));
+    const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
       const response = await Backend.messageToken();
-      return this.newMsgData.plaintext + '\n\n' + Ui.e('div', {
+      return newMsgData.plaintext + '\n\n' + Ui.e('div', {
         'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.htmlAttrEncode({
-          sender: this.newMsgData.sender,
-          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.newMsgData.sender), this.urlParams.acctEmail),
-          subject: this.newMsgData,
+          sender: newMsgData.sender,
+          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, newMsgData.sender), this.composer.urlParams.acctEmail),
+          subject: newMsgData,
           token: response.token,
         })
       });
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
         if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
+          BrowserMsg.send.subscribeDialog(this.composer.urlParams.parentTabId, { isAuthErr: true });
         }
         throw new ComposerResetBtnTrigger();
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
-        return this.newMsgData.plaintext;
+        return newMsgData.plaintext;
       }
       throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
     }

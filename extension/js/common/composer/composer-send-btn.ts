@@ -15,7 +15,7 @@ import { Store } from '../platform/store.js';
 import { GmailRes } from '../api/google.js';
 import { SendableMsg } from '../api/email_provider_api.js';
 import { Att } from '../core/att.js';
-import { GeneralMailFormatter } from './composer-mail-formatter.js';
+import { GeneralMailFormatter } from './formatters/composer-mail-formatter.js';
 import { ComposerSendBtnPopover } from './composer-send-btn-popover.js';
 
 export class ComposerSendBtn extends ComposerComponent {
