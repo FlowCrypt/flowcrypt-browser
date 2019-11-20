@@ -40,9 +40,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
 
   async createMsgObject(): Promise<SendableMsg> {
     const subscription = await this.composer.app.storageGetSubscription();
-    this.newMsgData.plaintext = await this.addReplyTokenToMsgBodyIfNeeded(Array.prototype.concat.apply([], Object.values(this.newMsgData.recipients)),
-      this.newMsgData.subject, this.newMsgData.plaintext, this.pwd, subscription);
-    const atts = await this.composer.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), this.pwd);
+    this.newMsgData.plaintext = await this.addReplyTokenToMsgBodyIfNeeded(subscription);
+    const atts = await this.composer.composerAtts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), this.pwd);
     if (atts.length && this.pwd) { // these will be password encrypted attachments
       this.composer.composerSendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
       this.newMsgData.plaintext = this.addUploadedFileLinksToMsgBody(this.newMsgData.plaintext, atts);
@@ -64,20 +63,21 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
       await this.composer.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
     }
-    return await Google.createMsgObj(this.urlParams.acctEmail, this.composer.getSender(), this.newMsgData.recipients, this.newMsgData.subject, encryptedBody, atts, this.urlParams.threadId);
+    return await Google.createMsgObj(this.urlParams.acctEmail, this.newMsgData.sender, this.newMsgData.recipients, this.newMsgData.subject, encryptedBody, atts, this.urlParams.threadId);
   }
 
-  private async addReplyTokenToMsgBodyIfNeeded(recipients: string[], subject: string, plaintext: string, challenge: Pwd | undefined, subscription: Subscription): Promise<string> {
-    if (!challenge || !subscription.active) {
-      return plaintext;
+  private async addReplyTokenToMsgBodyIfNeeded(subscription: Subscription): Promise<string> {
+    if (!this.newMsgData.pwd || !subscription.active) {
+      return this.newMsgData.plaintext;
     }
+    const recipients = Array.prototype.concat.apply([], Object.values(this.newMsgData.recipients));
     try {
       const response = await Backend.messageToken();
-      return plaintext + '\n\n' + Ui.e('div', {
+      return this.newMsgData.plaintext + '\n\n' + Ui.e('div', {
         'style': 'display: none;', 'class': 'cryptup_reply', 'cryptup-data': Str.htmlAttrEncode({
-          sender: this.composer.getSender(),
-          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.composer.getSender()), this.urlParams.acctEmail),
-          subject,
+          sender: this.newMsgData.sender,
+          recipient: Value.arr.withoutVal(Value.arr.withoutVal(recipients, this.newMsgData.sender), this.urlParams.acctEmail),
+          subject: this.newMsgData,
           token: response.token,
         })
       });
@@ -88,7 +88,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
         }
         throw new ComposerResetBtnTrigger();
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
-        return plaintext;
+        return this.newMsgData.plaintext;
       }
       throw Catch.rewrapErr(msgTokenErr, 'There was a token error sending this message. Please try again. Let us know at human@flowcrypt.com if this happens repeatedly.');
     }

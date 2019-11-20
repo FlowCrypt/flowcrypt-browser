@@ -21,7 +21,6 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
   }
 
   async createMsgObject(): Promise<SendableMsg> {
-    const sender = this.composer.getSender();
     // Folding the lines or GMAIL WILL RAPE THE TEXT, regardless of what encoding is used
     // https://mathiasbynens.be/notes/gmail-plain-text applies to API as well
     // resulting in.. wait for it.. signatures that don't match
@@ -35,10 +34,10 @@ export class SignedMsgMailFormatter extends BaseMailFormatter implements MailFor
     // Removing them here will prevent Gmail from screwing up the signature
     this.newMsgData.plaintext = this.newMsgData.plaintext.split('\n').map(l => l.replace(/\s+$/g, '')).join('\n').trim();
     const signedData = await PgpMsg.sign(this.signingPrv, this.newMsgData.plaintext);
-    const atts = await this.composer.attach.collectAtts(); // todo - not signing attachments
+    const atts = await this.composer.composerAtts.attach.collectAtts(); // todo - not signing attachments
     const allContacts = [...this.newMsgData.recipients.to || [], ...this.newMsgData.recipients.cc || [], ...this.newMsgData.recipients.bcc || []];
     this.composer.app.storageContactUpdate(allContacts, { last_use: Date.now() }).catch(Catch.reportErr);
     const body = { 'text/plain': signedData };
-    return await Google.createMsgObj(this.urlParams.acctEmail, sender, this.newMsgData.recipients, this.newMsgData.subject, body, atts, this.urlParams.threadId);
+    return await Google.createMsgObj(this.urlParams.acctEmail, this.newMsgData.sender, this.newMsgData.recipients, this.newMsgData.subject, body, atts, this.urlParams.threadId);
   }
 }

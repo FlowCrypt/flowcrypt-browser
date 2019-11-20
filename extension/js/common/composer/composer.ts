@@ -10,10 +10,8 @@ import { BrowserMsg } from '../extension.js';
 import { Pgp, } from '../core/pgp.js';
 import { RecipientType } from '../api/api.js';
 import { Ui, BrowserEventErrHandler } from '../browser.js';
-import { AttUI, AttLimits } from '../ui/att_ui.js';
 import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Xss } from '../platform/xss.js';
-import { Rules } from '../rules.js';
 import { ComposerAppFunctionsInterface } from './interfaces/composer-app-functions.js';
 import { ComposerUrlParams, Recipients } from './interfaces/composer-types.js';
 import { ComposerDraft } from './composer-draft.js';
@@ -23,6 +21,7 @@ import { ComposerSendBtn } from './composer-send-btn.js';
 import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container.js';
 import { ComposerWindowSize } from './composer-window-size.js';
 import { ComposerSender } from './composer-sender.js';
+import { ComposerAtts } from './composer-atts.js';
 
 export class Composer {
   private debugId = Str.sloppyRandom();
@@ -71,8 +70,6 @@ export class Composer {
     sending_options_container: '#sending-options-container'
   });
 
-  public attach: AttUI;
-
   public composerQuote: ComposerQuote;
   public composerSendBtn: ComposerSendBtn;
   public composerDraft: ComposerDraft;
@@ -80,6 +77,7 @@ export class Composer {
   public composerPwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
   public composerWindowSize: ComposerWindowSize;
   public composerSender: ComposerSender;
+  public composerAtts: ComposerAtts;
 
   public app: ComposerAppFunctionsInterface;
   public urlParams: ComposerUrlParams;
@@ -87,7 +85,6 @@ export class Composer {
   public initialized: Promise<void>;
 
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams) {
-    this.attach = new AttUI(() => this.getMaxAttSizeAndOversizeNotice());
     this.app = appFunctions;
     this.urlParams = urlParams;
     this.composerDraft = new ComposerDraft(this);
@@ -97,15 +94,14 @@ export class Composer {
     this.composerPwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
     this.composerWindowSize = new ComposerWindowSize(this);
     this.composerSender = new ComposerSender(this);
+    this.composerAtts = new ComposerAtts(this);
     this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
-    const checkEmailAliases = this.composerSender.checkEmailAliases; // else TS will complain below
-
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;
-
     if (this.app.storageGetHideMsgPassword()) {
       this.S.cached('input_password').attr('type', 'password');
     }
+    const checkEmailAliases = this.composerSender.checkEmailAliases; // else TS will complain below
     this.initialized = (async () => {
       await this.initComposeBox();
       this.initActions();
@@ -116,50 +112,6 @@ export class Composer {
   public debug = (msg: string) => {
     if (this.urlParams.debug) {
       console.log(`[${this.debugId}] ${msg}`);
-    }
-  }
-
-  private getMaxAttSizeAndOversizeNotice = async (): Promise<AttLimits> => {
-    const subscription = await this.app.storageGetSubscription();
-    if (!Rules.relaxSubscriptionRequirements(this.composerSender.getSender()) && !subscription.active) {
-      return {
-        sizeMb: 5,
-        size: 5 * 1024 * 1024,
-        count: 10,
-        oversize: async () => {
-          let getAdvanced = 'The files are over 5 MB. Advanced users can send files up to 25 MB.';
-          if (!subscription.method) {
-            getAdvanced += '\n\nTry it free for 30 days.';
-          } else if (subscription.method === 'trial') {
-            getAdvanced += '\n\nYour trial has expired, please consider supporting our efforts by upgrading.';
-          } else if (subscription.method === 'group') {
-            getAdvanced += '\n\nGroup billing is due for renewal. Please check with your leadership.';
-          } else if (subscription.method === 'stripe') {
-            getAdvanced += '\n\nPlease renew your subscription to continue sending large files.';
-          } else {
-            getAdvanced += '\n\nClick ok to see subscribe options.';
-          }
-          if (subscription.method === 'group') {
-            await Ui.modal.info(getAdvanced);
-          } else {
-            if (await Ui.modal.confirm(getAdvanced)) {
-              BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, {});
-            }
-          }
-          return;
-        },
-      };
-    } else {
-      const allowHugeAtts = ['94658c9c332a11f20b1e45c092e6e98a1e34c953', 'b092dcecf277c9b3502e20c93b9386ec7759443a', '9fbbe6720a6e6c8fc30243dc8ff0a06cbfa4630e'];
-      const sizeMb = (subscription.method !== 'trial' && allowHugeAtts.includes(await Pgp.hash.sha1UtfStr(this.urlParams.acctEmail))) ? 200 : 25;
-      return {
-        sizeMb,
-        size: sizeMb * 1024 * 1024,
-        count: 10,
-        oversize: async (combinedSize: number) => {
-          await Ui.modal.warning('Combined attachment size is limited to 25 MB. The last file brings it to ' + Math.ceil(combinedSize / (1024 * 1024)) + ' MB.');
-        },
-      };
     }
   }
 
@@ -408,15 +360,7 @@ export class Composer {
         this.S.cached('input_to').focus();
       }
     }, this.getErrHandlers(`focus on recipient field`))).children().click(() => false);
-    this.attach.initAttDialog('fineuploader', 'fineuploader_button');
-    this.attach.setAttAddedCb(async () => {
-      this.composerWindowSize.setInputTextHeightManuallyIfNeeded();
-      this.composerWindowSize.resizeComposeBox();
-    });
-    this.attach.setAttRemovedCb(() => {
-      this.composerWindowSize.setInputTextHeightManuallyIfNeeded();
-      this.composerWindowSize.resizeComposeBox();
-    });
+    this.composerAtts.onComposeTableRender();
     if (this.urlParams.isReplyBox) {
       if (this.urlParams.to.length) {
         // Firefox will not always respond to initial automatic $input_text.blur()
