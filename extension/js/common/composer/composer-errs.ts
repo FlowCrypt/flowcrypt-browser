@@ -142,7 +142,7 @@ export class ComposerErrs extends ComposerComponent {
           `Sharing password over email undermines password based encryption.\n\n` +
           `You can ask the recipient to also install FlowCrypt, messages between FlowCrypt users don't need a password.`);
       }
-      const intro = this.composer.S.cached('input_intro').length ? this.composer.textInput.extractAsText('input_intro') : '';
+      const intro = this.composer.S.cached('input_intro').length ? this.composer.input.extract('text', 'input_intro') : '';
       if (intro.toLowerCase().includes(pwd.answer.toLowerCase())) {
         throw new ComposerUserError('Please do not include the password in the email intro. ' +
           `Sharing password over email undermines password based encryption.\n\n` +

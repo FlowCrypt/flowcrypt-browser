@@ -94,7 +94,7 @@ export class ComposerContacts extends ComposerComponent {
         const draggableElementIndex = this.addedRecipients.findIndex(r => r.element === this.dragged);
         this.addedRecipients[draggableElementIndex].sendingType = sendingType;
         this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.length - 1);
-        this.composer.windowSize.resizeInput(jqueryTarget.add(previousInput));
+        this.composer.size.resizeInput(jqueryTarget.add(previousInput));
         target.focus();
       }
     }));
@@ -107,8 +107,8 @@ export class ComposerContacts extends ComposerComponent {
       newContainer.css('display', 'block');
       target.style.display = 'none';
       input.focus();
-      this.composer.windowSize.resizeComposeBox();
-      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+      this.composer.size.resizeComposeBox();
+      this.composer.size.setInputTextHeightManuallyIfNeeded();
     };
     this.composer.S.now('cc').on('click', Ui.event.handle((target) => {
       const newContainer = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-cc`);
@@ -124,11 +124,11 @@ export class ComposerContacts extends ComposerComponent {
     const focusRecipients = Ui.event.handle(() => {
       this.composer.S.cached('recipients_placeholder').hide();
       this.composer.S.cached('input_addresses_container_outer').removeClass('invisible');
-      this.composer.windowSize.resizeComposeBox();
+      this.composer.size.resizeComposeBox();
       if (this.urlParams.isReplyBox) {
-        this.composer.windowSize.resizeInput();
+        this.composer.size.resizeInput();
       }
-      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+      this.composer.size.setInputTextHeightManuallyIfNeeded();
     });
     this.composer.S.cached('input_to').on('focus', focusRecipients);
     this.composer.S.cached('cc').on('focus', focusRecipients);
@@ -425,11 +425,11 @@ export class ComposerContacts extends ComposerComponent {
         input.val(validationResult.invalid.join(','));
       }
       this.composer.errs.debug(`parseRenderRecipients(force: ${force}).2`);
-      this.composer.windowSize.resizeInput(input);
+      this.composer.size.resizeInput(input);
       if (recipientsToEvaluate.length) {
         await this.evaluateRecipients(recipientsToEvaluate);
         this.composer.errs.debug(`parseRenderRecipients(force: ${force}).3`);
-        this.composer.windowSize.resizeInput(input);
+        this.composer.size.resizeInput(input);
         this.composer.errs.debug(`parseRenderRecipients(force: ${force}).4`);
       }
     }
@@ -466,7 +466,7 @@ export class ComposerContacts extends ComposerComponent {
           newRecipients = newRecipients.concat(this.createRecipientsElements(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`),
             recipients[sendingType]!, sendingType, RecipientStatuses.EVALUATING));
           this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType}`).css('display', '');
-          this.composer.windowSize.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
+          this.composer.size.resizeInput(this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`));
         }
       }
     }
@@ -609,7 +609,7 @@ export class ComposerContacts extends ComposerComponent {
     const index = this.addedRecipients.findIndex(r => r.element.isEqualNode(element));
     const container = element.parentElement!.parentElement!; // Get Container, e.g. '.input-container-cc'
     this.addedRecipients[index].element.remove();
-    this.composer.windowSize.resizeInput($(container).find('input'));
+    this.composer.size.resizeInput($(container).find('input'));
     this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${this.addedRecipients[index].sendingType} input`).focus();
     this.addedRecipients.splice(index, 1);
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
@@ -641,7 +641,7 @@ export class ComposerContacts extends ComposerComponent {
     for (const recipient of recipients) {
       this.composer.errs.debug(`evaluateRecipients.email(${String(recipient.email)})`);
       this.composer.S.now('send_btn_text').text(this.BTN_LOADING);
-      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+      this.composer.size.setInputTextHeightManuallyIfNeeded();
       recipient.evaluating = (async () => {
         let pubkeyLookupRes: Contact | 'fail' | 'wrong';
         if (recipient.status !== RecipientStatuses.WRONG) {
@@ -660,7 +660,7 @@ export class ComposerContacts extends ComposerComponent {
       }
     }
     $('body').attr('data-test-state', 'ready');
-    this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+    this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
   private recipientKeyIdText = (contact: Contact) => {
@@ -759,7 +759,7 @@ export class ComposerContacts extends ComposerComponent {
       // Sync the Recipients array with HTML
       this.addedRecipients = moveElementInArray(this.addedRecipients, draggableElementIndex, this.addedRecipients.findIndex(r => r.element === element));
       const newInput = this.composer.S.cached('input_addresses_container_outer').find(`#input-container-${sendingType} input`);
-      this.composer.windowSize.resizeInput(newInput.add(previousInput));
+      this.composer.size.resizeInput(newInput.add(previousInput));
       this.dragged = undefined;
       newInput.focus();
     };
@@ -820,7 +820,7 @@ export class ComposerContacts extends ComposerComponent {
       this.composer.S.cached('recipients_placeholder').css('display', 'flex');
       await this.setEmailsPreview(this.addedRecipients);
       this.hideContacts();
-      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+      this.composer.size.setInputTextHeightManuallyIfNeeded();
     }
   }
 

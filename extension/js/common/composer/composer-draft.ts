@@ -91,8 +91,8 @@ export class ComposerDraft extends ComposerComponent {
       try {
         this.composer.S.cached('send_btn_note').text('Saving');
         const primaryKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
-        const plainText = this.composer.textInput.extractAsText('input_text');
-        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plainText), armor: true }) as OpenPGP.EncryptArmorResult;
+        const plaintext = this.composer.input.extract('text', 'input_text');
+        const encrypted = await PgpMsg.encrypt({ pubkeys: [primaryKi.public], data: Buf.fromUtfStr(plaintext), armor: true }) as OpenPGP.EncryptArmorResult;
         let body: string;
         if (this.urlParams.threadId) { // reply draft
           body = `[cryptup:link:draft_reply:${this.urlParams.threadId}]\n\n${encrypted.data}`;
@@ -223,7 +223,7 @@ export class ComposerDraft extends ComposerComponent {
     const promptText = `Waiting for <a href="#" class="action_open_passphrase_dialog">pass phrase</a> to open draft..`;
     if (this.urlParams.isReplyBox) {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), promptText).css({ display: 'block' });
-      this.composer.windowSize.resizeComposeBox();
+      this.composer.size.resizeComposeBox();
     } else {
       Xss.sanitizeRender(this.composer.S.cached('prompt'), `${promptText}<br><br><a href="#" class="action_close">close</a>`).css({ display: 'block', height: '100%' });
     }

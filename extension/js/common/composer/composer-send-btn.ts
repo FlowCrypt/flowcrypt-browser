@@ -3,7 +3,7 @@
 'use strict';
 
 import { ComposerComponent } from './interfaces/composer-component.js';
-import { RecipientElement, Recipients, SendBtnTexts, NewMsgData } from './interfaces/composer-types.js';
+import { SendBtnTexts } from './interfaces/composer-types.js';
 import { Composer } from './composer.js';
 import { Xss } from '../platform/xss.js';
 import { Ui } from '../browser.js';
@@ -34,7 +34,7 @@ export class ComposerSendBtn extends ComposerComponent {
   }
 
   initActions(): void {
-    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.windowSize.isMinimized() && this.extractProcessSendMsg()));
+    this.composer.S.cached('body').keypress(Ui.ctrlEnter(() => !this.composer.size.isMinimized() && this.extractProcessSendMsg()));
     this.composer.S.cached('send_btn').click(Ui.event.prevent('double', () => this.extractProcessSendMsg()));
     this.popover.initActions();
   }
@@ -84,7 +84,7 @@ export class ComposerSendBtn extends ComposerComponent {
       this.composer.S.now('send_btn_text').text('Loading');
       Xss.sanitizeRender(this.composer.S.now('send_btn_i'), Ui.spinner('white'));
       this.composer.S.cached('send_btn_note').text('');
-      const newMsgData = this.collectNewMsgData();
+      const newMsgData = this.composer.input.extractAll();
       await this.composer.errs.throwIfFormValsInvalid(newMsgData);
       const senderKi = await this.composer.app.storageGetKey(this.urlParams.acctEmail, this.composer.sender.getSender());
       let signingPrv: OpenPGP.key.Key | undefined;
@@ -164,24 +164,6 @@ export class ComposerSendBtn extends ComposerComponent {
     }
   }
 
-  private mapRecipients = (recipients: RecipientElement[]) => {
-    const result: Recipients = { to: [], cc: [], bcc: [] };
-    for (const recipient of recipients) {
-      switch (recipient.sendingType) {
-        case "to":
-          result.to!.push(recipient.email);
-          break;
-        case "cc":
-          result.cc!.push(recipient.email);
-          break;
-        case "bcc":
-          result.bcc!.push(recipient.email);
-          break;
-      }
-    }
-    return result;
-  }
-
   public renderUploadProgress = (progress: number) => {
     if (this.composer.atts.attach.hasAtt()) {
       progress = Math.floor(progress);
@@ -221,7 +203,7 @@ export class ComposerSendBtn extends ComposerComponent {
     this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.sender.getSender());
     this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
     const repliedBodyEl = this.composer.S.cached('reply_msg_successful').find('div.replied_body');
-    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.textInput.extractAsText('input_text', 'SKIP-ADDONS')));
+    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.input.extract('text', 'input_text', 'SKIP-ADDONS')));
     const t = new Date();
     const time = ((t.getHours() !== 12) ?
       (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
@@ -233,18 +215,7 @@ export class ComposerSendBtn extends ComposerComponent {
         return this.composer.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
-    this.composer.windowSize.resizeComposeBox();
-  }
-
-  private collectNewMsgData = (): NewMsgData => {
-    const recipientElements = this.composer.contacts.getRecipients();
-    const recipients = this.mapRecipients(recipientElements);
-    const subject = this.urlParams.subject || ($('#input_subject').val() === undefined ? '' : String($('#input_subject').val())); // replies have subject in url params
-    const plaintext = this.composer.textInput.extractAsText('input_text');
-    const password = this.composer.S.cached('input_password').val();
-    const pwd = password ? { answer: String(password) } : undefined;
-    const sender = this.composer.sender.getSender();
-    return { recipients, subject, plaintext, pwd, sender };
+    this.composer.size.resizeComposeBox();
   }
 
 }

@@ -23,8 +23,8 @@ export class ComposerRender extends ComposerComponent {
     this.composer.S.cached('icon_help').click(Ui.event.handle(() => this.composer.app.renderHelpDialog(), this.composer.errs.handlers(`render help dialog`)));
     this.composer.S.cached('body').bind({ drop: Ui.event.stop(), dragover: Ui.event.stop() }); // prevents files dropped out of the intended drop area to screw up the page
     this.composer.draft.initActions().catch(Catch.reportErr);
-    this.composer.windowSize.initActions();
-    this.composer.textInput.initActions();
+    this.composer.size.initActions();
+    this.composer.input.initActions();
     await this.composer.sender.checkEmailAliases();
   }
 
@@ -79,7 +79,7 @@ export class ComposerRender extends ComposerComponent {
       }
     }
     if (this.urlParams.isReplyBox) {
-      $(document).ready(() => this.composer.windowSize.resizeComposeBox());
+      $(document).ready(() => this.composer.size.resizeComposeBox());
     } else {
       this.composer.S.cached('body').css('overflow', 'hidden'); // do not enable this for replies or automatic resize won't work
       await this.renderComposeTable();
@@ -122,7 +122,7 @@ export class ComposerRender extends ComposerComponent {
       $('.auth_settings').click(() => BrowserMsg.send.bg.settings({ acctEmail: this.urlParams.acctEmail, page: '/chrome/settings/modules/auth_denied.htm' }));
       $('.new_message_button').click(() => BrowserMsg.send.openNewMessage(this.urlParams.parentTabId));
     }
-    this.composer.windowSize.resizeComposeBox();
+    this.composer.size.resizeComposeBox();
     if (method === 'forward') {
       this.composer.S.cached('recipients_placeholder').click();
     }
@@ -144,7 +144,7 @@ export class ComposerRender extends ComposerComponent {
     this.composer.errs.debugFocusEvents('input_text', 'send_btn', 'input_to', 'input_subject');
     this.composer.S.cached('compose_table').css('display', 'table');
     this.composer.S.cached('body').keydown(Ui.event.handle((_, e) => {
-      if (this.composer.windowSize.composeWindowIsMinimized) {
+      if (this.composer.size.composeWindowIsMinimized) {
         return e.preventDefault();
       }
       Ui.escape(() => !this.urlParams.isReplyBox && $('.close_new_message').click())(e);
@@ -220,7 +220,7 @@ export class ComposerRender extends ComposerComponent {
       }
       const footer = this.composer.sender.getFooter();
       await this.composer.quote.addTripleDotQuoteExpandBtn(undefined, undefined, footer);
-      this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+      this.composer.size.setInputTextHeightManuallyIfNeeded();
     }
     // Firefox needs an iframe to be focused before focusing its content
     BrowserMsg.send.focusFrame(this.urlParams.parentTabId, { frameId: this.urlParams.frameId });
@@ -228,7 +228,7 @@ export class ComposerRender extends ComposerComponent {
       this.composer.S.cached(this.urlParams.isReplyBox && this.urlParams.to.length ? 'input_text' : 'input_to').focus();
       // document.getElementById('input_text')!.focus(); // #input_text is in the template
     }, 100);
-    this.composer.windowSize.onComposeTableRender();
+    this.composer.size.onComposeTableRender();
   }
 
   private loadRecipientsThenSetTestStateReady = async () => {

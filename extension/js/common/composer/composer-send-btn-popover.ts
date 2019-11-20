@@ -24,7 +24,7 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     };
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
-      if (popoverOpt === 'richText') {
+      if (popoverOpt === 'richText' && this.urlParams.acctEmail !== 'flowcrypt.compatibility@gmail.com') {
         continue; // richText not supported yet. Only used for local dev
       }
       const item = popoverItems[popoverOpt];

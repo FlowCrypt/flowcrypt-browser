@@ -60,7 +60,7 @@ export class ComposerSender extends ComposerComponent {
         this.composer.quote.replaceFooter(this.getFooter());
       });
       if (this.urlParams.isReplyBox) {
-        this.composer.windowSize.resizeComposeBox();
+        this.composer.size.resizeComposeBox();
       }
     }
   }

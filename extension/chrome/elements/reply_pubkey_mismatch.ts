@@ -108,13 +108,13 @@ Catch.try(async () => {
       Xss.sanitizeAppend('.email_preview', Ui.e('span', { class: 'email_address display_when_sign', text: recipient }));
     }
     $('.pubkey_file_name').text(att.name);
-    composer.windowSize.resizeComposeBox();
+    composer.size.resizeComposeBox();
     BrowserMsg.send.scrollToElement(parentTabId, { selector: `#${frameId}` });
     $('#input_text').focus();
 
     Catch.setHandledTimeout(() => {
-      $(window).resize(Ui.event.prevent('veryslowspree', () => composer.windowSize.resizeComposeBox()));
-      $('#input_text').keyup(Ui.event.prevent('slowspree', () => composer.windowSize.resizeComposeBox()));
+      $(window).resize(Ui.event.prevent('veryslowspree', () => composer.size.resizeComposeBox()));
+      $('#input_text').keyup(Ui.event.prevent('slowspree', () => composer.size.resizeComposeBox()));
     }, 1000);
   };
 

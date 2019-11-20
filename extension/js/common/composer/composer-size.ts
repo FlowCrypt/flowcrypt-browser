@@ -7,7 +7,7 @@ import { BrowserMsg } from '../extension.js';
 import { Catch } from '../platform/catch.js';
 import { Ui } from '../browser.js';
 
-export class ComposerWindowSize extends ComposerComponent {
+export class ComposerSize extends ComposerComponent {
 
   public composeWindowIsMinimized = false;
 

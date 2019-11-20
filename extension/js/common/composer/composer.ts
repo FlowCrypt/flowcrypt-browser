@@ -10,11 +10,11 @@ import { ComposerQuote } from './composer-quote.js';
 import { ComposerContacts } from './composer-contacts.js';
 import { ComposerSendBtn } from './composer-send-btn.js';
 import { ComposerPwdOrPubkeyContainer } from './composer-pwd-or-pubkey-container.js';
-import { ComposerWindowSize } from './composer-window-size.js';
+import { ComposerSize } from './composer-size.js';
 import { ComposerSender } from './composer-sender.js';
 import { ComposerAtts } from './composer-atts.js';
 import { ComposerErrs } from './composer-errs.js';
-import { ComposerTextInput } from './composer-text-input.js';
+import { ComposerInput } from './composer-input.js';
 import { ComposerRender } from './composer-render.js';
 import { Catch } from '../platform/catch.js';
 
@@ -69,11 +69,11 @@ export class Composer {
   public draft: ComposerDraft;
   public contacts: ComposerContacts;
   public pwdOrPubkeyContainer: ComposerPwdOrPubkeyContainer;
-  public windowSize: ComposerWindowSize;
+  public size: ComposerSize;
   public sender: ComposerSender;
   public atts: ComposerAtts;
   public errs: ComposerErrs;
-  public textInput: ComposerTextInput;
+  public input: ComposerInput;
   public render: ComposerRender;
 
   public app: ComposerAppFunctionsInterface;
@@ -90,11 +90,11 @@ export class Composer {
     this.contacts = new ComposerContacts(this);
     this.sendBtn = new ComposerSendBtn(this);
     this.pwdOrPubkeyContainer = new ComposerPwdOrPubkeyContainer(this);
-    this.windowSize = new ComposerWindowSize(this);
+    this.size = new ComposerSize(this);
     this.sender = new ComposerSender(this);
     this.atts = new ComposerAtts(this);
     this.errs = new ComposerErrs(this);
-    this.textInput = new ComposerTextInput(this);
+    this.input = new ComposerInput(this);
     this.render = new ComposerRender(this);
     const scopes = this.app.getScopes();
     this.canReadEmails = scopes.read || scopes.modify;

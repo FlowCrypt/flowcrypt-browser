@@ -42,12 +42,12 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     }
     if (this.urlParams.isReplyBox) {
       if (!wasPreviouslyVisible && this.composer.S.cached('password_or_pubkey').css('display') === 'table-row') {
-        this.composer.windowSize.resizeComposeBox((this.composer.S.cached('password_or_pubkey').first().height() || 66) + 20);
+        this.composer.size.resizeComposeBox((this.composer.S.cached('password_or_pubkey').first().height() || 66) + 20);
       } else {
-        this.composer.windowSize.resizeComposeBox();
+        this.composer.size.resizeComposeBox();
       }
     }
-    this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+    this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
   private showMsgPwdUiAndColorBtn = () => {
@@ -65,7 +65,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
     } else {
       this.composer.S.cached('add_intro').css('display', 'block');
     }
-    this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+    this.composer.size.setInputTextHeightManuallyIfNeeded();
     if (!this.rmPwdStrengthValidationElements) {
       const { removeValidationElements } = this.keyImportUI.renderPassPhraseStrengthValidationInput($("#input_password"), undefined, 'pwd');
       this.rmPwdStrengthValidationElements = removeValidationElements;
@@ -82,7 +82,7 @@ export class ComposerPwdOrPubkeyContainer extends ComposerComponent {
       this.rmPwdStrengthValidationElements();
       this.rmPwdStrengthValidationElements = undefined;
     }
-    this.composer.windowSize.setInputTextHeightManuallyIfNeeded();
+    this.composer.size.setInputTextHeightManuallyIfNeeded();
   }
 
 }
