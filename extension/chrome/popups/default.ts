@@ -74,6 +74,7 @@ Catch.try(async () => {
       $('body').text('Extension not ready.\nRestarting the browser should help.\nWrite human@flowcrypt.com if you need help.').css({ 'white-space': 'pre', size: 16, padding: 6 });
       return;
     } else {
+      $('body').text(`Error: ${String(e)}`).css({ 'white-space': 'pre', size: 16, padding: 6 });
       throw e;
     }
   }

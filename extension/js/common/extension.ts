@@ -256,7 +256,9 @@ export class BrowserMsg {
           if (typeof destString === 'undefined' && typeof r === 'undefined') {
             if (lastError === 'The object could not be cloned.') {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
-            } else if (lastError === 'Could not establish connection. Receiving end does not exist.') {
+            } else if (lastError === 'Could not establish connection. Receiving end does not exist.' || lastError === 'The message port closed before a response was received.') {
+              // "The message port closed before a response was received." could also happen for otherwise working extension, if bg script
+              //    did not return `true` (indicating async response). That would be our own coding error in BrowserMsg.
               e = new BgNotReadyError(`BgNotReadyError: BrowserMsg.sendAwait(${name}) failed with lastError: ${lastError}`);
             } else {
               e = new Error(`BrowserMsg.sendAwait(${name}) failed with unknown lastError: ${lastError}`);
