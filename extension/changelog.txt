@@ -1,6 +1,6 @@
 <div>
 
-version 7.1.0 on Nov 21, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/363?closed=1" target="_blank">Experimental PGP/MIME compose</a>
+version 7.1.2 on Nov 21, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/363?closed=1" target="_blank">Experimental PGP/MIME compose</a>
 
 version 7.0.9 on Nov 18, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/362?closed=1" target="_blank">End session button bugfix</a>
 
