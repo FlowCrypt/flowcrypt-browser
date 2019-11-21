@@ -207,7 +207,7 @@ export class GmailElementReplacer implements WebmailElementReplacer {
               } else if (Api.err.isNetErr(e)) {
                 $(newPgpAtts).find('.attachment_loader').text('Network error');
               } else {
-                if (!Api.err.isServerErr(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isNotFound(e)) {
+                if (!Api.err.isServerErr(e) && !Api.err.isMailOrAcctDisabledOrPolicy(e) && !Api.err.isNotFound(e)) {
                   Catch.reportErr(e);
                 }
                 $(newPgpAtts).find('.attachment_loader').text('Failed to load');

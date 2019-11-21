@@ -325,7 +325,7 @@ export class Settings {
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         await Ui.modal.error('Could not complete due to network error. Please try again.');
-      } else if (Api.err.isMailOrAcctDisabled(e)) {
+      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
         await Ui.modal.error('Your Google account or Gmail service is disabled. Please check your Google account settings.');
       } else {
         Catch.reportErr(e);

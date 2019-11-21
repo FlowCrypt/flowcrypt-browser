@@ -131,8 +131,8 @@ export class Api {
 
   public static err = {
     eli5: (e: any) => {
-      if (Api.err.isMailOrAcctDisabled(e)) {
-        return 'Email account is disabled';
+      if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+        return 'Email account is disabled, or access has been blocked by admin policy. Contact your email administrator.';
       } else if (Api.err.isAuthPopupNeeded(e)) {
         return 'Browser needs to be re-connected to email account before proceeding.';
       } else if (Api.err.isInsufficientPermission(e)) {
@@ -218,9 +218,14 @@ export class Api {
       }
       return false;
     },
-    isMailOrAcctDisabled: (e: any): boolean => {
+    isMailOrAcctDisabledOrPolicy: (e: any): boolean => {
       if (Api.err.isBadReq(e) && typeof e.responseText === 'string') {
-        return e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1;
+        if (e.responseText.indexOf('Mail service not enabled') !== -1 || e.responseText.indexOf('Account has been deleted') !== -1) {
+          return true;
+        }
+        if (e.responseText.indexOf('This application is currently blocked') !== -1 || e.responseText.indexOf('account data is restricted by policies') !== -1) {
+          return true; // could correctly be a separate type, but it's quite rare
+        }
       }
       return false;
     },
@@ -244,7 +249,7 @@ export class Api {
       return false;
     },
     isSignificant: (e: any) => {
-      return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabled(e) && !Api.err.isAuthErr(e)
+      return !Api.err.isNetErr(e) && !Api.err.isServerErr(e) && !Api.err.isNotFound(e) && !Api.err.isMailOrAcctDisabledOrPolicy(e) && !Api.err.isAuthErr(e)
         && !Api.err.isBlockedByProxy(e);
     },
     isInPrivateMode: (e: any) => {

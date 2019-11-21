@@ -211,8 +211,8 @@ Catch.try(async () => {
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         await Ui.modal.error('There was a network error, please try again.');
-      } else if (Api.err.isMailOrAcctDisabled(e)) {
-        await Ui.modal.error(Lang.account.googleAcctDisabled);
+      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+        await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
       } else if (Api.err.isAuthPopupNeeded(e)) {
         await Ui.modal.warning('New authorization needed. Please try Additional Settings -> Experimental -> Force Google Account email change');
       } else {
@@ -247,8 +247,8 @@ Catch.try(async () => {
       } else if (Api.err.isAuthErr(e)) {
         $('#status-row #status_google').text(`g:?:auth`).addClass('bad').attr('title', 'Auth error when checking Google Account, click to resolve.')
           .off().click(Ui.event.handle(() => Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId, acctEmail)));
-      } else if (Api.err.isMailOrAcctDisabled(e)) {
-        await Ui.modal.error(Lang.account.googleAcctDisabled);
+      } else if (Api.err.isMailOrAcctDisabledOrPolicy(e)) {
+        await Ui.modal.error(Lang.account.googleAcctDisabledOrPolicy);
       } else if (Api.err.isNetErr(e)) {
         $('#status-row #status_google').text(`g:?:offline`);
       } else {
