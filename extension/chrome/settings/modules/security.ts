@@ -28,6 +28,7 @@ Catch.try(async () => {
   }
 
   const storage = await Store.getAcct(acctEmail, ['hide_message_password', 'outgoing_language']);
+  const authInfo = await Store.authInfo(acctEmail);
 
   if (embedded) {
     $('.change_passhrase_container, .title_container').css('display', 'none');
@@ -37,7 +38,7 @@ Catch.try(async () => {
   const onDefaultExpireUserChange = async () => {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     $('.default_message_expire').css('display', 'none');
-    await Backend.accountUpdate({ default_message_expire: Number($('.default_message_expire').val()) });
+    await Backend.accountUpdate(authInfo, { default_message_expire: Number($('.default_message_expire').val()) });
     window.location.reload();
   };
 
@@ -99,18 +100,17 @@ Catch.try(async () => {
 
   $('.password_message_language').change(Ui.event.handle(onMsgLanguageUserChange));
 
-  const subscription = await Store.subscription();
+  const subscription = await Store.subscription(acctEmail);
   if (subscription.active) {
     Xss.sanitizeRender('.select_loader_container', Ui.spinner('green'));
     try {
-      const response = await Backend.accountUpdate();
+      const response = await Backend.accountUpdate(authInfo);
       $('.select_loader_container').text('');
       $('.default_message_expire').val(Number(response.result.default_message_expire).toString()).prop('disabled', false).css('display', 'inline-block');
       $('.default_message_expire').change(Ui.event.handle(onDefaultExpireUserChange));
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
-        const showAuthErr = () => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', { isAuthErr: true });
-        Xss.sanitizeRender('.expiration_container', '(unknown: <a href="#">verify your device</a>)').find('a').click(Ui.event.handle(showAuthErr));
+        Settings.offerToLoginWithPopupShowModalOnErr(acctEmail, () => window.location.reload());
       } else if (Api.err.isNetErr(e)) {
         Xss.sanitizeRender('.expiration_container', '(network error: <a href="#">retry</a>)').find('a').click(() => window.location.reload()); // safe source
       } else {

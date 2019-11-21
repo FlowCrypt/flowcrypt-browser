@@ -9,7 +9,7 @@ import { Att } from '../../js/common/core/att.js';
 import { Ui, Env, Browser } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Lang } from '../../js/common/lang.js';
-import { Api } from '../../js/common/api/api.js';
+import { Api, AuthError } from '../../js/common/api/api.js';
 import { VerifyRes, DecryptErrTypes, FormatError, PgpMsg, Pgp } from '../../js/common/core/pgp.js';
 import { Mime, MsgBlock } from '../../js/common/core/mime.js';
 import { Google, GmailResponseFormat } from '../../js/common/api/google.js';
@@ -18,6 +18,7 @@ import { BackendRes, Backend } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver } from '../../js/common/api/keyserver.js';
+import { Settings } from '../../js/common/settings.js';
 
 Catch.try(async () => {
 
@@ -315,7 +316,7 @@ Catch.try(async () => {
 
   const renderMsgExpirationRenewOptions = async (target: HTMLElement) => {
     const parent = $(target).parent();
-    const subscription = await Store.subscription();
+    const subscription = await Store.subscription(acctEmail);
     if (subscription.level && subscription.active) {
       const btns = `<a href="#7" class="do_extend">+7 days</a> <a href="#30" class="do_extend">+1 month</a> <a href="#365" class="do_extend">+1 year</a>`;
       Xss.sanitizeRender(parent, `<div style="font-family: monospace;">Extend message expiration: ${btns}</div>`);
@@ -335,7 +336,11 @@ Catch.try(async () => {
     const nDays = Number($(self).attr('href')!.replace('#', ''));
     Xss.sanitizeRender($(self).parent(), `Updating..${Ui.spinner('green')}`);
     try {
-      const r = await Backend.messageExpiration(adminCodes, nDays);
+      const fcAuth = await Store.authInfo(acctEmail);
+      if (!fcAuth) {
+        throw new AuthError();
+      }
+      const r = await Backend.messageExpiration(fcAuth, adminCodes, nDays);
       if (r.updated) { // todo - make backend return http error code when not updated, and skip this if/else
         window.location.reload();
       } else {
@@ -343,8 +348,7 @@ Catch.try(async () => {
       }
     } catch (e) {
       if (Api.err.isAuthErr(e)) {
-        await Ui.modal.warning('Your FlowCrypt account information is outdated, please review your account settings.');
-        BrowserMsg.send.subscribeDialog(parentTabId, { isAuthErr: true });
+        Settings.offerToLoginWithPopupShowModalOnErr(acctEmail);
       } else {
         Catch.report('error when extending message expiration', e);
       }

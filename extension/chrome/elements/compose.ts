@@ -258,7 +258,7 @@ Catch.try(async () => {
     storageGetAddressesKeyserver: () => storage.addresses_keyserver || [],
     storageGetAddresses,
     storageGetHideMsgPassword: () => !!storage.hide_message_password,
-    storageGetSubscription: () => Store.subscription(),
+    storageGetSubscription: () => Store.subscription(acctEmail),
     storageGetKey: async (acctEmail: string, senderEmail: string): Promise<KeyInfo> => {
       const keys = await Store.keysGet(acctEmail);
       let result = await chooseMyPublicKeyBySenderEmail(keys, senderEmail);

@@ -3,12 +3,13 @@
 'use strict';
 
 import { Catch } from '../../../js/common/platform/catch.js';
-import { Store } from '../../../js/common/platform/store.js';
+import { Store, Subscription } from '../../../js/common/platform/store.js';
 import { Ui, Env } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Api } from '../../../js/common/api/api.js';
 
 Catch.try(async () => {
 
@@ -18,11 +19,20 @@ Catch.try(async () => {
 
   Xss.sanitizeRender('.loading', Ui.spinner('green', 'large_spinner'));
 
-  await Backend.accountCheckSync();
-  const authInfo = await Store.authInfo();
-  const subscription = await Store.subscription();
+  const authInfo = await Store.authInfo(acctEmail);
+  let subscription = await Store.subscription(acctEmail);
+  try {
+    const r = await Backend.getSubscriptionWithoutLogin(acctEmail);
+    subscription = new Subscription(r.subscription);
+    await Backend.accountGet(authInfo); // here to test auth
+  } catch (e) {
+    if (Api.err.isAuthErr(e) && subscription.level) {
+      Settings.offerToLoginWithPopupShowModalOnErr(acctEmail, () => window.location.reload());
+      return;
+    }
+  }
 
-  $('.email').text(authInfo.acctEmail || 'UNKNOWN!');
+  $('.email').text(authInfo.account);
   $('.level').text('advanced');
   $('.expire').text(subscription.expire ? subscription.expire.split(' ')[0] : 'lifetime');
   if (subscription.method === 'stripe') {

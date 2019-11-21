@@ -7,7 +7,7 @@ import { Catch } from '../common/platform/catch.js';
 import { Store, GlobalStore } from '../common/platform/store.js';
 import { BrowserMsg, Bm } from '../common/extension.js';
 import { injectFcIntoWebmail } from './inject.js';
-import { migrateGlobal, scheduleFcSubscriptionLevelCheck } from './migrations.js';
+import { migrateGlobal } from './migrations.js';
 import { GoogleAuth } from '../common/api/google.js';
 import { BgUtils } from './bgutils.js';
 import { BgHandlers } from './bg_handlers.js';
@@ -19,11 +19,6 @@ declare const openpgp: typeof OpenPGP;
 console.info('background_process.js starting');
 
 openpgp.initWorker({ path: '/lib/openpgp.worker.js' });
-
-let backgroundProcessStartReason = 'browser_start';
-chrome.runtime.onInstalled.addListener(event => {
-  backgroundProcessStartReason = event.reason;
-});
 
 (async () => {
 
@@ -80,7 +75,6 @@ chrome.runtime.onInstalled.addListener(event => {
 
   await BgHandlers.updateUninstallUrl({}, {});
   injectFcIntoWebmail();
-  scheduleFcSubscriptionLevelCheck(backgroundProcessStartReason);
 
   if (storage.errors && storage.errors.length && storage.errors.length > 100) { // todo - ideally we should be trimming it to show the last 100
     await Store.removeGlobal(['errors']);

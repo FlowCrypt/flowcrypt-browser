@@ -6,80 +6,61 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
 import { Ui, Env } from '../../js/common/browser.js';
-import { FcAcct, CheckVerificationEmail } from '../../js/common/account.js';
 import { Lang } from '../../js/common/lang.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
-import { Backend } from '../../js/common/api/backend.js';
+import { Backend, ProductName, Product } from '../../js/common/api/backend.js';
 import { Assert } from '../../js/common/assert.js';
 import { XssSafeFactory } from '../../js/common/xss_safe_factory.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Settings } from '../../js/common/settings.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'placement', 'isAuthErr', 'parentTabId']);
-  let acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
+  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'placement', 'parentTabId']);
+  const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const placement = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'placement', ['settings', 'settings_compose', 'default', 'dialog', 'gmail', 'embedded', 'compose', undefined]);
-  const isAuthErr = uncheckedUrlParams.isAuthErr === true;
 
-  const authInfo = await Store.authInfo();
-  if (authInfo.acctEmail) {
-    acctEmail = authInfo.acctEmail; // todo - allow user to select and confirm email address
-  }
-  let origBtnContent: string;
-  let origBtnSel: JQuery<HTMLElement>;
+  const authInfo = await Store.authInfo(acctEmail);
 
-  const handleErrRes = (e: any) => {
-    const renderErr = (msg: string, e?: any) => {
-      msg = Xss.escape(msg);
-      const debug = e ? `<pre>${Xss.escape(JSON.stringify(e, undefined, 2))}</pre>` : '';
-      Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
-    };
-    if (Api.err.isNetErr(e)) {
-      renderErr('network error');
-    } else if (Api.err.isAuthErr(e)) {
-      renderErr('auth error', e);
-    } else if (e instanceof CheckVerificationEmail) {
-      $('.action_get_trial, .action_add_device').css('display', 'none');
-      $('.action_close').text('ok');
-      renderStatusText(e.message);
-      btnRestore();
-    } else {
-      renderErr('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);
-      Catch.reportErr(e);
-    }
+  const PRODUCTS: { [productName in ProductName]: Product } = {
+    null: { id: null, method: null, name: null, level: null }, // tslint:disable-line:no-null-keyword
+    trial: { id: 'free_month', method: 'trial', name: 'trial', level: 'pro' },
+    advancedMonthly: { id: 'cu-adv-month', method: 'stripe', name: 'advanced_monthly', level: 'pro' },
   };
 
   const stripeCcEnteredHandler: Bm.AsyncResponselessHandler = async ({ token }: Bm.StripeResult) => {
     $('.stripe_checkout').text('').css('display', 'none');
+    await subscribeAndHandleResult(PRODUCTS.advancedMonthly, token);
+  };
+
+  const subscribeAndHandleResult = async (chosenProduct: Product, source: string | undefined) => {
     try {
-      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.advancedMonthly, token);
-      handleSuccessfulUpgrade();
+      const response = await Backend.accountSubscribe(authInfo, chosenProduct.id!, chosenProduct.method!, source);
+      if (response.subscription.level === chosenProduct.level && response.subscription.method === chosenProduct.method) {
+        await Ui.modal.info('Successfully upgraded to FlowCrypt Advanced.');
+        BrowserMsg.send.reload(parentTabId, {});
+        closeDialog();
+      }
+      throw new Error('Something went wrong when upgrading (values don\'t match), please email human@flowcrypt.com to get this resolved.');
     } catch (e) {
-      handleErrRes(e);
+      const renderErr = (msg: string, e?: any) => {
+        msg = Xss.escape(msg);
+        const debug = e ? `<pre>${Xss.escape(JSON.stringify(e, undefined, 2))}</pre>` : '';
+        Xss.sanitizeRender('#content', `<br><br><br><div class="line">Could not complete action: ${msg}. ${Ui.retryLink()}</div><br><br>${debug}`);
+      };
+      if (Api.err.isNetErr(e)) {
+        renderErr('network error');
+      } else if (Api.err.isAuthErr(e)) {
+        renderErr('auth error', e);
+      } else {
+        renderErr('unknown error. Please write us at human@flowcrypt.com to get this resolved', e);
+        Catch.reportErr(e);
+      }
     }
-  };
-
-  const renderStatusText = (content: string) => {
-    $('.status').text(content);
-  };
-
-  const btnSpin = (element: HTMLElement) => {
-    origBtnContent = $(element).html();
-    origBtnSel = $(element);
-    Xss.sanitizeRender(element, Ui.spinner('white'));
-  };
-
-  const btnRestore = () => {
-    Xss.sanitizeRender(origBtnSel, origBtnContent);
-  };
-
-  const handleSuccessfulUpgrade = () => {
-    BrowserMsg.send.notificationShow(parentTabId, { notification: 'Successfully upgraded to FlowCrypt Advanced.' });
-    closeDialog();
   };
 
   const closeDialog = () => {
@@ -94,11 +75,12 @@ Catch.try(async () => {
   };
 
   try {
-    await Backend.accountCheckSync();
+    await Backend.accountGet(authInfo);
+    await Backend.getSubscriptionWithoutLogin(acctEmail);
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
-      // todo - handle auth error - add device
-      Xss.sanitizeRender('#content', `Failed to load - unknown device. ${Ui.retryLink()}`);
+      Xss.sanitizeRender('#content', `Not logged in. ${Ui.retryLink()}`);
+      Settings.offerToLoginWithPopupShowModalOnErr(acctEmail, () => window.location.reload());
     } else if (Api.err.isNetErr(e)) {
       Xss.sanitizeRender('#content', `Failed to load due to internet connection. ${Ui.retryLink()}`);
     } else {
@@ -107,10 +89,7 @@ Catch.try(async () => {
     }
   }
 
-  const subscription = await Store.subscription();
-  const scopes = await Store.getScopes(acctEmail);
-  const canReadEmail = scopes.read || scopes.modify;
-  const fcAccount = new FcAcct({ renderStatusText }, canReadEmail);
+  const subscription = await Store.subscription(acctEmail); // updated in getSubscriptionWithoutLogin
 
   if (placement === 'settings') {
     $('#content').removeClass('dialog').css({ 'margin-top': 0, 'margin-bottom': 30 });
@@ -118,11 +97,7 @@ Catch.try(async () => {
   } else {
     $('body').css('overflow', 'hidden');
   }
-  if (!isAuthErr) {
-    $('.list_table').css('display', 'block');
-  } else {
-    $('.action_get_trial').addClass('action_add_device').removeClass('action_get_trial').attr('data-test', 'action-add-device').text('Add Device');
-  }
+  $('.list_table').css('display', 'block');
   $('#content').css('display', 'block');
 
   $('.action_show_stripe').click(Ui.event.handle(() => {
@@ -136,24 +111,7 @@ Catch.try(async () => {
   $('.action_close').click(Ui.event.handle(closeDialog));
 
   $('.action_get_trial').click(Ui.event.prevent('parallel', async (target, done) => {
-    btnSpin(target);
-    try {
-      await fcAccount.subscribe(acctEmail, fcAccount.PRODUCTS.trial, undefined);
-      handleSuccessfulUpgrade();
-    } catch (e) {
-      handleErrRes(e);
-    }
-    done();
-  }));
-
-  $('.action_add_device').click(Ui.event.prevent('parallel', async (target, done) => {
-    btnSpin(target);
-    try {
-      await fcAccount.registerNewDevice(acctEmail);
-      closeDialog();
-    } catch (e) {
-      handleErrRes(e);
-    }
+    await subscribeAndHandleResult(PRODUCTS.trial, undefined);
     done();
   }));
 
@@ -173,35 +131,15 @@ Catch.try(async () => {
     }
   } else if (subscription.active && subscription.method === 'trial') {
     Xss.sanitizeRender('.status', 'After the trial, your account will automatically switch to Free Forever.<br/><br/>You can subscribe now to stay on FlowCrypt Advanced. It\'s $5 a month.');
-  } else {
-    // todo - upgrade to business
   }
   if (subscription.active) {
-    if (!isAuthErr) {
-      if (subscription.method === 'trial') {
-        $('.list_table').css('display', 'none');
-        $('.action_get_trial').css('display', 'none');
-        $('.action_show_stripe').removeClass('gray').addClass('green');
-      } else {
-        Xss.sanitizeRender('#content', `<div class="line">${Lang.account.alreadyUpgraded}</div><div class="line"><div class="button green long action_close">close</div></div>`);
-        $('.action_close').click(Ui.event.handle(() => closeDialog()));
-      }
+    if (subscription.method === 'trial') {
+      $('.list_table').css('display', 'none');
+      $('.action_get_trial').css('display', 'none');
+      $('.action_show_stripe').removeClass('gray').addClass('green');
     } else {
-      $('h1').text('New Device');
-      $('.action_show_stripe, .action_show_group').css('display', 'none');
-      $('.status').text(`This browser or device is not registered on your FlowCrypt Account (${acctEmail}).`);
-      $('.action_add_device, .action_close').addClass('long');
-      // try API call auth in case it got fixed meanwhile
-      try {
-        await Backend.accountUpdate();
-        $('.status').text(`Successfully verified your new device for your FlowCrypt Account (${acctEmail}).`);
-        $('.action_add_device').css('display', 'none');
-        $('.action_close').removeClass('gray').addClass('green').text('ok');
-      } catch (e) {
-        if (!Api.err.isAuthErr(e) && !Api.err.isNetErr(e)) {
-          Catch.reportErr(e);
-        }
-      }
+      Xss.sanitizeRender('#content', `<div class="line">${Lang.account.alreadyUpgraded}</div><div class="line"><div class="button green long action_close">close</div></div>`);
+      $('.action_close').click(Ui.event.handle(() => closeDialog()));
     }
   }
 

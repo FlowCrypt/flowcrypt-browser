@@ -10,17 +10,17 @@ import { Google } from '../../api/google.js';
 import { Catch } from '../../platform/catch.js';
 import { SendableMsgBody, Mime } from '../../core/mime.js';
 import { Buf } from '../../core/buf.js';
-import { Backend, BackendRes, AwsS3UploadItem } from '../../api/backend.js';
+import { Backend, BackendRes, AwsS3UploadItem, FcUuidAuth } from '../../api/backend.js';
 import { Store, Subscription } from '../../platform/store.js';
 import { Value, Str } from '../../core/common.js';
 import { Ui } from '../../browser.js';
-import { BrowserMsg } from '../../extension.js';
 import { Api } from '../../api/api.js';
 import { Att } from '../../core/att.js';
 import { Xss } from '../../platform/xss.js';
 import { Lang } from '../../lang.js';
 import { ComposerResetBtnTrigger, ComposerUserError } from '../composer-errs.js';
 import { BaseMailFormatter, MailFormatterInterface } from './base-mail-formatter.js';
+import { Settings } from '../../settings.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -39,7 +39,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     const subscription = await this.composer.app.storageGetSubscription();
     const pubkeysOnly = this.armoredPubkeys.map(p => p.pubkey);
     if (!this.richText) { // simple text
-      await this.addReplyTokenToMsgBodyIfNeeded(newMsg, subscription);
+      const authInfo = subscription.active ? await Store.authInfo(this.acctEmail) : undefined;
+      await this.addReplyTokenToMsgBodyIfNeeded(authInfo, newMsg, subscription);
       const atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
       if (newMsg.pwd && atts.length) { // these will be password encrypted attachments
         this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
@@ -49,7 +50,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       const encryptedBody = { 'text/plain': encrypted.data };
       await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
       if (newMsg.pwd) {
-        await this.fmtPwdProtectedEmailAndUploadAtts(encryptedBody, pubkeysOnly, atts, subscription);
+        await this.fmtPwdProtectedEmailAndUploadAtts(authInfo, encryptedBody, pubkeysOnly, atts, subscription);
       }
       return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.urlParams.threadId);
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
@@ -73,13 +74,13 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return await PgpMsg.encrypt({ pubkeys, signingPrv, pwd, data, armor: true, date: encryptAsOfDate }) as OpenPGP.EncryptArmorResult;
   }
 
-  private async addReplyTokenToMsgBodyIfNeeded(newMsgData: NewMsgData, subscription: Subscription): Promise<void> {
-    if (!newMsgData.pwd || !subscription.active) {
+  private async addReplyTokenToMsgBodyIfNeeded(authInfo: FcUuidAuth | undefined, newMsgData: NewMsgData, subscription: Subscription): Promise<void> {
+    if (!newMsgData.pwd || !subscription.active || !authInfo) {
       return;
     }
     const recipients = Array.prototype.concat.apply([], Object.values(newMsgData.recipients));
     try {
-      const response = await Backend.messageToken();
+      const response = await Backend.messageToken(authInfo);
       const infoDiv = Ui.e('div', {
         'style': 'display: none;',
         'class': 'cryptup_reply',
@@ -95,9 +96,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       return;
     } catch (msgTokenErr) {
       if (Api.err.isAuthErr(msgTokenErr)) {
-        if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-          BrowserMsg.send.subscribeDialog(this.composer.urlParams.parentTabId, { isAuthErr: true });
-        }
+        Settings.offerToLoginWithPopupShowModalOnErr(this.acctEmail);
         throw new ComposerResetBtnTrigger();
       } else if (Api.err.isStandardErr(msgTokenErr, 'subscription')) {
         return;
@@ -106,8 +105,8 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     }
   }
 
-  private async uploadAttsToFc(atts: Att[], subscription: Subscription): Promise<string[]> {
-    const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(atts, subscription.active ? 'uuid' : undefined);
+  private async uploadAttsToFc(authInfo: FcUuidAuth | undefined, atts: Att[], subscription: Subscription): Promise<string[]> {
+    const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(authInfo, atts);
     const items: AwsS3UploadItem[] = [];
     for (const i of pfRes.approvals.keys()) {
       items.push({ baseUrl: pfRes.approvals[i].base_url, fields: pfRes.approvals[i].fields, att: atts[i] });
@@ -176,10 +175,12 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private async fmtPwdProtectedEmailAndUploadAtts(encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], subscription: Subscription): Promise<void> {
+  private async fmtPwdProtectedEmailAndUploadAtts(
+    authInfo: FcUuidAuth | undefined, encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], subscription: Subscription
+  ): Promise<void> {
     // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
     // admin_code stays locally and helps the sender extend life of the message or delete it
-    const { short, admin_code } = await Backend.messageUpload(encryptedBody['text/plain']!, subscription.active ? 'uuid' : undefined);
+    const { short, admin_code } = await Backend.messageUpload(authInfo, encryptedBody['text/plain']!);
     const storage = await Store.getAcct(this.composer.urlParams.acctEmail, ['outgoing_language']);
     const lang = storage.outgoing_language || 'EN';
     const msgUrl = `${this.FC_WEB_URL}/${short}`;
@@ -203,7 +204,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
       atts.push(new Att({ data: Buf.fromUtfStr(encryptedBody['text/plain']!), name: 'encrypted.asc' }));
     }
-    const attAdminCodes = await this.uploadAttsToFc(atts, subscription);
+    const attAdminCodes = await this.uploadAttsToFc(authInfo, atts, subscription);
     await this.composer.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
     encryptedBody['text/plain'] = text.join('\n');
     encryptedBody['text/html'] = html.join('\n');

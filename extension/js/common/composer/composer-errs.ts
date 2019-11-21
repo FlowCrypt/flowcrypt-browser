@@ -10,6 +10,7 @@ import { Str } from '../core/common.js';
 import { Api } from '../api/api.js';
 import { SendBtnTexts } from './interfaces/composer-types.js';
 import { KeyInfo, Pwd } from '../core/pgp.js';
+import { Settings } from '../settings.js';
 
 export class ComposerUserError extends Error { }
 export class ComposerNotReadyError extends ComposerUserError { }
@@ -31,9 +32,7 @@ export class ComposerErrs extends ComposerComponent {
       network: async () => await Ui.modal.info(`Could not ${couldNotDoWhat} (network error). Please try again.`),
       authPopup: async () => BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail }),
       auth: async () => {
-        if (await Ui.modal.confirm(`Could not ${couldNotDoWhat}.\nYour FlowCrypt account information is outdated, please review your account settings.`)) {
-          BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
-        }
+        Settings.offerToLoginWithPopupShowModalOnErr(this.urlParams.acctEmail, undefined, `Could not ${couldNotDoWhat}.\n`);
       },
       other: async (e: any) => {
         if (e instanceof Error) {
@@ -72,9 +71,7 @@ export class ComposerErrs extends ComposerComponent {
       BrowserMsg.send.notificationShowAuthPopupNeeded(this.urlParams.parentTabId, { acctEmail: this.urlParams.acctEmail });
       await Ui.modal.error('Could not send message because FlowCrypt needs to be re-connected to google account.');
     } else if (Api.err.isAuthErr(e)) {
-      if (await Ui.modal.confirm('Your FlowCrypt account information is outdated, please review your account settings.')) {
-        BrowserMsg.send.subscribeDialog(this.urlParams.parentTabId, { isAuthErr: true });
-      }
+      Settings.offerToLoginWithPopupShowModalOnErr(this.urlParams.acctEmail);
     } else if (Api.err.isReqTooLarge(e)) {
       await Ui.modal.error(`Could not send: message or attachments too large.`);
     } else if (Api.err.isBadReq(e)) {

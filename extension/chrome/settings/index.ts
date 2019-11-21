@@ -122,7 +122,7 @@ Catch.try(async () => {
       const scopes = await Store.getScopes(acctEmail);
       if (storage.setup_done) {
         checkGoogleAcct().catch(Catch.reportErr);
-        checkFcAcctAndSubscriptionAndContactPage().catch(Catch.reportErr);
+        checkFcAcctAndSubscriptionAndContactPage(acctEmail).catch(Catch.reportErr);
         if (storage.picture) {
           $('img.main-profile-img').attr('src', storage.picture).on('error', Ui.event.handle(self => {
             $(self).off().attr('src', '/img/svgs/profile-icon.svg');
@@ -163,18 +163,18 @@ Catch.try(async () => {
     }).catch(e => Api.err.isSignificant(e) ? Catch.reportErr(e) : undefined);
   };
 
-  const checkFcAcctAndSubscriptionAndContactPage = async () => {
+  const checkFcAcctAndSubscriptionAndContactPage = async (acctEmail: string) => {
     const statusContainer = $('.public_profile_indicator_container');
     try {
-      await renderSubscriptionStatusHeader();
+      await renderSubscriptionStatusHeader(acctEmail);
     } catch (e) {
       Catch.reportErr(e);
     }
-    const authInfo = await Store.authInfo();
-    if (authInfo.acctEmail) { // have auth email set
+    const authInfo = await Store.authInfo(acctEmail);
+    if (authInfo.uuid) { // have auth email set
       try {
-        const response = await Backend.accountUpdate();
-        $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:ok`);
+        const response = await Backend.accountUpdate(authInfo);
+        $('#status-row #status_flowcrypt').text(`fc:ok`);
         if (response && response.result && response.result.alias) {
           statusContainer.find('.status-indicator-text').css('display', 'none');
           statusContainer.find('.status-indicator').addClass('active');
@@ -183,15 +183,15 @@ Catch.try(async () => {
         }
       } catch (e) {
         if (Api.err.isAuthErr(e)) {
-          const actionReauth = Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/elements/subscribe.htm', { isAuthErr: true }));
+          const actionReauth = Ui.event.handle(() => Settings.offerToLoginWithPopupShowModalOnErr(acctEmail));
           Xss.sanitizeRender(statusContainer, '<a class="bad" href="#">Auth Needed</a>').find('a').click(actionReauth);
-          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:auth`).addClass('bad').addClass('link').click(actionReauth);
+          $('#status-row #status_flowcrypt').text(`fc:auth`).addClass('bad').addClass('link').click(actionReauth);
         } else if (Api.err.isNetErr(e)) {
-          Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(checkFcAcctAndSubscriptionAndContactPage));
-          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:offline`);
+          Xss.sanitizeRender(statusContainer, '<a href="#">Network Error - Retry</a>').find('a').one('click', Ui.event.handle(() => checkFcAcctAndSubscriptionAndContactPage(acctEmail)));
+          $('#status-row #status_flowcrypt').text(`fc:offline`);
         } else {
           statusContainer.text('ecp error');
-          $('#status-row #status_flowcrypt').text(`fc:${authInfo.acctEmail}:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
+          $('#status-row #status_flowcrypt').text(`fc:error`).attr('title', `FlowCrypt Account Error: ${Xss.escape(String(e))}`);
           Catch.reportErr(e);
         }
       }
@@ -258,10 +258,10 @@ Catch.try(async () => {
     }
   };
 
-  const renderSubscriptionStatusHeader = async () => {
+  const renderSubscriptionStatusHeader = async (acctEmail: string) => {
     let liveness = '';
     try {
-      await Backend.accountCheckSync();
+      await Backend.getSubscriptionWithoutLogin(acctEmail);
       liveness = 'live';
     } catch (e) {
       if (!Api.err.isNetErr(e)) {
@@ -271,7 +271,7 @@ Catch.try(async () => {
         liveness = 'offline';
       }
     }
-    const subscription = await Store.subscription();
+    const subscription = await Store.subscription(acctEmail);
     $('#status-row #status_subscription').text(`s:${liveness}:${subscription.active ? 'active' : 'inactive'}-${subscription.method}:${subscription.expire}`);
     if (subscription.active) {
       const showAcct = () => Settings.renderSubPage(acctEmail, tabId, '/chrome/settings/modules/account.htm');
@@ -366,14 +366,6 @@ Catch.try(async () => {
   $('#status-row #status_google').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, 'modules/debug_api.htm', { which: 'google_account' })));
 
   $('#status-row #status_local_store').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, 'modules/debug_api.htm', { which: 'local_store' })));
-
-  // $('#status-row #status_flowcrypt').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {
-  //   which: 'flowcrypt_account' // not implemented in debug_api.ts yet
-  // })));
-
-  // $('#status-row #status_subscription').click(Ui.event.handle(() => Settings.render_sub_page(account_email!, tabId, '/chrome/settings/modules/debug_api.htm', {
-  //   which: 'flowcrypt_subscription' // not implemented in debug_api.ts yet
-  // })));
 
   const reload = (advanced = false) => {
     if (advanced) {
