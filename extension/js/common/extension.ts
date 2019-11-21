@@ -282,13 +282,27 @@ export class BrowserMsg {
         }
       } catch (e) {
         if (e instanceof Error && e.message === 'Extension context invalidated.') {
-          Ui.modal.warning(`Please reload the tab before continuing.\n\nError: ${e.message}`).catch(Catch.reportErr);
+          BrowserMsg.showFatalUserNotification('Restart browser to re-enable FlowCrypt');
         } else {
           throw e;
         }
       }
     }
   })
+
+  public static showFatalUserNotification(message: string) {
+    const div = document.createElement('div');
+    div.textContent = message;
+    div.style.position = 'fixed';
+    div.style.bottom = '0';
+    div.style.right = '0';
+    div.style.fontSize = '12px';
+    div.style.backgroundColor = '#31a217';
+    div.style.color = 'white';
+    div.style.padding = '1px 3px';
+    div.style.zIndex = '1000';
+    window.document.body.appendChild(div);
+  }
 
   public static tabId = async (): Promise<string | null | undefined> => {
     try {
