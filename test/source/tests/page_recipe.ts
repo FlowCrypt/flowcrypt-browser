@@ -9,18 +9,19 @@ import { EvaluateFn, ElementHandle } from 'puppeteer';
 import { totp as produce2faToken } from 'speakeasy';
 
 type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean };
+type ModalType = 'confirm' | 'error' | 'info' | 'warning';
 
 export class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
 
-  public static waitForModalAndRespond = async (controllable: Controllable, name: 'confirm' | 'error', { contentToCheck, clickOn }: ModalOpts) => {
-    const modalContainer = await controllable.waitAny(`.ui-modal-${name}`);
+  public static waitForModalAndRespond = async (controllable: Controllable, type: ModalType, { contentToCheck, clickOn }: ModalOpts) => {
+    const modalContainer = await controllable.waitAny(`.ui-modal-${type}`);
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('#swal2-content');
       expect(await PageRecipe.getElementPropertyJson(contentElement!, 'textContent')).to.include(contentToCheck);
     }
     if (clickOn) {
-      const button = await modalContainer.$(`button.ui-modal-${name}-${clickOn}`);
+      const button = await modalContainer.$(`button.ui-modal-${type}-${clickOn}`);
       await button!.click();
     }
   }
@@ -29,9 +30,9 @@ export class PageRecipe {
    * responding to modal triggers a new page to be open, eg oauth login page
    */
   public static waitForModalGetTriggeredPageAfterResponding = async (
-    cookieAcct: string, t: AvaContext, browser: BrowserHandle, controllable: ControllablePage, name: 'confirm' | 'error', modalOpts: ModalOpts
+    cookieAcct: string, t: AvaContext, browser: BrowserHandle, controllable: ControllablePage, type: ModalType, modalOpts: ModalOpts
   ): Promise<ControllablePage> => {
-    return await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(controllable, name, modalOpts), cookieAcct);
+    return await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(controllable, type, modalOpts), cookieAcct);
   }
 
 }

@@ -42,7 +42,6 @@ Catch.try(async () => {
       const response = await Backend.accountSubscribe(authInfo, chosenProduct.id!, chosenProduct.method!, source);
       if (response.subscription.level === chosenProduct.level && response.subscription.method === chosenProduct.method) {
         await Ui.modal.info('Successfully upgraded to FlowCrypt Advanced.');
-        BrowserMsg.send.reload(parentTabId, {});
         closeDialog();
       }
       throw new Error('Something went wrong when upgrading (values don\'t match), please email human@flowcrypt.com to get this resolved.');

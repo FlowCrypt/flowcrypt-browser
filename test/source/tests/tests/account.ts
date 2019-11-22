@@ -37,12 +37,10 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
         contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm'
       });
       await OauthPageRecipe.google(t, oauthPage, acct, 'login'); // should cause subscribePage to reload
-      const subscribePageReloaded = await browser.newPage(t, subscribePage.page.url()); // must force-reload also for puppeteer to continue working
       // get a trial
-      await subscribePageReloaded.waitAndClick('@action-get-trial', { delay: 1 });
+      await subscribePage.waitAndClick('@action-get-trial', { delay: 1 });
+      await PageRecipe.waitForModalAndRespond(subscribePage, 'info', { contentToCheck: 'Successfully upgraded to FlowCrypt Advanced', clickOn: 'confirm' });
       await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });
-      await gmailPage.waitAll('@webmail-notification');
-      expect(await gmailPage.read('@webmail-notification')).contains('Successfully upgraded to FlowCrypt Advanced');
       await subscribePage.waitForSelTestState('closed');
       await subscribePage.close();
       // verify can add large file now
