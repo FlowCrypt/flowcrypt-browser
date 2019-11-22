@@ -33,10 +33,12 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       await composePage.waitAndRespondToModal('confirm', 'confirm', 'The files are over 5 MB');
       // get a trial - log in first
       const subscribePage = await GmailPageRecipe.getSubscribeDialog(t, gmailPage, browser);
+      const subscribePageUrl = subscribePage.page.url();
       const oauthPage = await PageRecipe.waitForModalGetTriggeredPageAfterResponding(acct, t, browser, subscribePage, 'confirm', {
         contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm'
       });
       await OauthPageRecipe.google(t, oauthPage, acct, 'approve'); // should cause subscribePage to reload
+      await subscribePage.page.goto(subscribePageUrl); // must force-reload also for puppeteer to continue working
       // get a trial
       await subscribePage.waitAndClick('@action-get-trial', { delay: 1 });
       await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });
