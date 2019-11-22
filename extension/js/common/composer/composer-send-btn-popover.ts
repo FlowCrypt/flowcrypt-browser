@@ -7,6 +7,8 @@ import { PopoverOpt, PopoverChoices } from './interfaces/composer-types.js';
 import { Xss } from '../platform/xss.js';
 import { Lang } from '../lang.js';
 import { Ui } from '../browser.js';
+import { Catch } from '../platform/catch.js';
+import { Store } from '../platform/store.js';
 
 export class ComposerSendBtnPopover extends ComposerComponent {
 
@@ -16,12 +18,13 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     this.composer.S.cached('toggle_send_options').on('click', this.toggleVisible);
   }
 
-  render() {
+  async render() {
     const popoverItems = {
       richText: { text: 'Rich text (PGP/MIME) - experimental', iconPath: undefined },
       encrypt: { text: 'Encrypt message', iconPath: '/img/svgs/locked-icon-green.svg' },
       sign: { text: 'Sign message', iconPath: '/img/svgs/signature-gray.svg' },
     };
+    this.choices.richText = await this.richTextUserChoiceRetrieve();
     for (const key of Object.keys(popoverItems)) {
       const popoverOpt = key as PopoverOpt;
       if (popoverOpt === 'richText' && !['flowcrypt.compatibility@gmail.com', 'tom@flowcrypt.com'].includes(this.urlParams.acctEmail)) {
@@ -95,9 +98,12 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
   }
 
-  public toggleItemTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, forceStateTo?: boolean) {
+  /**
+   * @param machineForceStateTo - if this is present, this is a programmatic call, therefore such choices should not be sticky
+   */
+  public toggleItemTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, machineForceStateTo?: boolean) {
     const currentlyTicked = this.isTicked(elem);
-    const newToggleTicked = (typeof forceStateTo !== 'undefined') ? forceStateTo : !currentlyTicked;
+    const newToggleTicked = (typeof machineForceStateTo !== 'undefined') ? machineForceStateTo : !currentlyTicked;
     if (newToggleTicked === this.choices[popoverOpt] && newToggleTicked === currentlyTicked) {
       return; // internal state as well as UI state is in sync with newly desired result, nothing to do
     }
@@ -118,6 +124,18 @@ export class ComposerSendBtnPopover extends ComposerComponent {
     }
     this.composer.sendBtn.resetSendBtn();
     this.composer.pwdOrPubkeyContainer.showHideContainerAndColorSendBtn();
+    if (typeof machineForceStateTo === 'undefined' && popoverOpt === 'richText') { // human-input choice of rich text
+      this.richTextUserChoiceStore(newToggleTicked).catch(Catch.reportErr);
+    }
+  }
+
+  private async richTextUserChoiceStore(isTicked: boolean) {
+    await Store.setAcct(this.composer.urlParams.acctEmail, { use_rich_text: isTicked });
+  }
+
+  private async richTextUserChoiceRetrieve(): Promise<boolean> {
+    const store = await Store.getAcct(this.composer.urlParams.acctEmail, ['use_rich_text']);
+    return store.use_rich_text || false;
   }
 
   private renderCrossOrTick(elem: JQuery<HTMLElement>, popoverOpt: PopoverOpt, renderTick: boolean) {
