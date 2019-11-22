@@ -14,6 +14,8 @@ import { KeyImportUi } from '../ui/key_import_ui.js';
 import { Pgp } from '../core/pgp.js';
 import { Str } from '../core/common.js';
 import { Store } from '../platform/store.js';
+import { SendableMsg } from '../api/email_provider_api.js';
+import { Att } from '../core/att.js';
 
 export class ComposerRender extends ComposerComponent {
 
@@ -53,8 +55,7 @@ export class ComposerRender extends ComposerComponent {
     } else {
       if (this.urlParams.isReplyBox) {
         const recipients: Recipients = { to: this.urlParams.to, cc: this.urlParams.cc, bcc: this.urlParams.bcc };
-        this.composer.contacts.addRecipients(recipients, false).catch(Catch
-          .reportErr);
+        this.composer.contacts.addRecipients(recipients, false).catch(Catch.reportErr);
         // await this.composer.composerContacts.addRecipientsAndShowPreview(recipients);
         if (this.urlParams.skipClickPrompt) { // TODO: fix issue when loading recipients
           await this.renderReplyMsgComposeTable();
@@ -234,6 +235,36 @@ export class ComposerRender extends ComposerComponent {
   private loadRecipientsThenSetTestStateReady = async () => {
     await Promise.all(this.composer.contacts.getRecipients().filter(r => r.evaluating).map(r => r.evaluating));
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
+  }
+
+  public renderReplySuccess(msg: SendableMsg, msgId: string) {
+    this.composer.app.renderReinsertReplyBox(msgId);
+    if (!this.composer.sendBtn.popover.choices.encrypt) {
+      this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
+    }
+    this.composer.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
+    this.composer.S.cached('compose_table').css('display', 'none');
+    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.sender.getSender());
+    this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
+    const repliedBodyEl = this.composer.S.cached('reply_msg_successful').find('div.replied_body');
+    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.input.extract('text', 'input_text', 'SKIP-ADDONS')));
+    const t = new Date();
+    const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
+    this.composer.S.cached('reply_msg_successful').find('div.replied_time').text(time);
+    this.composer.S.cached('reply_msg_successful').css('display', 'block');
+    this.renderReplySuccessAtts(msg.atts, msgId);
+    this.composer.size.resizeComposeBox();
+  }
+
+  private renderReplySuccessAtts(atts: Att[], msgId: string) {
+    const hideAttTypes = this.composer.sendBtn.popover.choices.richText ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
+    const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
+    if (renderableAtts.length) {
+      this.composer.S.cached('replied_attachments').html(renderableAtts.map(a => { // xss-safe-factory
+        a.msgId = msgId;
+        return this.composer.app.factoryAtt(a, true);
+      }).join('')).css('display', 'block');
+    }
   }
 
 }
