@@ -11,7 +11,6 @@ import { Catch } from '../platform/catch.js';
 import { Att } from '../core/att.js';
 import { Ui } from '../browser.js';
 import { Buf } from '../core/buf.js';
-import { secureRandomBytes } from '../platform/util.js';
 
 type SubscriptionLevel = 'pro' | null;
 type ProfileUpdate = { alias?: string, name?: string, photo?: string, intro?: string, web?: string, phone?: string, default_message_expire?: number };
@@ -216,11 +215,6 @@ export class Backend extends Api {
       }));
     }
     return Promise.all(promises);
-  }
-
-  static async randomFortyHexChars(): Promise<string> { // 40-character hex
-    const bytes = Array.from(secureRandomBytes(20));
-    return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
   }
 
   private static throwIfMissingUuid(fcAuth: FcUuidAuth) {

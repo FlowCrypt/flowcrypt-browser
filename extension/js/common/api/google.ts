@@ -20,7 +20,6 @@ import { Buf } from '../core/buf.js';
 import { gmailBackupSearchQuery, GOOGLE_API_HOST, GOOGLE_OAUTH_SCREEN_HOST } from '../core/const.js';
 import { EmailProviderApi, SendableMsg } from './email_provider_api.js';
 import { Xss } from '../platform/xss.js';
-import { Backend } from './backend.js';
 
 type GoogleAuthTokenInfo = { issued_to: string, audience: string, scope: string, expires_in: number, access_type: 'offline' };
 type GoogleAuthTokensResponse = { access_token: string, expires_in: number, refresh_token?: string, id_token: string, token_type: 'Bearer' };
@@ -668,7 +667,7 @@ export class GoogleAuth {
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
-    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Backend.randomFortyHexChars()}` };
+    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
@@ -706,6 +705,7 @@ export class GoogleAuth {
     const parts = title.split(' ', 2);
     const result = parts[0] as GoogleAuthWindowResult$result;
     const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
+    console.log(`state: ${params.state}`);
     let authReq: AuthReq;
     try {
       authReq = GoogleAuth.apiGoogleAuthStateUnpack(String(params.state));

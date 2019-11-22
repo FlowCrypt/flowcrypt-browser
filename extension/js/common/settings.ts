@@ -370,7 +370,7 @@ export class Settings {
       if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
         const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
         if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-          const uuid = await Backend.randomFortyHexChars();
+          const uuid = Api.randomFortyHexChars();
           try {
             await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
             then();
