@@ -471,7 +471,7 @@ export class OauthPageRecipe extends PageRecipe {
   private static oauthPwdDelay = 2;
   private static longTimeout = 40;
 
-  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve"): Promise<void> => {
+  public static google = async (t: AvaContext, oauthPage: ControllablePage, acctEmail: string, action: "close" | "deny" | "approve" | 'login'): Promise<void> => {
     const isMock = oauthPage.target.url().includes('localhost');
     const auth = Config.secrets.auth.google.find(a => a.email === acctEmail)!;
     const selectors = {
@@ -505,7 +505,6 @@ export class OauthPageRecipe extends PageRecipe {
         await oauthPage.waitAndClick('.zZhnYe', { delay: 2 });  // confirm email
         await oauthPage.waitForNavigationIfAny();
         await enterPwdAndConfirm();
-        console.log('a');
       } else if (await oauthPage.target.$(`#profileIdentifier[data-email="${auth.email}"]`) !== null) { // already logged in - just choose an account
         await oauthPage.waitAndClick(`#profileIdentifier[data-email="${auth.email}"]`, { delay: 1 });
       } else if (await oauthPage.target.$('.w6VTHd') !== null) { // select from accounts where already logged in
@@ -514,6 +513,13 @@ export class OauthPageRecipe extends PageRecipe {
         return await OauthPageRecipe.google(t, oauthPage, acctEmail, action); // start from beginning after clicking "other email acct"
       }
       await Util.sleep(isMock ? 0 : 5);
+      if (action === 'login') {
+        await Util.sleep(isMock ? 0 : 3);
+        if (oauthPage.page.isClosed()) {
+          return;
+        }
+        throw new Error('Oauth page didnt close after login. Should increase timeout or await close event');
+      }
       const element = await oauthPage.waitAny([selectors.approve_button, selectors.backup_email_verification_choice, selectors.pwd_input, selectors.secret_2fa]);
       await Util.sleep(isMock ? 0 : 1);
       if (await oauthPage.isElementPresent(selectors.backup_email_verification_choice)) { // asks for registered backup email

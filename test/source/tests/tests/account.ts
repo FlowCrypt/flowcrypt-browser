@@ -32,14 +32,14 @@ export const defineConsumerAcctTests = (testVariant: TestVariant, testWithNewBro
       await fileInput!.uploadFile('test/samples/large.jpg');
       await composePage.waitAndRespondToModal('confirm', 'confirm', 'The files are over 5 MB');
       // get a trial - log in first
-      let subscribePage = await GmailPageRecipe.getSubscribeDialog(t, gmailPage, browser);
+      const subscribePage = await GmailPageRecipe.getSubscribeDialog(t, gmailPage, browser);
       const oauthPage = await PageRecipe.waitForModalGetTriggeredPageAfterResponding(acct, t, browser, subscribePage, 'confirm', {
         contentToCheck: 'Please log in with FlowCrypt to continue', clickOn: 'confirm'
       });
-      await OauthPageRecipe.google(t, oauthPage, acct, 'approve'); // should cause subscribePage to reload
-      subscribePage = await browser.newPage(t, subscribePage.page.url()); // must force-reload also for puppeteer to continue working
+      await OauthPageRecipe.google(t, oauthPage, acct, 'login'); // should cause subscribePage to reload
+      const subscribePageReloaded = await browser.newPage(t, subscribePage.page.url()); // must force-reload also for puppeteer to continue working
       // get a trial
-      await subscribePage.waitAndClick('@action-get-trial', { delay: 1 });
+      await subscribePageReloaded.waitAndClick('@action-get-trial', { delay: 1 });
       await gmailPage.waitTillGone('@dialog-subscribe', { timeout: 60 });
       await gmailPage.waitAll('@webmail-notification');
       expect(await gmailPage.read('@webmail-notification')).contains('Successfully upgraded to FlowCrypt Advanced');
