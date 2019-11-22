@@ -139,7 +139,7 @@ export class ComposerSendBtn extends ComposerComponent {
     await this.composer.draft.draftDelete();
     this.isSendMessageInProgress = false;
     if (this.urlParams.isReplyBox) {
-      this.renderReplySuccess(msg, msgSentRes.id);
+      this.composer.render.renderReplySuccess(msg, msgSentRes.id);
     } else {
       this.composer.app.closeMsg();
     }
@@ -191,31 +191,6 @@ export class ComposerSendBtn extends ComposerComponent {
     msg.recipients.cc = await addNameToEmail(msg.recipients.cc || []);
     msg.recipients.bcc = await addNameToEmail(msg.recipients.bcc || []);
     msg.from = (await addNameToEmail([msg.from]))[0];
-  }
-
-  private renderReplySuccess = (msg: SendableMsg, msgId: string) => {
-    this.composer.app.renderReinsertReplyBox(msgId);
-    if (!this.popover.choices.encrypt) {
-      this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
-    }
-    this.composer.S.cached('replied_body').css('width', ($('table#compose').width() || 500) - 30);
-    this.composer.S.cached('compose_table').css('display', 'none');
-    this.composer.S.cached('reply_msg_successful').find('div.replied_from').text(this.composer.sender.getSender());
-    this.composer.S.cached('reply_msg_successful').find('div.replied_to span').text(msg.headers.To.replace(/,/g, ', '));
-    const repliedBodyEl = this.composer.S.cached('reply_msg_successful').find('div.replied_body');
-    Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.input.extract('text', 'input_text', 'SKIP-ADDONS')));
-    const t = new Date();
-    const time = ((t.getHours() !== 12) ?
-      (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
-    this.composer.S.cached('reply_msg_successful').find('div.replied_time').text(time);
-    this.composer.S.cached('reply_msg_successful').css('display', 'block');
-    if (msg.atts.length) {
-      this.composer.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
-        a.msgId = msgId;
-        return this.composer.app.factoryAtt(a, true);
-      }).join('')).css('display', 'block');
-    }
-    this.composer.size.resizeComposeBox();
   }
 
 }
