@@ -8,11 +8,12 @@ import { FlowCryptApi } from './api';
 import { EvaluateFn, ElementHandle } from 'puppeteer';
 import { totp as produce2faToken } from 'speakeasy';
 
+type ModalOpts = { contentToCheck?: string, clickOn?: 'confirm' | 'cancel', getTriggeredPage?: boolean };
+
 export class PageRecipe {
   public static getElementPropertyJson = async (elem: ElementHandle<Element>, property: string) => await (await elem.getProperty(property)).jsonValue() as string;
 
-  public static waitForModalAndRespond = async (controllable: Controllable, name: 'confirm' | 'error', { contentToCheck, clickOn }:
-    { contentToCheck?: string, clickOn?: 'confirm' | 'cancel' }) => {
+  public static waitForModalAndRespond = async (controllable: Controllable, name: 'confirm' | 'error', { contentToCheck, clickOn }: ModalOpts) => {
     const modalContainer = await controllable.waitAny(`.ui-modal-${name}`);
     if (typeof contentToCheck !== 'undefined') {
       const contentElement = await modalContainer.$('#swal2-content');
@@ -23,6 +24,16 @@ export class PageRecipe {
       await button!.click();
     }
   }
+
+  /**
+   * responding to modal triggers a new page to be open, eg oauth login page
+   */
+  public static waitForModalGetTriggeredPageAfterResponding = async (
+    cookieAcct: string, t: AvaContext, browser: BrowserHandle, controllable: ControllablePage, name: 'confirm' | 'error', modalOpts: ModalOpts
+  ): Promise<ControllablePage> => {
+    return await browser.newPageTriggeredBy(t, () => PageRecipe.waitForModalAndRespond(controllable, name, modalOpts), cookieAcct);
+  }
+
 }
 
 type RecipientType = "to" | "cc" | "bcc";
