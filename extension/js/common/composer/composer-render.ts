@@ -15,6 +15,7 @@ import { Pgp } from '../core/pgp.js';
 import { Str } from '../core/common.js';
 import { Store } from '../platform/store.js';
 import { SendableMsg } from '../api/email_provider_api.js';
+import { Att } from '../core/att.js';
 
 export class ComposerRender extends ComposerComponent {
 
@@ -236,7 +237,7 @@ export class ComposerRender extends ComposerComponent {
     $('body').attr('data-test-state', 'ready');  // set as ready so that automated tests can evaluate results
   }
 
-  public renderReplySuccess = (msg: SendableMsg, msgId: string) => {
+  public renderReplySuccess(msg: SendableMsg, msgId: string) {
     this.composer.app.renderReinsertReplyBox(msgId);
     if (!this.composer.sendBtn.popover.choices.encrypt) {
       this.composer.S.cached('replied_body').addClass('pgp_neutral').removeClass('pgp_secure');
@@ -248,17 +249,22 @@ export class ComposerRender extends ComposerComponent {
     const repliedBodyEl = this.composer.S.cached('reply_msg_successful').find('div.replied_body');
     Xss.sanitizeRender(repliedBodyEl, Xss.escapeTextAsRenderableHtml(this.composer.input.extract('text', 'input_text', 'SKIP-ADDONS')));
     const t = new Date();
-    const time = ((t.getHours() !== 12) ?
-      (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
+    const time = ((t.getHours() !== 12) ? (t.getHours() % 12) : 12) + ':' + (t.getMinutes() < 10 ? '0' : '') + t.getMinutes() + ((t.getHours() >= 12) ? ' PM ' : ' AM ') + '(0 minutes ago)';
     this.composer.S.cached('reply_msg_successful').find('div.replied_time').text(time);
     this.composer.S.cached('reply_msg_successful').css('display', 'block');
-    if (msg.atts.length) {
-      this.composer.S.cached('replied_attachments').html(msg.atts.map(a => { // xss-safe-factory
+    this.renderReplySuccessAtts(msg.atts, msgId);
+    this.composer.size.resizeComposeBox();
+  }
+
+  private renderReplySuccessAtts(atts: Att[], msgId: string) {
+    const hideAttTypes = this.composer.sendBtn.popover.choices.richText ? ['hidden', 'encryptedMsg', 'signature', 'publicKey'] : ['publicKey'];
+    const renderableAtts = atts.filter(att => !hideAttTypes.includes(att.treatAs()));
+    if (renderableAtts.length) {
+      this.composer.S.cached('replied_attachments').html(renderableAtts.map(a => { // xss-safe-factory
         a.msgId = msgId;
         return this.composer.app.factoryAtt(a, true);
       }).join('')).css('display', 'block');
     }
-    this.composer.size.resizeComposeBox();
   }
 
 }
