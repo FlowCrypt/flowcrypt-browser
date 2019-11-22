@@ -87,7 +87,7 @@ export class ComposerRender extends ComposerComponent {
       await this.composer.contacts.setEmailsPreview(this.composer.contacts.getRecipients());
     }
     this.composer.sendBtn.resetSendBtn();
-    this.composer.sendBtn.popover.render();
+    await this.composer.sendBtn.popover.render();
     this.loadRecipientsThenSetTestStateReady().catch(Catch.reportErr);
   }
 

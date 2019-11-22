@@ -114,6 +114,7 @@ export type AccountStore = {
   picture?: string; // google image
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
+  use_rich_text?: boolean;
   openid?: GmailRes.OpenId;
   subscription?: SubscriptionInfo;
   uuid?: string;
@@ -132,7 +133,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'addresses' | 'sendAs' | 'addresses_keyserver' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
   'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid';
+  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid' | 'use_rich_text';
 
 export class Subscription implements SubscriptionInfo {
   active?: boolean;
