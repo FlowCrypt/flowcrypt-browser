@@ -24,14 +24,11 @@ export class ComposerAtts extends ComposerComponent {
   }
 
   onComposeTableRender() {
-    this.attach.initAttDialog('fineuploader', 'fineuploader_button');
-    this.attach.setAttAddedCb(async () => {
-      this.composer.size.setInputTextHeightManuallyIfNeeded();
-      this.composer.size.resizeComposeBox();
-    });
-    this.attach.setAttRemovedCb(() => {
-      this.composer.size.setInputTextHeightManuallyIfNeeded();
-      this.composer.size.resizeComposeBox();
+    this.attach.initAttDialog('fineuploader', 'fineuploader_button', {
+      uiChanged: () => {
+        this.composer.size.setInputTextHeightManuallyIfNeeded();
+        this.composer.size.resizeComposeBox();
+      }
     });
   }
 
