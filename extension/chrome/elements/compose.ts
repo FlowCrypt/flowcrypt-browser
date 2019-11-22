@@ -19,6 +19,7 @@ import { Xss } from '../../js/common/platform/xss.js';
 import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js';
 import { CollectPubkeysResult } from '../../js/common/composer/interfaces/composer-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/composer-errs.js';
+import { Backend } from '../../js/common/api/backend.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -115,6 +116,7 @@ Catch.try(async () => {
   if (isReplyBox && threadId && !ignoreDraft && storage.drafts_reply && storage.drafts_reply[threadId]) {
     draftId = storage.drafts_reply[threadId]; // there may be a draft we want to load
   }
+  Backend.getSubscriptionWithoutLogin(acctEmail).catch(Api.err.reportIfSignificant); // updates storage
   const processedUrlParams = {
     acctEmail, draftId, threadId, replyMsgId, ...replyParams, frameId, tabId, isReplyBox,
     skipClickPrompt, parentTabId, disableDraftSaving, debug, removeAfterClose

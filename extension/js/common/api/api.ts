@@ -255,7 +255,12 @@ export class Api {
     },
     isInPrivateMode: (e: any) => {
       return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
-    }
+    },
+    reportIfSignificant: (e: any) => {
+      if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
+      }
+    },
   };
 
   public static download = (url: string, progress?: ProgressCb): Promise<Buf> => new Promise((resolve, reject) => {
