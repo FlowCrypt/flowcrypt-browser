@@ -14,6 +14,7 @@ import { Pgp } from './core/pgp.js';
 import { Google, GoogleAuth } from './api/google.js';
 import { Attester } from './api/attester.js';
 import { Xss } from './platform/xss.js';
+import { Backend } from './api/backend.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const zxcvbn: Function; // tslint:disable-line:ban-types
@@ -362,6 +363,25 @@ export class Settings {
         ? Env.urlCreate(page, { acctEmail })
         : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
+  }
+
+  static offerToLoginWithPopupShowModalOnErr(acctEmail: string, then: (() => void) = () => undefined, prepend = '') {
+    (async () => {
+      if (await Ui.modal.confirm(`${prepend}Please log in with FlowCrypt to continue.`)) {
+        const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
+        if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
+          const uuid = Api.randomFortyHexChars();
+          try {
+            await Backend.loginWithOpenid(authRes.acctEmail, uuid, authRes.id_token);
+            then();
+          } catch (e) {
+            await Ui.modal.error(`Could not log in with FlowCrypt:\n\n${Api.err.eli5(e)}\n\n${String(e)}`);
+          }
+        } else {
+          await Ui.modal.warning(`Could not log in:\n\n${authRes.error || authRes.result}`);
+        }
+      }
+    })().catch(Catch.reportErr);
   }
 
   private static getDefaultEmailAlias(sendAs: Dict<SendAsAlias>) {

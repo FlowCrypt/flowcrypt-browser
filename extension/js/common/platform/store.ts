@@ -5,9 +5,8 @@
 import { Value, Str, Dict } from '../core/common.js';
 import { mnemonic } from '../core/mnemonic.js';
 import { Pgp, KeyInfo, Contact } from '../core/pgp.js';
-import { SubscriptionInfo } from '../api/backend.js';
+import { SubscriptionInfo, PaymentMethod, ProductLevel, FcUuidAuth } from '../api/backend.js';
 import { BrowserMsg, BgNotReadyError } from '../extension.js';
-import { Product, PaymentMethod, ProductLevel } from '../account.js';
 import { Env, Ui } from '../browser.js';
 import { Catch, UnreportableError } from './catch.js';
 import { storageLocalSet, storageLocalGet, storageLocalRemove } from '../api/chrome.js';
@@ -20,7 +19,6 @@ let KEY_CACHE: { [longidOrArmoredKey: string]: OpenPGP.key.Key } = {};
 let KEY_CACHE_WIPE_TIMEOUT: number;
 
 type SerializableTypes = FlatTypes | string[] | number[] | boolean[] | SubscriptionInfo;
-type StoredAuthInfo = { acctEmail: string | null, uuid: string | null };
 type StoredReplyDraftMeta = string; // draftId
 type StoredComposeDraftMeta = { recipients: string[], subject: string, date: number };
 type StoredAdminCode = { date: number, codes: string[] };
@@ -58,15 +56,11 @@ export type ContactUpdate = {
   pubkey_last_check?: number | null;
 };
 export type Storable = FlatTypes | string[] | KeyInfo[] | Dict<StoredReplyDraftMeta> | Dict<StoredComposeDraftMeta> | Dict<StoredAdminCode>
-  | SubscriptionAttempt | SubscriptionInfo | GmailRes.OpenId;
+  | SubscriptionInfo | GmailRes.OpenId;
 export type Serializable = SerializableTypes | SerializableTypes[] | Dict<SerializableTypes> | Dict<SerializableTypes>[];
 
 export interface RawStore {
   [key: string]: Storable;
-}
-
-export interface SubscriptionAttempt extends Product {
-  source: string | undefined;
 }
 
 export type GlobalStore = {
@@ -75,17 +69,16 @@ export type GlobalStore = {
   errors?: string[];
   settings_seen?: boolean;
   hide_pass_phrases?: boolean;
-  cryptup_account_email?: string | null;
-  cryptup_account_uuid?: string | null;
-  cryptup_account_subscription?: SubscriptionInfo | null;
+  cryptup_account_email?: string | null; // todo - remove
+  cryptup_account_uuid?: string | null; // todo - remove
+  cryptup_account_subscription?: SubscriptionInfo | null; // todo - remove
   dev_outlook_allow?: boolean;
-  cryptup_subscription_attempt?: SubscriptionAttempt;
   admin_codes?: Dict<StoredAdminCode>;
 };
 
 export type GlobalIndex = 'version' | 'account_emails' | 'errors' | 'settings_seen' | 'hide_pass_phrases' |
   'cryptup_account_email' | 'cryptup_account_uuid' | 'cryptup_account_subscription' | 'dev_outlook_allow' |
-  'cryptup_subscription_attempt' | 'admin_codes';
+  'admin_codes';
 
 export type SendAsAlias = {
   isPrimary: boolean;
@@ -122,6 +115,8 @@ export type AccountStore = {
   outgoing_language?: 'EN' | 'DE';
   setup_date?: number;
   openid?: GmailRes.OpenId;
+  subscription?: SubscriptionInfo;
+  uuid?: string;
   // temporary
   tmp_submit_main?: boolean;
   tmp_submit_all?: boolean;
@@ -137,7 +132,7 @@ export type AccountIndex = 'keys' | 'notification_setup_needed_dismissed' | 'ema
   'google_token_refresh' | 'hide_message_password' | 'addresses' | 'sendAs' | 'addresses_keyserver' | 'drafts_reply' | 'drafts_compose' |
   'pubkey_sent_to' | 'full_name' | 'cryptup_enabled' | 'setup_done' | 'setup_simple' | 'is_newly_created_key' | 'key_backup_method' |
   'key_backup_prompt' | 'successfully_received_at_leat_one_message' | 'notification_setup_done_seen' | 'picture' |
-  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all';
+  'outgoing_language' | 'setup_date' | 'openid' | 'tmp_submit_main' | 'tmp_submit_all' | 'subscription' | 'uuid';
 
 export class Subscription implements SubscriptionInfo {
   active?: boolean;
@@ -146,25 +141,13 @@ export class Subscription implements SubscriptionInfo {
   expire?: string;
   expired?: boolean;
 
-  constructor(storedSubscriptionInfo: SubscriptionInfo | undefined) {
+  constructor(storedSubscriptionInfo: SubscriptionInfo | undefined | null) {
     if (storedSubscriptionInfo) {
       this.active = storedSubscriptionInfo.active || undefined;
       this.method = storedSubscriptionInfo.method || undefined;
       this.level = storedSubscriptionInfo.level;
       this.expire = storedSubscriptionInfo.expire || undefined;
       this.expired = storedSubscriptionInfo.expired || undefined;
-    }
-  }
-
-  static updateSubscriptionGlobalStore = (gs: GlobalStore, stored: SubscriptionInfo, newest: SubscriptionInfo | null) => {
-    if (newest) {
-      if (newest.level !== stored.level || newest.method !== stored.method || newest.expire !== stored.expire || newest.active !== stored.active) {
-        gs.cryptup_account_subscription = newest;
-      }
-    } else {
-      if (stored.level || stored.expire || stored.active || stored.method) {
-        gs.cryptup_account_subscription = undefined;
-      }
     }
   }
 
@@ -482,18 +465,14 @@ export class Store {
     BrowserMsg.send.bg.updateUninstallUrl();
   }
 
-  static authInfo = async (): Promise<StoredAuthInfo> => {
-    const storage = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid']);
-    return { acctEmail: storage.cryptup_account_email || null, uuid: storage.cryptup_account_uuid || null };
+  static authInfo = async (acctEmail: string): Promise<FcUuidAuth> => {
+    const { uuid } = await Store.getAcct(acctEmail, ['uuid']);
+    return { account: acctEmail, uuid };
   }
 
-  static subscription = async (): Promise<Subscription> => {
-    const s = await Store.getGlobal(['cryptup_account_email', 'cryptup_account_uuid', 'cryptup_account_subscription']);
-    if (s.cryptup_account_email && s.cryptup_account_uuid && s.cryptup_account_subscription && s.cryptup_account_subscription.level) {
-      return new Subscription(s.cryptup_account_subscription || undefined);
-    } else {
-      return new Subscription(undefined);
-    }
+  static subscription = async (acctEmail: string): Promise<Subscription> => {
+    const { subscription } = await Store.getAcct(acctEmail, ['subscription']);
+    return new Subscription(subscription);
   }
 
   /* db */

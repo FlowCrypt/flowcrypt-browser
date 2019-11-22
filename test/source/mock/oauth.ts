@@ -36,9 +36,9 @@ export class OauthMock {
       this.refreshTokenByAuthCode[authCode] = refreshToken;
       this.accessTokenByRefreshToken[refreshToken] = accessToken;
       this.acctByAccessToken[accessToken] = acct;
-      return this.htmlPage(`${result} code=${authCode}&state=${state}&error=`, `Authorized successfully, please return to app`);
+      return this.htmlPage(`${result} code=${encodeURIComponent(authCode)}&state=${encodeURIComponent(state)}&error=`, `Authorized successfully, please return to app`);
     } else {
-      return this.htmlPage(`${result} code=&state=${state}&error=Result+is+${result}`, `Got a non-success result: ${result}`);
+      return this.htmlPage(`${result} code=&state=${encodeURIComponent(state)}&error=Result+is+${result}`, `Got a non-success result: ${result}`);
     }
   }
 

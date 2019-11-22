@@ -667,7 +667,7 @@ export class GoogleAuth {
     if (save || !scopes) { // if tokens will be saved (meaning also scopes should be pulled from storage) or if no scopes supplied
       scopes = await GoogleAuth.apiGoogleAuthPopupPrepareAuthReqScopes(acctEmail, scopes || GoogleAuth.defaultScopes());
     }
-    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Pgp.password.random()}` };
+    const authRequest: AuthReq = { acctEmail, scopes, csrfToken: `csrf-${Api.randomFortyHexChars()}` };
     const url = GoogleAuth.apiGoogleAuthCodeUrl(authRequest);
     const oauthWin = await windowsCreate({ url, left: 100, top: 50, height: 700, width: 600, type: 'popup' });
     if (!oauthWin || !oauthWin.tabs || !oauthWin.tabs.length) {
@@ -705,6 +705,7 @@ export class GoogleAuth {
     const parts = title.split(' ', 2);
     const result = parts[0] as GoogleAuthWindowResult$result;
     const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
+    console.log(`state: ${params.state}`);
     let authReq: AuthReq;
     try {
       authReq = GoogleAuth.apiGoogleAuthStateUnpack(String(params.state));

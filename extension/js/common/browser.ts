@@ -9,10 +9,7 @@ import { Value, Dict } from './core/common.js';
 import { Api } from './api/api.js';
 import { Att } from './core/att.js';
 import Swal from 'sweetalert2';
-import { requireTag } from './platform/require.js';
 import { Xss } from './platform/xss.js';
-
-requireTag('sweetalert2.js', 'sweetalert2.css');
 
 type PreventableEventName = 'double' | 'parallel' | 'spree' | 'slowspree' | 'veryslowspree';
 type NamedSels = Dict<JQuery<HTMLElement>>;

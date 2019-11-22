@@ -12,6 +12,7 @@ import { Buf } from '../core/buf.js';
 import { BrowserMsg } from '../extension.js';
 import { Xss } from '../platform/xss.js';
 import { Contact } from '../core/pgp.js';
+import { secureRandomBytes } from '../platform/util.js';
 
 type StandardError = { code: number | null; message: string; internal: string | null; data?: string; stack?: string; };
 type StandardErrorRes = { error: StandardError };
@@ -254,7 +255,12 @@ export class Api {
     },
     isInPrivateMode: (e: any) => {
       return e instanceof Error && e.message.startsWith('BrowserMsg() (no status text): -1 when GET-ing blob:moz-extension://');
-    }
+    },
+    reportIfSignificant: (e: any) => {
+      if (Api.err.isSignificant(e)) {
+        Catch.reportErr(e);
+      }
+    },
   };
 
   public static download = (url: string, progress?: ProgressCb): Promise<Buf> => new Promise((resolve, reject) => {
@@ -395,6 +401,11 @@ export class Api {
       throw new ApiErrorResponse(res as StandardErrorRes, req);
     }
     return res;
+  }
+
+  static randomFortyHexChars(): string { // 40-character hex
+    const bytes = Array.from(secureRandomBytes(20));
+    return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
   }
 
 }

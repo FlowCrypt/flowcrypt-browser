@@ -13,7 +13,6 @@ import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
-import { Backend } from '../../../js/common/api/backend.js';
 
 Catch.try(async () => {
 
@@ -43,16 +42,6 @@ Catch.try(async () => {
 
     $('.action_open_decrypt').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/settings/modules/decrypt.htm')));
 
-    $('.action_openid_login').click(Ui.event.handle(async () => {
-      const authRes = await GoogleAuth.newOpenidAuthPopup({ acctEmail });
-      if (authRes.result === 'Success' && authRes.acctEmail && authRes.id_token) {
-        await Backend.accountLoginWithOpenid(authRes.acctEmail, authRes.id_token);
-        await Ui.modal.info(`Sucessfully logged in as ${authRes.acctEmail}`);
-      } else {
-        await Ui.modal.error(`Could not log in:\n\n${authRes.error}`);
-      }
-    }));
-
     $('.action_backup').click(Ui.event.prevent('double', () => collectInfoAndDownloadBackupFile(acctEmail).catch(Catch.reportErr)));
 
     $('.action_throw_unchecked').click(() => Catch.test('error'));
@@ -76,7 +65,7 @@ Catch.try(async () => {
     }));
 
     $('.action_reset_managing_auth').click(Ui.event.handle(async () => {
-      await Store.removeGlobal(['cryptup_account_email', 'cryptup_account_subscription', 'cryptup_account_uuid']);
+      await Store.setAcct(acctEmail, { 'subscription': undefined, 'uuid': undefined });
       BrowserMsg.send.reload(parentTabId, {});
     }));
 

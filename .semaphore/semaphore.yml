@@ -55,11 +55,11 @@ blocks:
 
         - name: consumer mock
           commands:
-            - npm run-script test_chrome_consumer
+            - npm run-script test_ci_chrome_consumer
 
         - name: enterprise mock
           commands:
-            - npm run-script test_chrome_enterprise
+            - npm run-script test_ci_chrome_enterprise
 
         - name: internals
           commands:

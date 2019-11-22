@@ -10,7 +10,6 @@ import { Ui, Env } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
-import { Lang } from '../../../js/common/lang.js';
 import { Backend, BackendRes } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
@@ -22,6 +21,7 @@ Catch.try(async () => {
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
+  const authInfo = await Store.authInfo(acctEmail);
   const attachJs = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
   let newPhotoFile: Att;
 
@@ -70,12 +70,11 @@ Catch.try(async () => {
 
   const enableContactPage = async () => {
     Xss.sanitizeRender(S.cached('status'), 'Enabling..' + Ui.spinner('green'));
-    const authInfo = await Store.authInfo();
-    const storage = await Store.getAcct(authInfo.acctEmail!, ['full_name']);
+    const storage = await Store.getAcct(acctEmail, ['full_name']);
     try {
-      const alias = await findAvailableAlias(authInfo.acctEmail!);
-      const initial = { alias, name: storage.full_name || Str.capitalize(authInfo.acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
-      const response = await Backend.accountUpdate(initial);
+      const alias = await findAvailableAlias(acctEmail);
+      const initial = { alias, name: storage.full_name || Str.capitalize(acctEmail!.split('@')[0]), intro: 'Use this contact page to send me encrypted messages and files.' };
+      const response = await Backend.accountUpdate(authInfo, initial);
       if (!response.updated) {
         await Ui.modal.error('Failed to enable your Contact Page. Please try again');
       }
@@ -102,7 +101,7 @@ Catch.try(async () => {
         update.photo_content = newPhotoFile.getData().toBase64Str();
       }
       try {
-        await Backend.accountUpdate(update);
+        await Backend.accountUpdate(authInfo, update);
       } catch (e) {
         if (Api.err.isNetErr(e)) {
           await Ui.modal.error('No internet connection, please try again');
@@ -120,7 +119,10 @@ Catch.try(async () => {
     }
   }));
 
-  S.cached('action_close').click(Ui.event.handle(() => BrowserMsg.send.closePage(parentTabId)));
+  S.cached('action_close').click(Ui.event.handle(() => {
+    BrowserMsg.send.closePage(parentTabId);
+    BrowserMsg.send.reload(parentTabId, {});
+  }));
 
   const findAvailableAlias = async (email: string): Promise<string> => {
     let alias = email.split('@')[0].replace(/[^a-z0-9]/g, '');
@@ -140,14 +142,13 @@ Catch.try(async () => {
 
   Xss.sanitizeRender(S.cached('status'), 'Loading..' + Ui.spinner('green'));
   try {
-    const response = await Backend.accountUpdate();
+    const response = await Backend.accountUpdate(authInfo);
     renderFields(response.result);
   } catch (e) {
     if (Api.err.isAuthErr(e)) {
-      Xss.sanitizeRender(S.cached('status'), `${Lang.account.verifyToSetUpContactPage} <a href="#" class="action_subscribe">Get trial</a>`);
-      S.now('subscribe').click(Ui.event.handle(() => Settings.redirectSubPage(acctEmail, parentTabId, '/chrome/elements/subscribe.htm', { isAuthErr: true })));
+      Settings.offerToLoginWithPopupShowModalOnErr(acctEmail, () => window.location.reload());
     } else {
-      S.cached('status').text('Failed to load your Contact Page settings. Please try to reload this page. Let us know at human@flowcrypt.com if this persists.');
+      S.cached('status').text(`Failed to load your Contact Page settings. Please try to reload this page. Let us know at human@flowcrypt.com if this persists.\n${Api.err.eli5(e)}`);
     }
   }
 
