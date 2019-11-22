@@ -256,6 +256,10 @@ export class Mime {
     return rootNode.build(); // tslint:disable-line:no-unsafe-any
   }
 
+  static subjectWithoutPrefixes(subject: string): string {
+    return subject.replace(/^((Re|Fwd): ?)+/g, '').trim();
+  }
+
   private static async encodePgpMimeSigned(
     body: SendableMsgBody, headers: RichHeaders, atts: Att[] = [], sign: (signable: string) => Promise<string>
   ): Promise<string> {

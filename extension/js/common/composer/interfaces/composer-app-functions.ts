@@ -33,7 +33,7 @@ export interface ComposerAppFunctionsInterface {
   emailProviderDraftDelete: (draftId: string) => Promise<GmailRes.GmailDraftDelete>;
   emailProviderMsgSend: (msg: SendableMsg, renderUploadProgress: ProgressCb) => Promise<GmailRes.GmailMsgSend>;
   emailProviderGuessContactsFromSentEmails: (query: string, knownContacts: Contact[], multiCb: ChunkedCb) => void;
-  emailProviderExtractArmoredBlock: (msgId: string) => Promise<string>;
+  emailProviderExtractArmoredBlock: (msgId: string) => Promise<{ armored: string }>;
   renderAddPubkeyDialog: (emails: string[]) => void;
   renderReinsertReplyBox: (msgId: string) => void;
   renderHelpDialog: () => void;
