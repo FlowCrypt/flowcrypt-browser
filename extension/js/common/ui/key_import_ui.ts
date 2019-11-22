@@ -88,25 +88,26 @@ export class KeyImportUi {
       }
     }));
     const attach = new AttUI(() => Promise.resolve({ count: 100, size: 1024 * 1024, size_mb: 1 }));
-    attach.initAttDialog('fineuploader', 'fineuploader_button');
-    attach.setAttAddedCb(async file => {
-      let prv: OpenPGP.key.Key | undefined;
-      const utf = file.getData().toUtfStr();
-      if (utf.includes(Pgp.armor.headers('privateKey').begin)) {
-        const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
-        if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
-          prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
+    attach.initAttDialog('fineuploader', 'fineuploader_button', {
+      attAdded: async file => {
+        let prv: OpenPGP.key.Key | undefined;
+        const utf = file.getData().toUtfStr();
+        if (utf.includes(Pgp.armor.headers('privateKey').begin)) {
+          const firstPrv = Pgp.armor.detectBlocks(utf).blocks.filter(b => b.type === 'privateKey')[0];
+          if (firstPrv) { // filter out all content except for the first encountered private key (GPGKeychain compatibility)
+            prv = (await openpgp.key.readArmored(firstPrv.content.toString())).keys[0];
+          }
+        } else {
+          prv = (await openpgp.key.read(file.getData())).keys[0];
         }
-      } else {
-        prv = (await openpgp.key.read(file.getData())).keys[0];
-      }
-      if (typeof prv !== 'undefined') {
-        $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
-        $('.source_paste_container').css('display', 'block');
-      } else {
-        $('.input_private_key').val('').change().prop('disabled', false);
-        await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
-        $('input[type=radio][name=source]').removeAttr('checked');
+        if (typeof prv !== 'undefined') {
+          $('.input_private_key').val(prv.armor()).change().prop('disabled', true);
+          $('.source_paste_container').css('display', 'block');
+        } else {
+          $('.input_private_key').val('').change().prop('disabled', false);
+          await Ui.modal.error('Not able to read this key. Is it a valid PGP private key?');
+          $('input[type=radio][name=source]').removeAttr('checked');
+        }
       }
     });
   }

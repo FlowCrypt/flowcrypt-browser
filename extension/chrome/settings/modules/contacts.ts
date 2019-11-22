@@ -35,19 +35,20 @@ Catch.try(async () => {
   BrowserMsg.listen(tabId); // set_css
 
   const attUI = new AttUI(() => Promise.resolve({ sizeMb: 5, size: 5 * 1024 * 1024, count: 1 }));
-  attUI.initAttDialog('fineuploader', 'fineuploader_button');
-  attUI.setAttAddedCb(async (file) => {
-    attUI.clearAllAtts();
-    const { keys, errs } = await Pgp.key.readMany(file.getData());
-    if (keys.length) {
-      if (errs.length) {
-        await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
+  attUI.initAttDialog('fineuploader', 'fineuploader_button', {
+    attAdded: async (file) => {
+      attUI.clearAllAtts();
+      const { keys, errs } = await Pgp.key.readMany(file.getData());
+      if (keys.length) {
+        if (errs.length) {
+          await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
+        }
+        $('#bulk_import .input_pubkey').val(keys.map(key => key.armor()).join('\n\n'));
+        $('#bulk_import .action_process').trigger('click');
+        $('#file_import').hide();
+      } else if (errs.length) {
+        await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
       }
-      $('#bulk_import .input_pubkey').val(keys.map(key => key.armor()).join('\n\n'));
-      $('#bulk_import .action_process').trigger('click');
-      $('#file_import').hide();
-    } else if (errs.length) {
-      await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
     }
   });
 

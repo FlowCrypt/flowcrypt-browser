@@ -78,18 +78,19 @@ Catch.try(async () => {
   $('.action_close').click(Ui.event.handle(closeDialog));
 
   const attUI = new AttUI(() => Promise.resolve({ size_mb: 5, size: 5 * 1024 * 1024, count: 1 }));
-  attUI.initAttDialog('fineuploader', 'fineuploader_button');
-  attUI.setAttAddedCb(async (file) => {
-    attUI.clearAllAtts();
-    const { keys, errs } = await Pgp.key.readMany(file.getData());
-    if (keys.length) {
-      if (errs.length) {
-        await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
+  attUI.initAttDialog('fineuploader', 'fineuploader_button', {
+    attAdded: async (file) => {
+      attUI.clearAllAtts();
+      const { keys, errs } = await Pgp.key.readMany(file.getData());
+      if (keys.length) {
+        if (errs.length) {
+          await Ui.modal.warning(`some keys could not be processed due to errors:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
+        }
+        $('.pubkey').val(String(keys[0].armor()));
+        $('.action_ok').trigger('click');
+      } else if (errs.length) {
+        await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
       }
-      $('.pubkey').val(String(keys[0].armor()));
-      $('.action_ok').trigger('click');
-    } else if (errs.length) {
-      await Ui.modal.error(`error processing public keys:\n${errs.map(e => `-> ${e.message}\n`).join('')}`);
     }
   });
 
