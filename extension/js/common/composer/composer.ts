@@ -17,6 +17,7 @@ import { ComposerErrs } from './composer-errs.js';
 import { ComposerInput } from './composer-input.js';
 import { ComposerRender } from './composer-render.js';
 import { Catch } from '../platform/catch.js';
+import { Mime } from '../core/mime.js';
 
 export class Composer {
 
@@ -84,7 +85,7 @@ export class Composer {
   constructor(appFunctions: ComposerAppFunctionsInterface, urlParams: ComposerUrlParams) {
     this.app = appFunctions;
     this.urlParams = urlParams;
-    this.urlParams.subject = this.urlParams.subject.replace(/^((Re|Fwd): )+/g, '');
+    this.urlParams.subject = Mime.subjectWithoutPrefixes(this.urlParams.subject);
     this.draft = new ComposerDraft(this);
     this.quote = new ComposerQuote(this);
     this.contacts = new ComposerContacts(this);

@@ -358,7 +358,7 @@ Catch.try(async () => {
     }
   };
 
-  const decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined) => {
+  const decideDecryptedContentFormattingAndRender = async (decryptedBytes: Buf, isEncrypted: boolean, sigResult: VerifyRes | undefined, plainSubject?: string) => {
     setFrameColor(isEncrypted ? 'green' : 'gray');
     renderPgpSignatureCheckResult(sigResult);
     const publicKeys: string[] = [];
@@ -385,8 +385,9 @@ Catch.try(async () => {
       } else {
         decryptedContent = '';
       }
-      if (decoded.subject && isEncrypted) {
-        decryptedContent = getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent;
+      if (decoded.subject && isEncrypted && (!plainSubject || !Mime.subjectWithoutPrefixes(plainSubject).includes(Mime.subjectWithoutPrefixes(decoded.subject)))) {
+        // there is an encrypted subject + (either there is no plain subject or the plain subject does not contain what's in the encrypted subject)
+        decryptedContent = getEncryptedSubjectText(decoded.subject, isHtml) + decryptedContent; // render encrypted subject in message
       }
       for (const att of decoded.atts) {
         if (att.treatAs() !== 'publicKey') {
@@ -412,7 +413,7 @@ Catch.try(async () => {
     }
   };
 
-  const decryptAndRender = async (encryptedData: Buf, optionalPwd?: string) => {
+  const decryptAndRender = async (encryptedData: Buf, optionalPwd?: string, plainSubject?: string) => {
     if (typeof signature !== 'string') {
       const kisWithPp = await Store.keysGetAllWithPp(acctEmail);
       const result = await BrowserMsg.send.bg.await.pgpMsgDecrypt({ kisWithPp, encryptedData, msgPwd: await getDecryptPwd(optionalPwd) });
@@ -426,7 +427,7 @@ Catch.try(async () => {
           console.info(`re-fetching message ${msgId} from api because failed signature check: ${!msgFetchedFromApi ? 'full' : 'raw'}`);
           await initialize(true);
         } else {
-          await decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature); // text!: did not request uint8
+          await decideDecryptedContentFormattingAndRender(result.content, Boolean(result.isEncrypted), result.signature, plainSubject); // text!: did not request uint8
         }
       } else if (result.error.type === DecryptErrTypes.format) {
         if (canReadEmails && msgFetchedFromApi !== 'raw') {
@@ -621,12 +622,12 @@ Catch.try(async () => {
         } else if (canReadEmails) {
           renderText('Retrieving message...');
           const format: GmailResponseFormat = (!msgFetchedFromApi) ? 'full' : 'raw';
-          const extracted = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format, (progress) => {
+          const { armored, subject } = await Google.gmail.extractArmoredBlock(acctEmail, msgId, format, (progress) => {
             renderText(`Retrieving message... ${progress}%`);
           });
           renderText('Decrypting...');
           msgFetchedFromApi = format;
-          await decryptAndRender(Buf.fromUtfStr(extracted));
+          await decryptAndRender(Buf.fromUtfStr(armored), undefined, subject);
         } else { // gmail message read auth not allowed
           // tslint:disable-next-line:max-line-length
           const readAccess = `Your browser needs to access gmail it in order to decrypt and display the message.<br/><br/><div class="button green auth_settings">Add missing permission</div>`;

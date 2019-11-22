@@ -426,18 +426,19 @@ export class Google extends EmailProviderApi {
     /**
      * Extracts the encrypted message from gmail api. Sometimes it's sent as a text, sometimes html, sometimes attachments in various forms.
      */
-    extractArmoredBlock: async (acctEmail: string, msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<string> => {
+    extractArmoredBlock: async (acctEmail: string, msgId: string, format: GmailResponseFormat, progressCb?: ProgressCb): Promise<{ armored: string, subject?: string }> => {
       const gmailMsg = await Google.gmail.msgGet(acctEmail, msgId, format);
+      const subject = Google.gmail.findHeader(gmailMsg.payload, 'subject');
       if (format === 'full') {
         const bodies = Google.gmail.findBodies(gmailMsg);
         const atts = Google.gmail.findAtts(gmailMsg);
         const fromTextBody = Pgp.armor.clip(Buf.fromBase64UrlStr(bodies['text/plain'] || '').toUtfStr());
         if (fromTextBody) {
-          return fromTextBody;
+          return { armored: fromTextBody, subject };
         }
         const fromHtmlBody = Pgp.armor.clip(Xss.htmlSanitizeAndStripAllTags(Buf.fromBase64UrlStr(bodies['text/html'] || '').toUtfStr(), '\n'));
         if (fromHtmlBody) {
-          return fromHtmlBody;
+          return { armored: fromHtmlBody, subject };
         }
         if (atts.length) {
           for (const att of atts) {
@@ -447,7 +448,7 @@ export class Google extends EmailProviderApi {
               if (!armoredMsg) {
                 throw new FormatError('Problem extracting armored message', att.getData().toUtfStr());
               }
-              return armoredMsg;
+              return { armored: armoredMsg, subject };
             }
           }
           throw new FormatError('Armored message not found', JSON.stringify(gmailMsg.payload, undefined, 2));
@@ -460,7 +461,7 @@ export class Google extends EmailProviderApi {
         if (decoded.text !== undefined) {
           const armoredMsg = Pgp.armor.clip(decoded.text); // todo - the message might be in attachments
           if (armoredMsg) {
-            return armoredMsg;
+            return { armored: armoredMsg, subject };
           } else {
             throw new FormatError('Could not find armored message in parsed raw mime', mimeMsg.toUtfStr());
           }
