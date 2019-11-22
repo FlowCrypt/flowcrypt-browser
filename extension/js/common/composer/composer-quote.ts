@@ -239,7 +239,8 @@ export class ComposerQuote extends ComposerComponent {
   }
 
   private generateHtmlPreviousMsgQuote = (text: string, date: Date, from: string) => {
-    return Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
+    const sanitizedQuote = Xss.htmlSanitize(`On ${Str.fromDate(date).replace(' ', ' at ')}, ${from} wrote:${this.quoteText(Xss.escape(text))}`);
+    return `<blockquote>${sanitizedQuote}</blockquote>`;
   }
 
   private setExpandingTextAfterClick = () => {
