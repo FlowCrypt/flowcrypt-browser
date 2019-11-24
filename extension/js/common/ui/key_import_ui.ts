@@ -3,7 +3,7 @@
 'use strict';
 
 import { Store } from '../platform/store.js';
-import { Ui, Env } from '../browser.js';
+import { Ui } from '../browser.js';
 import { Pgp } from '../core/pgp.js';
 import { KeyBlockType } from '../core/mime.js';
 import { mnemonic } from '../core/mnemonic.js';
@@ -11,6 +11,7 @@ import { AttUI } from './att_ui.js';
 import { Lang } from '../lang.js';
 import { Catch } from '../platform/catch.js';
 import { Settings } from '../settings.js';
+import { Url } from '../core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -56,7 +57,7 @@ export class KeyImportUi {
         $('.source_paste_container').css('display', 'block');
         $('.source_paste_container .unprotected_key_create_pass_phrase').hide();
       } else if ((this as HTMLInputElement).value === 'backup') {
-        window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
+        window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, parentTabId, action: 'add_key' });
       }
     });
     $('.line.unprotected_key_create_pass_phrase .action_use_random_pass_phrase').click(Ui.event.handle(target => {

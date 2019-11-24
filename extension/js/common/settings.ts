@@ -4,8 +4,8 @@
 
 import { Catch } from './platform/catch.js';
 import { Store, SendAsAlias } from './platform/store.js';
-import { Str, Dict } from './core/common.js';
-import { Ui, Env, UrlParams, JQS } from './browser.js';
+import { Str, Dict, UrlParams, Url } from './core/common.js';
+import { Ui, Env, JQS } from './browser.js';
 import { BrowserMsg } from './extension.js';
 import { Lang } from './lang.js';
 import { Rules } from './rules.js';
@@ -54,14 +54,14 @@ export class Settings {
       }
       addUrlTextOrParams = undefined;
     }
-    return Env.urlCreate(page, pageParams) + (addUrlTextOrParams || '');
+    return Url.create(page, pageParams) + (addUrlTextOrParams || '');
   }
 
   static renderSubPage = (acctEmail: string | undefined, tabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     let newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, tabId, page, addUrlTextOrParams);
     let iframeWidth, iframeHeight, variant, closeOnClick;
     const beforeClose = () => {
-      const urlWithoutPageParam = Env.removeParamsFromUrl(window.location.href, ['page']);
+      const urlWithoutPageParam = Url.removeParamsFromUrl(window.location.href, ['page']);
       window.history.pushState('', '', urlWithoutPageParam);
     };
     if (page !== '/chrome/elements/compose.htm') {
@@ -83,7 +83,7 @@ export class Settings {
 
   static redirectSubPage = (acctEmail: string, parentTabId: string, page: string, addUrlTextOrParams?: string | UrlParams) => {
     const newLocation = Settings.prepareNewSettingsLocationUrl(acctEmail, parentTabId, page, addUrlTextOrParams);
-    if (Boolean(Env.urlParams(['embedded']).embedded)) { // embedded on the main page
+    if (Boolean(Url.parse(['embedded']).embedded)) { // embedded on the main page
       BrowserMsg.send.openPage(parentTabId, { page, addUrlText: addUrlTextOrParams });
     } else { // on a sub page/module page, inside a lightbox. Just change location.
       window.location.href = newLocation;
@@ -308,10 +308,10 @@ export class Settings {
         const storage = await Store.getAcct(response.acctEmail, ['setup_done']);
         if (storage.setup_done) { // this was just an additional permission
           await Ui.modal.info('You\'re all set.');
-          window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
+          window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail: response.acctEmail });
         } else {
           await Store.setAcct(response.acctEmail, { email_provider: 'gmail' });
-          window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
+          window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail: response.acctEmail });
         }
       } else if (response.result === 'Denied' || response.result === 'Closed') {
         if (settingsTabId) {
@@ -360,8 +360,8 @@ export class Settings {
       const acctEmail = $(target).find('.contains_email').text();
       const acctStorage = acctStorages[acctEmail];
       window.location.href = acctStorage.setup_done
-        ? Env.urlCreate(page, { acctEmail })
-        : Env.urlCreate(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
+        ? Url.create(page, { acctEmail })
+        : Url.create(Env.getBaseUrl() + '/chrome/settings/index.htm', { acctEmail });
     }));
   }
 

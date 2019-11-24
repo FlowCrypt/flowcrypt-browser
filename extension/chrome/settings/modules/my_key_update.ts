@@ -4,22 +4,23 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui, Env } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Lang } from '../../../js/common/lang.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Api } from '../../../js/common/api/api.js';
+import { Url } from '../../../js/common/core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-  const showKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
+  const showKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
 
   $('.action_show_public_key').attr('href', showKeyUrl);
   const inputPrivateKey = $('.input_private_key');

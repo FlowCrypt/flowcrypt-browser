@@ -4,7 +4,7 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Assert } from '../../js/common/assert.js';
 import { KeyImportUi, UserAlert, } from '../../js/common/ui/key_import_ui.js';
@@ -12,12 +12,13 @@ import { AttUI } from '../../js/common/ui/att_ui.js';
 import { Pgp } from '../../js/common/core/pgp.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { FetchKeyUI } from '../../js/common/ui/fetch_key_ui.js';
+import { Url } from '../../js/common/core/common.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emails', 'placement']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'emails', 'placement']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const missingPubkeyEmails = Assert.urlParamRequire.string(uncheckedUrlParams, 'emails').split(',');

@@ -5,11 +5,11 @@
 'use strict';
 
 import { Catch } from './platform/catch.js';
-import { Str, Dict } from './core/common.js';
+import { Str, Dict, UrlParams, Url } from './core/common.js';
 import { Pgp } from './core/pgp.js';
 import { Att } from './core/att.js';
 import { MsgBlock } from './core/mime.js';
-import { Browser, UrlParams, Env, Ui, WebMailName } from './browser.js';
+import { Browser, Ui, WebMailName } from './browser.js';
 import { Xss } from './platform/xss.js';
 import { SendAsAlias } from './platform/store.js';
 
@@ -54,7 +54,7 @@ export class XssSafeFactory {
     for (const k of Object.keys(this.setParams)) {
       params[k] = this.setParams[k];
     }
-    return Env.urlCreate(path, params);
+    return Url.create(path, params);
   }
 
   srcComposeMsg = (draftId?: string) => {
@@ -234,7 +234,7 @@ export class XssSafeFactory {
   private newId = () => `frame_${Str.sloppyRandom(10)}`;
 
   private iframe = (src: string, classes: string[] = [], elAttributes: UrlParams = {}) => {
-    const id = String(Env.urlParams(['frameId'], src).frameId);
+    const id = String(Url.parse(['frameId'], src).frameId);
     const classAttribute = (classes || []).concat(this.reloadableCls).join(' ');
     const attrs: Dict<string> = { id, class: classAttribute, src };
     for (const name of Object.keys(elAttributes)) {

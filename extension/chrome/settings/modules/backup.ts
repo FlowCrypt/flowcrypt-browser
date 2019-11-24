@@ -4,9 +4,9 @@
 
 import { Catch, UnreportableError } from '../../../js/common/platform/catch.js';
 import { Store, KeyBackupMethod, EmailProvider } from '../../../js/common/platform/store.js';
-import { Value } from '../../../js/common/core/common.js';
+import { Value, Url } from '../../../js/common/core/common.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Rules } from '../../../js/common/rules.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -25,7 +25,7 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['setup', 'passphrase_change_gmail_backup', 'options', undefined]);
   const keyImportUi = new KeyImportUi({});
@@ -241,7 +241,7 @@ Catch.try(async () => {
       return;
     }
     if (!isPassPhraseStrongEnough(primaryKi, pp) && await Ui.modal.confirm('Your key is not protected with strong pass phrase, would you like to change pass phrase now?')) {
-      window.location.href = Env.urlCreate('/chrome/settings/modules/change_passphrase.htm', { acctEmail, parentTabId });
+      window.location.href = Url.create('/chrome/settings/modules/change_passphrase.htm', { acctEmail, parentTabId });
       return;
     }
     const btn = $('.action_manual_backup');
@@ -286,7 +286,7 @@ Catch.try(async () => {
   const writeBackupDoneAndRender = async (prompt: number | false, method: KeyBackupMethod) => {
     await Store.setAcct(acctEmail, { key_backup_prompt: prompt, key_backup_method: method });
     if (action === 'setup') {
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail, action: 'finalize' });
+      window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail, action: 'finalize' });
     } else {
       await showStatus();
     }
@@ -360,7 +360,7 @@ Catch.try(async () => {
   $('.action_skip_backup').click(Ui.event.prevent('double', async () => {
     if (action === 'setup') {
       await Store.setAcct(acctEmail, { key_backup_prompt: false });
-      window.location.href = Env.urlCreate('/chrome/settings/setup.htm', { acctEmail });
+      window.location.href = Url.create('/chrome/settings/setup.htm', { acctEmail });
     } else {
       if (parentTabId) {
         BrowserMsg.send.closePage(parentTabId);

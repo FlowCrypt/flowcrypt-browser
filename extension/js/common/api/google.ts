@@ -10,7 +10,7 @@ import { Catch } from '../platform/catch.js';
 import { Store, AccountStore, Serializable } from '../platform/store.js';
 import { Api, AuthError, ReqMethod, ProgressCbs, ProgressCb, AjaxError, RecipientType, ChunkedCb, ProviderContactsResults } from './api.js';
 import { Env, Ui } from '../browser.js';
-import { Dict, Value, Str } from '../core/common.js';
+import { Dict, Value, Str, Url } from '../core/common.js';
 import { GoogleAuthWindowResult$result, BrowserMsg, AddrParserResult, BrowserWidnow } from '../extension.js';
 import { Mime, SendableMsgBody } from '../core/mime.js';
 import { Att } from '../core/att.js';
@@ -705,7 +705,7 @@ export class GoogleAuth {
   private static processOauthResTitle = (title: string): { result: GoogleAuthWindowResult$result, code?: string, error?: string, csrf?: string } => {
     const parts = title.split(' ', 2);
     const result = parts[0] as GoogleAuthWindowResult$result;
-    const params = Env.urlParams(['code', 'state', 'error'], parts[1]);
+    const params = Url.parse(['code', 'state', 'error'], parts[1]);
     console.log(`state: ${params.state}`);
     let authReq: AuthReq;
     try {
@@ -754,7 +754,7 @@ export class GoogleAuth {
     }
   }
 
-  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => Env.urlCreate(GoogleAuth.OAUTH.url_code, {
+  private static apiGoogleAuthCodeUrl = (authReq: AuthReq) => Url.create(GoogleAuth.OAUTH.url_code, {
     client_id: GoogleAuth.OAUTH.client_id,
     response_type: 'code',
     access_type: 'offline',
@@ -791,21 +791,21 @@ export class GoogleAuth {
   }
 
   private static googleAuthGetTokens = (code: string) => Api.ajax({
-    url: Env.urlCreate(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
+    url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'authorization_code', code, client_id: GoogleAuth.OAUTH.client_id, redirect_uri: GoogleAuth.OAUTH.url_redirect }),
     method: 'POST',
     crossDomain: true,
     async: true,
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
 
   private static googleAuthRefreshToken = (refreshToken: string) => Api.ajax({
-    url: Env.urlCreate(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
+    url: Url.create(GoogleAuth.OAUTH.url_tokens, { grant_type: 'refresh_token', refreshToken, client_id: GoogleAuth.OAUTH.client_id }),
     method: 'POST',
     crossDomain: true,
     async: true,
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokensResponse>
 
   private static googleAuthCheckAccessToken = (accessToken: string) => Api.ajax({
-    url: Env.urlCreate(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
+    url: Url.create(`${GOOGLE_API_HOST}/oauth2/v1/tokeninfo`, { access_token: accessToken }),
     crossDomain: true,
     async: true,
   }, Catch.stackTrace()) as any as Promise<GoogleAuthTokenInfo>

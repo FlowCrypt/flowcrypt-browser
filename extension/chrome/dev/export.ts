@@ -3,17 +3,18 @@
 'use strict';
 
 import { Catch } from '../../js/common/platform/catch.js';
-import { Ui, Env, Browser } from '../../js/common/browser.js';
+import { Ui, Browser } from '../../js/common/browser.js';
 import { Google, GmailRes } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
 import { Api } from '../../js/common/api/api.js';
 import { Att } from '../../js/common/core/att.js';
 import { Buf } from '../../js/common/core/buf.js';
 import { openpgp } from '../../js/common/core/pgp.js';
+import { Url } from '../../js/common/core/common.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail']);
+  const uncheckedUrlParams = Url.parse(['acctEmail']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
 
   if (!confirm('This is page is meant for debugging. It will download messages from your inbox and save them to your device. Continue?')) {

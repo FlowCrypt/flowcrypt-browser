@@ -4,14 +4,15 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui, Env } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Assert } from '../../../js/common/assert.js';
+import { Url } from '../../../js/common/core/common.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'emailProvider']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'emailProvider']);
   const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const emailProvider = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'emailProvider') || 'gmail';

@@ -2,8 +2,8 @@
 
 'use strict';
 
-import { Ui, UrlParams, UrlParam } from './browser.js';
-import { Dict } from './core/common.js';
+import { Ui } from './browser.js';
+import { Dict, UrlParams, UrlParam } from './core/common.js';
 import { Catch, UnreportableError } from './platform/catch.js';
 import { KeyInfo, Pgp } from './core/pgp.js';
 import { BrowserMsg } from './extension.js';

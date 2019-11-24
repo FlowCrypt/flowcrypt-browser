@@ -6,7 +6,7 @@ import { Catch } from '../../js/common/platform/catch.js';
 import { Store, ContactUpdate, DbContactFilter, AccountStoreExtension, SendAsAlias } from '../../js/common/platform/store.js';
 import { Str, Dict } from '../../js/common/core/common.js';
 import { Att } from '../../js/common/core/att.js';
-import { Ui, Env, JQS } from '../../js/common/browser.js';
+import { Ui, JQS } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer/composer.js';
 import { Api, ProgressCb, ChunkedCb } from '../../js/common/api/api.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
@@ -20,6 +20,7 @@ import { Keyserver, PubkeySearchResult } from '../../js/common/api/keyserver.js'
 import { CollectPubkeysResult } from '../../js/common/composer/interfaces/composer-types.js';
 import { PUBKEY_LOOKUP_RESULT_FAIL } from '../../js/common/composer/composer-errs.js';
 import { Backend } from '../../js/common/api/backend.js';
+import { Url } from '../../js/common/core/common.js';
 
 export type DeterminedMsgHeaders = {
   lastMsgId: string,
@@ -32,7 +33,7 @@ Catch.try(async () => {
 
   const ksLookupsByEmail: { [key: string]: PubkeySearchResult | Contact } = {};
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId',
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'draftId', 'placement', 'frameId',
     'replyMsgId', 'skipClickPrompt', 'ignoreDraft', 'debug', 'removeAfterClose']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');

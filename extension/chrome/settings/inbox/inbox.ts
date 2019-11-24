@@ -4,8 +4,8 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Str, Dict } from '../../../js/common/core/common.js';
-import { Ui, Env, UrlParams } from '../../../js/common/browser.js';
+import { Str, Dict, Url, UrlParams } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser.js';
 import { Injector } from '../../../js/common/inject.js';
 import { Notifications } from '../../../js/common/notifications.js';
 import { Settings } from '../../../js/common/settings.js';
@@ -22,7 +22,7 @@ import { WebmailCommon } from "../../../js/common/webmail.js";
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'labelId', 'threadId', 'showOriginal']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const labelId = uncheckedUrlParams.labelId ? String(uncheckedUrlParams.labelId) : 'INBOX';
   const threadId = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'threadId');
@@ -145,14 +145,14 @@ Catch.try(async () => {
   BrowserMsg.listen(tabId);
 
   const updateUrlWithoutRedirecting = (title: string, params: UrlParams) => {
-    const newUrlSearch = Env.urlCreate('', params);
+    const newUrlSearch = Url.create('', params);
     if (newUrlSearch !== window.location.search) {
       window.history.pushState({}, title, newUrlSearch);
     }
   };
 
   const redirectToUrl = (params: UrlParams) => {
-    const newUrlSearch = Env.urlCreate('', params);
+    const newUrlSearch = Url.create('', params);
     if (newUrlSearch !== window.location.search) {
       window.location.search = newUrlSearch;
     } else {

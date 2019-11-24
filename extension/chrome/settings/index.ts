@@ -5,8 +5,8 @@
 import { VERSION } from '../../js/common/core/const.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Str } from '../../js/common/core/common.js';
-import { Ui, Env, JQS, UrlParams } from '../../js/common/browser.js';
+import { Str, UrlParams, Url } from '../../js/common/core/common.js';
+import { Ui, Env, JQS } from '../../js/common/browser.js';
 import { Rules } from '../../js/common/rules.js';
 import { Notifications } from '../../js/common/notifications.js';
 import { Settings } from '../../js/common/settings.js';
@@ -24,7 +24,7 @@ declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'page', 'pageUrlParams', 'advanced', 'addNewAcct']);
   const acctEmail = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'acctEmail');
   let page = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'page');
   page = (page === 'undefined') ? undefined : page; // in case an "undefined" strring slipped in
@@ -117,7 +117,7 @@ Catch.try(async () => {
       await Settings.newGoogleAcctAuthPromptThenAlertOrForward(tabId);
     } else if (acctEmail) {
       $('.email-address').text(acctEmail);
-      $('#security_module').attr('src', Env.urlCreate('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
+      $('#security_module').attr('src', Url.create('modules/security.htm', { acctEmail, parentTabId: tabId, embedded: true }));
       const storage = await Store.getAcct(acctEmail, ['setup_done', 'email_provider', 'picture']);
       const scopes = await Store.getScopes(acctEmail);
       if (storage.setup_done) {
@@ -148,7 +148,7 @@ Catch.try(async () => {
     } else {
       const acctEmails = await Store.acctEmailsGet();
       if (acctEmails && acctEmails[0]) {
-        window.location.href = Env.urlCreate('index.htm', { acctEmail: acctEmails[0] });
+        window.location.href = Url.create('index.htm', { acctEmail: acctEmails[0] });
       } else {
         $('.show_if_setup_not_done').css('display', 'initial');
         $('.hide_if_setup_not_done').css('display', 'none');
@@ -207,7 +207,7 @@ Catch.try(async () => {
       await Settings.refreshAcctAliases(acctEmail!);
       await Settings.acctStorageChangeEmail(acctEmail!, newAcctEmail);
       await Ui.modal.info(`Email address changed to ${newAcctEmail}. You should now check that your public key is properly submitted.`);
-      window.location.href = Env.urlCreate('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
+      window.location.href = Url.create('index.htm', { acctEmail: newAcctEmail, page: '/chrome/settings/modules/keyserver.htm' });
     } catch (e) {
       if (Api.err.isNetErr(e)) {
         await Ui.modal.error('There was a network error, please try again.');
@@ -333,7 +333,7 @@ Catch.try(async () => {
   }));
 
   $('.action_show_encrypted_inbox').click(Ui.event.handle(target => {
-    window.location.href = Env.urlCreate('/chrome/settings/inbox/inbox.htm', { acctEmail });
+    window.location.href = Url.create('/chrome/settings/inbox/inbox.htm', { acctEmail });
   }));
 
   $('.action_go_auth_denied').click(Ui.event.handle(() => Settings.renderSubPage(acctEmail!, tabId, '/chrome/settings/modules/auth_denied.htm')));
@@ -369,7 +369,7 @@ Catch.try(async () => {
 
   const reload = (advanced = false) => {
     if (advanced) {
-      window.location.href = Env.urlCreate('/chrome/settings/index.htm', { acctEmail, advanced: true });
+      window.location.href = Url.create('/chrome/settings/index.htm', { acctEmail, advanced: true });
     } else {
       window.location.reload();
     }

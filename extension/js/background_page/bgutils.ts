@@ -3,8 +3,7 @@
 'use strict';
 
 import { Catch, UnreportableError } from '../common/platform/catch.js';
-import { Dict } from '../common/core/common.js';
-import { Env, UrlParam } from '../common/browser.js';
+import { Dict, Url, UrlParam } from '../common/core/common.js';
 import { Store, StoreCorruptedError, StoreDeniedError, StoreFailedError } from '../common/platform/store.js';
 
 export class BgUtils {
@@ -13,12 +12,12 @@ export class BgUtils {
     const basePath = chrome.runtime.getURL(`chrome/settings/${path}`);
     const pageUrlParams = rawPageUrlParams ? JSON.stringify(rawPageUrlParams) : undefined;
     if (acctEmail || path === 'fatal.htm') {
-      await BgUtils.openExtensionTab(Env.urlCreate(basePath, { acctEmail, page, pageUrlParams }));
+      await BgUtils.openExtensionTab(Url.create(basePath, { acctEmail, page, pageUrlParams }));
     } else if (addNewAcct) {
-      await BgUtils.openExtensionTab(Env.urlCreate(basePath, { addNewAcct }));
+      await BgUtils.openExtensionTab(Url.create(basePath, { addNewAcct }));
     } else {
       const acctEmails = await Store.acctEmailsGet();
-      await BgUtils.openExtensionTab(Env.urlCreate(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
+      await BgUtils.openExtensionTab(Url.create(basePath, { acctEmail: acctEmails[0], page, pageUrlParams }));
     }
   }
 
@@ -57,7 +56,7 @@ export class BgUtils {
         reason = 'db_failed';
       }
     }
-    await BgUtils.openSettingsPage(Env.urlCreate('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
+    await BgUtils.openSettingsPage(Url.create('fatal.htm', { reason, stack: e instanceof Error ? e.stack : Catch.stackTrace() }));
     throw new UnreportableError();
   }
 

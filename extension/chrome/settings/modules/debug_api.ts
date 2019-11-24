@@ -2,8 +2,7 @@
 
 'use strict';
 
-import { Dict } from '../../../js/common/core/common.js';
-import { Env } from '../../../js/common/browser.js';
+import { Dict, Url } from '../../../js/common/core/common.js';
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Google } from '../../../js/common/api/google.js';
 import { Store } from '../../../js/common/platform/store.js';
@@ -12,7 +11,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'which']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'which']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const which = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'which', ['google_account', 'flowcrypt_account', 'flowcrypt_subscription', 'local_store']);
 
