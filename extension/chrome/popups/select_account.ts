@@ -3,15 +3,16 @@
 'use strict';
 
 import { Store } from '../../js/common/platform/store.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Catch } from '../../js/common/platform/catch.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Url } from '../../js/common/core/common.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['action']);
+  const uncheckedUrlParams = Url.parse(['action']);
   const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['inbox', 'settings']);
 
   $('#title').text(action === 'inbox' ? 'Choose inbox account' : 'Select an account to open settings');

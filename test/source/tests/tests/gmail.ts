@@ -1,5 +1,6 @@
+import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { Url, BrowserHandle, ControllablePage } from '../../browser';
+import { BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { expect } from 'chai';
 import { BrowserRecipe } from '../browser_recipe';
@@ -23,7 +24,7 @@ export const defineGmailTests = (testVariant: TestVariant, testWithNewBrowser: T
     };
 
     const openGmailPage = async (t: AvaContext, browser: BrowserHandle, path: string): Promise<ControllablePage> => {
-      const url = Url.gmail(0, path);
+      const url = TestUrls.gmail(0, path);
       const gmialPage = await browser.newPage(t, url);
       await gmialPage.waitAll('@action-secure-compose');
       if (path) { // gmail does weird things with navigation sometimes, nudge it again

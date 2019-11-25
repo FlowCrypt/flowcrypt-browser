@@ -14,6 +14,7 @@ import { Store } from '../platform/store.js';
 import { Composer } from './composer.js';
 import { Recipients } from './interfaces/composer-types.js';
 import { ComposerComponent } from './interfaces/composer-component.js';
+import { Url } from '../core/common.js';
 
 export class ComposerDraft extends ComposerComponent {
 
@@ -36,7 +37,7 @@ export class ComposerDraft extends ComposerComponent {
       await this.draftDelete();
       if (this.urlParams.isReplyBox && !this.urlParams.removeAfterClose) { // reload iframe so we don't leave users without a reply UI
         this.urlParams.skipClickPrompt = false;
-        window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
+        window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams);
       } else { // close new msg
         this.composer.app.closeMsg();
       }
@@ -76,7 +77,7 @@ export class ComposerDraft extends ComposerComponent {
         await this.composer.app.storageSetDraftMeta(false, this.urlParams.draftId, this.urlParams.threadId);
         console.info('Above red message means that there used to be a draft, but was since deleted. (not an error)');
         this.urlParams.draftId = '';
-        window.location.href = Env.urlCreate(Env.getUrlNoParams(), this.urlParams);
+        window.location.href = Url.create(Env.getUrlNoParams(), this.urlParams);
       } else {
         Catch.reportErr(e);
         await this.abortAndRenderReplyMsgComposeTableIfIsReplyBox('exception');

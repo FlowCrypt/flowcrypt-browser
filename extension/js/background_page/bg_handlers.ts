@@ -5,10 +5,10 @@
 import { Store } from '../common/platform/store.js';
 import { Bm } from '../common/extension.js';
 import { BgUtils } from './bgutils.js';
-import { Env } from '../common/browser.js';
 import { Api } from '../common/api/api.js';
 import { Google } from '../common/api/google.js';
 import { Pgp } from '../common/core/pgp.js';
+import { Url } from '../common/core/common.js';
 
 export class BgHandlers {
 
@@ -17,7 +17,7 @@ export class BgHandlers {
   }
 
   public static openInboxPageHandler: Bm.AsyncResponselessHandler = async (message: { acctEmail: string, threadId?: string, folder?: string }) => {
-    await BgUtils.openExtensionTab(Env.urlCreate(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
+    await BgUtils.openExtensionTab(Url.create(chrome.runtime.getURL(`chrome/settings/inbox/inbox.htm`), message));
   }
 
   public static dbOperationHandler = async (db: IDBDatabase, request: Bm.Db): Promise<Bm.Res.Db> => {

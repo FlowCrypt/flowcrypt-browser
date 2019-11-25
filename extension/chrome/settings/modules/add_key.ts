@@ -4,8 +4,8 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Value } from '../../../js/common/core/common.js';
-import { Ui, Env } from '../../../js/common/browser.js';
+import { Value, Url } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Api } from '../../../js/common/api/api.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
@@ -17,7 +17,7 @@ import { Xss } from '../../../js/common/platform/xss.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 

@@ -4,7 +4,7 @@
 
 import { Store, Subscription } from '../../js/common/platform/store.js';
 import { Att } from '../../js/common/core/att.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser.js';
 import { Composer } from '../../js/common/composer/composer.js';
 import { Api } from '../../js/common/api/api.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -13,12 +13,13 @@ import { Google } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
 import { ComposerAppFunctionsInterface } from '../../js/common/composer/interfaces/composer-app-functions.js';
+import { Url } from '../../js/common/core/common.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'from', 'to', 'subject', 'frameId', 'replyMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft', 'debug']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'from', 'to', 'subject', 'frameId', 'replyMsgId', 'parentTabId', 'skipClickPrompt', 'ignoreDraft', 'debug']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const from = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'from') || acctEmail;

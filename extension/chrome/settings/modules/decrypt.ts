@@ -5,17 +5,18 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { DecryptErrTypes, PgpMsg } from '../../../js/common/core/pgp.js';
 import { Assert } from '../../../js/common/assert.js';
 import { AttUI } from '../../../js/common/ui/att_ui.js';
 import { XssSafeFactory } from '../../../js/common/xss_safe_factory.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Url } from '../../../js/common/core/common.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
 
   const tabId = await BrowserMsg.requiredTabId();

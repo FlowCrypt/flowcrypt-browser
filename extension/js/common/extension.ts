@@ -2,10 +2,10 @@
 
 'use strict';
 
-import { Str, Dict } from './core/common.js';
+import { Str, Dict, UrlParams } from './core/common.js';
 import { DiagnoseMsgPubkeysResult, DecryptResult, VerifyRes, PgpMsgTypeResult, PgpMsgMethod, KeyDetails } from './core/pgp.js';
 import { FlatTypes, GlobalIndex, GlobalStore, AccountIndex, AccountStore } from './platform/store.js';
-import { Ui, Env, Browser, UrlParams } from './browser.js';
+import { Ui, Env, Browser } from './browser.js';
 import { Catch } from './platform/catch.js';
 import { AuthRes } from './api/google.js';
 import { Buf } from './core/buf.js';

@@ -1,4 +1,5 @@
-import { Url, BrowserHandle } from '../browser';
+import { TestUrls } from './../browser/test_urls';
+import { BrowserHandle } from '../browser';
 import { OauthPageRecipe, SettingsPageRecipe, SetupPageRecipe } from './page_recipe';
 import { Util, Config } from '../util';
 import { AvaContext } from '.';
@@ -6,7 +7,7 @@ import { AvaContext } from '.';
 export class BrowserRecipe {
 
   public static openSettingsLoginButCloseOauthWindowBeforeGrantingPermission = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, Url.extensionSettings());
+    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup0 = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'), acctEmail);
     await OauthPageRecipe.google(t, oauthPopup0, acctEmail, 'close');
     // dialog shows up with permission explanation
@@ -15,14 +16,14 @@ export class BrowserRecipe {
   }
 
   public static openSettingsLoginApprove = async (t: AvaContext, browser: BrowserHandle, acctEmail: string) => {
-    const settingsPage = await browser.newPage(t, Url.extensionSettings());
+    const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
     const oauthPopup = await browser.newPageTriggeredBy(t, () => settingsPage.waitAndClick('@action-connect-to-gmail'), acctEmail);
     await OauthPageRecipe.google(t, oauthPopup, acctEmail, 'approve');
     return settingsPage;
   }
 
   public static openGmailPage = async (t: AvaContext, browser: BrowserHandle, googleLoginIndex = 0) => {
-    const gmailPage = await browser.newPage(t, Url.gmail(googleLoginIndex));
+    const gmailPage = await browser.newPage(t, TestUrls.gmail(googleLoginIndex));
     await gmailPage.waitAll('div.z0'); // compose button container visible
     await Util.sleep(3); // give it extra time to make sure FlowCrypt is initialized if it was supposed to
     return gmailPage;

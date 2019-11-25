@@ -4,16 +4,17 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store, Subscription } from '../../../js/common/platform/store.js';
-import { Ui, Env } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
 import { Api } from '../../../js/common/api/api.js';
+import { Url } from '../../../js/common/core/common.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 

@@ -5,24 +5,25 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Browser } from '../../../js/common/browser.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
 import { Api } from '../../../js/common/api/api.js';
 import { Attester } from '../../../js/common/api/attester.js';
 import { Backend } from '../../../js/common/api/backend.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Buf } from '../../../js/common/core/buf.js';
+import { Url } from '../../../js/common/core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 declare const ClipboardJS: any;
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-  const myKeyUserIdsUrl = Env.urlCreate('my_key_user_ids.htm', uncheckedUrlParams);
-  const myKeyUpdateUrl = Env.urlCreate('my_key_update.htm', uncheckedUrlParams);
+  const myKeyUserIdsUrl = Url.create('my_key_user_ids.htm', uncheckedUrlParams);
+  const myKeyUpdateUrl = Url.create('my_key_update.htm', uncheckedUrlParams);
 
   $('.action_view_user_ids').attr('href', myKeyUserIdsUrl);
   $('.action_view_update').attr('href', myKeyUpdateUrl);

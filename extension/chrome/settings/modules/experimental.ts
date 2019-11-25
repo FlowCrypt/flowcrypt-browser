@@ -5,7 +5,7 @@
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
 import { Att } from '../../../js/common/core/att.js';
-import { Ui, Env, Browser } from '../../../js/common/browser.js';
+import { Ui, Browser } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Lang } from '../../../js/common/lang.js';
@@ -13,15 +13,16 @@ import { GoogleAuth } from '../../../js/common/api/google.js';
 import { Buf } from '../../../js/common/core/buf.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Url } from '../../../js/common/core/common.js';
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
   if (Catch.environment() === 'ex:dev') {
-    Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.escape(Env.urlCreate('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
+    Xss.sanitizeAppend('.storage_link_container', ` - <a href="${Xss.escape(Url.create('/chrome/dev/storage.htm', { controls: true }))}">Storage</a>`);
   }
 
   if (acctEmail) {

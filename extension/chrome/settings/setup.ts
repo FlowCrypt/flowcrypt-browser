@@ -3,8 +3,8 @@
 'use strict';
 
 import { Store, SendAsAlias } from '../../js/common/platform/store.js';
-import { Value, Dict } from '../../js/common/core/common.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Value, Dict, Url } from '../../js/common/core/common.js';
+import { Ui } from '../../js/common/browser.js';
 import { BrowserMsg, Bm } from '../../js/common/extension.js';
 import { Rules } from '../../js/common/rules.js';
 import { Lang } from '../../js/common/lang.js';
@@ -35,7 +35,7 @@ interface SetupOptions {
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'action', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'action', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   let parentTabId: string | undefined;
   const action = Assert.urlParamRequire.oneof(uncheckedUrlParams, 'action', ['add_key', 'finalize', undefined]) as 'add_key' | 'finalize' | undefined;
@@ -118,7 +118,7 @@ Catch.try(async () => {
       }
       if (typeof key_backup_method !== 'string') {
         await Ui.modal.error('Backup has not successfully finished, will retry');
-        window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
+        window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail });
         return;
       }
       await finalizeSetup({ submit_all: tmp_submit_all, submit_main: tmp_submit_main });
@@ -216,7 +216,7 @@ Catch.try(async () => {
       fetchedKeyBackups = await Google.gmail.fetchKeyBackups(acctEmail);
       fetchedKeyBackupsUniqueLongids = await getUniqueLongids(fetchedKeyBackups);
     } catch (e) {
-      window.location.href = Env.urlCreate('modules/add_key.htm', { acctEmail, parentTabId });
+      window.location.href = Url.create('modules/add_key.htm', { acctEmail, parentTabId });
       return;
     }
     if (fetchedKeyBackupsUniqueLongids.length) {
@@ -225,7 +225,7 @@ Catch.try(async () => {
       await renderSetupDone();
       $('#step_4_more_to_recover .action_recover_remaining').click();
     } else {
-      window.location.href = Env.urlCreate('modules/add_key.htm', { acctEmail, parentTabId });
+      window.location.href = Url.create('modules/add_key.htm', { acctEmail, parentTabId });
     }
   };
 
@@ -416,7 +416,7 @@ Catch.try(async () => {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', Lang.setup.nBackupsAlreadyRecoveredOrLeft(nImported, nFetched, txtKeysTeft));
       Xss.sanitizeReplace('#step_2_recovery .line_skip_recovery', Ui.e('div', { class: 'line', html: Ui.e('a', { href: '#', class: 'skip_recover_remaining', html: 'Skip this step' }) }));
       $('#step_2_recovery .skip_recover_remaining').click(Ui.event.handle(() => {
-        window.location.href = Env.urlCreate('index.htm', { acctEmail });
+        window.location.href = Url.create('index.htm', { acctEmail });
       }));
     } else {
       Xss.sanitizeRender('#step_2_recovery .recovery_status', `There ${txtKeysTeft} left to recover.<br><br>Try different pass phrases to unlock all backups.`);
@@ -435,11 +435,11 @@ Catch.try(async () => {
   }));
 
   $('.action_account_settings').click(Ui.event.handle(() => {
-    window.location.href = Env.urlCreate('index.htm', { acctEmail });
+    window.location.href = Url.create('index.htm', { acctEmail });
   }));
 
   $('.action_go_auth_denied').click(Ui.event.handle(() => {
-    window.location.href = Env.urlCreate('index.htm', { acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
+    window.location.href = Url.create('index.htm', { acctEmail, page: '/chrome/settings/modules/auth_denied.htm' });
   }));
 
   $('.input_submit_key').click(Ui.event.handle(target => {
@@ -574,7 +574,7 @@ Catch.try(async () => {
       await createSaveKeyPair(options);
       await preFinalizeSetup(options);
       // only finalize after backup is done. backup.htm will redirect back to this page with ?action=finalize
-      window.location.href = Env.urlCreate('modules/backup.htm', { action: 'setup', acctEmail });
+      window.location.href = Url.create('modules/backup.htm', { action: 'setup', acctEmail });
     } catch (e) {
       Catch.reportErr(e);
       await Ui.modal.error(`There was an error, please try again.\n\n(${String(e)})`);
@@ -598,7 +598,7 @@ Catch.try(async () => {
 
   $('#step_4_close .action_close').click(Ui.event.handle(() => { // only rendered if action=add_key which means parentTabId was used
     if (parentTabId) {
-      BrowserMsg.send.redirect(parentTabId, { location: Env.urlCreate('index.htm', { acctEmail, advanced: true }) });
+      BrowserMsg.send.redirect(parentTabId, { location: Url.create('index.htm', { acctEmail, advanced: true }) });
     } else {
       Catch.report('setup.ts missing parentTabId');
     }

@@ -4,8 +4,8 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Dict } from '../../../js/common/core/common.js';
-import { Ui, Env } from '../../../js/common/browser.js';
+import { Dict, Url } from '../../../js/common/core/common.js';
+import { Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Api } from '../../../js/common/api/api.js';
@@ -19,7 +19,7 @@ type AttKeyserverDiagnosis = { hasPubkeyMissing: boolean, hasPubkeyMismatch: boo
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 

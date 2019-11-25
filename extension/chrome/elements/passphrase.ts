@@ -4,13 +4,14 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store, StorageType } from '../../js/common/platform/store.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Assert } from '../../js/common/assert.js';
 import { initPassphraseToggle } from '../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Url } from '../../js/common/core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -18,7 +19,7 @@ Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId', 'longids', 'type']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId', 'longids', 'type']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const longids = Assert.urlParamRequire.string(uncheckedUrlParams, 'longids').split(',');

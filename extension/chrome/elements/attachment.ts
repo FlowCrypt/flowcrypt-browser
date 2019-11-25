@@ -4,7 +4,7 @@
 
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
-import { Ui, Env, Browser } from '../../js/common/browser.js';
+import { Ui, Browser } from '../../js/common/browser.js';
 import { Api } from '../../js/common/api/api.js';
 import { DecryptErrTypes, PgpMsg } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
@@ -12,12 +12,13 @@ import { Att } from '../../js/common/core/att.js';
 import { Google } from '../../js/common/api/google.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Url } from '../../js/common/core/common.js';
 
 Catch.try(async () => {
 
   Ui.event.protect();
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'msgId', 'attId', 'name', 'type', 'size', 'url', 'parentTabId', 'content', 'decrypted', 'frameId', 'isEncrypted']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const frameId = Assert.urlParamRequire.string(uncheckedUrlParams, 'frameId');

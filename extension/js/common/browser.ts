@@ -5,7 +5,7 @@
 'use strict';
 
 import { Catch } from './platform/catch.js';
-import { Value, Dict } from './core/common.js';
+import { Dict } from './core/common.js';
 import { Api } from './api/api.js';
 import { Att } from './core/att.js';
 import Swal from 'sweetalert2';
@@ -17,8 +17,6 @@ type NamedSels = Dict<JQuery<HTMLElement>>;
 export type WebMailName = 'gmail' | 'outlook' | 'settings';
 export type BrowserEventErrHandler = { auth?: () => Promise<void>, authPopup?: () => Promise<void>, network?: () => Promise<void>, other?: (e: any) => Promise<void> };
 export type SelCache = { cached: (name: string) => JQuery<HTMLElement>; now: (name: string) => JQuery<HTMLElement>; sel: (name: string) => string; };
-export type UrlParam = string | number | null | undefined | boolean | string[];
-export type UrlParams = Dict<UrlParam>;
 
 export interface JQS extends JQueryStatic { featherlight: (contentOrSettings: string | Object) => void; } // tslint:disable-line:ban-types
 
@@ -89,8 +87,6 @@ export class Browser {
 
 export class Env {
 
-  private static URL_PARAM_DICT: Dict<boolean | null> = { '___cu_true___': true, '___cu_false___': false, '___cu_null___': null }; // tslint:disable-line:no-null-keyword
-
   public static runtimeId = (orig = false) => {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id) {
       if (orig === true) {
@@ -107,78 +103,6 @@ export class Env {
   public static isBackgroundPage = () => Boolean(window.location && window.location.href.includes('background_page.htm'));
 
   public static isExtension = () => typeof Env.runtimeId() !== 'undefined';
-
-  private static snakeCaseToCamelCase = (s: string) => s.replace(/_[a-z]/g, boundary => boundary[1].toUpperCase());
-
-  private static camelCaseToSnakeCase = (s: string) => s.replace(/[a-z][A-Z]/g, boundary => `${boundary[0]}_${boundary[1].toLowerCase()}`);
-
-  private static findAndProcessUrlParam = (expectedParamName: string, rawParamNameDict: Dict<string>, rawParms: Dict<string>): UrlParam => {
-    if (typeof rawParamNameDict[expectedParamName] === 'undefined') {
-      return undefined; // param name not found in param name dict
-    }
-    const rawValue = rawParms[rawParamNameDict[expectedParamName]];
-    if (typeof rawValue === 'undefined') {
-      return undefined; // original param name not found in raw params
-    }
-    if (typeof Env.URL_PARAM_DICT[rawValue] !== 'undefined') {
-      return Env.URL_PARAM_DICT[rawValue]; // raw value was converted using a value dict to get proper: true, false, undefined, null
-    }
-    return decodeURIComponent(rawValue);
-  }
-
-  private static fillPossibleUrlParamNameVariations = (urlParamName: string, rawParamNameDict: Dict<string>) => {
-    rawParamNameDict[urlParamName] = urlParamName;
-    rawParamNameDict[Env.snakeCaseToCamelCase(urlParamName)] = urlParamName;
-    rawParamNameDict[Env.camelCaseToSnakeCase(urlParamName)] = urlParamName;
-    const shortened = urlParamName.replace('account', 'acct').replace('message', 'msg').replace('attachment', 'att');
-    rawParamNameDict[Env.snakeCaseToCamelCase(shortened)] = urlParamName;
-    rawParamNameDict[Env.camelCaseToSnakeCase(shortened)] = urlParamName;
-  }
-
-  /**
-   * will convert result to desired format: camelCase or snake_case, based on what was supplied in expectedKeys
-   */
-  public static urlParams = (expectedKeys: string[], parseThisUrl?: string) => {
-    const url = (parseThisUrl || window.location.search.replace('?', ''));
-    const valuePairs = url.split('?').pop()!.split('&'); // str.split('?') string[].length will always be >= 1
-    const rawParams: Dict<string> = {};
-    const rawParamNameDict: Dict<string> = {};
-    for (const valuePair of valuePairs) {
-      const pair = valuePair.split('=');
-      rawParams[pair[0]] = pair[1];
-      Env.fillPossibleUrlParamNameVariations(pair[0], rawParamNameDict);
-    }
-    const processedParams: UrlParams = {};
-    for (const expectedKey of expectedKeys) {
-      processedParams[expectedKey] = Env.findAndProcessUrlParam(expectedKey, rawParamNameDict, rawParams);
-    }
-    return processedParams;
-  }
-
-  public static urlCreate = (link: string, params: UrlParams) => {
-    for (const key of Object.keys(params)) {
-      const value = params[key];
-      if (typeof value !== 'undefined') {
-        const transformed = Value.obj.keyByValue(Env.URL_PARAM_DICT, value);
-        link += (link.includes('?') ? '&' : '?') + encodeURIComponent(key) + '=' + encodeURIComponent(String(typeof transformed !== 'undefined' ? transformed : value));
-      }
-    }
-    return link;
-  }
-
-  public static removeParamsFromUrl = (url: string, paramsToDelete: string[]) => {
-    const urlParts = url.split('?');
-    if (!urlParts[1]) { // Nothing to remove
-      return url;
-    }
-    let queryParams = urlParts[1];
-    queryParams = queryParams[queryParams.length - 1] === '#' ? queryParams.slice(0, -1) : queryParams;
-    const params = new URLSearchParams(queryParams);
-    for (const p of paramsToDelete) {
-      params.delete(p);
-    }
-    return `${urlParts[0]}?${params.toString()}`;
-  }
 
   public static keyCodes = () => { // todo - use e.key (string) instead? Keycodes not reliable. https://bugs.chromium.org/p/chromium/issues/detail?id=79407
     return { a: 97, r: 114, A: 65, R: 82, f: 102, F: 70, backspace: 8, tab: 9, enter: 13, comma: 188, };

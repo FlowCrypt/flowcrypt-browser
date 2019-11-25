@@ -4,7 +4,7 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Ui, Env } from '../../../js/common/browser.js';
+import { Ui } from '../../../js/common/browser.js';
 import { BrowserMsg } from '../../../js/common/extension.js';
 import { Settings } from '../../../js/common/settings.js';
 import { Pgp } from '../../../js/common/core/pgp.js';
@@ -12,12 +12,13 @@ import { Lang } from '../../../js/common/lang.js';
 import { Assert } from '../../../js/common/assert.js';
 import { initPassphraseToggle } from '../../../js/common/ui/passphrase_ui.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Url } from '../../../js/common/core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
 
@@ -28,7 +29,7 @@ Catch.try(async () => {
 
   const { keys: [key] } = await openpgp.key.readArmored(primaryKi.private);
   if (!key.isFullyEncrypted()) {
-    const setUpPpUrl = Env.urlCreate('change_passphrase.htm', { acctEmail, parentTabId });
+    const setUpPpUrl = Url.create('change_passphrase.htm', { acctEmail, parentTabId });
     Xss.sanitizeRender('#content', `<div class="line">No pass phrase set up yet: <a href="${setUpPpUrl}">set up pass phrase</a></div>`);
     return;
   }

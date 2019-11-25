@@ -6,6 +6,7 @@ import { Store } from '../platform/store.js';
 import { Env, Ui } from '../browser.js';
 import { Catch } from '../platform/catch.js';
 import { ContentScriptWindow } from '../extension.js';
+import { Url } from '../core/common.js';
 
 export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
   try {
@@ -16,7 +17,7 @@ export const handleFatalErr = (reason: 'storage_undefined', error: Error) => {
     } else if (!chrome.runtime) {
       console.error('Chrome.runtime missing, cannot continue', error);
     } else { // extension pages
-      window.location.href = chrome.runtime.getURL(Env.urlCreate(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
+      window.location.href = chrome.runtime.getURL(Url.create(`chrome/settings/fatal.htm`, { reason, stack: error.stack }));
     }
   } catch (e) {
     if (e && e instanceof Error && e.message === 'Extension context invalidated.') {

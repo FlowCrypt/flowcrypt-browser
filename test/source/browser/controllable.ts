@@ -1,7 +1,7 @@
 
 import { Page, ElementHandle, Frame, Dialog, ConsoleMessage } from 'puppeteer';
 import { Util } from '../util';
-import { Url } from './url';
+import { TestUrls } from './test_urls';
 import { TIMEOUT_TEST_STATE_SATISFY, TIMEOUT_ELEMENT_APPEAR, TIMEOUT_ELEMENT_GONE, TIMEOUT_PAGE_LOAD, TIMEOUT_DESTROY_UNEXPECTED_ALERT } from '.';
 import { newTimeoutPromise, AvaContext } from '../tests';
 import { expect } from 'chai';
@@ -348,7 +348,7 @@ export class ControllablePage extends ControllableBase {
       const response = r.response();
       const fail = r.failure();
       const url = r.url();
-      if (url.indexOf(Url.extension('')) !== 0 || fail) { // not an extension url, or a fail
+      if (url.indexOf(TestUrls.extension('')) !== 0 || fail) { // not an extension url, or a fail
         this.consoleMsgs.push(new ConsoleEvent('request', `${response ? response.status() : '-1'} ${r.method()} ${url}: ${fail ? fail.errorText : 'ok'}`));
       }
     });
@@ -398,7 +398,7 @@ export class ControllablePage extends ControllableBase {
   }
 
   public goto = async (url: string) => {
-    url = url.indexOf('https://') === 0 || url.indexOf(Url.extension('')) === 0 ? url : Url.extension(url);
+    url = url.indexOf('https://') === 0 || url.indexOf(TestUrls.extension('')) === 0 ? url : TestUrls.extension(url);
     // await this.page.goto(url); // may produce intermittent Navigation Timeout Exceeded in CI environment
     this.page.goto(url).catch(e => this.t.log(`goto: ${e.message}: ${url}`));
     await Promise.race([

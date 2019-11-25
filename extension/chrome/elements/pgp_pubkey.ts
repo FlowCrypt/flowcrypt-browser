@@ -5,12 +5,13 @@
 import { Catch } from '../../js/common/platform/catch.js';
 import { Store } from '../../js/common/platform/store.js';
 import { Str } from '../../js/common/core/common.js';
-import { Ui, Env } from '../../js/common/browser.js';
+import { Ui } from '../../js/common/browser.js';
 import { mnemonic } from '../../js/common/core/mnemonic.js';
 import { Pgp, Contact } from '../../js/common/core/pgp.js';
 import { BrowserMsg } from '../../js/common/extension.js';
 import { Assert } from '../../js/common/assert.js';
 import { Xss } from '../../js/common/platform/xss.js';
+import { Url } from '../../js/common/core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
@@ -21,7 +22,7 @@ Catch.try(async () => {
   Ui.event.protect();
 
   // minimized means I have to click to see details. Compact means the details take up very little space.
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'armoredPubkey', 'parentTabId', 'minimized', 'compact', 'frameId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const parentTabId = Assert.urlParamRequire.string(uncheckedUrlParams, 'parentTabId');
   const armoredPubkey = Pgp.armor.normalize(Assert.urlParamRequire.string(uncheckedUrlParams, 'armoredPubkey'), 'publicKey');
@@ -93,7 +94,7 @@ Catch.try(async () => {
         fixed = fixed.replace(/\n> /g, '\n').replace(/\n>\n/g, '\n\n');
       }
       if (fixed !== armoredPubkey) { // try to re-render it after un-quoting, (minimized because it is probably their own pubkey quoted by the other guy)
-        window.location.href = Env.urlCreate('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
+        window.location.href = Url.create('pgp_pubkey.htm', { armoredPubkey: fixed, minimized: true, acctEmail, parentTabId, frameId });
       } else {
         showKeyNotUsableError();
       }

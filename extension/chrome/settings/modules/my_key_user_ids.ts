@@ -4,18 +4,18 @@
 
 import { Catch } from '../../../js/common/platform/catch.js';
 import { Store } from '../../../js/common/platform/store.js';
-import { Env } from '../../../js/common/browser.js';
 import { Assert } from '../../../js/common/assert.js';
 import { Xss } from '../../../js/common/platform/xss.js';
+import { Url } from '../../../js/common/core/common.js';
 
 declare const openpgp: typeof OpenPGP;
 
 Catch.try(async () => {
 
-  const uncheckedUrlParams = Env.urlParams(['acctEmail', 'longid', 'parentTabId']);
+  const uncheckedUrlParams = Url.parse(['acctEmail', 'longid', 'parentTabId']);
   const acctEmail = Assert.urlParamRequire.string(uncheckedUrlParams, 'acctEmail');
   const longid = Assert.urlParamRequire.optionalString(uncheckedUrlParams, 'longid') || 'primary';
-  const myKeyUrl = Env.urlCreate('my_key.htm', uncheckedUrlParams);
+  const myKeyUrl = Url.create('my_key.htm', uncheckedUrlParams);
 
   $('.action_show_public_key').attr('href', myKeyUrl);
 
