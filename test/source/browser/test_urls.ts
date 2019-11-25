@@ -1,7 +1,7 @@
 
 import { Config } from '../util';
 
-export class Urls {
+export class TestUrls {
 
   public static extension = (path: string) => `chrome-extension://${Config.extensionId}/${path}`;
 

@@ -1,7 +1,7 @@
+import { TestUrls } from './../../browser/test_urls';
 import * as ava from 'ava';
 import { Config, Util, TestVariant } from '../../util';
 import { BrowserRecipe } from '../browser_recipe';
-import { Url } from '../../browser';
 import { SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { expect } from "chai";
@@ -121,7 +121,7 @@ export const defineDecryptTests = (testVariant: TestVariant, testWithNewBrowser:
       const expectedContent = 'The International DUBLIN Literary Award is an international literary award';
       const acctEmail = 'flowcrypt.compatibility@gmail.com';
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-      const settingsPage = await browser.newPage(t, Url.extensionSettings());
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, pp);
       // requires pp entry
       await InboxPageRecipe.checkDecryptMsg(t, browser, { acctEmail, threadId, expectedContent, enterPp: Config.key('flowcrypt.compatibility.1pp1').passphrase });

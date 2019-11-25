@@ -1,7 +1,7 @@
 export { BrowserHandle } from './browser_handle';
 export { BrowserPool, Semaphore } from './browser_pool';
 export { Controllable, ControllablePage, ControllableFrame } from './controllable';
-export { Url } from './url';
+export { TestUrls as Urls } from './test_urls';
 
 export const TIMEOUT_ELEMENT_GONE = 20;
 export const TIMEOUT_ELEMENT_APPEAR = 20;

@@ -1,5 +1,6 @@
+import { TestUrls } from './../browser/test_urls';
 
-import { BrowserHandle, ControllablePage, ControllableFrame, Controllable, Url } from '../browser';
+import { BrowserHandle, ControllablePage, ControllableFrame, Controllable } from '../browser';
 import { Util, Config } from '../util';
 import { expect } from 'chai';
 import { AvaContext } from '.';
@@ -291,7 +292,7 @@ type CheckSentMsg$opt = { acctEmail: string, subject: string, expectedContent?: 
 export class InboxPageRecipe extends PageRecipe {
 
   public static checkDecryptMsg = async (t: AvaContext, browser: BrowserHandle, { acctEmail, threadId, enterPp, expectedContent, finishCurrentSession }: CheckDecryptMsg$opt) => {
-    const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     if (finishCurrentSession) {
       await inboxPage.waitAndClick('@finish-session');
@@ -318,7 +319,7 @@ export class InboxPageRecipe extends PageRecipe {
   }
 
   public static checkFinishingSession = async (t: AvaContext, browser: BrowserHandle, acctEmail: string, threadId: string) => {
-    const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
+    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&threadId=${threadId}`));
     await inboxPage.waitAll('iframe');
     await inboxPage.waitAndClick('@finish-session');
     const pgpBlockFrame = await inboxPage.getFrame(['pgp_block.htm']);
@@ -338,7 +339,7 @@ export class InboxPageRecipe extends PageRecipe {
     if (typeof isEncrypted !== 'undefined') {
       throw new Error('checkSentMsg.isEncrypted not implemented');
     }
-    const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`));
+    const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=${acctEmail}&labelId=SENT`));
     await inboxPage.waitAndClick(`@container-subject(${subject})`, { delay: 1 });
     if (sender) { // make sure it was sent from intended addr
       await inboxPage.waitAll(`@container-msg-header(${sender})`);

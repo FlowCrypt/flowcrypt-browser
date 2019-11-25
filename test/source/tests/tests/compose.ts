@@ -1,13 +1,13 @@
+import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
-import { ComposePageRecipe, SettingsPageRecipe, InboxPageRecipe, PageRecipe, OauthPageRecipe, SetupPageRecipe } from '../page_recipe';
+import { ComposePageRecipe, SettingsPageRecipe, PageRecipe, OauthPageRecipe } from '../page_recipe';
 import { BrowserRecipe } from '../browser_recipe';
-import { Url, Controllable, BrowserHandle, ControllablePage } from '../../browser';
+import { Controllable, BrowserHandle, ControllablePage } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { TestVariant } from '../../util';
 import { expect } from "chai";
 import { AvaContext } from '..';
-import { ElementHandle } from 'puppeteer';
 import { Dict } from '../../core/common';
 
 // tslint:disable:no-blank-lines-func
@@ -19,7 +19,7 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     ava.default('[standalone] compose - signed with entered pass phrase + will remember pass phrase in session', testWithNewBrowser(async (t, browser) => {
       const k = Config.key('test.ci.compose');
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compose');
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, k.passphrase);
       const composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'sign with entered pass phrase', { encrypt: false });
@@ -107,12 +107,12 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
     }));
 
     ava.default('compose[global:compose] - settings - manually copied pubkey', testWithSemaphoredGlobalBrowser('compose', async (t, browser) => {
-      let settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
+      let settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       let composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human@flowcrypt.com' }, 'just to load - will close this page');
       await Util.sleep(1); // todo: should wait until actually loaded
       await settingsPage.close();
-      settingsPage = await browser.newPage(t, Url.extensionSettings('test.ci.compose@org.flowcrypt.com'));
+      settingsPage = await browser.newPage(t, TestUrls.extensionSettings('test.ci.compose@org.flowcrypt.com'));
       composeFrame = await ComposePageRecipe.openInSettings(settingsPage);
       await ComposePageRecipe.fillMsg(composeFrame, { to: 'human+manualcopypgp@flowcrypt.com' }, 'manual copied key');
       await composeFrame.waitAndClick('@action-open-add-pubkey-dialog', { delay: 1 });
@@ -470,10 +470,10 @@ export const defineComposeTests = (testVariant: TestVariant, testWithNewBrowser:
 };
 
 const setRequirePassPhraseAndOpenRepliedMessage = async (t: AvaContext, browser: BrowserHandle, passpharase: string) => {
-  const settingsPage = await browser.newPage(t, Url.extensionSettings());
+  const settingsPage = await browser.newPage(t, TestUrls.extensionSettings());
   await SettingsPageRecipe.forgetAllPassPhrasesInStorage(settingsPage, passpharase);
   // Open Message Page
-  const inboxPage = await browser.newPage(t, Url.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`));
+  const inboxPage = await browser.newPage(t, TestUrls.extension(`chrome/settings/inbox/inbox.htm?acctEmail=flowcrypt.compatibility@gmail.com&threadId=16b584ed95837510`));
   await inboxPage.waitAll('iframe');
   // Get Reply Window (Composer) and click on reply button.
   const replyFrame = await inboxPage.getFrame(['compose.htm']);

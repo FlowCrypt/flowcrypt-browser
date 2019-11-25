@@ -1,6 +1,6 @@
+import { TestUrls } from './../../browser/test_urls';
 import { TestWithNewBrowser, TestWithGlobalBrowser } from '../../test';
 import { SettingsPageRecipe, InboxPageRecipe } from '../page_recipe';
-import { Url } from '../../browser';
 import * as ava from 'ava';
 import { Util, Config } from '../../util';
 import { expect } from 'chai';
@@ -14,7 +14,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
   if (testVariant !== 'CONSUMER-LIVE-GMAIL') {
 
     ava.default('settings[global:compatibility] - my own emails show as contacts', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const comtactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
       await comtactsFrame.waitAll('@page-contacts');
@@ -26,7 +26,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     }));
 
     ava.default('settings[global:compatibility] - attester shows my emails', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const attesterFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-attester-page', ['keyserver.htm', 'placement=settings']);
       await attesterFrame.waitAll('@page-attester');
@@ -40,12 +40,12 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     }));
 
     ava.default('settings[global:compatibility] - verify key presense 1pp1', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'button');
     }));
 
     ava.default('settings[global:compatibility] - test pass phrase', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.wrong.passphrase').passphrase, false);
       await SettingsPageRecipe.passphraseTest(settingsPage, Config.key('flowcrypt.compatibility.1pp1').passphrase, true);
     }));
@@ -54,7 +54,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     // await tests.settings_my_key_tests(settingsPage, 'flowcrypt.compatibility.2pp1', 'link');
 
     ava.default('settings[global:compatibility] - feedback form', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await settingsPage.waitAndClick('@action-open-modules-help');
       await settingsPage.waitAll('@dialog');
       const helpFrame = await settingsPage.getFrame(['help.htm']);
@@ -65,7 +65,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
 
     ava.default('settings[new:compatibility] - view contact public key', testWithNewBrowser(async (t, browser) => {
       await BrowserRecipe.setUpCommonAcct(t, browser, 'compatibility');
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.toggleScreen(settingsPage, 'additional');
       const contactsFrame = await SettingsPageRecipe.awaitNewPageFrame(settingsPage, '@action-open-contacts-page', ['contacts.htm', 'placement=settings']);
       await contactsFrame.waitAll('@page-contacts');
@@ -85,7 +85,7 @@ export let defineSettingsTests = (testVariant: TestVariant, testWithNewBrowser: 
     }));
 
     ava.default('settings[global:compatibility] - my key page - primary + secondary', testWithSemaphoredGlobalBrowser('compatibility', async (t, browser) => {
-      const settingsPage = await browser.newPage(t, Url.extensionSettings('flowcrypt.compatibility@gmail.com'));
+      const settingsPage = await browser.newPage(t, TestUrls.extensionSettings('flowcrypt.compatibility@gmail.com'));
       await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.1pp1', 'link', 0);
       await SettingsPageRecipe.verifyMyKeyPage(settingsPage, 'flowcrypt.compatibility.2pp1', 'link', 1);
     }));
