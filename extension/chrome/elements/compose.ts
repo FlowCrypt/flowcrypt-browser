@@ -292,13 +292,10 @@ Catch.try(async () => {
       }
     },
     storagePassphraseGet,
-    storageAddAdminCodes: async (shortId: string, msgAdminCode: string, attAdminCodes: string[]) => {
+    storageAddAdminCodes: async (shortId: string, codes: string[]) => {
       const adminCodeStorage = await Store.getGlobal(['admin_codes']);
       adminCodeStorage.admin_codes = adminCodeStorage.admin_codes || {};
-      adminCodeStorage.admin_codes[shortId] = {
-        date: Date.now(),
-        codes: [msgAdminCode].concat(attAdminCodes || []),
-      };
+      adminCodeStorage.admin_codes[shortId] = { date: Date.now(), codes };
       await Store.setGlobal(adminCodeStorage);
     },
     storageContactGet,
