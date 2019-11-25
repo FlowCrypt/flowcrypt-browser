@@ -69,10 +69,6 @@ export class XssSafeFactory {
     return this.frameSrc(this.extUrl('chrome/elements/subscribe.htm'), { verificationEmailText, placement, isAuthErr });
   }
 
-  srcVerificationDialog = (verificationEmailText: string) => {
-    return this.frameSrc(this.extUrl('chrome/elements/verification.htm'), { verificationEmailText });
-  }
-
   srcAddPubkeyDialog = (emails: string[], placement: Placement) => {
     return this.frameSrc(this.extUrl('chrome/elements/add_pubkey.htm'), { emails, placement });
   }
@@ -142,10 +138,6 @@ export class XssSafeFactory {
 
   embeddedSubscribe = (verifEmailText: string, isAuthErr: boolean) => {
     return this.iframe(this.srcSubscribeDialog(verifEmailText, 'embedded', isAuthErr), ['short', 'embedded'], { scrolling: 'no' });
-  }
-
-  embeddedVerification = (verifEmailText: string) => {
-    return this.iframe(this.srcVerificationDialog(verifEmailText), ['short', 'embedded'], { scrolling: 'no' });
   }
 
   embeddedAtta = (meta: Att, isEncrypted: boolean) => {
@@ -270,8 +262,6 @@ export class XssSafeFactory {
       return factory.embeddedBackup(Pgp.armor.normalize(block.content.toString(), 'privateKey'));
     } else if (block.type === 'encryptedMsgLink') {
       return factory.embeddedMsg('', msgId, isOutgoing, senderEmail, true, undefined, block.content.toString()); // here block.content is message short id
-    } else if (block.type === 'cryptupVerification') {
-      return factory.embeddedVerification(block.content.toString());
     } else if (block.type === 'encryptedAtt') {
       return block.attMeta ? factory.embeddedAtta(new Att(block.attMeta), true) : '[missing encrypted attachment details]';
     } else if (block.type === 'signedHtml') {

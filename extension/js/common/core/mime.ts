@@ -33,7 +33,7 @@ export type MimeContent = {
 export type RichHeaders = Dict<string | string[]>;
 export type SendableMsgBody = { [key: string]: string | undefined; 'text/plain'?: string; 'text/html'?: string; };
 export type KeyBlockType = 'publicKey' | 'privateKey';
-export type ReplaceableMsgBlockType = KeyBlockType | 'cryptupVerification' | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
+export type ReplaceableMsgBlockType = KeyBlockType | 'signedMsg' | 'encryptedMsg' | 'encryptedMsgLink';
 export type MsgBlockType = ReplaceableMsgBlockType | 'plainText' | 'decryptedText' | 'plainHtml' | 'decryptedHtml' | 'plainAtt' | 'encryptedAtt'
   | 'decryptedAtt' | 'encryptedAttLink' | 'decryptErr' | 'verifiedMsg' | 'signedHtml';
 export type MsgBlock = {
@@ -62,7 +62,7 @@ export class Mime {
     if (decoded.text) {
       const blocksFromTextPart = Pgp.armor.detectBlocks(Str.normalize(decoded.text)).blocks;
       // if there are some encryption-related blocks found in the text section, which we can use, and not look at the html section
-      if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey' || b.type === 'cryptupVerification')) {
+      if (blocksFromTextPart.find(b => b.type === 'encryptedMsg' || b.type === 'signedMsg' || b.type === 'publicKey' || b.type === 'privateKey')) {
         blocks.push(...blocksFromTextPart); // because the html most likely containt the same thing, just harder to parse pgp sections cause it's html
       } else if (decoded.html) { // if no pgp blocks found in text part and there is html part, prefer html
         blocks.push(Pgp.internal.msgBlockObj('plainHtml', decoded.html));
