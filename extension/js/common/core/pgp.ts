@@ -200,7 +200,6 @@ export class Pgp {
     null: { begin: '-----BEGIN', end: '-----END', replace: false },
     publicKey: { begin: '-----BEGIN PGP PUBLIC KEY BLOCK-----', end: '-----END PGP PUBLIC KEY BLOCK-----', replace: true },
     privateKey: { begin: '-----BEGIN PGP PRIVATE KEY BLOCK-----', end: '-----END PGP PRIVATE KEY BLOCK-----', replace: true },
-    cryptupVerification: { begin: '-----BEGIN CRYPTUP VERIFICATION-----', end: '-----END CRYPTUP VERIFICATION-----', replace: true },
     signedMsg: { begin: '-----BEGIN PGP SIGNED MESSAGE-----', middle: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: true },
     signature: { begin: '-----BEGIN PGP SIGNATURE-----', end: '-----END PGP SIGNATURE-----', replace: false },
     encryptedMsg: { begin: '-----BEGIN PGP MESSAGE-----', end: '-----END PGP MESSAGE-----', replace: true },
@@ -229,10 +228,9 @@ export class Pgp {
     { match: '', word: 'weak', bar: 10, color: 'red', pass: false },
   ];
 
-  private static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = {
+  private static readonly FRIENDLY_BLOCK_TYPE_NAMES: { [type in MsgBlockType]: string } = { // todo - remove this, almost useless
     privateKey: 'Private Key',
     publicKey: 'Public Key',
-    cryptupVerification: 'Cryptup Verification',
     decryptErr: 'Decrypt Error',
     decryptedAtt: 'Decrypted Attachment',
     decryptedHtml: 'Decrypted HTML',
@@ -333,7 +331,7 @@ export class Pgp {
     },
   };
 
-  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => {
+  public static friendlyMsgBlockTypeName = (type: MsgBlockType) => { // todo - remove this, just use the block type string
     return Pgp.FRIENDLY_BLOCK_TYPE_NAMES[type];
   }
 
