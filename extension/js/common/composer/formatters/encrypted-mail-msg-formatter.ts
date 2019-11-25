@@ -29,6 +29,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
   private armoredPubkeys: PubkeyResult[];
   private FC_WEB_URL = 'https://flowcrypt.com'; // todo Send plain (not encrypted)uld use Api.url()
   private pgpMimeRootType = `multipart/encrypted; protocol="application/pgp-encrypted";`;
+  private fcAdminCodes: string[] = [];
 
   constructor(composer: Composer, armoredPubkeys: PubkeyResult[]) {
     super(composer);
@@ -37,20 +38,24 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
 
   async sendableMsg(newMsg: NewMsgData, signingPrv?: OpenPGP.key.Key): Promise<SendableMsg> {
     const subscription = await this.composer.app.storageGetSubscription();
-    const pubkeysOnly = this.armoredPubkeys.map(p => p.pubkey);
-    if (!this.richText) { // simple text
+    const pubkeys = this.armoredPubkeys.map(p => p.pubkey);
+    if (!this.richText) { // simple text: PGP/Inline
       const authInfo = subscription.active ? await Store.authInfo(this.acctEmail) : undefined;
       await this.addReplyTokenToMsgBodyIfNeeded(authInfo, newMsg, subscription);
-      const atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
+      let atts = await this.composer.atts.attach.collectEncryptAtts(this.armoredPubkeys.map(p => p.pubkey), newMsg.pwd);
       if (newMsg.pwd && atts.length) { // these will be password encrypted attachments
         this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
+        await this.uploadAttsToFc(authInfo, atts); // must strictly be preceeding the next function, because it's setting att.url
         newMsg.plaintext = this.addUploadedFileLinksToMsgBody(newMsg.plaintext, atts);
       }
-      const encrypted = await this.encryptData(Buf.fromUtfStr(newMsg.plaintext), newMsg.pwd, pubkeysOnly, signingPrv);
+      const encrypted = await this.encryptData(Buf.fromUtfStr(newMsg.plaintext), newMsg.pwd, pubkeys, signingPrv);
       const encryptedBody = { 'text/plain': encrypted.data };
       await this.composer.app.storageContactUpdate(Array.prototype.concat.apply([], Object.values(newMsg.recipients)), { last_use: Date.now() });
       if (newMsg.pwd) {
-        await this.fmtPwdProtectedEmailAndUploadAtts(authInfo, encryptedBody, pubkeysOnly, atts, subscription);
+        await this.uploadAndFormatPwdProtectedEmail(authInfo, encryptedBody);
+        // attachmetns already included inside message as links, setting email real email attachmetns to empty array
+        // however if there is more than one recipient with pubkeys, still append the encrypted message as attachment
+        atts = pubkeys.length === 1 ? [] : [new Att({ data: Buf.fromUtfStr(encrypted.data), name: 'encrypted.asc' })];
       }
       return await Google.createMsgObj(this.acctEmail, newMsg.sender, newMsg.recipients, newMsg.subject, encryptedBody, atts, this.composer.urlParams.threadId);
     } else { // rich text: PGP/MIME - https://tools.ietf.org/html/rfc3156#section-4
@@ -60,7 +65,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       }
       const plainAtts = await this.composer.atts.attach.collectAtts();
       const pgpMimeToEncrypt = await Mime.encode({ 'text/plain': newMsg.plaintext, 'text/html': newMsg.plainhtml }, { Subject: newMsg.subject }, plainAtts);
-      const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeysOnly, signingPrv);
+      const encrypted = await this.encryptData(Buf.fromUtfStr(pgpMimeToEncrypt), undefined, pubkeys, signingPrv);
       const atts = [
         new Att({ data: Buf.fromUtfStr('Version: 1'), type: 'application/pgp-encrypted', contentDescription: 'PGP/MIME version identification' }),
         new Att({ data: Buf.fromUtfStr(encrypted.data), type: 'application/octet-stream', contentDescription: 'OpenPGP encrypted message', name: 'encrypted.asc' }),
@@ -105,7 +110,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     }
   }
 
-  private async uploadAttsToFc(authInfo: FcUuidAuth | undefined, atts: Att[], subscription: Subscription): Promise<string[]> {
+  private async uploadAttsToFc(authInfo: FcUuidAuth | undefined, atts: Att[]): Promise<void> {
     const pfRes: BackendRes.FcMsgPresignFiles = await Backend.messagePresignFiles(authInfo, atts);
     const items: AwsS3UploadItem[] = [];
     for (const i of pfRes.approvals.keys()) {
@@ -119,10 +124,10 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     for (const i of atts.keys()) {
       atts[i].url = pfRes.approvals[i].base_url + pfRes.approvals[i].fields.key;
     }
-    return admin_codes;
+    this.fcAdminCodes.push(...admin_codes);
   }
 
-  private addUploadedFileLinksToMsgBody = (plaintext: string, atts: Att[]) => {
+  private addUploadedFileLinksToMsgBody(plaintext: string, atts: Att[]) {
     plaintext += '\n\n';
     for (const att of atts) {
       const sizeMb = att.length / (1024 * 1024);
@@ -175,9 +180,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     return new Date(usableTimeUntil); // latest date none of the keys were expired
   }
 
-  private async fmtPwdProtectedEmailAndUploadAtts(
-    authInfo: FcUuidAuth | undefined, encryptedBody: SendableMsgBody, armoredPubkeys: string[], atts: Att[], subscription: Subscription
-  ): Promise<void> {
+  private async uploadAndFormatPwdProtectedEmail(authInfo: FcUuidAuth | undefined, encryptedBody: SendableMsgBody): Promise<void> {
     // this is used when sending encrypted messages to people without encryption plugin, the encrypted data goes through FlowCrypt and recipients get a link
     // admin_code stays locally and helps the sender extend life of the message or delete it
     const { short, admin_code } = await Backend.messageUpload(authInfo, encryptedBody['text/plain']!);
@@ -201,11 +204,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
                     ${Lang.compose.msgEncryptedHtml[lang] + a}<br/><br/>
                     ${Lang.compose.alternativelyCopyPaste[lang] + Xss.escape(msgUrl)}<br/><br/><br/>
                 </div>`);
-    if (armoredPubkeys.length > 1) { // only include the message in email if a pubkey-holding person is receiving it as well
-      atts.push(new Att({ data: Buf.fromUtfStr(encryptedBody['text/plain']!), name: 'encrypted.asc' }));
-    }
-    const attAdminCodes = await this.uploadAttsToFc(authInfo, atts, subscription);
-    await this.composer.app.storageAddAdminCodes(short, admin_code, attAdminCodes);
+    await this.composer.app.storageAddAdminCodes(short, [admin_code].concat(this.fcAdminCodes));
     encryptedBody['text/plain'] = text.join('\n');
     encryptedBody['text/html'] = html.join('\n');
   }
