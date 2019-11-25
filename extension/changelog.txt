@@ -1,5 +1,7 @@
 <div>
 
+version 7.2.1 on Nov 25, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/365?closed=1" target="_blank">Verification bugfix</a>
+
 version 7.2.0 on Nov 22, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/364?closed=1" target="_blank">OpenID Connect</a>
 
 version 7.1.3 on Nov 22, 2019: <a href="https://github.com/FlowCrypt/flowcrypt-browser/milestone/363?closed=1" target="_blank">Experimental PGP/MIME compose</a>
