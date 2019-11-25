@@ -46,7 +46,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
       if (newMsg.pwd && atts.length) { // these will be password encrypted attachments
         this.composer.sendBtn.btnUpdateTimeout = Catch.setHandledTimeout(() => this.composer.S.now('send_btn_text').text(SendBtnTexts.BTN_SENDING), 500);
         await this.uploadAttsToFc(authInfo, atts);
-        newMsg.plaintext = await this.addAttFileLinksToMsgBody(newMsg.plaintext, atts);
+        newMsg.plaintext = this.addUploadedFileLinksToMsgBody(newMsg.plaintext, atts);
       }
       const encrypted = await this.encryptData(Buf.fromUtfStr(newMsg.plaintext), newMsg.pwd, pubkeys, signingPrv);
       const encryptedBody = { 'text/plain': encrypted.data };
@@ -127,7 +127,7 @@ export class EncryptedMsgMailFormatter extends BaseMailFormatter implements Mail
     this.fcAdminCodes.push(...admin_codes);
   }
 
-  private async addAttFileLinksToMsgBody(plaintext: string, atts: Att[]) {
+  private addUploadedFileLinksToMsgBody(plaintext: string, atts: Att[]) {
     plaintext += '\n\n';
     for (const att of atts) {
       const sizeMb = att.length / (1024 * 1024);
